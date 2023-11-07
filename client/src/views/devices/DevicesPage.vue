@@ -2,33 +2,141 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
-      <div class="devices-container">
-        <div class="title">
-          <h1>{{ $t('DevicesPage.title') }}</h1>
-          <ion-button
-            fill="clear"
-            @click="onAddDeviceClick()"
-          >
-            <ion-icon :icon="add" />
-            {{ $t('DevicesPage.addDevice') }}
-          </ion-button>
-        </div>
-        <div class="list">
-          <ion-text v-if="devices.length === 0">
-            {{ $t('DevicesPage.noDevices') }}
-          </ion-text>
-          <ion-list v-if="devices.length > 0">
-            <ion-item
-              v-for="device in devices"
-              :key="device.id"
+    <ion-content
+      :fullscreen="true"
+    >
+      <div class="container">
+        <div class="devices-container">
+          <!-- header -->
+          <div class="devices-header">
+            <h2 class="title-h2 devices-header-title">
+              {{ $t('DevicesPage.title') }}
+            </h2>
+            <ion-button
+              class="devices-header-button"
+              fill="clear"
+              @click="onAddDeviceClick()"
             >
-              <device-card
-                :label="device.deviceLabel"
-                :is-current="device.isCurrent"
+              <ion-icon
+                :icon="add"
               />
-            </ion-item>
-          </ion-list>
+              <span>{{ $t('DevicesPage.addDevice') }}</span>
+            </ion-button>
+          </div>
+
+          <!-- device list -->
+          <div class="devices-content">
+            <ion-text
+              class="no-device"
+              v-if="devices.length === 0"
+            >
+              {{ $t('DevicesPage.noDevices') }}
+            </ion-text>
+            <ion-list
+              class="devices-list"
+              v-if="devices.length > 0"
+            >
+              <ion-item
+                v-for="device in devices"
+                :key="device.id"
+                class="device-list-item"
+              >
+                <device-card
+                  :label="device.deviceLabel"
+                  :date="device.createdOn"
+                  :is-current="device.isCurrent"
+                />
+              </ion-item>
+            </ion-list>
+          </div>
+        </div>
+
+        <!-- restore password card -->
+        <!-- files not downloaded -->
+        <div
+          class="restore-password"
+          v-if="passwordSaved === false"
+        >
+          <ion-label
+            class="body-sm danger"
+          >
+            {{ $t('DevicesPage.restorePassword.notDone.label') }}
+          </ion-label>
+          <div class="restore-password-header">
+            <img
+              src="@/assets/images/password.svg"
+              alt="password-image"
+              class="info-password__img"
+            >
+            <h3 class="title-h3 restore-password-header__title">
+              {{ $t('DevicesPage.restorePassword.title') }}
+            </h3>
+          </div>
+          <div class="restore-password-subtitles">
+            <ion-text
+              class="body"
+              :show="passwordSaved"
+            >
+              {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
+            </ion-text>
+            <ion-text
+              class="body"
+            >
+              {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
+            </ion-text>
+          </div>
+          <div class="restore-password-button">
+            <ion-button
+              class="button-default"
+              @click="passwordSaved = true"
+            >
+              <ion-icon
+                :icon="sparkles"
+                class="icon"
+              />
+              {{ $t('DevicesPage.restorePassword.notDone.button') }}
+            </ion-button>
+          </div>
+        </div>
+        <!-- files downloaded -->
+        <div
+          class="restore-password"
+          v-else
+        >
+          <ion-label
+            class="body-sm done"
+          >
+            {{ $t('DevicesPage.restorePassword.done.label') }}
+          </ion-label>
+          <div class="restore-password-header">
+            <img
+              src="@/assets/images/password.svg"
+              alt="password-image"
+              class="info-password__img"
+            >
+            <h3 class="title-h3 restore-password-header__title">
+              {{ $t('DevicesPage.restorePassword.title') }}
+            </h3>
+          </div>
+          <div class="restore-password-subtitles">
+            <ion-text
+              class="body"
+            >
+              {{ $t('DevicesPage.restorePassword.done.subtitle') }}
+            </ion-text>
+          </div>
+          <div class="restore-password-button">
+            <ion-button
+              class="button-default"
+              fill="clear"
+            >
+              <ion-icon
+                :icon="download"
+                class="icon"
+              />
+              {{ $t('DevicesPage.restorePassword.done.button') }}
+            </ion-button>
+          </div>
         </div>
       </div>
     </ion-content>
@@ -37,8 +145,18 @@
 
 <script setup lang="ts">
 import { ref, Ref, onMounted, inject } from 'vue';
-import { add } from 'ionicons/icons';
-import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonText, modalController } from '@ionic/vue';
+import { add, sparkles, download } from 'ionicons/icons';
+import {
+  IonButton,
+  IonList,
+  IonItem,
+  IonIcon,
+  IonPage,
+  IonContent,
+  IonLabel,
+  IonText,
+  modalController,
+} from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
@@ -49,6 +167,7 @@ import { MsModalResult } from '@/components/core/ms-types';
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
+const passwordSaved = ref(false);
 
 onMounted(async () => {
   await refreshDevicesList();
@@ -85,26 +204,111 @@ async function onAddDeviceClick(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.devices-container {
-  margin: 2em;
-  background-color: white;
-  width: 50%;
-}
-
-.title {
+.container {
   display: flex;
+  max-width: 70rem;
+}
+
+.devices-container {
+  margin: 2.5em 2rem 0;
+  width: 45%;
+}
+
+.devices-header {
+  padding-inline: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+
+  &-title {
+    margin: 0;
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  &-button {
+    margin: 0;
+
+    span {
+      margin-left: .625rem;
+    }
+  }
 }
 
-.title h1 {
-  color: var(--parsec-color-light-primary-700);
+.devices-content {
+  margin-top: 2rem;
+
+  .devices-list {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
 }
 
-.title ion-button {
-  margin-left: auto;
-}
+.restore-password {
+  width: 45%;
+  margin: 6rem 2rem 0;
+  padding: 2rem 1.5rem;
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  border-radius: var(--parsec-radius-6);
+  display: flex;
+  flex-direction: column;
+  position: relative;
 
-.list {
-  padding-top: 2em;
+  ion-label {
+    width: max-content;
+    position: absolute;
+    top: -.8rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: .125rem 1.75rem;
+    border-radius: var(--parsec-radius-12);
+
+    &.done {
+      color: var(--parsec-color-light-success-500);
+      background: var(--parsec-color-light-success-100);
+    }
+
+    &.danger {
+      background: var(--parsec-color-light-danger-100);
+      color: var(--parsec-color-light-danger-500);
+    }
+  }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    &__title {
+      margin: 0;
+      color: var(--parsec-color-light-primary-700);
+    }
+
+    img {
+      width: 3.25rem;
+      height: 3.25rem;
+      margin-right: .5rem;
+    }
+  }
+
+  &-subtitles {
+    margin: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    color: var(--parsec-color-light-secondary-grey);
+  }
+
+  &-button {
+    .icon {
+      margin-right: .625rem;
+      font-size: 1.125rem;
+    }
+  }
 }
 </style>
