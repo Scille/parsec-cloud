@@ -471,6 +471,21 @@
         "addDevice": "Ajouter",
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
+        "joinedOn": "Rejoint le",
+        "restorePassword": {
+            "title": "Fichiers de récupération de mot de passe",
+            "done": {
+                "subtitle": "Vous avez sauvegardé les fichiers de récupération de mot de passe.",
+                "label": "Fichiers déjà téléchargés",
+                "button": "Re-télécharger les fichiers"
+            },
+            "notDone": {
+                "label": "Action requise",
+                "subtitle": "Parsec ne stocke pas votre mot de passe. ",
+                "subtitle2": "Ces fichiers vous permettent de restaurer votre mot de passe sur un appareil en cas d’oublis.",
+                "button": "Sauvegarder mon mot de passe"
+            }
+        },
         "greet": {
             "steps": {
                 "hostCode": "Code hôte",
