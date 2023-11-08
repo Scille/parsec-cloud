@@ -41,11 +41,27 @@ describe('Date formatting', () => {
     // Birth of a very important and exceptional person
     vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
 
-    expect(formatTimeSince(date, mockT as any, mockD as any, '', format)).to.equal(expected);
+    expect(formatTimeSince(date, mockT as any, mockD as any, '', format as 'long' | 'short')).to.equal(expected);
   });
 
   it('Uses default value', () => {
     expect(formatTimeSince(undefined, mockT as any, mockD as any)).to.equal('');
     expect(formatTimeSince(undefined, mockT as any, mockD as any, 'Default Value')).to.equal('Default Value');
+  });
+
+  it('Round at day', () => {
+    vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
+    expect(
+      formatTimeSince(DateTime.utc(1988, 4, 7, 11, 59, 30), mockT as any, mockD as any, '', 'long', true),
+    ).to.equal('common.date.lastLoginDays {"days":0} 0');
+    expect(
+      formatTimeSince(DateTime.utc(1988, 4, 7, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
+    ).to.equal('common.date.lastLoginDays {"days":0} 0');
+    expect(
+      formatTimeSince(DateTime.utc(1988, 4, 6, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
+    ).to.equal('common.date.lastLoginDays {"days":1} 1');
+    expect(
+      formatTimeSince(DateTime.utc(1988, 4, 2, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
+    ).to.equal('common.date.lastLoginDays {"days":5} 5');
   });
 });

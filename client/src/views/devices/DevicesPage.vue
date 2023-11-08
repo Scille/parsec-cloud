@@ -55,7 +55,7 @@
         <!-- files not downloaded -->
         <div
           class="restore-password"
-          v-if="passwordSaved === false"
+          v-if="!passwordSaved"
         >
           <ion-label
             class="body-sm danger"

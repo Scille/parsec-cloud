@@ -3,7 +3,7 @@
 import { DateTime } from 'luxon';
 
 export interface Formatters {
-  timeSince(date: DateTime | undefined, defaultValue?: string, format?: 'long' | 'short', roundDays?:boolean): string;
+  timeSince(date: DateTime | undefined, defaultValue?: string, format?: 'long' | 'short', roundDays?: boolean): string;
   fileSize(bytes: number): string;
 }
 

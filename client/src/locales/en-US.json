@@ -471,7 +471,7 @@
         "addDevice": "Add",
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
-        "joinedOn": "Joined on:",
+        "joinedOn": "Joined:",
         "restorePassword": {
             "title": "Password recovery files",
             "done": {

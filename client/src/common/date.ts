@@ -3,8 +3,8 @@
 import { DateTime } from 'luxon';
 import { ComposerTranslation } from 'vue-i18n';
 
-export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslation, d: any, defaultValue='', format:'long'|'short' = 'long',
-  roundDays = false): string {
+export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslation, d: any, defaultValue = '',
+  format: 'long' | 'short' = 'long', roundDays = false): string {
   if (!date) {
     return defaultValue;
   }
@@ -12,11 +12,13 @@ export function formatTimeSince(date: DateTime | undefined, t: ComposerTranslati
   const diff = DateTime.now().diff(date, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
 
   // More than 6 days, just display the date as is
-  if (!diff || diff.years && diff.years > 0 || diff.months && diff.months > 0 || diff.days && diff.days > 6 && !roundDays) {
+  if (!diff || diff.years && diff.years > 0 || diff.months && diff.months > 0 || diff.days && diff.days > 6) {
     return d(date.toJSDate(), format);
-  } else if (diff.days && diff.days > 0 || (roundDays && diff.days === 0)) {
+  } else if (roundDays) {
+    return t('common.date.lastLoginDays', {days: diff.days || 0}, diff.days || 0);
+  } else if (diff.days && diff.days > 0) {
     return t('common.date.lastLoginDays', {days: diff.days}, diff.days);
-  } else if (diff.hours && diff.hours > 0 || (!roundDays && diff.hours === 0)) {
+  } else if (diff.hours && diff.hours > 0) {
     return t('common.date.lastLoginHours', {hours: diff.hours}, diff.hours);
   } else if (diff.minutes && diff.minutes > 0) {
     return t('common.date.lastLoginMinutes', { minutes: diff.minutes }, diff.minutes);
