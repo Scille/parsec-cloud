@@ -35,7 +35,7 @@ import {
 import {
   checkmark,
 } from 'ionicons/icons';
-import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
+import { MsDropdownOption, getMsOptionByKey, MsModalResult } from '@/components/core/ms-types';
 
 const props = defineProps<{
   defaultOption?: any
@@ -50,9 +50,7 @@ function onOptionClick(option?: MsDropdownOption): void {
   if (option) {
     selectedOption.value = option;
   }
-  popoverController.dismiss({
-    option: selectedOption.value,
-  });
+  popoverController.dismiss({option: selectedOption.value}, MsModalResult.Confirm);
 }
 </script>
 

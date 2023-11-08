@@ -19,7 +19,10 @@
             v-show="!isOrganizationManagementRoute()"
           >
             <!-- active organization -->
-            <ion-card class="organization-card">
+            <ion-card
+              class="organization-card"
+              @click="openOrganizationChoice($event)"
+            >
               <ion-card-header class="organization-card__header">
                 <div class="organization-card__container">
                   <ion-avatar class="orga-avatar">
@@ -37,7 +40,6 @@
                 <!-- Keep it hidden for now since we have no way of switching org -->
                 <div
                   class="organization-card__icon"
-                  v-show="false"
                 >
                   <!-- new icon to provide -->
                   <svg
@@ -256,6 +258,7 @@ import {
   menuController,
   GestureDetail,
   IonButton,
+  popoverController,
 } from '@ionic/vue';
 import {
   business,
@@ -276,7 +279,11 @@ import {
   ClientInfo,
   UserProfile,
   WorkspaceInfo,
+  listConnectedDevices,
+  Handle,
 } from '@/parsec';
+import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
+import { MsDropdownOption, MsModalResult } from '@/components/core/ms-types';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 
@@ -302,6 +309,44 @@ function navigateToWorkspace(workspaceId: string): void {
 function navigateToWorkspaceList(): void {
   routerNavigateTo('workspaces');
   menuController.close();
+}
+
+async function openOrganizationChoice(clickEvent: Event): Promise<void> {
+  const result = await listConnectedDevices();
+
+  if (!result.ok) {
+    // Failed to list, probably should display an error, will decide later
+    return;
+  }
+  let defaultHandle: Handle | null = null;
+  const options: MsDropdownOption[] = result.value.map((device) => {
+    if (device.isCurrent) {
+      defaultHandle = device.handle;
+    }
+    return {label: `${device.organizationId} - ${device.humanHandle.label}`, key: device.handle};
+  });
+  options.push({label: '...another organization', key: null});
+
+  const popover = await popoverController.create({
+    component: MsDropdownPopover,
+    componentProps: {
+      options: options,
+      defaultOption: defaultHandle,
+    },
+    showBackdrop: false,
+    event: clickEvent,
+  });
+  await popover.present();
+  const { data, role } = await popover.onWillDismiss();
+  await popover.dismiss();
+  if (role !== MsModalResult.Confirm || !data || data.option.key === defaultHandle) {
+    return;
+  }
+  if (data.option.key === null) {
+    console.log('Switch to login page');
+  } else {
+    console.log(`Switch to org with handle ${data.option.key}`);
+  }
 }
 
 onMounted(async () => {

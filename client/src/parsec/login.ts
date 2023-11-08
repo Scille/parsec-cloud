@@ -13,7 +13,6 @@ import {
   ClientInfo,
   ClientInfoError,
   UserProfile,
-  DeviceInfo,
   ClientListUserDevicesError,
   ClientListUserDevicesErrorTag,
   OwnDeviceInfo,
@@ -132,4 +131,39 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
       isCurrent: false,
     }]};
   }
+}
+
+export enum ConnectedDeviceErrorTag {
+  Internal = 'Internal'
+}
+
+export interface ConnectedDeviceError {
+  tag: ConnectedDeviceErrorTag.Internal
+}
+
+export interface ConnectedDevice extends AvailableDevice {
+  handle: Handle
+  isCurrent: boolean
+}
+
+// Simulate what will be a call to the bindings
+export async function listConnectedDevices(): Promise<Result<Array<ConnectedDevice>, ConnectedDeviceError>> {
+  if (!needsMocks()) {
+    return {ok: true, value: []};
+  }
+  const devices = await listAvailableDevices();
+  const deviceList: Array<ConnectedDevice> = [];
+  const currentHandle = getParsecHandle();
+
+  if (devices.length > 1) {
+    let connectedDevice = devices[0];
+    (connectedDevice as ConnectedDevice).handle = DEFAULT_HANDLE;
+    (connectedDevice as ConnectedDevice).isCurrent = (connectedDevice as ConnectedDevice).handle === currentHandle;
+    deviceList.push(connectedDevice as ConnectedDevice);
+    connectedDevice = devices[1];
+    (connectedDevice as ConnectedDevice).handle = DEFAULT_HANDLE + 1;
+    (connectedDevice as ConnectedDevice).isCurrent = false;
+    deviceList.push(connectedDevice as ConnectedDevice);
+  }
+  return {ok: true, value: deviceList};
 }
