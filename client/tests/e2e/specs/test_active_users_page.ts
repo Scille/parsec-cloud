@@ -57,6 +57,10 @@ describe('Check active users page', () => {
     // All unchecked by default
     checkChecked(false);
 
+    // Options button is visible if nothing is checked
+    cy.get('@userItems').eq(1).find('.options-button').should('be.visible');
+    cy.get('@userItems').eq(2).find('.options-button').should('be.visible');
+
     cy.get('.user-footer__container').contains('3 users');
     cy.get('.user-footer__container').find('#button-revoke-user').should('not.exist');
 
@@ -64,6 +68,11 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').click();
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     checkChecked(true);
+
+    // Options button should not be visible if something is checked
+    cy.get('@userItems').eq(1).find('.options-button').should('not.be.visible');
+    cy.get('@userItems').eq(2).find('.options-button').should('not.be.visible');
+
     cy.get('.user-footer__container').contains('2 users selected');
     cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('not.exist');
@@ -97,10 +106,10 @@ describe('Check active users page', () => {
     cy.get('.user-context-menu').should('exist');
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems').should('have.length', 4);
     // 0 is title, 1 is revoke button
-    cy.get('@menuItems').eq(1).contains('Revoke');
-    cy.get('@menuItems').eq(1).click();
-    // cspell:disable-next-line
-    cy.get('@consoleLog').should('have.been.calledWith', 'Revoke user Jaheira');
+    cy.get('@menuItems').eq(0).contains('Deletion');
+    cy.get('@menuItems').eq(1).contains('Revoke this user');
+    cy.get('@menuItems').eq(2).contains('User details');
+    cy.get('@menuItems').eq(3).contains('View details');
   });
 
   it('Invite from active user page', () => {
@@ -113,5 +122,47 @@ describe('Check active users page', () => {
     cy.get('@inviteButton').should('not.have.attr', 'disabled');
     cy.get('@inviteButton').click();
     cy.checkToastMessage('An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
+  });
+
+  it('Tests revoke one user', () => {
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    cy.get('@userItems').eq(1).find('.options-button').click();
+    cy.get('.user-context-menu').find('.menu-list').find('ion-item').eq(1).contains('Revoke this user').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
+    cy.get('.question-modal').find('#next-button').click();
+    // cspell:disable-next-line
+    cy.checkToastMessage('Cernd has been revoked and can no longer access this organization!');
+  });
+
+  it('Tests revoke one selected user', () => {
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    // Since the checkbox appears only on hover, it's easier to select all and deselect the one we don't want
+    cy.get('.user-list-header').find('ion-checkbox').click();
+    cy.get('@userItems').eq(2).find('ion-checkbox').click();
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('@userItems').eq(2).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.user-footer__container').contains('One user selected');
+    cy.get('.contextual-menu').find('#button-revoke-user').contains('Revoke this user').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
+    cy.get('.question-modal').find('#next-button').click();
+    // cspell:disable-next-line
+    cy.checkToastMessage('Cernd has been revoked and can no longer access this organization!');
+    // Ultimately, they probably should not appear anymore
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+  });
+
+  it('Tests revoke multiple', () => {
+    cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
+    cy.get('.user-list-header').find('ion-checkbox').click();
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('@userItems').eq(2).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.contextual-menu').find('#button-revoke-user').contains('Revoke these users').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke these users?');
+    cy.get('.question-modal').find('#next-button').click();
+    // cspell:disable-next-line
+    cy.checkToastMessage('2 users have been revoked and can no longer access this organization!');
+    // Ultimately, they probably should not appear anymore
+    cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('@userItems').eq(2).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
   });
 });

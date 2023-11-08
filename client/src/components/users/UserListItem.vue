@@ -55,6 +55,7 @@
     <!-- options -->
     <div class="user-options ion-item-child-clickable">
       <ion-button
+        v-show="showOptions"
         fill="clear"
         class="options-button"
         @click.stop="$emit('menuClick', $event, user)"
@@ -84,6 +85,7 @@ const isSelected = ref(false);
 const props = defineProps<{
   user: UserInfo;
   showCheckbox: boolean;
+  showOptions: boolean;
 }>();
 
 defineEmits<{

@@ -596,7 +596,7 @@
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
         "revokedEmptyList": "Aucun utilisateur révoqué",
         "listRevokedUsersFailed": "Impossible de récupérer la liste des utilisateurs révoqués. Veuillez vérifier votre connexion internet.",
-        "userSelectedCount": "Aucun utilisateur sélectionné | 1 utilisateur sélectionné | {count} utilisateurs sélectionnés",
+        "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
@@ -676,6 +676,13 @@
             "placeholder": "jean.martin{'@'}exemple.com",
             "cancel": "Annuler",
             "create": "Inviter"
+        },
+        "revocation": {
+            "revokeTitle": "Révoquer cet utilisateur? | Révoquer ces utilisateurs ?",
+            "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
+            "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
+            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation ! | {count} utilisateurs ont été révoqués et ne peuvent plus accéder à l'organisation !",
+            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
         }
     },
     "AboutPage": {
