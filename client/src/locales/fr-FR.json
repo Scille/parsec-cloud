@@ -446,7 +446,7 @@
             "lastLoginSeconds": "il y a une seconde | il y a {seconds} secondes",
             "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
             "lastLoginHours": "il y a une heure | il y a {hours} heures",
-            "lastLoginDays": "il y a un jour | il y a {days} jours"
+            "lastLoginDays": "Aujourd'hui | Hier | il y a {days} jours"
         },
         "filesize": {
             "bytes": "o",
@@ -471,7 +471,7 @@
         "addDevice": "Ajouter",
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
-        "joinedOn": "Rejoint le",
+        "joinedOn": "Rejoint :",
         "restorePassword": {
             "title": "Fichiers de récupération de mot de passe",
             "done": {
@@ -481,7 +481,7 @@
             },
             "notDone": {
                 "label": "Action requise",
-                "subtitle": "Parsec ne stocke pas votre mot de passe. ",
+                "subtitle": "Parsec ne stocke pas votre mot de passe.",
                 "subtitle2": "Ces fichiers vous permettent de restaurer votre mot de passe sur un appareil en cas d’oublis.",
                 "button": "Sauvegarder mon mot de passe"
             }
