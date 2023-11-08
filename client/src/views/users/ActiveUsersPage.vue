@@ -78,12 +78,14 @@
                 :user="userList.find((user) => isCurrentUser(user.id))!"
                 :show-checkbox="false"
                 :disabled="true"
+                :show-options="false"
               />
               <user-list-item
                 v-for="user in userList.filter((user) => !isCurrentUser(user.id))"
                 :key="user.id"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
+                :show-options="selectedUsersCount === 0"
                 @menu-click="openUserContextMenu($event, user)"
                 @select="onUserSelect"
                 ref="userListItemRefs"
@@ -101,6 +103,7 @@
               <user-card
                 :user="userList.find((user) => isCurrentUser(user.id))!"
                 :show-checkbox="false"
+                :show-options="false"
               />
             </ion-item>
             <ion-item
@@ -114,6 +117,7 @@
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
                 @menu-click="openUserContextMenu($event, user)"
                 @select="onUserSelect"
+                :show-options="selectedUsersCount === 0"
               />
             </ion-item>
           </div>
@@ -171,10 +175,19 @@ import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
-import { listUsers as parsecListUsers, UserInfo, ClientInfo, getClientInfo as parsecGetClientInfo, UserProfile, UserID } from '@/parsec';
+import {
+  listUsers as parsecListUsers,
+  UserInfo,
+  ClientInfo,
+  getClientInfo as parsecGetClientInfo,
+  UserProfile,
+  UserID,
+  revokeUser as parsecRevokeUser,
+} from '@/parsec';
 import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
+import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
@@ -212,11 +225,15 @@ function getSelectedUsers(): UserInfo[] {
 
   if (displayView.value === DisplayState.List) {
     for (const item of userListItemRefs.value) {
-      selectedUsers.push(item.getUser());
+      if (item.isSelected) {
+        selectedUsers.push(item.getUser());
+      }
     }
   } else {
     for (const item of userGridItemRefs.value) {
-      selectedUsers.push(item.getUser());
+      if (item.isSelected) {
+        selectedUsers.push(item.getUser());
+      }
     }
   }
   return selectedUsers;
@@ -258,18 +275,73 @@ function selectAllUsers(checked: boolean): void {
   }
 }
 
-function revokeUser(user: UserInfo): void {
-  console.log(`Revoke user ${user.humanHandle.label}`);
+async function revokeUser(user: UserInfo): Promise<void> {
+  const answer = await askQuestion(
+    t('UsersPage.revocation.revokeTitle', 1),
+    t('UsersPage.revocation.revokeQuestion', {user: user.humanHandle.label}, 1),
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+  const result = await parsecRevokeUser(user.id);
+
+  if (!result.ok) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.revocation.revokeFailed', 1),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.revocation.revokeSuccess', {user: user.humanHandle.label}, 1),
+      level: NotificationLevel.Success,
+    }));
+  }
+  await refreshUserList();
+}
+
+async function revokeSelectedUsers(): Promise<void> {
+  const selectedUsers = getSelectedUsers();
+
+  if (selectedUsers.length === 1) {
+    return await revokeUser(selectedUsers[0]);
+  }
+
+  const answer = await askQuestion(
+    t('UsersPage.revocation.revokeTitle', selectedUsers.length),
+    t('UsersPage.revocation.revokeQuestion', {count: selectedUsers.length}, selectedUsers.length),
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+  let errorCount = 0;
+
+  for (const user of getSelectedUsers()) {
+    const result = await parsecRevokeUser(user.id);
+    if (!result.ok) {
+      errorCount += 1;
+    }
+  }
+  if (errorCount === 0) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.revocation.revokeSuccess', {count: selectedUsers.length}, selectedUsers.length),
+      level: NotificationLevel.Success,
+    }));
+  } else if (errorCount < selectedUsers.length) {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.revocation.revokeSomeFailed'),
+      level: NotificationLevel.Error,
+    }));
+  } else {
+    notificationCenter.showToast(new Notification({
+      message: t('UsersPage.revocation.revokeFailed', selectedUsers.length),
+      level: NotificationLevel.Error,
+    }));
+  }
+  await refreshUserList();
 }
 
 function details(user: UserInfo): void {
   console.log(`Show details on user ${user.humanHandle.label}`);
-}
-
-function revokeSelectedUsers(): void {
-  for (const user of getSelectedUsers()) {
-    revokeUser(user);
-  }
 }
 
 function isCurrentUser(userId: UserID): boolean {
@@ -324,6 +396,7 @@ async function refreshUserList(): Promise<void> {
       }),
     );
   }
+  selectAllUsers(false);
 }
 
 const routeUnwatch = watch(currentRoute, async (newRoute) => {

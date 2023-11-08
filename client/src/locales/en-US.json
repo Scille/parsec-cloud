@@ -596,12 +596,12 @@
         "listUsersFailed": "Could not retrieve the users list. Please make sure you're connected to the internet.",
         "revokedEmptyList": "No revoked users to display.",
         "listRevokedUsersFailed": "Could not retrieve the revoked users list. Please make sure you're connected to the internet.",
-        "userSelectedCount": "No user selected | 1 user selected | {count} users selected",
+        "userSelectedCount": "No user selected | One user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user | Revoke these users",
-            "actionDetails": "View detail",
+            "actionDetails": "View details",
             "actionSeeCommonWorkspaces": "See common workspaces"
         },
         "greet": {
@@ -676,6 +676,13 @@
             "placeholder": "john.smith{'@'}example.com",
             "cancel": "Cancel",
             "create": "Invite"
+        },
+        "revocation": {
+            "revokeTitle": "Revoke this user? | Revoke these users?",
+            "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
+            "revokeFailed": "Failed to revoke this user. | Failed to revoke any user.",
+            "revokeSuccess": "{user} has been revoked and can no longer access this organization! | {count} users have been revoked and can no longer access this organization!",
+            "revokeSomeFailed": "Some users could not be revoked."
         }
     },
     "AboutPage": {

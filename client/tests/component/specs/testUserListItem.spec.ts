@@ -25,6 +25,7 @@ describe('User List Item', () => {
       props: {
         user: USER,
         showCheckbox: true,
+        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

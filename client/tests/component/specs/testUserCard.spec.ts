@@ -25,6 +25,7 @@ describe('User Card', () => {
       props: {
         user: USER,
         showCheckbox: true,
+        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

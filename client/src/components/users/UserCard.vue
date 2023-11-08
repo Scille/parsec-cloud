@@ -21,6 +21,7 @@
     </div>
     <div
       class="card-option"
+      v-show="showOptions"
       @click.stop="$emit('menuClick', $event, user)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
@@ -63,6 +64,7 @@ defineEmits<{
 const props = defineProps<{
   user: UserInfo;
   showCheckbox: boolean;
+  showOptions: boolean;
 }>();
 
 function getUser(): UserInfo {

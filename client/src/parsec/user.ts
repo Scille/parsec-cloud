@@ -119,3 +119,22 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
     };
   }
 }
+
+export enum RevokeUserTag {
+  Internal = 'Internal'
+}
+
+export interface RevokeUserError {
+  tag: RevokeUserTag.Internal
+}
+
+export async function revokeUser(userId: UserID): Promise<Result<null, RevokeUserError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && !needsMocks()) {
+    // Will call the bindings
+    return {ok: true, value: null};
+  } else {
+    return {ok: true, value: null};
+  }
+}
