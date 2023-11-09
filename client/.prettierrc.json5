@@ -1,8 +1,16 @@
 {
-  "tabWidth": 2,
-  "singleQuote": true,
-  "printWidth": 140,
-  "useTabs": false,
-  "bracketSameLine": false,
-  "singleAttributePerLine": true
+    tabWidth: 2,
+    singleQuote: true,
+    printWidth: 140,
+    useTabs: false,
+    bracketSameLine: false,
+    singleAttributePerLine: true,
+    overrides: [
+        {
+            files: ['*.json', '*.json5'],
+            options: {
+                tabWidth: 4,
+            },
+        },
+    ],
 }
