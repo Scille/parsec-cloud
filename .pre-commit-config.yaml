@@ -205,14 +205,12 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry: npx prettier
-        language: node
-        args: [
-          --config=client/.prettierrc.json5,
-          --ignore-path=client/.prettierignore,
-          client
+        entry: >-
+          npx prettier
+          --config=client/.prettierrc.json5
+          --ignore-path=client/.prettierignore
           --write
-        ]
+        language: node
         files: ^(client|bindings)/
         types_or: [ vue, ts, tsx, javascript, jsx, html ]
         stages:
