@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from functools import partial, wraps
 from pathlib import PurePath
 from typing import Any, Callable, Iterator, List, Tuple, TypeVar, Union, cast
@@ -220,8 +220,8 @@ def stat_to_file_attributes(stat: dict[str, str]) -> FILE_ATTRIBUTE:
 
 
 def stat_to_winfsp_attributes(stat: dict[str, Any]) -> dict[str, Any]:
-    created = dt_to_filetime(datetime.fromtimestamp(stat["created"].timestamp()))
-    updated = dt_to_filetime(datetime.fromtimestamp(stat["updated"].timestamp()))
+    created = dt_to_filetime(datetime.fromtimestamp(stat["created"].timestamp(), tz=timezone.utc))
+    updated = dt_to_filetime(datetime.fromtimestamp(stat["updated"].timestamp(), tz=timezone.utc))
     attributes = {
         "creation_time": created,
         "last_access_time": updated,
