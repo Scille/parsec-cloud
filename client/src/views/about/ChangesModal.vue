@@ -4,7 +4,7 @@
   <ion-page class="modal">
     <ms-modal
       :title="$t('Changelog.title')"
-      :close-button="{visible: true}"
+      :close-button="{ visible: true }"
     >
       <div>
         <div
@@ -13,9 +13,7 @@
           class="container"
         >
           <div class="version">
-            <ion-text class="version-title title-h3">
-              {{ $t('app.name') }} v{{ versionChange.version }}
-            </ion-text>
+            <ion-text class="version-title title-h3"> {{ $t('app.name') }} v{{ versionChange.version }} </ion-text>
             <ion-text class="version-date body">
               {{ $d(versionChange.date.toJSDate(), 'short') }}
             </ion-text>
@@ -27,9 +25,7 @@
             class="categorie"
           >
             <ion-text class="categorie-title body-lg">
-              <ion-icon
-                :icon="sparkles"
-              />
+              <ion-icon :icon="sparkles" />
               {{ $t('Changelog.features') }}
             </ion-text>
             <ion-list class="list">
@@ -59,9 +55,7 @@
             class="categorie"
           >
             <ion-text class="categorie-title body-lg">
-              <ion-icon
-                :icon="construct"
-              />
+              <ion-icon :icon="construct" />
               {{ $t('Changelog.fixes') }}
             </ion-text>
             <ion-list class="list">
@@ -91,9 +85,7 @@
             class="categorie"
           >
             <ion-text class="categorie-title body-lg">
-              <ion-icon
-                :icon="infinite"
-              />
+              <ion-icon :icon="infinite" />
               {{ $t('Changelog.misc') }}
             </ion-text>
             <ion-list class="list">
@@ -123,18 +115,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonIcon,
-  IonList,
-  IonItem,
-  IonText,
-} from '@ionic/vue';
-import {
-  sparkles,
-  construct,
-  infinite,
-} from 'ionicons/icons';
+import { IonPage, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
+import { sparkles, construct, infinite } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
 import { getChanges, VersionChange } from '@/common/mocks';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
@@ -182,7 +164,7 @@ onMounted(() => {
 .categorie-title {
   display: flex;
   align-items: center;
-  gap: .5rem;
+  gap: 0.5rem;
   padding: 0.5rem 0.5rem 0.5rem 0.5rem;
   margin-bottom: 0.5rem;
   color: var(--parsec-color-light-primary-700);
@@ -235,7 +217,7 @@ onMounted(() => {
     }
 
     &__text {
-      padding: .4rem 0;
+      padding: 0.4rem 0;
     }
 
     &__link {

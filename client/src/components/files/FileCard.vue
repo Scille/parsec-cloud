@@ -9,13 +9,9 @@
       class="card-option"
       @click.stop="$emit('menuClick', $event, file)"
     >
-      <ion-icon
-        :icon="ellipsisHorizontal"
-      />
+      <ion-icon :icon="ellipsisHorizontal" />
     </div>
-    <div
-      class="card-content"
-    >
+    <div class="card-content">
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="card-content-icons__item"
@@ -41,25 +37,19 @@
 </template>
 
 <script setup lang="ts">
-import {
-  folder,
-  document,
-  ellipsisHorizontal,
-  cloudDone,
-  cloudOffline,
-} from 'ionicons/icons';
+import { folder, document, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { EntryStat } from '@/parsec';
 
 const props = defineProps<{
-  file: EntryStat
+  file: EntryStat;
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: EntryStat): void
-  (e: 'menuClick', event: Event, file: EntryStat): void
+  (e: 'click', event: Event, file: EntryStat): void;
+  (e: 'menuClick', event: Event, file: EntryStat): void;
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -95,15 +85,15 @@ function isFileSynced(): boolean {
   top: 0;
   right: 1rem;
   font-size: 1.5rem;
-  padding: .5rem;
+  padding: 0.5rem;
 
-  &:hover{
+  &:hover {
     color: var(--parsec-color-light-primary-500);
   }
 }
 
 .card-content-icons {
-  margin:0 auto .5rem;
+  margin: 0 auto 0.5rem;
   position: relative;
   height: fit-content;
   display: flex;
@@ -151,7 +141,7 @@ function isFileSynced(): boolean {
 .card-content-last-update {
   color: var(--parsec-color-light-secondary-grey);
   text-align: center;
-  margin: .5rem 0 2rem;
+  margin: 0.5rem 0 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -159,7 +149,8 @@ function isFileSynced(): boolean {
 }
 
 /* No idea how to change the color of the ion-item */
-.card-content__title::part(native), .card-content-last-update::part(native) {
+.card-content__title::part(native),
+.card-content-last-update::part(native) {
   background-color: var(--parsec-color-light-secondary-background);
 }
 </style>

@@ -5,11 +5,7 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[
-        $t('UsersPage.greet.steps.hostCode'),
-        $t('UsersPage.greet.steps.guestCode'),
-        $t('UsersPage.greet.steps.contactDetails'),
-      ]"
+      :titles="[$t('UsersPage.greet.steps.hostCode'), $t('UsersPage.greet.steps.guestCode'), $t('UsersPage.greet.steps.contactDetails')]"
     />
     <ion-buttons
       slot="end"
@@ -27,18 +23,12 @@
         />
       </ion-button>
     </ion-buttons>
-    <div
-      class="modal"
-    >
+    <div class="modal">
       <ion-header class="modal-header">
-        <ion-title
-          class="modal-header__title title-h2"
-        >
+        <ion-title class="modal-header__title title-h2">
           {{ getTitleAndSubtitle()[0] }}
         </ion-title>
-        <ion-text
-          class="modal-header__text body"
-        >
+        <ion-text class="modal-header__text body">
           {{ getTitleAndSubtitle()[1] }}
         </ion-text>
       </ion-header>
@@ -61,9 +51,7 @@
           v-show="pageStep === GreetUserStep.ProvideHostSasCode"
           class="step"
         >
-          <sas-code-provide
-            :code="greeter.hostSASCode"
-          />
+          <sas-code-provide :code="greeter.hostSASCode" />
         </div>
 
         <!-- choose code step -->
@@ -138,9 +126,7 @@
             {{ guestInfoPage?.email }}
           </div>
           <div class="user-profile">
-            <tag-profile
-              :profile="profile ? profile : UserProfile.Outsider"
-            />
+            <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
           </div>
         </div>
       </div>
@@ -165,11 +151,7 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-label
-              class="label-waiting"
-            >
-              {{ }}
-            </ion-label>
+            <ion-label class="label-waiting" />
             <ion-spinner
               name="crescent"
               color="primary"
@@ -199,9 +181,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import {
-  close,
-} from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
@@ -229,7 +209,7 @@ const { t } = useI18n();
 
 const pageStep = ref(GreetUserStep.WaitForGuest);
 const props = defineProps<{
-  invitation: UserInvitation
+  invitation: UserInvitation;
 }>();
 
 const profile: Ref<UserProfile | null> = ref(null);
@@ -254,9 +234,9 @@ function getTitleAndSubtitle(): [string, string] {
   } else if (pageStep.value === GreetUserStep.Summary) {
     return [
       t('UsersPage.greet.titles.summary'),
-      t('UsersPage.greet.subtitles.summary',
-        {name: guestInfoPage.value ? guestInfoPage.value.fullName : ''},
-      ),
+      t('UsersPage.greet.subtitles.summary', {
+        name: guestInfoPage.value ? guestInfoPage.value.fullName : '',
+      }),
     ];
   }
   return ['', ''];
@@ -270,7 +250,7 @@ async function updateCanGoForward(): Promise<void> {
   if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === true) {
     canGoForward.value = false;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    canGoForward.value = guestInfoPage.value && profile.value && await guestInfoPage.value.areFieldsCorrect() && profile.value !== null;
+    canGoForward.value = guestInfoPage.value && profile.value && (await guestInfoPage.value.areFieldsCorrect()) && profile.value !== null;
   } else {
     canGoForward.value = true;
   }
@@ -297,7 +277,7 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else {
     await showErrorAndRestart(t('UsersPage.greet.errors.invalidCodeSelected'));
@@ -314,19 +294,23 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
   if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.greet.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.greet.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.greet.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.greet.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
@@ -358,11 +342,7 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(
-    t('UsersPage.greet.cancelConfirm'),
-    t('UsersPage.greet.cancelConfirmSubtitle'),
-    false,
-  );
+  const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), false);
 
   if (answer === Answer.Yes) {
     await greeter.value.abort();
@@ -372,10 +352,12 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(new Notification({
-    message: message,
-    level: NotificationLevel.Error,
-  }));
+  notificationCenter.showToast(
+    new Notification({
+      message: message,
+      level: NotificationLevel.Error,
+    }),
+  );
   await restartProcess();
 }
 
@@ -385,15 +367,19 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetUserStep.Summary) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.greet.success', {user: guestInfoPage.value?.fullName}),
-      level: NotificationLevel.Success,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.greet.success', {
+          user: guestInfoPage.value?.fullName,
+        }),
+        level: NotificationLevel.Success,
+      }),
+    );
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
     const result = await greeter.value.createUser(
-      {label: guestInfoPage.value.fullName, email: guestInfoPage.value.email},
+      { label: guestInfoPage.value.fullName, email: guestInfoPage.value.email },
       guestInfoPage.value.deviceName,
       profile.value,
     );
@@ -414,7 +400,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -441,24 +427,24 @@ onUnmounted(async () => {
 </script>
 
 <style scoped lang="scss">
-  .final-step {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    background: var(--parsec-color-light-secondary-background);
-    padding: .75rem 1rem;
-    border-radius: var(--parsec-radius-6);
-    justify-content: space-between;
-    color: var(--parsec-color-light-secondary-text);
+.final-step {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: var(--parsec-color-light-secondary-background);
+  padding: 0.75rem 1rem;
+  border-radius: var(--parsec-radius-6);
+  justify-content: space-between;
+  color: var(--parsec-color-light-secondary-text);
 
-    &__icon {
-      font-size: 1.5rem;
-      color: var(--parsec-color-light-primary-500);
-    }
-
-    &__name {
-      font-weight: 500;
-    }
+  &__icon {
+    font-size: 1.5rem;
+    color: var(--parsec-color-light-primary-500);
   }
+
+  &__name {
+    font-weight: 500;
+  }
+}
 </style>

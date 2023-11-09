@@ -8,7 +8,6 @@ import FileDropZone from '@/components/files/FileDropZone.vue';
 mockI18n();
 
 describe('File Drop Zone', () => {
-
   it('Handles dropped file', async () => {
     const wrapper = mount(FileDropZone, {
       global: {
@@ -31,21 +30,23 @@ describe('File Drop Zone', () => {
 
     // Fake drop event
     await wrapper.trigger('drop', {
-      'dataTransfer': {
-        'items': [{
-          'webkitGetAsEntry': (): any => {
-            return {
-              'name': 'File1.txt',
-              'size': 1337,
-            };
+      dataTransfer: {
+        items: [
+          {
+            webkitGetAsEntry: (): any => {
+              return {
+                name: 'File1.txt',
+                size: 1337,
+              };
+            },
           },
-        }],
+        ],
       },
     });
 
     // Making sure we got our filesDrop event
     expect(wrapper.emitted('filesDrop')?.length).to.equal(1);
-    const files = (wrapper.emitted('filesDrop')?.at(0)?.at(0) as Array<any>);
+    const files = wrapper.emitted('filesDrop')?.at(0)?.at(0) as Array<any>;
     expect(files.length).to.equal(1);
     expect(files[0].name).to.equal('File1.txt');
     expect(files[0].size).to.equal(1337);

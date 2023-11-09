@@ -23,8 +23,8 @@ import { IonAvatar } from '@ionic/vue';
 import { defineProps } from 'vue';
 
 defineProps<{
-  people: string[],
-  maxDisplay: number
+  people: string[];
+  maxDisplay: number;
 }>();
 </script>
 
@@ -45,7 +45,7 @@ defineProps<{
     width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
-    &:first-of-type{
+    &:first-of-type {
       margin-left: 0;
     }
   }

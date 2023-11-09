@@ -47,7 +47,7 @@ describe('File List Item', () => {
   });
 
   it('Display item for folder', () => {
-    const FOLDER: EntryStatFolder= {
+    const FOLDER: EntryStatFolder = {
       tag: FileType.Folder,
       confinementPoint: null,
       id: '67',

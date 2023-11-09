@@ -25,9 +25,7 @@
             id="back-block"
             v-if="hasHistory()"
           >
-            <header-back-button
-              :short="isDocumentRoute() ? true : false"
-            />
+            <header-back-button :short="isDocumentRoute() ? true : false" />
           </div>
 
           <div
@@ -42,12 +40,8 @@
             </ion-label>
           </div>
 
-          <div
-            class="topbar-left__breadcrumb"
-          >
-            <header-breadcrumbs
-              :path-nodes="fullPath"
-            />
+          <div class="topbar-left__breadcrumb">
+            <header-breadcrumbs :path-nodes="fullPath" />
           </div>
         </div>
 
@@ -120,12 +114,7 @@ import {
   IonPage,
   IonLabel,
 } from '@ionic/vue';
-import {
-  menu,
-  search,
-  home,
-  notifications,
-} from 'ionicons/icons';
+import { menu, search, home, notifications } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, computed, Ref, ref, watch, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -143,7 +132,7 @@ const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
-const unwatchRoute = watch(currentRoute,  async (newRoute, _oldRoute) => {
+const unwatchRoute = watch(currentRoute, async (newRoute, _oldRoute) => {
   if (newRoute.query && newRoute.query.workspaceId) {
     const result = await getWorkspaceName(newRoute.query.workspaceId as WorkspaceID);
     if (result.ok) {
@@ -255,17 +244,18 @@ const fullPath = computed(() => {
   display: flex;
   gap: 1.5em;
   align-items: center;
-  &::after{
+  &::after {
     content: '';
     display: block;
     width: 1px;
     height: 1.5em;
-    margin: 0 .5em 0 1em;
+    margin: 0 0.5em 0 1em;
     background: var(--parsec-color-light-secondary-light);
   }
 }
 
-.topbar-button__item, .sc-ion-buttons-md-s .button {
+.topbar-button__item,
+.sc-ion-buttons-md-s .button {
   border: 1px solid var(--parsec-color-light-secondary-light);
   color: var(--parsec-color-light-primary-700);
   border-radius: 50%;

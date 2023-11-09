@@ -1,6 +1,6 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
- /* **** Parsec fonts **** */
+/* **** Parsec fonts **** */
 
 @font-face {
   font-family: 'montserrat';
@@ -17,202 +17,202 @@
 /* **** Parsec typography **** */
 
 :root {
-	/* ** title ** */
-	.title-h1-lg {
-		font-size: 40px;
-		line-height: 120%;
-		font-weight: 600;
-	}
+  /* ** title ** */
+  .title-h1-lg {
+    font-size: 40px;
+    line-height: 120%;
+    font-weight: 600;
+  }
 
-	.title-h1 {
-		line-height: 120%;
-		font-weight: 600;
-		font-size: 1.62rem;
-	}
+  .title-h1 {
+    line-height: 120%;
+    font-weight: 600;
+    font-size: 1.62rem;
+  }
 
-	.title-h2 {
-		line-height: 120%;
-		font-weight: 600;
-		font-size: 1.375rem;
-	}
+  .title-h2 {
+    line-height: 120%;
+    font-weight: 600;
+    font-size: 1.375rem;
+  }
 
-	.title-h3 {
-		line-height: 120%;
-		font-weight: 600;
-		font-size: 1.25rem;
-	}
+  .title-h3 {
+    line-height: 120%;
+    font-weight: 600;
+    font-size: 1.25rem;
+  }
 
-	.title-h4 {
-		line-height: 120%;
-		font-weight: 500;
-		font-size: 1.12rem;
-	}
+  .title-h4 {
+    line-height: 120%;
+    font-weight: 500;
+    font-size: 1.12rem;
+  }
 
-	.title-h5 {
-		line-height: 120%;
-		font-weight: 600;
-		font-size: 1rem;
-	}
+  .title-h5 {
+    line-height: 120%;
+    font-weight: 600;
+    font-size: 1rem;
+  }
 
-	/* ** subtitle ** */
-	.subtitles-normal{
-		font-weight: 500;
-		font-size: 1.12rem;
-		line-height: 156%;
-		letter-spacing: 0.15px;
-	}
+  /* ** subtitle ** */
+  .subtitles-normal {
+    font-weight: 500;
+    font-size: 1.12rem;
+    line-height: 156%;
+    letter-spacing: 0.15px;
+  }
 
-	.subtitles-sm{
-		font-weight: 500;
-		font-size: 0.88rem;
-		line-height: 171%;
-	}
+  .subtitles-sm {
+    font-weight: 500;
+    font-size: 0.88rem;
+    line-height: 171%;
+  }
 
-	/* ** body ** */
-	.body-lg {
-		font-size: 1.12rem;
-		line-height: 161%;
-		letter-spacing: 0.2px;
-		font-weight: 500;
-	}
+  /* ** body ** */
+  .body-lg {
+    font-size: 1.12rem;
+    line-height: 161%;
+    letter-spacing: 0.2px;
+    font-weight: 500;
+  }
 
-	.body {
-		font-size: 1rem;
-		line-height: 156%;
-		letter-spacing: 0.15px;
-		font-weight: 500;
-	}
+  .body {
+    font-size: 1rem;
+    line-height: 156%;
+    letter-spacing: 0.15px;
+    font-weight: 500;
+  }
 
-	.body-sm {
-		font-size: 0.88rem;
-		line-height: 143%;
-		letter-spacing: 0.25px;
-		font-weight: 500;
-	}
+  .body-sm {
+    font-size: 0.88rem;
+    line-height: 143%;
+    letter-spacing: 0.25px;
+    font-weight: 500;
+  }
 
-	/* ** button ** */
-	.button-large {
-		font-weight: 500;
-		letter-spacing: 0.02em;
-		font-size: 1.12rem;
-		line-height: 22px;
-		letter-spacing: 0.02em;
-	}
+  /* ** button ** */
+  .button-large {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    font-size: 1.12rem;
+    line-height: 22px;
+    letter-spacing: 0.02em;
+  }
 
-	.button-medium {
-		font-weight: 500;
-		letter-spacing: 0.02em;
-		font-size: 1rem;
-		line-height: 20px;
-	}
-	.button-small {
-		font-weight: 500;
-		letter-spacing: 0.02em;
-		font-size: 0.88rem;
-		line-height: 17px;
-	}
+  .button-medium {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    font-size: 1rem;
+    line-height: 20px;
+  }
+  .button-small {
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    font-size: 0.88rem;
+    line-height: 17px;
+  }
 
-	/* ** caption ** */
-	.caption-code {
-		font-size: 1.5rem;
-		font-weight: 700;
-		line-height: 29px;
-		letter-spacing: 9px;
-		text-transform: uppercase;
-	}
+  /* ** caption ** */
+  .caption-code {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 29px;
+    letter-spacing: 9px;
+    text-transform: uppercase;
+  }
 
-	.caption-caption {
-		font-size: 0.875rem;
-		font-weight: 500;
-		line-height: 133%;
-		letter-spacing: 0.15px;
-	}
+  .caption-caption {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 133%;
+    letter-spacing: 0.15px;
+  }
 
-	.caption-info {
-		font-weight: 500;
-		font-size: 0.62rem;
-		line-height: 12px;
-		text-transform: uppercase;
-	}
+  .caption-info {
+    font-weight: 500;
+    font-size: 0.62rem;
+    line-height: 12px;
+    text-transform: uppercase;
+  }
 
-	/* ** breadcrumb ** */
-	.breadcrumb-large {
-		font-size: 1.25rem;
-		font-weight: 500;
-		line-height: 150%;
-	}
+  /* ** breadcrumb ** */
+  .breadcrumb-large {
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 150%;
+  }
 
-	.breadcrumb-normal {
-		font-size: 1rem;
-		font-weight: 500;
-		line-height: 150%;
-	}
+  .breadcrumb-normal {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 150%;
+  }
 
-	/* ** menu ** */
-	.menu-link {
-		font-size: 1rem;
-		font-weight: 500;
-		line-height: 150%;
-	}
-	.menu-default {
-		font-size: 1rem;
-		font-weight: 500;
-		line-height: 150%;
-	}
+  /* ** menu ** */
+  .menu-link {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 150%;
+  }
+  .menu-default {
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 150%;
+  }
 
-	.menu-active {
-		font-size: 1rem;
-		font-weight: 600;
-		line-height: 150%;
-	}
+  .menu-active {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 150%;
+  }
 
-	/* ** table ** */
-	.cell{
-		letter-spacing: 0.15px;
-		font-size: 1rem;
-		font-weight: 500;
-		line-height: 125%;
-	}
+  /* ** table ** */
+  .cell {
+    letter-spacing: 0.15px;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 125%;
+  }
 
-	.cell-title {
-		letter-spacing: 0.15px;
-		font-size: 0.88rem;
-		font-weight: 600;
-		line-height: 143%;
-	}
+  .cell-title {
+    letter-spacing: 0.15px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 143%;
+  }
 
-	/* ** calendar ** */
-	.calendar-day {
-		font-weight: 400;
-		font-size: 0.88rem;
-		line-height: 171%;
-	}
+  /* ** calendar ** */
+  .calendar-day {
+    font-weight: 400;
+    font-size: 0.88rem;
+    line-height: 171%;
+  }
 
-	.calendar-weekday {
-		font-size: 0.75rem;
-		font-weight: 500;
-		line-height: 133%;
-		letter-spacing: 0.4px;
-	}
+  .calendar-weekday {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 133%;
+    letter-spacing: 0.4px;
+  }
 
-	/* ** form ** */
-	.form-label {
-		font-weight: 500;
-		font-size: 0.88rem;
-		line-height: 156%;
-		letter-spacing: 0.15px;
-	}
+  /* ** form ** */
+  .form-label {
+    font-weight: 500;
+    font-size: 0.88rem;
+    line-height: 156%;
+    letter-spacing: 0.15px;
+  }
 
-	.form-input {
-		font-weight: 500;
-		font-size: 1rem;
-		line-height: 150%;
-	}
+  .form-input {
+    font-weight: 500;
+    font-size: 1rem;
+    line-height: 150%;
+  }
 
-	.form-helperText {
-		font-weight: 500;
-		font-size: 0.75rem;
-		line-height: 133%;
-		letter-spacing: 0.4px;
-	}
+  .form-helperText {
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 133%;
+    letter-spacing: 0.4px;
+  }
 }

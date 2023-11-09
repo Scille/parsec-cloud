@@ -18,7 +18,6 @@ More specifically:
 import { ComposerTranslation } from 'vue-i18n';
 
 function size(bytes: number, system: [number, string][]): string {
-
   if (bytes < 0) {
     throw Error('Bytes must be >= 0');
   }

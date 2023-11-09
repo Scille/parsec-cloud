@@ -3,7 +3,7 @@
 <template>
   <ms-modal
     :title="$t('HeaderPage.titles.about')"
-    :close-button="{visible: true}"
+    :close-button="{ visible: true }"
   >
     <about-view />
   </ms-modal>
@@ -14,5 +14,4 @@ import AboutView from '@/views/about/AboutView.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

@@ -8,13 +8,13 @@
   flex-direction: row;
   width: 100%;
 
-	&>div:not(.right-side) {
+  & > div:not(.right-side) {
     display: flex;
     gap: 1rem;
-	}
+  }
 
-	.ms-action-bar-button ion-icon{
+  .ms-action-bar-button ion-icon {
     margin-inline: 0em;
-    margin-right: .625rem;
+    margin-right: 0.625rem;
   }
 }

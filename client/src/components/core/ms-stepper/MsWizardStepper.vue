@@ -26,8 +26,8 @@ import MsWizardStepperStep, { MsStepStatus } from '@/components/core/ms-stepper/
 import { defineProps } from 'vue';
 
 defineProps<{
-  titles: string[]
-  currentIndex: number
+  titles: string[];
+  currentIndex: number;
 }>();
 </script>
 
@@ -56,7 +56,7 @@ defineProps<{
     }
 
     &:first-of-type {
-      .ms-wizard-stepper-step{
+      .ms-wizard-stepper-step {
         justify-content: end;
       }
       .left-line {
@@ -64,9 +64,9 @@ defineProps<{
       }
     }
     &:last-of-type {
-      .ms-wizard-stepper-step{
+      .ms-wizard-stepper-step {
         justify-content: start;
-      };
+      }
       .right-line {
         display: none;
       }

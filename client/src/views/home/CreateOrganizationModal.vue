@@ -50,9 +50,7 @@
             @on-enter-keyup="nextStep()"
           />
 
-          <ion-text
-            class="subtitles-sm org-name-criteria"
-          >
+          <ion-text class="subtitles-sm org-name-criteria">
             {{ $t('CreateOrganization.organizationNameCriteria') }}
           </ion-text>
         </div>
@@ -174,24 +172,9 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonTitle,
-  IonText,
-  IonPage,
-  IonHeader,
-  IonButton,
-  IonButtons,
-  IonFooter,
-  IonIcon,
-  modalController,
-} from '@ionic/vue';
+import { IonTitle, IonText, IonPage, IonHeader, IonButton, IonButtons, IonFooter, IonIcon, modalController } from '@ionic/vue';
 
-import {
-  chevronForward,
-  chevronBack,
-  checkmarkDone,
-  close,
-} from 'ionicons/icons';
+import { chevronForward, chevronBack, checkmarkDone, close } from 'ionicons/icons';
 import { ref, Ref, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
@@ -239,43 +222,61 @@ const orgInfo: Ref<null | OrgInfoValues> = ref(null);
 const fieldsUpdated = ref(false);
 
 interface Title {
-  title: string,
-  subtitle?: string,
+  title: string;
+  subtitle?: string;
 }
 
 interface OrgInfoValues {
-  orgName: string,
-  userName: string,
-  email: string,
-  deviceName: string,
-  serverMode: ServerMode,
-  serverAddr: string,
+  orgName: string;
+  userName: string;
+  email: string;
+  deviceName: string;
+  serverMode: ServerMode;
+  serverAddr: string;
 }
 
-const titles = new Map<CreateOrganizationStep, Title>([[
-  CreateOrganizationStep.OrgNameStep, {
-    title: t('CreateOrganization.title.create'),
-    subtitle: t('CreateOrganization.subtitle.nameYourOrg'),
-  }], [
-  CreateOrganizationStep.UserInfoStep, {
-    title: t('CreateOrganization.title.personalDetails'),
-    subtitle: t('CreateOrganization.subtitle.personalDetails'),
-  }], [
-  CreateOrganizationStep.ServerStep, {
-    title: t('CreateOrganization.title.server'),
-    subtitle: t('CreateOrganization.subtitle.server'),
-  }], [
-  CreateOrganizationStep.PasswordStep, {
-    title: t('CreateOrganization.title.password'),
-    subtitle: t('CreateOrganization.subtitle.password'),
-  }], [
-  CreateOrganizationStep.SummaryStep, {
-    title: t('CreateOrganization.title.overview'),
-    subtitle: t('CreateOrganization.subtitle.overview'),
-  }], [
-  CreateOrganizationStep.FinishStep, {
-    title: t('CreateOrganization.title.done'),
-  }],
+const titles = new Map<CreateOrganizationStep, Title>([
+  [
+    CreateOrganizationStep.OrgNameStep,
+    {
+      title: t('CreateOrganization.title.create'),
+      subtitle: t('CreateOrganization.subtitle.nameYourOrg'),
+    },
+  ],
+  [
+    CreateOrganizationStep.UserInfoStep,
+    {
+      title: t('CreateOrganization.title.personalDetails'),
+      subtitle: t('CreateOrganization.subtitle.personalDetails'),
+    },
+  ],
+  [
+    CreateOrganizationStep.ServerStep,
+    {
+      title: t('CreateOrganization.title.server'),
+      subtitle: t('CreateOrganization.subtitle.server'),
+    },
+  ],
+  [
+    CreateOrganizationStep.PasswordStep,
+    {
+      title: t('CreateOrganization.title.password'),
+      subtitle: t('CreateOrganization.subtitle.password'),
+    },
+  ],
+  [
+    CreateOrganizationStep.SummaryStep,
+    {
+      title: t('CreateOrganization.title.overview'),
+      subtitle: t('CreateOrganization.subtitle.overview'),
+    },
+  ],
+  [
+    CreateOrganizationStep.FinishStep,
+    {
+      title: t('CreateOrganization.title.done'),
+    },
+  ],
 ]);
 
 function getNextButtonText(): string {
@@ -289,15 +290,13 @@ function getNextButtonText(): string {
 }
 
 function canGoBackward(): boolean {
-  return ![
-    CreateOrganizationStep.OrgNameStep, CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
-  ].includes(pageStep.value);
+  return ![CreateOrganizationStep.OrgNameStep, CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep].includes(
+    pageStep.value,
+  );
 }
 
 function canClose(): boolean {
-  return ![
-    CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep,
-  ].includes(pageStep.value);
+  return ![CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep].includes(pageStep.value);
 }
 
 const canGoForward = asyncComputed(async () => {
@@ -311,10 +310,11 @@ const canGoForward = asyncComputed(async () => {
   if (pageStep.value === CreateOrganizationStep.FinishStep || pageStep.value === CreateOrganizationStep.SpinnerStep) {
     return true;
   } else if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
-    return await organizationValidator(orgName.value) === Validity.Valid;
-  } else if (pageStep.value === CreateOrganizationStep.PasswordStep
-    || pageStep.value === CreateOrganizationStep.ServerStep
-    || pageStep.value === CreateOrganizationStep.UserInfoStep
+    return (await organizationValidator(orgName.value)) === Validity.Valid;
+  } else if (
+    pageStep.value === CreateOrganizationStep.PasswordStep ||
+    pageStep.value === CreateOrganizationStep.ServerStep ||
+    pageStep.value === CreateOrganizationStep.UserInfoStep
   ) {
     return await currentPage.value.areFieldsCorrect();
   }
@@ -357,11 +357,7 @@ async function cancelModal(): Promise<boolean> {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
 
-  const answer = await askQuestion(
-    t('CreateOrganization.cancelConfirm'),
-    t('CreateOrganization.cancelConfirmSubtitle'),
-    false,
-  );
+  const answer = await askQuestion(t('CreateOrganization.cancelConfirm'), t('CreateOrganization.cancelConfirmSubtitle'), false);
 
   if (answer === Answer.Yes) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
@@ -383,7 +379,12 @@ async function nextStep(): Promise<void> {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
 
     const result = await parsecCreateOrganization(
-      addr, orgName.value, userInfo.value.fullName, userInfo.value.email, passwordChoice.value.password, userInfo.value.deviceName,
+      addr,
+      orgName.value,
+      userInfo.value.fullName,
+      userInfo.value.email,
+      passwordChoice.value.password,
+      userInfo.value.deviceName,
     );
     if (result.ok) {
       device.value = result.value;
@@ -402,25 +403,26 @@ async function nextStep(): Promise<void> {
           break;
 
         case BootstrapOrganizationErrorTag.BadTimestamp:
-          message = t(
-            'CreateOrganization.errors.badTimestamp',
-            {
-              clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
-              serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
-            },
-          );
+          message = t('CreateOrganization.errors.badTimestamp', {
+            clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
+            serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
+          });
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
         default:
-          message = t('CreateOrganization.errors.generic', { reason: result.error.tag });
+          message = t('CreateOrganization.errors.generic', {
+            reason: result.error.tag,
+          });
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
       }
-      notificationCenter.showToast(new Notification({
-        message: message,
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: message,
+          level: NotificationLevel.Error,
+        }),
+      );
     }
   }
 

@@ -118,42 +118,38 @@ import type {
   DeviceInfo,
 } from '@/plugins/libparsec';
 
-import {
-  RealmRole as WorkspaceRole,
-} from '@/plugins/libparsec';
+import { RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
 type WorkspaceHandle = number;
 type EntryID = VlobID;
 type WorkspaceName = EntryName;
 
 interface UserInfo extends ParsecUserInfo {
-  isRevoked: () => boolean
+  isRevoked: () => boolean;
 }
 
 interface OwnDeviceInfo extends DeviceInfo {
-  isCurrent: boolean
+  isCurrent: boolean;
 }
 
 interface EntryStatFolder extends ParsecEntryStatFolder {
-  isFile: () => boolean
-  name: EntryName
+  isFile: () => boolean;
+  name: EntryName;
 }
 
 interface EntryStatFile extends ParsecEntryStatFile {
-  isFile: () => boolean
-  name: EntryName
+  isFile: () => boolean;
+  name: EntryName;
 }
 
-type EntryStat =
-  | EntryStatFile
-  | EntryStatFolder;
+type EntryStat = EntryStatFile | EntryStatFolder;
 
 enum GetWorkspaceNameErrorTag {
   NotFound = 'NotFound',
 }
 
 interface GetWorkspaceNameError {
-  tag: GetWorkspaceNameErrorTag.NotFound,
+  tag: GetWorkspaceNameErrorTag.NotFound;
 }
 
 enum GetAbsolutePathErrorTag {
@@ -161,7 +157,7 @@ enum GetAbsolutePathErrorTag {
 }
 
 interface GetAbsolutePathError {
-  tag: GetAbsolutePathErrorTag.NotFound,
+  tag: GetAbsolutePathErrorTag.NotFound;
 }
 
 enum LinkErrorTag {
@@ -171,63 +167,63 @@ enum LinkErrorTag {
 }
 
 interface LinkErrorWorkspaceNotFound {
-  tag: LinkErrorTag.WorkspaceNotFound
+  tag: LinkErrorTag.WorkspaceNotFound;
 }
 
 interface LinkErrorPathNotFound {
-  tag: LinkErrorTag.PathNotFound
+  tag: LinkErrorTag.PathNotFound;
 }
 
 interface LinkErrorInternal {
-  tag: LinkErrorTag.Internal
+  tag: LinkErrorTag.Internal;
 }
 
 export type LinkError = LinkErrorWorkspaceNotFound | LinkErrorPathNotFound | LinkErrorInternal;
 
 interface UserTuple {
-  id: UserID,
-  humanHandle: HumanHandle,
-  profile: UserProfile,
+  id: UserID;
+  humanHandle: HumanHandle;
+  profile: UserProfile;
 }
 
 interface WorkspaceInfo extends ParsecWorkspaceInfo {
-  sharing: Array<[UserTuple, WorkspaceRole | null]>,
-  size: number,
-  lastUpdated: DateTime,
-  availableOffline: boolean,
+  sharing: Array<[UserTuple, WorkspaceRole | null]>;
+  size: number;
+  lastUpdated: DateTime;
+  availableOffline: boolean;
 }
 
 enum OrganizationInfoErrorTag {
   Internal = 'Internal',
-  Offline = 'Offline'
+  Offline = 'Offline',
 }
 
 interface OrganizationInfoErrorInternal {
-  tag: OrganizationInfoErrorTag.Internal
+  tag: OrganizationInfoErrorTag.Internal;
 }
 
-interface OrganizationInfoErrorOffline{
-  tag: OrganizationInfoErrorTag.Offline
+interface OrganizationInfoErrorOffline {
+  tag: OrganizationInfoErrorTag.Offline;
 }
 
 type OrganizationInfoError = OrganizationInfoErrorOffline | OrganizationInfoErrorInternal;
 
 interface OrganizationInfo {
   users: {
-    revoked: number,
-    total: number,
-    active: number,
-    admins: number,
-    standards: number,
-    outsiders: number,
-  },
+    revoked: number;
+    total: number;
+    active: number;
+    admins: number;
+    standards: number;
+    outsiders: number;
+  };
   size: {
-    metadata: number,
-    data: number,
-    total: number,
-  },
-  outsidersAllowed: boolean,
-  userLimit: number,
+    metadata: number;
+    data: number;
+    total: number;
+  };
+  outsidersAllowed: boolean;
+  userLimit: number;
 }
 
 export {

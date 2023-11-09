@@ -4,9 +4,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
-      <ms-action-bar
-        id="activate-users-ms-action-bar"
-      >
+      <ms-action-bar id="activate-users-ms-action-bar">
         <ms-action-bar-button
           :icon="personAdd"
           id="button-invite-user"
@@ -15,9 +13,7 @@
           v-show="isAdmin"
         />
         <div class="right-side">
-          <ms-grid-list-toggle
-            v-model="displayView"
-          />
+          <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
 
@@ -74,18 +70,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonContent,
-  IonList,
-  IonItem,
-  IonListHeader,
-  IonLabel,
-  modalController,
-} from '@ionic/vue';
-import {
-  personAdd,
-} from 'ionicons/icons';
+import { IonPage, IonContent, IonList, IonItem, IonListHeader, IonLabel, modalController } from '@ionic/vue';
+import { personAdd } from 'ionicons/icons';
 import { onUpdated, ref, Ref, onMounted, inject, watch, onUnmounted } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
@@ -150,10 +136,12 @@ async function refreshInvitationsList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.invitation.invitationsListFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.invitation.invitationsListFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -176,15 +164,23 @@ async function inviteUser(): Promise<void> {
   if (result.ok) {
     await refreshInvitationsList();
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteSuccessMailSent', {email: email}),
-        level: NotificationLevel.Success,
-      }));
+      await notificationCenter.showToast(
+        new Notification({
+          message: t('UsersPage.invitation.inviteSuccessMailSent', {
+            email: email,
+          }),
+          level: NotificationLevel.Success,
+        }),
+      );
     } else {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.inviteSuccessNoMail', {email: email}),
-        level: NotificationLevel.Success,
-      }));
+      await notificationCenter.showToast(
+        new Notification({
+          message: t('UsersPage.invitation.inviteSuccessNoMail', {
+            email: email,
+          }),
+          level: NotificationLevel.Success,
+        }),
+      );
     }
   } else {
     let message = '';
@@ -199,14 +195,18 @@ async function inviteUser(): Promise<void> {
         message = t('UsersPage.invitation.inviteFailedNotAllowed');
         break;
       default:
-        message = t('UsersPage.invitation.inviteFailedUnknown', { reason: result.error.tag });
+        message = t('UsersPage.invitation.inviteFailedUnknown', {
+          reason: result.error.tag,
+        });
         break;
     }
 
-    await notificationCenter.showToast(new Notification({
-      message,
-      level: NotificationLevel.Error,
-    }));
+    await notificationCenter.showToast(
+      new Notification({
+        message,
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -225,18 +225,20 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   await modal.dismiss();
   await refreshInvitationsList();
   if (modalResult.role === MsModalResult.Confirm) {
-    routerNavigateTo('activeUsers', {}, {refresh: true});
+    routerNavigateTo('activeUsers', {}, { refresh: true });
   }
 }
 
-async function rejectUser(invitation: UserInvitation) : Promise<void> {
+async function rejectUser(invitation: UserInvitation): Promise<void> {
   const result = await parsecCancelInvitation(invitation.token);
 
   if (result.ok) {
-    await notificationCenter.showToast(new Notification({
-      message: t('UsersPage.invitation.cancelSuccess'),
-      level: NotificationLevel.Success,
-    }));
+    await notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.invitation.cancelSuccess'),
+        level: NotificationLevel.Success,
+      }),
+    );
     await refreshInvitationsList();
   } else {
     // In both those cases we can just refresh the list and the invitation should disappear, no need
@@ -244,10 +246,12 @@ async function rejectUser(invitation: UserInvitation) : Promise<void> {
     if (result.error.tag === DeleteInvitationErrorTag.NotFound || result.error.tag === DeleteInvitationErrorTag.AlreadyDeleted) {
       await refreshInvitationsList();
     } else {
-      await notificationCenter.showToast(new Notification({
-        message: t('UsersPage.invitation.cancelFailed'),
-        level: NotificationLevel.Error,
-      }));
+      await notificationCenter.showToast(
+        new Notification({
+          message: t('UsersPage.invitation.cancelFailed'),
+          level: NotificationLevel.Error,
+        }),
+      );
     }
   }
 }
@@ -272,7 +276,7 @@ async function rejectUser(invitation: UserInvitation) : Promise<void> {
 
 .invitation-list-header {
   color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start:0;
+  padding-inline-start: 0;
 
   &__label {
     padding: 0 1rem;

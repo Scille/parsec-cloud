@@ -2,15 +2,7 @@
 
 import { libparsec } from '@/plugins/libparsec';
 
-import {
-  Result,
-  UserInfo,
-  UserProfile,
-  ClientListUsersError,
-  UserID,
-  DeviceInfo,
-  ClientListUserDevicesError,
-} from '@/parsec/types';
+import { Result, UserInfo, UserProfile, ClientListUsersError, UserID, DeviceInfo, ClientListUserDevicesError } from '@/parsec/types';
 import { getParsecHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
 import { needsMocks } from '@/parsec/environment';
@@ -32,44 +24,48 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
     }
     return result as any as Promise<Result<Array<UserInfo>, ClientListUsersError>>;
   } else {
-    const value: Array<UserInfo> = [{
-      id: 'id1',
-      // cspell:disable-next-line
-      humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'},
-      currentProfile: UserProfile.Standard,
-      createdOn: DateTime.now(),
-      createdBy: 'device',
-      revokedOn: null,
-      revokedBy: null,
-      isRevoked: (): boolean => false,
-    }, {
-      id: 'id2',
-      // cspell:disable-next-line
-      humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'},
-      currentProfile: UserProfile.Admin,
-      createdOn: DateTime.now(),
-      createdBy: 'device',
-      revokedOn: null,
-      revokedBy: null,
-      isRevoked: (): boolean => false,
-    }, {
-      id: 'me',
-      humanHandle: {
-        email: 'user@host.com',
-        label: 'Gordon Freeman',
+    const value: Array<UserInfo> = [
+      {
+        id: 'id1',
+        // cspell:disable-next-line
+        humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
+        currentProfile: UserProfile.Standard,
+        createdOn: DateTime.now(),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
       },
-      currentProfile: UserProfile.Admin,
-      createdOn: DateTime.now(),
-      createdBy: 'device',
-      revokedOn: null,
-      revokedBy: null,
-      isRevoked: (): boolean => false,
-    }];
+      {
+        id: 'id2',
+        // cspell:disable-next-line
+        humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
+        currentProfile: UserProfile.Admin,
+        createdOn: DateTime.now(),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      },
+      {
+        id: 'me',
+        humanHandle: {
+          email: 'user@host.com',
+          label: 'Gordon Freeman',
+        },
+        currentProfile: UserProfile.Admin,
+        createdOn: DateTime.now(),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      },
+    ];
     if (!skipRevoked) {
       value.push({
         id: 'id3',
         // cspell:disable-next-line
-        humanHandle: {label: 'Valygar Corthala', email: 'val@gmail.com'},
+        humanHandle: { label: 'Valygar Corthala', email: 'val@gmail.com' },
         currentProfile: UserProfile.Standard,
         createdOn: DateTime.now(),
         createdBy: 'device',
@@ -78,7 +74,7 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
         isRevoked: (): boolean => true,
       });
     }
-    return {ok: true, value: value};
+    return { ok: true, value: value };
   }
 }
 
@@ -104,16 +100,22 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
     }
     return result as any as Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>;
   } else {
-    return {ok: true, value: [{
-      id: 'device1',
-      deviceLabel: 'My First Device',
-      createdOn: DateTime.now(),
-      createdBy: 'some_device',
-    }, {
-      id: 'device2',
-      deviceLabel: 'My Second Device',
-      createdOn: DateTime.now(),
-      createdBy: 'device1',
-    }]};
+    return {
+      ok: true,
+      value: [
+        {
+          id: 'device1',
+          deviceLabel: 'My First Device',
+          createdOn: DateTime.now(),
+          createdBy: 'some_device',
+        },
+        {
+          id: 'device2',
+          deviceLabel: 'My Second Device',
+          createdOn: DateTime.now(),
+          createdBy: 'device1',
+        },
+      ],
+    };
   }
 }

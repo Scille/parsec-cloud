@@ -1,9 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="content"
-  >
+  <div class="content">
     <user-avatar-name
       class="user"
       :user-avatar="user.humanHandle.label"
@@ -33,36 +31,47 @@ import { translateWorkspaceRole } from '@/common/translations';
 const { t } = useI18n();
 
 const props = defineProps<{
-  user: UserTuple
-  role: WorkspaceRole | null
-  disabled?: boolean,
-  clientProfile: UserProfile,
-  clientRole: WorkspaceRole | null
+  user: UserTuple;
+  role: WorkspaceRole | null;
+  disabled?: boolean;
+  clientProfile: UserProfile;
+  clientRole: WorkspaceRole | null;
 }>();
 
 defineEmits<{
-  (e: 'roleUpdate', user: UserTuple, newRole: WorkspaceRole | null): void
+  (e: 'roleUpdate', user: UserTuple, newRole: WorkspaceRole | null): void;
 }>();
 
 const NOT_SHARED_KEY = 'not_shared';
 
 const options = computed((): MsDropdownOption[] => {
-  return [{
-    key:  WorkspaceRole.Reader, label: translateWorkspaceRole(t, WorkspaceRole.Reader),
-    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Reader),
-  }, {
-    key: WorkspaceRole.Contributor, label: translateWorkspaceRole(t, WorkspaceRole.Contributor),
-    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Contributor),
-  }, {
-    key: WorkspaceRole.Manager, label: translateWorkspaceRole(t, WorkspaceRole.Manager),
-    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Manager),
-  }, {
-    key: WorkspaceRole.Owner, label: translateWorkspaceRole(t, WorkspaceRole.Owner),
-    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Owner),
-  }, {
-    key: NOT_SHARED_KEY, label: translateWorkspaceRole(t, null),
-    disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, null),
-  }];
+  return [
+    {
+      key: WorkspaceRole.Reader,
+      label: translateWorkspaceRole(t, WorkspaceRole.Reader),
+      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Reader),
+    },
+    {
+      key: WorkspaceRole.Contributor,
+      label: translateWorkspaceRole(t, WorkspaceRole.Contributor),
+      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Contributor),
+    },
+    {
+      key: WorkspaceRole.Manager,
+      label: translateWorkspaceRole(t, WorkspaceRole.Manager),
+      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Manager),
+    },
+    {
+      key: WorkspaceRole.Owner,
+      label: translateWorkspaceRole(t, WorkspaceRole.Owner),
+      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Owner),
+    },
+    {
+      key: NOT_SHARED_KEY,
+      label: translateWorkspaceRole(t, null),
+      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, null),
+    },
+  ];
 });
 
 function getRoleFromString(role: string): WorkspaceRole | null {
@@ -76,7 +85,7 @@ function getRoleFromString(role: string): WorkspaceRole | null {
 <style scoped lang="scss">
 .content {
   height: 4em;
-  padding: .5rem;
+  padding: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;

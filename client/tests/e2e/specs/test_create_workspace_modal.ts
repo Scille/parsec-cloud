@@ -23,7 +23,6 @@ describe('Check create workspace modal', () => {
 
   it('Create workspace', () => {
     // Fails sometimes
-
     // cy.get('#button-new-workspace').click();
     // cy.get('.text-input-modal').should('exist');
     // cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('createButton').contains('Create');

@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 describe('Create a new organization', () => {
-
   beforeEach(() => {
     cy.visitApp('coolorg');
     cy.contains('Your organizations');
@@ -114,7 +113,7 @@ describe('Create a new organization', () => {
     // Spinner gets replaced after 2s
     // Seventh page, end
     cy.get('@title').contains('Your organization has been created!');
-    cy.get('#next-button').contains('Let\'s go!');
+    cy.get('#next-button').contains("Let's go!");
     cy.get('#next-button').should('not.have.class', 'button-disabled');
     cy.get('.closeBtn').should('not.be.visible');
     cy.get('#next-button').click();

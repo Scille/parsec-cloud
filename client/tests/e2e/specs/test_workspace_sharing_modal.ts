@@ -39,7 +39,7 @@ describe('Check workspace sharing modal', () => {
     cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
-    cy.checkToastMessage('Jaheira\'s role has been updated to Reader.');
+    cy.checkToastMessage("Jaheira's role has been updated to Reader.");
     cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Reader').click();
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared').click();
     // cspell:disable-next-line
@@ -48,7 +48,6 @@ describe('Check workspace sharing modal', () => {
 
   it('Filter users', () => {
     // Fails sometimes
-
     // cy.get('ion-modal').find('ion-list').find('.content').should('have.length', 4);
     // cy.get('ion-modal').find('ion-input').as('searchInput');
     // cy.get('@searchInput').find('input').type('a');

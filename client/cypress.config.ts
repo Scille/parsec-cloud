@@ -13,21 +13,21 @@ process.env.CYPRESS_TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL 
 // - CYPRESS_BASE_URL: the address of the web server serving our application
 // - TESTBED_SERVER_URL: the address of the testbed server for mocking Parsec server
 
-const DEFAULT_BASE_URL = 'http://localhost:8080/';  // Vite's dev server
+const DEFAULT_BASE_URL = 'http://localhost:8080/'; // Vite's dev server
 if (!process.env.CYPRESS_BASE_URL) {
   console.log(`\`CYPRESS_BASE_URL\` not set, defaulting to \`${DEFAULT_BASE_URL}\``);
   process.env.CYPRESS_BASE_URL = DEFAULT_BASE_URL;
 }
 const BASE_URL = process.env.CYPRESS_BASE_URL;
-process.env.CYPRESS_BASE_URL = undefined;  // Clear variable to prevent Cypress from doing voodoo on it
+process.env.CYPRESS_BASE_URL = undefined; // Clear variable to prevent Cypress from doing voodoo on it
 
-const DEFAULT_TESTBED_SERVER_URL = 'http://localhost:6770/';  // Default port in run_testbed_server.py script
+const DEFAULT_TESTBED_SERVER_URL = 'http://localhost:6770/'; // Default port in run_testbed_server.py script
 if (!process.env.CYPRESS_TESTBED_SERVER_URL) {
   console.log(`\`TESTBED_SERVER_URL\` not set, defaulting to \`${DEFAULT_TESTBED_SERVER_URL}\``);
   process.env.CYPRESS_TESTBED_SERVER_URL = DEFAULT_TESTBED_SERVER_URL;
 }
 const TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL;
-process.env.CYPRESS_TESTBED_SERVER_URL = undefined;  // Clear variable to prevent Cypress from doing voodoo on it
+process.env.CYPRESS_TESTBED_SERVER_URL = undefined; // Clear variable to prevent Cypress from doing voodoo on it
 
 export default defineConfig({
   e2e: {

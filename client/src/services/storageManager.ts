@@ -49,8 +49,8 @@ export class StorageManager {
     return storage;
   }
 
-  async storeDevicesData(data: {[slug: string]: StoredDeviceData}): Promise<void> {
-    const serialized: {[slug: string]: object} = {};
+  async storeDevicesData(data: { [slug: string]: StoredDeviceData }): Promise<void> {
+    const serialized: { [slug: string]: object } = {};
 
     Object.keys(data).forEach((slug: string, _data) => {
       if (data[slug] && data[slug].lastLogin) {
@@ -63,9 +63,9 @@ export class StorageManager {
     this.internalStore.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
   }
 
-  async retrieveDevicesData(): Promise<{[slug: string]: StoredDeviceData}> {
+  async retrieveDevicesData(): Promise<{ [slug: string]: StoredDeviceData }> {
     const data = await this.internalStore.get(StorageManager.STORED_DEVICE_DATA_KEY);
-    const deviceData: {[slug: string]: StoredDeviceData} = {};
+    const deviceData: { [slug: string]: StoredDeviceData } = {};
 
     if (!data) {
       return deviceData;
@@ -75,7 +75,7 @@ export class StorageManager {
         deviceData[slug] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
           // the timezone part otherwise
-          lastLogin: DateTime.fromISO(data[slug].lastLogin, {setZone: true}),
+          lastLogin: DateTime.fromISO(data[slug].lastLogin, { setZone: true }),
         };
       }
     });

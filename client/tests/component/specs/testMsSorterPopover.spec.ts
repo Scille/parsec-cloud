@@ -49,10 +49,10 @@ describe('Select popover', () => {
     // const sortButton = wrapper.find('#sort-order-button');
     // expect(sortButton.text()).to.equal('Asc');
     // sortButton.trigger('click');
-  //   expect(sortButton.text()).to.equal('Desc');
-  //   sortButton.trigger('click');
-  //   expect(sortButton.text()).to.equal('Asc');
-  // });
+    //   expect(sortButton.text()).to.equal('Desc');
+    //   sortButton.trigger('click');
+    //   expect(sortButton.text()).to.equal('Asc');
+    // });
   });
 
   it('changes selected when clicked', () => {

@@ -40,31 +40,28 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { IonGrid, IonCol, IonRow, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
-import {
-  eye,
-  eyeOff,
-} from 'ionicons/icons';
+import { eye, eyeOff } from 'ionicons/icons';
 
 defineProps<{
-  label: string
-  modelValue?: string
+  label: string;
+  modelValue?: string;
 }>();
 
 const emits = defineEmits<{
-  (e: 'change', value: string): void
-  (e: 'onEnterKeyup', value: string): void
-  (e: 'update:modelValue', value: string): void
+  (e: 'change', value: string): void;
+  (e: 'onEnterKeyup', value: string): void;
+  (e: 'update:modelValue', value: string): void;
 }>();
 
 const passwordVisible = ref(false);
 const passwordRef = ref('');
 
-function onChange(value: any) : void {
+function onChange(value: any): void {
   emits('update:modelValue', value);
   emits('change', value);
 }
 
-function onEnterPress() : void {
+function onEnterPress(): void {
   if (passwordRef.value.length > 0) {
     emits('onEnterKeyup', passwordRef.value);
   }
@@ -82,9 +79,9 @@ function onEnterPress() : void {
   padding: var(--offset);
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: 0.5rem;
 
-  .form-label{
+  .form-label {
     color: var(--parsec-color-light-primary-700);
   }
 
@@ -100,7 +97,7 @@ function onEnterPress() : void {
     }
 
     .input-icon {
-      padding: .5rem 0 .5rem 1rem;
+      padding: 0.5rem 0 0.5rem 1rem;
       display: flex;
       align-items: center;
       justify-content: center;

@@ -30,19 +30,19 @@ import { IonItem, IonInput, IonIcon } from '@ionic/vue';
 import { search } from 'ionicons/icons';
 
 defineProps<{
-  label: string
-  modelValue?: string
+  label: string;
+  modelValue?: string;
 }>();
 
 const searchRef = ref('');
 
 const emits = defineEmits<{
-  (e: 'change', value: string): void
-  (e: 'enter'): void
-  (e: 'update:modelValue', value: string): void
+  (e: 'change', value: string): void;
+  (e: 'enter'): void;
+  (e: 'update:modelValue', value: string): void;
 }>();
 
-function onEnterPress() : void {
+function onEnterPress(): void {
   if (searchRef.value.length > 0) {
     emits('enter');
   }
@@ -70,12 +70,12 @@ function onChange(value: any): void {
   .icon {
     font-size: 1.125em;
     margin-inline-end: 1rem;
-    color: var(--parsec-color-light-secondary-light);;
+    color: var(--parsec-color-light-secondary-light);
   }
 }
 .ms-search-input {
   --placeholder-color: var(--parsec-color-light-secondary-light);
-  --placeholder-opacity: .8;
+  --placeholder-opacity: 0.8;
   min-height: 1rem;
 }
 </style>

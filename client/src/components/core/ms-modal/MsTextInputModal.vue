@@ -4,16 +4,16 @@
   <ms-modal
     :title="title"
     :subtitle="subtitle"
-    :close-button="{visible: true}"
+    :close-button="{ visible: true }"
     :cancel-button="{
       label: $t('TextInputModal.cancel'),
       disabled: false,
-      onClick: cancel
+      onClick: cancel,
     }"
     :confirm-button="{
       label: okButtonText || $t('TextInputModal.ok'),
       disabled: !textIsValid,
-      onClick: confirm
+      onClick: confirm,
     }"
   >
     <ms-input
@@ -29,14 +29,14 @@
 import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 
 export interface GetTextOptions {
-  title: string,
-  subtitle?: string,
-  trim?: boolean,
-  validator?: IValidator,
-  inputLabel?: string,
-  placeholder?: string,
-  okButtonText?: string,
-  defaultValue?: string,
+  title: string;
+  subtitle?: string;
+  trim?: boolean;
+  validator?: IValidator;
+  inputLabel?: string;
+  placeholder?: string;
+  okButtonText?: string;
+  defaultValue?: string;
 }
 
 export async function getTextInputFromUser(options: GetTextOptions): Promise<string | null> {
@@ -58,14 +58,12 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
   await modal.present();
   const result = await modal.onWillDismiss();
   await modal.dismiss();
-  return (result.role === MsModalResult.Confirm ? result.data : null);
+  return result.role === MsModalResult.Confirm ? result.data : null;
 }
 </script>
 
 <script setup lang="ts">
-import {
-  modalController,
-} from '@ionic/vue';
+import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
@@ -77,7 +75,7 @@ const props = defineProps<GetTextOptions>();
 
 const text = ref(props.defaultValue || '');
 const textIsValid = asyncComputed(async () => {
-  return text.value && (!props.validator || (props.validator && await props.validator(text.value) === Validity.Valid));
+  return text.value && (!props.validator || (props.validator && (await props.validator(text.value)) === Validity.Valid));
 });
 
 async function confirm(): Promise<boolean> {

@@ -18,7 +18,6 @@ describe('Check invitations page', () => {
 
   it('Create new invitation', () => {
     // Fails sometimes
-
     // cy.get('.topbar-left__title').find('.title-h2').contains('Invitations');
     // cy.get('#activate-users-ms-action-bar').find('#button-invite-user').click({force: true});
     // cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('inviteButton').contains('Invite');

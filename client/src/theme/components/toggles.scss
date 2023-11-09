@@ -3,38 +3,38 @@
 /* **** Parsec toggles **** */
 
 ion-toggle {
-    width: auto;
-    --handle-width: 22px;
-    --handle-height: 22px;
-    --handle-max-height: auto;
-    --handle-spacing: 3px;
+  width: auto;
+  --handle-width: 22px;
+  --handle-height: 22px;
+  --handle-max-height: auto;
+  --handle-spacing: 3px;
 
-    // uncheck
-    &::part(track) {
-        height: 28px;
-        width: 50px;
-        border-radius: 20px;
-        background: var(--parsec-color-light-secondary-inversed-contrast);
-        box-shadow:inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
-        /* Required for iOS handle to overflow the height of the track */
-        overflow: visible;
-        opacity: .4;
-    }
+  // uncheck
+  &::part(track) {
+    height: 28px;
+    width: 50px;
+    border-radius: 20px;
+    background: var(--parsec-color-light-secondary-inversed-contrast);
+    box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
+    /* Required for iOS handle to overflow the height of the track */
+    overflow: visible;
+    opacity: 0.4;
+  }
 
-    &::part(handle) {
-        background: var(--parsec-color-light-primary-600);
-        box-shadow: none;
-    }
+  &::part(handle) {
+    background: var(--parsec-color-light-primary-600);
+    box-shadow: none;
+  }
 
-    // check
-    &.toggle-checked::part(track){
-        background: var(--parsec-color-light-primary-600);
-        border: none;
-        opacity: 1;
-    }
+  // check
+  &.toggle-checked::part(track) {
+    background: var(--parsec-color-light-primary-600);
+    border: none;
+    opacity: 1;
+  }
 
-    &.toggle-checked::part(handle) {
-        background: var(--parsec-color-light-secondary-inversed-contrast);
-        box-shadow: -2px 1px 6px rgba(0, 0, 0, 0.24);
-    }
+  &.toggle-checked::part(handle) {
+    background: var(--parsec-color-light-secondary-inversed-contrast);
+    box-shadow: -2px 1px 6px rgba(0, 0, 0, 0.24);
+  }
 }

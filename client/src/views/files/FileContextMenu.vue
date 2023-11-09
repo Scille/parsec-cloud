@@ -4,9 +4,7 @@
   <ion-content id="file-context-menu">
     <ion-list class="menu-list">
       <ion-item-group class="group">
-        <ion-item
-          class="group-title caption-caption"
-        >
+        <ion-item class="group-title caption-caption">
           <ion-label class="group-title__label">
             {{ $t('FoldersPage.fileContextMenu.titleManage') }}
           </ion-label>
@@ -100,9 +98,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group class="group">
-        <ion-item
-          class="group-title caption-caption"
-        >
+        <ion-item class="group-title caption-caption">
           <ion-label class="group-title__label">
             {{ $t('FoldersPage.fileContextMenu.titleCollaboration') }}
           </ion-label>
@@ -132,27 +128,17 @@ export enum FileAction {
   ShowHistory,
   Download,
   ShowDetails,
-  CopyLink
+  CopyLink,
 }
 </script>
 
 <script setup lang="ts">
 import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
-import {
-  copy,
-  arrowRedo,
-  pencil,
-  link,
-  informationCircle,
-  download,
-  time,
-  open,
-  trashBin,
-} from 'ionicons/icons';
+import { copy, arrowRedo, pencil, link, informationCircle, download, time, open, trashBin } from 'ionicons/icons';
 import { isDesktop } from '@/parsec';
 
 async function onClick(action: FileAction): Promise<boolean> {
-  return await popoverController.dismiss({'action': action});
+  return await popoverController.dismiss({ action: action });
 }
 </script>
 
@@ -179,13 +165,13 @@ ion-item {
 }
 
 .group-title {
-  padding: 0 .75rem;
+  padding: 0 0.75rem;
   color: var(--parsec-color-light-secondary-light);
   user-select: none;
   text-transform: uppercase;
 
   &::part(native) {
-    padding-left: .5rem;
+    padding-left: 0.5rem;
   }
 
   &__label {
@@ -194,12 +180,12 @@ ion-item {
 }
 
 .group-item {
-  padding: 0 .75rem;
+  padding: 0 0.75rem;
   color: var(--parsec-color-light-secondary-grey);
   --border-radius: 4px;
 
   &::part(native) {
-    padding-left: .5rem;
+    padding-left: 0.5rem;
   }
 
   &:hover {
@@ -213,7 +199,7 @@ ion-item {
 
   ion-icon {
     font-size: 1.25rem;
-    margin-right: .75em;
+    margin-right: 0.75em;
     color: var(--parsec-color-light-secondary-grey);
   }
 }

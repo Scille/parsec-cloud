@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  BackendInvitationAddr,
-  InvitationToken,
-  libparsec, SASCode,
-} from '@/plugins/libparsec';
+import { BackendInvitationAddr, InvitationToken, libparsec, SASCode } from '@/plugins/libparsec';
 import {
   Handle,
   ClientStartInvitationGreetError,
@@ -92,11 +88,14 @@ export class DeviceGreet {
       this.invitationLink = 'parsec://example.parsec.cloud/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529';
       // cspell:disable-next-line
       this.token = '9ae715f49bc0468eac211e1028f15529';
-      return {ok: true, value: {
-        addr: this.invitationLink,
-        token: this.token,
-        emailSentStatus: InvitationEmailSentStatus.Success,
-      }};
+      return {
+        ok: true,
+        value: {
+          addr: this.invitationLink,
+          token: this.token,
+          emailSentStatus: InvitationEmailSentStatus.Success,
+        },
+      };
     }
   }
 
@@ -114,7 +113,7 @@ export class DeviceGreet {
     } else {
       this.handle = DEFAULT_HANDLE;
       await wait(MOCK_WAITING_TIME);
-      return {ok: true, value: {handle: DEFAULT_HANDLE}};
+      return { ok: true, value: { handle: DEFAULT_HANDLE } };
     }
   }
 
@@ -132,7 +131,10 @@ export class DeviceGreet {
       return result;
     } else {
       this.hostSASCode = '2EDF';
-      return {ok: true, value: {handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode}};
+      return {
+        ok: true,
+        value: { handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode },
+      };
     }
   }
 
@@ -153,7 +155,14 @@ export class DeviceGreet {
       await wait(MOCK_WAITING_TIME);
       this.SASCodeChoices = ['1ABC', '2DEF', '3GHI', '4JKL'];
       this.correctSASCode = '2DEF';
-      return {ok: true, value: {handle: DEFAULT_HANDLE, claimerSasChoices: this.SASCodeChoices, claimerSas: this.correctSASCode}};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          claimerSasChoices: this.SASCodeChoices,
+          claimerSas: this.correctSASCode,
+        },
+      };
     }
   }
 
@@ -169,7 +178,7 @@ export class DeviceGreet {
       }
       return result;
     } else {
-      return {ok: true, value: {handle: DEFAULT_HANDLE}};
+      return { ok: true, value: { handle: DEFAULT_HANDLE } };
     }
   }
 
@@ -188,10 +197,13 @@ export class DeviceGreet {
     } else {
       await wait(MOCK_WAITING_TIME);
       this.requestedDeviceLabel = 'My Device';
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-        requestedDeviceLabel: this.requestedDeviceLabel,
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          requestedDeviceLabel: this.requestedDeviceLabel,
+        },
+      };
     }
   }
 
@@ -210,7 +222,7 @@ export class DeviceGreet {
       return result;
     } else {
       this.handle = null;
-      return {ok: true, value: null};
+      return { ok: true, value: null };
     }
   }
 }

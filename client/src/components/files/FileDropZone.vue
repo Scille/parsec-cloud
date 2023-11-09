@@ -16,7 +16,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 
 const emits = defineEmits<{
-  (e: 'filesDrop', entries: FileSystemEntry[]): void
+  (e: 'filesDrop', entries: FileSystemEntry[]): void;
 }>();
 
 const isActive = ref(false);

@@ -153,9 +153,13 @@ describe('Check folders page', () => {
     cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 8);
     cy.get('@values').eq(0).contains('File');
     cy.get('@values').eq(1).contains('/File1.txt');
-    cy.get('@values').eq(2).contains(/^\d+ B|KB|MB|GB$/);
+    cy.get('@values')
+      .eq(2)
+      .contains(/^\d+ B|KB|MB|GB$/);
     cy.get('@values').eq(5).contains('1');
-    cy.get('@values').eq(6).contains(/^Yes|No$/);
+    cy.get('@values')
+      .eq(6)
+      .contains(/^Yes|No$/);
     cy.get('@values').eq(7).contains('67');
   });
 
@@ -167,7 +171,9 @@ describe('Check folders page', () => {
     cy.get('@values').eq(0).contains('Folder');
     cy.get('@values').eq(1).contains('/Dir1');
     cy.get('@values').eq(4).contains('1');
-    cy.get('@values').eq(5).contains(/^Yes|No$/);
+    cy.get('@values')
+      .eq(5)
+      .contains(/^Yes|No$/);
     cy.get('@values').eq(6).contains('68');
   });
 

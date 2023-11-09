@@ -6,12 +6,10 @@
       <img
         src="@/assets/images/Logo/logo_column_gradient.svg"
         alt="Parsec logo"
-      >
+      />
     </div>
 
-    <ion-title
-      class="title-h3 about-title"
-    >
+    <ion-title class="title-h3 about-title">
       {{ $t('app.name') }}
     </ion-title>
 
@@ -21,9 +19,7 @@
         <ion-label class="app-info-key">
           {{ $t('AboutPage.appInfo.version') }}
         </ion-label>
-        <ion-text class="app-info-value">
-          {{ $t('app.name') }} v{{ getAppVersion() }}
-        </ion-text>
+        <ion-text class="app-info-value"> {{ $t('app.name') }} v{{ getAppVersion() }} </ion-text>
       </ion-item>
 
       <!-- developper -->
@@ -40,7 +36,7 @@
             <img
               src="@/assets/images/Logo/logo_column_gradient.svg"
               alt="Scille logo"
-            >
+            />
             <span>{{ $t('app.developer') }}</span>
           </a>
         </ion-text>
@@ -71,9 +67,7 @@
             :href="$t('app.projectSources')"
             class="link"
           >
-            <ion-icon
-              :icon="logoGithub"
-            />
+            <ion-icon :icon="logoGithub" />
             GitHub
           </a>
         </ion-text>
@@ -83,16 +77,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonText,
-  IonLabel,
-  IonItem,
-  IonIcon,
-  IonTitle,
-} from '@ionic/vue';
-import {
-  logoGithub,
-} from 'ionicons/icons';
+import { IonText, IonLabel, IonItem, IonIcon, IonTitle } from '@ionic/vue';
+import { logoGithub } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { getAppVersion } from '@/common/mocks';
 
@@ -130,11 +116,11 @@ useI18n();
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: .5rem;
+    gap: 0.5rem;
     color: var(--parsec-color-light-primary-800);
     border-radius: var(--parsec-radius-6);
     background: var(--parsec-color-light-secondary-background);
-    padding: .5rem;
+    padding: 0.5rem;
 
     img {
       width: 2.2rem;

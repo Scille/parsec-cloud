@@ -10,9 +10,7 @@
       :disabled="modelValue === DisplayState.Grid"
       @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
-      <ion-icon
-        :icon="grid"
-      />
+      <ion-icon :icon="grid" />
       <span v-if="modelValue === DisplayState.Grid">
         {{ $t('WorkspacesPage.viewDisplay.grid') }}
       </span>
@@ -25,9 +23,7 @@
       :disabled="modelValue === DisplayState.List"
       @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
-      <ion-icon
-        :icon="list"
-      />
+      <ion-icon :icon="list" />
       <span v-if="modelValue === DisplayState.List">
         {{ $t('WorkspacesPage.viewDisplay.list') }}
       </span>
@@ -48,11 +44,11 @@ import { defineEmits } from 'vue';
 import { grid, list } from 'ionicons/icons';
 
 defineProps<{
-  modelValue: DisplayState
+  modelValue: DisplayState;
 }>();
 
 defineEmits<{
-  (e: 'update:modelValue', value: DisplayState): void
+  (e: 'update:modelValue', value: DisplayState): void;
 }>();
 
 defineExpose({
@@ -73,7 +69,7 @@ defineExpose({
   height: auto;
 
   span {
-    margin-left: .5rem;
+    margin-left: 0.5rem;
   }
 
   &:not(.button-disabled) {

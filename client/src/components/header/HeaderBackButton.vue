@@ -7,9 +7,7 @@
       @click="goBack()"
       class="back-button"
     >
-      <ion-icon
-        :icon="chevronBack"
-      />
+      <ion-icon :icon="chevronBack" />
 
       <ion-label
         v-if="!short"
@@ -32,7 +30,7 @@ import { chevronBack } from 'ionicons/icons';
 import { IonLabel, IonIcon, IonButton } from '@ionic/vue';
 
 defineProps<{
-  short: boolean,
+  short: boolean;
 }>();
 
 const router = useRouter();
@@ -49,11 +47,11 @@ function goBack(): void {
   margin-bottom: 0px;
 
   &::part(native) {
-    padding: .5rem;
+    padding: 0.5rem;
   }
 
   &__label {
-    margin-left: .625rem;
+    margin-left: 0.625rem;
   }
 }
 

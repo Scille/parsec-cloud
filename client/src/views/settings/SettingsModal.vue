@@ -3,7 +3,7 @@
 <template>
   <ms-modal
     :title="$t('SettingsPage.pageTitle')"
-    :close-button="{visible: true}"
+    :close-button="{ visible: true }"
   >
     <settings-view />
   </ms-modal>
@@ -14,5 +14,4 @@ import SettingsView from '@/views/settings/SettingsView.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

@@ -1,0 +1,9 @@
+android
+dist
+electron
+node_modules
+public
+resources
+scripts
+package.json
+package-lock.json

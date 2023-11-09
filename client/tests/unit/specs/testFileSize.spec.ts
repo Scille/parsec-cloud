@@ -4,7 +4,6 @@ import { formatFileSize } from '@/common/filesize';
 import { it } from 'vitest';
 
 describe('File size', () => {
-
   function t(key: string): string {
     const map = new Map<string, string>([
       ['common.filesize.bytes', 'B'],
@@ -33,9 +32,9 @@ describe('File size', () => {
     ['12.3 KB', 1024 * 12 + 300],
     ['123 KB', 1024 * 123 + 400],
     ['0.99 MB', 1023 * 1024],
-    ['2.50 MB', 1024**2 * 2.5],
-    ['1024 TB', 1024**5],
-    [`${1024 ** 2} TB`, 1024**6 + 5 * 1024**3],
+    ['2.50 MB', 1024 ** 2 * 2.5],
+    ['1024 TB', 1024 ** 5],
+    [`${1024 ** 2} TB`, 1024 ** 6 + 5 * 1024 ** 3],
     ['0 B', 0],
     ['1 B', 1],
     ['9 B', 9],

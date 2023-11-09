@@ -3,9 +3,7 @@
 <template>
   <div class="container">
     <div class="import-drag-drop">
-      <ion-img
-        src="@/assets/images/image_import.svg"
-      />
+      <ion-img src="@/assets/images/image_import.svg" />
       <ion-text class="import-drag-drop__title title-h3">
         {{ $t('FoldersPage.importModal.dragAndDrop') }}
       </ion-text>
@@ -24,10 +22,8 @@
         multiple
         hidden
         ref="hiddenInput"
-      >
-      <ion-button
-        @click="importButtonClick"
-      >
+      />
+      <ion-button @click="importButtonClick">
         <ion-icon
           :icon="ellipsisHorizontalCircle"
           slot="start"
@@ -39,19 +35,12 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ellipsisHorizontalCircle,
-} from 'ionicons/icons';
-import {
-  IonImg,
-  IonButton,
-  IonText,
-  IonIcon,
-} from '@ionic/vue';
+import { ellipsisHorizontalCircle } from 'ionicons/icons';
+import { IonImg, IonButton, IonText, IonIcon } from '@ionic/vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 
 const emits = defineEmits<{
-  (e: 'filesImport', entries: File[]): void
+  (e: 'filesImport', entries: File[]): void;
 }>();
 
 const hiddenInput = ref();

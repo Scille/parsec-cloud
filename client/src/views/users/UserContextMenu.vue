@@ -7,9 +7,7 @@
         class="group"
         v-if="!isRevoked"
       >
-        <ion-item
-          class="group-title caption-caption"
-        >
+        <ion-item class="group-title caption-caption">
           <ion-label class="group-title__label">
             {{ $t('UsersPage.userContextMenu.titleRemove') }}
           </ion-label>
@@ -28,9 +26,7 @@
       </ion-item-group>
 
       <ion-item-group class="group">
-        <ion-item
-          class="group-title caption-caption"
-        >
+        <ion-item class="group-title caption-caption">
           <ion-label class="group-title__label">
             {{ $t('UsersPage.userContextMenu.titleDetails') }}
           </ion-label>
@@ -53,23 +49,20 @@
 <script lang="ts">
 export enum UserAction {
   Revoke,
-  Details
+  Details,
 }
 </script>
 
 <script setup lang="ts">
 import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
-import {
-  personRemove,
-  informationCircle,
-} from 'ionicons/icons';
+import { personRemove, informationCircle } from 'ionicons/icons';
 
 defineProps<{
-  isRevoked: boolean,
+  isRevoked: boolean;
 }>();
 
 function onClick(action: UserAction): Promise<boolean> {
-  return popoverController.dismiss({'action': action});
+  return popoverController.dismiss({ action: action });
 }
 </script>
 
@@ -96,13 +89,13 @@ ion-item {
 }
 
 .group-title {
-  padding: 0 .75rem;
+  padding: 0 0.75rem;
   color: var(--parsec-color-light-secondary-light);
   user-select: none;
   text-transform: uppercase;
 
   &::part(native) {
-    padding-left: .5rem;
+    padding-left: 0.5rem;
   }
 
   &__label {
@@ -111,12 +104,12 @@ ion-item {
 }
 
 .group-item {
-  padding: 0 .75rem;
+  padding: 0 0.75rem;
   color: var(--parsec-color-light-secondary-grey);
   --border-radius: 4px;
 
   &::part(native) {
-    padding-left: .5rem;
+    padding-left: 0.5rem;
   }
 
   &:hover {
@@ -130,7 +123,7 @@ ion-item {
 
   ion-icon {
     font-size: 1.25rem;
-    margin-right: .75em;
+    margin-right: 0.75em;
     color: var(--parsec-color-light-secondary-grey);
   }
 }

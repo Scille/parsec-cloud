@@ -1,6 +1,8 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
-.folder-footer, .user-footer, .workspaces-footer {
+.folder-footer,
+.user-footer,
+.workspaces-footer {
   width: 100%;
   position: fixed;
   pointer-events: none;
@@ -8,7 +10,7 @@
   padding: 1em 0 2.5em;
   z-index: 100;
   text-align: center;
-  background: linear-gradient(360deg, #FFF 0%, rgba(255, 255, 255, 0.00) 100%);
+  background: linear-gradient(360deg, #fff 0%, rgba(255, 255, 255, 0) 100%);
 
   &__container {
     background: var(--parsec-color-light-secondary-background);
@@ -40,7 +42,7 @@
       content: '';
       width: 1.5px;
       border-radius: var(--parsec-radius-4);
-      height: calc(100% - .5rem);
+      height: calc(100% - 0.5rem);
       display: block;
     }
   }

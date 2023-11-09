@@ -59,11 +59,7 @@
       class="container__item version"
       @click="onOptionClick(ProfilePopoverOption.App)"
     >
-      <ion-text
-        class="body-sm"
-      >
-        {{ $t('app.name') }} v{{ getAppVersion() }}
-      </ion-text>
+      <ion-text class="body-sm"> {{ $t('app.name') }} v{{ getAppVersion() }} </ion-text>
     </ion-item>
   </ion-list>
 </template>
@@ -79,24 +75,13 @@ export enum ProfilePopoverOption {
 </script>
 
 <script setup lang="ts">
-import {
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonText,
-} from '@ionic/vue';
-import {
-  phonePortrait,
-  cog,
-  helpCircle,
-  logOut,
-} from 'ionicons/icons';
+import { IonList, IonItem, IonIcon, IonLabel, IonText } from '@ionic/vue';
+import { phonePortrait, cog, helpCircle, logOut } from 'ionicons/icons';
 import { popoverController } from '@ionic/core';
 import { getAppVersion } from '@/common/mocks';
 
 defineProps<{
-  name: string
+  name: string;
 }>();
 
 function onOptionClick(option: ProfilePopoverOption): void {
@@ -115,7 +100,8 @@ function onOptionClick(option: ProfilePopoverOption): void {
   background: var(--parsec-color-light-secondary-background);
 }
 
-.profile-email, .version {
+.profile-email,
+.version {
   color: var(--parsec-color-light-secondary-grey);
   --padding-start: 0.5rem;
   --padding-end: 0.5rem;
@@ -137,7 +123,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
   color: var(--parsec-color-light-secondary-text);
   border-radius: 0.25rem;
 
-  &:hover{
+  &:hover {
     --background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-primary-600);
 
@@ -156,7 +142,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
       --background: var(--parsec-color-light-danger-100);
     }
 
-    &::before{
+    &::before {
       content: '';
       position: absolute;
       top: 0;

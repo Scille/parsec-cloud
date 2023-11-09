@@ -10,7 +10,7 @@
         src="@/assets/images/device.svg"
         alt="device with Parsec Cloud connected"
         class="content__device"
-      >
+      />
       <ion-text class="body content__text">
         {{ $t('ClaimDeviceModal.currentDevice') }}
       </ion-text>
@@ -22,14 +22,14 @@
       <img
         src="@/assets/images/arrows.svg"
         alt="arrows between device"
-      >
+      />
     </div>
     <div class="content">
       <img
         src="@/assets/images/device.svg"
         alt="device with Parsec Cloud connected"
         class="content__device"
-      >
+      />
       <ion-text class="body content__text">
         {{ $t('ClaimDeviceModal.newDevice') }}
       </ion-text>
@@ -41,9 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonText,
-} from '@ionic/vue';
+import { IonText } from '@ionic/vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 </script>
 

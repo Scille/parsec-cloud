@@ -4,26 +4,26 @@
 http://ionicframework.com/docs/theming/ */
 
 //import variables
-@import "variables/colors";
-@import "variables/colorsIonic";
-@import "variables/fonts";
-@import "variables/radius";
-@import "variables/shadows";
-@import "variables/spacing";
-@import "variables/width";
+@import 'variables/colors';
+@import 'variables/colorsIonic';
+@import 'variables/fonts';
+@import 'variables/radius';
+@import 'variables/shadows';
+@import 'variables/spacing';
+@import 'variables/width';
 
 // import components
-@import "components/buttons";
-@import "components/cards";
-@import "components/inputs";
-@import "components/modals";
-@import "components/toasts";
-@import "components/popovers";
-@import "components/scrollbars";
-@import "components/contextual-menu";
-@import "components/tags";
-@import "components/footerList";
-@import "components/toggles";
+@import 'components/buttons';
+@import 'components/cards';
+@import 'components/inputs';
+@import 'components/modals';
+@import 'components/toasts';
+@import 'components/popovers';
+@import 'components/scrollbars';
+@import 'components/contextual-menu';
+@import 'components/tags';
+@import 'components/footerList';
+@import 'components/toggles';
 
 /**** Global CSS overloads ****/
 
@@ -33,7 +33,8 @@ http://ionicframework.com/docs/theming/ */
   --box-shadow: var(--parsec-shadow-light);
 }
 
-.header-md, .footer-md {
+.header-md,
+.footer-md {
   -webkit-box-shadow: inherit;
   box-shadow: inherit;
 }

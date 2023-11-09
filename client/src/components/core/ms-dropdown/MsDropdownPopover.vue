@@ -4,7 +4,7 @@
   <ion-list class="container">
     <ion-item
       class="option body"
-      :class="{selected: selectedOption?.key === option.key}"
+      :class="{ selected: selectedOption?.key === option.key }"
       :disabled="option.disabled"
       button
       lines="none"
@@ -17,7 +17,7 @@
         slot="end"
         :icon="checkmark"
         class="checked"
-        :class="{selected: selectedOption?.key === option.key}"
+        :class="{ selected: selectedOption?.key === option.key }"
         v-if="selectedOption?.key === option.key"
       />
     </ion-item>
@@ -26,25 +26,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import {
-  IonList,
-  IonItem,
-  IonIcon,
-  popoverController,
-} from '@ionic/vue';
-import {
-  checkmark,
-} from 'ionicons/icons';
+import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
+import { checkmark } from 'ionicons/icons';
 import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption?: any
-  options: MsDropdownOption[]
+  defaultOption?: any;
+  options: MsDropdownOption[];
 }>();
 
-const selectedOption = ref(
-  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0],
-);
+const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
 
 function onOptionClick(option?: MsDropdownOption): void {
   if (option) {

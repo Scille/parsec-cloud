@@ -4,15 +4,11 @@
   <ion-page>
     <ion-content>
       <div class="container">
-        <div
-          class="about-container"
-        >
+        <div class="about-container">
           <about-view />
         </div>
         <div class="update-container">
-          <ion-title
-            class="title-h3 about-title"
-          >
+          <ion-title class="title-h3 about-title">
             {{ $t('AboutPage.update.title') }}
           </ion-title>
           <div
@@ -28,9 +24,7 @@
             class="update-text body-lg"
           >
             {{ $t('AboutPage.update.notUpToDate') }}
-            <ion-button
-              @click="update"
-            >
+            <ion-button @click="update">
               {{ $t('AboutPage.update.update') }}
             </ion-button>
           </div>
@@ -53,17 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonButton,
-  IonContent,
-  IonIcon,
-  IonPage,
-  modalController,
-  IonTitle,
-} from '@ionic/vue';
-import {
-  open,
-} from 'ionicons/icons';
+import { IonButton, IonContent, IonIcon, IonPage, modalController, IonTitle } from '@ionic/vue';
+import { open } from 'ionicons/icons';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AboutView from '@/views/about/AboutView.vue';
@@ -120,7 +105,7 @@ async function showChangelog(): Promise<void> {
   margin: 0;
 
   ion-icon {
-    margin-right: .5rem;
+    margin-right: 0.5rem;
   }
 }
 </style>

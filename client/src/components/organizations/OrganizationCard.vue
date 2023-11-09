@@ -21,17 +21,11 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonCard,
-  IonAvatar,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardContent,
-} from '@ionic/vue';
+import { IonCard, IonAvatar, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/vue';
 import { AvailableDevice } from '@/parsec';
 
 defineProps<{
-  device: AvailableDevice
+  device: AvailableDevice;
 }>();
 </script>
 
@@ -51,7 +45,7 @@ defineProps<{
     display: flex;
     align-items: center;
     flex-direction: row;
-    gap: .5rem;
+    gap: 0.5rem;
 
     .orga-avatar {
       background-color: white;

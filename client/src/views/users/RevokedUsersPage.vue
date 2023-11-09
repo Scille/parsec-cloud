@@ -4,9 +4,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
-      <ms-action-bar
-        id="revoked-users-ms-action-bar"
-      >
+      <ms-action-bar id="revoked-users-ms-action-bar">
         <!-- view common workspace -->
         <div v-if="selectedUsersCount >= 1">
           <ms-action-bar-button
@@ -124,20 +122,8 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, inject } from 'vue';
-import {
-  IonContent,
-  IonItem,
-  IonList,
-  IonPage,
-  IonLabel,
-  IonListHeader,
-  IonCheckbox,
-  IonText,
-  popoverController,
-} from '@ionic/vue';
-import {
-  eye,
-} from 'ionicons/icons';
+import { IonContent, IonItem, IonList, IonPage, IonLabel, IonListHeader, IonCheckbox, IonText, popoverController } from '@ionic/vue';
+import { eye } from 'ionicons/icons';
 import UserListItem from '@/components/users/UserListItem.vue';
 import UserCard from '@/components/users/UserCard.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
@@ -152,8 +138,8 @@ import { useI18n } from 'vue-i18n';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
-const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
-const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
+const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
+const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
@@ -213,25 +199,22 @@ function details(user: UserInfo): void {
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {
-  const popover = await popoverController
-    .create({
-      component: UserContextMenu,
-      cssClass: 'user-context-menu',
-      event: event,
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      reference: 'event',
-      componentProps: {
-        isRevoked: user.isRevoked(),
-      },
-    });
+  const popover = await popoverController.create({
+    component: UserContextMenu,
+    cssClass: 'user-context-menu',
+    event: event,
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    reference: 'event',
+    componentProps: {
+      isRevoked: user.isRevoked(),
+    },
+  });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  const actions = new Map<UserAction, (user: UserInfo) => void>([
-    [UserAction.Details, details],
-  ]);
+  const actions = new Map<UserAction, (user: UserInfo) => void>([[UserAction.Details, details]]);
 
   if (!data) {
     return;
@@ -253,10 +236,12 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.listRevokedUsersFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.listRevokedUsersFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -272,7 +257,7 @@ onMounted(async (): Promise<void> => {
 
 .user-list-header {
   color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start:0;
+  padding-inline-start: 0;
 
   &__label {
     padding: 0 1rem;

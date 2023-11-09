@@ -4,13 +4,13 @@
 
 import { computed, isRef, ref, Ref, shallowRef, watchEffect } from 'vue';
 
-export type AsyncComputedOnCancel = (cancelCallback: any) => void
+export type AsyncComputedOnCancel = (cancelCallback: any) => void;
 
 export interface AsyncComputedOptions {
-  lazy?: boolean
-  evaluating?: Ref<boolean>
-  shallow?: boolean
-  onError?: (e: unknown) => void
+  lazy?: boolean;
+  evaluating?: Ref<boolean>;
+  shallow?: boolean;
+  onError?: (e: unknown) => void;
 }
 
 export function asyncComputed<T>(
@@ -28,19 +28,14 @@ export function asyncComputed<T>(
     options = optionsOrRef || {};
   }
 
-  const {
-    lazy = false,
-    evaluating = undefined,
-    shallow = true,
-  } = options;
+  const { lazy = false, evaluating = undefined, shallow = true } = options;
 
   const started = ref(!lazy);
   const current = (shallow ? shallowRef(initialState) : ref(initialState)) as Ref<T>;
   let counter = 0;
 
   watchEffect(async (onInvalidate) => {
-    if (!started.value)
-      return;
+    if (!started.value) return;
 
     counter++;
     const counterAtBeginning = counter;
@@ -57,21 +52,17 @@ export function asyncComputed<T>(
     try {
       const result = await evaluationCallback((cancelCallback) => {
         onInvalidate(() => {
-          if (evaluating)
-            evaluating.value = false;
+          if (evaluating) evaluating.value = false;
 
-          if (!hasFinished)
-            cancelCallback();
+          if (!hasFinished) cancelCallback();
         });
       });
 
-      if (counterAtBeginning === counter)
-        current.value = result;
+      if (counterAtBeginning === counter) current.value = result;
     } catch (e) {
       console.log(e);
     } finally {
-      if (evaluating && counterAtBeginning === counter)
-        evaluating.value = false;
+      if (evaluating && counterAtBeginning === counter) evaluating.value = false;
 
       hasFinished = true;
     }

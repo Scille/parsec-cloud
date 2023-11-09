@@ -10,7 +10,7 @@
         $t('JoinOrganization.stepTitles.ProvideGuestCode'),
         $t('JoinOrganization.stepTitles.ContactDetails'),
         $t('JoinOrganization.stepTitles.Password'),
-        $t('JoinOrganization.stepTitles.Validation')
+        $t('JoinOrganization.stepTitles.Validation'),
       ]"
     />
     <ion-buttons
@@ -33,7 +33,7 @@
     <div
       class="modal"
       :class="{
-        wizardTrue: pageStep > 1
+        wizardTrue: pageStep > 1,
       }"
     >
       <ion-header class="modal-header">
@@ -61,18 +61,16 @@
             <ms-informative-text>
               {{ $t('JoinOrganization.instructions.start.first') }}
             </ms-informative-text>
-            <ms-informative-text
-              v-if="!claimer.greeter"
-            >
+            <ms-informative-text v-if="!claimer.greeter">
               {{ $t('JoinOrganization.instructions.start.second') }}
             </ms-informative-text>
-            <ms-informative-text
-              v-if="claimer.greeter"
-            >
-              {{ $t(
-                'JoinOrganization.instructions.start.greeter',
-                {greeter: claimer.greeter.label, greeterEmail: claimer.greeter.email}
-              ) }}
+            <ms-informative-text v-if="claimer.greeter">
+              {{
+                $t('JoinOrganization.instructions.start.greeter', {
+                  greeter: claimer.greeter.label,
+                  greeterEmail: claimer.greeter.email,
+                })
+              }}
             </ms-informative-text>
           </div>
         </div>
@@ -93,9 +91,7 @@
           v-show="pageStep === UserJoinOrganizationStep.ProvideGuestCode"
           class="step guest-code"
         >
-          <sas-code-provide
-            :code="claimer.guestSASCode"
-          />
+          <sas-code-provide :code="claimer.guestSASCode" />
         </div>
 
         <!-- part 4 (user info)-->
@@ -188,9 +184,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import {
-  close,
-} from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
@@ -227,48 +221,68 @@ const fieldsUpdated = ref(false);
 const claimer = ref(new UserClaim());
 
 const props = defineProps<{
-  invitationLink: string
+  invitationLink: string;
 }>();
 
 const waitingForHost = ref(true);
 
 interface Title {
-  title: string,
-  subtitle: string,
+  title: string;
+  subtitle: string;
 }
 
 const titles = new Map<UserJoinOrganizationStep, Title>([
   [
     UserJoinOrganizationStep.WaitForHost,
-    { title: t('JoinOrganization.titles.waitForHost'), subtitle: t('JoinOrganization.subtitles.waitForHost') },
+    {
+      title: t('JoinOrganization.titles.waitForHost'),
+      subtitle: t('JoinOrganization.subtitles.waitForHost'),
+    },
   ],
   [
     UserJoinOrganizationStep.GetHostSasCode,
-    { title: t('JoinOrganization.titles.getHostCode'), subtitle: t('JoinOrganization.subtitles.getHostCode') },
+    {
+      title: t('JoinOrganization.titles.getHostCode'),
+      subtitle: t('JoinOrganization.subtitles.getHostCode'),
+    },
   ],
   [
     UserJoinOrganizationStep.ProvideGuestCode,
-    { title: t('JoinOrganization.titles.provideGuestCode'), subtitle: t('JoinOrganization.subtitles.provideGuestCode') },
+    {
+      title: t('JoinOrganization.titles.provideGuestCode'),
+      subtitle: t('JoinOrganization.subtitles.provideGuestCode'),
+    },
   ],
   [
     UserJoinOrganizationStep.GetUserInfo,
-    { title: t('JoinOrganization.titles.getUserInfo'), subtitle: t('JoinOrganization.subtitles.getUserInfo') },
+    {
+      title: t('JoinOrganization.titles.getUserInfo'),
+      subtitle: t('JoinOrganization.subtitles.getUserInfo'),
+    },
   ],
   [
     UserJoinOrganizationStep.GetPassword,
-    { title: t('JoinOrganization.titles.getPassword'), subtitle: t('JoinOrganization.subtitles.getPassword') },
+    {
+      title: t('JoinOrganization.titles.getPassword'),
+      subtitle: t('JoinOrganization.subtitles.getPassword'),
+    },
   ],
   [
     UserJoinOrganizationStep.Finish,
-    { title: t('JoinOrganization.titles.finish', { org: '' }), subtitle: t('JoinOrganization.subtitles.finish') },
+    {
+      title: t('JoinOrganization.titles.finish', { org: '' }),
+      subtitle: t('JoinOrganization.subtitles.finish'),
+    },
   ],
 ]);
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(new Notification({
-    message: message,
-    level: NotificationLevel.Error,
-  }));
+  notificationCenter.showToast(
+    new Notification({
+      message: message,
+      level: NotificationLevel.Error,
+    }),
+  );
   await restartProcess();
 }
 
@@ -281,7 +295,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
       if (result.ok) {
         await nextStep();
       } else {
-        await showErrorAndRestart(t('JoinOrganization.errors.unexpected', {reason: result.error.tag}));
+        await showErrorAndRestart(t('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
       }
     } else {
       await showErrorAndRestart(t('JoinOrganization.errors.invalidCodeSelected'));
@@ -305,10 +319,10 @@ function getNextButtonText(): string {
 
 const nextButtonIsVisible = computed(() => {
   return (
-    pageStep.value === UserJoinOrganizationStep.WaitForHost && !waitingForHost.value
-    || pageStep.value === UserJoinOrganizationStep.GetUserInfo && !waitingForHost.value
-    || pageStep.value === UserJoinOrganizationStep.GetPassword
-    || pageStep.value === UserJoinOrganizationStep.Finish
+    (pageStep.value === UserJoinOrganizationStep.WaitForHost && !waitingForHost.value) ||
+    (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !waitingForHost.value) ||
+    pageStep.value === UserJoinOrganizationStep.GetPassword ||
+    pageStep.value === UserJoinOrganizationStep.Finish
   );
 });
 
@@ -316,20 +330,16 @@ const canGoForward = asyncComputed(async () => {
   if (fieldsUpdated.value) {
     fieldsUpdated.value = false;
   }
-  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !await userInfoPage.value.areFieldsCorrect()) {
+  if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !(await userInfoPage.value.areFieldsCorrect())) {
     return false;
-  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !await passwordPage.value.areFieldsCorrect()) {
+  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !(await passwordPage.value.areFieldsCorrect())) {
     return false;
   }
   return true;
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(
-    t('JoinOrganization.cancelConfirm'),
-    t('JoinOrganization.cancelConfirmSubtitle'),
-    false,
-  );
+  const answer = await askQuestion(t('JoinOrganization.cancelConfirm'), t('JoinOrganization.cancelConfirmSubtitle'), false);
 
   if (answer === Answer.Yes) {
     await claimer.value.abort();
@@ -348,17 +358,17 @@ async function nextStep(): Promise<void> {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
-      notificationCenter.showToast(new Notification({
-        message: t('JoinOrganization.errors.saveDeviceFailed'),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('JoinOrganization.errors.saveDeviceFailed'),
+          level: NotificationLevel.Error,
+        }),
+      );
       return;
     }
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
-    const result = await claimer.value.doClaim(
-      userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email,
-    );
+    const result = await claimer.value.doClaim(userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
     if (!result.ok) {
       await showErrorAndRestart(t('JoinOrganization.errors.sendUserInfoFailed'));
       return;
@@ -369,7 +379,7 @@ async function nextStep(): Promise<void> {
       message: t('JoinOrganization.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showToast(notification, {trace: true});
+    notificationCenter.showToast(notification, { trace: true });
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -383,7 +393,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart(t('JoinOrganization.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
     }
   }
 }
@@ -394,10 +404,12 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationCenter.showModal(new Notification({
-      message: t('JoinOrganization.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    await notificationCenter.showModal(
+      new Notification({
+        message: t('JoinOrganization.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
@@ -406,10 +418,12 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationCenter.showModal(new Notification({
-      message: t('JoinOrganization.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    await notificationCenter.showModal(
+      new Notification({
+        message: t('JoinOrganization.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }

@@ -18,8 +18,8 @@
 import { IonText } from '@ionic/vue';
 
 defineProps<{
-  title: string
-  description?: string
+  title: string;
+  description?: string;
 }>();
 </script>
 
@@ -43,7 +43,7 @@ defineProps<{
     }
 
     .description {
-      color: var(--parsec-color-light-secondary-grey)
+      color: var(--parsec-color-light-secondary-grey);
     }
   }
 }

@@ -32,13 +32,13 @@ export {};
 import 'cypress-file-upload';
 
 declare global {
-// eslint-disable-next-line @typescript-eslint/no-namespace
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
-      visitApp(template?: 'coolorg' | 'empty'): Chainable<string>
-      dropTestbed(): Chainable<null>
-      login(userName: string, password: string): Chainable<null>,
-      checkToastMessage(expectedMessage: string): Chainable<null>,
+      visitApp(template?: 'coolorg' | 'empty'): Chainable<string>;
+      dropTestbed(): Chainable<null>;
+      login(userName: string, password: string): Chainable<null>;
+      checkToastMessage(expectedMessage: string): Chainable<null>;
     }
   }
 }
@@ -49,13 +49,14 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
   // If the variable is not defined, Cypress gets it as the string "undefined" instead of the value. So we check that also.
   assert.notStrictEqual(TESTBED_SERVER_URL, 'undefined', 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
 
-  cy.visit('/', {
-    onBeforeLoad(win) {
-      // Intercept console logs
-      cy.stub(win.console, 'log').as('consoleLog');
-      cy.stub(win.console, 'error').as('consoleError');
-    },
-  })
+  cy
+    .visit('/', {
+      onBeforeLoad(win) {
+        // Intercept console logs
+        cy.stub(win.console, 'log').as('consoleLog');
+        cy.stub(win.console, 'error').as('consoleError');
+      },
+    })
     .as('window')
     // Wait App to be in the first stage of the init
     .get('#app[app-state="waiting-for-config-path"]')

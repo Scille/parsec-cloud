@@ -9,7 +9,7 @@
     :disabled="disabled"
   >
     <ion-icon
-      :class="{'popover-is-open': isPopoverOpen}"
+      :class="{ 'popover-is-open': isPopoverOpen }"
       class="ms-dropdown-icon"
       slot="end"
       :icon="caretDown"
@@ -20,24 +20,20 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits, Ref, ref } from 'vue';
-import {
-  IonButton,
-  IonIcon,
-  popoverController,
-} from '@ionic/vue';
+import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { caretDown } from 'ionicons/icons';
 import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
 import { MsDropdownOption, MsDropdownChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption: any
-  label?: string
-  options: MsDropdownOption[]
-  disabled?: boolean
+  defaultOption: any;
+  label?: string;
+  options: MsDropdownOption[];
+  disabled?: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'change', value: MsDropdownChangeEvent): void
+  (e: 'change', value: MsDropdownChangeEvent): void;
 }>();
 
 const selectedOption: Ref<MsDropdownOption | undefined> = ref(
@@ -90,7 +86,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
   }
 }
 .ms-dropdown-icon {
-  margin-left: .5em;
+  margin-left: 0.5em;
   transition: transform ease-out 300ms;
   &.popover-is-open {
     transform: rotate(180deg);

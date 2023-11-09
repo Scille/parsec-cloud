@@ -10,9 +10,7 @@
       size="default"
       class="container-textinfo__icon"
     />
-    <ion-text
-      class="subtitles-normal container-textinfo__text"
-    >
+    <ion-text class="subtitles-normal container-textinfo__text">
       <slot />
     </ion-text>
   </div>
@@ -20,16 +18,11 @@
 
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
-import {
-  informationCircle,
-  checkmarkCircle,
-  warning,
-  closeCircle,
-} from 'ionicons/icons';
+import { informationCircle, checkmarkCircle, warning, closeCircle } from 'ionicons/icons';
 import { MsReportTheme } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  theme?: MsReportTheme,
+  theme?: MsReportTheme;
 }>();
 
 function getIcon(): string {
@@ -84,7 +77,10 @@ function getIcon(): string {
   &__text {
     color: var(--parsec-color-light-secondary-grey);
   }
-  &.ms-info, &.ms-success, &.ms-warning, &.ms-error {
+  &.ms-info,
+  &.ms-success,
+  &.ms-warning,
+  &.ms-error {
     border-radius: 4px;
     padding: 1em;
   }

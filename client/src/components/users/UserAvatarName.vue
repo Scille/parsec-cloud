@@ -2,9 +2,7 @@
 
 <template>
   <div class="container">
-    <ion-avatar
-      class="avatar person-avatar body-sm"
-    >
+    <ion-avatar class="avatar person-avatar body-sm">
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
     <ion-text
@@ -21,8 +19,8 @@ import { IonAvatar, IonText } from '@ionic/vue';
 import { defineProps } from 'vue';
 
 defineProps<{
-  userAvatar: string,
-  userName?: string
+  userAvatar: string;
+  userName?: string;
 }>();
 </script>
 
@@ -40,7 +38,7 @@ defineProps<{
     width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
-    &:first-of-type{
+    &:first-of-type {
       margin-left: 0;
     }
   }

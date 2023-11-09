@@ -23,27 +23,31 @@ export async function inviteUser(email: string): Promise<Result<NewInvitationInf
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientNewUserInvitation(handle, email, true);
   } else {
-    return {ok: true, value: {
-      token: '12346565645645654645645645645645',
-      emailSentStatus: InvitationEmailSentStatus.Success,
-      addr: 'parsec://parsec.example.com/Org?action=claimer_user&token=12346565645645654645645645645645',
-    }};
+    return {
+      ok: true,
+      value: {
+        token: '12346565645645654645645645645645',
+        emailSentStatus: InvitationEmailSentStatus.Success,
+        addr: 'parsec://parsec.example.com/Org?action=claimer_user&token=12346565645645654645645645645645',
+      },
+    };
   }
 }
 
-export async function inviteDevice(sendEmail: boolean):
-  Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>> {
+export async function inviteDevice(
+  sendEmail: boolean,
+): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
     const ret = await libparsec.clientNewDeviceInvitation(handle, sendEmail);
     if (ret.ok) {
-      return {ok: true, value: [ret.value.token, ret.value.emailSentStatus]};
+      return { ok: true, value: [ret.value.token, ret.value.emailSentStatus] };
     } else {
       return ret;
     }
   }
-  return {ok: true, value: ['1234', InvitationEmailSentStatus.Success]};
+  return { ok: true, value: ['1234', InvitationEmailSentStatus.Success] };
 }
 
 export async function listUserInvitations(): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
@@ -65,22 +69,25 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     return result as any;
   } else {
     return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
-      const ret: Array<UserInvitation> = [{
-        tag: InviteListItemTag.User,
-        addr: 'parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
-        token: '12346565645645654645645645645645',
-        createdOn: DateTime.now(),
-        claimerEmail: 'shadowheart@swordcoast.faerun',
-        status: InvitationStatus.Ready,
-      }, {
-        tag: InviteListItemTag.User,
-        addr: 'parsec://parsec.example.com/MyOrg?action=claim_user&token=32346565645645654645645645645645',
-        token: '32346565645645654645645645645645',
-        createdOn: DateTime.now(),
-        claimerEmail: 'gale@waterdeep.faerun',
-        status: InvitationStatus.Ready,
-      }];
-      resolve({ok: true, value: ret});
+      const ret: Array<UserInvitation> = [
+        {
+          tag: InviteListItemTag.User,
+          addr: 'parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
+          token: '12346565645645654645645645645645',
+          createdOn: DateTime.now(),
+          claimerEmail: 'shadowheart@swordcoast.faerun',
+          status: InvitationStatus.Ready,
+        },
+        {
+          tag: InviteListItemTag.User,
+          addr: 'parsec://parsec.example.com/MyOrg?action=claim_user&token=32346565645645654645645645645645',
+          token: '32346565645645654645645645645645',
+          createdOn: DateTime.now(),
+          claimerEmail: 'gale@waterdeep.faerun',
+          status: InvitationStatus.Ready,
+        },
+      ];
+      resolve({ ok: true, value: ret });
     });
   }
 }
@@ -91,6 +98,6 @@ export async function cancelInvitation(token: InvitationToken): Promise<Result<n
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientDeleteInvitation(handle, token);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }

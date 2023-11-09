@@ -83,13 +83,11 @@ const routes: Array<RouteRecordRaw> = [
 ];
 
 if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
-  routes.push(
-    {
-      path: '/test',
-      name: 'Test',
-      component: () => import('@/views/testing/TestPage.vue'),
-    },
-  );
+  routes.push({
+    path: '/test',
+    name: 'Test',
+    component: () => import('@/views/testing/TestPage.vue'),
+  });
 }
 
 const router = createRouter({
@@ -113,7 +111,7 @@ export function routerNavigateTo(routeName: string, params: any | null = null, q
 export function routerNavigateToWorkspace(workspaceId: WorkspaceID, path = '/'): void {
   startWorkspace(workspaceId).then((result) => {
     if (result.ok) {
-      routerNavigateTo('folder', {workspaceHandle: result.value}, {path: path, workspaceId: workspaceId});
+      routerNavigateTo('folder', { workspaceHandle: result.value }, { path: path, workspaceId: workspaceId });
     } else {
       console.log(`Failed to navigate to workspace: ${result.error.tag}`);
     }

@@ -18,9 +18,8 @@ import { WorkspaceRole } from '@/parsec';
 import { translateWorkspaceRole } from '@/common/translations';
 
 defineProps<{
-  role: WorkspaceRole,
+  role: WorkspaceRole;
 }>();
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

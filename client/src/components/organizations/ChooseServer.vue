@@ -65,18 +65,13 @@
 
 <script lang="ts">
 export enum ServerMode {
-  SaaS ='saas',
+  SaaS = 'saas',
   Custom = 'custom',
 }
 </script>
 
 <script setup lang="ts">
-import {
-  IonList,
-  IonRadio,
-  IonRadioGroup,
-  IonText,
-} from '@ionic/vue';
+import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { ref } from 'vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { backendAddrValidator, Validity } from '@/common/validators';
@@ -92,12 +87,14 @@ defineExpose({
 });
 
 defineEmits<{
-  (e: 'fieldUpdate'): void
+  (e: 'fieldUpdate'): void;
 }>();
 
 async function areFieldsCorrect(): Promise<boolean> {
-  return mode.value === ServerMode.SaaS || (mode.value === ServerMode.Custom &&
-    await backendAddrValidator(backendAddr.value) === Validity.Valid);
+  return (
+    mode.value === ServerMode.SaaS ||
+    (mode.value === ServerMode.Custom && (await backendAddrValidator(backendAddr.value)) === Validity.Valid)
+  );
 }
 </script>
 
@@ -138,7 +135,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
 
   &:first-of-type {
-    margin-bottom: .5rem;
+    margin-bottom: 0.5rem;
   }
 
   .link {
@@ -155,7 +152,7 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 .item-radio {
-  gap: .5rem;
+  gap: 0.5rem;
   padding: 1em;
   width: 100%;
 
@@ -165,7 +162,8 @@ async function areFieldsCorrect(): Promise<boolean> {
     transform: none;
   }
 
-  &__label, &__text{
+  &__label,
+  &__text {
     color: var(--parsec-color-light-secondary-grey);
     display: block;
     margin-left: 1rem;
@@ -179,8 +177,8 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
 
   &::part(mark) {
-    width: .85rem;
-    height: .85rem;
+    width: 0.85rem;
+    height: 0.85rem;
     border: 1.5px solid var(--parsec-color-light-secondary-inversed-contrast);
     background: var(--parsec-color-light-primary-600);
     border-radius: var(--parsec-radius-circle);

@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  Notification as MsNotification,
-  NotificationLevel,
-  NotificationCenter,
-} from '@/services/notificationCenter';
+import { Notification as MsNotification, NotificationLevel, NotificationCenter } from '@/services/notificationCenter';
 import { vi } from 'vitest';
 import { DateTime } from 'luxon';
 import { modalController, toastController } from '@ionic/vue';
@@ -12,9 +8,7 @@ import { modalController, toastController } from '@ionic/vue';
 describe('Notification Center', () => {
   // mock ComposerTranslation
   function t(key: string): string {
-    const map = new Map<string, string>([
-      ['Notification.nextButton', 'nextButton'],
-    ]);
+    const map = new Map<string, string>([['Notification.nextButton', 'nextButton']]);
     return map.get(key) as string;
   }
   let NOTIFS: MsNotification[];
@@ -55,7 +49,7 @@ describe('Notification Center', () => {
         read: false,
         time: DateTime.now(),
         data: {
-          'key': 'value',
+          key: 'value',
         },
       },
       {
@@ -85,11 +79,11 @@ describe('Notification Center', () => {
 
   it('Adds notification to list', async () => {
     expect(center.notifications).to.deep.equal([]);
-    center.showModal(NOTIFS[0], {addToList: true});
+    center.showModal(NOTIFS[0], { addToList: true });
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 1));
     expect(center.hasUnreadNotifications()).to.be.true;
 
-    center.showToast(NOTIFS[1], {addToList: true});
+    center.showToast(NOTIFS[1], { addToList: true });
     expect(center.getNotifications()).to.deep.equal(NOTIFS.slice(0, 2));
 
     center.addToList(NOTIFS[2]);
@@ -116,7 +110,7 @@ describe('Notification Center', () => {
 
   it('Mark as read', async () => {
     expect(center.hasUnreadNotifications()).to.be.false;
-    center.showModal(NOTIFS[0], {addToList: true});
+    center.showModal(NOTIFS[0], { addToList: true });
     expect(center.hasUnreadNotifications()).to.be.true;
     center.markAsRead('1234', true);
     expect(center.hasUnreadNotifications()).to.be.false;

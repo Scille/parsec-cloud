@@ -2,16 +2,12 @@
 
 <template>
   <div class="invitation-list-item__waiting">
-    <ion-icon
-      :icon="time"
-    />
+    <ion-icon :icon="time" />
     <ion-text class="caption-caption">
       {{ translateInvitationStatus($t, $props.invitation.status) }}
     </ion-text>
   </div>
-  <ion-label
-    class="body invitation-list-item__label"
-  >
+  <ion-label class="body invitation-list-item__label">
     {{ invitation.claimerEmail }}
   </ion-label>
   <ion-buttons class="invitation-list-item__buttons">
@@ -33,27 +29,19 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonLabel,
-  IonButtons,
-  IonButton,
-  IonIcon,
-  IonText,
-} from '@ionic/vue';
-import {
-  time,
-} from 'ionicons/icons';
+import { IonLabel, IonButtons, IonButton, IonIcon, IonText } from '@ionic/vue';
+import { time } from 'ionicons/icons';
 import { defineProps } from 'vue';
 import { UserInvitation } from '@/parsec';
 import { translateInvitationStatus } from '@/common/translations';
 
 defineProps<{
-  invitation: UserInvitation,
+  invitation: UserInvitation;
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: UserInvitation) : void,
-  (e: 'greetUser', invitation: UserInvitation) : void,
+  (e: 'rejectUser', invitation: UserInvitation): void;
+  (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 </script>
 
@@ -62,7 +50,7 @@ defineEmits<{
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: .2rem;
+  padding: 0.2rem;
   color: var(--parsec-color-light-secondary-grey);
   margin-left: auto;
   font-style: italic;
@@ -76,7 +64,7 @@ defineEmits<{
 
 .invitation-list-item__buttons {
   display: flex;
-  gap: .5rem;
+  gap: 0.5rem;
   margin-left: auto;
   width: 100%;
 

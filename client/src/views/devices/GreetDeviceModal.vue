@@ -5,10 +5,7 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetDeviceStep.WaitForGuest && pageStep < GreetDeviceStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[
-        $t('DevicesPage.greet.steps.hostCode'),
-        $t('DevicesPage.greet.steps.guestCode'),
-      ]"
+      :titles="[$t('DevicesPage.greet.steps.hostCode'), $t('DevicesPage.greet.steps.guestCode')]"
     />
     <ion-buttons
       slot="end"
@@ -26,18 +23,12 @@
         />
       </ion-button>
     </ion-buttons>
-    <div
-      class="modal"
-    >
+    <div class="modal">
       <ion-header class="modal-header">
-        <ion-title
-          class="modal-header__title title-h2"
-        >
+        <ion-title class="modal-header__title title-h2">
           {{ getTitleAndSubtitle()[0] }}
         </ion-title>
-        <ion-text
-          class="modal-header__text body"
-        >
+        <ion-text class="modal-header__text body">
           {{ getTitleAndSubtitle()[1] }}
         </ion-text>
       </ion-header>
@@ -53,9 +44,7 @@
           <ms-informative-text>
             {{ $t('DevicesPage.greet.subtitles.waitForGuest2') }}
           </ms-informative-text>
-          <ion-buttons
-            slot="start"
-          >
+          <ion-buttons slot="start">
             <ion-button
               fill="solid"
               size="default"
@@ -74,9 +63,7 @@
           v-show="pageStep === GreetDeviceStep.ProvideHostSasCode"
           class="step"
         >
-          <sas-code-provide
-            :code="greeter.hostSASCode"
-          />
+          <sas-code-provide :code="greeter.hostSASCode" />
         </div>
 
         <!-- choose code step -->
@@ -105,7 +92,11 @@
           v-show="pageStep === GreetDeviceStep.Summary"
           class="step final-step"
         >
-          {{ $t('DevicesPage.greet.subtitles.summary', {label: greeter.requestedDeviceLabel}) }}
+          {{
+            $t('DevicesPage.greet.subtitles.summary', {
+              label: greeter.requestedDeviceLabel,
+            })
+          }}
         </div>
       </div>
       <ion-footer class="modal-footer">
@@ -129,9 +120,7 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-label
-              class="label-waiting"
-            />
+            <ion-label class="label-waiting" />
             <ion-spinner
               name="crescent"
               color="primary"
@@ -158,9 +147,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import {
-  close,
-} from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
@@ -198,10 +185,7 @@ function getTitleAndSubtitle(): [string, string] {
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     return [t('DevicesPage.greet.titles.deviceDetails'), ''];
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return [
-      t('DevicesPage.greet.titles.summary'),
-      '',
-    ];
+    return [t('DevicesPage.greet.titles.summary'), ''];
   }
   return ['', ''];
 }
@@ -233,7 +217,7 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else {
     await showErrorAndRestart(t('DevicesPage.greet.errors.invalidCodeSelected'));
@@ -250,19 +234,23 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet();
   if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('DevicesPage.greet.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('DevicesPage.greet.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('DevicesPage.greet.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('DevicesPage.greet.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
@@ -296,10 +284,12 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(new Notification({
-    message: message,
-    level: NotificationLevel.Error,
-  }));
+  notificationCenter.showToast(
+    new Notification({
+      message: message,
+      level: NotificationLevel.Error,
+    }),
+  );
   await restartProcess();
 }
 
@@ -309,10 +299,14 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetDeviceStep.Summary) {
-    notificationCenter.showToast(new Notification({
-      message: t('DevicesPage.greet.success', {label: greeter.value.requestedDeviceLabel}),
-      level: NotificationLevel.Success,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('DevicesPage.greet.success', {
+          label: greeter.value.requestedDeviceLabel,
+        }),
+        level: NotificationLevel.Success,
+      }),
+    );
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   }
@@ -328,7 +322,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -349,10 +343,12 @@ async function nextStep(): Promise<void> {
 
 async function copyLink(): Promise<void> {
   await navigator.clipboard.writeText(greeter.value.invitationLink);
-  notificationCenter.showToast(new Notification({
-    message: t('DevicesPage.greet.linkCopiedToClipboard'),
-    level: NotificationLevel.Info,
-  }));
+  notificationCenter.showToast(
+    new Notification({
+      message: t('DevicesPage.greet.linkCopiedToClipboard'),
+      level: NotificationLevel.Info,
+    }),
+  );
 }
 
 onMounted(async () => {
@@ -362,24 +358,24 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-  .final-step {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    background: var(--parsec-color-light-secondary-background);
-    padding: .75rem 1rem;
-    border-radius: var(--parsec-radius-6);
-    justify-content: space-between;
-    color: var(--parsec-color-light-secondary-text);
+.final-step {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: var(--parsec-color-light-secondary-background);
+  padding: 0.75rem 1rem;
+  border-radius: var(--parsec-radius-6);
+  justify-content: space-between;
+  color: var(--parsec-color-light-secondary-text);
 
-    &__icon {
-      font-size: 1.5rem;
-      color: var(--parsec-color-light-primary-500);
-    }
-
-    &__name {
-      font-weight: 500;
-    }
+  &__icon {
+    font-size: 1.5rem;
+    color: var(--parsec-color-light-primary-500);
   }
+
+  &__name {
+    font-weight: 500;
+  }
+}
 </style>

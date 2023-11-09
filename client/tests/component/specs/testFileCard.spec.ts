@@ -9,7 +9,6 @@ import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
 mockI18n();
 
 describe('File Card Item', () => {
-
   it('Display item for file', () => {
     const FILE: EntryStatFile = {
       tag: FileType.File,
@@ -45,7 +44,7 @@ describe('File Card Item', () => {
   });
 
   it('Display item for folder', () => {
-    const FOLDER: EntryStatFolder= {
+    const FOLDER: EntryStatFolder = {
       tag: FileType.Folder,
       confinementPoint: null,
       id: '67',

@@ -9,9 +9,7 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div
-      class="card-checkbox"
-    >
+    <div class="card-checkbox">
       <ion-checkbox
         aria-label=""
         v-model="isSelected"
@@ -25,13 +23,9 @@
       class="card-option"
       @click.stop="$emit('menuClick', $event, user)"
     >
-      <ion-icon
-        :icon="ellipsisHorizontal"
-      />
+      <ion-icon :icon="ellipsisHorizontal" />
     </div>
-    <div
-      class="card-content"
-    >
+    <div class="card-content">
       <ion-avatar class="card-content-avatar">
         <user-avatar-name
           class="user-avatar large"
@@ -42,27 +36,17 @@
         {{ user.humanHandle.label }}
       </ion-text>
       <ion-title class="user-profile body-lg">
-        <tag-profile
-          :profile="user.currentProfile"
-        />
+        <tag-profile :profile="user.currentProfile" />
       </ion-title>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  ellipsisHorizontal,
-} from 'ionicons/icons';
+import { ellipsisHorizontal } from 'ionicons/icons';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import {
-  IonAvatar,
-  IonIcon,
-  IonText,
-  IonTitle,
-  IonCheckbox,
-} from '@ionic/vue';
+import { IonAvatar, IonIcon, IonText, IonTitle, IonCheckbox } from '@ionic/vue';
 import { defineProps } from 'vue';
 import { UserInfo } from '@/parsec';
 import { defineEmits, defineExpose, ref } from 'vue';
@@ -71,14 +55,14 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 
 defineEmits<{
-  (e: 'click', event: Event, user: UserInfo): void,
-  (e: 'menuClick', event: Event, user: UserInfo): void,
-  (e: 'select', user: UserInfo, selected: boolean): void
+  (e: 'click', event: Event, user: UserInfo): void;
+  (e: 'menuClick', event: Event, user: UserInfo): void;
+  (e: 'select', user: UserInfo, selected: boolean): void;
 }>();
 
 const props = defineProps<{
-  user: UserInfo,
-  showCheckbox: boolean
+  user: UserInfo;
+  showCheckbox: boolean;
 }>();
 
 function getUser(): UserInfo {
@@ -115,7 +99,8 @@ defineExpose({
   }
 }
 
-.card-option, .card-checkbox {
+.card-option,
+.card-checkbox {
   position: absolute;
 }
 
@@ -134,7 +119,7 @@ defineExpose({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
+  gap: 0.5rem;
   color: var(--parsec-color-light-secondary-text);
 
   .card-content-avatar {

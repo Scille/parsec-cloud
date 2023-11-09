@@ -17,7 +17,7 @@
     </ion-item>
     <ion-item
       class="option body"
-      :class="{selected: selectedOption?.key === option.key}"
+      :class="{ selected: selectedOption?.key === option.key }"
       :disabled="option.disabled"
       button
       lines="none"
@@ -30,7 +30,7 @@
         slot="end"
         :icon="checkmark"
         class="checked"
-        :class="{selected: selectedOption?.key === option.key}"
+        :class="{ selected: selectedOption?.key === option.key }"
         v-if="selectedOption?.key === option.key"
       />
     </ion-item>
@@ -39,30 +39,19 @@
 
 <script setup lang="ts">
 import { ref, Ref } from 'vue';
-import {
-  IonList,
-  IonItem,
-  IonIcon,
-  popoverController,
-} from '@ionic/vue';
-import {
-  arrowUp,
-  arrowDown,
-  checkmark,
-} from 'ionicons/icons';
+import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
+import { arrowUp, arrowDown, checkmark } from 'ionicons/icons';
 import { MsSorterOption, MsSorterLabels, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption?: any
-  options: MsSorterOption[]
-  sorterLabels?: MsSorterLabels
-  sortByAsc: boolean
+  defaultOption?: any;
+  options: MsSorterOption[];
+  sorterLabels?: MsSorterLabels;
+  sortByAsc: boolean;
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
-const selectedOption = ref(
-  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0],
-);
+const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
 
 function onOptionClick(option?: MsSorterOption): void {
   if (option) {
@@ -99,7 +88,7 @@ function onOptionClick(option?: MsSorterOption): void {
   width: fit-content;
   padding-right: 0.5rem;
   margin-left: auto;
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
   --min-height: 2rem;
 
   ion-icon {

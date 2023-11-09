@@ -3,15 +3,11 @@
 <template>
   <ms-modal
     :title="$t('FoldersPage.importModal.title')"
-    :close-button="{visible: true}"
+    :close-button="{ visible: true }"
   >
     <div class="modal-content inner-content">
-      <file-drop-zone
-        @files-drop="onFilesDrop"
-      >
-        <file-import
-          @files-import="onFilesImport"
-        />
+      <file-drop-zone @files-drop="onFilesDrop">
+        <file-import @files-import="onFilesImport" />
       </file-drop-zone>
     </div>
   </ms-modal>
@@ -29,9 +25,9 @@ import { ImportManager, ImportManagerKey } from '@/common/importManager';
 const importManager = inject(ImportManagerKey) as ImportManager;
 
 const props = defineProps<{
-  currentPath: string
-  workspaceHandle: WorkspaceHandle
-  workspaceId: WorkspaceID
+  currentPath: string;
+  workspaceHandle: WorkspaceHandle;
+  workspaceId: WorkspaceID;
 }>();
 
 async function uploadFileEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<void> {
@@ -71,5 +67,4 @@ async function onFilesImport(files: File[]): Promise<void> {
 }
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

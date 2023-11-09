@@ -1,17 +1,13 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="container-textinfo"
-  >
+  <div class="container-textinfo">
     <ion-icon
       :icon="icon ?? caretForwardCircle"
       size="default"
       class="container-textinfo__icon"
     />
-    <ion-text
-      class="subtitles-normal container-textinfo__text"
-    >
+    <ion-text class="subtitles-normal container-textinfo__text">
       <slot />
     </ion-text>
   </div>
@@ -19,12 +15,10 @@
 
 <script setup lang="ts">
 import { IonIcon, IonText } from '@ionic/vue';
-import {
-  caretForwardCircle,
-} from 'ionicons/icons';
+import { caretForwardCircle } from 'ionicons/icons';
 
 defineProps<{
-  icon?: string,
+  icon?: string;
 }>();
 </script>
 

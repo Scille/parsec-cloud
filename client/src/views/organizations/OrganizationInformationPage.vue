@@ -8,19 +8,19 @@
         v-if="orgInfo !== null && clientInfo !== null"
       >
         <div class="title">
-          <h1>{{ $t('OrganizationPage.infoPage.title', {organizationName: clientInfo.organizationId}) }}</h1>
+          <h1>
+            {{
+              $t('OrganizationPage.infoPage.title', {
+                organizationName: clientInfo.organizationId,
+              })
+            }}
+          </h1>
         </div>
 
         <!-- Configuration list -->
-        <ion-list
-          :inset="true"
-        >
-          <ion-list-header
-            lines="full"
-          >
-            <ion-title
-              class="organization-info-title"
-            >
+        <ion-list :inset="true">
+          <ion-list-header lines="full">
+            <ion-title class="organization-info-title">
               {{ $t('OrganizationPage.infoPage.configuration.title') }}
             </ion-title>
           </ion-list-header>
@@ -36,9 +36,11 @@
               :color="orgInfo.outsidersAllowed ? 'success' : 'warning'"
               slot="end"
             >
-              {{ orgInfo.outsidersAllowed ?
-                $t('OrganizationPage.infoPage.configuration.allowed') :
-                $t('OrganizationPage.infoPage.configuration.forbidden') }}
+              {{
+                orgInfo.outsidersAllowed
+                  ? $t('OrganizationPage.infoPage.configuration.allowed')
+                  : $t('OrganizationPage.infoPage.configuration.forbidden')
+              }}
             </ion-chip>
           </ion-item>
           <!-- User limit -->
@@ -70,15 +72,9 @@
         </ion-list>
 
         <!-- Data size list -->
-        <ion-list
-          :inset="true"
-        >
-          <ion-list-header
-            lines="full"
-          >
-            <ion-title
-              class="organization-info-title"
-            >
+        <ion-list :inset="true">
+          <ion-list-header lines="full">
+            <ion-title class="organization-info-title">
               {{ $t('OrganizationPage.infoPage.size.title') }}
             </ion-title>
           </ion-list-header>
@@ -113,20 +109,14 @@
           class="user-list"
           :inset="true"
         >
-          <ion-list-header
-            lines="full"
-          >
-            <ion-title
-              class="organization-info-title"
-            >
+          <ion-list-header lines="full">
+            <ion-title class="organization-info-title">
               {{ $t('OrganizationPage.infoPage.users.title') }}
             </ion-title>
           </ion-list-header>
           <!-- Active users -->
           <ion-item class="organization-info">
-            <ion-chip
-              color="success"
-            >
+            <ion-chip color="success">
               {{ $t('OrganizationPage.infoPage.users.activeUsers') }}
             </ion-chip>
             <ion-label
@@ -138,9 +128,7 @@
           </ion-item>
           <!-- Admins -->
           <ion-item class="organization-info">
-            <ion-chip
-              color="primary"
-            >
+            <ion-chip color="primary">
               {{ $t('OrganizationPage.infoPage.users.adminUsers') }}
             </ion-chip>
             <ion-label
@@ -153,9 +141,7 @@
 
           <!-- Standard -->
           <ion-item class="organization-info">
-            <ion-chip
-              color="secondary"
-            >
+            <ion-chip color="secondary">
               {{ $t('OrganizationPage.infoPage.users.standardUsers') }}
             </ion-chip>
             <ion-label
@@ -171,9 +157,7 @@
             class="organization-info"
             v-if="orgInfo.outsidersAllowed"
           >
-            <ion-chip
-              color="tertiary"
-            >
+            <ion-chip color="tertiary">
               {{ $t('OrganizationPage.infoPage.users.outsiderUsers') }}
             </ion-chip>
             <ion-label
@@ -186,9 +170,7 @@
 
           <!-- Revoked -->
           <ion-item class="organization-info">
-            <ion-chip
-              color="danger"
-            >
+            <ion-chip color="danger">
               {{ $t('OrganizationPage.infoPage.users.revokedUsers') }}
             </ion-chip>
             <ion-label
@@ -211,16 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonContent,
-  IonLabel,
-  IonChip,
-  IonItem,
-  IonList,
-  IonListHeader,
-  IonTitle,
-} from '@ionic/vue';
+import { IonPage, IonContent, IonLabel, IonChip, IonItem, IonList, IonListHeader, IonTitle } from '@ionic/vue';
 import { onMounted, ref, Ref, inject } from 'vue';
 import { getClientInfo, getOrganizationInfo, OrganizationInfo, ClientInfo } from '@/parsec';
 import { Formatters, FormattersKey } from '@/common/injectionKeys';

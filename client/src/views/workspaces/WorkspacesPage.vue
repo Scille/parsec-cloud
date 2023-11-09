@@ -3,9 +3,7 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <ms-action-bar
-        id="workspaces-ms-action-bar"
-      >
+      <ms-action-bar id="workspaces-ms-action-bar">
         <!-- contextual menu -->
         <ms-action-bar-button
           id="button-new-workspace"
@@ -21,9 +19,7 @@
             :sorter-labels="msSorterLabels"
             @change="onMsSorterChange($event)"
           />
-          <ms-grid-list-toggle
-            v-model="displayView"
-          />
+          <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
       <!-- workspaces -->
@@ -122,9 +118,7 @@ import {
   IonItem,
 } from '@ionic/vue';
 
-import {
-  addCircle,
-} from 'ionicons/icons';
+import { addCircle } from 'ionicons/icons';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
@@ -171,10 +165,12 @@ async function refreshWorkspacesList(): Promise<void> {
   if (result.ok) {
     workspaceList.value = result.value;
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('WorkspacesPage.listError'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('WorkspacesPage.listError'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -215,16 +211,22 @@ async function openCreateWorkspaceModal(): Promise<void> {
   if (workspaceName) {
     const result = await parsecCreateWorkspace(workspaceName);
     if (result.ok) {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspacesPage.newWorkspaceSuccess', {workspace: workspaceName}),
-        level: NotificationLevel.Success,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspacesPage.newWorkspaceSuccess', {
+            workspace: workspaceName,
+          }),
+          level: NotificationLevel.Success,
+        }),
+      );
       await refreshWorkspacesList();
     } else {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspacesPage.newWorkspaceError'),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspacesPage.newWorkspaceError'),
+          level: NotificationLevel.Error,
+        }),
+      );
     }
   }
 }
@@ -247,15 +249,14 @@ async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promis
 }
 
 async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
-  const popover = await popoverController
-    .create({
-      component: WorkspaceContextMenu,
-      event: event,
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      reference: 'event',
-    });
+  const popover = await popoverController.create({
+    component: WorkspaceContextMenu,
+    event: event,
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    reference: 'event',
+  });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
@@ -273,21 +274,27 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspacesPage.linkNotCopiedToClipboard'),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspacesPage.linkNotCopiedToClipboard'),
+          level: NotificationLevel.Error,
+        }),
+      );
     } else {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspacesPage.linkCopiedToClipboard'),
-        level: NotificationLevel.Info,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspacesPage.linkCopiedToClipboard'),
+          level: NotificationLevel.Info,
+        }),
+      );
     }
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('WorkspacesPage.getLinkError', {reason: result.error.tag}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('WorkspacesPage.getLinkError', { reason: result.error.tag }),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 </script>
@@ -301,7 +308,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 .workspace-list-header {
   color: var(--parsec-color-light-secondary-grey);
   font-weight: 600;
-  padding-inline-start:0;
+  padding-inline-start: 0;
 
   &__label {
     padding: 0 1rem;
