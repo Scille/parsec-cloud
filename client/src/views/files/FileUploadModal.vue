@@ -17,7 +17,7 @@
 import FileImport from '@/components/files/FileImport.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
-import { join as joinPath } from '@/common/path';
+import { Path } from '@/parsec';
 import { createFolder, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { inject } from 'vue';
 import { ImportManager, ImportManagerKey } from '@/common/importManager';
@@ -31,7 +31,7 @@ const props = defineProps<{
 }>();
 
 async function uploadFileEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<void> {
-  const parsecPath = joinPath(currentPath, fsEntry.name);
+  const parsecPath = await Path.join(currentPath, fsEntry.name);
 
   if (fsEntry.isDirectory) {
     console.log('Uploading folder', fsEntry.name, 'to', currentPath, 'create', parsecPath);
@@ -62,7 +62,7 @@ async function onFilesDrop(entries: FileSystemEntry[]): Promise<void> {
 
 async function onFilesImport(files: File[]): Promise<void> {
   for (const file of files) {
-    importManager.importFile(props.workspaceHandle, props.workspaceId, file, joinPath(props.currentPath, file.name));
+    importManager.importFile(props.workspaceHandle, props.workspaceId, file, await Path.join(props.currentPath, file.name));
   }
 }
 </script>
