@@ -201,7 +201,6 @@ import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
 import * as parsec from '@/parsec';
-import { join as pathJoin } from '@/common/path';
 import { useI18n } from 'vue-i18n';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { entryNameValidator } from '@/common/validators';
@@ -265,7 +264,7 @@ async function listFolder(): Promise<void> {
     children.value = [];
     allFilesSelected.value = false;
     for (const childName of (result.value as parsec.EntryStatFolder).children) {
-      const childPath = pathJoin(currentPath.value, childName);
+      const childPath = await parsec.Path.join(currentPath.value, childName);
       const fileResult = await parsec.entryStat(childPath);
       if (fileResult.ok) {
         children.value.push(fileResult.value);
@@ -297,10 +296,10 @@ function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
   }
 }
 
-function onFileClick(_event: Event, file: parsec.EntryStat): void {
+async function onFileClick(_event: Event, file: parsec.EntryStat): Promise<void> {
   if (!file.isFile()) {
-    const newPath = pathJoin(currentPath.value, file.name);
-    routerNavigateTo('folder', { workspaceHandle: workspaceHandle.value }, { path: newPath, workspaceId: currentRoute.query.workspaceId });
+    const newPath = await parsec.Path.join(currentPath.value, file.name);
+    routerNavigateTo('folder', {workspaceHandle: workspaceHandle.value}, {path: newPath, workspaceId: currentRoute.query.workspaceId});
   }
 }
 
@@ -317,7 +316,7 @@ async function createFolder(): Promise<void> {
   if (!folderName) {
     return;
   }
-  const folderPath = pathJoin(currentPath.value, folderName);
+  const folderPath = await parsec.Path.join(currentPath.value, folderName);
   const result = await parsec.createFolder(folderPath);
   if (!result.ok) {
     notificationCenter.showToast(
@@ -378,7 +377,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (answer === Answer.No) {
       return;
     }
-    const path = pathJoin(currentPath.value, entry.name);
+    const path = await parsec.Path.join(currentPath.value, entry.name);
     const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
     if (!result.ok) {
       notificationCenter.showToast(
@@ -402,7 +401,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     }
     let errorsEncountered = 0;
     for (const entry of entries) {
-      const path = pathJoin(currentPath.value, entry.name);
+      const path = await parsec.Path.join(currentPath.value, entry.name);
       const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
       if (!result.ok) {
         errorsEncountered += 1;
@@ -443,7 +442,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (!newName) {
     return;
   }
-  const filePath = pathJoin(currentPath.value, entry.name);
+  const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.rename(filePath, newName);
   if (!result.ok) {
     notificationCenter.showToast(
@@ -463,7 +462,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const filePath = pathJoin(currentPath.value, entry.name);
+  const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await getPathLink(workspaceId.value, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
@@ -505,7 +504,7 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
     cssClass: 'file-details-modal',
     componentProps: {
       entry: entry,
-      path: pathJoin(currentPath.value, entry.name),
+      path: await parsec.Path.join(currentPath.value, entry.name),
     },
   });
   await modal.present();

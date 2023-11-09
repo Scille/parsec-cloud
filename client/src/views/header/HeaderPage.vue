@@ -116,32 +116,79 @@ import {
 } from '@ionic/vue';
 import { menu, search, home, notifications } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
-import { onMounted, computed, Ref, ref, watch, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted, Ref, ref, watch, onUnmounted } from 'vue';
+import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { parse as parsePath } from '@/common/path';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute } from '@/parsec';
+import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute, Path } from '@/parsec';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
+const fullPath: Ref<RouterPathNode[]> = ref([]);
 
-const unwatchRoute = watch(currentRoute, async (newRoute, _oldRoute) => {
-  if (newRoute.query && newRoute.query.workspaceId) {
-    const result = await getWorkspaceName(newRoute.query.workspaceId as WorkspaceID);
+const unwatchRoute = watch(currentRoute,  async (newRoute) => {
+  await parseRoute(newRoute);
+});
+
+async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
+  if (route.query && route.query.workspaceId) {
+    const result = await getWorkspaceName(route.query.workspaceId as WorkspaceID);
     if (result.ok) {
       workspaceName.value = result.value;
     } else {
       console.log('Could not get workspace name', result.error);
     }
   }
-});
+
+  // Parse path and remove /deviceId
+  const routePath = (await Path.parse(currentRoute.path)).slice(2);
+  const finalPath: RouterPathNode[] = [];
+
+  // If route is 'workspaces' and we have an id, we're visiting a workspace
+  if (routePath[0] === 'workspaces') {
+    // Always put the document route first
+    finalPath.push({
+      id: 0,
+      display: routePath.length >= 2 ? '' : t('HeaderPage.titles.workspaces'),
+      icon: home,
+      name: 'workspaces',
+      params: { deviceId: currentRoute.params.deviceId },
+    });
+
+    if (routePath.length >= 2 && currentRoute.query.path) {
+      const rebuildPath: string[] = [];
+      const workspacePath = await Path.parse(currentRoute.query.path as string);
+      for (let i = 0; i < workspacePath.length; i++) {
+        // Root folder
+        if (workspacePath[i] === '/') {
+          finalPath.push({
+            id: i + 1,
+            display: workspaceName.value,
+            name: 'folder',
+            query: { path: '/' },
+            params: currentRoute.params,
+          });
+        } else {
+          rebuildPath.push(workspacePath[i]);
+          finalPath.push({
+            id: i + 1,
+            display: workspacePath[i],
+            name: 'folder',
+            query: { path: `/${rebuildPath.join('/')}` },
+            params: currentRoute.params,
+          });
+        }
+      }
+    }
+  }
+  fullPath.value = finalPath;
+}
 
 onMounted(async () => {
   const result = await getClientInfo();
@@ -150,6 +197,7 @@ onMounted(async () => {
   } else {
     console.log('Could not get user info', result.error);
   }
+  await parseRoute(currentRoute);
 });
 
 onUnmounted(async () => {
@@ -179,53 +227,6 @@ function getTitleForRoute(): string {
 
   return '';
 }
-
-const fullPath = computed(() => {
-  // Parse path and remove /deviceId
-  const route = parsePath(currentRoute.path).slice(2);
-
-  const finalPath: RouterPathNode[] = [];
-
-  // If route is 'workspaces' and we have an id, we're visiting a workspace
-  if (route[0] === 'workspaces') {
-    // Always put the document route first
-    finalPath.push({
-      id: 0,
-      display: route.length >= 2 ? '' : t('HeaderPage.titles.workspaces'),
-      icon: home,
-      name: 'workspaces',
-      params: { deviceId: currentRoute.params.deviceId },
-    });
-
-    if (route.length >= 2) {
-      const rebuildPath: string[] = [];
-      const workspacePath = parsePath(currentRoute.query.path as string);
-      for (let i = 0; i < workspacePath.length; i++) {
-        // Root folder
-        if (workspacePath[i] === '/') {
-          finalPath.push({
-            id: i + 1,
-            display: workspaceName.value,
-            name: 'folder',
-            query: { path: '/' },
-            params: currentRoute.params,
-          });
-        } else {
-          rebuildPath.push(workspacePath[i]);
-          finalPath.push({
-            id: i + 1,
-            display: workspacePath[i],
-            name: 'folder',
-            query: { path: `/${rebuildPath.join('/')}` },
-            params: currentRoute.params,
-          });
-        }
-      }
-    }
-  }
-
-  return finalPath;
-});
 </script>
 
 <style scoped lang="scss">

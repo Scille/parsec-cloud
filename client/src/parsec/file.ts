@@ -17,7 +17,7 @@ import {
 } from '@/parsec/types';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
-import { parse as pathParse } from '@/common/path';
+import { Path } from '@/parsec/path';
 import { needsMocks } from '@/parsec/environment';
 
 export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
@@ -79,7 +79,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  const parsedPath = pathParse(path);
+  const parsedPath = await Path.parse(path);
 
   if (clientHandle && workspaceHandle && !needsMocks()) {
     const result = await libparsec.workspaceStatEntry(workspaceHandle, path);
