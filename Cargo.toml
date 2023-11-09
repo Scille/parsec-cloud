@@ -39,6 +39,7 @@ default-members = [
     "libparsec/crates/tests_macros",
     "libparsec/crates/types",
 ]
+resolver = "2"
 
 # Define values to be inherited by workspace members.
 #

@@ -1,7 +1,7 @@
 exclude: ^misc/bench.py$
 
 default_language_version:
-  rust: 1.71.1
+  rust: 1.72.1
   node: 18.12.0
 
 repos:
