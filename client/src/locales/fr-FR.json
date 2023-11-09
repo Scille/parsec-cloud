@@ -437,7 +437,7 @@
                 "forbidden": "Interdit",
                 "title": "Configuration",
                 "serverAddr": "Adresse du serveur"
-        }
+            }
         }
     },
     "common": {

@@ -532,11 +532,11 @@
         "linkFormPlaceholder": "parsec://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
         "stepTitles": {
-        "GetHostCode": "Host code",
-        "ProvideGuestCode": "Guest code",
-        "ContactDetails": "Contact details",
-        "Password": "Password",
-        "Validation": "Validation"
+            "GetHostCode": "Host code",
+            "ProvideGuestCode": "Guest code",
+            "ContactDetails": "Contact details",
+            "Password": "Password",
+            "Validation": "Validation"
         },
         "instructions": {
             "start": {
