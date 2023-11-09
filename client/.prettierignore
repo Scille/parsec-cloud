@@ -15,4 +15,4 @@ package-lock.json
 **/*.json
 **/*.json5
 # Auto-generated
-src/plugins
+src/plugins/libparsec/definitions.ts
