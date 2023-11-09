@@ -211,7 +211,7 @@ repos:
           --ignore-path=client/.prettierignore
           --write
         language: node
-        files: ^(client|bindings)/
+        files: ^client/
         types_or: [ vue, ts, tsx, javascript, jsx, html ]
         stages:
           - manual
