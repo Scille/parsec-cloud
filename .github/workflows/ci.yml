@@ -206,5 +206,5 @@ jobs:
   docs:
     needs:
       - dispatch
-    if: needs.dispatch.outputs.docs
+    if: needs.dispatch.outputs.docs == 'true'
     uses: ./.github/workflows/ci-docs.yml
