@@ -1795,6 +1795,8 @@ version = "2.16.0-a.0+dev"
 dependencies = [
  "libparsec_types",
  "reqwest",
+ "widestring",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
