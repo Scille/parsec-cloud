@@ -411,7 +411,10 @@ fn {{ struct_js_to_rs_function_name(struct) }}(obj: JsValue) -> Result<libparsec
         {{ struct.list_attributes() }}
     })
 {% else %}
-    {{ struct.custom_init }}({{ struct.list_attributes() }}).map_err(|e| e.into())
+    {
+        let custom_init = {{ struct.custom_init }};
+        custom_init({{ struct.list_attributes() }}).map_err(|e| e.into())
+    }
 {% endif %}
 }
 {% endmacro -%}

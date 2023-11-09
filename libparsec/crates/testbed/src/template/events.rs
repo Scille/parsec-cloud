@@ -85,7 +85,8 @@ macro_rules! impl_certificates_meth_for_single_certificate {
             ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
                 std::iter::once(()).map(move |_| {
                     let mut guard = self.cache.lock().expect("Mutex is poisoned");
-                    let populate = || $populate(self, template);
+                    let populate_fn = $populate;
+                    let populate = || populate_fn(self, template);
                     guard.populated(populate).to_owned()
                 })
             }

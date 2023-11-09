@@ -406,7 +406,10 @@ fn {{ struct_js_to_rs_function_name(struct) }}<'a>(
         {{ struct.list_attributes() }}
     })
 {% else %}
-    {{ struct.custom_init }}({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
+    {
+        let custom_init = {{ struct.custom_init }};
+        custom_init({{ struct.list_attributes() }}).or_else(|e| cx.throw_error(e))
+    }
 {% endif%}
 }
 {% endmacro -%}

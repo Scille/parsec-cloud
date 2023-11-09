@@ -72,7 +72,8 @@ macro_rules! merge_local_xxx_manifest {
             //   that would be considered as bug :/
             // - the fixtures and backend data binder system used in the tests
             //   makes it much more likely
-            if $remote.author == *$local_author && !$is_speculative_fn($local) {
+            let is_speculative_fn = $is_speculative_fn;
+            if $remote.author == *$local_author && !is_speculative_fn($local) {
                 let mut new_local = $local.to_owned();
                 new_local.base = $remote;
                 return Some(new_local);
