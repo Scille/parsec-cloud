@@ -20,7 +20,7 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 defineProps<{
-  profile: UserProfile
+  profile: UserProfile;
 }>();
 
 function translateProfile(profile: UserProfile): string {
@@ -35,5 +35,4 @@ function translateProfile(profile: UserProfile): string {
 }
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

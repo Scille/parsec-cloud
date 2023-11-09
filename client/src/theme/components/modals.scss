@@ -1,6 +1,6 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
- /* **** Parsec modal **** */
+/* **** Parsec modal **** */
 
 ion-modal::part(content) {
   border-radius: var(--parsec-radius-8);
@@ -9,120 +9,120 @@ ion-modal::part(content) {
 
 /* -- modal-stepper -- */
 .modal-stepper {
-    .modal {
-      padding: 3.5rem;
-      justify-content: start;
+  .modal {
+    padding: 3.5rem;
+    justify-content: start;
 
-      &.wizardTrue {
-        padding-top: 2.5rem;
+    &.wizardTrue {
+      padding-top: 2.5rem;
+    }
+  }
+
+  .closeBtn-container {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+  }
+
+  .closeBtn-container,
+  .closeBtn {
+    margin: 0;
+    --padding-start: 0;
+    --padding-end: 0;
+  }
+
+  .closeBtn {
+    width: fit-content;
+    height: fit-content;
+    --border-radius: var(--parsec-radius-4);
+    --background-hover: var(--parsec-color-light-primary-50);
+    border-radius: var(--parsec-radius-4);
+
+    &__icon {
+      padding: 4px;
+      color: var(--parsec-color-light-primary-500);
+
+      &:hover {
+        --background-hover: var(--parsec-color-light-primary-50);
       }
     }
 
-    .closeBtn-container {
-      position: absolute;
-      top: 2rem;
-      right: 2rem;
-    }
-
-    .closeBtn-container,
-    .closeBtn {
-      margin: 0;
-      --padding-start: 0;
-      --padding-end: 0;
-    }
-
-    .closeBtn {
-      width: fit-content;
-      height: fit-content;
-      --border-radius: var(--parsec-radius-4);
-      --background-hover: var(--parsec-color-light-primary-50);
+    &:active {
       border-radius: var(--parsec-radius-4);
+      background: var(--parsec-color-light-primary-100);
+    }
+  }
 
-      &__icon {
-        padding: 4px;
-        color: var(--parsec-color-light-primary-500);
+  .modal-header {
+    margin-bottom: 2rem;
 
-        &:hover {
-          --background-hover: var(--parsec-color-light-primary-50);
-        }
-      }
-
-      &:active {
-        border-radius: var(--parsec-radius-4);
-        background: var(--parsec-color-light-primary-100);
-      }
+    &__title {
+      padding: 0;
+      margin-bottom: 1.5rem;
+      color: var(--parsec-color-light-primary-600);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
 
-    .modal-header {
-      margin-bottom: 2rem;
-
-      &__title {
-        padding: 0;
-        margin-bottom: 1.5rem;
-        color: var(--parsec-color-light-primary-600);
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-      }
-
-      &__text {
-        color: var(--parsec-color-light-secondary-grey);
-      }
+    &__text {
+      color: var(--parsec-color-light-secondary-grey);
     }
+  }
 
-    .modal-content {
-      --background: transparent;
+  .modal-content {
+    --background: transparent;
 
-      .step {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
-    }
-
-    .modal-footer {
-      margin-top: 2.5rem;
-
-      &::before {
-        background: transparent;
-      }
-
-      &-buttons {
-        display: flex;
-        justify-content: end;
-        gap: 1rem;
-      }
-    }
-
-    .orga-name {
+    .step {
       display: flex;
       flex-direction: column;
+      gap: 1.5rem;
+    }
+  }
 
-      &-content {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-      }
+  .modal-footer {
+    margin-top: 2.5rem;
+
+    &::before {
+      background: transparent;
     }
 
-    .label-waiting {
-      color: var(--parsec-color-light-secondary-grey);
-      font-style: italic;
-      padding-left: 2em;
-      padding-right: 2em;
-    }
-
-    .guest-code {
-      margin: 4.7rem auto;
-    }
-
-    .spinner-container {
+    &-buttons {
       display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100%;
+      justify-content: end;
+      gap: 1rem;
     }
+  }
+
+  .orga-name {
+    display: flex;
+    flex-direction: column;
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
     }
+  }
+
+  .label-waiting {
+    color: var(--parsec-color-light-secondary-grey);
+    font-style: italic;
+    padding-left: 2em;
+    padding-right: 2em;
+  }
+
+  .guest-code {
+    margin: 4.7rem auto;
+  }
+
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+}
 
 /* --join by link modal -- */
 ion-modal.join-by-link-modal::part(content) {
@@ -134,7 +134,8 @@ ion-modal.join-by-link-modal::part(content) {
 
 /* -- settings modal -- */
 @media only screen and (min-width: 768px) and (min-height: 600px) {
-  .settings-modal, .settings-modal .ion-overlay-wrapper{
+  .settings-modal,
+  .settings-modal .ion-overlay-wrapper {
     --width: 800px;
     --height: 600px;
     --border-radius: 8px;
@@ -196,12 +197,14 @@ ion-modal .inner-content {
     flex-direction: row !important;
 
     .input-container {
-      &:nth-child(1), &:nth-child(2) {
+      &:nth-child(1),
+      &:nth-child(2) {
         width: 100%;
         flex-shrink: 0;
       }
-      &:nth-child(3), &:nth-child(4) {
-        width: calc(50% - .75rem);
+      &:nth-child(3),
+      &:nth-child(4) {
+        width: calc(50% - 0.75rem);
       }
       // input will be changed with a custom dropdown: https://github.com/Scille/parsec-cloud/issues/4603
       &:nth-child(4) {
@@ -216,5 +219,5 @@ ion-modal .inner-content {
 }
 
 .overlapped-modal {
-    visibility: hidden;
+  visibility: hidden;
 }

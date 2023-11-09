@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { DeviceFileType,  AvailableDevice } from '@/plugins/libparsec';
+import { DeviceFileType, AvailableDevice } from '@/plugins/libparsec';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Organization Card', () => {

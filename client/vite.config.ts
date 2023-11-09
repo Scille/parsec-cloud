@@ -37,7 +37,6 @@ if (process.env.PLATFORM !== undefined) {
   } else {
     throw new Error('Invalid value for PLATFORM environ variable, accepted values: `web`/`native`');
   }
-
 } else {
   // Ain't nobody got time to set environ variable !
   console.log('PLATFORM environ variable not set, defaulting to `web`');
@@ -47,7 +46,7 @@ if (process.env.PLATFORM !== undefined) {
 // 2) Add the packaging of the Wasm stuff if the platform requires it
 
 if (platform === 'web') {
-  plugins.push(wasmPack([{path: '../bindings/web/', name: 'libparsec_bindings_web'}]));
+  plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
 }
 
 // 3) Finally configure Vite

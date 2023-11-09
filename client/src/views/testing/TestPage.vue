@@ -6,9 +6,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <ion-header collapse="condense">
-        <ion-title size="large">
-          Test libparsec
-        </ion-title>
+        <ion-title size="large"> Test libparsec </ion-title>
       </ion-header>
       <div v-html="logs" />
     </ion-content>
@@ -16,12 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonHeader,
-  IonPage,
-  IonTitle,
-} from '@ionic/vue';
+import { IonContent, IonHeader, IonPage, IonTitle } from '@ionic/vue';
 import { ref, onMounted } from 'vue';
 import { libparsec, DeviceSaveStrategyTag, WorkspaceStorageCacheSizeTag, BootstrapOrganizationErrorTag } from '@/plugins/libparsec';
 import { ClientEvent, ClientConfig } from '@/plugins/libparsec';
@@ -45,9 +38,12 @@ async function testCase<T>(name: string, cb: () => Promise<T>): Promise<T> {
 
 // ARE YOU KIDDING ME JAVASCRIPT ??????
 function compareArrays(a: Array<any>, b: Array<any>): boolean {
-  return a.length === b.length && a.every((value, index) => {
-    b[index] === value;
-  });
+  return (
+    a.length === b.length &&
+    a.every((value, index) => {
+      b[index] === value;
+    })
+  );
 }
 
 function assert(outcome: boolean, msg: string): void {
@@ -157,6 +153,5 @@ async function testBootstrapOrganization(): Promise<void> {
   await testCase('Teardown testbed', async () => {
     await libparsec.testDropTestbed(configPath);
   });
-
 }
 </script>

@@ -49,13 +49,9 @@ export function isDocumentRoute(): boolean {
 
 export function isOrganizationManagementRoute(): boolean {
   const currentRoute = router.currentRoute.value;
-  return currentRoute.name ? [
-    'activeUsers',
-    'revokedUsers',
-    'invitations',
-    'storage',
-    'organization',
-  ].includes(currentRoute.name.toString()) : false;
+  return currentRoute.name
+    ? ['activeUsers', 'revokedUsers', 'invitations', 'storage', 'organization'].includes(currentRoute.name.toString())
+    : false;
 }
 
 export function isRoute(name: string): boolean {

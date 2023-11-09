@@ -4,9 +4,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <!-- contextual menu -->
-      <ms-action-bar
-        id="activate-users-ms-action-bar"
-      >
+      <ms-action-bar id="activate-users-ms-action-bar">
         <div v-if="selectedUsersCount === 0">
           <ms-action-bar-button
             :icon="personAdd"
@@ -162,22 +160,8 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
-import {
-  IonContent,
-  IonItem,
-  IonList,
-  IonPage,
-  IonLabel,
-  IonListHeader,
-  IonCheckbox,
-  IonText,
-  popoverController,
-} from '@ionic/vue';
-import {
-  personRemove,
-  personAdd,
-  eye,
-} from 'ionicons/icons';
+import { IonContent, IonItem, IonList, IonPage, IonLabel, IonListHeader, IonCheckbox, IonText, popoverController } from '@ionic/vue';
+import { personRemove, personAdd, eye } from 'ionicons/icons';
 import UserListItem from '@/components/users/UserListItem.vue';
 import UserCard from '@/components/users/UserCard.vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
@@ -187,22 +171,15 @@ import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { routerNavigateTo } from '@/router';
-import {
-  listUsers as parsecListUsers,
-  UserInfo,
-  ClientInfo,
-  getClientInfo as parsecGetClientInfo,
-  UserProfile,
-  UserID,
-} from '@/parsec';
+import { listUsers as parsecListUsers, UserInfo, ClientInfo, getClientInfo as parsecGetClientInfo, UserProfile, UserID } from '@/parsec';
 import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
-const userListItemRefs: Ref<typeof UserListItem[]> = ref([]);
-const userGridItemRefs: Ref<typeof UserCard[]> = ref([]);
+const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
+const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -246,7 +223,7 @@ function getSelectedUsers(): UserInfo[] {
 }
 
 async function inviteUser(): Promise<void> {
-  routerNavigateTo('invitations', {}, {openInvite: true});
+  routerNavigateTo('invitations', {}, { openInvite: true });
 }
 
 function viewCommonWorkspace(): void {
@@ -300,19 +277,18 @@ function isCurrentUser(userId: UserID): boolean {
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {
-  const popover = await popoverController
-    .create({
-      component: UserContextMenu,
-      cssClass: 'user-context-menu',
-      event: event,
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      reference: 'event',
-      componentProps: {
-        isRevoked: user.isRevoked(),
-      },
-    });
+  const popover = await popoverController.create({
+    component: UserContextMenu,
+    cssClass: 'user-context-menu',
+    event: event,
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    reference: 'event',
+    componentProps: {
+      isRevoked: user.isRevoked(),
+    },
+  });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
@@ -341,10 +317,12 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.listUsersFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.listUsersFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -376,7 +354,7 @@ onUnmounted(async () => {
 
 .user-list-header {
   color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start:0;
+  padding-inline-start: 0;
 
   &__label {
     padding: 0 1rem;

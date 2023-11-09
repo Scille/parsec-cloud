@@ -1,6 +1,6 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
- /* **** Parsec scrollbar **** */
+/* **** Parsec scrollbar **** */
 
 body {
   scrollbar-color: var(--parsec-color-light-primary-600) var(--parsec-color-light-secondary-background);
@@ -9,7 +9,7 @@ body {
 ::-webkit-scrollbar {
   width: 1em;
   border-radius: 1em;
-  background:  var(--parsec-color-light-secondary-background);
+  background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 

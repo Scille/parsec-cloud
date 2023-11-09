@@ -6,11 +6,9 @@
       <img
         src="@/assets/images/Logo/logo_icon_gradient.svg"
         alt="loading-image"
-      >
+      />
     </div>
-    <ion-text
-      class="subtitles-normal container-text"
-    >
+    <ion-text class="subtitles-normal container-text">
       {{ title }}
     </ion-text>
     <ion-spinner
@@ -24,7 +22,7 @@
 import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{
-  title: string
+  title: string;
 }>();
 </script>
 

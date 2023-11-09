@@ -63,6 +63,11 @@ jobs:
         working-directory: client
         timeout-minutes: 5
 
+      - name: Check prettier
+        run: npx prettier . --check
+        working-directory: client
+        timeout-minutes: 5
+
       - name: Setup cache-key
         id: cache-key
         run: >-

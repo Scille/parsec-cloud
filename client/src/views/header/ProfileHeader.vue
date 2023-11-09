@@ -5,22 +5,23 @@
     button
     id="click-trigger"
     class="container"
-    @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
+    @click="
+      isPopoverOpen = !isPopoverOpen;
+      openPopover($event);
+    "
   >
     <ion-avatar
       slot="start"
       class="avatar"
     >
-      <ion-icon
-        :icon="personCircle"
-      />
+      <ion-icon :icon="personCircle" />
     </ion-avatar>
     <div class="text-icon">
       <ion-text class="body">
         {{ name }}
       </ion-text>
       <ion-icon
-        :class="{'popover-is-open': isPopoverOpen}"
+        :class="{ 'popover-is-open': isPopoverOpen }"
         slot="end"
         :icon="chevronDown"
       />
@@ -29,13 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonItem,
-  IonIcon,
-  IonAvatar,
-  IonText,
-  popoverController,
-}from '@ionic/vue';
+import { IonItem, IonIcon, IonAvatar, IonText, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, ref, inject } from 'vue';
 import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
@@ -54,7 +49,7 @@ const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
 
 const props = defineProps<{
-  name: string
+  name: string;
 }>();
 
 async function openPopover(ev: Event): Promise<void> {
@@ -81,10 +76,12 @@ async function openPopover(ev: Event): Promise<void> {
       if (answer === Answer.Yes) {
         const result = await parsecLogout();
         if (!result.ok) {
-          notificationCenter.showToast(new Notification({
-            message: t('HomePage.topbar.logoutFailed'),
-            level: NotificationLevel.Error,
-          }));
+          notificationCenter.showToast(
+            new Notification({
+              message: t('HomePage.topbar.logoutFailed'),
+              level: NotificationLevel.Error,
+            }),
+          );
         } else {
           router.replace({ name: 'home' });
         }
@@ -95,7 +92,7 @@ async function openPopover(ev: Event): Promise<void> {
       routerNavigateTo('devices');
     } else if (value.data.option === ProfilePopoverOption.Help) {
       window.open(t('MenuPage.helpLink'), '_blank');
-    }  else if (value.data.option === ProfilePopoverOption.App) {
+    } else if (value.data.option === ProfilePopoverOption.App) {
       routerNavigateTo('about');
     }
   });
@@ -108,13 +105,13 @@ async function openPopover(ev: Event): Promise<void> {
   flex-direction: column;
   --background: none;
   cursor: pointer;
-  &:hover{
+  &:hover {
     --background-hover: none;
   }
 }
 
 .avatar {
-  margin: 0 .75em 0 0;
+  margin: 0 0.75em 0 0;
   position: relative;
 
   ion-icon {
@@ -123,7 +120,7 @@ async function openPopover(ev: Event): Promise<void> {
   }
 
   &::after {
-    content:'';
+    content: '';
     position: absolute;
     bottom: 0;
     right: -4px;
@@ -138,7 +135,7 @@ async function openPopover(ev: Event): Promise<void> {
 .text-icon {
   display: flex;
   align-items: center;
-  gap: .1em;
+  gap: 0.1em;
   color: var(--parsec-color-light-secondary-text);
 
   ion-icon {

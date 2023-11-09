@@ -11,9 +11,7 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div
-      class="user-selected"
-    >
+    <div class="user-selected">
       <ion-checkbox
         aria-label=""
         v-model="isSelected"
@@ -44,16 +42,12 @@
 
     <!-- user profile -->
     <div class="user-profile">
-      <tag-profile
-        :profile="user.currentProfile"
-      />
+      <tag-profile :profile="user.currentProfile" />
     </div>
 
     <!-- user joined on -->
     <div class="user-join">
-      <ion-label
-        class="user-join-label cell"
-      >
+      <ion-label class="user-join-label cell">
         {{ timeSince(user.createdOn, '--', 'short') }}
       </ion-label>
     </div>
@@ -76,16 +70,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonItem,
-  IonLabel,
-  IonIcon,
-  IonButton,
-  IonCheckbox,
-} from '@ionic/vue';
-import {
-  ellipsisHorizontal,
-} from 'ionicons/icons';
+import { IonItem, IonLabel, IonIcon, IonButton, IonCheckbox } from '@ionic/vue';
+import { ellipsisHorizontal } from 'ionicons/icons';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { inject, ref } from 'vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
@@ -96,14 +82,14 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
-  user: UserInfo,
-  showCheckbox: boolean
+  user: UserInfo;
+  showCheckbox: boolean;
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, user: UserInfo): void,
-  (e: 'menuClick', event: Event, user: UserInfo): void,
-  (e: 'select', user: UserInfo, selected: boolean): void
+  (e: 'click', event: Event, user: UserInfo): void;
+  (e: 'menuClick', event: Event, user: UserInfo): void;
+  (e: 'select', user: UserInfo, selected: boolean): void;
 }>();
 
 function getUser(): UserInfo {
@@ -134,19 +120,24 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
     --background-hover-opacity: 1;
   }
 
-  &:hover, &.selected {
-    .cell, .options-button__icon {
+  &:hover,
+  &.selected {
+    .cell,
+    .options-button__icon {
       color: var(--parsec-color-light-secondary-text);
     }
   }
 
-  &:focus, &:active, &.selected {
+  &:focus,
+  &:active,
+  &.selected {
     --background-focused: var(--parsec-color-light-primary-100);
     --background: var(--parsec-color-light-primary-100);
     --background-focused-opacity: 1;
   }
 
-  &.selected, &:focus {
+  &.selected,
+  &:focus {
     --border-width: 0;
   }
 
@@ -154,13 +145,14 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
     --background: var(--parsec-color-light-primary-100);
     --background-checked-opacity: 1;
 
-    .cell, .options-button__icon {
+    .cell,
+    .options-button__icon {
       color: var(--parsec-color-light-secondary-text);
     }
   }
 }
 
-.user-list-item>[class^="user-"] {
+.user-list-item > [class^='user-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;
@@ -173,7 +165,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 }
 
 .user-name {
-  padding: .75rem 1rem;
+  padding: 0.75rem 1rem;
   width: 100%;
   max-width: 20vw;
   min-width: 11.25rem;

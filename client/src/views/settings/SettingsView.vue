@@ -17,9 +17,7 @@
             class="menu-list__item"
           >
             <div class="item-container">
-              <ion-icon
-                :icon="cog"
-              />
+              <ion-icon :icon="cog" />
               <ion-text class="body">
                 {{ $t('SettingsPage.general') }}
               </ion-text>
@@ -31,9 +29,7 @@
             class="menu-list__item"
           >
             <div class="item-container">
-              <ion-icon
-                :icon="options"
-              />
+              <ion-icon :icon="options" />
               <ion-text class="body">
                 {{ $t('SettingsPage.advanced') }}
               </ion-text>
@@ -80,9 +76,7 @@
                 :title="$t('SettingsPage.minimizeToSystemTray.label')"
                 :description="$t('SettingsPage.minimizeToSystemTray.description')"
               >
-                <ion-toggle
-                  v-model="config.minimizeToTray"
-                />
+                <ion-toggle v-model="config.minimizeToTray" />
               </settings-option>
             </ion-list>
           </div>
@@ -97,18 +91,14 @@
                 :title="$t('SettingsPage.enableTelemetry.label')"
                 :description="$t('SettingsPage.enableTelemetry.description')"
               >
-                <ion-toggle
-                  v-model="config.enableTelemetry"
-                />
+                <ion-toggle v-model="config.enableTelemetry" />
               </settings-option>
               <!-- display unsync files -->
               <settings-option
                 :title="$t('SettingsPage.unsyncFiles.label')"
                 :description="$t('SettingsPage.unsyncFiles.description')"
               >
-                <ion-toggle
-                  v-model="config.unsyncFiles"
-                />
+                <ion-toggle v-model="config.unsyncFiles" />
               </settings-option>
               <!-- synchro wifi -->
               <settings-option
@@ -116,9 +106,7 @@
                 :title="$t('SettingsPage.meteredConnection.label')"
                 :description="$t('SettingsPage.meteredConnection.description')"
               >
-                <ion-toggle
-                  v-model="config.meteredConnection"
-                />
+                <ion-toggle v-model="config.meteredConnection" />
               </settings-option>
             </ion-list>
           </div>
@@ -128,22 +116,10 @@
   </ion-page>
 </template>
 
-<script setup lang = "ts">
-import {
-  IonPage,
-  IonList,
-  IonRadioGroup,
-  IonRadio,
-  IonText,
-  IonIcon,
-  IonToggle,
-  isPlatform,
-} from '@ionic/vue';
+<script setup lang="ts">
+import { IonPage, IonList, IonRadioGroup, IonRadio, IonText, IonIcon, IonToggle, isPlatform } from '@ionic/vue';
 
-import {
-  cog,
-  options,
-} from 'ionicons/icons';
+import { cog, options } from 'ionicons/icons';
 import { ref, inject, toRaw, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toggleDarkMode } from '@/states/darkMode';
@@ -161,19 +137,27 @@ let justLoaded = false;
 
 const languageOptions: MsDropdownOption[] = [
   {
-    key:  'en-US', label: t('SettingsPage.language.values.enUS'),
-  }, {
-    key: 'fr-FR', label: t('SettingsPage.language.values.frFR'),
+    key: 'en-US',
+    label: t('SettingsPage.language.values.enUS'),
+  },
+  {
+    key: 'fr-FR',
+    label: t('SettingsPage.language.values.frFR'),
   },
 ];
 
 const themeOptions: MsDropdownOption[] = [
   {
-    key:  'dark', label: t('SettingsPage.theme.values.dark'),
-  }, {
-    key: 'light', label: t('SettingsPage.theme.values.light'),
-  }, {
-    key: 'system', label: t('SettingsPage.theme.values.system'),
+    key: 'dark',
+    label: t('SettingsPage.theme.values.dark'),
+  },
+  {
+    key: 'light',
+    label: t('SettingsPage.theme.values.light'),
+  },
+  {
+    key: 'system',
+    label: t('SettingsPage.theme.values.system'),
   },
 ];
 
@@ -183,13 +167,17 @@ enum SettingsTabs {
 }
 const settingTab = ref(SettingsTabs.General);
 
-const configUnwatch = watch(config, async (newConfig) => {
-  // No point in saving a config we just loaded
-  if (!justLoaded) {
-    await storageManager.storeConfig(toRaw(newConfig));
-  }
-  justLoaded = false;
-}, { deep: true });
+const configUnwatch = watch(
+  config,
+  async (newConfig) => {
+    // No point in saving a config we just loaded
+    if (!justLoaded) {
+      await storageManager.storeConfig(toRaw(newConfig));
+    }
+    justLoaded = false;
+  },
+  { deep: true },
+);
 
 async function changeLang(selectedLang: string): Promise<void> {
   config.value.locale = selectedLang;
@@ -210,7 +198,7 @@ onMounted(async (): Promise<void> => {
   }
 });
 
-onUnmounted(async ():Promise<void> => {
+onUnmounted(async (): Promise<void> => {
   configUnwatch();
 });
 </script>
@@ -248,7 +236,7 @@ onUnmounted(async ():Promise<void> => {
         align-items: center;
         justify-content: center;
         padding: 0.75rem 0.5em;
-        gap: .5rem;
+        gap: 0.5rem;
       }
 
       &::part(container) {

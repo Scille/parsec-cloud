@@ -1,9 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="card"
-  >
+  <div class="card">
     <ion-icon
       class="icon"
       :icon="desktopOutline"
@@ -24,18 +22,12 @@
 </template>
 
 <script setup lang="ts">
-import {
-  desktopOutline,
-} from 'ionicons/icons';
-import {
-  IonChip,
-  IonIcon,
-  IonText,
-} from '@ionic/vue';
+import { desktopOutline } from 'ionicons/icons';
+import { IonChip, IonIcon, IonText } from '@ionic/vue';
 
 defineProps<{
-  label: string
-  isCurrent: boolean
+  label: string;
+  isCurrent: boolean;
 }>();
 </script>
 

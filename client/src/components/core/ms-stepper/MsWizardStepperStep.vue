@@ -1,17 +1,13 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="ms-wizard-stepper-step"
-  >
+  <div class="ms-wizard-stepper-step">
     <!-- default -->
     <div
       class="shape"
       :class="getClass(status)"
     >
-      <div
-        class="left-line"
-      />
+      <div class="left-line" />
       <div class="circle">
         <div
           v-if="status === 'done'"
@@ -28,9 +24,7 @@
           size="default"
         />
       </div>
-      <div
-        class="right-line"
-      />
+      <div class="right-line" />
     </div>
   </div>
 </template>
@@ -49,7 +43,7 @@ import { checkmark } from 'ionicons/icons';
 import { defineProps } from 'vue';
 
 defineProps<{
-  status: MsStepStatus
+  status: MsStepStatus;
 }>();
 
 function getClass(status: MsStepStatus): string {
@@ -74,7 +68,8 @@ function getClass(status: MsStepStatus): string {
   display: flex;
   flex-direction: row;
   align-items: center;
-  .left-line, .right-line {
+  .left-line,
+  .right-line {
     background: var(--parsec-color-light-primary-600);
     width: 53px; //change to rem
     height: 2px;
@@ -110,8 +105,8 @@ function getClass(status: MsStepStatus): string {
     background: var(--parsec-color-light-secondary-background);
     .inner-circle-active {
       background: var(--parsec-color-light-primary-600);
-      width: .75rem;
-      height: .5rem;
+      width: 0.75rem;
+      height: 0.5rem;
       border-radius: var(--parsec-radius-32);
       position: absolute;
     }

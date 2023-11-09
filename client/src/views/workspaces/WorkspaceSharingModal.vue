@@ -4,7 +4,7 @@
   <ion-page class="modal">
     <ms-modal
       :title="$t('WorkspaceSharing.title')"
-      :close-button="{visible: true}"
+      :close-button="{ visible: true }"
     >
       <!-- content -->
       <div>
@@ -16,7 +16,14 @@
         <ion-list class="user-list">
           <workspace-user-role
             :disabled="true"
-            :user="{id: 'FAKE', humanHandle: {label: $t('WorkspaceSharing.currentUserLabel'), email: ''}, profile: UserProfile.Outsider}"
+            :user="{
+              id: 'FAKE',
+              humanHandle: {
+                label: $t('WorkspaceSharing.currentUserLabel'),
+                email: '',
+              },
+              profile: UserProfile.Outsider,
+            }"
             :role="ownRole"
             :client-profile="ownProfile"
             :client-role="ownRole"
@@ -38,11 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonList,
-  modalController,
-} from '@ionic/vue';
+import { IonPage, IonList, modalController } from '@ionic/vue';
 import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, getClientProfile } from '@/parsec';
@@ -61,15 +64,15 @@ const { t } = useI18n();
 let ownProfile = UserProfile.Outsider;
 
 const props = defineProps<{
-  workspaceId: WorkspaceID,
-  ownRole: WorkspaceRole | null,
+  workspaceId: WorkspaceID;
+  ownRole: WorkspaceRole | null;
 }>();
 
 const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
 
 // Would prefere to use a computed instead of a watch but
 // Vue doesn't handle async in computed.
-const unwatchSearch = watch(search, async() => {
+const unwatchSearch = watch(search, async () => {
   await refreshSharingInfo(search.value);
 });
 
@@ -112,10 +115,12 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
       userRoles.value = result.value;
     }
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('WorkspaceSharing.listFailure'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('WorkspaceSharing.listFailure'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -132,21 +137,34 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspaceSharing.unshareSuccess', {user: user.humanHandle.label}),
-        level: NotificationLevel.Success,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspaceSharing.unshareSuccess', {
+            user: user.humanHandle.label,
+          }),
+          level: NotificationLevel.Success,
+        }),
+      );
     } else {
-      notificationCenter.showToast(new Notification({
-        message: t('WorkspaceSharing.updateRoleSuccess', {user: user.humanHandle.label, role: translateWorkspaceRole(t, role)}),
-        level: NotificationLevel.Success,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('WorkspaceSharing.updateRoleSuccess', {
+            user: user.humanHandle.label,
+            role: translateWorkspaceRole(t, role),
+          }),
+          level: NotificationLevel.Success,
+        }),
+      );
     }
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('WorkspaceSharing.updateRoleFailure', {user: user.humanHandle.label}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('WorkspaceSharing.updateRoleFailure', {
+          user: user.humanHandle.label,
+        }),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
   await refreshSharingInfo();
 }
@@ -168,6 +186,6 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
 
 <style scoped lang="scss">
 .user-list {
-  padding: .5rem;
+  padding: 0.5rem;
 }
 </style>

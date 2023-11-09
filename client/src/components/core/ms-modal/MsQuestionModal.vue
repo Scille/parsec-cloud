@@ -5,9 +5,17 @@
     :title="title"
     :subtitle="subtitle"
     :title-icon="helpCircle"
-    :close-button="{visible: false}"
-    :cancel-button="{disabled: false, label: $t('QuestionModal.no'), onClick: onNo}"
-    :confirm-button="{disabled: false, label: $t('QuestionModal.yes'), onClick: onYes}"
+    :close-button="{ visible: false }"
+    :cancel-button="{
+      disabled: false,
+      label: $t('QuestionModal.no'),
+      onClick: onNo,
+    }"
+    :confirm-button="{
+      disabled: false,
+      label: $t('QuestionModal.yes'),
+      onClick: onYes,
+    }"
     @on-enter-keyup="onYes"
   />
 </template>
@@ -62,13 +70,11 @@ export async function askQuestion(title: string, subtitle?: string, redisplayMai
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import {
-  helpCircle,
-} from 'ionicons/icons';
+import { helpCircle } from 'ionicons/icons';
 
 defineProps<{
-  title: string,
-  subtitle?: string,
+  title: string;
+  subtitle?: string;
 }>();
 
 async function onYes(): Promise<boolean> {
@@ -81,5 +87,4 @@ async function onNo(): Promise<boolean> {
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

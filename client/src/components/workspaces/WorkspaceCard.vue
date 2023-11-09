@@ -9,13 +9,9 @@
       class="card-option"
       @click.stop="$emit('menuClick', $event, workspace)"
     >
-      <ion-icon
-        :icon="ellipsisHorizontal"
-      />
+      <ion-icon :icon="ellipsisHorizontal" />
     </div>
-    <div
-      class="card-content"
-    >
+    <div class="card-content">
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="card-content-icons__item"
@@ -60,12 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  business,
-  ellipsisHorizontal,
-  cloudDone,
-  cloudOffline,
-} from 'ionicons/icons';
+import { business, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle, IonLabel } from '@ionic/vue';
 import { inject } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
@@ -73,13 +64,13 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { WorkspaceInfo } from '@/parsec';
 
 defineProps<{
-  workspace: WorkspaceInfo
+  workspace: WorkspaceInfo;
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: WorkspaceInfo): void
-  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void
-  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void
+  (e: 'click', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -111,15 +102,15 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
   top: 0;
   right: 1rem;
   font-size: 1.5rem;
-  padding: .75rem;
+  padding: 0.75rem;
 
-  &:hover{
+  &:hover {
     color: var(--parsec-color-light-primary-500);
   }
 }
 
 .card-content-icons {
-  margin:0 auto .5rem;
+  margin: 0 auto 0.5rem;
   position: relative;
   height: fit-content;
   display: flex;
@@ -167,7 +158,7 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 .card-content-last-update {
   color: var(--parsec-color-light-secondary-grey);
   text-align: center;
-  margin: .5rem 0 2rem;
+  margin: 0.5rem 0 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -177,14 +168,16 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 .workspace-info {
   display: flex;
   justify-content: space-between;
-  padding: .625rem 0;
+  padding: 0.625rem 0;
   align-items: center;
   color: var(--parsec-color-light-secondary-grey);
   border-top: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 /* No idea how to change the color of the ion-item */
-.card-content__title::part(native), .workspace-info::part(native), .card-content-last-update::part(native) {
+.card-content__title::part(native),
+.workspace-info::part(native),
+.card-content-last-update::part(native) {
   background-color: var(--parsec-color-light-secondary-background);
 }
 </style>

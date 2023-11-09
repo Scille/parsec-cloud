@@ -59,9 +59,7 @@
             </ion-text>
           </template>
         </ion-header>
-        <div
-          class="ms-modal-content inner-content"
-        >
+        <div class="ms-modal-content inner-content">
           <slot />
         </div>
         <ion-footer
@@ -104,47 +102,30 @@
 
 <script lang="ts">
 export interface MsModalConfig {
-  title?: string,
-  titleIcon?: string,
-  theme?: MsReportTheme,
-  subtitle?: string,
+  title?: string;
+  titleIcon?: string;
+  theme?: MsReportTheme;
+  subtitle?: string;
   closeButton?: {
-    visible: boolean,
-    onClick?: () => Promise<boolean>,
-  },
+    visible: boolean;
+    onClick?: () => Promise<boolean>;
+  };
   cancelButton?: {
-    disabled: boolean,
-    label: string,
-    onClick?: () => Promise<boolean>,
-  },
+    disabled: boolean;
+    label: string;
+    onClick?: () => Promise<boolean>;
+  };
   confirmButton?: {
-    disabled: boolean,
-    label: string,
-    onClick?: () => Promise<boolean>,
-  },
+    disabled: boolean;
+    label: string;
+    onClick?: () => Promise<boolean>;
+  };
 }
 </script>
 
 <script setup lang="ts">
-import {
-  IonText,
-  IonPage,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
-  IonButton,
-  modalController,
-  IonFooter,
-  IonIcon,
-} from '@ionic/vue';
-import {
-  close,
-  informationCircle,
-  checkmarkCircle,
-  warning,
-  closeCircle,
-} from 'ionicons/icons';
+import { IonText, IonPage, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton, modalController, IonFooter, IonIcon } from '@ionic/vue';
+import { close, informationCircle, checkmarkCircle, warning, closeCircle } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
 import { MsReportTheme, MsModalResult } from '@/components/core/ms-types';
 import MsReportText from '@/components/core/ms-text/MsReportText.vue';
@@ -152,7 +133,7 @@ import MsReportText from '@/components/core/ms-text/MsReportText.vue';
 const modal: Ref<HTMLDivElement | null> = ref(null);
 const props = defineProps<MsModalConfig>();
 defineEmits<{
-  (e: 'onEnterKeyup'): void
+  (e: 'onEnterKeyup'): void;
 }>();
 
 onMounted(() => {
@@ -172,7 +153,7 @@ async function confirm(): Promise<boolean> {
 
 function getTitleIcon(): string {
   if (props.theme) {
-    switch(props.theme) {
+    switch (props.theme) {
       case MsReportTheme.Info:
         return informationCircle;
       case MsReportTheme.Success:
@@ -197,9 +178,10 @@ function getTitleIcon(): string {
   position: absolute;
   top: 1rem;
   right: 1rem;
- }
+}
 
-.closeBtn-container, .closeBtn {
+.closeBtn-container,
+.closeBtn {
   margin: 0;
   --padding-start: 0;
   --padding-end: 0;
@@ -309,7 +291,10 @@ function getTitleIcon(): string {
   --ms-modal-next-button-background-hover-color: var(--parsec-color-light-danger-700);
 }
 
-.ms-info, .ms-success, .ms-warning, .ms-error {
+.ms-info,
+.ms-success,
+.ms-warning,
+.ms-error {
   .ms-modal-header {
     &__title {
       color: var(--ms-modal-title-text-color);

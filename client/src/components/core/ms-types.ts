@@ -13,9 +13,9 @@ export enum MsModalResult {
 }
 
 interface MsOption {
-  label: string,
-  key: any,
-  disabled?: boolean,
+  label: string;
+  key: any;
+  disabled?: boolean;
 }
 
 export function getMsOptionByKey(options: MsOption[], key: any): MsOption | undefined {
@@ -28,14 +28,14 @@ export type MsDropdownOption = MsOption;
 export type MsSorterOption = MsOption;
 
 export interface MsSorterLabels {
-  asc: string,
-  desc: string,
+  asc: string;
+  desc: string;
 }
 export interface MsDropdownChangeEvent {
-  option: MsDropdownOption,
+  option: MsDropdownOption;
 }
 
 export interface MsSorterChangeEvent {
-  option: MsSorterOption,
-  sortByAsc: boolean,
+  option: MsSorterOption;
+  sortByAsc: boolean;
 }

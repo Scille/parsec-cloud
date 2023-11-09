@@ -10,9 +10,7 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div
-      class="file-selected"
-    >
+    <div class="file-selected">
       <ion-checkbox
         aria-label=""
         class="checkbox"
@@ -88,13 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  ellipsisHorizontal,
-  cloudDone,
-  cloudOffline,
-  folder,
-  document,
-} from 'ionicons/icons';
+import { ellipsisHorizontal, cloudDone, cloudOffline, folder, document } from 'ionicons/icons';
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
@@ -105,14 +97,14 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
-  file: EntryStat
-  showCheckbox: boolean
+  file: EntryStat;
+  showCheckbox: boolean;
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, file: EntryStat): void
-  (e: 'menuClick', event: Event, file: EntryStat): void
-  (e: 'select', file: EntryStat, selected: boolean): void
+  (e: 'click', event: Event, file: EntryStat): void;
+  (e: 'menuClick', event: Event, file: EntryStat): void;
+  (e: 'select', file: EntryStat, selected: boolean): void;
 }>();
 
 defineExpose({
@@ -150,13 +142,17 @@ function isFileSynced(): boolean {
     --background-hover-opacity: 1;
   }
 
-  &:hover, &.selected {
-    .cell, .options-button__icon {
+  &:hover,
+  &.selected {
+    .cell,
+    .options-button__icon {
       color: var(--parsec-color-light-secondary-text);
     }
   }
 
-  &:focus, &:active, &.selected {
+  &:focus,
+  &:active,
+  &.selected {
     --background-focused: var(--parsec-color-light-primary-100);
     --background: var(--parsec-color-light-primary-100);
     --background-focused-opacity: 1;
@@ -164,7 +160,7 @@ function isFileSynced(): boolean {
   }
 }
 
-.file-list-item>[class^="file-"] {
+.file-list-item > [class^='file-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;
@@ -177,14 +173,14 @@ function isFileSynced(): boolean {
 }
 
 .file-name {
-  padding: .75rem 1rem;
+  padding: 0.75rem 1rem;
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
 
   &__icons {
-  position: relative;
-  padding: 5px;
+    position: relative;
+    padding: 5px;
 
     .main-icon {
       color: var(--parsec-color-light-primary-600);
@@ -256,7 +252,8 @@ function isFileSynced(): boolean {
   }
 }
 
-.label-size, .label-last-update {
+.label-size,
+.label-last-update {
   color: var(--parsec-color-light-secondary-grey);
 }
 </style>

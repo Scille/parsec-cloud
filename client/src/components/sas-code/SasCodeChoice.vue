@@ -43,9 +43,7 @@
       </ion-col>
     </ion-row>
     <ion-row>
-      <ion-col
-        class="container-clear"
-      >
+      <ion-col class="container-clear">
         <ion-button
           class="button-clear"
           fill="clear"
@@ -59,19 +57,14 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonGrid,
-  IonRow,
-  IonCol,
-  IonButton,
-} from '@ionic/vue';
+import { IonGrid, IonRow, IonCol, IonButton } from '@ionic/vue';
 
 defineProps<{
-  choices: string[]
+  choices: string[];
 }>();
 
 defineEmits<{
-  (e: 'select', value: string | null): void
+  (e: 'select', value: string | null): void;
 }>();
 </script>
 
@@ -84,7 +77,7 @@ defineEmits<{
   width: 8em;
   height: 4em;
   background-color: var(--parsec-color-light-primary-30);
-  margin: .75rem;
+  margin: 0.75rem;
   border-radius: var(--parsec-radius-4);
 
   &::part(native) {

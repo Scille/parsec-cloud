@@ -8,18 +8,14 @@
   >
     <!-- invitation email -->
     <div class="invitation-email">
-      <ion-label
-        class="cell invitation-label"
-      >
+      <ion-label class="cell invitation-label">
         {{ invitation.claimerEmail }}
       </ion-label>
     </div>
 
     <!-- invitation date -->
     <div class="invitation-date">
-      <ion-label
-        class="cell invitation-label"
-      >
+      <ion-label class="cell invitation-label">
         <span>{{ timeSince(invitation.createdOn, '--', 'short') }}</span>
       </ion-label>
     </div>
@@ -61,13 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonLabel,
-  IonButtons,
-  IonButton,
-  IonItem,
-  IonText,
-} from '@ionic/vue';
+import { IonLabel, IonButtons, IonButton, IonItem, IonText } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
 import { UserInvitation } from '@/parsec';
@@ -77,12 +67,12 @@ import { translateInvitationStatus } from '@/common/translations';
 import { writeTextToClipboard } from '@/common/clipboard';
 
 defineProps<{
-  invitation: UserInvitation,
+  invitation: UserInvitation;
 }>();
 
 defineEmits<{
-  (e: 'rejectUser', invitation: UserInvitation) : void,
-  (e: 'greetUser', invitation: UserInvitation) : void,
+  (e: 'rejectUser', invitation: UserInvitation): void;
+  (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -94,21 +84,25 @@ const { t } = useI18n();
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
   if (result) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.invitation.linkCopiedToClipboard'),
-      level: NotificationLevel.Info,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.invitation.linkCopiedToClipboard'),
+        level: NotificationLevel.Info,
+      }),
+    );
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.invitation.linkNotCopiedToClipboard'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.invitation.linkNotCopiedToClipboard'),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 </script>
 
 <style scoped lang="scss">
-.invitation-list-item>[class^="invitation-"] {
+.invitation-list-item > [class^='invitation-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;
@@ -125,7 +119,8 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
     --inner-padding-end: 0px;
   }
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     --background: var(--parsec-color-light-primary-30);
     color: var(--parsec-color-light-secondary-text);
 

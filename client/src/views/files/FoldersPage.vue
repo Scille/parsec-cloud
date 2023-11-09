@@ -3,9 +3,7 @@
 <template>
   <ion-page>
     <ion-content :fullscreen="true">
-      <ms-action-bar
-        id="folders-ms-action-bar"
-      >
+      <ms-action-bar id="folders-ms-action-bar">
         <div v-if="selectedFilesCount === 0">
           <ms-action-bar-button
             id="button-new-folder"
@@ -147,8 +145,7 @@
             class="text title-h5"
             v-if="selectedFilesCount === 0"
           >
-            {{ $t('FoldersPage.itemCount', { count: children.length }, children.length)
-            }}
+            {{ $t('FoldersPage.itemCount', { count: children.length }, children.length) }}
           </ion-text>
           <ion-text
             class="text title-h5"
@@ -189,16 +186,7 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-import {
-  folderOpen,
-  document,
-  pencil,
-  link,
-  arrowRedo,
-  trashBin,
-  copy,
-  informationCircle,
-} from 'ionicons/icons';
+import { folderOpen, document, pencil, link, arrowRedo, trashBin, copy, informationCircle } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { computed, ref, Ref, inject, watch, onUnmounted, onMounted } from 'vue';
 import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
@@ -225,7 +213,7 @@ import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/commo
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
-const fileItemRefs: Ref<typeof FileListItem[]> = ref([]);
+const fileItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const allFilesSelected = ref(false);
 const currentRoute = useRoute();
 const unwatchRoute = watch(currentRoute, async (newRoute) => {
@@ -243,7 +231,7 @@ const workspaceHandle = computed(() => {
 const workspaceId = computed(() => {
   return currentRoute.query.workspaceId as WorkspaceID;
 });
-const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null) ;
+const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const children: Ref<Array<parsec.EntryStat>> = ref([]);
 const selectedFilesCount = computed(() => {
   const count = fileItemRefs.value.filter((item) => item.isSelected).length;
@@ -284,10 +272,14 @@ async function listFolder(): Promise<void> {
       }
     }
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.errors.listFailed', {path: currentPath.value}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('FoldersPage.errors.listFailed', {
+          path: currentPath.value,
+        }),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -308,7 +300,7 @@ function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
 function onFileClick(_event: Event, file: parsec.EntryStat): void {
   if (!file.isFile()) {
     const newPath = pathJoin(currentPath.value, file.name);
-    routerNavigateTo('folder', {workspaceHandle: workspaceHandle.value}, {path: newPath, workspaceId: currentRoute.query.workspaceId});
+    routerNavigateTo('folder', { workspaceHandle: workspaceHandle.value }, { path: newPath, workspaceId: currentRoute.query.workspaceId });
   }
 }
 
@@ -328,10 +320,14 @@ async function createFolder(): Promise<void> {
   const folderPath = pathJoin(currentPath.value, folderName);
   const result = await parsec.createFolder(folderPath);
   if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.errors.createFolderFailed', {name: folderName}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('FoldersPage.errors.createFolderFailed', {
+          name: folderName,
+        }),
+        level: NotificationLevel.Error,
+      }),
+    );
   } else {
     console.log(`New folder ${folderName} created`);
   }
@@ -373,12 +369,10 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   } else if (entries.length === 1) {
     const entry = entries[0];
-    const title = entry.isFile() ?
-      t('FoldersPage.deleteOneFileQuestionTitle') :
-      t('FoldersPage.deleteOneFolderQuestionTitle');
-    const subtitle = entry.isFile() ?
-      t('FoldersPage.deleteOneFileQuestionSubtitle', {name: entry.name}) :
-      t('FoldersPage.deleteOneFolderQuestionSubtitle', {name: entry.name});
+    const title = entry.isFile() ? t('FoldersPage.deleteOneFileQuestionTitle') : t('FoldersPage.deleteOneFolderQuestionTitle');
+    const subtitle = entry.isFile()
+      ? t('FoldersPage.deleteOneFileQuestionSubtitle', { name: entry.name })
+      : t('FoldersPage.deleteOneFolderQuestionSubtitle', { name: entry.name });
     const answer = await askQuestion(title, subtitle);
 
     if (answer === Answer.No) {
@@ -387,17 +381,21 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const path = pathJoin(currentPath.value, entry.name);
     const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
     if (!result.ok) {
-      notificationCenter.showToast(new Notification({
-        message: t('FoldersPage.errors.deleteFailed', {name: entry.name}),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('FoldersPage.errors.deleteFailed', { name: entry.name }),
+          level: NotificationLevel.Error,
+        }),
+      );
     } else {
       console.log(`File ${entry.name} deleted`);
     }
   } else {
     const answer = await askQuestion(
       t('FoldersPage.deleteMultipleQuestionTitle'),
-      t('FoldersPage.deleteMultipleQuestionSubtitle', {count: entries.length}),
+      t('FoldersPage.deleteMultipleQuestionSubtitle', {
+        count: entries.length,
+      }),
     );
     if (answer === Answer.No) {
       return;
@@ -411,12 +409,15 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       }
     }
     if (errorsEncountered > 0) {
-      notificationCenter.showToast(new Notification({
-        message: errorsEncountered === entries.length ?
-          t('FoldersPage.errors.deleteMultipleAllFailed') :
-          t('FoldersPage.errors.deleteMultipleSomeFailed'),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message:
+            errorsEncountered === entries.length
+              ? t('FoldersPage.errors.deleteMultipleAllFailed')
+              : t('FoldersPage.errors.deleteMultipleSomeFailed'),
+          level: NotificationLevel.Error,
+        }),
+      );
     } else {
       console.log(`${entries.length} entries deleted`);
     }
@@ -445,10 +446,12 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = pathJoin(currentPath.value, entry.name);
   const result = await parsec.rename(filePath, newName);
   if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.errors.renameFailed', {name: entry.name}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('FoldersPage.errors.renameFailed', { name: entry.name }),
+        level: NotificationLevel.Error,
+      }),
+    );
   } else {
     console.log(`File ${entry.name} renamed to ${newName}`);
   }
@@ -464,21 +467,27 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   const result = await getPathLink(workspaceId.value, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationCenter.showToast(new Notification({
-        message: t('FoldersPage.linkNotCopiedToClipboard'),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('FoldersPage.linkNotCopiedToClipboard'),
+          level: NotificationLevel.Error,
+        }),
+      );
     } else {
-      notificationCenter.showToast(new Notification({
-        message: t('FoldersPage.linkCopiedToClipboard'),
-        level: NotificationLevel.Info,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          message: t('FoldersPage.linkCopiedToClipboard'),
+          level: NotificationLevel.Info,
+        }),
+      );
     }
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('FoldersPage.getLinkError', {reason: result.error.tag}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('FoldersPage.getLinkError', { reason: result.error.tag }),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
 }
 
@@ -523,41 +532,42 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   if (isWeb()) {
-    notificationCenter.showModal(new Notification({
-      message: t('FoldersPage.open.unavailableOnWeb'),
-      level: NotificationLevel.Warning,
-    }));
+    notificationCenter.showModal(
+      new Notification({
+        message: t('FoldersPage.open.unavailableOnWeb'),
+        level: NotificationLevel.Warning,
+      }),
+    );
     return;
   }
   const entry = entries[0];
   const result = await parsec.getAbsolutePath(workspaceHandle.value, entry);
 
   if (!result.ok) {
-    notificationCenter.showModal(new Notification({
-      title: entry.isFile() ?
-        t('FoldersPage.open.fileFailedTitle') :
-        t('FoldersPage.open.folderFailedTitle'),
-      message: entry.isFile() ?
-        t('FoldersPage.open.fileFailedSubtitle', {name: entry.name}) :
-        t('FoldersPage.open.folderFailedSubtitle', {name: entry.name}),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showModal(
+      new Notification({
+        title: entry.isFile() ? t('FoldersPage.open.fileFailedTitle') : t('FoldersPage.open.folderFailedTitle'),
+        message: entry.isFile()
+          ? t('FoldersPage.open.fileFailedSubtitle', { name: entry.name })
+          : t('FoldersPage.open.folderFailedSubtitle', { name: entry.name }),
+        level: NotificationLevel.Error,
+      }),
+    );
   } else {
     window.electronAPI.openFile(result.value);
   }
 }
 
 async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promise<void> {
-  const popover = await popoverController
-    .create({
-      component: FileContextMenu,
-      cssClass: 'file-context-menu',
-      event: event,
-      translucent: true,
-      showBackdrop: false,
-      dismissOnSelect: true,
-      reference: 'event',
-    });
+  const popover = await popoverController.create({
+    component: FileContextMenu,
+    cssClass: 'file-context-menu',
+    event: event,
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    reference: 'event',
+  });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
@@ -602,7 +612,7 @@ async function resetSelection(): Promise<void> {
   padding-inline-start: 0;
 
   &__label {
-    padding: .75rem 1rem;
+    padding: 0.75rem 1rem;
   }
   .label-selected {
     min-width: 4rem;

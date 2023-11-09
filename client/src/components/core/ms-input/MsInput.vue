@@ -1,9 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="input-container"
-  >
+  <div class="input-container">
     <span
       id="label"
       class="form-label"
@@ -13,15 +11,18 @@
 
     <ion-item
       class="input"
-      :class="{'form-input-disabled': $props.disabled}"
+      :class="{ 'form-input-disabled': $props.disabled }"
     >
       <ion-input
         class="form-input"
         :autofocus="true"
         :placeholder="$props.placeholder"
         :value="modelValue"
-        @ion-input="$emit('update:modelValue', $event.detail.value || ''); $emit('change', $event.detail.value || '')"
-        @keyup.enter="$emit('onEnterKeyup', $event.target.value);"
+        @ion-input="
+          $emit('update:modelValue', $event.detail.value || '');
+          $emit('change', $event.detail.value || '');
+        "
+        @keyup.enter="$emit('onEnterKeyup', $event.target.value)"
         :disabled="$props.disabled"
       />
     </ion-item>
@@ -39,21 +40,21 @@
 </template>
 
 <script setup lang="ts">
-import {IonItem, IonInput } from '@ionic/vue';
+import { IonItem, IonInput } from '@ionic/vue';
 
 defineProps<{
-  label?: string
-  placeholder?: string
-  errorMessage?: string
-  errorIcon?: string
-  modelValue?: string
-  disabled?: boolean
+  label?: string;
+  placeholder?: string;
+  errorMessage?: string;
+  errorIcon?: string;
+  modelValue?: string;
+  disabled?: boolean;
 }>();
 
 defineEmits<{
-  (e: 'update:modelValue', value: string): void
-  (e: 'change', value: string): void
-  (e: 'onEnterKeyup', value: string): void
+  (e: 'update:modelValue', value: string): void;
+  (e: 'change', value: string): void;
+  (e: 'onEnterKeyup', value: string): void;
 }>();
 </script>
 
@@ -64,9 +65,9 @@ defineEmits<{
   padding: var(--offset);
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: 0.5rem;
 
-  .form-label{
+  .form-label {
     color: var(--parsec-color-light-primary-700);
   }
 

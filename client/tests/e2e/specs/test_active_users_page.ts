@@ -41,8 +41,14 @@ describe('Check active users page', () => {
   it('Tests selection', () => {
     function checkChecked(checked: boolean): void {
       for (let i = 1; i < 3; i++) {
-        cy.get('@userItems').eq(i).find('ion-checkbox').should(checked ? 'be.visible' : 'not.be.visible');
-        cy.get('@userItems').eq(i).find('ion-checkbox').should(checked ? 'have.class' : 'not.have.class', 'checkbox-checked');
+        cy.get('@userItems')
+          .eq(i)
+          .find('ion-checkbox')
+          .should(checked ? 'be.visible' : 'not.be.visible');
+        cy.get('@userItems')
+          .eq(i)
+          .find('ion-checkbox')
+          .should(checked ? 'have.class' : 'not.have.class', 'checkbox-checked');
       }
     }
 

@@ -6,10 +6,8 @@
       src="@/assets/images/password.svg"
       alt="password-image"
       class="info-password__img"
-    >
-    <ion-text
-      class="subtitles-sm info-password__text"
-    >
+    />
+    <ion-text class="subtitles-sm info-password__text">
       {{ $t('Password.passwordInfo') }}
     </ion-text>
   </div>
@@ -48,15 +46,11 @@
         <div class="bar-item" />
         <div class="bar-item" />
       </div>
-      <ion-text
-        class="subtitles-sm password-level__text"
-      >
+      <ion-text class="subtitles-sm password-level__text">
         {{ getPasswordStrengthText($t, passwordStrength) }}
       </ion-text>
     </div>
-    <ion-text
-      class="subtitles-sm password-criteria"
-    >
+    <ion-text class="subtitles-sm password-criteria">
       {{ $t('Password.passwordCriteria') }}
     </ion-text>
   </div>
@@ -73,7 +67,7 @@ const passwordConfirm = ref('');
 const passwordStrength = ref(PasswordStrength.None);
 
 defineEmits<{
-  (e: 'onEnterKeyup', value: string): void
+  (e: 'onEnterKeyup', value: string): void;
 }>();
 
 defineExpose({
@@ -89,7 +83,7 @@ function onPasswordChange(): void {
   passwordStrength.value = getPasswordStrength(password.value);
 }
 
-function getPasswordLevelClass() : string {
+function getPasswordLevelClass(): string {
   if (passwordStrength.value === PasswordStrength.Low) {
     return 'password-level-low';
   } else if (passwordStrength.value === PasswordStrength.Medium) {
@@ -106,16 +100,16 @@ function getPasswordLevelClass() : string {
   background: var(--parsec-color-light-primary-30);
   display: flex;
   align-items: center;
-  gap: .625rem;
+  gap: 0.625rem;
   width: 100%;
-  padding: .625rem;
+  padding: 0.625rem;
   border-radius: var(--parsec-radius-6);
-  margin-bottom: .5rem;
+  margin-bottom: 0.5rem;
 
   &__img {
     width: 3.25rem;
     height: 3.25rem;
-    margin-right: .5rem;
+    margin-right: 0.5rem;
   }
 
   &__text {
@@ -134,7 +128,7 @@ function getPasswordLevelClass() : string {
   .form-helperText {
     display: flex;
     flex-direction: column;
-    margin-top: .5rem;
+    margin-top: 0.5rem;
     color: var(--parsec-color-light-danger-500);
   }
 }
@@ -142,13 +136,13 @@ function getPasswordLevelClass() : string {
 .password-level-container {
   display: flex;
   flex-direction: column;
-  gap: .5rem;
+  gap: 0.5rem;
   max-width: 35rem;
 
   .password-level {
-  display: flex;
-  flex-direction: column;
-  gap: .5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 
     &__text {
       color: var(--parsec-color-light-secondary-text);
@@ -156,11 +150,11 @@ function getPasswordLevelClass() : string {
 
     &-bar {
       display: flex;
-      gap: .5rem;
+      gap: 0.5rem;
 
       .bar-item {
         width: 3rem;
-        height: .375rem;
+        height: 0.375rem;
         border-radius: var(--parsec-radius-6);
         background: var(--parsec-color-light-primary-50);
         position: relative;
@@ -172,7 +166,7 @@ function getPasswordLevelClass() : string {
         color: var(--parsec-color-light-danger-500);
       }
 
-      .bar-item:nth-child(-n+1) {
+      .bar-item:nth-child(-n + 1) {
         background: var(--parsec-color-light-danger-500);
       }
     }
@@ -182,7 +176,7 @@ function getPasswordLevelClass() : string {
         color: var(--parsec-color-light-warning-500);
       }
 
-      .bar-item:nth-child(-n+2) {
+      .bar-item:nth-child(-n + 2) {
         background: var(--parsec-color-light-warning-500);
       }
     }
@@ -192,7 +186,7 @@ function getPasswordLevelClass() : string {
         color: var(--parsec-color-light-success-500);
       }
 
-      .bar-item:nth-child(-n+3) {
+      .bar-item:nth-child(-n + 3) {
         background: var(--parsec-color-light-success-500);
       }
     }

@@ -15,34 +15,29 @@ enum ImportState {
 }
 
 interface FileProgressStateData {
-  importData: ImportData
-  progress: number,
+  importData: ImportData;
+  progress: number;
 }
 
 interface FileImportedStateData {
-  importData: ImportData
+  importData: ImportData;
 }
 
 interface FileAddedStateData {
-  importData: ImportData
+  importData: ImportData;
 }
 
 interface CreateFailedStateData {
-  importData: ImportData,
-  error: string,
+  importData: ImportData;
+  error: string;
 }
 
 interface WriteErrorStateData {
-  importData: ImportData,
-  error: string,
+  importData: ImportData;
+  error: string;
 }
 
-export type StateData =
-  FileProgressStateData |
-  FileImportedStateData |
-  FileAddedStateData |
-  CreateFailedStateData |
-  WriteErrorStateData;
+export type StateData = FileProgressStateData | FileImportedStateData | FileAddedStateData | CreateFailedStateData | WriteErrorStateData;
 
 type FileImportCallback = (state: ImportState, data: StateData) => Promise<void>;
 type ImportID = string;
@@ -87,26 +82,30 @@ class ImportManager {
 
   async importFile(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath): Promise<void> {
     const newData = new ImportData(workspaceHandle, workspaceId, file, path);
-    await this.fileMutex.runExclusive(async () => {
-      console.log(`Adding file ${file.name} to import to ${path}`);
-      this.importData.unshift(newData);
-    }).then(() => {
-      this.sendState(ImportState.FileAdded, {importData: newData});
-    });
+    await this.fileMutex
+      .runExclusive(async () => {
+        console.log(`Adding file ${file.name} to import to ${path}`);
+        this.importData.unshift(newData);
+      })
+      .then(() => {
+        this.sendState(ImportState.FileAdded, { importData: newData });
+      });
   }
 
   async cancelImport(id: ImportID): Promise<void> {
-    await this.fileMutex.runExclusive(async () => {
-      const index = this.importData.findIndex((item) => item.id === id);
-      if (index !== -1) {
-        console.log(`Canceling import of ${this.importData[index].file.name}`);
-        return this.importData.splice(index, 1);
-      }
-    }).then((result) => {
-      if (result && result.length > 0) {
-        this.sendState(ImportState.Cancelled, {importData: result[0]});
-      }
-    });
+    await this.fileMutex
+      .runExclusive(async () => {
+        const index = this.importData.findIndex((item) => item.id === id);
+        if (index !== -1) {
+          console.log(`Canceling import of ${this.importData[index].file.name}`);
+          return this.importData.splice(index, 1);
+        }
+      })
+      .then((result) => {
+        if (result && result.length > 0) {
+          this.sendState(ImportState.Cancelled, { importData: result[0] });
+        }
+      });
   }
 
   async registerCallback(cb: FileImportCallback): Promise<string> {
@@ -154,7 +153,10 @@ class ImportManager {
     const result = await createFile(data.path);
     if (!result.ok) {
       console.log(`Failed to create file ${data.path} (reason: ${result.error.tag}), cancelling...`);
-      this.sendState(ImportState.CreateFailed, {importData: data, error: result.error.tag});
+      this.sendState(ImportState.CreateFailed, {
+        importData: data,
+        error: result.error.tag,
+      });
       return;
     }
     const fd = await this.mockOpen(data.path, 'w+');
@@ -171,11 +173,17 @@ class ImportManager {
       }
       await this.mockWrite(fd, buffer.value);
       writtenData += buffer.value.byteLength;
-      this.sendState(ImportState.FileProgress, {importData: data, progress: (writtenData / data.file.size ?? 1) * 100});
+      this.sendState(ImportState.FileProgress, {
+        importData: data,
+        progress: (writtenData / data.file.size ?? 1) * 100,
+      });
     }
     await this.mockClose(fd);
-    this.sendState(ImportState.FileProgress, {importData: data, progress: 100});
-    this.sendState(ImportState.FileImported, {importData: data});
+    this.sendState(ImportState.FileProgress, {
+      importData: data,
+      progress: 100,
+    });
+    this.sendState(ImportState.FileImported, { importData: data });
   }
 
   async stop(): Promise<void> {
@@ -203,7 +211,10 @@ class ImportManager {
 
       if (elem) {
         console.log(`Importing file ${elem.file.name} to ${elem.path}`);
-        this.sendState(ImportState.FileProgress,  {importData: elem, progress: 0});
+        this.sendState(ImportState.FileProgress, {
+          importData: elem,
+          progress: 0,
+        });
         await this.doImport(elem);
       } else {
         await wait(500);

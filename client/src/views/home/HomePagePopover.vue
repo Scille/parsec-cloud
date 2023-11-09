@@ -48,21 +48,11 @@ export enum HomePageAction {
 
 <script setup lang="ts">
 import { MsModalResult } from '@/components/core/ms-types';
-import {
-  IonList,
-  IonItem,
-  IonIcon,
-  IonLabel,
-  IonText,
-  popoverController,
-} from '@ionic/vue';
-import {
-  addCircle,
-  mail,
-} from 'ionicons/icons';
+import { IonList, IonItem, IonIcon, IonLabel, IonText, popoverController } from '@ionic/vue';
+import { addCircle, mail } from 'ionicons/icons';
 
 async function onClick(action: HomePageAction): Promise<boolean> {
-  return await popoverController.dismiss({action: action}, MsModalResult.Confirm);
+  return await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
 }
 </script>
 

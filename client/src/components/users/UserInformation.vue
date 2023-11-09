@@ -71,8 +71,8 @@ const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
 
 defineEmits<{
-  (e: 'fieldUpdate'): void
-  (e: 'onEnterKeyup', value: string): void
+  (e: 'fieldUpdate'): void;
+  (e: 'onEnterKeyup', value: string): void;
 }>();
 
 defineExpose({
@@ -83,11 +83,12 @@ defineExpose({
 });
 
 async function areFieldsCorrect(): Promise<boolean> {
-  return await emailValidator(email.value) === Validity.Valid &&
-    await userNameValidator(fullName.value) === Validity.Valid &&
-    await deviceNameValidator(deviceName.value) === Validity.Valid;
+  return (
+    (await emailValidator(email.value)) === Validity.Valid &&
+    (await userNameValidator(fullName.value)) === Validity.Valid &&
+    (await deviceNameValidator(deviceName.value)) === Validity.Valid
+  );
 }
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

@@ -1,8 +1,9 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
- /* **** Parsec button **** */
+/* **** Parsec button **** */
 
-ion-button, .sc-ion-buttons-md-s ion-button:not(.button-round) {
+ion-button,
+.sc-ion-buttons-md-s ion-button:not(.button-round) {
   text-transform: none;
   --border-radius: var(--parsec-radius-6);
   --box-shadow: none;
@@ -15,9 +16,9 @@ ion-button, .sc-ion-buttons-md-s ion-button:not(.button-round) {
 
 /* button size */
 ion-button.button-large {
-  --padding-top: 1rem ;
+  --padding-top: 1rem;
   --padding-end: 1.25rem;
-  --padding-bottom: 1rem ;
+  --padding-bottom: 1rem;
   --padding-start: 1.25rem;
   font-size: 1.12rem;
   line-height: 22px;
@@ -67,7 +68,8 @@ ion-button.button-outline:hover {
 }
 
 /* ghost */
-.sc-ion-buttons-md-s .button-clear, .button-clear {
+.sc-ion-buttons-md-s .button-clear,
+.button-clear {
   --color: var(--parsec-color-light-primary-500);
   --color-hover: var(--parsec-color-light-primary-700);
   --background-hover: var(--parsec-color-light-primary-50);
@@ -79,7 +81,7 @@ ion-button.button-solid {
   --background: var(--parsec-color-light-primary-100);
 }
 
-.danger{
+.danger {
   color: var(--parsec-color-light-danger-500);
   --background-hover: var(--parsec-color-light-danger-100) !important;
 }

@@ -10,21 +10,52 @@ import { WorkspaceRole, WorkspaceInfo, UserProfile } from '@/parsec';
 mockI18n();
 
 describe('Workspace List Item', () => {
-
   let wrapper: VueWrapper;
 
   const WORKSPACE: WorkspaceInfo = {
     id: 'id1',
     name: 'My Workspace',
     sharing: [
-      // cspell:disable-next-line
-      [{id: 'auser', humanHandle: {label: 'AUser', email: 'usera@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Contributor],
-      // cspell:disable-next-line
-      [{id: 'buser', humanHandle: {label: 'BUser', email: 'userb@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Reader],
-      // cspell:disable-next-line
-      [{id: 'cuser', humanHandle: {label: 'CUser', email: 'userc@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Owner],
-      // cspell:disable-next-line
-      [{id: 'duser', humanHandle: {label: 'DUser', email: 'userd@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Manager],
+      [
+        {
+          // cspell:disable-next-line
+          id: 'auser',
+          // cspell:disable-next-line
+          humanHandle: { label: 'AUser', email: 'usera@gmail.com' },
+          profile: UserProfile.Standard,
+        },
+        WorkspaceRole.Contributor,
+      ],
+      [
+        {
+          // cspell:disable-next-line
+          id: 'buser',
+          // cspell:disable-next-line
+          humanHandle: { label: 'BUser', email: 'userb@gmail.com' },
+          profile: UserProfile.Standard,
+        },
+        WorkspaceRole.Reader,
+      ],
+      [
+        {
+          // cspell:disable-next-line
+          id: 'cuser',
+          // cspell:disable-next-line
+          humanHandle: { label: 'CUser', email: 'userc@gmail.com' },
+          profile: UserProfile.Standard,
+        },
+        WorkspaceRole.Owner,
+      ],
+      [
+        {
+          // cspell:disable-next-line
+          id: 'duser',
+          // cspell:disable-next-line
+          humanHandle: { label: 'DUser', email: 'userd@gmail.com' },
+          profile: UserProfile.Standard,
+        },
+        WorkspaceRole.Manager,
+      ],
     ],
     size: 60_817_408,
     selfCurrentRole: WorkspaceRole.Reader,

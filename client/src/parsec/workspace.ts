@@ -51,18 +51,33 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         }
         returnValue.push(info);
       }
-      return {ok: true, value: returnValue};
+      return { ok: true, value: returnValue };
     } else {
       return result;
     }
   } else {
-    const value: Array<WorkspaceInfo> = [{
-      'id': '1', 'name': 'Trademeet', 'selfCurrentRole': WorkspaceRole.Owner, size: 934_583, lastUpdated: DateTime.now().minus(2000),
-      availableOffline: false, isStarted: false, sharing: [],
-    }, {
-      'id': '2', 'name': 'The Copper Coronet', 'selfCurrentRole': WorkspaceRole.Manager, size: 3_489_534_274, lastUpdated: DateTime.now(),
-      availableOffline: false, isStarted: false, sharing: [],
-    }];
+    const value: Array<WorkspaceInfo> = [
+      {
+        id: '1',
+        name: 'Trademeet',
+        selfCurrentRole: WorkspaceRole.Owner,
+        size: 934_583,
+        lastUpdated: DateTime.now().minus(2000),
+        availableOffline: false,
+        isStarted: false,
+        sharing: [],
+      },
+      {
+        id: '2',
+        name: 'The Copper Coronet',
+        selfCurrentRole: WorkspaceRole.Manager,
+        size: 3_489_534_274,
+        lastUpdated: DateTime.now(),
+        availableOffline: false,
+        isStarted: false,
+        sharing: [],
+      },
+    ];
 
     for (let i = 0; i < value.length; i++) {
       const result = await getWorkspaceSharing(value[i].id, false);
@@ -71,7 +86,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
       }
     }
 
-    return {ok: true, value: value};
+    return { ok: true, value: value };
   }
 }
 
@@ -98,23 +113,26 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
         return false;
       });
       if (workspace) {
-        return {ok: true, value: workspace.name};
+        return { ok: true, value: workspace.name };
       }
     }
-    return {ok: false, error: {tag: GetWorkspaceNameErrorTag.NotFound}};
+    return { ok: false, error: { tag: GetWorkspaceNameErrorTag.NotFound } };
   } else {
     if (workspaceId === '1') {
-      return {ok: true, value: 'Trademeet'};
+      return { ok: true, value: 'Trademeet' };
     } else if (workspaceId === '2') {
-      return {ok: true, value: 'The Copper Coronet'};
+      return { ok: true, value: 'The Copper Coronet' };
     } else {
-      return {ok: true, value: 'My Workspace'};
+      return { ok: true, value: 'My Workspace' };
     }
   }
 }
 
-export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUsers = false, includeSelf = false):
-  Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
+export async function getWorkspaceSharing(
+  workspaceId: WorkspaceID,
+  includeAllUsers = false,
+  includeSelf = false,
+): Promise<Result<Array<[UserTuple, WorkspaceRole | null]>, ClientListWorkspaceUsersError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -134,7 +152,11 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
       for (const sharing of result.value) {
         if (includeSelf || (!includeSelf && selfId !== sharing.userId)) {
           value.push([
-            {id: sharing.userId, humanHandle: sharing.humanHandle, profile: sharing.currentProfile},
+            {
+              id: sharing.userId,
+              humanHandle: sharing.humanHandle,
+              profile: sharing.currentProfile,
+            },
             sharing.currentRole,
           ]);
         }
@@ -145,49 +167,80 @@ export async function getWorkspaceSharing(workspaceId: WorkspaceID, includeAllUs
           for (const user of usersResult.value) {
             if (!value.find((item) => item[0].id === user.id) && (includeSelf || (!includeSelf && user.id !== selfId))) {
               value.push([
-                {id: user.id, humanHandle: user.humanHandle, profile: user.currentProfile},
+                {
+                  id: user.id,
+                  humanHandle: user.humanHandle,
+                  profile: user.currentProfile,
+                },
                 null,
               ]);
             }
           }
         }
       }
-      return {ok: true, value: value};
+      return { ok: true, value: value };
     }
-    return {ok: false, error: result.error};
+    return { ok: false, error: result.error };
   } else {
-    const value: Array<[UserTuple, WorkspaceRole | null]> = [[
-      // cspell:disable-next-line
-      {id: '1', humanHandle: {label: 'Korgan Bloodaxe', email: 'korgan@gmail.com'}, profile: UserProfile.Standard}, WorkspaceRole.Reader,
-    ], [
-      // cspell:disable-next-line
-      {id: '2', humanHandle: {label: 'Cernd', email: 'cernd@gmail.com'}, profile: UserProfile.Admin}, WorkspaceRole.Contributor,
-    ]];
+    const value: Array<[UserTuple, WorkspaceRole | null]> = [
+      [
+        {
+          id: '1',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Korgan Bloodaxe', email: 'korgan@gmail.com' },
+          profile: UserProfile.Standard,
+        },
+        WorkspaceRole.Reader,
+      ],
+      [
+        {
+          id: '2',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
+          profile: UserProfile.Admin,
+        },
+        WorkspaceRole.Contributor,
+      ],
+    ];
 
     if (includeSelf) {
       value.push([
-        {id: 'me', humanHandle: {email: 'user@host.com', label: 'Gordon Freeman'}, profile: UserProfile.Admin},
+        {
+          id: 'me',
+          humanHandle: { email: 'user@host.com', label: 'Gordon Freeman' },
+          profile: UserProfile.Admin,
+        },
         WorkspaceRole.Owner,
       ]);
     }
 
     if (includeAllUsers) {
-      // cspell:disable-next-line
-      value.push([{id: '3', humanHandle: {label: 'Jaheira', email: 'jaheira@gmail.com'}, profile: UserProfile.Outsider}, null]);
+      value.push([
+        {
+          id: '3',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
+          profile: UserProfile.Outsider,
+        },
+        null,
+      ]);
     }
 
-    return {ok: true, value: value};
+    return { ok: true, value: value };
   }
 }
 
-export async function shareWorkspace(workspaceId: WorkspaceID, userId: UserID, role: WorkspaceRole | null):
-  Promise<Result<null, ClientShareWorkspaceError>> {
+export async function shareWorkspace(
+  workspaceId: WorkspaceID,
+  userId: UserID,
+  role: WorkspaceRole | null,
+): Promise<Result<null, ClientShareWorkspaceError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientShareWorkspace(handle, workspaceId, userId, role);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
 
@@ -197,7 +250,7 @@ export async function startWorkspace(workspaceId: WorkspaceID): Promise<Result<W
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientStartWorkspace(handle, workspaceId);
   } else {
-    return {ok: true, value: 1337};
+    return { ok: true, value: 1337 };
   }
 }
 
@@ -207,12 +260,15 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
   if (handle !== null && !needsMocks()) {
     return await libparsec.workspaceStop(workspaceHandle);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
 
-export async function getPathLink(workspaceId: WorkspaceID, path: string, timestamp: DateTime | null = null):
-  Promise<Result<BackendOrganizationFileLinkAddr, LinkError>> {
+export async function getPathLink(
+  workspaceId: WorkspaceID,
+  path: string,
+  timestamp: DateTime | null = null,
+): Promise<Result<BackendOrganizationFileLinkAddr, LinkError>> {
   const handle = getParsecHandle();
 
   // cspell:disable-next-line
@@ -223,9 +279,9 @@ export async function getPathLink(workspaceId: WorkspaceID, path: string, timest
   }
   // Both are mocked for now
   if (handle !== null && !needsMocks()) {
-    return {ok: true, value: link};
+    return { ok: true, value: link };
   } else {
-    return {ok: true, value: link};
+    return { ok: true, value: link };
   }
 }
 

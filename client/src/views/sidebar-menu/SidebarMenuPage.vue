@@ -15,9 +15,7 @@
         class="sidebar"
       >
         <ion-header class="sidebar__header">
-          <div
-            v-show="!isOrganizationManagementRoute()"
-          >
+          <div v-show="!isOrganizationManagementRoute()">
             <!-- active organization -->
             <ion-card class="organization-card">
               <ion-card-header class="organization-card__header">
@@ -74,17 +72,17 @@
                   class="subtitles-sm"
                   button
                 >
-                  {{ userInfo && userInfo.currentProfile === UserProfile.Admin ?
-                    $t('SideMenu.manageOrganization') :
-                    $t('SideMenu.organizationInfo') }}
+                  {{
+                    userInfo && userInfo.currentProfile === UserProfile.Admin
+                      ? $t('SideMenu.manageOrganization')
+                      : $t('SideMenu.organizationInfo')
+                  }}
                 </ion-text>
               </div>
             </ion-card>
             <!-- end of active organization -->
           </div>
-          <div
-            v-show="isOrganizationManagementRoute()"
-          >
+          <div v-show="isOrganizationManagementRoute()">
             <div
               class="back-organization"
               @click="routerNavigateTo('workspaces')"
@@ -99,9 +97,11 @@
                 />
               </ion-button>
               <ion-label class="title-h3">
-                {{ userInfo && userInfo.currentProfile === UserProfile.Admin ?
-                  $t('SideMenu.manageOrganization') :
-                  $t('SideMenu.organizationInfo') }}
+                {{
+                  userInfo && userInfo.currentProfile === UserProfile.Admin
+                    ? $t('SideMenu.manageOrganization')
+                    : $t('SideMenu.organizationInfo')
+                }}
               </ion-label>
             </div>
           </div>
@@ -210,9 +210,7 @@
               </ion-item>
             </ion-list>
             <!-- org info -->
-            <ion-list
-              class="organization"
-            >
+            <ion-list class="organization">
               <ion-item
                 lines="none"
                 class="sidebar-item organization-title menu-default"
@@ -257,13 +255,7 @@ import {
   GestureDetail,
   IonButton,
 } from '@ionic/vue';
-import {
-  business,
-  chevronBack,
-  people,
-  pieChart,
-  informationCircle,
-} from 'ionicons/icons';
+import { business, chevronBack, people, pieChart, informationCircle } from 'ionicons/icons';
 import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
 import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
@@ -369,7 +361,7 @@ function resizeMenu(newWidth: number): void {
   left: 296px;
   top: 0;
   z-index: 10000;
-  cursor:ew-resize;
+  cursor: ew-resize;
   display: flex;
   justify-content: center;
 
@@ -380,19 +372,21 @@ function resizeMenu(newWidth: number): void {
     padding: 20rem 0;
   }
 
-  &:hover::after, &:active::after {
+  &:hover::after,
+  &:active::after {
     background: var(--parsec-color-light-primary-200);
   }
 }
 
-.sidebar, .sidebar ion-content {
+.sidebar,
+.sidebar ion-content {
   --background: var(--parsec-color-light-primary-800);
 }
 
 .sidebar {
   border: none;
   user-select: none;
-  border-radius: 0 .5rem .5rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
 
   &__header {
     padding: 0.5rem;
@@ -401,7 +395,7 @@ function resizeMenu(newWidth: number): void {
   // logo parsec
   &::after {
     content: url('@/assets/images/Logo/logo_icon_white.svg');
-    opacity: .03;
+    opacity: 0.03;
     width: 100%;
     max-width: 270px;
     max-height: 170px;
@@ -454,10 +448,10 @@ function resizeMenu(newWidth: number): void {
       white-space: nowrap;
       overflow: hidden;
       ion-card-subtitle {
-      --color: var(--parsec-color-light-secondary-light);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+        --color: var(--parsec-color-light-secondary-light);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
       ion-card-title {
@@ -490,7 +484,7 @@ function resizeMenu(newWidth: number): void {
   }
 
   &__manageBtn {
-    padding:0.625em 1em;
+    padding: 0.625em 1em;
     cursor: pointer;
     align-items: center;
     color: var(--parsec-color-light-secondary-light);
@@ -550,7 +544,7 @@ ion-menu {
   display: flex;
   flex-direction: column;
   flex: 1;
-  gap: .5rem;
+  gap: 0.5rem;
 
   &__header {
     opacity: 0.6;
@@ -564,7 +558,7 @@ ion-menu {
     &:hover::after {
       content: '';
       position: absolute;
-      bottom: -.25rem;
+      bottom: -0.25rem;
       left: 0;
       height: 2px;
       width: 100%;
@@ -575,7 +569,7 @@ ion-menu {
 }
 
 .sidebar-item {
-  --background:none;
+  --background: none;
   border-radius: var(--parsec-radius-6);
   border: solid 1px var(--parsec-color-light-primary-800);
   --min-height: 0;
@@ -585,15 +579,16 @@ ion-menu {
     cursor: pointer;
   }
 
-  &:active, &.item-selected {
+  &:active,
+  &.item-selected {
     --background: var(--parsec-color-light-primary-30-opacity15);
   }
 
-  &>ion-label {
+  & > ion-label {
     --color: var(--parsec-color-light-primary-100);
   }
 
-  &>ion-icon {
+  & > ion-icon {
     color: var(--parsec-color-light-primary-100);
     font-size: 1.25em;
     margin: 0;
@@ -608,12 +603,12 @@ ion-menu {
 }
 
 .user-menu {
-  padding: .5rem 2.5rem;
+  padding: 0.5rem 2.5rem;
 
   &__item {
     --background: none;
     position: relative;
-    opacity: .5;
+    opacity: 0.5;
     min-height: 100%;
     --background-hover: none;
 
@@ -650,7 +645,6 @@ ion-menu {
     ion-label {
       --color: var(--parsec-color-light-primary-100);
     }
-
   }
 }
 

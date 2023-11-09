@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  DeviceSaveStrategyTag,
-  UserOrDeviceClaimInitialInfoTag,
-  libparsec,
-} from '@/plugins/libparsec';
+import { DeviceSaveStrategyTag, UserOrDeviceClaimInitialInfoTag, libparsec } from '@/plugins/libparsec';
 
 import {
   DeviceLabel,
@@ -75,8 +71,7 @@ export class DeviceClaim {
     }
   }
 
-  async retrieveInfo(invitationLink: string):
-  Promise<Result<UserOrDeviceClaimInitialInfoDevice, ClaimerRetrieveInfoError>> {
+  async retrieveInfo(invitationLink: string): Promise<Result<UserOrDeviceClaimInitialInfoDevice, ClaimerRetrieveInfoError>> {
     function eventCallback(event: ClientEvent): void {
       console.log('On event', event);
     }
@@ -99,21 +94,23 @@ export class DeviceClaim {
         // cspell:disable-next-line
         label: 'Gale Dekarios',
       };
-      return {ok: true, value: {
-        tag: UserOrDeviceClaimInitialInfoTag.Device,
-        handle: DEFAULT_HANDLE,
-        greeterUserId: '1234',
-        greeterHumanHandle: {
-          email: 'gale@waterdeep.faerun',
-          // cspell:disable-next-line
-          label: 'Gale Dekarios',
+      return {
+        ok: true,
+        value: {
+          tag: UserOrDeviceClaimInitialInfoTag.Device,
+          handle: DEFAULT_HANDLE,
+          greeterUserId: '1234',
+          greeterHumanHandle: {
+            email: 'gale@waterdeep.faerun',
+            // cspell:disable-next-line
+            label: 'Gale Dekarios',
+          },
         },
-      }};
+      };
     }
   }
 
-  async initialWaitHost():
-  Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>> {
+  async initialWaitHost(): Promise<Result<DeviceClaimInProgress1Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
@@ -129,16 +126,18 @@ export class DeviceClaim {
     } else {
       this.SASCodeChoices = ['5MNO', '6PQR', '7STU', '8VWX'];
       this.correctSASCode = '7STU';
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-        greeterSas: this.correctSASCode,
-        greeterSasChoices: this.SASCodeChoices,
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          greeterSas: this.correctSASCode,
+          greeterSasChoices: this.SASCodeChoices,
+        },
+      };
     }
   }
 
-  async signifyTrust():
-  Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>> {
+  async signifyTrust(): Promise<Result<DeviceClaimInProgress2Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
@@ -152,15 +151,17 @@ export class DeviceClaim {
       return result;
     } else {
       this.guestSASCode = '1337';
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-        claimerSas: '1337',
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          claimerSas: '1337',
+        },
+      };
     }
   }
 
-  async waitHostTrust():
-  Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>> {
+  async waitHostTrust(): Promise<Result<DeviceClaimInProgress3Info, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
@@ -173,20 +174,24 @@ export class DeviceClaim {
       return result;
     } else {
       await wait(MOCK_WAITING_TIME);
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+        },
+      };
     }
   }
 
-  async doClaim(deviceLabel: DeviceLabel):
-  Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>> {
+  async doClaim(deviceLabel: DeviceLabel): Promise<Result<DeviceClaimFinalizeInfo, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       const result = await libparsec.claimerDeviceInProgress3DoClaim(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.canceller, this.handle!, deviceLabel,
+        this.canceller,
+        this.handle!,
+        deviceLabel,
       );
       if (result.ok) {
         this.handle = result.value.handle;
@@ -195,18 +200,20 @@ export class DeviceClaim {
       return result;
     } else {
       await wait(MOCK_WAITING_TIME);
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+        },
+      };
     }
   }
 
-  async finalize(password: string):
-  Promise<Result<AvailableDevice, ClaimInProgressError>> {
+  async finalize(password: string): Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       const result = await libparsec.claimerDeviceFinalizeSaveLocalDevice(
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.handle!,
         { tag: DeviceSaveStrategyTag.Password, password: password },
       );
@@ -229,7 +236,7 @@ export class DeviceClaim {
         slug: 'slug',
         ty: DeviceFileType.Password,
       };
-      return {ok: true, value: this.device};
+      return { ok: true, value: this.device };
     }
   }
 }

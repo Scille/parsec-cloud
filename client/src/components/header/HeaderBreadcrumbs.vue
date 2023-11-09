@@ -32,29 +32,23 @@
 
 <script lang="ts">
 export interface RouterPathNode {
-  id: number,
-  display: string,
-  icon?: string,
-  name: string,
-  params?: any,
-  query?: any
+  id: number;
+  display: string;
+  icon?: string;
+  name: string;
+  params?: any;
+  query?: any;
 }
 </script>
 
 <script setup lang="ts">
 import { ref, Ref, computed } from 'vue';
-import {
-  IonBreadcrumb,
-  IonBreadcrumbs,
-  IonIcon,
-} from '@ionic/vue';
-import {
-  caretForward,
-} from 'ionicons/icons';
+import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
+import { caretForward } from 'ionicons/icons';
 import { useRouter } from 'vue-router';
 
 const props = defineProps<{
-  pathNodes: RouterPathNode[]
+  pathNodes: RouterPathNode[];
 }>();
 
 // Using a computed to reset maxBreadcrumbs value automatically
@@ -80,26 +74,26 @@ function navigateTo(path: RouterPathNode): void {
     ignoreNextEvent = false;
     return;
   }
-  router.push({name: path.name, params: path.params, query: path.query});
+  router.push({ name: path.name, params: path.params, query: path.query });
 }
 </script>
 
 <style scoped lang="scss">
-  .breadcrumb {
-    padding: 0;
-    color: var(--parsec-color-light-secondary-grey);
+.breadcrumb {
+  padding: 0;
+  color: var(--parsec-color-light-secondary-grey);
 
-    // Defined by ionic
-    // eslint-disable-next-line vue-scoped-css/no-unused-selector
-    &-active {
+  // Defined by ionic
+  // eslint-disable-next-line vue-scoped-css/no-unused-selector
+  &-active {
+    color: var(--parsec-color-light-primary-700);
+
+    .main-icon {
       color: var(--parsec-color-light-primary-700);
-
-      .main-icon {
-        color: var(--parsec-color-light-primary-700);
-        margin-right: 0.5rem;
-      }
+      margin-right: 0.5rem;
     }
   }
+}
 .breadcrumb-element {
   cursor: pointer;
 

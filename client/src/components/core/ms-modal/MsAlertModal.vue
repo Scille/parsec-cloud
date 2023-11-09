@@ -5,17 +5,21 @@
     :title="title"
     :subtitle="message"
     :theme="theme"
-    :close-button="{visible: false}"
-    :confirm-button="{disabled: false, label: $t('Notification.nextButton'), onClick: confirm}"
+    :close-button="{ visible: false }"
+    :confirm-button="{
+      disabled: false,
+      label: $t('Notification.nextButton'),
+      onClick: confirm,
+    }"
     @on-enter-keyup="confirm()"
   />
 </template>
 
 <script lang="ts">
 export interface MsAlertModalConfig {
-  title?: string,
-  theme: MsReportTheme,
-  message: string,
+  title?: string;
+  theme: MsReportTheme;
+  message: string;
 }
 </script>
 
@@ -31,5 +35,4 @@ async function confirm(): Promise<boolean> {
 }
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

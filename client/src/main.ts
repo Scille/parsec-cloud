@@ -44,7 +44,6 @@ import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/valida
 import { ImportManager, ImportManagerKey } from '@/common/importManager';
 
 async function setupApp(): Promise<void> {
-
   const storageManager = new StorageManager();
   await storageManager.create();
 
@@ -114,11 +113,11 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.provide(FormattersKey, {
-    'timeSince': (date: DateTime | undefined, defaultValue = '', format = 'long'): string => {
+    timeSince: (date: DateTime | undefined, defaultValue = '', format = 'long'): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue, format);
     },
-    'fileSize': (bytes: number): string => {
+    fileSize: (bytes: number): string => {
       const { t } = useI18n();
       return formatFileSize(bytes, t);
     },
@@ -181,17 +180,17 @@ async function setupApp(): Promise<void> {
   } else if (import.meta.env.VITE_TESTBED_SERVER_URL) {
     // Dev mode, provide a default testbed
     const configPath = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
-    nextStage(configPath);  // Fire-and-forget call
+    nextStage(configPath); // Fire-and-forget call
   } else {
     // Prod or using devices in local storage
-    nextStage();  // Fire-and-forget call
+    nextStage(); // Fire-and-forget call
   }
   if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
     const x = async (): Promise<void> => {
       await router.isReady();
       router.push('/test');
     };
-    x();  // Fire-and-forget call
+    x(); // Fire-and-forget call
   }
 
   if (isElectron()) {
@@ -202,23 +201,27 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('open-link', async (link: string) => {
-      if (await fileLinkValidator(link) === Validity.Valid || await claimLinkValidator(link) === Validity.Valid) {
+      if ((await fileLinkValidator(link)) === Validity.Valid || (await claimLinkValidator(link)) === Validity.Valid) {
         if (isHomeRoute()) {
-          routerNavigateTo('home', {}, {link: link});
+          routerNavigateTo('home', {}, { link: link });
         }
       } else {
-        await notificationCenter.showModal(new Notification({
-          message: t('link.invalid'),
-          level: NotificationLevel.Error,
-        }));
+        await notificationCenter.showModal(
+          new Notification({
+            message: t('link.invalid'),
+            level: NotificationLevel.Error,
+          }),
+        );
       }
     });
     window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
-      notificationCenter.showToast(new Notification({
-        title: t('openFile.failedTitle'),
-        message: t('openFile.failedSubtitle', {path: path}),
-        level: NotificationLevel.Error,
-      }));
+      notificationCenter.showToast(
+        new Notification({
+          title: t('openFile.failedTitle'),
+          message: t('openFile.failedSubtitle', { path: path }),
+          level: NotificationLevel.Error,
+        }),
+      );
     });
   } else {
     window.electronAPI = {
@@ -236,20 +239,20 @@ async function setupApp(): Promise<void> {
 
 declare global {
   interface Window {
-    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>],
-    testbedPath: string | null,
-    getConfigDir: () => string,
-    getDataBaseDir: () => string,
-    getMountpointBaseDir: () => string,
-    getPlatform: () => Platform,
-    isDesktop: () => boolean,
-    isLinux: () => boolean,
+    nextStageHook: () => [any, (configPath: string, locale?: string) => Promise<void>];
+    testbedPath: string | null;
+    getConfigDir: () => string;
+    getDataBaseDir: () => string;
+    getMountpointBaseDir: () => string;
+    getPlatform: () => Platform;
+    isDesktop: () => boolean;
+    isLinux: () => boolean;
     electronAPI: {
-      sendConfig: (config: Config) => void,
-      closeApp: () => void,
-      receive: (channel: string, f: (...args: any[]) => Promise<void>) => void,
-      openFile: (path: string) => void,
-    },
+      sendConfig: (config: Config) => void;
+      closeApp: () => void;
+      receive: (channel: string, f: (...args: any[]) => Promise<void>) => void;
+      openFile: (path: string) => void;
+    };
   }
 }
 

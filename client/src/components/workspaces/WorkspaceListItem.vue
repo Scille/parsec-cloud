@@ -29,9 +29,7 @@
 
     <!-- role user -->
     <div class="workspace-role">
-      <workspace-tag-role
-        :role="workspace.selfCurrentRole"
-      />
+      <workspace-tag-role :role="workspace.selfCurrentRole" />
     </div>
 
     <!-- user avatars -->
@@ -84,12 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  business,
-  ellipsisHorizontal,
-  cloudDone,
-  cloudOffline,
-} from 'ionicons/icons';
+import { business, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
 import { ref, inject } from 'vue';
 import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
@@ -100,13 +93,13 @@ import { WorkspaceInfo } from '@/parsec';
 const isSelected = ref(false);
 
 defineProps<{
-  workspace: WorkspaceInfo
+  workspace: WorkspaceInfo;
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: WorkspaceInfo): void
-  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void
-  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void
+  (e: 'click', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -129,7 +122,7 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
   }
 }
 
-.workspace-list-item>[class^="workspace-"] {
+.workspace-list-item > [class^='workspace-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;
@@ -137,15 +130,15 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 }
 
 .workspace-name {
-  padding: .75rem 1rem;
+  padding: 0.75rem 1rem;
   width: 100%;
   max-width: 20vw;
   white-space: nowrap;
   overflow: hidden;
 
   &__icons {
-  position: relative;
-  padding: 5px;
+    position: relative;
+    padding: 5px;
 
     .main-icon {
       color: var(--parsec-color-light-secondary-text);
@@ -222,7 +215,9 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
   }
 }
 
-.label-size, .label-shared-with, .label-last-update {
+.label-size,
+.label-shared-with,
+.label-last-update {
   color: var(--parsec-color-light-secondary-grey);
 }
 </style>

@@ -12,7 +12,7 @@ describe('User List Item', () => {
   it('Display item for user', () => {
     const USER: UserInfo = {
       id: '0',
-      humanHandle: {label: 'John Smith', email: 'john.smith@gmail.com'},
+      humanHandle: { label: 'John Smith', email: 'john.smith@gmail.com' },
       currentProfile: UserProfile.Standard,
       createdOn: DateTime.now(),
       createdBy: 'device',

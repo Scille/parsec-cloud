@@ -3,8 +3,8 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$t('FileDetails.title', {name: entry.name})"
-      :close-button="{visible: true}"
+      :title="$t('FileDetails.title', { name: entry.name })"
+      :close-button="{ visible: true }"
     >
       <div class="file-info">
         <!-- Entry type -->
@@ -87,14 +87,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonLabel,
-  IonItem,
-  IonText,
-} from '@ionic/vue';
-import {
-} from 'ionicons/icons';
+import { IonPage, IonLabel, IonItem, IonText } from '@ionic/vue';
+import {} from 'ionicons/icons';
 import { inject } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { EntryStat, EntryStatFile } from '@/parsec';
@@ -104,8 +98,8 @@ import { FormattersKey, Formatters } from '@/common/injectionKeys';
 const { fileSize } = inject(FormattersKey)! as Formatters;
 
 defineProps<{
-  entry: EntryStat
-  path: string
+  entry: EntryStat;
+  path: string;
 }>();
 </script>
 

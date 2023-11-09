@@ -26,17 +26,7 @@ export class Notification {
   level: NotificationLevel;
   data?: object;
   title?: string;
-  constructor({
-    message,
-    level,
-    data = {},
-    title,
-  }: {
-    message: string,
-    level: NotificationLevel,
-    data?: object,
-    title?: string,
-  }) {
+  constructor({ message, level, data = {}, title }: { message: string; level: NotificationLevel; data?: object; title?: string }) {
     this.id = uuid4();
     this.time = DateTime.now();
     this.read = false;
@@ -48,12 +38,12 @@ export class Notification {
 }
 
 export interface NotificationOptions {
-  addToList?: boolean,
-  trace?: boolean,
+  addToList?: boolean;
+  trace?: boolean;
 }
 
 export interface NotificationToastOptions extends NotificationOptions {
-  duration?: number,
+  duration?: number;
 }
 
 const DEFAULT_NOTIFICATION_DURATION = 5000;
@@ -68,10 +58,7 @@ export class NotificationCenter {
     this.toastManager = new ToastManager(this.t);
   }
 
-  async showModal(
-    notification: Notification,
-    options?: NotificationOptions,
-  ): Promise<void> {
+  async showModal(notification: Notification, options?: NotificationOptions): Promise<void> {
     if (options && options.addToList) {
       this.addToList(notification);
     }
@@ -115,10 +102,7 @@ export class NotificationCenter {
     return result;
   }
 
-  async showToast(
-    notification: Notification,
-    options?: NotificationToastOptions,
-  ): Promise<void> {
+  async showToast(notification: Notification, options?: NotificationToastOptions): Promise<void> {
     if (options && options.addToList) {
       this.addToList(notification);
     }
@@ -126,20 +110,22 @@ export class NotificationCenter {
       this._trace(notification);
     }
 
-    this.toastManager.createAndPresent({
-      theme: this._getMsReportTheme(notification.level),
-      message: notification.message,
-      title: notification.title,
-      duration: DEFAULT_NOTIFICATION_DURATION,
-    }).then(async (result) => {
-      if (result && result.role === 'confirm') {
-        this.markAsRead(notification.id);
-      }
-    });
+    this.toastManager
+      .createAndPresent({
+        theme: this._getMsReportTheme(notification.level),
+        message: notification.message,
+        title: notification.title,
+        duration: DEFAULT_NOTIFICATION_DURATION,
+      })
+      .then(async (result) => {
+        if (result && result.role === 'confirm') {
+          this.markAsRead(notification.id);
+        }
+      });
   }
 
   private _getMsReportTheme(notificationLevel: NotificationLevel): MsReportTheme {
-    switch(notificationLevel) {
+    switch (notificationLevel) {
       case NotificationLevel.Info:
         return MsReportTheme.Info;
       case NotificationLevel.Success:

@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  libparsec, SASCode,
-} from '@/plugins/libparsec';
+import { libparsec, SASCode } from '@/plugins/libparsec';
 import {
   Handle,
   InvitationToken,
@@ -81,7 +79,7 @@ export class UserGreet {
     } else {
       this.handle = DEFAULT_HANDLE;
       await wait(MOCK_WAITING_TIME);
-      return {ok: true, value: {handle: DEFAULT_HANDLE}};
+      return { ok: true, value: { handle: DEFAULT_HANDLE } };
     }
   }
 
@@ -99,7 +97,10 @@ export class UserGreet {
       return result;
     } else {
       this.hostSASCode = '2EDF';
-      return {ok: true, value: {handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode}};
+      return {
+        ok: true,
+        value: { handle: DEFAULT_HANDLE, greeterSas: this.hostSASCode },
+      };
     }
   }
 
@@ -120,7 +121,14 @@ export class UserGreet {
       await wait(MOCK_WAITING_TIME);
       this.SASCodeChoices = ['1ABC', '2DEF', '3GHI', '4JKL'];
       this.correctSASCode = '2DEF';
-      return {ok: true, value: {handle: DEFAULT_HANDLE, claimerSasChoices: this.SASCodeChoices, claimerSas: this.correctSASCode}};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          claimerSasChoices: this.SASCodeChoices,
+          claimerSas: this.correctSASCode,
+        },
+      };
     }
   }
 
@@ -136,7 +144,7 @@ export class UserGreet {
       }
       return result;
     } else {
-      return {ok: true, value: {handle: DEFAULT_HANDLE}};
+      return { ok: true, value: { handle: DEFAULT_HANDLE } };
     }
   }
 
@@ -160,11 +168,14 @@ export class UserGreet {
         email: 'gordon.freeman@blackmesa.nm',
       };
       this.requestedDeviceLabel = 'My Device';
-      return {ok: true, value: {
-        handle: DEFAULT_HANDLE,
-        requestedDeviceLabel: this.requestedDeviceLabel,
-        requestedHumanHandle: this.requestedHumanHandle,
-      }};
+      return {
+        ok: true,
+        value: {
+          handle: DEFAULT_HANDLE,
+          requestedDeviceLabel: this.requestedDeviceLabel,
+          requestedHumanHandle: this.requestedHumanHandle,
+        },
+      };
     }
   }
 
@@ -185,7 +196,7 @@ export class UserGreet {
       return result;
     } else {
       this.handle = null;
-      return {ok: true, value: null};
+      return { ok: true, value: null };
     }
   }
 }

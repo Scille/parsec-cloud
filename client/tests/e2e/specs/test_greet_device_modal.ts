@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 describe('Greet a new device', () => {
-
   const WAIT_TIME = 500;
 
   beforeEach(() => {
@@ -92,7 +91,7 @@ describe('Greet a new device', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage('You didn\'t select the right code. Please restart the process.');
+    cy.checkToastMessage("You didn't select the right code. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');
@@ -110,7 +109,7 @@ describe('Greet a new device', () => {
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None of the codes').click();
-    cy.checkToastMessage('If you didn\'t see the right code, it could be a security concern. Please restart the process.');
+    cy.checkToastMessage("If you didn't see the right code, it could be a security concern. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');

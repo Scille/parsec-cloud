@@ -10,9 +10,7 @@
             fill="clear"
             @click="onAddDeviceClick()"
           >
-            <ion-icon
-              :icon="add"
-            />
+            <ion-icon :icon="add" />
             {{ $t('DevicesPage.addDevice') }}
           </ion-button>
         </div>
@@ -20,9 +18,7 @@
           <ion-text v-if="devices.length === 0">
             {{ $t('DevicesPage.noDevices') }}
           </ion-text>
-          <ion-list
-            v-if="devices.length > 0"
-          >
+          <ion-list v-if="devices.length > 0">
             <ion-item
               v-for="device in devices"
               :key="device.id"
@@ -42,16 +38,7 @@
 <script setup lang="ts">
 import { ref, Ref, onMounted, inject } from 'vue';
 import { add } from 'ionicons/icons';
-import {
-  IonButton,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonPage,
-  IonContent,
-  IonText,
-  modalController,
-} from '@ionic/vue';
+import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonText, modalController } from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
@@ -72,10 +59,12 @@ async function refreshDevicesList(): Promise<void> {
   if (result.ok) {
     devices.value = result.value;
   } else {
-    notificationCenter.showToast(new Notification({
-      message: 'Failed to retrieve devices',
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: 'Failed to retrieve devices',
+        level: NotificationLevel.Error,
+      }),
+    );
     console.log('Could not list devices', result.error);
   }
 }

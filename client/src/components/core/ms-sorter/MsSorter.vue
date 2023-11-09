@@ -19,25 +19,21 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits, Ref, ref } from 'vue';
-import {
-  IonButton,
-  IonIcon,
-  popoverController,
-} from '@ionic/vue';
+import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { MsSorterOption, MsSorterLabels, MsSorterChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption: any
-  label?: string
-  options: MsSorterOption[]
-  sorterLabels?: MsSorterLabels
-  disabled?: boolean
+  defaultOption: any;
+  label?: string;
+  options: MsSorterOption[];
+  sorterLabels?: MsSorterLabels;
+  disabled?: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'change', value: MsSorterChangeEvent): void
+  (e: 'change', value: MsSorterChangeEvent): void;
 }>();
 
 const selectedOption: Ref<MsSorterOption | undefined> = ref(
@@ -92,6 +88,6 @@ async function onDidDismissPopover(popover: any): Promise<void> {
   }
 }
 .ms-sorter-icon {
-  margin-left: .5em;
+  margin-left: 0.5em;
 }
 </style>

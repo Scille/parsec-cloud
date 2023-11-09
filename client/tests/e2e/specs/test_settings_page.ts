@@ -26,7 +26,9 @@ describe('Check settings page', () => {
     cy.get('.settings-option').eq(1).as('theme');
     cy.get('@theme').find('ion-text.title').contains('Theme');
     cy.get('@theme').find('ion-text.description').contains('Choose the application appearance');
-    cy.get('@theme').find('#dropdown-popover-button').contains(/Light|Dark|System/g);
+    cy.get('@theme')
+      .find('#dropdown-popover-button')
+      .contains(/Light|Dark|System/g);
   });
 
   it('Check Advanced tab', () => {

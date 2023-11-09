@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 describe('Display client devices', () => {
-
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');

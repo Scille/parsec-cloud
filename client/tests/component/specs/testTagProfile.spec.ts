@@ -10,7 +10,6 @@ import { UserProfile } from '@/parsec';
 import { mount } from '@vue/test-utils';
 
 describe('User Avatar', () => {
-
   it('Display avatar for user', () => {
     const wrapper = mount(TagProfile, {
       props: {

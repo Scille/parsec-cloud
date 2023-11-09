@@ -11,7 +11,6 @@ import {
   EntryName,
   FileType,
   EntryStat,
-  EntryID,
   WorkspaceHandle,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
@@ -28,7 +27,7 @@ export async function createFile(path: FsPath): Promise<Result<FileID, Workspace
   if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFile(workspaceHandle, path);
   } else {
-    return {ok: true, value: '42'};
+    return { ok: true, value: '42' };
   }
 }
 
@@ -39,7 +38,7 @@ export async function createFolder(path: FsPath): Promise<Result<FileID, Workspa
   if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFolder(workspaceHandle, path);
   } else {
-    return {ok: true, value: '7'};
+    return { ok: true, value: '7' };
   }
 }
 
@@ -50,7 +49,7 @@ export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceFs
   if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFile(workspaceHandle, path);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
 
@@ -61,7 +60,7 @@ export async function deleteFolder(path: FsPath): Promise<Result<null, Workspace
   if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFolder(workspaceHandle, path);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
 
@@ -72,7 +71,7 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
   if (clientHandle && workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, true);
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
 
@@ -98,33 +97,39 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     return result as Result<EntryStat, WorkspaceFsOperationError>;
   } else {
     if (path !== '/' && parsedPath[parsedPath.length - 1] !== 'Dir1') {
-      return {ok: true, value: {
-        tag: FileType.File,
-        confinementPoint: null,
-        id: '67',
-        created: DateTime.now(),
-        updated: DateTime.now(),
-        baseVersion: 1,
-        isPlaceholder: false,
-        needSync: Math.floor(Math.random() * 2) === 1,
-        size: Math.floor(Math.random() * 1_000_000),
-        name: parsedPath[parsedPath.length - 1],
-        isFile: (): boolean => true,
-      }};
+      return {
+        ok: true,
+        value: {
+          tag: FileType.File,
+          confinementPoint: null,
+          id: '67',
+          created: DateTime.now(),
+          updated: DateTime.now(),
+          baseVersion: 1,
+          isPlaceholder: false,
+          needSync: Math.floor(Math.random() * 2) === 1,
+          size: Math.floor(Math.random() * 1_000_000),
+          name: parsedPath[parsedPath.length - 1],
+          isFile: (): boolean => true,
+        },
+      };
     } else {
-      return {ok: true, value: {
-        tag: FileType.Folder,
-        confinementPoint: null,
-        id: '68',
-        created: DateTime.now(),
-        updated: DateTime.now(),
-        baseVersion: 1,
-        isPlaceholder: false,
-        needSync: Math.floor(Math.random() * 2) === 1,
-        name: parsedPath[parsedPath.length - 1],
-        isFile: (): boolean => false,
-        children: ['File1.txt', 'File2.jpeg', 'Dir1'],
-      }};
+      return {
+        ok: true,
+        value: {
+          tag: FileType.Folder,
+          confinementPoint: null,
+          id: '68',
+          created: DateTime.now(),
+          updated: DateTime.now(),
+          baseVersion: 1,
+          isPlaceholder: false,
+          needSync: Math.floor(Math.random() * 2) === 1,
+          name: parsedPath[parsedPath.length - 1],
+          isFile: (): boolean => false,
+          children: ['File1.txt', 'File2.jpeg', 'Dir1'],
+        },
+      };
     }
   }
 }
@@ -132,12 +137,12 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
 export async function getAbsolutePath(_workspaceHandle: WorkspaceHandle, entry: EntryStat): Promise<Result<FsPath, GetAbsolutePathError>> {
   // Helps for tests, will be replaced with bindings
   if (entry.name === 'f') {
-    return {ok: true, value: './tsconfig.json'};
+    return { ok: true, value: './tsconfig.json' };
   } else if (entry.name === 'd') {
-    return {ok: true, value: './src'};
+    return { ok: true, value: './src' };
   } else if (entry.name === 'e') {
-    return {ok: false, error: {tag: GetAbsolutePathErrorTag.NotFound}};
+    return { ok: false, error: { tag: GetAbsolutePathErrorTag.NotFound } };
   } else {
-    return {ok: true, value: '/unknown'};
+    return { ok: true, value: '/unknown' };
   }
 }

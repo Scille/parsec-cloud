@@ -3,9 +3,7 @@
 <template>
   <ion-list class="summary-list">
     <!-- organization name -->
-    <ion-item
-      class="summary-item"
-    >
+    <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
         {{ $t('CreateOrganization.overview.organization') }}
       </ion-label>
@@ -22,9 +20,7 @@
     </ion-item>
 
     <!-- fullname -->
-    <ion-item
-      class="summary-item"
-    >
+    <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
         {{ $t('CreateOrganization.overview.fullname') }}
       </ion-label>
@@ -41,9 +37,7 @@
     </ion-item>
 
     <!-- Email -->
-    <ion-item
-      class="summary-item"
-    >
+    <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
         {{ $t('CreateOrganization.overview.email') }}
       </ion-label>
@@ -60,9 +54,7 @@
     </ion-item>
 
     <!-- deviceName -->
-    <ion-item
-      class="summary-item"
-    >
+    <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
         {{ $t('CreateOrganization.overview.deviceName') }}
       </ion-label>
@@ -79,9 +71,7 @@
     </ion-item>
 
     <!-- serverMode -->
-    <ion-item
-      class="summary-item"
-    >
+    <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
         {{ $t('CreateOrganization.overview.server') }}
       </ion-label>
@@ -108,13 +98,7 @@ export enum OrgInfo {
 </script>
 
 <script setup lang="ts">
-import {
-  IonList,
-  IonItem,
-  IonLabel,
-  IonText,
-  IonButton,
-} from '@ionic/vue';
+import { IonList, IonItem, IonLabel, IonText, IonButton } from '@ionic/vue';
 import { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import { useI18n } from 'vue-i18n';
 
@@ -129,12 +113,12 @@ defineExpose({
 });
 
 defineProps<{
-  organization: string,
-  fullname: string,
-  email: string,
-  deviceName: string,
-  serverMode: ServerMode,
-  serverAddr: string,
+  organization: string;
+  fullname: string;
+  email: string;
+  deviceName: string;
+  serverMode: ServerMode;
+  serverAddr: string;
 }>();
 </script>
 
@@ -152,8 +136,8 @@ defineProps<{
     padding: 0;
   }
 
-  &>*:not(:last-child) {
-    margin-right: .5rem;
+  & > *:not(:last-child) {
+    margin-right: 0.5rem;
   }
 
   &::after {
@@ -161,7 +145,7 @@ defineProps<{
     position: relative;
     width: 100%;
     height: 1px;
-    margin: .5rem 0;
+    margin: 0.5rem 0;
     background: var(--parsec-color-light-secondary-disabled);
   }
 

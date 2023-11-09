@@ -3,18 +3,13 @@
 <template>
   <ion-page>
     <ion-content class="settings-content">
-      <settings-view
-        class="settings-view"
-      />
+      <settings-view class="settings-view" />
     </ion-content>
   </ion-page>
 </template>
 
-<script setup lang = "ts">
-import {
-  IonContent,
-  IonPage,
-} from '@ionic/vue';
+<script setup lang="ts">
+import { IonContent, IonPage } from '@ionic/vue';
 
 import SettingsView from '@/views/settings/SettingsView.vue';
 </script>

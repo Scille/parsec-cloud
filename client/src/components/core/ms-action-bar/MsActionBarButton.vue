@@ -1,9 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-button
-    class="ms-action-bar-button body"
-  >
+  <ion-button class="ms-action-bar-button body">
     <ion-icon
       v-show="icon"
       slot="start"
@@ -15,14 +13,11 @@
 
 <script setup lang="ts">
 import { defineProps } from 'vue';
-import {
-  IonButton,
-  IonIcon,
-} from '@ionic/vue';
+import { IonButton, IonIcon } from '@ionic/vue';
 
 defineProps<{
-  buttonLabel?: any,
-  icon?: string
+  buttonLabel?: any;
+  icon?: string;
 }>();
 </script>
 
@@ -34,9 +29,9 @@ defineProps<{
   margin-top: 0px;
   margin-bottom: 0px;
   --padding-top: 0.5rem;
-  --padding-end: .5rem;
+  --padding-end: 0.5rem;
   --padding-bottom: 0.5rem;
-  --padding-start: .5rem;
+  --padding-start: 0.5rem;
   color: var(--parsec-color-light-secondary-grey);
 
   &:hover {

@@ -24,7 +24,7 @@
                   src="@/assets/images/Logo/logo_row_white.svg"
                   alt="Parsec logo"
                   class="logo-img"
-                >
+                />
               </div>
               <div
                 class="sidebar-footer__version body"
@@ -65,7 +65,10 @@
               v-show="deviceList.length >= 2"
             />
             <ion-button
-              @click="isPopoverOpen = !isPopoverOpen; openPopover($event)"
+              @click="
+                isPopoverOpen = !isPopoverOpen;
+                openPopover($event);
+              "
               size="large"
               id="create-organization-button"
               class="button-default"
@@ -138,10 +141,15 @@
                               />
                               <ion-row class="card-content__footer">
                                 <ion-col size="auto">
-                                  <p>{{ $t('HomePage.organizationList.lastLogin') }}</p>
                                   <p>
-                                    {{ device.slug in storedDeviceDataDict ?
-                                      timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
+                                    {{ $t('HomePage.organizationList.lastLogin') }}
+                                  </p>
+                                  <p>
+                                    {{
+                                      device.slug in storedDeviceDataDict
+                                        ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--')
+                                        : '--'
+                                    }}
                                   </p>
                                 </ion-col>
                               </ion-row>
@@ -196,7 +204,7 @@
                         slot="start"
                         :icon="logIn"
                       />
-                      {{ $t("HomePage.organizationLogin.login") }}
+                      {{ $t('HomePage.organizationLogin.login') }}
                     </ion-button>
                   </div>
                 </div>
@@ -228,11 +236,8 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-import {
-  chevronBack,
-  cog,
-  logIn,
-} from 'ionicons/icons'; // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
+// We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
+import { chevronBack, cog, logIn } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
@@ -279,7 +284,10 @@ const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
 const msSorterOptions: MsSorterOption[] = [
-  { label: t('HomePage.organizationList.sortByOrganization'), key: 'organization' },
+  {
+    label: t('HomePage.organizationList.sortByOrganization'),
+    key: 'organization',
+  },
   { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
   { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
 ];
@@ -290,38 +298,46 @@ const msSorterLabels = {
 };
 
 const filteredDevices = computed(() => {
-  return deviceList.value.filter((item) => {
-    const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-    return (item.humanHandle.label.toLocaleLowerCase().includes(lowerSearchString) ||
-      item.organizationId.toLocaleLowerCase().includes(lowerSearchString));
-  }).sort((a, b) => {
-    const aLabel = a.humanHandle.label;
-    const bLabel = b.humanHandle.label;
-    if (sortBy.value === 'organization') {
-      if (sortByAsc.value) {
-        return a.organizationId.localeCompare(b.organizationId);
-      } else {
-        return b.organizationId.localeCompare(a.organizationId);
+  return deviceList.value
+    .filter((item) => {
+      const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
+      return (
+        item.humanHandle.label.toLocaleLowerCase().includes(lowerSearchString) ||
+        item.organizationId.toLocaleLowerCase().includes(lowerSearchString)
+      );
+    })
+    .sort((a, b) => {
+      const aLabel = a.humanHandle.label;
+      const bLabel = b.humanHandle.label;
+      if (sortBy.value === 'organization') {
+        if (sortByAsc.value) {
+          return a.organizationId.localeCompare(b.organizationId);
+        } else {
+          return b.organizationId.localeCompare(a.organizationId);
+        }
+      } else if (sortBy.value === 'user_name' && aLabel && bLabel) {
+        if (sortByAsc.value) {
+          return aLabel?.localeCompare(bLabel ?? '');
+        } else {
+          return bLabel?.localeCompare(aLabel ?? '');
+        }
+      } else if (sortBy.value === 'last_login') {
+        const aLastLogin =
+          a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined
+            ? storedDeviceDataDict.value[a.slug].lastLogin
+            : DateTime.fromMillis(0);
+        const bLastLogin =
+          b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined
+            ? storedDeviceDataDict.value[b.slug].lastLogin
+            : DateTime.fromMillis(0);
+        if (sortByAsc.value) {
+          return bLastLogin.diff(aLastLogin).toObject().milliseconds!;
+        } else {
+          return aLastLogin.diff(bLastLogin).toObject().milliseconds!;
+        }
       }
-    } else if (sortBy.value === 'user_name' && aLabel && bLabel) {
-      if (sortByAsc.value) {
-        return aLabel?.localeCompare(bLabel ?? '');
-      } else {
-        return bLabel?.localeCompare(aLabel ?? '');
-      }
-    } else if (sortBy.value === 'last_login') {
-      const aLastLogin = (a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined) ?
-        storedDeviceDataDict.value[a.slug].lastLogin : DateTime.fromMillis(0);
-      const bLastLogin = (b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined) ?
-        storedDeviceDataDict.value[b.slug].lastLogin : DateTime.fromMillis(0);
-      if (sortByAsc.value) {
-        return bLastLogin.diff(aLastLogin).toObject().milliseconds!;
-      } else {
-        return aLastLogin.diff(bLastLogin).toObject().milliseconds!;
-      }
-    }
-    return 0;
-  });
+      return 0;
+    });
 });
 
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
@@ -373,9 +389,9 @@ async function openCreateOrganizationModal(): Promise<void> {
 async function openJoinByLinkModal(link: string): Promise<void> {
   let component = null;
 
-  if (await claimUserLinkValidator(link) === Validity.Valid) {
+  if ((await claimUserLinkValidator(link)) === Validity.Valid) {
     component = UserJoinOrganizationModal;
-  } else if (await claimDeviceLinkValidator(link) === Validity.Valid) {
+  } else if ((await claimDeviceLinkValidator(link)) === Validity.Valid) {
     component = DeviceJoinOrganizationModal;
   }
 
@@ -426,7 +442,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   const result = await parsecLogin(device, password);
   if (result.ok) {
     showOrganizationList.value = true;
-    router.push({ name: 'workspaces', params: {handle: result.value}});
+    router.push({ name: 'workspaces', params: { handle: result.value } });
   } else {
     const notification = new Notification({
       title: t('HomePage.loginNotification.title'),
@@ -542,7 +558,6 @@ async function openSettingsModal(): Promise<void> {
       position: relative;
       gap: 1rem;
     }
-
   }
 
   .sidebar-footer {
@@ -564,7 +579,7 @@ async function openSettingsModal(): Promise<void> {
     &__version {
       cursor: pointer;
       color: var(--parsec-color-light-secondary-light);
-      padding: .5rem;
+      padding: 0.5rem;
       border-radius: var(--parsec-radius-6);
 
       &:hover {
@@ -637,7 +652,7 @@ async function openSettingsModal(): Promise<void> {
 
   .organization-filter {
     display: flex;
-    margin: 0 0 .5rem;
+    margin: 0 0 0.5rem;
     justify-content: flex-end;
   }
 

@@ -29,12 +29,12 @@
     </ion-buttons>
     <div
       class="modal"
-      :class="{ wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish }"
+      :class="{
+        wizardTrue: pageStep > DeviceJoinOrganizationStep.Information && pageStep != DeviceJoinOrganizationStep.Finish,
+      }"
     >
       <ion-header class="modal-header">
-        <ion-title
-          class="modal-header__title title-h2"
-        >
+        <ion-title class="modal-header__title title-h2">
           {{ getTitleAndSubtitle().title }}
         </ion-title>
         <ion-text
@@ -71,9 +71,7 @@
           v-show="pageStep === DeviceJoinOrganizationStep.ProvideGuestCode"
           class="step guest-code"
         >
-          <sas-code-provide
-            :code="claimer.guestSASCode"
-          />
+          <sas-code-provide :code="claimer.guestSASCode" />
         </div>
 
         <!-- part 4 (get password)-->
@@ -99,9 +97,7 @@
           v-show="pageStep === DeviceJoinOrganizationStep.Finish"
           class="step"
         >
-          <ms-informative-text
-            :icon="checkmarkCircle"
-          >
+          <ms-informative-text :icon="checkmarkCircle">
             {{ $t('ClaimDeviceModal.subtitles.done') }}
           </ms-informative-text>
         </div>
@@ -157,10 +153,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import {
-  close,
-  checkmarkCircle,
-} from 'ionicons/icons';
+import { close, checkmarkCircle } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
 import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
@@ -178,7 +171,7 @@ import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
-const notificationCenter  = inject(NotificationKey) as NotificationCenter;
+const notificationCenter = inject(NotificationKey) as NotificationCenter;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -197,14 +190,14 @@ let backendAddr: ParsedBackendAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
 
 const props = defineProps<{
-  invitationLink: string
+  invitationLink: string;
 }>();
 
 const waitingForHost = ref(true);
 
 interface Title {
-  title: string,
-  subtitle?: string,
+  title: string;
+  subtitle?: string;
 }
 
 function getTitleAndSubtitle(): Title {
@@ -234,7 +227,9 @@ function getTitleAndSubtitle(): Title {
     }
     case DeviceJoinOrganizationStep.Finish: {
       return {
-        title: t('ClaimDeviceModal.titles.done', { org: backendAddr?.organizationId || '' }),
+        title: t('ClaimDeviceModal.titles.done', {
+          org: backendAddr?.organizationId || '',
+        }),
       };
     }
   }
@@ -258,10 +253,12 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(new Notification({
-    message: message,
-    level: NotificationLevel.Error,
-  }));
+  notificationCenter.showToast(
+    new Notification({
+      message: message,
+      level: NotificationLevel.Error,
+    }),
+  );
   await restartProcess();
 }
 
@@ -279,26 +276,22 @@ function getNextButtonText(): string {
 
 const nextButtonIsVisible = computed(() => {
   return (
-    pageStep.value === DeviceJoinOrganizationStep.Information && !waitingForHost.value
-    || pageStep.value === DeviceJoinOrganizationStep.Password && !waitingForHost.value
-    || pageStep.value === DeviceJoinOrganizationStep.Finish
+    (pageStep.value === DeviceJoinOrganizationStep.Information && !waitingForHost.value) ||
+    (pageStep.value === DeviceJoinOrganizationStep.Password && !waitingForHost.value) ||
+    pageStep.value === DeviceJoinOrganizationStep.Finish
   );
 });
 
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
     const validDeviceName = await deviceNameValidator(deviceName.value);
-    return await passwordPage.value.areFieldsCorrect() && validDeviceName === Validity.Valid;
+    return (await passwordPage.value.areFieldsCorrect()) && validDeviceName === Validity.Valid;
   }
   return true;
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(
-    t('ClaimDeviceModal.cancelConfirm'),
-    t('ClaimDeviceModal.cancelConfirmSubtitle'),
-    false,
-  );
+  const answer = await askQuestion(t('ClaimDeviceModal.cancelConfirm'), t('ClaimDeviceModal.cancelConfirmSubtitle'), false);
 
   if (answer === Answer.Yes) {
     await claimer.value.abort();
@@ -313,17 +306,17 @@ async function nextStep(): Promise<void> {
   }
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
     waitingForHost.value = true;
-    const doClaimResult = await claimer.value.doClaim(
-      deviceName.value,
-    );
+    const doClaimResult = await claimer.value.doClaim(deviceName.value);
     if (doClaimResult.ok) {
       waitingForHost.value = false;
       const result = await claimer.value.finalize(passwordPage.value.password);
       if (!result.ok) {
-        notificationCenter.showToast(new Notification({
-          message: t('ClaimDeviceModal.errors.saveDeviceFailed'),
-          level: NotificationLevel.Error,
-        }));
+        notificationCenter.showToast(
+          new Notification({
+            message: t('ClaimDeviceModal.errors.saveDeviceFailed'),
+            level: NotificationLevel.Error,
+          }),
+        );
         return;
       }
     } else {
@@ -335,7 +328,7 @@ async function nextStep(): Promise<void> {
       message: t('ClaimDeviceModal.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showToast(notification, {trace: true});
+    notificationCenter.showToast(notification, { trace: true });
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -349,7 +342,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected', {reason: result.error.tag}));
+      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected', { reason: result.error.tag }));
     }
   }
 }
@@ -362,20 +355,24 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationCenter.showModal(new Notification({
-      message: t('ClaimDeviceModal.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    await notificationCenter.showModal(
+      new Notification({
+        message: t('ClaimDeviceModal.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
 
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationCenter.showModal(new Notification({
-      message: t('ClaimDeviceModal.errors.startFailed'),
-      level: NotificationLevel.Error,
-    }));
+    await notificationCenter.showModal(
+      new Notification({
+        message: t('ClaimDeviceModal.errors.startFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
     await cancelModal();
     return;
   }
