@@ -26,7 +26,9 @@
         "electron:copy": "npm run native:build && npx cap copy @capacitor-community/electron",
         "electron:open": "npm run electron:copy && npx cap open @capacitor-community/electron",
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
-        "electron:debug": "npm run electron:copy && cd electron && npm run electron:start"
+        "electron:debug": "npm run electron:copy && cd electron && npm run electron:start",
+        "prettier:check": "prettier . --check",
+        "prettier:fix": "prettier . --write"
     },
     "dependencies": {
         "@capacitor-community/electron": "^5.0.1",
