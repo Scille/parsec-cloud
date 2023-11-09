@@ -201,17 +201,24 @@ repos:
           - eslint-plugin-promise@6.1.1
           - eslint-plugin-vue@8.7.1
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.0.3
+  - repo: local
     hooks:
       - id: prettier
         name: prettier
-        entry: prettier
-        files: ^client/
+        entry: npx prettier
+        language: node
+        args: [
+          --config=client/.prettierrc.json5,
+          --ignore-path=client/.prettierignore,
+          client
+          --write
+        ]
+        files: ^(client|bindings)/
         types_or: [ vue, ts, tsx, javascript, jsx, html ]
-        args: [ --fix ]
         stages:
           - manual
+        additional_dependencies:
+          - prettier@3.0.3
 
   ######
   # JSON

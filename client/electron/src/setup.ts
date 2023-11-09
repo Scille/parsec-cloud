@@ -1,11 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
-import {
-  CapElectronEventEmitter,
-  CapacitorSplashScreen,
-  setupCapacitorElectronPlugins
-} from '@capacitor-community/electron';
+import { CapElectronEventEmitter, CapacitorSplashScreen, setupCapacitorElectronPlugins } from '@capacitor-community/electron';
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { app, BrowserWindow, Menu, MenuItem, nativeImage, Tray, session, dialog, ipcMain } from 'electron';
@@ -19,13 +15,13 @@ import { shell } from 'electron';
 const reloadWatcher = {
   debouncer: null,
   ready: false,
-  watcher: null
+  watcher: null,
 };
 export function setupReloadWatcher(electronCapacitorApp: ElectronCapacitorApp): void {
   reloadWatcher.watcher = chokidar
     .watch(join(app.getAppPath(), 'app'), {
       ignored: /[/\\]\./,
-      persistent: true
+      persistent: true,
     })
     .on('ready', () => {
       reloadWatcher.ready = true;
@@ -54,7 +50,7 @@ export class ElectronCapacitorApp {
   private TrayMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [];
   private AppMenuBarMenuTemplate: (MenuItem | MenuItemConstructorOptions)[] = [
     { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
-    { role: 'viewMenu' }
+    { role: 'viewMenu' },
   ];
   private mainWindowState;
   private loadWebApp;
@@ -62,19 +58,19 @@ export class ElectronCapacitorApp {
   private config: object;
   public forceClose: boolean;
 
-  constructor(
-    capacitorFileConfig: CapacitorElectronConfig,
-    appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]
-  ) {
+  constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
 
     this.TrayMenuTemplate = [
-      new MenuItem({ label: 'Quit App', click: () => {
-        this.forceClose = true;
-        app.quit();
-      } }),
+      new MenuItem({
+        label: 'Quit App',
+        click: () => {
+          this.forceClose = true;
+          app.quit();
+        },
+      }),
     ];
 
     if (appMenuBarMenuTemplate) {
@@ -87,7 +83,7 @@ export class ElectronCapacitorApp {
     // Setup our web app loader, this lets us load apps like react, vue, and angular without changing their build chains.
     this.loadWebApp = electronServe({
       directory: join(app.getAppPath(), 'app'),
-      scheme: this.customScheme
+      scheme: this.customScheme,
     });
   }
 
@@ -114,7 +110,8 @@ export class ElectronCapacitorApp {
         click: () => {
           this.forceClose = true;
           app.quit();
-      } }),
+        },
+      }),
     ];
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
   }
@@ -152,12 +149,10 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
-    const icon = nativeImage.createFromPath(
-      join(app.getAppPath(), 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png')
-    );
+    const icon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'));
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
-      defaultHeight: 800
+      defaultHeight: 800,
     });
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
@@ -173,8 +168,8 @@ export class ElectronCapacitorApp {
         contextIsolation: true,
         // Use preload to inject the electron variant overrides for capacitor plugins.
         // preload: join(app.getAppPath(), "node_modules", "@capacitor-community", "electron", "dist", "runtime", "electron-rt.js"),
-        preload: preloadPath
-      }
+        preload: preloadPath,
+      },
     });
     this.mainWindowState.manage(this.MainWindow);
     this.MainWindow.setMenu(null);
@@ -226,18 +221,14 @@ export class ElectronCapacitorApp {
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
     /*
-    ** If the splash screen is enabled, show it first while the main window loads, then dismiss it to display the main window.
-    ** Alternatively, you can just load the main window from the start without showing the splash screen.
-    */
+     ** If the splash screen is enabled, show it first while the main window loads, then dismiss it to display the main window.
+     ** Alternatively, you can just load the main window from the start without showing the splash screen.
+     */
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
       this.SplashScreen = new CapacitorSplashScreen({
-        imageFilePath: join(
-          app.getAppPath(),
-          'assets',
-          this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash.png'
-        ),
+        imageFilePath: join(app.getAppPath(), 'assets', this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash.png'),
         windowWidth: 600,
-        windowHeight: 400
+        windowHeight: 400,
       });
       this.SplashScreen.init(this.loadMainWindow, this);
     } else {
@@ -246,14 +237,10 @@ export class ElectronCapacitorApp {
 
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
-
       function isAuthorizedUrl(url: string): boolean {
-        return [
-          'https://my.parsec.cloud/',
-          'https://parsec.cloud/',
-          'https://github.com/Scille/',
-          'https://spdx.org/licenses/',
-        ].some((prefix) => url.startsWith(prefix));
+        return ['https://my.parsec.cloud/', 'https://parsec.cloud/', 'https://github.com/Scille/', 'https://spdx.org/licenses/'].some(
+          (prefix) => url.startsWith(prefix),
+        );
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
@@ -311,9 +298,9 @@ export function setupContentSecurityPolicy(customScheme: string): void {
         'Content-Security-Policy': [
           electronIsDev
             ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' data:`
-        ]
-      }
+            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' data:`,
+        ],
+      },
     });
   });
 }
