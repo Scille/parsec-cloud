@@ -16,9 +16,7 @@ Object.keys(plugins).forEach((pluginKey) => {
   Object.keys(plugins[pluginKey])
     .filter((className) => className !== 'default')
     .forEach((classKey) => {
-      const functionList = Object.getOwnPropertyNames(plugins[pluginKey][classKey].prototype).filter(
-        (v) => v !== 'constructor'
-      );
+      const functionList = Object.getOwnPropertyNames(plugins[pluginKey][classKey].prototype).filter((v) => v !== 'constructor');
 
       if (!contextApi[classKey]) {
         contextApi[classKey] = {};
@@ -33,8 +31,7 @@ Object.keys(plugins).forEach((pluginKey) => {
       // Events
       if (plugins[pluginKey][classKey].prototype instanceof EventEmitter) {
         const listeners: { [key: string]: { type: string; listener: (...args: any[]) => void } } = {};
-        const listenersOfTypeExist = (type): boolean =>
-          !!Object.values(listeners).find((listenerObj) => listenerObj.type === type);
+        const listenersOfTypeExist = (type): boolean => !!Object.values(listeners).find((listenerObj) => listenerObj.type === type);
 
         Object.assign(contextApi[classKey], {
           addListener(type: string, callback: (...args) => void) {
@@ -76,7 +73,7 @@ Object.keys(plugins).forEach((pluginKey) => {
             });
 
             ipcRenderer.send(`event-remove-${classKey}-${type}`);
-          }
+          },
         });
       }
     });
@@ -84,5 +81,5 @@ Object.keys(plugins).forEach((pluginKey) => {
 
 contextBridge.exposeInMainWorld('CapacitorCustomPlatform', {
   name: 'electron',
-  plugins: contextApi
+  plugins: contextApi,
 });

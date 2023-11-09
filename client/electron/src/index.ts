@@ -16,7 +16,7 @@ unhandled();
 // Define our menu templates (these are optional)
 const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
   { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
-  { role: 'viewMenu' }
+  { role: 'viewMenu' },
 ];
 
 // Get Config options from capacitor.config
@@ -29,7 +29,7 @@ const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarM
 // If deep linking is enabled then we will set it up here.
 if (capacitorFileConfig.electron?.deepLinkingEnabled) {
   setupElectronDeepLinking(myCapacitorApp, {
-    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'mycapacitorapp'
+    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'mycapacitorapp',
   });
 }
 

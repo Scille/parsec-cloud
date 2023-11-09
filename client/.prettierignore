@@ -1,9 +1,18 @@
+# Avoid auto-generated files
 android
+electron/app
+electron/build
+electron/dist
+electron/node_modules
 dist
-electron
-node_modules
-public
-resources
+# Auto-generated/boilerplate
 scripts
+# Node files
+node_modules
 package.json
 package-lock.json
+# Leave JSON alone
+**/*.json
+**/*.json5
+# Auto-generated
+src/plugins
