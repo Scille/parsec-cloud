@@ -1,25 +1,25 @@
 {
-  "compilerOptions": {
-    "noEmit": true,
-    "allowJs": true
-  },
-  "extends": "./tsconfig.json",
-  "include": [
-    ".eslintrc.cjs",
-    "vite.config.ts",
-    "vitest.config.ts",
-    "capacitor.config.ts",
-    "cypress.config.ts",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "src/**/*.js",
-    "electron/**/*.ts",
-    "electron/**/*.tsx",
-    "electron/**/*.js",
-    "tests/**/*.ts",
-    "tests/**/*.tsx",
-    "tests/e2e/.eslintrc.cjs",
-    "scripts/*.cjs"
-  ]
+    "compilerOptions": {
+        "noEmit": true,
+        "allowJs": true
+    },
+    "extends": "./tsconfig.json",
+    "include": [
+        ".eslintrc.cjs",
+        "vite.config.ts",
+        "vitest.config.ts",
+        "capacitor.config.ts",
+        "cypress.config.ts",
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "src/**/*.vue",
+        "src/**/*.js",
+        "electron/**/*.ts",
+        "electron/**/*.tsx",
+        "electron/**/*.js",
+        "tests/**/*.ts",
+        "tests/**/*.tsx",
+        "tests/e2e/.eslintrc.cjs",
+        "scripts/*.cjs"
+    ]
 }
