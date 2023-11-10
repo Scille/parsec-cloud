@@ -95,7 +95,7 @@ msgid ""
 "if something happens to it, having a workspace with a single user is "
 "dangerous."
 msgstr ""
-"De la même façon qu'un utilisateur avec un seul terminal est une mauvaise "
+"De la même façon qu'un utilisateur avec un seul appareil est une mauvaise "
 "idée car il ne dispose pas de moyen de récupération en cas de problème, "
 "avoir un espace de travail contenant un seul utilisateur est dangereux."
 
