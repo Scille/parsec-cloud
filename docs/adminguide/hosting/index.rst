@@ -1,6 +1,6 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. cspell:words conninfo literalinclude
+.. cspell:words conninfo literalinclude linenos
 
 .. _doc_adminguide_hosting:
 
@@ -66,6 +66,7 @@ For this guide, the required TLS certificates will be generated with a custom Ce
 
 .. literalinclude:: setup-tls.sh
   :language: bash
+  :linenos:
 
 The script will:
 
@@ -102,6 +103,7 @@ Below you will find a simple script to generate a token:
 
 .. literalinclude:: gen-admin-token.sh
   :language: shell
+  :linenos:
 
 The script will generate a random token (:bash:`openssl rand 63 | base64 --wrap=86`) and create the env file ``parsec-admin-token.env``
 
@@ -117,7 +119,8 @@ Database configuration
 Create the file ``parsec-db.env`` with the following content to configure the access to the PostgreSQL database:
 
 .. literalinclude:: parsec-db.env
-   :language: ini
+  :language: ini
+  :linenos:
 
 SMTP configuration
 ------------------
@@ -128,6 +131,7 @@ We need to set the connection informations, the sender information, in which the
 
 .. literalinclude:: parsec-smtp.env
   :language: ini
+  :linenos:
 
 S3 service configuration
 ------------------------
@@ -136,6 +140,7 @@ Create the file ``parsec-s3.env`` with the following content to set the URL for 
 
 .. literalinclude:: parsec-s3.env
   :language: ini
+  :linenos:
 
 .. note::
 
@@ -148,6 +153,7 @@ Create the file ``parsec.env`` with the following content to configure the ``par
 
 .. literalinclude:: parsec.env
   :language: ini
+  :linenos:
 
 The docker-compose file
 =======================
@@ -156,6 +162,7 @@ You can use the following `docker-compose`_ file (``parsec-server.docker.yaml``)
 
 .. literalinclude:: parsec-server.docker.yaml
   :language: yaml
+  :linenos:
 
 It will setup 4 services:
 
@@ -230,6 +237,7 @@ You can test ``mailhog`` with:
 
 .. literalinclude:: ping-mailhog.sh
   :language: bash
+  :linenos:
 
 You can then check if the email is present in the web interface at http://127.0.0.1:8025
 
