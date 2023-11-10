@@ -50,7 +50,7 @@ msgstr "le partage des données au sein d’un Espace de Travail;"
 
 #: ../../roles.rst:21
 msgid "the creation of its own Devices."
-msgstr "la création de ses propres Terminaux."
+msgstr "la création de ses propres Appareils."
 
 #: ../../roles.rst:25
 msgid "The Administrator profile enables"
@@ -84,15 +84,15 @@ msgstr ""
 
 #: ../../roles.rst:37
 msgid "Device management"
-msgstr "Gestion des terminaux"
+msgstr "Gestion des appareils"
 
 #: ../../roles.rst:39
 msgid ""
 "Only the user, regardless the profile, can create devices for itself. "
 "Devices are clones. The number of devices created by a user is usually small."
 msgstr ""
-"Seul l'utilisateur, quel que soit son profil, peut créer des terminaux pour "
-"lui-même. Les terminaux sont des clones. Le nombre de terminaux créés par un "
+"Seul l'utilisateur, quel que soit son profil, peut créer des appareils pour "
+"lui-même. Les appareils sont des clones. Le nombre de appareils créés par un "
 "utilisateur est généralement faible."
 
 #: ../../roles.rst:41
@@ -100,8 +100,8 @@ msgid ""
 "When a user is deleted, all the associated devices are deleted. It is not "
 "possible to delete a single device."
 msgstr ""
-"Lorsqu'un utilisateur est supprimé, tous les terminaux associés sont "
-"supprimés. Il n'est pas possible de supprimer un seul terminal."
+"Lorsqu'un utilisateur est supprimé, tous les appareils associés sont "
+"supprimés. Il n'est pas possible de supprimer un seul appareil."
 
 #: ../../roles.rst:45
 msgid "Management of Workspaces and Documents"

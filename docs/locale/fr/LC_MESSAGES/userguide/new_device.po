@@ -20,7 +20,7 @@ msgstr ""
 
 #: ../../userguide/new_device.rst:6
 msgid "Create new devices"
-msgstr "Créer de nouveaux terminaux"
+msgstr "Créer de nouvels appareils"
 
 #: ../../userguide/new_device.rst:8
 msgid ""
@@ -45,14 +45,14 @@ msgid ""
 msgstr ""
 "Une autre façon de voir cela est de considérer qu'une personne physique est "
 "représentée dans Parsec par un utilisateur et que chaque ordinateur que la "
-"personne possède est représenté dans Parsec par un terminal."
+"personne possède est représenté dans Parsec par un appareil."
 
 #: ../../userguide/new_device.rst:14
 msgid ""
 "Just like for the user, the device creation requires to have the inviting "
 "and the invitee devices both connected to the server at the same time."
 msgstr ""
-"Comme pour créer un nouvel utilisateur, la création d'un nouveau terminal "
+"Comme pour créer un nouvel utilisateur, la création d'un nouvel appareil "
 "nécessite d'avoir le créateur de l'invitation et l'invité connectés au "
 "serveur simultanément."
 
@@ -62,7 +62,7 @@ msgstr "Envoi de l'invitation"
 
 #: ../../userguide/new_device.rst:20
 msgid "Inviting a new device is done from the Parsec client:"
-msgstr "Inviter un nouveau terminal se fait via le client Parsec:"
+msgstr "Inviter un nouvel appareil se fait via le client Parsec:"
 
 #: ../../userguide/new_device.rst:-1
 msgid "Device invitation process"
@@ -83,7 +83,7 @@ msgid ""
 "For cryptographic reasons, a user can only create new devices for himself."
 msgstr ""
 "Pour des raisons liées aux procédés cryptographiques, un utilisateur ne peut "
-"créer de nouveaux terminaux que pour lui-même."
+"créer de nouveaux appareils que pour lui-même."
 
 #: ../../userguide/new_device.rst:34
 msgid "Receive invite"
@@ -115,7 +115,7 @@ msgid ""
 "across devices."
 msgstr ""
 "Le mot de passe n'étant utilisé que localement, il n'a pas besoin d'être le "
-"même pour les deux terminaux."
+"même pour les deux appareils."
 
 #: ../../userguide/new_device.rst:47
 msgid "Token exchange"

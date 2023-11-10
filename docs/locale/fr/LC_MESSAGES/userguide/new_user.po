@@ -47,7 +47,7 @@ msgstr "Envoi de l'invitation"
 
 #: ../../userguide/new_user.rst:15
 msgid "Inviting a user is done from the Parsec client:"
-msgstr "Inviter un nouveau terminal se fait via le client Parsec:"
+msgstr "Inviter un nouvel appareil se fait via le client Parsec:"
 
 #: ../../userguide/new_user.rst:-1
 msgid "Click on Invite User"
