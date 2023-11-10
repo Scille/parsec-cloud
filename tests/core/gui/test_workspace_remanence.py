@@ -1,11 +1,16 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0 2016-present Scille SAS
 
 import pytest
+from hypothesis import assume, given
+from hypothesis.strategies import integers
 from PyQt5 import QtCore
 
 from parsec.api.data import EntryName
 from parsec.core.gui.lang import translate
-from parsec.core.gui.remanence_management_widget import RemanenceManagementWidget
+from parsec.core.gui.remanence_management_widget import (
+    RemanenceManagementWidget,
+    normalize_progress,
+)
 from parsec.core.gui.workspace_button import WorkspaceButton
 
 
@@ -183,3 +188,14 @@ async def test_remanence_dialog_turn_on(
         ]
 
     await aqtbot.wait_until(_wait_remanence_turned_on)
+
+
+@given(integers(min_value=0), integers(min_value=1))
+def test_normalize_progress(value, total):
+    assume(value <= total)
+    normalized_value, normalized_total = normalize_progress(value, total)
+    if total <= 0x7FFFFFFF:
+        assert value == normalized_value
+        assert total == normalized_total
+    precision = 5
+    assert round(value / total, precision) == round(normalized_value / normalized_total, precision)
