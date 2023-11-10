@@ -81,9 +81,7 @@
       </div>
       <div class="workspaces-footer">
         <div class="folder-footer__container">
-          <ion-text
-            class="text title-h5"
-          >
+          <ion-text class="text title-h5">
             {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
           </ion-text>
         </div>
