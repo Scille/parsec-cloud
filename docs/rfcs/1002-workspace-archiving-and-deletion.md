@@ -8,7 +8,6 @@ At the moment, there is no way to delete or archive a workspace. The aim of this
 
 In particular, the owner of a workspace should be able to archive said workspace making it read-only for every users that is part of it. It should also be possible for the owner to set a deletion date after which the workspace is marked as deleted and becomes unavailable for all users. The data is then free to be deleted by a cleanup routine on the server, according to a configured policy. Note that owners are free to override the previous status (archiving and deletion date) as long as the workspace is not marked as deleted.
 
-
 Additionally, a minimum archiving period can be configured by the server administrator at the organization level in order to prevent hasty deletion (e.g, a 30 days period can be configured so that any workspace stays recoverable for at least 30 days after it's been archived).
 
 ## 1 - General approach
@@ -30,9 +29,7 @@ More specifically, the following API changes are required:
 - Update the realm commands to return specific status when the realm is not available due to its archiving status
 - Update the organization configuration API to include the minimum archiving period
 
-
 ## 2 - Data model
-
 
 The archiving status can be configured using one of 3 variants, `Available`, `Archived` and `DeletionPlanned`:
 
@@ -47,6 +44,7 @@ pub enum RealmArchivingConfiguration {
 ```
 
 This configuration is included in a certificate signed by the owner:
+
 ```json5
 {
     "label": "RealmArchivingCertificate",
@@ -78,9 +76,7 @@ The following constraints should be verified:
 - the user corresponding to `author` must be owner of the realm
 - the deletion date should respect the configured minimum archiving period
 
-
 **Note 1:** A new archiving configuration completely overrides the previous one. That means that it's irrelevant whether the workspace was already archived or not, the minimum archiving period is checked against the `timestamp` provided by the new manifest.
-
 
 **Note 2:** This data model does not allow for planning a future archiving, only the deletion can be planned.
 
@@ -229,7 +225,6 @@ It is defined as such:
 
 In addition, the following commands are updated with new reply status:
 
-
 | Check for archived/deleted status          | archived | deleted |
 |--------------------------------------------|----------|---------|
 | `realm_create`                             |          |         |
@@ -250,8 +245,6 @@ In addition, the following commands are updated with new reply status:
 | `block_read`                               |          | ✔️       |
 | `block_create`                             | ✔️        | ✔️       |
 
-
-
 ```json5
             [...]
             {
@@ -263,8 +256,8 @@ In addition, the following commands are updated with new reply status:
             [...]
 ```
 
-
 The organization config API is also modified to include the minimum archiving period:
+
 ```json5
 [
     {
