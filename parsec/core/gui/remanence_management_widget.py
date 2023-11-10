@@ -19,6 +19,14 @@ from parsec.core.gui.ui.remanence_management_widget import Ui_RemanenceManagemen
 from parsec.core.logged_core import LoggedCore
 
 
+def normalize_progress(value: int, total: int, maxi: int = 0x7FFFFFFF) -> tuple[int, int]:
+    if total <= maxi:
+        return value, total
+    assert total != 0
+    normalized_value = int(round(value * maxi / total))
+    return normalized_value, maxi
+
+
 class RemanenceManagementWidget(QWidget, Ui_RemanenceManagementWidget):
     def __init__(self, jobs_ctx: QtToTrioJobScheduler, core: LoggedCore, workspace_fs: WorkspaceFS):
         super().__init__()
@@ -106,10 +114,13 @@ class RemanenceManagementWidget(QWidget, Ui_RemanenceManagementWidget):
             format_value = "{} - {} / {} (%p%)".format(
                 title, get_filesize(info.local_and_remote_size), get_filesize(info.total_size)
             )
+            current_size, total_size = normalize_progress(
+                info.local_and_remote_size, info.total_size
+            )
             self.progress_bar.setFormat(format_value)
             self.progress_bar.setMinimum(0)
-            self.progress_bar.setMaximum(info.total_size)
-            self.progress_bar.setValue(info.local_and_remote_size)
+            self.progress_bar.setMaximum(total_size)
+            self.progress_bar.setValue(current_size)
         # Congratulate when a download is finished
         if (
             self._download_started
