@@ -13,7 +13,7 @@ import trio
 from parsec._parsec import CoreEvent, DateTime
 from parsec.api.data import EntryID, EntryName
 from parsec.core import logged_core_factory
-from parsec.core.fs import FsPath
+from parsec.core.fs import FsPath, UserFS
 from parsec.core.mountpoint import (
     MountpointAlreadyMounted,
     MountpointConfigurationError,
@@ -815,4 +815,49 @@ async def test_personal_workspace_invalid_options(base_mountpoint, running_backe
         check_mountpoint_paths(
             await mountpoint_manager.mount_workspace(wid_standard),
             await mountpoint_manager.mount_workspace(wid_personal),
+        )
+
+
+@pytest.mark.trio
+@pytest.mark.mountpoint
+async def test_file_creation_and_modification_time(
+    base_mountpoint,
+    alice_user_fs: UserFS,
+    event_bus,
+    running_backend,
+):
+    # Populate a bit the fs first...
+
+    wid = await alice_user_fs.workspace_create(EntryName("w"))
+    workspace = alice_user_fs.get_workspace(wid)
+
+    before_creation = alice_user_fs.device.time_provider.now().timestamp()
+    await workspace.write_bytes("/foo.txt", b"Hello world !")
+    after_creation = alice_user_fs.device.time_provider.now().timestamp()
+
+    # Now we can start fuse
+
+    async with mountpoint_manager_factory(
+        alice_user_fs, event_bus, base_mountpoint
+    ) as mountpoint_manager:
+        path = trio.Path(await mountpoint_manager.mount_workspace(wid)) / "foo.txt"
+        stat = await path.stat()
+
+        assert before_creation <= stat.st_ctime <= stat.st_mtime <= stat.st_atime <= after_creation
+
+        before_modification = alice_user_fs.device.time_provider.now().timestamp()
+        assert await path.read_text() == "Hello world !"
+        await path.write_text("New content")
+        assert await path.read_text() == "New content"
+        after_modification = alice_user_fs.device.time_provider.now().timestamp()
+
+        stat = await path.stat()
+        assert (
+            before_creation
+            <= stat.st_ctime
+            <= after_creation
+            <= before_modification
+            <= stat.st_mtime
+            <= stat.st_atime
+            <= after_modification
         )
