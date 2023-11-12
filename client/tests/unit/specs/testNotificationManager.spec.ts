@@ -44,6 +44,7 @@ describe('Notification Manager', () => {
       },
       {
         id: '1234',
+        title: 'C',
         message: 'D',
         level: NotificationLevel.Info,
         read: false,

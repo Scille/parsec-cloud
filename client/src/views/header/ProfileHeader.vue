@@ -79,7 +79,8 @@ async function openPopover(event: Event): Promise<void> {
         if (!result.ok) {
           notificationManager.showToast(
             new Notification({
-              message: t('HomePage.topbar.logoutFailed'),
+              title: t('HomePage.topbar.logoutFailed.title'),
+              message: t('HomePage.topbar.logoutFailed.message'),
               level: NotificationLevel.Error,
             }),
           );

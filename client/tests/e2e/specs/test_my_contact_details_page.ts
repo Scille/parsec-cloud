@@ -28,7 +28,7 @@ describe('Display client info', () => {
     cy.get('@passwordChange').find('ion-input').eq(2).find('input').type('N3w-P@ssw0rd.1337');
     cy.get('@changeButton').should('not.have.class', 'button-disabled');
     cy.get('@changeButton').click();
-    cy.checkToastMessage('success', 'Your password has been updated. Make sure you remember it!');
+    cy.checkToastMessage('success', 'Password updated', 'You can log in with your new password.');
     // Clear inputs on success
     cy.get('@passwordChange').find('ion-input').eq(0).find('input').should('have.value', '');
     cy.get('@passwordChange').find('ion-input').eq(1).find('input').should('have.value', '');
@@ -46,7 +46,7 @@ describe('Display client info', () => {
     cy.get('@passwordChange').find('ion-input').eq(2).find('input').type('N3w-P@ssw0rd.1337');
     cy.get('@changeButton').should('not.have.class', 'button-disabled');
     cy.get('@changeButton').click();
-    cy.checkToastMessage('error', 'Wrong password!');
+    cy.checkToastMessage('error', 'Wrong password', 'Please try again.');
     // Don't clear inputs on failure
     // cspell:disable-next-line
     cy.get('@passwordChange').find('ion-input').eq(0).find('input').should('have.value', '1nval1dP@ssw0rd.');

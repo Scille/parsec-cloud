@@ -198,6 +198,7 @@ async function exportDevice(): Promise<void> {
     // toast atm but to be changed
     notificationManager.showToast(
       new Notification({
+        title: t('PasswordInputModal.invalid'),
         message: notificationMsg,
         level: NotificationLevel.Error,
       }),
@@ -215,7 +216,8 @@ async function downloadRecoveryKey(): Promise<void> {
     recoveryKeyDownloaded.value = true;
     notificationManager.showToast(
       new Notification({
-        message: t('ExportRecoveryDevicePage.toasts.keyDownloadOk'),
+        title: t('ExportRecoveryDevicePage.toasts.keyDownloadOk.title'),
+        message: t('ExportRecoveryDevicePage.toasts.keyDownloadOk.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -228,7 +230,8 @@ async function downloadRecoveryFile(): Promise<void> {
     recoveryFileDownloaded.value = true;
     notificationManager.showToast(
       new Notification({
-        message: t('ExportRecoveryDevicePage.toasts.fileDownloadOk'),
+        title: t('ExportRecoveryDevicePage.toasts.fileDownloadOk.title'),
+        message: t('ExportRecoveryDevicePage.toasts.fileDownloadOk.message'),
         level: NotificationLevel.Success,
       }),
     );

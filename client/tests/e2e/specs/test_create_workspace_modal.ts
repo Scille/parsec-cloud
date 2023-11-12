@@ -30,7 +30,7 @@ describe('Check create workspace modal', () => {
     cy.get('@createButton').should('not.have.class', 'button-disabled');
     cy.get('@createButton').click();
     cy.get('.text-input-modal').should('not.exist');
-    cy.checkToastMessage('success', "The workspace 'MyWorkspace' has been created!");
+    cy.checkToastMessage('success', 'Workspace created', "The workspace 'MyWorkspace' has been created!");
   });
 
   it('Close modal', () => {

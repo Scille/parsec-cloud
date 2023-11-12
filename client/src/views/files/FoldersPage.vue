@@ -267,7 +267,8 @@ async function listFolder(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.errors.listFailed', {
+        title: t('FoldersPage.errors.listFailed.title'),
+        message: t('FoldersPage.errors.listFailed.message', {
           path: currentPath.value,
         }),
         level: NotificationLevel.Error,
@@ -315,7 +316,8 @@ async function createFolder(): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.errors.createFolderFailed', {
+        title: t('FoldersPage.errors.createFolderFailed.title'),
+        message: t('FoldersPage.errors.createFolderFailed.message', {
           name: folderName,
         }),
         level: NotificationLevel.Error,
@@ -380,7 +382,8 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (!result.ok) {
       notificationManager.showToast(
         new Notification({
-          message: t('FoldersPage.errors.deleteFailed', { name: entry.name }),
+          title: t('FoldersPage.errors.deleteFailed.title'),
+          message: t('FoldersPage.errors.deleteFailed.message', { name: entry.name }),
           level: NotificationLevel.Error,
         }),
       );
@@ -413,6 +416,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (errorsEncountered > 0) {
       notificationManager.showToast(
         new Notification({
+          title: t('FoldersPage.errors.deleteMultipleFailed'),
           message:
             errorsEncountered === entries.length
               ? t('FoldersPage.errors.deleteMultipleAllFailed')
@@ -450,7 +454,8 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.errors.renameFailed', { name: entry.name }),
+        title: t('FoldersPage.errors.renameFailed.title'),
+        message: t('FoldersPage.errors.renameFailed.message', { name: entry.name }),
         level: NotificationLevel.Error,
       }),
     );
@@ -471,14 +476,16 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       notificationManager.showToast(
         new Notification({
-          message: t('FoldersPage.linkNotCopiedToClipboard'),
+          title: t('FoldersPage.linkNotCopiedToClipboard.title'),
+          message: t('FoldersPage.linkNotCopiedToClipboard.message'),
           level: NotificationLevel.Error,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('FoldersPage.linkCopiedToClipboard'),
+          title: t('FoldersPage.linkCopiedToClipboard.title'),
+          message: t('FoldersPage.linkCopiedToClipboard.message'),
           level: NotificationLevel.Info,
         }),
       );
@@ -486,7 +493,8 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.getLinkError', { reason: result.error.tag }),
+        title: t('FoldersPage.getLinkError.title'),
+        message: t('FoldersPage.getLinkError.message', { reason: result.error.tag }),
         level: NotificationLevel.Error,
       }),
     );
@@ -516,13 +524,15 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       notificationManager.showToast(
         new Notification({
-          message: t('FoldersPage.errors.moveOneFailed', { name: entries[0].name }),
+          title: t('FoldersPage.errors.moveOneFailed.title'),
+          message: t('FoldersPage.errors.moveOneFailed.message', { name: entries[0].name }),
           level: NotificationLevel.Error,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
+          title: t('FoldersPage.errors.moveMultipleFailed'),
           message:
             errorCount === entries.length ? t('FoldersPage.errors.moveMultipleAllFailed') : t('FoldersPage.errors.moveMultipleSomeFailed'),
           level: NotificationLevel.Error,
@@ -532,7 +542,8 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.moveSuccess', { count: entries.length }, entries.length),
+        title: t('FoldersPage.moveSuccess.title', entries.length),
+        message: t('FoldersPage.moveSuccess.message', { count: entries.length }, entries.length),
         level: NotificationLevel.Success,
       }),
     );
@@ -580,13 +591,15 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       notificationManager.showToast(
         new Notification({
-          message: t('FoldersPage.errors.copyOneFailed', { name: entries[0].name }),
+          title: t('FoldersPage.errors.copyOneFailed.title'),
+          message: t('FoldersPage.errors.copyOneFailed.message', { name: entries[0].name }),
           level: NotificationLevel.Error,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
+          title: t('FoldersPage.errors.copyMultipleFailed'),
           message:
             errorCount === entries.length ? t('FoldersPage.errors.copyMultipleAllFailed') : t('FoldersPage.errors.copyMultipleSomeFailed'),
           level: NotificationLevel.Error,
@@ -596,7 +609,8 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('FoldersPage.copySuccess', { count: entries.length }, entries.length),
+        title: t('FoldersPage.copySuccess.title', { count: entries.length }, entries.length),
+        message: t('FoldersPage.copySuccess.message', entries.length),
         level: NotificationLevel.Success,
       }),
     );
@@ -622,7 +636,8 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (parsec.isWeb()) {
     await notificationManager.showModal(
       new Notification({
-        message: t('FoldersPage.open.unavailableOnWeb'),
+        title: t('FoldersPage.open.unavailableOnWeb.title'),
+        message: t('FoldersPage.open.unavailableOnWeb.message'),
         level: NotificationLevel.Warning,
       }),
     );

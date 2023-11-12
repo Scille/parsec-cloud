@@ -26,7 +26,7 @@ describe('Display export recovery device page', () => {
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.password-input-modal').find('#ms-password-input').find('input').type('wr0ng.');
     cy.get('@okButton').should('not.have.class', 'button-disabled').click();
-    cy.checkToastMessage('error', 'Invalid password.');
+    cy.checkToastMessage('error', 'Invalid password.', 'Invalid password.');
     cy.get('.recovery-container').find('#exportDevice').contains('I understand').click();
     cy.get('.password-input-modal').find('#ms-password-input').find('input').type('P@ssw0rd.');
     cy.get('@okButton').should('not.have.class', 'button-disabled').click();
@@ -40,13 +40,13 @@ describe('Display export recovery device page', () => {
     cy.get('@fourthItem').contains('File downloaded').should('not.be.visible');
     cy.get('@fileDownloadButton').click();
     cy.wait(500);
-    cy.checkToastMessage('success', 'The recovery file was successfully downloaded');
+    cy.checkToastMessage('success', 'File downloaded', 'The recovery file was successfully downloaded');
     cy.get('@thirdItem').find('#downloadButton').should('be.visible');
     cy.get('@thirdItem').find('#downloadButton').contains('Download again');
     cy.get('@thirdItem').contains('File downloaded').should('be.visible');
     cy.get('@keyDownloadButton').click();
     cy.wait(500);
-    cy.checkToastMessage('success', 'The secret key was successfully downloaded');
+    cy.checkToastMessage('success', 'File downloaded', 'The secret key was successfully downloaded');
     cy.get('@fourthItem').find('#downloadButton').should('be.visible');
     cy.get('@fourthItem').find('#downloadButton').contains('Download again');
     cy.get('.recovery-container').find('#back-to-devices-button').as('returnButton').should('be.visible');

@@ -234,7 +234,8 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('DevicesPage.greet.errors.startFailed'),
+        title: t('DevicesPage.greet.errors.startFailed.title'),
+        message: t('DevicesPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -245,7 +246,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('DevicesPage.greet.errors.startFailed'),
+        title: t('DevicesPage.greet.errors.startFailed.title'),
+        message: t('DevicesPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -297,6 +299,7 @@ async function cancelModal(): Promise<boolean> {
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
+      title: t('DevicesPage.greet.errors.unexpected.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -312,9 +315,10 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetDeviceStep.Summary) {
     notificationManager.showToast(
       new Notification({
-        message: t('DevicesPage.greet.success', {
+        title: t('DevicesPage.greet.success.title', {
           label: greeter.value.requestedDeviceLabel,
         }),
+        message: t('DevicesPage.greet.success.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -333,7 +337,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected.message', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -356,7 +360,8 @@ async function copyLink(): Promise<void> {
   await navigator.clipboard.writeText(greeter.value.invitationLink);
   notificationManager.showToast(
     new Notification({
-      message: t('DevicesPage.greet.linkCopiedToClipboard'),
+      title: t('DevicesPage.greet.linkCopiedToClipboard.title'),
+      message: t('DevicesPage.greet.linkCopiedToClipboard.message'),
       level: NotificationLevel.Info,
     }),
   );

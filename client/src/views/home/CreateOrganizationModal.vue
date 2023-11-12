@@ -417,6 +417,7 @@ async function nextStep(): Promise<void> {
       }
       notificationManager.showToast(
         new Notification({
+          title: t('CreateOrganization.errors.title'),
           message: message,
           level: NotificationLevel.Error,
         }),

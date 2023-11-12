@@ -115,7 +115,8 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('WorkspaceSharing.listFailure'),
+        title: t('WorkspaceSharing.listFailure.title'),
+        message: t('WorkspaceSharing.listFailure.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -139,14 +140,19 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (role === null) {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspaceSharing.alreadyNotShared', { user: user.humanHandle.label }),
+          title: t('WorkspaceSharing.listFailure.alreadyNotShared.title'),
+          message: t('WorkspaceSharing.listFailure.alreadyNotShared.message', { user: user.humanHandle.label }),
           level: NotificationLevel.Info,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspaceSharing.alreadyHasRole', { user: user.humanHandle.label, role: translateWorkspaceRole(t, role).label }),
+          title: t('WorkspaceSharing.listFailure.alreadyHasRole.title'),
+          message: t('WorkspaceSharing.listFailure.alreadyHasRole.message', {
+            user: user.humanHandle.label,
+            role: translateWorkspaceRole(t, role).label,
+          }),
           level: NotificationLevel.Info,
         }),
       );
@@ -158,7 +164,8 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (!role) {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspaceSharing.unshareSuccess', {
+          title: t('WorkspaceSharing.unshareSuccess.title'),
+          message: t('WorkspaceSharing.unshareSuccess.message', {
             user: user.humanHandle.label,
           }),
           level: NotificationLevel.Success,
@@ -167,7 +174,8 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspaceSharing.updateRoleSuccess', {
+          title: t('WorkspaceSharing.updateRoleSuccess.title'),
+          message: t('WorkspaceSharing.updateRoleSuccess.message', {
             user: user.humanHandle.label,
             role: translateWorkspaceRole(t, role).label,
           }),
@@ -178,7 +186,8 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('WorkspaceSharing.updateRoleFailure', {
+        title: t('WorkspaceSharing.updateRoleFailure.title'),
+        message: t('WorkspaceSharing.updateRoleFailure.message', {
           user: user.humanHandle.label,
         }),
         level: NotificationLevel.Error,

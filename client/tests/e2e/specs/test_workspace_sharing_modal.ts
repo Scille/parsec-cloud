@@ -42,11 +42,11 @@ describe('Check workspace sharing modal', () => {
     cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__label').contains('Reader').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
-    cy.checkToastMessage('success', "Jaheira's role has been updated to Reader.");
+    cy.checkToastMessage('success', 'Role updated', "Jaheira's role has been updated to Reader.");
     cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Reader').click();
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', 'The workspace is no longer shared with Korgan Bloodaxe.');
+    cy.checkToastMessage('success', 'Revoked access', 'The workspace is no longer shared with Korgan Bloodaxe.');
   });
 
   it('Set the same role', () => {
@@ -54,13 +54,13 @@ describe('Check workspace sharing modal', () => {
     cy.get('.popover-viewport').find('ion-item').eq(1).find('.option-text__label').contains('Contributor').click();
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor');
     // cspell:disable-next-line
-    cy.checkToastMessage('info', 'Cernd is already Contributor on this workspace.');
+    cy.checkToastMessage('info', 'Role already assigned', 'Cernd is already Contributor on this workspace.');
 
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click();
     cy.get('.popover-viewport').find('ion-item').eq(4).find('.option-text__label').contains('Not shared').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared');
     // cspell:disable-next-line
-    cy.checkToastMessage('info', 'This workspace is not shared with Jaheira.');
+    cy.checkToastMessage('info', 'Workspace not shared', 'This workspace is not shared with Jaheira.');
   });
 
   it('Filter users', () => {

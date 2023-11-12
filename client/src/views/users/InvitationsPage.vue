@@ -136,7 +136,8 @@ async function refreshInvitationsList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.invitation.invitationsListFailed'),
+        title: t('UsersPage.invitation.invitationsListFailed.title'),
+        message: t('UsersPage.invitation.invitationsListFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -164,7 +165,8 @@ async function inviteUser(): Promise<void> {
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
       notificationManager.showToast(
         new Notification({
-          message: t('UsersPage.invitation.inviteSuccessMailSent', {
+          title: t('UsersPage.invitation.inviteSuccessMailSent.title'),
+          message: t('UsersPage.invitation.inviteSuccessMailSent.message', {
             email: email,
           }),
           level: NotificationLevel.Success,
@@ -173,7 +175,8 @@ async function inviteUser(): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('UsersPage.invitation.inviteSuccessNoMail', {
+          title: t('UsersPage.invitation.inviteSuccessNoMail.title'),
+          message: t('UsersPage.invitation.inviteSuccessNoMail.message', {
             email: email,
           }),
           level: NotificationLevel.Success,
@@ -201,6 +204,7 @@ async function inviteUser(): Promise<void> {
 
     notificationManager.showToast(
       new Notification({
+        title: t('UsersPage.invitation.inviteFailedUnknown.title'),
         message,
         level: NotificationLevel.Error,
       }),
@@ -233,7 +237,8 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   if (result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.invitation.cancelSuccess'),
+        title: t('UsersPage.invitation.cancelSuccess.title'),
+        message: t('UsersPage.invitation.cancelSuccess.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -246,7 +251,8 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('UsersPage.invitation.cancelFailed'),
+          title: t('UsersPage.invitation.cancelFailed.title'),
+          message: t('UsersPage.invitation.cancelFailed.message'),
           level: NotificationLevel.Error,
         }),
       );
