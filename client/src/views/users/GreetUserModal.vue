@@ -298,7 +298,8 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.greet.errors.startFailed'),
+        title: t('UsersPage.greet.errors.startFailed.title'),
+        message: t('UsersPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -309,7 +310,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.greet.errors.startFailed'),
+        title: t('UsersPage.greet.errors.startFailed.title'),
+        message: t('UsersPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -364,6 +366,7 @@ async function cancelModal(): Promise<boolean> {
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
+      title: t('UsersPage.greet.errors.createUserFailed.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -379,7 +382,8 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.greet.success', {
+        title: t('UsersPage.greet.success.title'),
+        message: t('UsersPage.greet.success.message', {
           user: guestInfoPage.value?.fullName,
         }),
         level: NotificationLevel.Success,

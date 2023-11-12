@@ -169,7 +169,8 @@ async function refreshWorkspacesList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('WorkspacesPage.listError'),
+        title: t('WorkspacesPage.listError.title'),
+        message: t('WorkspacesPage.listError.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -215,7 +216,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
     if (result.ok) {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspacesPage.newWorkspaceSuccess', {
+          title: t('WorkspacesPage.newWorkspaceSuccess.title'),
+          message: t('WorkspacesPage.newWorkspaceSuccess.message', {
             workspace: workspaceName,
           }),
           level: NotificationLevel.Success,
@@ -225,7 +227,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspacesPage.newWorkspaceError'),
+          title: t('WorkspacesPage.newWorkspaceError.title'),
+          message: t('WorkspacesPage.newWorkspaceError.message'),
           level: NotificationLevel.Error,
         }),
       );
@@ -279,14 +282,16 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspacesPage.linkNotCopiedToClipboard'),
+          title: t('WorkspacesPage.linkNotCopiedToClipboard.title'),
+          message: t('WorkspacesPage.linkNotCopiedToClipboard.message'),
           level: NotificationLevel.Error,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
-          message: t('WorkspacesPage.linkCopiedToClipboard'),
+          title: t('WorkspacesPage.linkCopiedToClipboard.title'),
+          message: t('WorkspacesPage.linkCopiedToClipboard.message'),
           level: NotificationLevel.Info,
         }),
       );
@@ -294,7 +299,8 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('WorkspacesPage.getLinkError', { reason: result.error.tag }),
+        title: t('WorkspacesPage.getLinkError.title'),
+        message: t('WorkspacesPage.getLinkError.message', { reason: result.error.tag }),
         level: NotificationLevel.Error,
       }),
     );

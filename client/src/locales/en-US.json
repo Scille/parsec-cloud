@@ -48,7 +48,10 @@
         "none": "Not shared"
     },
     "link": {
-        "invalid": "The provided link is invalid."
+        "invalid": {
+            "title": "Invalid link",
+            "message": "The link you provided is invalid."
+        }
     },
     "HomePage": {
         "topbar": {
@@ -57,11 +60,11 @@
             "help": "Help and feedback",
             "myDevices": "My devices",
             "myContactDetails": "My contact details",
-            "logoutConfirmTitle": "Logging out",
-            "logoutConfirmQuestion": "Are you sure you want to log out?",
-            "logoutFailed": "Could not log out.",
-            "logoutYes": "Log out",
-            "logoutNo": "Stay logged in"
+            "logoutConfirm": "Are you sure you want to log out?",
+            "logoutFailed": {
+                "title": "Failed to log out",
+                "message": "An error occured while logging out."
+            }
         },
         "organizationList": {
             "title": "Your organizations",
@@ -171,6 +174,7 @@
             "modify": "Edit"
         },
         "errors": {
+            "title": "Could not create the organization",
             "badTimestamp": "The time of your machine differs from the server's. Please check your clock and make sure it is up-to-date (your machine's time is {clientTime}, server time is {serverTime}).",
             "offline": "Could not contact the server. Make sure you're connected to the internet.",
             "alreadyExists": "This organization name is not available, please choose another one.",
@@ -234,12 +238,30 @@
         "valid": "Valid",
         "cancel": "Cancel",
         "currentUserLabel": "Me",
-        "unshareSuccess": "The workspace is no longer shared with {user}.",
-        "updateRoleSuccess": "{user}'s role has been updated to {role}.",
-        "updateRoleFailure": "Could not update {user}'s role.",
-        "listFailure": "Could not get the sharing information for this workspace.",
-        "alreadyNotShared": "This workspace is not shared with {user}.",
-        "alreadyHasRole": "{user} is already {role} on this workspace."
+        "unshareSuccess": {
+            "title": "Revoked access",
+            "message": "The workspace is no longer shared with {user}."
+        },
+        "updateRoleSuccess": {
+            "title": "Role updated",
+            "message": "{user}'s role has been updated to {role}."
+        },
+        "updateRoleFailure": {
+            "title": "Could not update {user}'s role",
+            "message": "Please make sure you're connected to the internet."
+        },
+        "listFailure": {
+            "title": "An error occured",
+            "message": "Could not get the sharing information for this workspace.",
+            "alreadyNotShared": {
+                "title": "Workspace not shared",
+                "message": "This workspace is not shared with {user}."
+            },
+            "alreadyHasRole": {
+                "title": "Role already assigned",
+                "message": "{user} is already {role} on this workspace."
+            }
+        }
     },
     "SettingsPage": {
         "pageTitle": "Settings",
@@ -285,9 +307,18 @@
         "user": "user",
         "itemCount": "No items | 1 item | {count} items",
         "noWorkspaces": "You haven't created a workspace, and no workspace has been shared with you yet.",
-        "listError": "Could not list the workspaces.",
-        "newWorkspaceError": "Could not create the new workspace.",
-        "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",
+        "listError": {
+            "title": "Could not list the workspaces",
+            "message": "Please make sure you're connected to the internet."
+        },
+        "newWorkspaceError": {
+            "title": "Could not create the workspace",
+            "message": "Please make sure you're connected to the internet."
+        },
+        "newWorkspaceSuccess": {
+            "title": "Workspace created",
+            "message": "The workspace '{workspace}' has been created!"
+        },
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
@@ -330,9 +361,18 @@
             "contributor": "Contributor",
             "reader": "Reader"
         },
-        "getLinkError": "Could not get a link to the workspace (reason: {reason}).",
-        "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-        "linkNotCopiedToClipboard": "Could not copy the link to the clipboard."
+        "getLinkError": {
+            "title": "Could not get a link to the workspace",
+            "message": "{reason}."
+        },
+        "linkCopiedToClipboard": {
+            "title": "Link copied",
+            "message": "The link has been copied to the clipboard."
+        },
+        "linkNotCopiedToClipboard": {
+            "title": "Could not copy the link",
+            "message": "Check that your browser or device allows copy/paste."
+        }
     },
     "FoldersPage": {
         "createFolder": "New folder",
@@ -369,17 +409,38 @@
             "browse": "Browse"
         },
         "errors": {
-            "deleteFailed": "Failed to delete `{name}`",
-            "renameFailed": "Failed to rename `{name}`",
-            "createFolderFailed": "Failed to create folder `{name}`",
-            "listFailed": "Failed to list the content of the folder `{path}`",
-            "deleteMultipleAllFailed": "Failed to delete all entries.",
+            "deleteFailed": {
+                "title": "Failed to delete the file",
+                "message": "Could not delete the file `{name}`, please try again."
+            },
+            "renameFailed": {
+                "title": "Failed to rename the file",
+                "message": "Could not rename the file `{name}`, please try again."
+            },
+            "createFolderFailed": {
+                "title": "Failed to create folder",
+                "message": "Could not create folder `{name}`, please try again."
+            },
+            "listFailed": {
+                "title": "Failed to show the content of the folder",
+                "message": "Could not list the content of the folder `{path}`"
+            },
+            "deleteMultipleFailed": "Failed to delete",
+            "deleteMultipleAllFailed": "Could not delete all entries.",
             "deleteMultipleSomeFailed": "Some entries could not be deleted.",
-            "moveOneFailed": "Failed to move `{name}`",
+            "moveOneFailed": {
+                "title": "Failed to move the file",
+                "message": "Could not move the file `{name}`, please try again."
+            },
+            "moveMultipleFailed": "Failed to move",
             "moveMultipleAllFailed": "Failed to move all entries.",
             "moveMultipleSomeFailed": "Some entries could not be moved.",
-            "copyOneFailed": "Failed to copy `{name}`",
-            "copyMultipleAllFailed": "Failed to copy all entries.",
+            "copyOneFailed": {
+                "title": "Failed to copy the file",
+                "message": "Could not copy the file `{name}`, please try again."
+            },
+            "copyMultipleFailed": "Failed to copy",
+            "copyMultipleAllFailed": "All entries could not be copied.",
             "copyMultipleSomeFailed": "Some entries could not be copied."
         },
         "CreateFolderModal": {
@@ -413,18 +474,36 @@
         "copySelectFolderSubtitle": "Current location: {location}",
         "moveSelectFolderTitle": "Move one item | Move {count} items",
         "moveSelectFolderSubtitle": "Current location: {location}",
-        "moveSuccess": "One item moved! | {count} items moved!",
-        "copySuccess": "One item copied! | {count} items copied!",
+        "moveSuccess": {
+            "title": "1 element moved | {count} elements moved",
+            "message": "The element have been moved the choosen folder. | All the elements have been moved to the chosen folder."
+        },
+        "copySuccess": {
+            "title": "1 element copied | {count} elements copied",
+            "message": "The element have been copied to the choosen folder. | All the elements have been copied to the chosen folder."
+        },
         "open": {
             "fileFailedTitle": "Failed to open the file",
             "fileFailedSubtitle": "Could not open file `{name}`",
             "folderFailedTitle": "Failed to open the folder",
             "folderFailedSubtitle": "Could not open folder `{name}`",
-            "unavailableOnWeb": "Not available in web mode (yet!)."
+            "unavailableOnWeb": {
+                "title": "Not available in web mode",
+                "message": "This feature is not yet available in web mode."
+            }
         },
-        "linkNotCopiedToClipboard": "Could not copy the link to the clipboard.",
-        "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-        "getLinkError": "Could not get a link to the workspace (reason: {reason})."
+        "linkNotCopiedToClipboard": {
+            "title": "Could not copy the link",
+            "message": "Check that your browser or device allows copy/paste."
+        },
+        "linkCopiedToClipboard": {
+            "title": "Link copied",
+            "message": "The link has been copied to the clipboard."
+        },
+        "getLinkError": {
+            "title": "Could not get a link to the file",
+            "message": "Reason: {reason}."
+        }
     },
     "FileDetails": {
         "title": "Details on {name}",
@@ -553,10 +632,19 @@
                 "waitForGuest2": "Please don't close this window during the process."
             },
             "errors": {
-                "retrieveDeviceInfoFailed": "Could not retrieve the information.",
-                "unexpected": "An unexpected error occured (reason: {reason}).",
+                "retrieveDeviceInfoFailed": {
+                    "title": "Could not retrieve the information.",
+                    "message": "Please make sure you're connected to the internet."
+                },
+                "unexpected": {
+                    "title": "An unexpected error occured",
+                    "message": "reason : {reason}"
+                },
                 "createDeviceFailed": "Could not create the device.",
-                "startFailed": "Failed to start the process. Please make sure that you are connected to the internet.",
+                "startFailed": {
+                    "title": "Failed to start the process",
+                    "message": "Please make sure that you are connected to the internet."
+                },
                 "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
                 "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process."
             },
@@ -565,13 +653,15 @@
                 "finish": "Finish",
                 "start": "Start"
             },
-            "success": "The device {label} has been created!",
-            "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-            "copyLink": "Copy invitation link",
-            "cancelConfirm": "Cancel the greeting process",
-            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
-            "cancelYes": "Cancel the process",
-            "cancelNo": "Resume"
+            "success": {
+                "title": "{label} has been created!",
+                "message": "You can connect to this organisation from your new device."
+            },
+            "linkCopiedToClipboard": {
+                "title": "Link copied",
+                "message": "The link has been copied to the clipboard."
+            },
+            "copyLink": "Copy invitation link"
         }
     },
     "Password": {
@@ -614,8 +704,14 @@
             "backToDevices": "Back to my devices"
         },
         "toasts": {
-            "fileDownloadOk": "The recovery file was successfully downloaded",
-            "keyDownloadOk": "The secret key was successfully downloaded"
+            "fileDownloadOk": {
+                "title": "File downloaded",
+                "message": "The recovery file was successfully downloaded"
+            },
+            "keyDownloadOk": {
+                "title": "File downloaded",
+                "message": "The secret key was successfully downloaded"
+            }
         },
         "filenames": {
             "recoveryFile": "Parsec_Recovery_File_{org}.data",
@@ -634,7 +730,10 @@
         "waitingForHost": "(Waiting for the host)",
         "linkFormLabel": "Invitation link",
         "linkFormPlaceholder": "parsec://example.com/Org?...",
-        "successMessage": "You successfully joined the organization.",
+        "successMessage": {
+            "title": "Organization joined",
+            "message": "You successfully joined the organization."
+        },
         "stepTitles": {
             "GetHostCode": "Host code",
             "ProvideGuestCode": "Guest code",
@@ -672,12 +771,19 @@
             "finish": ""
         },
         "errors": {
-            "saveDeviceFailed": "Failed to save the information, please try again.",
+            "saveDeviceFailed": {
+                "title": "Failed to save the device",
+                "message": "Please make sure you're connected to the internet."
+            },
+            "title": "An error occured",
             "sendUserInfoFailed": "Failed to send information to the host, please restart the process.",
             "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
-            "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet."
+            "startFailed": {
+                "title": "Failed to start the process",
+                "message": "Please make sure the link is correct and that you are connected to the internet."
+            }
         },
         "cancelConfirm": "Cancel the joining process",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
@@ -712,9 +818,15 @@
             "profile": "Profile choice:"
         },
         "emptyList": "No user to display.",
-        "listUsersFailed": "Could not retrieve the users list. Please make sure you're connected to the internet.",
+        "listUsersFailed": {
+            "title": "Could not retrieve the users list",
+            "message": "Please make sure you're connected to the internet."
+        },
         "revokedEmptyList": "No revoked users to display.",
-        "listRevokedUsersFailed": "Could not retrieve the revoked users list. Please make sure you're connected to the internet.",
+        "listRevokedUsersFailed": {
+            "title": "Could not retrieve the revoked users list",
+            "message": "Please make sure you're connected to the internet."
+        },
         "userSelectedCount": "No user selected | One user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
@@ -753,38 +865,70 @@
             "profileDropdownPlaceholder": "Choose a profile",
             "profileDropdownTitle": "Profile",
             "errors": {
+                "title": "An error occured",
                 "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
                 "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
                 "unexpected": "An unexpected error occured (reason: {reason}).",
-                "startFailed": "Failed to start the process. Please make sure you are connected to the internet.",
-                "createUserFailed": "Failed to create the new user. Please restart the process.",
+                "startFailed": {
+                    "title": "Failed to start the process",
+                    "message": "Please make sure you're connected to the internet."
+                },
+                "createUserFailed": {
+                    "title": "Failed to create the new user",
+                    "message": "Please restart the process."
+                },
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the process."
             },
-            "success": "The user {user} has joined the organization!",
+            "success": {
+                "title": "{user} added",
+                "message": "{user} can now access to the organization."
+            },
             "cancelConfirm": "Cancel the onboarding",
             "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
             "cancelYes": "Cancel the process",
             "cancelNo": "Resume"
         },
         "invitation": {
+            "title": "An error occured",
             "greetUser": "Greet",
             "rejectUser": "Reject",
             "emailTitle": "Email",
             "dateTitle": "Invitation date",
             "statusTitle": "Status",
             "noInvitations": "No pending invitations",
-            "invitationsListFailed": "Failed to list the invitations. Make you you're connected to the internet.",
-            "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
-            "inviteSuccessNoMail": "The invitation was successfully created but we couldn't sent an email to {email}. You will have to forward the invitation link yourself.",
+            "invitationsListFailed": {
+                "title": "Could not retrieve the invitations list",
+                "message": "Please make sure you're connected to the internet."
+            },
+            "inviteSuccessMailSent": {
+                "title": "Invitation sent",
+                "message": "An invitation to join the organization has been sent to {email}."
+            },
+            "inviteSuccessNoMail": {
+                "title": "Invitation link created",
+                "message": "The invitation was successfully created but we couldn't sent an email to {email}."
+            },
             "inviteFailedAlreadyMember": "This email is already used by a member of this organization.",
             "inviteFailedOffline": "Could not reach the server. Please make sure you're connected to the internet.",
             "inviteFailedNotAllowed": "Only administrators can invite new people into the organization.",
             "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
-            "cancelSuccess": "The invitation has been cancelled.",
-            "cancelFailed": "Could not cancel the invitation. Make sure you're connected to the internet.",
+            "cancelSuccess": {
+                "title": "Invitation cancelled",
+                "message": "The invitation link is no longer valid."
+            },
+            "cancelFailed": {
+                "title": "Could not cancel the invitation",
+                "message": "Please make sure you're connected to the internet."
+            },
             "orgInfoFailed": "Could not retrieve the link. Please make sure you're connected to the internet.",
-            "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-            "linkNotCopiedToClipboard": "Could not copy the link to the clipboard.",
+            "linkCopiedToClipboard": {
+                "title": "Link copied",
+                "message": "The link has been copied to the clipboard."
+            },
+            "linkNotCopiedToClipboard": {
+                "title": "Impossible de copier le lien",
+                "message": "Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
+            },
             "copyLink": "Copy the link",
             "status": {
                 "ready": "Ready",
@@ -814,11 +958,18 @@
         "revocation": {
             "revokeTitle": "Revoke this user? | Revoke these users?",
             "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
-            "revokeFailed": "Failed to revoke this user. | Failed to revoke any user.",
-            "revokeSuccess": "{user} has been revoked and can no longer access this organization! | {count} users have been revoked and can no longer access this organization!",
-            "revokeSomeFailed": "Some users could not be revoked.",
-            "revokeYes": "Revoke",
-            "revokeNo": "Cancel"
+            "revokeFailed": {
+                "title": "Failed to revoke this user | Failed to revoke any user",
+                "message": "Please try again"
+            },
+            "revokeSuccess": {
+                "title": "User revoked | {count} users revoked",
+                "message": "{user} can no longer access this organization. | They can no longer access this organization."
+            },
+            "revokeSomeFailed": {
+                "title": "Some users could not be revoked",
+                "message": "Please try again"
+            }
         }
     },
     "AboutPage": {
@@ -873,11 +1024,18 @@
         "cancelConfirmSubtitle": "Information will not be saved, you will have to restart.",
         "cancelYes": "Cancel the process",
         "cancelNo": "Resume",
-        "successMessage": "Your new device has been successfully created!",
+        "successMessage": {
+            "title": "Device successfully created",
+            "message": "You can now access your organization from your new device."
+        },
         "errors": {
+            "title": "Could not add the device",
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
-            "saveDeviceFailed": "Failed to save the information, please try again.",
+            "saveDeviceFailed": {
+                "title": "Failed to save the information",
+                "message": "Please try again"
+            },
             "sendDeviceInfoFailed": "Failed to send information to the host, please restart the process.",
             "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
             "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process."
@@ -890,18 +1048,28 @@
         "title": "Changes"
     },
     "Notification": {
-        "nextButton": "Okay!"
+        "nextButton": "close"
     },
     "ContactDetailsPage": {
         "title": "Change your password",
-        "avatarTitle": "Avatar",
-        "avatarUnavailable": "Unavailable",
-        "changePasswordButton": "Change password",
-        "errors": {
-            "failedToRetrieveInformation": "Could not retrieve the information.",
-            "wrongPassword": "Wrong password!",
-            "cannotChangePassword": "Failed to change the password."
+        "changePasswordButton": "Update password",
+        "passwordUpdated": {
+            "title": "Password updated",
+            "message": "You can log in with your new password."
         },
-        "passwordUpdated": "Your password has been updated. Make sure you remember it!"
+        "errors": {
+            "wrongPassword": {
+                "title": "Wrong password",
+                "message": "Please try again."
+            },
+            "cannotChangePassword": {
+                "title": "Could not update the password",
+                "message": "Please make sure you're connected to the internet."
+            },
+            "failedToRetrieveInformation": {
+                "title": "Could not retrieve the information",
+                "message": "Please make sure you're connected to the internet."
+            }
+        }
     }
 }

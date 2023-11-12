@@ -2,7 +2,7 @@
 
 import { MsReportTheme } from '@/components/core';
 import { toastController } from '@ionic/vue';
-import { checkmarkCircle, closeCircle, informationCircle, warning } from 'ionicons/icons';
+import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
 import { ComposerTranslation } from 'vue-i18n';
 
 const DEFAULT_TOAST_DURATION = 3000;
@@ -58,9 +58,9 @@ export class ToastManager {
   private _getIcon(theme: MsReportTheme): string {
     switch (theme) {
       case MsReportTheme.Info:
-        return informationCircle;
+        return information;
       case MsReportTheme.Success:
-        return checkmarkCircle;
+        return checkmark;
       case MsReportTheme.Warning:
         return warning;
       case MsReportTheme.Error:

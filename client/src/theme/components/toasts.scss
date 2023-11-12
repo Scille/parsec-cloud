@@ -2,39 +2,115 @@
 
 /* **** Parsec toasts **** */
 
+// animation not working because of shadow-root element
+// need to be investigated
+@keyframes progress-bar {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
 ion-toast.notification-toast {
   --start: var(--parsec-sidebar-menu-width);
+
   &.ms-info {
-    --ms-notification-toast-text-color: var(--parsec-color-light-primary-600);
-    --ms-notification-toast-background-color: var(--parsec-color-light-primary-100);
-    --ms-notification-toast-button-color: var(--parsec-color-light-primary-700);
+    --ms-notification-toast-text-color: var(--parsec-color-light-info-700);
+    --ms-notification-toast-border-color: var(--parsec-color-light-info-500);
+    --ms-notification-toast-progress-bg-color: var(--parsec-color-light-info-100);
+    --ms-notification-toast-progress-color: var(--parsec-color-light-info-500);
   }
 
   &.ms-success {
-    --ms-notification-toast-text-color: var(--parsec-color-light-success-500);
-    --ms-notification-toast-background-color: var(--parsec-color-light-success-100);
-    --ms-notification-toast-button-color: var(--parsec-color-light-success-700);
+    --ms-notification-toast-text-color: var(--parsec-color-light-success-700);
+    --ms-notification-toast-border-color: var(--parsec-color-light-success-500);
+    --ms-notification-toast-progress-bg-color: var(--parsec-color-light-success-100);
+    --ms-notification-toast-progress-color: var(--parsec-color-light-success-500);
   }
 
   &.ms-warning {
-    --ms-notification-toast-text-color: var(--parsec-color-light-warning-500);
-    --ms-notification-toast-background-color: var(--parsec-color-light-warning-100);
-    --ms-notification-toast-button-color: var(--parsec-color-light-warning-700);
+    --ms-notification-toast-text-color: var(--parsec-color-light-warning-700);
+    --ms-notification-toast-border-color: var(--parsec-color-light-warning-500);
+    --ms-notification-toast-progress-bg-color: var(--parsec-color-light-warning-100);
+    --ms-notification-toast-progress-color: var(--parsec-color-light-warning-500);
   }
 
   &.ms-error {
-    --ms-notification-toast-text-color: var(--parsec-color-light-danger-500);
-    --ms-notification-toast-background-color: var(--parsec-color-light-danger-100);
-    --ms-notification-toast-button-color: var(--parsec-color-light-danger-700);
+    --ms-notification-toast-text-color: var(--parsec-color-light-danger-700);
+    --ms-notification-toast-border-color: var(--parsec-color-light-danger-500);
+    --ms-notification-toast-progress-bg-color: var(--parsec-color-light-danger-100);
+    --ms-notification-toast-progress-color: var(--parsec-color-light-danger-500);
   }
 
   &.ms-info,
   &.ms-success,
   &.ms-warning,
   &.ms-error {
-    --background: var(--ms-notification-toast-background-color);
+    --background: var(--parsec-color-light-secondary-inversed-contrast);
+    --border-color: var(--ms-notification-toast-border-color);
+    --border-radius: var(--parsec-radius-12);
+    --box-shadow: 0;
+    --button-color: var(--parsec-color-light-secondary-text);
     --color: var(--ms-notification-toast-text-color);
-    --button-color: var(--ms-notification-toast-button-color);
-    --box-shadow: 2px 2px 4px 0px var(--parsec-color-light-secondary-contrast);
+    --max-width: 27rem;
+  }
+
+  &::part(container) {
+    border-radius: var(--parsec-radius-12);
+    box-shadow: var(--parsec-shadow-strong);
+    margin-bottom: 2rem;
+    overflow: hidden;
+    padding: 0.5rem 1rem;
+
+    &::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0.25rem;
+      background: var(--ms-notification-toast-progress-bg-color);
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 0.25rem;
+      background: var(--ms-notification-toast-progress-color);
+      animation-name: progress-bar;
+      animation-duration: 5s;
+      animation-timing-function: ease-out;
+    }
+  }
+
+  &::role(status) {
+    display: none;
+  }
+
+  &::part(message) {
+    color: var(--parsec-color-light-secondary-text);
+    font-size: 0.825rem;
+    padding-top: 0.25rem;
+  }
+
+  &::part(icon) {
+    margin: 0;
+    padding: 0.25rem;
+    background: var(--ms-notification-toast-text-color);
+    border-radius: var(--parsec-radius-8);
+    color: var(--parsec-color-light-secondary-inversed-contrast);
+  }
+
+  &::part(button) {
+    background: var(--parsec-color-light-secondary-background);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: 0;
+    letter-spacing: 0.015rem;
   }
 }

@@ -108,7 +108,8 @@ async function changePassword(): Promise<void> {
   if (result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('ContactDetailsPage.passwordUpdated'),
+        title: t('ContactDetailsPage.passwordUpdated.title'),
+        message: t('ContactDetailsPage.passwordUpdated.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -120,7 +121,8 @@ async function changePassword(): Promise<void> {
       case ChangeAuthErrorTag.DecryptionFailed: {
         notificationManager.showToast(
           new Notification({
-            message: t('ContactDetailsPage.errors.wrongPassword'),
+            title: t('ContactDetailsPage.errors.wrongPassword.title'),
+            message: t('ContactDetailsPage.errors.wrongPassword.message'),
             level: NotificationLevel.Error,
           }),
         );
@@ -129,7 +131,8 @@ async function changePassword(): Promise<void> {
       default:
         notificationManager.showToast(
           new Notification({
-            message: t('ContactDetailsPage.errors.cannotChangePassword'),
+            title: t('ContactDetailsPage.errors.cannotChangePassword.title'),
+            message: t('ContactDetailsPage.errors.cannotChangePassword.message'),
             level: NotificationLevel.Error,
           }),
         );
@@ -144,7 +147,8 @@ onMounted(async () => {
   if (!result.ok || !deviceResult.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('ContactDetailsPage.errors.failedToRetrieveInformation'),
+        title: t('ContactDetailsPage.errors.failedToRetrieveInformation.title'),
+        message: t('ContactDetailsPage.errors.failedToRetrieveInformation.message'),
         level: NotificationLevel.Error,
       }),
     );

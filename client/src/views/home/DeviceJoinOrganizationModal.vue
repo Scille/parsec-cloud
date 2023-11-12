@@ -250,6 +250,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
+      title: t('ClaimDeviceModal.errors.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -313,7 +314,8 @@ async function nextStep(): Promise<void> {
       if (!result.ok) {
         notificationManager.showToast(
           new Notification({
-            message: t('ClaimDeviceModal.errors.saveDeviceFailed'),
+            title: t('ClaimDeviceModal.errors.saveDeviceFailed.title'),
+            message: t('ClaimDeviceModal.errors.saveDeviceFailed.message'),
             level: NotificationLevel.Error,
           }),
         );
@@ -325,7 +327,8 @@ async function nextStep(): Promise<void> {
     }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
     const notification = new Notification({
-      message: t('ClaimDeviceModal.successMessage'),
+      title: t('ClaimDeviceModal.successMessage.title'),
+      message: t('ClaimDeviceModal.successMessage.message'),
       level: NotificationLevel.Success,
     });
     notificationManager.showToast(notification, { trace: true });
@@ -357,7 +360,8 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        message: t('ClaimDeviceModal.errors.startFailed'),
+        title: t('ClaimDeviceModal.errors.startFailed.title'),
+        message: t('ClaimDeviceModal.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -369,7 +373,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        message: t('ClaimDeviceModal.errors.startFailed'),
+        title: t('ClaimDeviceModal.errors.startFailed.title'),
+        message: t('ClaimDeviceModal.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

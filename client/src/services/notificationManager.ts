@@ -21,11 +21,11 @@ export class Notification {
   id: string;
   time: DateTime;
   read: boolean;
+  title: string;
   message: string;
   level: NotificationLevel;
   data?: object;
-  title?: string;
-  constructor({ message, level, data = {}, title }: { message: string; level: NotificationLevel; data?: object; title?: string }) {
+  constructor({ title, level, data = {}, message }: { title: string; message: string; level: NotificationLevel; data?: object }) {
     this.id = uuid4();
     this.time = DateTime.now();
     this.read = false;
@@ -67,11 +67,9 @@ export class NotificationManager {
 
     const alertModalConfig: MsAlertModalConfig = {
       theme: this._getMsReportTheme(notification.level),
+      title: notification.title,
       message: notification.message,
     };
-    if (notification.title) {
-      alertModalConfig.title = notification.title;
-    }
 
     const result = await this._createAndPresentModal(alertModalConfig);
     if (result && result.role === MsModalResult.Confirm) {
@@ -112,8 +110,8 @@ export class NotificationManager {
     this.toastManager
       .createAndPresent({
         theme: this._getMsReportTheme(notification.level),
-        message: notification.message,
         title: notification.title,
+        message: notification.message,
         duration: DEFAULT_NOTIFICATION_DURATION,
       })
       .then(async (result) => {

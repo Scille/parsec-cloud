@@ -251,7 +251,8 @@ async function refreshUserList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.listRevokedUsersFailed'),
+        title: t('UsersPage.listRevokedUsersFailed.title'),
+        message: t('UsersPage.listRevokedUsersFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

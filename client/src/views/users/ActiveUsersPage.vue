@@ -281,14 +281,16 @@ async function revokeUser(user: UserInfo): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.revocation.revokeFailed', 1),
+        title: t('UsersPage.revocation.revokeFailed.title'),
+        message: t('UsersPage.revocation.revokeFailed.message', 1),
         level: NotificationLevel.Error,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.revocation.revokeSuccess', { user: user.humanHandle.label }, 1),
+        title: t('UsersPage.revocation.revokeSuccess.title'),
+        message: t('UsersPage.revocation.revokeSuccess.message', { user: user.humanHandle.label }, 1),
         level: NotificationLevel.Success,
       }),
     );
@@ -321,21 +323,24 @@ async function revokeSelectedUsers(): Promise<void> {
   if (errorCount === 0) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.revocation.revokeSuccess', { count: selectedUsers.length }, selectedUsers.length),
+        title: t('UsersPage.revocation.revokeSuccess.title', { count: selectedUsers.length }, selectedUsers.length),
+        message: t('UsersPage.revocation.revokeSuccess.message', { count: selectedUsers.length }, selectedUsers.length),
         level: NotificationLevel.Success,
       }),
     );
   } else if (errorCount < selectedUsers.length) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.revocation.revokeSomeFailed'),
+        title: t('UsersPage.revocation.revokeSomeFailed.title'),
+        message: t('UsersPage.revocation.revokeSomeFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.revocation.revokeFailed', selectedUsers.length),
+        title: t('UsersPage.revocation.revokeFailed.title'),
+        message: t('UsersPage.revocation.revokeFailed.message', selectedUsers.length),
         level: NotificationLevel.Error,
       }),
     );
@@ -409,7 +414,9 @@ async function refreshUserList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.listUsersFailed'),
+        title: t('UsersPage.listUsersFailed.title'),
+
+        message: t('UsersPage.listUsersFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -492,13 +499,6 @@ onUnmounted(async () => {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow-y: auto;
-}
-
-.users-toolbar {
-  padding: 1em 2em;
-  height: 6em;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-top: 1px solid var(--parsec-color-light-secondary-light);
 }
 
 .users-grid-item {

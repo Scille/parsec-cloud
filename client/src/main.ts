@@ -210,7 +210,8 @@ async function setupApp(): Promise<void> {
       } else {
         await notificationManager.showModal(
           new Notification({
-            message: t('link.invalid'),
+            title: t('link.invalid.title'),
+            message: t('link.invalid.message'),
             level: NotificationLevel.Error,
           }),
         );

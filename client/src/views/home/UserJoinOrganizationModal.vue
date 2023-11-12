@@ -275,6 +275,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
+      title: t('JoinOrganization.errors.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -361,7 +362,8 @@ async function nextStep(): Promise<void> {
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
       notificationManager.showToast(
         new Notification({
-          message: t('JoinOrganization.errors.saveDeviceFailed'),
+          title: t('JoinOrganization.errors.saveDeviceFailed.title'),
+          message: t('JoinOrganization.errors.saveDeviceFailed.message'),
           level: NotificationLevel.Error,
         }),
       );
@@ -377,7 +379,8 @@ async function nextStep(): Promise<void> {
     waitingForHost.value = false;
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Notification({
-      message: t('JoinOrganization.successMessage'),
+      title: t('JoinOrganization.successMessage.title'),
+      message: t('JoinOrganization.successMessage.message'),
       level: NotificationLevel.Success,
     });
     notificationManager.showToast(notification, { trace: true });
@@ -407,7 +410,8 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        message: t('JoinOrganization.errors.startFailed'),
+        title: t('JoinOrganization.errors.startFailed.title'),
+        message: t('JoinOrganization.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -421,7 +425,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        message: t('JoinOrganization.errors.startFailed'),
+        title: t('JoinOrganization.errors.startFailed.title'),
+        message: t('JoinOrganization.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

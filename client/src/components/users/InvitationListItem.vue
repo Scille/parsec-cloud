@@ -86,14 +86,16 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   if (result) {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.invitation.linkCopiedToClipboard'),
+        title: t('UsersPage.invitation.linkCopiedToClipboard.title'),
+        message: t('UsersPage.invitation.linkCopiedToClipboard.message'),
         level: NotificationLevel.Info,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        message: t('UsersPage.invitation.linkNotCopiedToClipboard'),
+        title: t('UsersPage.invitation.linkNotCopiedToClipboard.title'),
+        message: t('UsersPage.invitation.linkNotCopiedToClipboard.message'),
         level: NotificationLevel.Error,
       }),
     );
