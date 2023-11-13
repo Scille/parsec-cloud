@@ -18,7 +18,7 @@ ADD --link \
     Cargo.toml \
     make.py \
     server/packaging/testbed-server/in-docker-build.sh \
-    .
+    ./
 ADD --link libparsec/ libparsec/
 ADD --link server/ server/
 ADD --link bindings/ bindings/
