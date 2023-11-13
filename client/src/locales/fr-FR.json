@@ -678,7 +678,7 @@
             "create": "Inviter"
         },
         "revocation": {
-            "revokeTitle": "Révoquer cet utilisateur? | Révoquer ces utilisateurs ?",
+            "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
             "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
             "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation ! | {count} utilisateurs ont été révoqués et ne peuvent plus accéder à l'organisation !",
