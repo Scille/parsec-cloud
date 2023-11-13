@@ -114,6 +114,7 @@ import {
   IonList,
   IonListHeader,
   IonItem,
+  IonText,
 } from '@ionic/vue';
 
 import { addCircle } from 'ionicons/icons';
