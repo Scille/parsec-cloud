@@ -2,13 +2,15 @@
 
 .. _doc_userguide_recovery_device:
 
-===============
-Recover devices
-===============
+================================
+Create and use a recovery device
+================================
 
-A *recovery device* is a backup of an existing device. If you lose access to Parsec (you forget the password), the recovery device will allow you to recreate a new device and set a new password.
+A *recovery device* is a backup of an existing device.
+If you lose access to a Parsec's device (you forget the password, the Parsec keys had been lost, etc.),
+the recovery device will allow you to recreate a new device and set a new password.
 
-In order to `Create a new recovery device`_ or `Use a recovery device`_ you need to open the recovery device dialog from the main menu:
+In order to `create a new recovery device`_ or to `use a recovery device`_ you need to open the recovery device dialog from the main menu:
 
 1. Open the ``Recovery device`` menu.
 
@@ -38,7 +40,7 @@ Create a new recovery device
 3. Click ``Next``, you will be prompted to enter the password for the device you have selected
 
    .. image:: screens/recovery_device_create_device_re_auth.png
-      :alt: Create a recovery device re-authenticate modal
+      :alt: Create a recovery device authentication modal
 
 4. After confirmation, the recovery file is created and a passphrase is displayed. **You need to save the passphrase** as it will not be displayed again.
 
