@@ -5,6 +5,21 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.1-rc.1 (2023-11-13)
+--------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix file creation/modification times as shown in the file explorer on Windows
+  (`#5693 <https://github.com/Scille/parsec-cloud/issues/5693>`__)
+
+* Fix progress bar issue for offline availability when the workspace contains
+  more than 2GB of data
+  (`#5759 <https://github.com/Scille/parsec-cloud/issues/5759>`__)
+
+
+
 Parsec v2.16.0 (2023-10-31)
 ---------------------------
 

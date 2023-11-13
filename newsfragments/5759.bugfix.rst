@@ -1,1 +1,0 @@
-Fix progress bar issue for offline availability when the workspace contains more than 2GB of data
