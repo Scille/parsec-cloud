@@ -278,7 +278,7 @@ function selectAllUsers(checked: boolean): void {
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
     t('UsersPage.revocation.revokeTitle', 1),
-    t('UsersPage.revocation.revokeQuestion', {user: user.humanHandle.label}, 1),
+    t('UsersPage.revocation.revokeQuestion', { user: user.humanHandle.label }, 1),
   );
   if (answer === Answer.No) {
     return;
@@ -286,15 +286,19 @@ async function revokeUser(user: UserInfo): Promise<void> {
   const result = await parsecRevokeUser(user.id);
 
   if (!result.ok) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.revocation.revokeFailed', 1),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.revocation.revokeFailed', 1),
+        level: NotificationLevel.Error,
+      }),
+    );
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.revocation.revokeSuccess', {user: user.humanHandle.label}, 1),
-      level: NotificationLevel.Success,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.revocation.revokeSuccess', { user: user.humanHandle.label }, 1),
+        level: NotificationLevel.Success,
+      }),
+    );
   }
   await refreshUserList();
 }
@@ -308,7 +312,7 @@ async function revokeSelectedUsers(): Promise<void> {
 
   const answer = await askQuestion(
     t('UsersPage.revocation.revokeTitle', selectedUsers.length),
-    t('UsersPage.revocation.revokeQuestion', {count: selectedUsers.length}, selectedUsers.length),
+    t('UsersPage.revocation.revokeQuestion', { count: selectedUsers.length }, selectedUsers.length),
   );
   if (answer === Answer.No) {
     return;
@@ -322,20 +326,26 @@ async function revokeSelectedUsers(): Promise<void> {
     }
   }
   if (errorCount === 0) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.revocation.revokeSuccess', {count: selectedUsers.length}, selectedUsers.length),
-      level: NotificationLevel.Success,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.revocation.revokeSuccess', { count: selectedUsers.length }, selectedUsers.length),
+        level: NotificationLevel.Success,
+      }),
+    );
   } else if (errorCount < selectedUsers.length) {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.revocation.revokeSomeFailed'),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.revocation.revokeSomeFailed'),
+        level: NotificationLevel.Error,
+      }),
+    );
   } else {
-    notificationCenter.showToast(new Notification({
-      message: t('UsersPage.revocation.revokeFailed', selectedUsers.length),
-      level: NotificationLevel.Error,
-    }));
+    notificationCenter.showToast(
+      new Notification({
+        message: t('UsersPage.revocation.revokeFailed', selectedUsers.length),
+        level: NotificationLevel.Error,
+      }),
+    );
   }
   await refreshUserList();
 }

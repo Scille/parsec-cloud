@@ -121,11 +121,11 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
 }
 
 export enum RevokeUserTag {
-  Internal = 'Internal'
+  Internal = 'Internal',
 }
 
 export interface RevokeUserError {
-  tag: RevokeUserTag.Internal
+  tag: RevokeUserTag.Internal;
 }
 
 export async function revokeUser(userId: UserID): Promise<Result<null, RevokeUserError>> {
@@ -133,8 +133,8 @@ export async function revokeUser(userId: UserID): Promise<Result<null, RevokeUse
 
   if (handle !== null && !needsMocks()) {
     // Will call the bindings
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   } else {
-    return {ok: true, value: null};
+    return { ok: true, value: null };
   }
 }
