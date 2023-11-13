@@ -132,7 +132,7 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 
-const unwatchRoute = watch(currentRoute,  async (newRoute) => {
+const unwatchRoute = watch(currentRoute, async (newRoute) => {
   await parseRoute(newRoute);
 });
 

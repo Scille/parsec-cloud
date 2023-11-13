@@ -299,7 +299,7 @@ function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
 async function onFileClick(_event: Event, file: parsec.EntryStat): Promise<void> {
   if (!file.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, file.name);
-    routerNavigateTo('folder', {workspaceHandle: workspaceHandle.value}, {path: newPath, workspaceId: currentRoute.query.workspaceId});
+    routerNavigateTo('folder', { workspaceHandle: workspaceHandle.value }, { path: newPath, workspaceId: currentRoute.query.workspaceId });
   }
 }
 
