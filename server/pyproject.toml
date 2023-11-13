@@ -83,7 +83,7 @@ docutils = "0.20.1"
 Babel = "^2.10"
 
 ruff = "0.1.3"
-black = "23.10.1"
+black = "23.11.0"
 mypy = "1.6.1"
 
 setuptools = ">=63.1,<69.0"
