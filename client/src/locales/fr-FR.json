@@ -6,7 +6,8 @@
         "projectLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "BUSL-1.1",
-        "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html"
+        "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html",
+        "history": "https://docs.parsec.cloud/fr/stable/history.html"
     },
     "quit": {
         "title": "Quitter l'application",

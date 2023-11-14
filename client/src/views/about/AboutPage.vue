@@ -30,7 +30,8 @@
           </div>
 
           <ion-button
-            @click="showChangelog"
+            target="_blank"
+            :href="$t('app.history')"
             fill="outline"
             class="update-btn"
           >
