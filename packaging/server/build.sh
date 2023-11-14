@@ -13,6 +13,7 @@ CURRENT_COMMIT_SHA=$(git rev-parse --short HEAD)
 UNIQ_TAG="$CURRENT_DATE-$CURRENT_VERSION-$CURRENT_COMMIT_SHA"
 # We use Github package repository to store our docker's container.
 PREFIX=ghcr.io/scille/parsec-cloud
+IMAGE_NAME=parsec-server
 
 echo "Will create an image \`parsec-backend-server\` with the following tags:"
 echo "- \`latest\`"
@@ -23,8 +24,8 @@ echo
 
 DOCKER_BUILDKIT=1 docker build \
     -f $SCRIPTDIR/server.dockerfile \
-    -t $PREFIX/parsec-backend-server:latest \
-    -t $PREFIX/parsec-backend-server:$UNIQ_TAG \
+    -t $PREFIX/$IMAGE_NAME:latest \
+    -t $PREFIX/$IMAGE_NAME:$UNIQ_TAG \
     $ROOTDIR $@
 
 echo
