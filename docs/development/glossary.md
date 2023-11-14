@@ -228,4 +228,14 @@
     </td>
     <td></td>
   </tr>
+  <tr>
+    <td>Passphrase / Phrase secrète</td>
+    <td></td>
+    <td>
+      A passphrase is equivalent to a password, but instead of being composed of characters (letter, digit, ...)
+      it is composed of words (can also include digit and special characters like the password).
+    </td>
+    <td></td>
+    <td> / Phrase de passe</td>
+  </tr>
 </table>
