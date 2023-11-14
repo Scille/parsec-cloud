@@ -248,7 +248,7 @@ import { MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types'
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import { StoredDeviceData, StorageManager } from '@/services/storageManager';
 import { DateTime } from 'luxon';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
@@ -264,8 +264,8 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import AppManager from '@/services/appManager';
 
-const router = useRouter();
 const currentRoute = useRoute();
 const { t } = useI18n();
 const deviceList: Ref<AvailableDevice[]> = ref([]);
@@ -442,7 +442,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   const result = await parsecLogin(device, password);
   if (result.ok) {
     showOrganizationList.value = true;
-    router.push({ name: 'workspaces', params: { handle: result.value } });
+    await AppManager.get().login(result.value);
   } else {
     const notification = new Notification({
       title: t('HomePage.loginNotification.title'),

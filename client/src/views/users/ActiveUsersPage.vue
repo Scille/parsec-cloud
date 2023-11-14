@@ -427,3 +427,4 @@ onUnmounted(async () => {
   --inner-padding-start: 0px;
 }
 </style>
+@/router/routes

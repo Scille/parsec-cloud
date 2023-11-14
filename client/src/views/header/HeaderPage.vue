@@ -117,7 +117,6 @@ import {
 import { menu, search, home, notifications } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, computed, Ref, ref, watch, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { parse as parsePath } from '@/common/path';
@@ -126,22 +125,21 @@ import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute } from '@/parsec';
 
-const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
-const unwatchRoute = watch(currentRoute, async (newRoute, _oldRoute) => {
-  if (newRoute.query && newRoute.query.workspaceId) {
-    const result = await getWorkspaceName(newRoute.query.workspaceId as WorkspaceID);
-    if (result.ok) {
-      workspaceName.value = result.value;
-    } else {
-      console.log('Could not get workspace name', result.error);
-    }
-  }
-});
+// const unwatchRoute = watch(currentRoute, async (newRoute, _oldRoute) => {
+//   if (newRoute.query && newRoute.query.workspaceId) {
+//     const result = await getWorkspaceName(newRoute.query.workspaceId as WorkspaceID);
+//     if (result.ok) {
+//       workspaceName.value = result.value;
+//     } else {
+//       console.log('Could not get workspace name', result.error);
+//     }
+//   }
+// });
 
 onMounted(async () => {
   const result = await getClientInfo();
@@ -153,11 +151,11 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  unwatchRoute();
+  // unwatchRoute();
 });
 
 function getTitleForRoute(): string {
-  const route = currentRoute.name;
+  const route = 'settings'; // currentRoute.name;
 
   if (route === 'settings') {
     return t('HeaderPage.titles.settings');
@@ -182,7 +180,16 @@ function getTitleForRoute(): string {
 
 const fullPath = computed(() => {
   // Parse path and remove /deviceId
-  const route = parsePath(currentRoute.path).slice(2);
+  const currentRoute = {
+    params: {
+      deviceId: 42,
+    },
+    query: {
+      path: '/42/workspaces/1337',
+    },
+  };
+  const route = parsePath('/42/workspaces/1337');
+  // const route = parsePath(currentRoute.path).slice(2);
 
   const finalPath: RouterPathNode[] = [];
 

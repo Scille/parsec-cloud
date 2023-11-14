@@ -328,3 +328,4 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   }
 }
 </style>
+@/router/routes

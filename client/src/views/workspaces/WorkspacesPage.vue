@@ -131,7 +131,6 @@ import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed, inject } from 'vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import { routerNavigateToWorkspace } from '@/router';
 import {
   WorkspaceInfo,
   listWorkspaces as parsecListWorkspaces,
@@ -158,6 +157,10 @@ const msSorterLabels = {
 onMounted(async (): Promise<void> => {
   await refreshWorkspacesList();
 });
+
+function routerNavigateToWorkspace(a: string): void {
+  console.log('a');
+}
 
 async function refreshWorkspacesList(): Promise<void> {
   const result = await parsecListWorkspaces();
@@ -369,3 +372,4 @@ ion-item::part(native) {
 }
 </style>
 @/components/core/ms-sort/MsSorterOption
+@/router/routes

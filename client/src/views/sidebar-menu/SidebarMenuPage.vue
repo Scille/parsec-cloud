@@ -261,7 +261,6 @@ import { createGesture } from '@ionic/vue';
 import { useRoute } from 'vue-router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/parsec';
-import { routerNavigateTo, routerNavigateToWorkspace } from '@/router';
 import {
   listWorkspaces as parsecListWorkspaces,
   getClientInfo as parsecGetClientInfo,
@@ -285,6 +284,14 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
     wasReset.value = false;
   }
 });
+
+function routerNavigateTo(a: string): void {
+  console.log('a');
+}
+
+function routerNavigateToWorkspace(a: string): void {
+  console.log('a');
+}
 
 function navigateToWorkspace(workspaceId: string): void {
   routerNavigateToWorkspace(workspaceId);
@@ -657,3 +664,4 @@ ion-menu {
   text-decoration: none;
 }
 </style>
+@/router/routes

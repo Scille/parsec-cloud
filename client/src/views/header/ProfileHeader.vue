@@ -35,15 +35,13 @@ import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, ref, inject } from 'vue';
 import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
 import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
-import { useRouter } from 'vue-router';
-import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
 import { logout as parsecLogout } from '@/parsec';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import AppManager from '@/services/appManager';
 
 const isPopoverOpen = ref(false);
-const router = useRouter();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const { t } = useI18n();
@@ -83,7 +81,8 @@ async function openPopover(ev: Event): Promise<void> {
             }),
           );
         } else {
-          router.replace({ name: 'home' });
+          AppManager.get().logout(42);
+          // router.replace({ name: 'home' });
         }
       }
     } else if (value.data.option === ProfilePopoverOption.Settings) {
@@ -96,6 +95,10 @@ async function openPopover(ev: Event): Promise<void> {
       routerNavigateTo('about');
     }
   });
+}
+
+function routerNavigateTo(a: string): void {
+  console.log(a);
 }
 </script>
 
@@ -152,3 +155,4 @@ async function openPopover(ev: Event): Promise<void> {
   justify-content: center;
 }
 </style>
+@/router/routes

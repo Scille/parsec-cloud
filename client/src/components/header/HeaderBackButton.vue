@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+// import { useRouter } from 'vue-router';
 import { chevronBack } from 'ionicons/icons';
 import { IonLabel, IonIcon, IonButton } from '@ionic/vue';
 
@@ -33,10 +33,10 @@ defineProps<{
   short: boolean;
 }>();
 
-const router = useRouter();
+// const router = useRouter();
 
 function goBack(): void {
-  router.go(-1);
+  // router.go(-1);
 }
 </script>
 
