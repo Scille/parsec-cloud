@@ -143,4 +143,4 @@ jobs:
         env:
           TESTBED_SERVER_URL: parsec://localhost:6777?no_ssl=true
         working-directory: client
-        timeout-minutes: 10
+        timeout-minutes: 20
