@@ -12,6 +12,11 @@ on:
       - published
       - edited
 
+# We set `concurrency` to prevent `publish` workflow being run multiple time on the same git ref.
+concurrency:
+  group: publish-package-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
