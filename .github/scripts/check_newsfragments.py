@@ -6,30 +6,23 @@ PRs must contain a newsfragment that reference an opened issue
 
 import argparse
 import json
-import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from subprocess import run
 from typing import Optional
 from urllib.request import HTTPError, Request, urlopen
 
-# If file never existed in master, consider as a new newsfragment
-# Cannot just git diff against master branch here given newsfragments
-# removed in master will be considered as new items in our branch
-# --exit-code makes the command exit with 0 if there are changes
-BASE_CMD = "git log origin/master --exit-code --".split()
-
-# Ignore master given we compare against it !
-# Also ignore release branch (e.g. `2.11`) that don't have to create newsfragments
-IGNORED_BRANCHES_PATTERN = r"(master|[0-9]+\.[0-9]+)"
-
 # This list should be keep up to date with `misc/releaser.py::FRAGMENT_TYPES.keys()`
 VALID_TYPE = ["feature", "bugfix", "doc", "removal", "api", "misc", "empty"]
 
 
-def check_newsfragment(fragment: Path) -> Optional[bool]:
+def check_newsfragment(fragment: Path, base: str) -> Optional[bool]:
     fragment_name = fragment.name
-    cmd_args = [*BASE_CMD, str(fragment)]
+    # If file never existed in `base`, consider as a new newsfragment
+    # Cannot just git diff against `base` branch here given newsfragments
+    # removed in master will be considered as new items in our branch
+    # --exit-code makes the command exit with 0 if there are changes
+    cmd_args = ["git", "log", base, "--exit-code", "--", str(fragment)]
     ret = run(cmd_args, capture_output=True)
 
     if ret.returncode == 0:
@@ -76,18 +69,16 @@ def check_newsfragment(fragment: Path) -> Optional[bool]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("branch_name", help="current branch name", type=str)
+    parser.add_argument(
+        "--base", help="The base branch to compare to", default="origin/master", type=str
+    )
     args = parser.parse_args()
-
-    if re.match(IGNORED_BRANCHES_PATTERN, args.branch_name):
-        print("Release branch detected, ignoring newsfragment checks")
-        raise SystemExit(0)
 
     with ThreadPoolExecutor() as pool:
         ret = list(
             filter(
                 lambda value: value is not None,
-                pool.map(check_newsfragment, Path("newsfragments").glob("*.rst")),
+                pool.map(check_newsfragment, Path("newsfragments").glob("*.rst"), args.base),
             )
         )
 
