@@ -238,9 +238,13 @@ export class ElectronCapacitorApp {
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
       function isAuthorizedUrl(url: string): boolean {
-        return ['https://my.parsec.cloud/', 'https://parsec.cloud/', 'https://github.com/Scille/', 'https://spdx.org/licenses/'].some(
-          (prefix) => url.startsWith(prefix),
-        );
+        return [
+          'https://my.parsec.cloud/',
+          'https://parsec.cloud/',
+          'https://github.com/Scille/',
+          'https://spdx.org/licenses/',
+          'https://docs.parsec.cloud/',
+        ].some((prefix) => url.startsWith(prefix));
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
