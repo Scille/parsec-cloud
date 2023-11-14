@@ -259,7 +259,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 
 <style scoped lang="scss">
 .invitation-container {
-  margin: 2rem;
+  margin: 7em 2em 2em;
 }
 
 .right-side {
