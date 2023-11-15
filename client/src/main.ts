@@ -113,7 +113,7 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.provide(FormattersKey, {
-    'timeSince': (date: DateTime | undefined, defaultValue = '', format: 'long' | 'short' = 'long', roundDays?: boolean): string => {
+    timeSince: (date: DateTime | undefined, defaultValue = '', format: 'long' | 'short' = 'long', roundDays?: boolean): string => {
       const { t, d } = useI18n();
       return formatTimeSince(date, t, d, defaultValue, format, roundDays);
     },
