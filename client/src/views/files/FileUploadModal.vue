@@ -20,7 +20,7 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { join as joinPath } from '@/common/path';
 import { createFolder, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { inject } from 'vue';
-import { ImportManager, ImportManagerKey } from '@/common/importManager';
+import { ImportManager, ImportManagerKey } from '@/services/importManager';
 
 const importManager = inject(ImportManagerKey) as ImportManager;
 

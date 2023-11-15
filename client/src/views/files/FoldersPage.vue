@@ -209,7 +209,7 @@ import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
 import { getPathLink, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/common/importManager';
+import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/services/importManager';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
