@@ -138,7 +138,7 @@ import {
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
 } from '@/parsec';
-import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { workspaceNameValidator } from '@/common/validators';
 import { writeTextToClipboard } from '@/common/clipboard';
@@ -149,7 +149,7 @@ const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const msSorterLabels = {
   asc: t('HomePage.organizationList.sortOrderAsc'),
   desc: t('HomePage.organizationList.sortOrderDesc'),
@@ -164,7 +164,7 @@ async function refreshWorkspacesList(): Promise<void> {
   if (result.ok) {
     workspaceList.value = result.value;
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('WorkspacesPage.listError'),
         level: NotificationLevel.Error,
@@ -210,7 +210,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
   if (workspaceName) {
     const result = await parsecCreateWorkspace(workspaceName);
     if (result.ok) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspacesPage.newWorkspaceSuccess', {
             workspace: workspaceName,
@@ -220,7 +220,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
       );
       await refreshWorkspacesList();
     } else {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspacesPage.newWorkspaceError'),
           level: NotificationLevel.Error,
@@ -273,14 +273,14 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspacesPage.linkNotCopiedToClipboard'),
           level: NotificationLevel.Error,
         }),
       );
     } else {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspacesPage.linkCopiedToClipboard'),
           level: NotificationLevel.Info,
@@ -288,7 +288,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
       );
     }
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('WorkspacesPage.getLinkError', { reason: result.error.tag }),
         level: NotificationLevel.Error,

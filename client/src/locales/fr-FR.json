@@ -6,7 +6,7 @@
         "projectLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "BUSL-1.1",
-        "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html",
+        "licenseLink": "https://github.com/Scille/parsec-cloud/blob/master/LICENSE",
         "history": "https://docs.parsec.cloud/fr/stable/history.html"
     },
     "quit": {
@@ -33,12 +33,12 @@
             "logout": "Déconnexion",
             "help": "Aide et commentaires",
             "myDevices": "Mes appareils",
-            "logoutConfirm": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutConfirm": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutFailed": "Impossible de se déconnecter."
         },
         "organizationList": {
             "title": "Vos organisations",
-            "subtitle": "Gardez le contrôle total sur vos données avec Parsec et soyez sûr de leur sécurité.",
+            "subtitle": "Gardez le contrôle total sur vos données avec Parsec et soyez sûr(e) de leur sécurité.",
             "lastLogin": "Dernière connexion sur cet appareil :",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
@@ -56,7 +56,7 @@
             "createOrganizationSubtitle": "Je souhaite créer une organisation",
             "joinOrganization": "Rejoindre une organisation",
             "joinOrganizationTitle": "Rejoindre",
-            "joinOrganizationSubtitle": "J'ai reçu une invitation Parsec Cloud"
+            "joinOrganizationSubtitle": "J'ai reçu une invitation à rejoindre une organisation"
         },
         "organizationLogin": {
             "backToList": "Retour aux organisations",
@@ -74,11 +74,11 @@
             "joinByQRcode": "Rejoindre par QR code"
         },
         "loginNotification": {
-            "title": "Impossible de se connecter !",
+            "title": "Impossible de se connecter",
             "message": "Le mot de passe est incorrect !"
         },
-        "noDevices": "Vous n'avez pas d'organisations sur cet appareil.",
-        "howToAddDevices": "Créez une nouvelle organisation ou faites vous inviter dans une organisation existante.",
+        "noDevices": "Vous n'avez pas d'organisation sur cet appareil.",
+        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
         "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
         "createOrganization": "Créer une organisation",
         "joinByLink": "Rejoindre par lien",
@@ -86,7 +86,7 @@
     },
     "CreateOrganization": {
         "fullname": "Nom complet",
-        "fullnamePlaceholder": "Jean MARTIN",
+        "fullnamePlaceholder": "Jean Martin",
         "email": "E-mail",
         "emailPlaceholder": "jean.martin{'@'}exemple.com",
         "organizationName": "Nom de l'organisation",
@@ -112,7 +112,7 @@
         "loading": "Un instant, nous mettons en place votre organisation",
         "organizationCreated": "Vous pouvez accéder à votre nouvelle organisation",
         "title": {
-            "create": "Créez une nouvelle organisation",
+            "create": "Créer une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
             "server": "Choisissez votre serveur adapté",
             "password": "Créez votre mot de passe",
@@ -122,9 +122,9 @@
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
-            "server": "Choisissez le type de serveur que vous avez besoin.",
-            "password": "Pour finir créez votre mot de passe.",
-            "overview": "Vérifier que les informations sont correctes.",
+            "server": "Choisissez le type de serveur dont vous avez besoin.",
+            "password": "Pour finir, créez votre mot de passe.",
+            "overview": "Vérifiez que les informations sont correctes.",
             "Waiting": "Un instant, nous mettons en place votre organisation.",
             "Done": "Vous pouvez accéder à votre nouvelle organisation."
         },
@@ -144,8 +144,8 @@
             "modify": "Modifier"
         },
         "errors": {
-            "badTimestamp": "Le temps de votre ordinateur est différent du temps du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
-            "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à internet.",
+            "badTimestamp": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
+            "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason})."
         },
@@ -204,7 +204,7 @@
         "cancel": "Annuler",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
-        "updateRoleSuccess": "Le rôle de {user} a été changé en {role}.",
+        "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
         "updateRoleFailure": "Impossible de modifier le rôle de {user}.",
         "listFailure": "Impossible de récupérer les informations de partage de cet espace de travail."
     },
@@ -254,7 +254,7 @@
         "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
-        "newWorkspaceSuccess": "Le nouvel espace de travail '{workspace}' a été créé !",
+        "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -262,7 +262,7 @@
             "actionOffline": "Rendre disponible hors-ligne",
             "actionRename": "Renommer",
             "actionOpenInExplorer": "Ouvrir dans l'explorateur",
-            "actionHistory": "Historique de versions",
+            "actionHistory": "Historique des versions",
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
             "actionCopyLink": "Copier le lien"
@@ -293,7 +293,7 @@
         "sort": {
             "sortByName": "Nom",
             "sortBySize": "Taille",
-            "sortByLastUpdated": "Dernière màj"
+            "sortByLastUpdated": "Dernière modification"
         },
         "role": {
             "owner": "Propriétaire",
@@ -394,7 +394,7 @@
             "no": "Non",
             "id": "Id",
             "size": "Taille",
-            "path": "Chemin"
+            "path": "Emplacement"
         }
     },
     "OrganizationPage": {
@@ -500,19 +500,19 @@
             },
             "subtitles": {
                 "provideHostCode": "Cliquez sur le code ci-dessous sur l'appareil invité.",
-                "getGuestCode": "Cliques sur le code ci-dessous correspondant à celui affiché par l'invité.",
+                "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché par l'invité.",
                 "summary": "L'appareil {label} a été créé.",
                 "getDeviceInfo": "En attente des informations de l'invité.",
-                "waitForGuest1": "Pour créer un nouvel appareil, vous devez avoir Parsec lancé sur les deux appareils. Utilisez le lien d'invitation sur votre second appareil pour lancer la démarche",
-                "waitForGuest2": "Veuillez ne pas fermer cette fenêtre pendant le processus.."
+                "waitForGuest1": "Pour créer un nouvel appareil, vous devez avoir Parsec lancé sur les deux appareils. Veuillez utiliser le lien d'invitation sur votre second appareil pour lancer la démarche.",
+                "waitForGuest2": "Veuillez ne pas fermer cette fenêtre pendant le processus."
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Impossible de récupérer les informations.",
                 "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
                 "createDeviceFailed": "Impossible de créer l'appareil.",
-                "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes connecté(e) à internet.",
+                "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes connecté(e) à Internet.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus."
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus."
             },
             "actions": {
                 "approve": "Approuver",
@@ -527,11 +527,11 @@
     "Password": {
         "password": "Mot de passe",
         "confirmPassword": "Confirmer le mot de passe",
-        "passwordInfo": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillions de créer plusieurs appareils si possible et de partager les espaces de travail.",
+        "passwordInfo": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
         "passwordLevelLow": "Faible",
         "passwordLevelMedium": "Moyen",
         "passwordLevelHigh": "Fort",
-        "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : éviter les répétitions, les mots trop communs et les suites.",
+        "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
         "noMatch": "Ne correspondent pas"
     },
     "SasCodeChoice": {
@@ -557,7 +557,7 @@
         "instructions": {
             "start": {
                 "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée de l'inscription.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le process d'invitation.",
+                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus d'invitation.",
                 "greeter": "Vous serez accueilli(e) dans l'organisation par {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -577,19 +577,19 @@
         "subtitles": {
             "joinOrga": "Saisissez le lien que vous avez reçu par mail.",
             "waitForHost": "",
-            "getHostCode": "Cliquez sur le code que vous donne l'hôte.",
+            "getHostCode": "Sélectionnez le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
             "getUserInfo": "Veuillez saisir vos coordonnées pour accéder à l'organisation.",
-            "getPassword": "Veuillez choisir un mot de passe pour finalement l'enrôlement.",
+            "getPassword": "Veuillez choisir un mot de passe pour finaliser l'enrôlement.",
             "finish": ""
         },
         "errors": {
             "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer.",
             "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
-            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus.",
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet."
+            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
         },
         "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
         "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
@@ -629,10 +629,10 @@
                 "summary": "L'utilisateur a bien été ajouté !"
             },
             "subtitles": {
-                "waitForGuest1": "Pour accueillir un nouvel utilisateur vous devez être en contact direct avec la personne pendant la durée de l'inscription (environ 2 min).",
+                "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée de l'inscription (environ 2 minutes).",
                 "waitForGuest2": "Il ne faudra pas quitter la session.",
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
-                "getGuestCode": "Cliquez sur le code que vous donne l'invité.",
+                "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
                 "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil.",
                 "summary": "{name} a été ajouté(e) à l'organisation."
@@ -649,7 +649,7 @@
             },
             "profilePlaceholder": "Choisissez un profil",
             "errors": {
-                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus.",
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier votre connexion internet.",
@@ -733,11 +733,11 @@
         },
         "subtitles": {
             "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l’inscription.",
-            "invitationLink": "Veuillez saisir le lien d'invitation afficher sur l'appareil hôte.",
-            "getCode": "Cliquez sur le code que vous apercevez sur l’appareil principal.",
-            "provideCode": "Sur l’appareil principal, veuillez cliquer la suite de lettres que vous voyez ci-dessous.",
+            "invitationLink": "Veuillez saisir le lien d'invitation affiché sur l'appareil hôte.",
+            "getCode": "Sélectionnez le code que vous apercevez sur l’appareil principal.",
+            "provideCode": "Sur l’appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
             "password": "Pour terminer, créez un mot de passe pour votre nouvel appareil.",
-            "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connectez à Parsec avec celui-ci."
+            "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
         },
         "buttons": {
             "understand": "J'ai compris !",
@@ -753,12 +753,12 @@
         "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "successMessage": "Votre nouvel appareil a été créé !",
         "errors": {
-            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à internet.",
+            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet.",
             "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
             "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer.",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un soucis de sécurité. Veuillez redémarrer le processus."
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus."
         }
     },
     "Changelog": {

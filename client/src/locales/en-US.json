@@ -6,12 +6,12 @@
         "projectLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "BUSL-1.1",
-        "licenseLink": "https://spdx.org/licenses/BUSL-1.1.html",
+        "licenseLink": "https://github.com/Scille/parsec-cloud/blob/master/LICENSE",
         "history": "https://docs.parsec.cloud/en/stable/history.html"
     },
     "quit": {
-        "title": "Quit the application",
-        "subtitle": "Are you sure you want to quit the application?"
+        "title": "Exit application",
+        "subtitle": "Are you sure you want to exit the application?"
     },
     "openFile": {
         "failedTitle": "Failed to open the element",
@@ -38,7 +38,7 @@
         },
         "organizationList": {
             "title": "Your organizations",
-            "subtitle": "With Parsec, keep full control of your data and be sure that it safe.",
+            "subtitle": "With Parsec, keep complete control over your data and make sure that it stays safe.",
             "lastLogin": "Last login on this device:",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
@@ -56,7 +56,7 @@
             "createOrganizationSubtitle": "I want to create an organization",
             "joinOrganization": "Join an organization",
             "joinOrganizationTitle": "Join",
-            "joinOrganizationSubtitle": "I received a Parsec Cloud invitation"
+            "joinOrganizationSubtitle": "I received an invitation to join an organization"
         },
         "organizationLogin": {
             "backToList": "Return to organizations",
@@ -74,7 +74,7 @@
             "joinByQRcode": "Join by QR code"
         },
         "loginNotification": {
-            "title": "Could not login!",
+            "title": "Could not login",
             "message": "The password is incorrect!"
         },
         "noDevices": "You don't have any organization on this device.",
@@ -86,7 +86,7 @@
     },
     "CreateOrganization": {
         "fullname": "Full name",
-        "fullnamePlaceholder": "John SMITH",
+        "fullnamePlaceholder": "John Smith",
         "email": "Email",
         "emailPlaceholder": "john.smith{'@'}example.com",
         "organizationName": "Organization name",
@@ -107,10 +107,10 @@
         "parsecServerUrl": "URL of your PARSEC server",
         "parsecServerUrlPlaceholder": "parsec://hote:port",
         "registeringDevice": "Registering your device",
-        "deviceNameInputLabel": "Name of the device",
+        "deviceNameInputLabel": "Device name",
         "deviceNamePlaceholder": "Desktop123",
-        "loading": "Just a moment, and we set up your organization",
-        "organizationCreated": "You can access to your new organization",
+        "loading": "Just a moment, we're setting up your organization",
+        "organizationCreated": "You can access your new organization",
         "title": {
             "create": "Create an organization",
             "personalDetails": "Enter your personal information",
@@ -144,9 +144,9 @@
             "modify": "Edit"
         },
         "errors": {
-            "badTimestamp": "The time of your machine differs from the server. Please check your clock and make sure it is up-to-date (your machine's time is {clientTime}, server time is {serverTime}).",
+            "badTimestamp": "The time of your machine differs from the server's. Please check your clock and make sure it is up-to-date (your machine's time is {clientTime}, server time is {serverTime}).",
             "offline": "Could not contact the server. Make sure you're connected to the internet.",
-            "alreadyExists": "This organization name is not available, please chose another one.",
+            "alreadyExists": "This organization name is not available, please choose another one.",
             "generic": "Failed to create the organization (reason: {reason})."
         },
         "cancelConfirm": "Are you sure you want to cancel the process?",
@@ -154,7 +154,7 @@
     },
     "JoinByLinkModal": {
         "pageTitle": "Join by link",
-        "pleaseEnterUrl": "Please enter the organization's URL",
+        "pleaseEnterUrl": "Please enter the organization URL",
         "urlInputLabel": "URL of the organization",
         "urlPlaceholder": "parsec://hote:port/organization?action=action&...",
         "join": "Join"
@@ -254,7 +254,7 @@
         "noWorkspaces": "You haven't created a workspace, and no workspace has been shared with you yet.",
         "listError": "Could not list the workspaces.",
         "newWorkspaceError": "Could not create the new workspace.",
-        "newWorkspaceSuccess": "The new workspace '{workspace}' has been created!",
+        "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
@@ -287,13 +287,13 @@
             "name": "Name",
             "role": "Role",
             "sharedWith": "Users",
-            "lastUpdate": "Last update",
+            "lastUpdate": "Last updated",
             "size": "Size"
         },
         "sort": {
             "sortByName": "Name",
             "sortBySize": "Size",
-            "sortByLastUpdated": "Last update"
+            "sortByLastUpdated": "Last updated"
         },
         "role": {
             "owner": "Owner",
@@ -314,7 +314,7 @@
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
-            "lastUpdate": "Last Update",
+            "lastUpdate": "Last Updated",
             "size": "Size"
         },
         "File": {
@@ -336,14 +336,14 @@
         "importModal": {
             "title": "Upload your files",
             "dragAndDrop": "Drag and drop your files here",
-            "maxSize": "Maximale size: 25Mb",
+            "maxSize": "Maximum size: 25Mb",
             "or": "or",
             "browse": "Browse"
         },
         "errors": {
             "deleteFailed": "Failed to delete `{name}`",
             "renameFailed": "Failed to rename `{name}`",
-            "createFolderFailed": "Failed to create new folder `{name}`",
+            "createFolderFailed": "Failed to create folder `{name}`",
             "listFailed": "Failed to list the content of the folder `{path}`",
             "deleteMultipleAllFailed": "Failed to delete all entries.",
             "deleteMultipleSomeFailed": "Some entries could not be deleted."
@@ -365,7 +365,7 @@
         },
         "deleteOneFileQuestionTitle": "Delete one file",
         "deleteOneFileQuestionSubtitle": "Are you sure you want to delete the file `{name}`?",
-        "deleteOneFolderQuestionTitle": "Delete one folder?",
+        "deleteOneFolderQuestionTitle": "Delete one folder",
         "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete the folder `{name}`?",
         "deleteMultipleQuestionTitle": "Delete multiple elements",
         "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} elements?",
@@ -511,8 +511,8 @@
                 "unexpected": "An unexpected error occured (reason: {reason}).",
                 "createDeviceFailed": "Could not create the device.",
                 "startFailed": "Failed to start the process. Please make sure that you are connected to the internet.",
-                "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
-                "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process."
+                "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
+                "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process."
             },
             "actions": {
                 "approve": "Approve",
@@ -531,11 +531,11 @@
         "passwordLevelLow": "Low",
         "passwordLevelMedium": "Moderate",
         "passwordLevelHigh": "Strong",
-        "passwordCriteria": "Make sure it corresponds to a strong level: avoid repetition, overly common words and sequences.",
-        "noMatch": "Do not match"
+        "passwordCriteria": "Make sure it corresponds to a strong level: avoid repetitions, overly common words and sequences.",
+        "noMatch": "Does not match"
     },
     "SasCodeChoice": {
-        "noneOfTheChoices": "None of the codes"
+        "noneOfTheChoices": "None shown"
     },
     "JoinOrganization": {
         "logIn": "Log In",
@@ -556,13 +556,13 @@
         },
         "instructions": {
             "start": {
-                "first": "In order to avoid any attacks, you will have to be in direct contact with the host during the whole enrollment process.",
+                "first": "In order to avoid any attack, you will have to be in direct contact with the host during the whole enrollment process.",
                 "second": "The host will have to go to Users, then Pending invitation to start the process.",
                 "greeter": "You will be welcomed into the organization by {greeter} <{greeterEmail}>."
             },
             "finish": {
                 "first": "You can now log in to Parsec.",
-                "second": "We advice that you create a recovery file in case you forget your password."
+                "second": "We advise that you create a recovery file in the event that you forget your password."
             }
         },
         "titles": {
@@ -586,9 +586,9 @@
         "errors": {
             "saveDeviceFailed": "Failed to save the information, please try again.",
             "sendUserInfoFailed": "Failed to send information to the host, please restart the process.",
-            "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process.",
+            "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
-            "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
+            "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet."
         },
         "cancelConfirm": "Are you sure you want to cancel the process?",
@@ -608,7 +608,7 @@
             "standard": "Standard",
             "outsider": "Outsider"
         },
-        "emptyList": "No users to display.",
+        "emptyList": "No user to display.",
         "listUsersFailed": "Could not retrieve the users list. Please make sure you're connected to the internet.",
         "revokedEmptyList": "No revoked users to display.",
         "listRevokedUsersFailed": "Could not retrieve the revoked users list. Please make sure you're connected to the internet.",
@@ -649,8 +649,8 @@
             },
             "profilePlaceholder": "Choose a profile",
             "errors": {
-                "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process.",
-                "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
+                "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
+                "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
                 "unexpected": "An unexpected error occured (reason: {reason}).",
                 "startFailed": "Failed to start the process. Please make sure you are connected to the internet.",
                 "createUserFailed": "Failed to create the new user. Please restart the process.",
@@ -735,7 +735,7 @@
             "claimDevice": "You must open Parsec on both devices during the registration period.",
             "invitationLink": "Please enter the invitation link displayed on the host device.",
             "getCode": "Click on the code you see on the main device.",
-            "provideCode": "On the main device, click on the sequence of letters you see below.",
+            "provideCode": "On the main device, click on the code you see below.",
             "password": "Finally, create a password for your new device.",
             "done": "The device has been created and added to this organization. You can now use it to connect to Parsec."
         },
@@ -757,8 +757,8 @@
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "saveDeviceFailed": "Failed to save the information, please try again.",
             "sendDeviceInfoFailed": "Failed to send information to the host, please restart the process.",
-            "invalidCodeSelected": "You didn't select the right code. Please restart the process.",
-            "noneCodeSelected": "If you didn't see the right code, it could be a security concern. Please restart the process."
+            "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
+            "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process."
         }
     },
     "Changelog": {

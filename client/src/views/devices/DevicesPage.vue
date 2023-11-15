@@ -138,12 +138,12 @@ import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonLabel, Io
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const passwordSaved = ref(false);
 
@@ -156,7 +156,7 @@ async function refreshDevicesList(): Promise<void> {
   if (result.ok) {
     devices.value = result.value;
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: 'Failed to retrieve devices',
         level: NotificationLevel.Error,

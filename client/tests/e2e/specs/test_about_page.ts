@@ -22,12 +22,12 @@ describe('Check about page', () => {
     cy.get('@keys').eq(3).contains('Project');
     cy.get('@values')
       .eq(0)
-      .contains(/Parsec Cloud v[\da-z.-]+/);
+      .contains(/v[\da-z.-]+/);
     cy.get('@values').eq(1).contains('Parsec Cloud');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');
-    cy.get('.update-container').find('#notuptodate').contains('A new version is available.');
-    cy.get('.update-container').find('ion-button').contains('Show changelog');
+    cy.get('.about').find('#notuptodate').contains('A new version is available.');
+    cy.get('.info-list').find('.changelog-btn').contains('Show changelog');
   });
 
   it('Go back to workspaces', () => {

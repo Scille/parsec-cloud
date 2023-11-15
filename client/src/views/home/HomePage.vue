@@ -30,7 +30,14 @@
                 class="sidebar-footer__version body"
                 @click="openAboutModal"
               >
-                {{ getAppVersion() }}
+                <ion-icon
+                  slot="start"
+                  :icon="informationCircle"
+                  size="small"
+                />
+                <span class="version-text">
+                  {{ getAppVersion() }}
+                </span>
               </div>
             </div>
           </div>
@@ -237,7 +244,7 @@ import {
   modalController,
 } from '@ionic/vue';
 // We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
-import { chevronBack, cog, logIn } from 'ionicons/icons';
+import { chevronBack, cog, logIn, informationCircle } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
@@ -254,7 +261,7 @@ import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 import { MsModalResult } from '@/components/core/ms-types';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
@@ -280,7 +287,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
 const msSorterOptions: MsSorterOption[] = [
@@ -449,7 +456,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
       message: t('HomePage.loginNotification.message'),
       level: NotificationLevel.Error,
     });
-    notificationCenter.showToast(notification);
+    notificationManager.showToast(notification);
   }
 }
 
@@ -571,19 +578,35 @@ async function openSettingsModal(): Promise<void> {
 
       .logo-img {
         max-height: 3em;
-        width: 25%;
+        width: 30%;
         height: 100%;
       }
     }
 
     &__version {
       cursor: pointer;
-      color: var(--parsec-color-light-secondary-light);
-      padding: 0.5rem;
-      border-radius: var(--parsec-radius-6);
+      color: var(--parsec-color-light-secondary-premiere);
+      padding: 0.3rem 0.5rem;
+      border-radius: var(--parsec-radius-8);
+      background-color: var(--parsec-color-light-primary-30-opacity15);
+      border: 1px solid var(--parsec-color-light-primary-30-opacity15);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 150ms linear;
+
+      .version-text {
+        line-height: 0;
+        padding: 0.8rem 0;
+      }
+
+      ion-icon {
+        font-size: 1.375rem;
+        color: var(--parsec-color-light-primary-100);
+      }
 
       &:hover {
-        text-decoration: underline;
+        border-color: var(--parsec-color-light-primary-100);
       }
     }
   }
