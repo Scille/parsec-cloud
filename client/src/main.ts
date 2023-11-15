@@ -41,7 +41,7 @@ import { Notification, NotificationCenter, NotificationLevel } from '@/services/
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import { isElectron, isHomeRoute } from '@/parsec';
 import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
-import { ImportManager, ImportManagerKey } from '@/common/importManager';
+import { ImportManager, ImportManagerKey } from '@/services/importManager';
 
 async function setupApp(): Promise<void> {
   const storageManager = new StorageManager();
