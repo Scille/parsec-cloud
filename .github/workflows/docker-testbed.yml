@@ -82,8 +82,6 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
         timeout-minutes: 20
 
       - name: Start docker test container
@@ -115,5 +113,4 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
-          cache-from: type=gha
         timeout-minutes: 5
