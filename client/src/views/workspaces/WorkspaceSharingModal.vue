@@ -17,15 +17,15 @@
           <workspace-user-role
             :disabled="true"
             :user="{
-              id: 'FAKE',
-              humanHandle: {
+              id: clientInfo ? clientInfo.userId : 'FAKE',
+              humanHandle: clientInfo ? clientInfo.humanHandle : {
                 label: $t('WorkspaceSharing.currentUserLabel'),
                 email: '',
               },
               profile: UserProfile.Outsider,
             }"
             :role="ownRole"
-            :client-profile="ownProfile"
+            :client-profile="clientInfo ? clientInfo.currentProfile : UserProfile.Outsider"
             :client-role="ownRole"
           />
           <workspace-user-role
@@ -34,7 +34,7 @@
             :key="entry[0].id"
             :user="entry[0]"
             :role="entry[1]"
-            :client-profile="ownProfile"
+            :client-profile="clientInfo ? clientInfo.currentProfile : UserProfile.Outsider"
             :client-role="ownRole"
             @role-update="updateUserRole"
           />
@@ -45,10 +45,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonList, modalController } from '@ionic/vue';
+import { IonPage, IonList } from '@ionic/vue';
 import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
-import { MsModalResult } from '@/components/core/ms-types';
-import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, getClientProfile } from '@/parsec';
+import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, ClientInfo, getClientInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
@@ -61,7 +60,7 @@ import { translateWorkspaceRole } from '@/common/translations';
 const notificationCenter: NotificationCenter = inject(NotificationKey)!;
 const search = ref('');
 const { t } = useI18n();
-let ownProfile = UserProfile.Outsider;
+const clientInfo: Ref<ClientInfo | null> = ref(null);
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
@@ -78,7 +77,7 @@ const unwatchSearch = watch(search, async () => {
 
 function isSelectDisabled(role: WorkspaceRole | null): boolean {
   // Outsider should not be able to change anything
-  if (ownProfile === UserProfile.Outsider) {
+  if (!clientInfo.value || clientInfo.value.currentProfile === UserProfile.Outsider) {
     return true;
   }
   // If our role is not Manager or Owner, can't change anything
@@ -125,7 +124,10 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
 }
 
 onMounted(async () => {
-  ownProfile = await getClientProfile();
+  const result = await getClientInfo();
+  if (result.ok) {
+    clientInfo.value = result.value;
+  }
   await refreshSharingInfo();
 });
 

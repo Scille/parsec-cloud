@@ -2,9 +2,11 @@
 
 <template>
   <div class="container">
-    <ion-avatar class="avatar person-avatar body-sm">
-      {{ userAvatar.substring(0, 2) }}
-    </ion-avatar>
+    <ms-avatar
+      class="avatar person-avatar body-sm"
+      :data="userAvatar"
+      :type="AvatarType.Initials"
+    />
     <ion-text
       class="person-name"
       v-if="userName"
@@ -15,8 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonAvatar, IonText } from '@ionic/vue';
+import { IonText } from '@ionic/vue';
 import { defineProps } from 'vue';
+import MsAvatar, { AvatarType } from '@/components/core/ms-avatar/MsAvatar.vue';
 
 defineProps<{
   userAvatar: string;
@@ -34,8 +37,6 @@ defineProps<{
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
-    height: 2rem;
-    width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
     &:first-of-type {
@@ -77,6 +78,5 @@ defineProps<{
 
 .person-avatar {
   color: var(--parsec-color-light-primary-500);
-  background-color: var(--parsec-color-light-primary-100);
 }
 </style>

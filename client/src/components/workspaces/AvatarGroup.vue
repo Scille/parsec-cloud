@@ -2,25 +2,28 @@
 
 <template>
   <div class="container">
-    <ion-avatar
+    <ms-avatar
       class="avatar person-avatar body-sm"
       v-for="person in people.slice(0, maxDisplay)"
       :key="person"
-    >
-      {{ person.substring(0, 2) }}
-    </ion-avatar>
-    <ion-avatar
+      :data="person"
+      :type="AvatarType.Initials"
+    />
+
+    <ms-avatar
       class="avatar extra-avatar"
-      v-if="people.length > maxDisplay"
-    >
-      + {{ people.length - maxDisplay }}
-    </ion-avatar>
+      :data="''"
+      :display="`+${people.length - maxDisplay}`"
+      :type="AvatarType.Initials"
+      :background-color="'#FFFFFF'"
+      :text-color="''"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonAvatar } from '@ionic/vue';
 import { defineProps } from 'vue';
+import MsAvatar, { AvatarType } from '@/components/core/ms-avatar/MsAvatar.vue';
 
 defineProps<{
   people: string[];
@@ -34,6 +37,7 @@ defineProps<{
   flex-wrap: nowrap;
   background: var(--parsec-color-light-secondary-inversed-contrast);
   border-radius: 32px;
+  height: 1rem;
 
   .avatar {
     display: flex;
@@ -41,8 +45,6 @@ defineProps<{
     justify-content: center;
     text-transform: uppercase;
     margin-left: -0.6em;
-    height: 2rem;
-    width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
     &:first-of-type {
@@ -57,7 +59,6 @@ defineProps<{
 }
 
 .extra-avatar {
-  background-color: var(--parsec-color-light-secondary-background);
   color: var(--parsec-color-light-secondary-grey);
 }
 </style>

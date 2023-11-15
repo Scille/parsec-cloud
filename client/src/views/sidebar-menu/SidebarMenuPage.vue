@@ -20,9 +20,11 @@
             <ion-card class="organization-card">
               <ion-card-header class="organization-card__header">
                 <div class="organization-card__container">
-                  <ion-avatar class="orga-avatar">
-                    <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
-                  </ion-avatar>
+                  <ms-avatar
+                    class="orga-avatar"
+                    :type="AvatarType.Icon"
+                    :data="userInfo ? userInfo.organizationId : ''"
+                  />
                   <div class="orga-text">
                     <ion-card-subtitle class="caption-info">
                       {{ $t('HomePage.organizationActionSheet.header') }}
@@ -248,7 +250,6 @@ import {
   IonCardHeader,
   IonLabel,
   IonPage,
-  IonAvatar,
   IonItem,
   IonRouterOutlet,
   menuController,
@@ -269,6 +270,7 @@ import {
   UserProfile,
   WorkspaceInfo,
 } from '@/parsec';
+import MsAvatar, { AvatarType } from '@/components/core/ms-avatar/MsAvatar.vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 
