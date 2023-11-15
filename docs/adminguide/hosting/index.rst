@@ -14,7 +14,7 @@
 Parsec Server installation
 ==========================
 
-This guide covers the installation procedure for the `Parsec`_ server (also called `parsec-backend`).
+This guide covers the installation procedure for the `Parsec`_ server.
 
 .. _Parsec: https://parsec.cloud
 
@@ -71,12 +71,12 @@ For this guide, the required TLS certificates will be generated with a custom Ce
 The script will:
 
 1. Generate the CA key & self-signed certificate (``custom-ca.{key,crt}``).
-2. For ``parsec-s3`` and ``parsec-backend`` services:
+2. For ``parsec-s3`` and ``parsec-server`` services:
 
    a. Generate the service key & Certificate Signing Request (CSR) ``parsec-{service}.{key,csr}``.
    b. Generate the certificate using the CSR and the CA.
 
-3. For the service ``parsec-backend``:
+3. For the service ``parsec-server``:
 
    a. Change the group id of the key file to ``1234`` (That is the GID used by the ``parsec-server`` container).
    b. Change the file mode to give read permission to the group ``1234``.
@@ -98,7 +98,7 @@ We split the configuration of the parsec server into multiple env files so it's 
 The administration token
 ------------------------
 
-To be able to perform admin tasks (like creating an organization) on the backend, an administration token is required.
+To be able to perform admin tasks (like creating an organization) on the server, an administration token is required.
 Below you will find a simple script to generate a token:
 
 .. literalinclude:: gen-admin-token.sh
@@ -149,7 +149,7 @@ Create the file ``parsec-s3.env`` with the following content to set the URL for 
 Parsec server configuration
 ---------------------------
 
-Create the file ``parsec.env`` with the following content to configure the ``parsec-backend`` service:
+Create the file ``parsec.env`` with the following content to configure the ``parsec-server`` service:
 
 .. literalinclude:: parsec.env
   :language: ini
@@ -175,7 +175,7 @@ It will setup 4 services:
 +---------------------+----------------------------+
 | ``parsec-smtp``     | A mock SMTP server         |
 +---------------------+----------------------------+
-| ``parsec-backend``  | The Parsec server          |
+| ``parsec-server``   | The Parsec server          |
 +---------------------+----------------------------+
 
 Starting the services
@@ -215,7 +215,7 @@ To bootstrap the database we just need to apply the migrations with:
 
 .. code-block:: bash
 
-  docker compose -f parsec-server.docker.yaml run parsec-backend migrate
+  docker compose -f parsec-server.docker.yaml run parsec-server migrate
 
 Create the S3 Bucket
 --------------------
@@ -224,11 +224,11 @@ Access the console at https://127.0.0.1:9090, you will need to use the credentia
 
 Go to https://127.0.0.1:9090/buckets/add-bucket to create a new bucket named ``parsec`` with the features ``object locking`` toggled on.
 
-After that you will need to restart the ``parsec-backend`` (that likely exited because it wasn't able to access the S3 bucket):
+After that you will need to restart the ``parsec-server`` (that likely exited because it wasn't able to access the S3 bucket):
 
 .. code-block:: bash
 
-  docker compose -f parsec-server.docker.yaml restart parsec-backend
+  docker compose -f parsec-server.docker.yaml restart parsec-server
 
 Test the SMTP configuration & server
 ------------------------------------
