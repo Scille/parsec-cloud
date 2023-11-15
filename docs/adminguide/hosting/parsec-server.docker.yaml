@@ -35,13 +35,13 @@ services:
       # Web interface exposed to http://127.0.0.1:8025
       - 127.0.0.1:8025:8025
 
-  parsec-backend:
+  parsec-server:
     depends_on:
       - parsec-smtp
       - parsec-s3
       - parsec-postgres
-    image: ghcr.io/scille/parsec-cloud/parsec-backend-server:2023-10-11-v2.16.0-rc.5.dev-b33d909
-    container_name: parsec-backend
+    image: ghcr.io/scille/parsec-cloud/parsec-server:2023-10-11-v2.16.0-rc.5.dev-b33d909
+    container_name: parsec-server
     env_file:
       - parsec.env
       - parsec-blockstore.env
@@ -63,8 +63,8 @@ volumes:
 
 secrets:
   parsec-pem-crt:
-    file: ./parsec-backend.crt
+    file: ./parsec-server.crt
   parsec-pem-key:
-    file: ./parsec-backend.key
+    file: ./parsec-server.key
   mini-ca-crt:
     file: ./custom-ca.crt
