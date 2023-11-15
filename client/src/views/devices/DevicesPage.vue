@@ -2,9 +2,7 @@
 
 <template>
   <ion-page>
-    <ion-content
-      :fullscreen="true"
-    >
+    <ion-content :fullscreen="true">
       <div class="container">
         <div class="devices-container">
           <!-- header -->
@@ -17,9 +15,7 @@
               fill="clear"
               @click="onAddDeviceClick()"
             >
-              <ion-icon
-                :icon="add"
-              />
+              <ion-icon :icon="add" />
               <span>{{ $t('DevicesPage.addDevice') }}</span>
             </ion-button>
           </div>
@@ -57,9 +53,7 @@
           class="restore-password"
           v-if="!passwordSaved"
         >
-          <ion-label
-            class="body-sm danger"
-          >
+          <ion-label class="body-sm danger">
             {{ $t('DevicesPage.restorePassword.notDone.label') }}
           </ion-label>
           <div class="restore-password-header">
@@ -67,7 +61,7 @@
               src="@/assets/images/password.svg"
               alt="password-image"
               class="info-password__img"
-            >
+            />
             <h3 class="title-h3 restore-password-header__title">
               {{ $t('DevicesPage.restorePassword.title') }}
             </h3>
@@ -79,9 +73,7 @@
             >
               {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
             </ion-text>
-            <ion-text
-              class="body"
-            >
+            <ion-text class="body">
               {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
             </ion-text>
           </div>
@@ -103,9 +95,7 @@
           class="restore-password"
           v-else
         >
-          <ion-label
-            class="body-sm done"
-          >
+          <ion-label class="body-sm done">
             {{ $t('DevicesPage.restorePassword.done.label') }}
           </ion-label>
           <div class="restore-password-header">
@@ -113,15 +103,13 @@
               src="@/assets/images/password.svg"
               alt="password-image"
               class="info-password__img"
-            >
+            />
             <h3 class="title-h3 restore-password-header__title">
               {{ $t('DevicesPage.restorePassword.title') }}
             </h3>
           </div>
           <div class="restore-password-subtitles">
-            <ion-text
-              class="body"
-            >
+            <ion-text class="body">
               {{ $t('DevicesPage.restorePassword.done.subtitle') }}
             </ion-text>
           </div>
@@ -146,17 +134,7 @@
 <script setup lang="ts">
 import { ref, Ref, onMounted, inject } from 'vue';
 import { add, sparkles, download } from 'ionicons/icons';
-import {
-  IonButton,
-  IonList,
-  IonItem,
-  IonIcon,
-  IonPage,
-  IonContent,
-  IonLabel,
-  IonText,
-  modalController,
-} from '@ionic/vue';
+import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonLabel, IonText, modalController } from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
@@ -231,7 +209,7 @@ async function onAddDeviceClick(): Promise<void> {
     margin: 0;
 
     span {
-      margin-left: .625rem;
+      margin-left: 0.625rem;
     }
   }
 }
@@ -262,10 +240,10 @@ async function onAddDeviceClick(): Promise<void> {
   ion-label {
     width: max-content;
     position: absolute;
-    top: -.8rem;
+    top: -0.8rem;
     left: 50%;
     transform: translateX(-50%);
-    padding: .125rem 1.75rem;
+    padding: 0.125rem 1.75rem;
     border-radius: var(--parsec-radius-12);
 
     &.done {
@@ -292,7 +270,7 @@ async function onAddDeviceClick(): Promise<void> {
     img {
       width: 3.25rem;
       height: 3.25rem;
-      margin-right: .5rem;
+      margin-right: 0.5rem;
     }
   }
 
@@ -300,13 +278,13 @@ async function onAddDeviceClick(): Promise<void> {
     margin: 1rem 0;
     display: flex;
     flex-direction: column;
-    gap: .5rem;
+    gap: 0.5rem;
     color: var(--parsec-color-light-secondary-grey);
   }
 
   &-button {
     .icon {
-      margin-right: .625rem;
+      margin-right: 0.625rem;
       font-size: 1.125rem;
     }
   }

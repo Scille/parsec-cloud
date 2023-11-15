@@ -9,7 +9,7 @@ function mockT(translationString: string, args?: object, count?: number): string
 }
 
 function mockD(date: Date, format: 'long' | 'short'): string {
-  const dateTime = DateTime.fromJSDate(date, {zone: 'UTC'});
+  const dateTime = DateTime.fromJSDate(date, { zone: 'UTC' });
   // Doesn't really matter how date is displayed, we're not testing this
   if (format === 'long') {
     return `${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute}:${dateTime.second}`;
@@ -51,17 +51,17 @@ describe('Date formatting', () => {
 
   it('Round at day', () => {
     vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
-    expect(
-      formatTimeSince(DateTime.utc(1988, 4, 7, 11, 59, 30), mockT as any, mockD as any, '', 'long', true),
-    ).to.equal('common.date.lastLoginDays {"days":0} 0');
-    expect(
-      formatTimeSince(DateTime.utc(1988, 4, 7, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
-    ).to.equal('common.date.lastLoginDays {"days":0} 0');
-    expect(
-      formatTimeSince(DateTime.utc(1988, 4, 6, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
-    ).to.equal('common.date.lastLoginDays {"days":1} 1');
-    expect(
-      formatTimeSince(DateTime.utc(1988, 4, 2, 10, 0, 0), mockT as any, mockD as any, '', 'long', true),
-    ).to.equal('common.date.lastLoginDays {"days":5} 5');
+    expect(formatTimeSince(DateTime.utc(1988, 4, 7, 11, 59, 30), mockT as any, mockD as any, '', 'long', true)).to.equal(
+      'common.date.lastLoginDays {"days":0} 0',
+    );
+    expect(formatTimeSince(DateTime.utc(1988, 4, 7, 10, 0, 0), mockT as any, mockD as any, '', 'long', true)).to.equal(
+      'common.date.lastLoginDays {"days":0} 0',
+    );
+    expect(formatTimeSince(DateTime.utc(1988, 4, 6, 10, 0, 0), mockT as any, mockD as any, '', 'long', true)).to.equal(
+      'common.date.lastLoginDays {"days":1} 1',
+    );
+    expect(formatTimeSince(DateTime.utc(1988, 4, 2, 10, 0, 0), mockT as any, mockD as any, '', 'long', true)).to.equal(
+      'common.date.lastLoginDays {"days":5} 5',
+    );
   });
 });

@@ -40,9 +40,9 @@ import { defineProps, inject } from 'vue';
 const { timeSince } = inject(FormattersKey)! as Formatters;
 
 defineProps<{
-  label: string
-  isCurrent: boolean
-  date: DateTime
+  label: string;
+  isCurrent: boolean;
+  date: DateTime;
 }>();
 </script>
 
@@ -69,7 +69,7 @@ defineProps<{
   &-text {
     display: flex;
     flex-direction: column;
-    gap: .25rem;
+    gap: 0.25rem;
 
     .device-name {
       color: var(--parsec-color-light-secondary-text);
@@ -84,7 +84,7 @@ defineProps<{
 .badge {
   margin: auto 0 auto auto;
   border-radius: var(--parsec-radius-32);
-  padding: .25em .5em;
+  padding: 0.25em 0.5em;
   color: var(--parsec-color-light-success-700);
   border: 1px solid var(--parsec-color-light-success-500);
   background: var(--parsec-color-light-success-100);
