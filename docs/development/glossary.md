@@ -238,4 +238,13 @@
     <td></td>
     <td> / Phrase de passe</td>
   </tr>
+  <tr>
+    <td>Server / Serveur</td>
+    <td></td>
+    <td>
+      The Parsec server is the application hosted on a remote computer interacting with the S3 data storage and the metadata PostgreSQL database.
+    </td>
+    <td></td>
+    <td>Backend / </td>
+  </tr>
 </table>
