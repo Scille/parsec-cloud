@@ -74,7 +74,7 @@ describe('Create a new organization', () => {
     cy.get('#previous-button').should('be.visible');
 
     cy.get('.org-password').find('ion-input').first().find('input').type('AVery');
-    cy.get('.org-password').find('.form-helperText').contains('Do not match');
+    cy.get('.org-password').find('.form-helperText').contains('Does not match');
     cy.get('.org-password').find('.password-level').should('have.class', 'password-level-low');
     cy.get('.org-password').find('.password-level__text').contains('Low');
     cy.get('#next-button').should('have.class', 'button-disabled');
