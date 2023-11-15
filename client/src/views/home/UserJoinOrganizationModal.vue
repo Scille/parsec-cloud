@@ -194,7 +194,7 @@ import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordIn
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { Notification, NotificationCenter, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
+import { Notification, NotificationManager, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { asyncComputed } from '@/common/asyncComputed';
 import { UserClaim } from '@/parsec';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
@@ -209,7 +209,7 @@ enum UserJoinOrganizationStep {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 const { t } = useI18n();
 
@@ -277,7 +277,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 ]);
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(
+  notificationManager.showToast(
     new Notification({
       message: message,
       level: NotificationLevel.Error,
@@ -358,7 +358,7 @@ async function nextStep(): Promise<void> {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('JoinOrganization.errors.saveDeviceFailed'),
           level: NotificationLevel.Error,
@@ -379,7 +379,7 @@ async function nextStep(): Promise<void> {
       message: t('JoinOrganization.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showToast(notification, { trace: true });
+    notificationManager.showToast(notification, { trace: true });
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -404,7 +404,7 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         message: t('JoinOrganization.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -418,7 +418,7 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         message: t('JoinOrganization.errors.startFailed'),
         level: NotificationLevel.Error,

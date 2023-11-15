@@ -93,7 +93,7 @@ import {
   InvitationErrorTag,
   DeleteInvitationErrorTag,
 } from '@/parsec';
-import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
 import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
@@ -104,7 +104,7 @@ const { t } = useI18n();
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const currentRoute = useRoute();
 
 const routeUnwatch = watch(currentRoute, async (newRoute) => {
@@ -136,7 +136,7 @@ async function refreshInvitationsList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.invitation.invitationsListFailed'),
         level: NotificationLevel.Error,
@@ -164,7 +164,7 @@ async function inviteUser(): Promise<void> {
   if (result.ok) {
     await refreshInvitationsList();
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-      await notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('UsersPage.invitation.inviteSuccessMailSent', {
             email: email,
@@ -173,7 +173,7 @@ async function inviteUser(): Promise<void> {
         }),
       );
     } else {
-      await notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('UsersPage.invitation.inviteSuccessNoMail', {
             email: email,
@@ -201,7 +201,7 @@ async function inviteUser(): Promise<void> {
         break;
     }
 
-    await notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message,
         level: NotificationLevel.Error,
@@ -233,7 +233,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   const result = await parsecCancelInvitation(invitation.token);
 
   if (result.ok) {
-    await notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.invitation.cancelSuccess'),
         level: NotificationLevel.Success,
@@ -246,7 +246,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
     if (result.error.tag === DeleteInvitationErrorTag.NotFound || result.error.tag === DeleteInvitationErrorTag.AlreadyDeleted) {
       await refreshInvitationsList();
     } else {
-      await notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('UsersPage.invitation.cancelFailed'),
           level: NotificationLevel.Error,

@@ -166,12 +166,12 @@ import MsInput from '@/components/core/ms-input/MsInput.vue';
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
 import { DeviceClaim, parseBackendAddr, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag } from '@/parsec';
-import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
-const notificationCenter = inject(NotificationKey) as NotificationCenter;
+const notificationManager = inject(NotificationKey) as NotificationManager;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -253,7 +253,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(
+  notificationManager.showToast(
     new Notification({
       message: message,
       level: NotificationLevel.Error,
@@ -311,7 +311,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       const result = await claimer.value.finalize(passwordPage.value.password);
       if (!result.ok) {
-        notificationCenter.showToast(
+        notificationManager.showToast(
           new Notification({
             message: t('ClaimDeviceModal.errors.saveDeviceFailed'),
             level: NotificationLevel.Error,
@@ -328,7 +328,7 @@ async function nextStep(): Promise<void> {
       message: t('ClaimDeviceModal.successMessage'),
       level: NotificationLevel.Success,
     });
-    notificationCenter.showToast(notification, { trace: true });
+    notificationManager.showToast(notification, { trace: true });
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -355,7 +355,7 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         message: t('ClaimDeviceModal.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -367,7 +367,7 @@ async function startProcess(): Promise<void> {
 
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         message: t('ClaimDeviceModal.errors.startFailed'),
         level: NotificationLevel.Error,

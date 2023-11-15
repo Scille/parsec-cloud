@@ -135,7 +135,7 @@ import UserContextMenu from '@/views/users/UserContextMenu.vue';
 import { UserAction } from '@/views/users/UserContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
-import { NotificationCenter, NotificationKey, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useI18n } from 'vue-i18n';
 
 const displayView = ref(DisplayState.List);
@@ -143,7 +143,7 @@ const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
 const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const { t } = useI18n();
 
 const allUsersSelected = computed({
@@ -238,7 +238,7 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.listRevokedUsersFailed'),
         level: NotificationLevel.Error,

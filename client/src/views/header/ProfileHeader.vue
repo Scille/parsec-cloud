@@ -40,12 +40,12 @@ import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
 import { logout as parsecLogout } from '@/parsec';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
-import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 
 const isPopoverOpen = ref(false);
 const router = useRouter();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const { t } = useI18n();
 
 const props = defineProps<{
@@ -76,7 +76,7 @@ async function openPopover(ev: Event): Promise<void> {
       if (answer === Answer.Yes) {
         const result = await parsecLogout();
         if (!result.ok) {
-          notificationCenter.showToast(
+          notificationManager.showToast(
             new Notification({
               message: t('HomePage.topbar.logoutFailed'),
               level: NotificationLevel.Error,

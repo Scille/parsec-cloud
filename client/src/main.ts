@@ -37,7 +37,7 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import '@/theme/global.scss';
 import { Platform, libparsec } from '@/plugins/libparsec';
-import { Notification, NotificationCenter, NotificationLevel } from '@/services/notificationCenter';
+import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import { isElectron, isHomeRoute } from '@/parsec';
 import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
@@ -102,7 +102,7 @@ async function setupApp(): Promise<void> {
   });
 
   const { t } = i18n.global;
-  const notificationCenter = new NotificationCenter(t);
+  const notificationManager = new NotificationManager(t);
   const importManager = new ImportManager();
 
   const app = createApp(App)
@@ -123,7 +123,7 @@ async function setupApp(): Promise<void> {
     },
   });
   app.provide(StorageManagerKey, storageManager);
-  app.provide(NotificationKey, notificationCenter);
+  app.provide(NotificationKey, notificationManager);
   app.provide(ImportManagerKey, importManager);
 
   // We can start the app with different cases :
@@ -206,7 +206,7 @@ async function setupApp(): Promise<void> {
           routerNavigateTo('home', {}, { link: link });
         }
       } else {
-        await notificationCenter.showModal(
+        await notificationManager.showModal(
           new Notification({
             message: t('link.invalid'),
             level: NotificationLevel.Error,
@@ -215,7 +215,7 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           title: t('openFile.failedTitle'),
           message: t('openFile.failedSubtitle', { path: path }),

@@ -61,7 +61,7 @@ import { IonLabel, IonButtons, IonButton, IonItem, IonText } from '@ionic/vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
 import { UserInvitation } from '@/parsec';
-import { Notification, NotificationCenter, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { Notification, NotificationManager, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import { useI18n } from 'vue-i18n';
 import { translateInvitationStatus } from '@/common/translations';
 import { writeTextToClipboard } from '@/common/clipboard';
@@ -78,20 +78,20 @@ defineEmits<{
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const { t } = useI18n();
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
   if (result) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.invitation.linkCopiedToClipboard'),
         level: NotificationLevel.Info,
       }),
     );
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.invitation.linkNotCopiedToClipboard'),
         level: NotificationLevel.Error,

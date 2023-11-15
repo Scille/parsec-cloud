@@ -199,7 +199,7 @@ import { routerNavigateTo } from '@/router';
 import { FileAction } from '@/views/files/FileContextMenu.vue';
 import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
-import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import * as parsec from '@/parsec';
 import { join as pathJoin } from '@/common/path';
 import { useI18n } from 'vue-i18n';
@@ -212,7 +212,7 @@ import { getPathLink, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/common/importManager';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const fileItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const allFilesSelected = ref(false);
 const currentRoute = useRoute();
@@ -272,7 +272,7 @@ async function listFolder(): Promise<void> {
       }
     }
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('FoldersPage.errors.listFailed', {
           path: currentPath.value,
@@ -320,7 +320,7 @@ async function createFolder(): Promise<void> {
   const folderPath = pathJoin(currentPath.value, folderName);
   const result = await parsec.createFolder(folderPath);
   if (!result.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('FoldersPage.errors.createFolderFailed', {
           name: folderName,
@@ -381,7 +381,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const path = pathJoin(currentPath.value, entry.name);
     const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
     if (!result.ok) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('FoldersPage.errors.deleteFailed', { name: entry.name }),
           level: NotificationLevel.Error,
@@ -409,7 +409,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       }
     }
     if (errorsEncountered > 0) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message:
             errorsEncountered === entries.length
@@ -446,7 +446,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = pathJoin(currentPath.value, entry.name);
   const result = await parsec.rename(filePath, newName);
   if (!result.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('FoldersPage.errors.renameFailed', { name: entry.name }),
         level: NotificationLevel.Error,
@@ -467,14 +467,14 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   const result = await getPathLink(workspaceId.value, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('FoldersPage.linkNotCopiedToClipboard'),
           level: NotificationLevel.Error,
         }),
       );
     } else {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('FoldersPage.linkCopiedToClipboard'),
           level: NotificationLevel.Info,
@@ -482,7 +482,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
       );
     }
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('FoldersPage.getLinkError', { reason: result.error.tag }),
         level: NotificationLevel.Error,
@@ -532,7 +532,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   if (isWeb()) {
-    notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         message: t('FoldersPage.open.unavailableOnWeb'),
         level: NotificationLevel.Warning,
@@ -544,7 +544,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   const result = await parsec.getAbsolutePath(workspaceHandle.value, entry);
 
   if (!result.ok) {
-    notificationCenter.showModal(
+    await notificationManager.showModal(
       new Notification({
         title: entry.isFile() ? t('FoldersPage.open.fileFailedTitle') : t('FoldersPage.open.folderFailedTitle'),
         message: entry.isFile()

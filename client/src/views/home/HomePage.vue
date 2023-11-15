@@ -254,7 +254,7 @@ import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
 import { MsModalResult } from '@/components/core/ms-types';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationCenter, NotificationLevel, Notification } from '@/services/notificationCenter';
+import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
 import { getAppVersion } from '@/common/mocks';
 import AboutModal from '@/views/about/AboutModal.vue';
 import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
@@ -280,7 +280,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
 const msSorterOptions: MsSorterOption[] = [
@@ -449,7 +449,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
       message: t('HomePage.loginNotification.message'),
       level: NotificationLevel.Error,
     });
-    notificationCenter.showToast(notification);
+    notificationManager.showToast(notification);
   }
 }
 

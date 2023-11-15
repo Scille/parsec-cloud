@@ -184,7 +184,7 @@ import {
   UserID,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
@@ -196,7 +196,7 @@ const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const { t } = useI18n();
 const currentRoute = useRoute();
 
@@ -286,14 +286,14 @@ async function revokeUser(user: UserInfo): Promise<void> {
   const result = await parsecRevokeUser(user.id);
 
   if (!result.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.revocation.revokeFailed', 1),
         level: NotificationLevel.Error,
       }),
     );
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.revocation.revokeSuccess', { user: user.humanHandle.label }, 1),
         level: NotificationLevel.Success,
@@ -326,21 +326,21 @@ async function revokeSelectedUsers(): Promise<void> {
     }
   }
   if (errorCount === 0) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.revocation.revokeSuccess', { count: selectedUsers.length }, selectedUsers.length),
         level: NotificationLevel.Success,
       }),
     );
   } else if (errorCount < selectedUsers.length) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.revocation.revokeSomeFailed'),
         level: NotificationLevel.Error,
       }),
     );
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.revocation.revokeFailed', selectedUsers.length),
         level: NotificationLevel.Error,
@@ -399,7 +399,7 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.listUsersFailed'),
         level: NotificationLevel.Error,

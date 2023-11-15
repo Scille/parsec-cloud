@@ -156,7 +156,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { DeviceGreet } from '@/parsec';
-import { NotificationCenter, NotificationKey, Notification, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,
@@ -173,7 +173,7 @@ const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new DeviceGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
@@ -234,7 +234,7 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet();
   if (!result.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('DevicesPage.greet.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -245,7 +245,7 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('DevicesPage.greet.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -284,7 +284,7 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(
+  notificationManager.showToast(
     new Notification({
       message: message,
       level: NotificationLevel.Error,
@@ -299,7 +299,7 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetDeviceStep.Summary) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('DevicesPage.greet.success', {
           label: greeter.value.requestedDeviceLabel,
@@ -343,7 +343,7 @@ async function nextStep(): Promise<void> {
 
 async function copyLink(): Promise<void> {
   await navigator.clipboard.writeText(greeter.value.invitationLink);
-  notificationCenter.showToast(
+  notificationManager.showToast(
     new Notification({
       message: t('DevicesPage.greet.linkCopiedToClipboard'),
       level: NotificationLevel.Info,

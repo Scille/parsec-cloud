@@ -48,7 +48,7 @@ export interface NotificationToastOptions extends NotificationOptions {
 
 const DEFAULT_NOTIFICATION_DURATION = 5000;
 
-export class NotificationCenter {
+export class NotificationManager {
   notifications: Notification[];
   toastManager: ToastManager;
 

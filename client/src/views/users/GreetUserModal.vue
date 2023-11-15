@@ -193,7 +193,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
-import { NotificationCenter, NotificationKey, Notification, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 enum GreetUserStep {
@@ -218,7 +218,7 @@ const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
@@ -294,7 +294,7 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
   if (!result.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.greet.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -305,7 +305,7 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.greet.errors.startFailed'),
         level: NotificationLevel.Error,
@@ -352,7 +352,7 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationCenter.showToast(
+  notificationManager.showToast(
     new Notification({
       message: message,
       level: NotificationLevel.Error,
@@ -367,7 +367,7 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetUserStep.Summary) {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('UsersPage.greet.success', {
           user: guestInfoPage.value?.fullName,
