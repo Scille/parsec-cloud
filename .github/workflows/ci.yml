@@ -142,10 +142,9 @@ jobs:
 
       - name: Check News fragments
         if: |
-          startsWith(github.ref, 'refs/pull/')
+          github.event_name == 'pull_request'
           && !(
-            startsWith(github.head_ref, 'yolo')
-            || startsWith(github.head_ref, 'release')
+            startsWith(github.head_ref, 'releases/')
             || startsWith(github.head_ref, 'revert')
             || startsWith(github.head_ref, 'acknowledge')
             )
@@ -153,7 +152,7 @@ jobs:
         run: |
           whereis git
           git fetch origin master
-          python .github/scripts/check_newsfragments.py ${{ github.head_ref }}
+          python .github/scripts/check_newsfragments.py --base=${{ github.base_ref }}
         timeout-minutes: 5
 
       - name: Patch pre-commit for line-ending
