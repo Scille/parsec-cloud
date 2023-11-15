@@ -11,11 +11,15 @@
     "
   >
     <ion-avatar
-      slot="start"
       class="avatar"
+      slot="start"
     >
-      <ion-icon :icon="personCircle" />
+      <ms-avatar
+        :data="name"
+        :type="AvatarType.Initials"
+      />
     </ion-avatar>
+
     <div class="text-icon">
       <ion-text class="body">
         {{ name }}
@@ -30,8 +34,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonIcon, IonAvatar, IonText, popoverController } from '@ionic/vue';
-import { chevronDown, personCircle } from 'ionicons/icons';
+import { IonItem, IonIcon, IonText, popoverController, IonAvatar } from '@ionic/vue';
+import { chevronDown } from 'ionicons/icons';
 import { defineProps, ref, inject } from 'vue';
 import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
 import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
@@ -41,6 +45,7 @@ import { useI18n } from 'vue-i18n';
 import { logout as parsecLogout } from '@/parsec';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import { NotificationCenter, Notification, NotificationKey, NotificationLevel } from '@/services/notificationCenter';
+import MsAvatar, { AvatarType } from '@/components/core/ms-avatar/MsAvatar.vue';
 
 const isPopoverOpen = ref(false);
 const router = useRouter();
@@ -113,11 +118,7 @@ async function openPopover(ev: Event): Promise<void> {
 .avatar {
   margin: 0 0.75em 0 0;
   position: relative;
-
-  ion-icon {
-    width: 100%;
-    height: 100%;
-  }
+  height: 100%;
 
   &::after {
     content: '';

@@ -4,9 +4,12 @@
   <ion-card class="organization-card__body">
     <ion-card-header class="card-content">
       <div class="organization-info">
-        <ion-avatar class="orga-avatar body-lg">
-          <span>{{ device.organizationId?.substring(0, 2) }}</span>
-        </ion-avatar>
+        <ms-avatar
+          class="orga-avatar body-lg"
+          :type="AvatarType.Icon"
+          :data="device.organizationId"
+        />
+
         <div class="orga-text">
           <ion-card-title class="card-title subtitles-normal">
             {{ device.organizationId }}
@@ -21,8 +24,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonCard, IonAvatar, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/vue';
+import { IonCard, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/vue';
 import { AvailableDevice } from '@/parsec';
+import MsAvatar, { AvatarType } from '@/components/core/ms-avatar/MsAvatar.vue';
 
 defineProps<{
   device: AvailableDevice;
