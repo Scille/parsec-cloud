@@ -190,7 +190,7 @@ import { AvailableDevice, createOrganization as parsecCreateOrganization, Bootst
 import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
-import { NotificationCenter, Notification, NotificationLevel, NotificationKey } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
 
 enum CreateOrganizationStep {
@@ -208,7 +208,7 @@ const { t, d } = useI18n();
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();
@@ -417,7 +417,7 @@ async function nextStep(): Promise<void> {
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
       }
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: message,
           level: NotificationLevel.Error,

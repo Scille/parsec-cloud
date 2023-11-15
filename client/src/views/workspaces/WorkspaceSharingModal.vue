@@ -50,7 +50,7 @@ import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, getClientProfile } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationCenter, Notification, NotificationLevel } from '@/services/notificationCenter';
+import { NotificationManager, Notification, NotificationLevel } from '@/services/notificationManager';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
@@ -58,7 +58,7 @@ import { useI18n } from 'vue-i18n';
 import { translateWorkspaceRole } from '@/common/translations';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationCenter: NotificationCenter = inject(NotificationKey)!;
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 const search = ref('');
 const { t } = useI18n();
 let ownProfile = UserProfile.Outsider;
@@ -115,7 +115,7 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
       userRoles.value = result.value;
     }
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('WorkspaceSharing.listFailure'),
         level: NotificationLevel.Error,
@@ -137,7 +137,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspaceSharing.unshareSuccess', {
             user: user.humanHandle.label,
@@ -146,7 +146,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         }),
       );
     } else {
-      notificationCenter.showToast(
+      notificationManager.showToast(
         new Notification({
           message: t('WorkspaceSharing.updateRoleSuccess', {
             user: user.humanHandle.label,
@@ -157,7 +157,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
       );
     }
   } else {
-    notificationCenter.showToast(
+    notificationManager.showToast(
       new Notification({
         message: t('WorkspaceSharing.updateRoleFailure', {
           user: user.humanHandle.label,
