@@ -1,0 +1,14 @@
+[profile.default]
+# https://nexte.st/book/slow-tests.html
+slow-timeout = { period = "10s", terminate-after = 3 } # Timeout a test after 30s (3 * 10s)
+
+[profile.ci]
+slow-timeout = { period = "10s", terminate-after = 5 } # Timeout a test after 50s (5 * 10s)
+# https://nexte.st/book/other-options.html#--success-output-and---failure-output
+status-level = "all"
+# Show output failures as soon as they happen and at the end of the test run.
+# This option work well when `fail-fast` is disabled.
+# https://nexte.st/book/other-options.html#--success-output-and---failure-output
+failure-output = "immediate-final"
+# Continue even if a test fail.
+fail-fast = false
