@@ -27,7 +27,7 @@ concurrency:
 
 env:
   CARGO_CI_FLAGS: --locked --profile ci-rust
-  CARGO_NEXTEST_CI_FLAGS: --locked --cargo-profile ci-rust
+  CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile ci-rust
   WINFSP_VERSION: 2.0.23075
   WINFSP_TEST_EXE: C:/Program Files (x86)/WinFsp/bin/winfsp-tests-x64.exe
 
