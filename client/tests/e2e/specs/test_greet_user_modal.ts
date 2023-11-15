@@ -95,7 +95,7 @@ describe('Greet user into an organization', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage("You didn't select the right code. Please restart the process.");
+    cy.checkToastMessage("You didn't select the correct code. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Onboard a new user');
     cy.get('@nextButton').contains('Start');
@@ -112,8 +112,8 @@ describe('Greet user into an organization', () => {
     cy.get('@title').contains('Share your code');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
-    cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None of the codes').click();
-    cy.checkToastMessage("If you didn't see the right code, it could be a security concern. Please restart the process.");
+    cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None shown').click();
+    cy.checkToastMessage("If you didn't see the correct code, it could be a security concern. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Onboard a new user');
     cy.get('@nextButton').contains('Start');

@@ -82,7 +82,7 @@ describe('Claim new device', () => {
     cy.get('@choiceButtons').eq(1).contains('6PQR');
     cy.get('@choiceButtons').eq(2).contains('7STU');
     cy.get('@choiceButtons').eq(3).contains('8VWX');
-    cy.get('ion-modal').find('.button-clear').contains('None of the codes');
+    cy.get('ion-modal').find('.button-clear').contains('None shown');
     cy.get('@choiceButtons').eq(2).click();
 
     // Page with one code, guest SAS code

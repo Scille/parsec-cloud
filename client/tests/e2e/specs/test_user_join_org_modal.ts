@@ -87,7 +87,7 @@ describe('User join an organization', () => {
     cy.get('@choiceButtons').eq(1).contains('2DEF');
     cy.get('@choiceButtons').eq(2).contains('3GHI');
     cy.get('@choiceButtons').eq(3).contains('4JKL');
-    cy.get('ion-modal').find('.button-clear').contains('None of the codes');
+    cy.get('ion-modal').find('.button-clear').contains('None shown');
     cy.get('@choiceButtons').eq(1).click();
 
     // Page with one code, guest SAS code

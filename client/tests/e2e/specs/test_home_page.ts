@@ -33,7 +33,7 @@ describe('Check organization list', () => {
     cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button-container > ion-button').click();
     cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
-    cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login!');
+    cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login');
     cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
   });
 
@@ -78,7 +78,7 @@ describe('Check organization list', () => {
 
   it('Open join organization dialog', () => {
     cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').contains('I received a Parsec Cloud invitation');
+    cy.get('.popover-viewport').contains('I received an invitation to join an organization');
   });
 
   it('Log into organization with command', () => {
