@@ -172,3 +172,31 @@ fn fs_path_into_child() {
     let fs_path = fs_path.into_child("bar".parse().unwrap());
     p_assert_eq!(fs_path, "/foo/bar".parse().unwrap());
 }
+
+#[rstest]
+#[case::simple("/a/b", "/a/b")]
+#[case::single_dot("/a/./b", "/a/b")]
+#[case::multiple_dot("/a/././b/./c", "/a/b/c")]
+#[case::single_dot_dot("/a/../b", "/b")]
+#[case::dot_dot_to_the_root("/a/../../../b", "/b")]
+#[case::multiple_dot_dot("/a/b/../../c", "/c")]
+#[case::mix_dot_and_dot_dot("/./a/../../b/././c/.", "/b/c")]
+#[case::start_end_with_dot_dot("/../../a/b/../c/../../..", "/")]
+fn fs_path_normalize(#[case] raw_path: &str, #[case] expected: FsPath) {
+    let raw_parts = raw_path
+        .split('/')
+        .filter_map(|s| {
+            if s.is_empty() {
+                None
+            } else {
+                Some(s.to_string())
+            }
+        })
+        .map(EntryName)
+        .collect();
+    let dirty_path = FsPath { parts: raw_parts };
+
+    let cleaned_path = dirty_path.normalize();
+
+    p_assert_eq!(cleaned_path, expected)
+}

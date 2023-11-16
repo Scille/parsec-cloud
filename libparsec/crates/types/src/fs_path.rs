@@ -167,7 +167,7 @@ impl<'a> TryFrom<&'a str> for EntryNameRef<'a> {
  * FsPath
  */
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Hash)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Hash, Default)]
 pub struct FsPath {
     parts: Vec<EntryName>,
 }
@@ -187,7 +187,7 @@ impl FsPath {
 
     pub fn parent(&self) -> Self {
         if self.parts.is_empty() {
-            self.clone()
+            Self::default()
         } else {
             let parts = self.parts[..self.parts.len() - 1].to_owned();
             Self { parts }
@@ -247,6 +247,22 @@ impl FsPath {
 
     pub fn from_parts(parts: Vec<EntryName>) -> Self {
         Self { parts }
+    }
+
+    /// Normalize the path
+    pub fn normalize(self) -> Self {
+        let mut new_parts = Vec::with_capacity(self.parts.len());
+
+        for part in self.parts {
+            match part.0.as_str() {
+                "." | "" => continue,
+                ".." => {
+                    new_parts.pop();
+                }
+                _ => new_parts.push(part),
+            }
+        }
+        Self { parts: new_parts }
     }
 }
 
