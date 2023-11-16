@@ -159,7 +159,7 @@ jobs:
           && steps.newsfragment-have-changed.outputs.newsfragments == 'true'
         run: |
           whereis git
-          git fetch origin master
+          git fetch origin ${{ github.base_ref }}
           python .github/scripts/check_newsfragments.py --base=${{ github.base_ref }}
         timeout-minutes: 5
 
