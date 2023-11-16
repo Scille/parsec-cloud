@@ -200,6 +200,9 @@ class Path(StrBasedType):
 
 class FsPath(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::FsPath>().map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) }"
+    )
 
 
 class SequesterVerifyKeyDer(BytesBasedType):

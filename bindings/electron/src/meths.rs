@@ -7250,6 +7250,160 @@ fn parse_backend_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// path_filename
+fn path_filename(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::path_filename(&path);
+    let js_ret = match ret {
+        Some(elem) => JsString::try_new(&mut cx, elem)
+            .or_throw(&mut cx)?
+            .as_value(&mut cx),
+        None => JsNull::new(&mut cx).as_value(&mut cx),
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// path_join
+fn path_join(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let parent = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let child = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::path_join(&parent, &child);
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string =
+            |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// path_normalize
+fn path_normalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::path_normalize(path);
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string =
+            |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// path_parent
+fn path_parent(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::path_parent(&path);
+    let js_ret = JsString::try_new(&mut cx, {
+        let custom_to_rs_string =
+            |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+        match custom_to_rs_string(ret) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(&mut cx)?;
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
+// path_split
+fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let path = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::path_split(&path);
+    let js_ret = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(&mut cx, ret.len() as u32);
+        for (i, elem) in ret.into_iter().enumerate() {
+            let js_elem = JsString::try_new(&mut cx, elem).or_throw(&mut cx)?;
+            js_array.set(&mut cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // test_drop_testbed
 fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
@@ -8265,6 +8419,11 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("newCanceller", new_canceller)?;
     cx.export_function("parseBackendAddr", parse_backend_addr)?;
+    cx.export_function("pathFilename", path_filename)?;
+    cx.export_function("pathJoin", path_join)?;
+    cx.export_function("pathNormalize", path_normalize)?;
+    cx.export_function("pathParent", path_parent)?;
+    cx.export_function("pathSplit", path_split)?;
     cx.export_function("testDropTestbed", test_drop_testbed)?;
     cx.export_function(
         "testGetTestbedBootstrapOrganizationAddr",

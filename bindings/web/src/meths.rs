@@ -6381,6 +6381,127 @@ pub fn parseBackendAddr(url: String) -> Promise {
     })
 }
 
+// path_filename
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pathFilename(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::path_filename(&path);
+        Ok(match ret {
+            Some(val) => JsValue::from_str(val.as_ref()),
+            None => JsValue::NULL,
+        })
+    })
+}
+
+// path_join
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pathJoin(parent: String, child: String) -> Promise {
+    future_to_promise(async move {
+        let parent = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(parent).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let child = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(child).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::path_join(&parent, &child);
+        Ok(JsValue::from_str({
+            let custom_to_rs_string =
+                |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// path_normalize
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pathNormalize(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::path_normalize(path);
+        Ok(JsValue::from_str({
+            let custom_to_rs_string =
+                |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// path_parent
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pathParent(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::path_parent(&path);
+        Ok(JsValue::from_str({
+            let custom_to_rs_string =
+                |path: libparsec::FsPath| -> Result<_, &'static str> { Ok(path.to_string()) };
+            match custom_to_rs_string(ret) {
+                Ok(ok) => ok,
+                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+            }
+            .as_ref()
+        }))
+    })
+}
+
+// path_split
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn pathSplit(path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::path_split(&path);
+        Ok({
+            // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+            let js_array = Array::new_with_length(ret.len() as u32);
+            for (i, elem) in ret.into_iter().enumerate() {
+                let js_elem = JsValue::from_str(elem.as_ref());
+                js_array.set(i as u32, js_elem);
+            }
+            js_array.into()
+        })
+    })
+}
+
 // test_drop_testbed
 #[allow(non_snake_case)]
 #[wasm_bindgen]
