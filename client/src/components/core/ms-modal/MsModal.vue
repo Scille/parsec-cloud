@@ -18,7 +18,7 @@
         <ion-button
           v-show="closeButton.visible"
           slot="icon-only"
-          @click="closeButton.onClick ? closeButton.onClick() : cancel()"
+          @click="closeButton && closeButton.onClick ? closeButton.onClick() : cancel()"
           class="closeBtn"
         >
           <ion-icon
@@ -76,7 +76,7 @@
                 fill="clear"
                 size="default"
                 id="cancel-button"
-                @click="cancelButton.onClick ? cancelButton.onClick() : cancel()"
+                @click="cancelButton && cancelButton.onClick ? cancelButton.onClick() : cancel()"
                 :disabled="cancelButton.disabled"
               >
                 {{ cancelButton.label }}
@@ -87,7 +87,7 @@
                 size="default"
                 id="next-button"
                 type="submit"
-                @click="confirmButton.onClick ? confirmButton.onClick() : confirm()"
+                @click="confirmButton && confirmButton.onClick ? confirmButton.onClick() : confirm()"
                 :disabled="confirmButton.disabled"
               >
                 {{ confirmButton.label }}

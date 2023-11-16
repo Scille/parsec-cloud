@@ -114,6 +114,7 @@ export async function isOutsider(): Promise<boolean> {
   return (await getClientProfile()) === UserProfile.Outsider;
 }
 
+// TODO move devices function to another file
 export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, ClientListUserDevicesError>> {
   const handle = getParsecHandle();
 
@@ -149,6 +150,13 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
         {
           id: 'device2',
           deviceLabel: 'My Second Device',
+          createdOn: DateTime.now(),
+          createdBy: 'device1',
+          isCurrent: false,
+        },
+        {
+          id: 'recovery_device1',
+          deviceLabel: 'Recovery First Device',
           createdOn: DateTime.now(),
           createdBy: 'device1',
           isCurrent: false,
@@ -230,4 +238,8 @@ export async function changePassword(
       password: newPassword,
     },
   );
+}
+
+export async function hasRecoveryDevice(devicesInfo: Array<OwnDeviceInfo>): Promise<boolean> {
+  return devicesInfo.some((deviceInfo: OwnDeviceInfo) => deviceInfo.id.startsWith('recovery_'));
 }

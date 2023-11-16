@@ -194,7 +194,8 @@
                 "storage": "Stockage",
                 "information": "Informations"
             },
-            "myContactDetails": "Mes coordonnées"
+            "myContactDetails": "Mes coordonnées",
+            "recoveryExport": "Fichiers de récupération"
         },
         "previous": "Précédent"
     },
@@ -537,6 +538,41 @@
         "passwordLevelHigh": "Fort",
         "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
         "noMatch": "Ne correspondent pas"
+    },
+    "PasswordInputModal": {
+        "passwordNeeded": "Mot de passe requis",
+        "enterPassword": "Veuillez saisir le mot de passe {org} pour continuer.",
+        "password": "Mot de passe",
+        "validate": "Valider",
+        "invalid": "Mot de passe invalide.",
+        "otherError": "Une erreur est survenue."
+    },
+    "ExportRecoveryDevicePage": {
+        "titles": {
+            "recoveryFile": "Fichier de récupération",
+            "recoveryKey": "Clé secrète"
+        },
+        "subtitles": {
+            "newPassword": "Les fichiers de récupération vous permettront de recréer un mot de passe en cas d'oubli sur un appareil.",
+            "twoFilesToKeep": "La récupération vous donnera 2 fichiers à conserver :",
+            "keepFilesSeparate": "Veuillez à bien conserver ces fichiers idéalement dans des répertoires indépendants.",
+            "fileExplanation": "Ce fichier permettra de choisir votre mot de passe à l'aide de la clé secrète.",
+            "keyExplanation": "La clé secrète est un code qui vous permettra de choisir un nouveau mot de passe.",
+            "fileDownloaded": "Fichier téléchargé"
+        },
+        "actions": {
+            "understand": "J'ai compris",
+            "download": "Télécharger",
+            "backToWorkspaces": "Retourner aux espaces de travail"
+        },
+        "toasts": {
+            "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",
+            "keyDownloadOk": "La clé secrète a bien été téléchargée"
+        },
+        "filenames": {
+            "recoveryFile": "Parsec_Fichier_Récupération_{org}.data",
+            "recoveryKey": "Parsec_Code_Récupération_{org}.txt"
+        }
     },
     "SasCodeChoice": {
         "noneOfTheChoices": "Aucun de ces codes"

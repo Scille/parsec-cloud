@@ -115,6 +115,12 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
           createdOn: DateTime.now(),
           createdBy: 'device1',
         },
+        {
+          id: 'recovery_device1',
+          deviceLabel: 'Recovery First Device',
+          createdOn: DateTime.now(),
+          createdBy: 'device1',
+        },
       ],
     };
   }

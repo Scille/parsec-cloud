@@ -221,6 +221,8 @@ function getTitleForRoute(): string {
     return t('HeaderPage.titles.about');
   } else if (route === 'myContactDetails') {
     return t('HeaderPage.titles.myContactDetails');
+  } else if (route === 'recoveryExport') {
+    return t('HeaderPage.titles.recoveryExport');
   }
 
   return '';
