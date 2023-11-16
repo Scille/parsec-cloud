@@ -16,6 +16,8 @@ pub struct ProxyConfig {
     http_proxy: Option<reqwest::Proxy>,
     #[cfg(not(target_arch = "wasm32"))]
     https_proxy: Option<reqwest::Proxy>,
+    #[cfg(target_os = "windows")]
+    pac_url: Option<widestring::U16CString>,
 }
 
 impl ProxyConfig {
