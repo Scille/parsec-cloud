@@ -1190,6 +1190,22 @@ export function newCanceller(
 export function parseBackendAddr(
     url: string
 ): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+export function pathFilename(
+    path: string
+): Promise<string | null>
+export function pathJoin(
+    parent: string,
+    child: string
+): Promise<string>
+export function pathNormalize(
+    path: string
+): Promise<string>
+export function pathParent(
+    path: string
+): Promise<string>
+export function pathSplit(
+    path: string
+): Promise<Array<string>>
 export function testDropTestbed(
     path: string
 ): Promise<null>
