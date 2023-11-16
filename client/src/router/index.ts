@@ -81,6 +81,11 @@ const routes: Array<RouteRecordRaw> = [
             name: 'myContactDetails',
             component: () => import('@/views/users/MyContactDetailsPage.vue'),
           },
+          {
+            path: '/:handle(\\d+)/recoveryExport',
+            name: 'recoveryExport',
+            component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
+          },
         ],
       },
     ],

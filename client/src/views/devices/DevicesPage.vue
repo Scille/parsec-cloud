@@ -80,7 +80,7 @@
           <div class="restore-password-button">
             <ion-button
               class="button-default"
-              @click="passwordSaved = true"
+              @click="goToExportRecoveryDevice()"
             >
               <ion-icon
                 :icon="sparkles"
@@ -115,6 +115,7 @@
           </div>
           <div class="restore-password-button">
             <ion-button
+              @click="goToExportRecoveryDevice()"
               class="button-default"
               fill="clear"
             >
@@ -136,11 +137,12 @@ import { ref, Ref, onMounted, inject } from 'vue';
 import { add, sparkles, download } from 'ionicons/icons';
 import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonLabel, IonText, modalController } from '@ionic/vue';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { listOwnDevices, OwnDeviceInfo } from '@/parsec';
+import { listOwnDevices, OwnDeviceInfo, hasRecoveryDevice } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
 import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { MsModalResult } from '@/components/core/ms-types';
+import { routerNavigateTo } from '@/router';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
@@ -151,10 +153,17 @@ onMounted(async () => {
   await refreshDevicesList();
 });
 
+async function goToExportRecoveryDevice(): Promise<void> {
+  routerNavigateTo('recoveryExport');
+}
+
 async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
     devices.value = result.value;
+    if (await hasRecoveryDevice(devices.value)) {
+      passwordSaved.value = true;
+    }
   } else {
     notificationManager.showToast(
       new Notification({

@@ -194,7 +194,8 @@
                 "storage": "Storage",
                 "information": "Information"
             },
-            "myContactDetails": "My contact details"
+            "myContactDetails": "My contact details",
+            "recoveryExport": "Recovery files"
         },
         "previous": "Go back"
     },
@@ -479,7 +480,7 @@
             "done": {
                 "subtitle": "You have saved the password recovery files.",
                 "label": "Files already downloaded",
-                "button": "Downloading files again"
+                "button": "Re-download recovery files"
             },
             "notDone": {
                 "label": "Action required",
@@ -537,6 +538,41 @@
         "passwordLevelHigh": "Strong",
         "passwordCriteria": "Make sure it corresponds to a strong level: avoid repetitions, overly common words and sequences.",
         "noMatch": "Does not match"
+    },
+    "PasswordInputModal": {
+        "passwordNeeded": "Password needed",
+        "enterPassword": "Please enter the password for {org} to continue.",
+        "password": "Password",
+        "validate": "Validate",
+        "invalid": "Invalid password.",
+        "otherError": "An error has occurred."
+    },
+    "ExportRecoveryDevicePage": {
+        "titles": {
+            "recoveryFile": "Recovery File",
+            "recoveryKey": "Secret Key"
+        },
+        "subtitles": {
+            "newPassword": "Recovery files let you create a new password in the event that you forget it on this device.",
+            "twoFilesToKeep": "You will then have to keep two separate files:",
+            "keepFilesSeparate": "Please make sure both files aren't stored in the same folder.",
+            "fileExplanation": "This file will allow you to choose your password using the secret key.",
+            "keyExplanation": "The secret key is a code which will allow you to choose a new password.",
+            "fileDownloaded": "File downloaded"
+        },
+        "actions": {
+            "understand": "I understand",
+            "download": "Download",
+            "backToWorkspaces": "Back to workspaces"
+        },
+        "toasts": {
+            "fileDownloadOk": "The recovery file was successfully downloaded",
+            "keyDownloadOk": "The secret key was successfully downloaded"
+        },
+        "filenames": {
+            "recoveryFile": "Parsec_Recovery_File_{org}.data",
+            "recoveryKey": "Parsec_Recovery_Code_{org}.txt"
+        }
     },
     "SasCodeChoice": {
         "noneOfTheChoices": "None shown"
