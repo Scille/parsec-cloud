@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+# cspell:words oneline
+
 """
 PRs must contain a newsfragment that reference an opened issue
 """
@@ -7,6 +9,7 @@ PRs must contain a newsfragment that reference an opened issue
 import argparse
 import json
 from concurrent.futures import ThreadPoolExecutor
+from itertools import repeat
 from pathlib import Path
 from subprocess import run
 from typing import Optional
@@ -18,11 +21,13 @@ VALID_TYPE = ["feature", "bugfix", "doc", "removal", "api", "misc", "empty"]
 
 def check_newsfragment(fragment: Path, base: str) -> Optional[bool]:
     fragment_name = fragment.name
+
     # If file never existed in `base`, consider as a new newsfragment
     # Cannot just git diff against `base` branch here given newsfragments
     # removed in master will be considered as new items in our branch
     # --exit-code makes the command exit with 0 if there are changes
-    cmd_args = ["git", "log", base, "--exit-code", "--", str(fragment)]
+    cmd_args = ["git", "log", base, "--exit-code", "--oneline", "--", str(fragment)]
+    print(f"[{fragment_name}] Checking news fragment on base {base} with `{' '.join(cmd_args)}`")
     ret = run(cmd_args, capture_output=True)
 
     if ret.returncode == 0:
@@ -48,21 +53,14 @@ def check_newsfragment(fragment: Path, base: str) -> Optional[bool]:
             response = urlopen(req)
         except HTTPError as exc:
             print(
-                f"[{fragment_name}] fragment ID doesn't correspond to an issue ! (On <{url}> HTTP error {exc.code} {exc.reason})"
+                f"[{fragment_name}] fragment ID doesn't correspond to an issue! (On <{url}> HTTP error {exc.code} {exc.reason})"
             )
+            return False
         else:
+            # Sanity check: try to deserialize the response.
             data = json.loads(response.read())
             print(f"[{fragment_name}] issue#{id} => {data}")
-            if "pull_request" in data:
-                print(
-                    f"[{fragment_name}] fragment ID correspond to a pull request instead of an issue !"
-                )
-            else:
-                if data["state"] == "open":
-                    return True
-                else:
-                    print(f"[{fragment_name}] fragment ID correspond to a closed issue !")
-        return False
+            return True
     else:
         return None
 
@@ -78,7 +76,11 @@ if __name__ == "__main__":
         ret = list(
             filter(
                 lambda value: value is not None,
-                pool.map(check_newsfragment, Path("newsfragments").glob("*.rst"), args.base),
+                pool.map(
+                    check_newsfragment,
+                    Path("newsfragments").glob("*.rst"),
+                    repeat("origin/" + args.base),
+                ),
             )
         )
 
