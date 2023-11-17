@@ -167,7 +167,7 @@ pub struct LocalPendingEnrollment {
 }
 
 impl LocalPendingEnrollment {
-    const DIRECTORY_NAME: &str = "enrollment_requests";
+    const DIRECTORY_NAME: &'static str = "enrollment_requests";
 
     fn path_from_enrollment_id(config_dir: &Path, enrollment_id: EnrollmentID) -> PathBuf {
         config_dir

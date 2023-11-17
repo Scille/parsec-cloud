@@ -11,6 +11,9 @@ repository.workspace = true
 [lib]
 crate-type = ["staticlib", "cdylib"]
 
+[lints]
+workspace = true
+
 [dependencies]
 libparsec = { workspace = true }
 lazy_static = { workspace = true }

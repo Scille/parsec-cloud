@@ -15,6 +15,9 @@ test-utils = ["libparsec/test-utils"]
 [lib]
 crate-type = ["cdylib"]
 
+[lints]
+workspace = true
+
 [dependencies]
 libparsec = { workspace = true }
 lazy_static = { workspace = true }

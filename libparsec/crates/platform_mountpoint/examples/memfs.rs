@@ -1,4 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+#![allow(clippy::unwrap_used)]
 
 fn main() {
     #[cfg(not(target_os = "macos"))]

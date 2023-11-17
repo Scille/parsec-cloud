@@ -52,7 +52,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
 }
 
 impl SequesterPrivateKeyDer {
-    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
         let priv_key = Rsa::generate(size_in_bits as u32).expect("Cannot generate the RSA key");
@@ -158,7 +158,7 @@ impl Serialize for SequesterPublicKeyDer {
 }
 
 impl SequesterPublicKeyDer {
-    const ALGORITHM: &str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
         self.0.size() as usize
@@ -243,7 +243,7 @@ impl TryFrom<&[u8]> for SequesterSigningKeyDer {
 }
 
 impl SequesterSigningKeyDer {
-    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+    const ALGORITHM: &'static str = "RSASSA-PSS-SHA256";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
@@ -351,7 +351,7 @@ impl Serialize for SequesterVerifyKeyDer {
 }
 
 impl SequesterVerifyKeyDer {
-    const ALGORITHM: &str = "RSASSA-PSS-SHA256";
+    const ALGORITHM: &'static str = "RSASSA-PSS-SHA256";
 
     pub fn size_in_bytes(&self) -> usize {
         self.0.bits() as usize / 8
