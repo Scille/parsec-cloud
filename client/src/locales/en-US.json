@@ -349,7 +349,13 @@
             "createFolderFailed": "Failed to create folder `{name}`",
             "listFailed": "Failed to list the content of the folder `{path}`",
             "deleteMultipleAllFailed": "Failed to delete all entries.",
-            "deleteMultipleSomeFailed": "Some entries could not be deleted."
+            "deleteMultipleSomeFailed": "Some entries could not be deleted.",
+            "moveOneFailed": "Failed to move `{name}`",
+            "moveMultipleAllFailed": "Failed to move all entries.",
+            "moveMultipleSomeFailed": "Some entries could not be moved.",
+            "copyOneFailed": "Failed to copy `{name}`",
+            "copyMultipleAllFailed": "Failed to copy all entries.",
+            "copyMultipleSomeFailed": "Some entries could not be copied."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -372,6 +378,12 @@
         "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete the folder `{name}`?",
         "deleteMultipleQuestionTitle": "Delete multiple elements",
         "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} elements?",
+        "copySelectFolderTitle": "Copy one element | Copy {count} elements",
+        "copySelectFolderSubtitle": "Current location: {location}",
+        "moveSelectFolderTitle": "Move one element | Move {count} elements",
+        "moveSelectFolderSubtitle": "Current location: {location}",
+        "moveSuccess": "One element moved! | {count} elements moved!",
+        "copySuccess": "One element copied! | {count} elements copied!",
         "open": {
             "fileFailedTitle": "Failed to open the file",
             "fileFailedSubtitle": "Could not open file `{name}`",

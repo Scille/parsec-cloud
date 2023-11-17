@@ -153,3 +153,41 @@ export async function getAbsolutePath(_workspaceHandle: WorkspaceHandle, entry: 
     return { ok: true, value: '/unknown' };
   }
 }
+
+export enum MoveErrorTag {
+  Internal = 'Internal',
+}
+
+export interface MoveError {
+  tag: MoveErrorTag.Internal;
+}
+
+export async function moveEntry(_source: FsPath, _destination: FsPath): Promise<Result<null, MoveError>> {
+  const clientHandle = getParsecHandle();
+  const workspaceHandle = getWorkspaceHandle();
+
+  if (clientHandle && workspaceHandle && !needsMocks()) {
+    return { ok: true, value: null };
+  } else {
+    return { ok: true, value: null };
+  }
+}
+
+export enum CopyErrorTag {
+  Internal = 'Internal',
+}
+
+export interface CopyError {
+  tag: CopyErrorTag.Internal;
+}
+
+export async function copyEntry(_source: FsPath, _destination: FsPath): Promise<Result<null, CopyError>> {
+  const clientHandle = getParsecHandle();
+  const workspaceHandle = getWorkspaceHandle();
+
+  if (clientHandle && workspaceHandle && !needsMocks()) {
+    return { ok: true, value: null };
+  } else {
+    return { ok: true, value: null };
+  }
+}

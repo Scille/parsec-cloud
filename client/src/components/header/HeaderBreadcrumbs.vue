@@ -45,10 +45,13 @@ export interface RouterPathNode {
 import { ref, Ref, computed } from 'vue';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
 
 const props = defineProps<{
   pathNodes: RouterPathNode[];
+}>();
+
+const emits = defineEmits<{
+  (e: 'change', node: RouterPathNode): void;
 }>();
 
 // Using a computed to reset maxBreadcrumbs value automatically
@@ -59,7 +62,6 @@ const fullPath = computed(() => {
 });
 
 const maxBreadcrumbs: Ref<number | undefined> = ref(4);
-const router = useRouter();
 let ignoreNextEvent = false;
 
 function expandCollapsed(): void {
@@ -74,7 +76,7 @@ function navigateTo(path: RouterPathNode): void {
     ignoreNextEvent = false;
     return;
   }
-  router.push({ name: path.name, params: path.params, query: path.query });
+  emits('change', path);
 }
 </script>
 

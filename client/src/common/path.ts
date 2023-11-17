@@ -26,5 +26,6 @@ export function parse(path: string): string[] {
 }
 
 export function join(path: string, elem: string): string {
-  return path.endsWith('/') ? `${path}${elem}` : `${path}/${elem}`;
+  const final = path.endsWith('/') ? `${path}${elem}` : `${path}/${elem}`;
+  return final.replace(/\/\/+/g, '/');
 }

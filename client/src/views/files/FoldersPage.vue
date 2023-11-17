@@ -35,10 +35,16 @@
             @click="copyLink(getSelectedEntries())"
           />
           <ms-action-bar-button
-            id="button-move-to"
+            id="button-moveto"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
+          />
+          <ms-action-bar-button
+            id="button-makeacopy"
+            :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
+            :icon="copy"
+            @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
@@ -210,8 +216,9 @@ import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
-import { getPathLink, isWeb, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { getPathLink, isWeb, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/services/importManager';
+import { selectFolder } from '@/views/files/FolderSelectionModal.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
@@ -494,7 +501,50 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
-  console.log('Move entries', entries);
+  if (entries.length === 0) {
+    return;
+  }
+  const folder = await selectFolder({
+    title: t('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
+    subtitle: t('FoldersPage.moveSelectFolderSubtitle', { location: currentPath.value }),
+    startingPath: currentPath.value,
+  });
+  if (!folder) {
+    return;
+  }
+  let errorCount = 0;
+  for (const entry of entries) {
+    const currentEntryPath = await parsec.Path.join(currentPath.value, entry.name);
+    const newEntryPath = await parsec.Path.join(folder, entry.name);
+    const result = await parsec.moveEntry(currentEntryPath, newEntryPath);
+    errorCount += Number(!result.ok);
+  }
+  if (errorCount > 0) {
+    if (entries.length === 1) {
+      notificationManager.showToast(
+        new Notification({
+          message: t('FoldersPage.errors.moveOneFailed', { name: entries[0].name }),
+          level: NotificationLevel.Error,
+        }),
+      );
+    } else {
+      notificationManager.showToast(
+        new Notification({
+          message:
+            errorCount === entries.length ? t('FoldersPage.errors.moveMultipleAllFailed') : t('FoldersPage.errors.moveMultipleSomeFailed'),
+          level: NotificationLevel.Error,
+        }),
+      );
+    }
+  } else {
+    notificationManager.showToast(
+      new Notification({
+        message: t('FoldersPage.moveSuccess', { count: entries.length }, entries.length),
+        level: NotificationLevel.Success,
+      }),
+    );
+  }
+  await listFolder();
 }
 
 async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
@@ -515,7 +565,50 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
-  console.log('Make a copy', entries);
+  if (entries.length === 0) {
+    return;
+  }
+  const folder = await selectFolder({
+    title: t('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
+    subtitle: t('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
+    startingPath: currentPath.value,
+  });
+  if (!folder) {
+    return;
+  }
+  let errorCount = 0;
+  for (const entry of entries) {
+    const currentEntryPath = await parsec.Path.join(currentPath.value, entry.name);
+    const newEntryPath = await parsec.Path.join(folder, entry.name);
+    const result = await parsec.copyEntry(currentEntryPath, newEntryPath);
+    errorCount += Number(!result.ok);
+  }
+  if (errorCount > 0) {
+    if (entries.length === 1) {
+      notificationManager.showToast(
+        new Notification({
+          message: t('FoldersPage.errors.copyOneFailed', { name: entries[0].name }),
+          level: NotificationLevel.Error,
+        }),
+      );
+    } else {
+      notificationManager.showToast(
+        new Notification({
+          message:
+            errorCount === entries.length ? t('FoldersPage.errors.copyMultipleAllFailed') : t('FoldersPage.errors.copyMultipleSomeFailed'),
+          level: NotificationLevel.Error,
+        }),
+      );
+    }
+  } else {
+    notificationManager.showToast(
+      new Notification({
+        message: t('FoldersPage.copySuccess', { count: entries.length }, entries.length),
+        level: NotificationLevel.Success,
+      }),
+    );
+  }
+  await listFolder();
 }
 
 async function downloadEntries(entries: parsec.EntryStat[]): Promise<void> {
