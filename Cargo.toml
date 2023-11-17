@@ -55,6 +55,10 @@ license = "BUSL-1.1"
 version = "0.0.0"
 repository = "https://github.com/Scille/parsec-cloud"
 
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"
+unwrap_used = "deny"
+
 # All dependencies should be specified here instead of just in the crate(s) requiring them:
 # - It ensures each given dependency version is consistent across all crates
 # - It simplifies updating dependency version (only a single place to update)

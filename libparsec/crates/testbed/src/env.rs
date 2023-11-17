@@ -561,11 +561,9 @@ where
             })
         };
 
-        let downcasted = component_store.downcast::<T>().unwrap_or_else(|_| {
+        component_store.downcast::<T>().unwrap_or_else(|_| {
             panic!("Unexpected component storage type for `{}`", component_key);
-        });
-
-        downcasted
+        })
     })
 }
 

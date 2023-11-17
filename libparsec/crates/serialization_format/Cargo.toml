@@ -11,6 +11,9 @@ repository.workspace = true
 [lib]
 proc-macro = true
 
+[lints]
+workspace = true
+
 [features]
 python-bindings-support = []
 

@@ -25,7 +25,7 @@ fn find_device_files(path: PathBuf) -> Vec<PathBuf> {
 
     // `fs::read_dir` fails if path doesn't exists, is not a folder or is not
     // accessible... In any case, there is not much we can do but to ignore it.
-    if let Ok(children) = std::fs::read_dir(&path) {
+    if let Ok(children) = std::fs::read_dir(path) {
         for child_dir in children.filter_map(|entry| entry.ok()) {
             let path = child_dir.path();
             if path.extension() == Some(OsStr::new(DEVICE_FILE_EXT)) {

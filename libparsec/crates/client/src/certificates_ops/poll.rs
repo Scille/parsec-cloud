@@ -105,7 +105,11 @@ pub(super) async fn poll_server_for_new_certificates(
 
         let certificates = match offset.cmp(&new_offset) {
             // Certificates hasn't changed while we were requesting the server
-            std::cmp::Ordering::Equal => certificates.into_iter().skip(0),
+            std::cmp::Ordering::Equal => {
+                // We need to return the same value as other branch so `skip(0)` it is.
+                #[allow(clippy::iter_skip_zero)]
+                certificates.into_iter().skip(0)
+            }
             // New certificates has been added while we were requesting the server
             std::cmp::Ordering::Less => {
                 let to_skip = (new_offset - offset) as usize;

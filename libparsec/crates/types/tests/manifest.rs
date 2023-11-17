@@ -483,8 +483,6 @@ fn file_manifest_verify(
         .map(|author| DeviceID::from_str(author).expect("Invalid raw DeviceID"))
         .unwrap_or_else(|| alice.device_id.to_owned());
     let expected_timestamp = expected_timestamp.unwrap_or(now);
-    let expected_id = expected_id;
-    let expected_version = expected_version;
 
     let manifest = FileManifest {
         author: alice.device_id.to_owned(),
