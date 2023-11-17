@@ -1,0 +1,2 @@
+Add documentation for the ``recovery device`` feature.
+This feature was introduced in v2.6.0 and it was not documented until now.
