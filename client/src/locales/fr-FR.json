@@ -349,7 +349,13 @@
             "createFolderFailed": "Impossible de créer le dossier `{name}`",
             "listFailed": "Impossible de lister le contenu du dossier `{path}`",
             "deleteMultipleAllFailed": "Les éléments n'ont pas pu être supprimés.",
-            "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés."
+            "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
+            "moveOneFailed": "Impossible de déplacer `{name}`",
+            "moveMultipleAllFailed": "Les éléments n'ont pas pu être déplacés.",
+            "moveMultipleSomeFailed": "Certains éléments n'ont pas py être déplacés.",
+            "copyOneFailed": "Impossible de copier `{name}`",
+            "copyMultipleAllFailed": "Les éléments n'ont pas pu être copiés.",
+            "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",
@@ -372,6 +378,12 @@
         "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
         "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
         "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "copySelectFolderTitle": "Copier un élément | Copier {count} elements",
+        "copySelectFolderSubtitle": "Emplacement actuel : {location}",
+        "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
+        "moveSelectFolderSubtitle": "Emplacement actuel : {location}",
+        "moveSuccess": "Un élément déplacé ! | {count} éléments déplacés !",
+        "copySuccess": "Un élément copié ! | {count} éléments copiés !",
         "open": {
             "fileFailedTitle": "Impossible d'ouvrir le fichier",
             "fileFailedSubtitle": "Le fichier `{name}` n'a pas pu être ouvert.",

@@ -41,7 +41,10 @@
           </div>
 
           <div class="topbar-left__breadcrumb">
-            <header-breadcrumbs :path-nodes="fullPath" />
+            <header-breadcrumbs
+              :path-nodes="fullPath"
+              @change="onNodeSelected"
+            />
           </div>
         </div>
 
@@ -124,6 +127,7 @@ import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute, Path } from '@/parsec';
+import { routerNavigateTo } from '@/router';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
@@ -135,6 +139,10 @@ const fullPath: Ref<RouterPathNode[]> = ref([]);
 const unwatchRoute = watch(currentRoute, async (newRoute) => {
   await parseRoute(newRoute);
 });
+
+async function onNodeSelected(node: RouterPathNode): Promise<void> {
+  routerNavigateTo(node.name, node.params, node.query);
+}
 
 async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
   if (route.query && route.query.workspaceId) {
