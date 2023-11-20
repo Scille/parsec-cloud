@@ -6,6 +6,7 @@
     class="file-list-item"
     lines="full"
     :detail="false"
+    :class="{ selected: isSelected }"
     @click="$emit('click', $event, file)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -72,6 +73,7 @@
     <div class="file-options ion-item-child-clickable">
       <ion-button
         fill="clear"
+        v-show="isHovered"
         class="options-button"
         @click.stop="$emit('menuClick', $event, file)"
       >
@@ -230,6 +232,7 @@ function isFileSynced(): boolean {
 }
 
 .file-options {
+  min-width: 4rem;
   flex-grow: 0;
   margin-left: auto;
 

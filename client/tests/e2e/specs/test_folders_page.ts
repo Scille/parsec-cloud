@@ -65,7 +65,7 @@ describe('Check folders page', () => {
   }
 
   it('Open file menu in list view', () => {
-    cy.get('.file-list-item').first().find('.options-button').click();
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
     checkMenuItems();
   });
 
@@ -95,9 +95,9 @@ describe('Check folders page', () => {
   });
 
   it('Tests select all files', () => {
-    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').should('not.have.class', 'checkbox-checked');
     // Select all
-    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.folder-footer').contains('3 selected items');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
@@ -110,7 +110,7 @@ describe('Check folders page', () => {
     cy.get('.folder-footer').contains('3 items');
 
     // Select all, unselect first file
-    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.folder-footer').contains('3 selected items');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
@@ -120,7 +120,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests delete one file', () => {
-    cy.get('.file-list-item').first().find('.options-button').click();
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete the file `File1.txt`?');
@@ -131,7 +131,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests delete multiple files', () => {
-    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('#button-delete').contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple elements');
     cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete these 3 elements?');
@@ -147,7 +147,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests file details', () => {
-    cy.get('.file-list-item').first().find('.options-button').click();
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
     cy.get('.file-details-modal').find('.ms-modal-header__title').contains('Details on File1.txt');
     cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 8);
@@ -164,7 +164,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests folder details', () => {
-    cy.get('.file-list-item').last().find('.options-button').click();
+    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
     cy.get('.file-details-modal').find('.ms-modal-header__title').contains('Details on Dir1');
     cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 7);
@@ -178,7 +178,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests get file link', () => {
-    cy.get('.file-list-item').last().find('.options-button').click();
+    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
     cy.checkToastMessage('The link has been copied to the clipboard.');
     cy.window().then((win) => {

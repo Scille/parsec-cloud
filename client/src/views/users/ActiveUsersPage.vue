@@ -78,14 +78,13 @@
                 :user="userList.find((user) => isCurrentUser(user.id))!"
                 :show-checkbox="false"
                 :disabled="true"
-                :show-options="false"
+                :hide-options="true"
               />
               <user-list-item
                 v-for="user in userList.filter((user) => !isCurrentUser(user.id))"
                 :key="user.id"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                :show-options="selectedUsersCount === 0"
                 @menu-click="openUserContextMenu($event, user)"
                 @select="onUserSelect"
                 ref="userListItemRefs"

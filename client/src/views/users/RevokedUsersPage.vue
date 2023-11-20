@@ -62,7 +62,6 @@
                 :key="user.id"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                :show-options="selectedUsersCount === 0"
                 @menu-click="openUserContextMenu($event, user)"
                 @select="onUserSelect"
                 ref="userListItemRefs"
