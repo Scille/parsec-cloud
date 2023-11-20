@@ -102,10 +102,10 @@ crypto_secretbox = { version = "0.1.1", default-features = false }
 ctrlc = { version = "3.4.1", default-features = false }
 # You need base64&co ? This is the crate you need !
 data-encoding = { version = "2.4.0", default-features = false }
-diesel = { version = "2.1.3", default-features = false }
+diesel = { version = "2.1.4", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
-ed25519-dalek = { version = "2.0.0", default-features = false }
+ed25519-dalek = { version = "2.1.0", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.1", default-features = false }
 event-listener = { version = "2.5.3", default-features = false }
@@ -169,7 +169,7 @@ thiserror = { version = "1.0.50", default-features = false }
 tokio = { version = "1.34.0", default-features = false }
 unicode-normalization = { version = "0.1.22", default-features = false }
 url = { version = "2.4.1", default-features = false }
-uuid = { version = "1.5.0", default-features = false }
+uuid = { version = "1.6.0", default-features = false }
 wasm-bindgen-futures = { version = "0.4.38", default-features = false }
 wasm-bindgen-test = { version = "0.3.38", default-features = false }
 wasm-bindgen = { version = "0.2.87", default-features = false }
@@ -177,7 +177,7 @@ web-sys = { version = "0.3.65", default-features = false }
 winfsp_build = { version = "0.1.1", default-features = false }
 winfsp_wrs = { version = "0.1.0", git = "https://github.com/Scille/winfsp_wrs.git", rev = "d768c7e", default-features = false }
 x25519-dalek = { version = "2.0.0", default-features = false }
-zeroize = { version = "1.6.0", default-features = false }
+zeroize = { version = "1.7.0", default-features = false }
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
 # hence we optimize our 3rd party dependencies.
