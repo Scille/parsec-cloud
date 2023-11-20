@@ -147,7 +147,7 @@ async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
   }
 
   // Parse path and remove /deviceId
-  const routePath = (await Path.parse(currentRoute.path)).slice(2);
+  const routePath = (await Path.parse(currentRoute.path)).slice(1);
   const finalPath: RouterPathNode[] = [];
 
   // If route is 'workspaces' and we have an id, we're visiting a workspace
@@ -164,26 +164,22 @@ async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
     if (routePath.length >= 2 && currentRoute.query.path) {
       const rebuildPath: string[] = [];
       const workspacePath = await Path.parse(currentRoute.query.path as string);
+      finalPath.push({
+        id: 1,
+        display: workspaceName.value,
+        name: 'folder',
+        query: { path: '/' },
+        params: currentRoute.params,
+      });
       for (let i = 0; i < workspacePath.length; i++) {
-        // Root folder
-        if (workspacePath[i] === '/') {
-          finalPath.push({
-            id: i + 1,
-            display: workspaceName.value,
-            name: 'folder',
-            query: { path: '/' },
-            params: currentRoute.params,
-          });
-        } else {
-          rebuildPath.push(workspacePath[i]);
-          finalPath.push({
-            id: i + 1,
-            display: workspacePath[i],
-            name: 'folder',
-            query: { path: `/${rebuildPath.join('/')}` },
-            params: currentRoute.params,
-          });
-        }
+        rebuildPath.push(workspacePath[i]);
+        finalPath.push({
+          id: i + 2,
+          display: workspacePath[i],
+          name: 'folder',
+          query: { path: `/${rebuildPath.join('/')}` },
+          params: currentRoute.params,
+        });
       }
     }
   }

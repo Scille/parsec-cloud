@@ -79,7 +79,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
-  const parsedPath = await Path.parse(path);
+  const fileName = (await Path.filename(path)) || '';
 
   if (clientHandle && workspaceHandle && !needsMocks()) {
     const result = await libparsec.workspaceStatEntry(workspaceHandle, path);
@@ -88,15 +88,15 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
       result.value.updated = DateTime.fromSeconds(result.value.updated as any as number);
       if (result.value.tag === FileType.File) {
         (result.value as EntryStatFile).isFile = (): boolean => true;
-        (result.value as EntryStatFile).name = parsedPath[parsedPath.length - 1];
+        (result.value as EntryStatFile).name = fileName;
       } else {
         (result.value as EntryStatFolder).isFile = (): boolean => false;
-        (result.value as EntryStatFolder).name = parsedPath[parsedPath.length - 1];
+        (result.value as EntryStatFolder).name = fileName;
       }
     }
     return result as Result<EntryStat, WorkspaceFsOperationError>;
   } else {
-    if (path !== '/' && parsedPath[parsedPath.length - 1] !== 'Dir1') {
+    if (path !== '/' && fileName !== 'Dir1') {
       return {
         ok: true,
         value: {
@@ -109,7 +109,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           isPlaceholder: false,
           needSync: Math.floor(Math.random() * 2) === 1,
           size: Math.floor(Math.random() * 1_000_000),
-          name: parsedPath[parsedPath.length - 1],
+          name: fileName,
           isFile: (): boolean => true,
         },
       };
@@ -125,7 +125,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           baseVersion: 1,
           isPlaceholder: false,
           needSync: Math.floor(Math.random() * 2) === 1,
-          name: parsedPath[parsedPath.length - 1],
+          name: fileName,
           isFile: (): boolean => false,
           children: ['File1.txt', 'File2.jpeg', 'Dir1'],
         },
