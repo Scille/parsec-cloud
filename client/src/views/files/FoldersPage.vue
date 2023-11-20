@@ -115,7 +115,7 @@
               :file="child"
               :show-checkbox="selectedFilesCount > 0 || allFilesSelected"
               @click="onFileClick"
-              @menu-click="openFileContextMenu($event, child)"
+              @menu-click="openFileContextMenu"
               @select="onFileSelect"
               ref="fileItemRefs"
             />
@@ -133,7 +133,7 @@
             <file-card
               :file="child"
               @click="onFileClick"
-              @menu-click="openFileContextMenu($event, child)"
+              @menu-click="openFileContextMenu"
             />
           </ion-item>
         </div>
@@ -557,7 +557,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promise<void> {
+async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinished?: () => void): Promise<void> {
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -572,6 +572,9 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promis
   const { data } = await popover.onDidDismiss();
 
   if (!data) {
+    if (onFinished) {
+      onFinished();
+    }
     return;
   }
 
@@ -590,6 +593,9 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat): Promis
   const fn = actions.get(data.action);
   if (fn) {
     await fn([file]);
+  }
+  if (onFinished) {
+    onFinished();
   }
 }
 

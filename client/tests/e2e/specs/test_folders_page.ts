@@ -71,7 +71,7 @@ describe('Check folders page', () => {
 
   it('Open file menu in grid view', () => {
     cy.get('#folders-ms-action-bar').find('#grid-view').click();
-    cy.get('.folder-grid-item').first().find('.card-option').click();
+    cy.get('.folder-grid-item').first().find('.card-option').invoke('show').click();
     checkMenuItems();
   });
 

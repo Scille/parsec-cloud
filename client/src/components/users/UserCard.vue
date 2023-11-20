@@ -21,8 +21,13 @@
     </div>
     <div
       class="card-option"
-      v-show="showOptions"
-      @click.stop="$emit('menuClick', $event, user)"
+      v-show="isHovered || menuOpened"
+      @click.stop="
+        menuOpened = true;
+        $emit('menuClick', $event, user, () => {
+          menuOpened = false;
+        });
+      "
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -54,17 +59,17 @@ import { defineEmits, defineExpose, ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
+const menuOpened = ref(false);
 
 defineEmits<{
   (e: 'click', event: Event, user: UserInfo): void;
-  (e: 'menuClick', event: Event, user: UserInfo): void;
+  (e: 'menuClick', event: Event, user: UserInfo, onFinished: () => void): void;
   (e: 'select', user: UserInfo, selected: boolean): void;
 }>();
 
 const props = defineProps<{
   user: UserInfo;
   showCheckbox: boolean;
-  showOptions: boolean;
 }>();
 
 function getUser(): UserInfo {
