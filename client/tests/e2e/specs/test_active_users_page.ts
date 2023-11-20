@@ -57,9 +57,9 @@ describe('Check active users page', () => {
     // All unchecked by default
     checkChecked(false);
 
-    // Options button is visible if nothing is checked
-    cy.get('@userItems').eq(1).find('.options-button').should('be.visible');
-    cy.get('@userItems').eq(2).find('.options-button').should('be.visible');
+    // Options button should not be visible
+    cy.get('@userItems').eq(1).find('.options-button').should('not.be.visible');
+    cy.get('@userItems').eq(2).find('.options-button').should('not.be.visible');
 
     cy.get('.user-footer__container').contains('3 users');
     cy.get('.user-footer__container').find('#button-revoke-user').should('not.exist');
@@ -68,10 +68,6 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').click();
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     checkChecked(true);
-
-    // Options button should not be visible if something is checked
-    cy.get('@userItems').eq(1).find('.options-button').should('not.be.visible');
-    cy.get('@userItems').eq(2).find('.options-button').should('not.be.visible');
 
     cy.get('.user-footer__container').contains('2 users selected');
     cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
@@ -102,7 +98,7 @@ describe('Check active users page', () => {
   it('Tests context menu', () => {
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
     cy.get('.user-context-menu').should('not.exist');
-    cy.get('@userItems').eq(2).find('.user-options').find('ion-button').click();
+    cy.get('@userItems').eq(2).find('.options-button').invoke('show').click();
     cy.get('.user-context-menu').should('exist');
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems').should('have.length', 4);
     // 0 is title, 1 is revoke button
@@ -126,7 +122,7 @@ describe('Check active users page', () => {
 
   it('Tests revoke one user', () => {
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 3);
-    cy.get('@userItems').eq(1).find('.options-button').click();
+    cy.get('@userItems').eq(1).find('.options-button').invoke('show').click();
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').eq(1).contains('Revoke this user').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();

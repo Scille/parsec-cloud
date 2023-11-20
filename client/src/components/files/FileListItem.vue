@@ -73,9 +73,14 @@
     <div class="file-options ion-item-child-clickable">
       <ion-button
         fill="clear"
-        v-show="isHovered"
+        v-show="isHovered || menuOpened"
         class="options-button"
-        @click.stop="$emit('menuClick', $event, file)"
+        @click.stop="
+          menuOpened = true;
+          $emit('menuClick', $event, file, () => {
+            menuOpened = false;
+          });
+        "
       >
         <ion-icon
           :icon="ellipsisHorizontal"
@@ -96,6 +101,7 @@ import { EntryStat, EntryStatFile } from '@/parsec';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 
 const isHovered = ref(false);
+const menuOpened = ref(false);
 const isSelected = ref(false);
 
 const props = defineProps<{
@@ -105,7 +111,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', event: Event, file: EntryStat): void;
-  (e: 'menuClick', event: Event, file: EntryStat): void;
+  (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
   (e: 'select', file: EntryStat, selected: boolean): void;
 }>();
 

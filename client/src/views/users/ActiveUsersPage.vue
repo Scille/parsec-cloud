@@ -85,7 +85,7 @@
                 :key="user.id"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                @menu-click="openUserContextMenu($event, user)"
+                @menu-click="openUserContextMenu"
                 @select="onUserSelect"
                 ref="userListItemRefs"
               />
@@ -114,7 +114,7 @@
                 ref="userGridItemRefs"
                 :user="user"
                 :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                @menu-click="openUserContextMenu($event, user)"
+                @menu-click="openUserContextMenu"
                 @select="onUserSelect"
                 :show-options="selectedUsersCount === 0"
               />
@@ -349,7 +349,7 @@ async function revokeSelectedUsers(): Promise<void> {
   await refreshUserList();
 }
 
-function details(user: UserInfo): void {
+async function details(user: UserInfo): Promise<void> {
   console.log(`Show details on user ${user.humanHandle.label}`);
 }
 
@@ -357,7 +357,7 @@ function isCurrentUser(userId: UserID): boolean {
   return clientInfo.value !== null && clientInfo.value.userId === userId;
 }
 
-async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> {
+async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
   const popover = await popoverController.create({
     component: UserContextMenu,
     cssClass: 'user-context-menu',
@@ -373,18 +373,24 @@ async function openUserContextMenu(event: Event, user: UserInfo): Promise<void> 
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  const actions = new Map<UserAction, (user: UserInfo) => void>([
+  const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, details],
   ]);
 
   if (!data) {
+    if (onFinished) {
+      onFinished();
+    }
     return;
   }
 
   const fn = actions.get(data.action);
   if (fn) {
-    fn(user);
+    await fn(user);
+  }
+  if (onFinished) {
+    onFinished();
   }
 }
 

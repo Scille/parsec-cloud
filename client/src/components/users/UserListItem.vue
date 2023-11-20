@@ -55,10 +55,15 @@
     <!-- options -->
     <div class="user-options ion-item-child-clickable">
       <ion-button
-        v-show="isHovered && !hideOptions"
+        v-show="(isHovered || menuOpened) && !hideOptions"
         fill="clear"
         class="options-button"
-        @click.stop="$emit('menuClick', $event, user)"
+        @click.stop="
+          menuOpened = true;
+          $emit('menuClick', $event, user, () => {
+            menuOpened = false;
+          });
+        "
       >
         <ion-icon
           slot="icon-only"
@@ -81,6 +86,7 @@ import { UserInfo } from '@/parsec';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
+const menuOpened = ref(false);
 
 const props = defineProps<{
   user: UserInfo;
@@ -90,7 +96,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', event: Event, user: UserInfo): void;
-  (e: 'menuClick', event: Event, user: UserInfo): void;
+  (e: 'menuClick', event: Event, user: UserInfo, onFinished: () => void): void;
   (e: 'select', user: UserInfo, selected: boolean): void;
 }>();
 

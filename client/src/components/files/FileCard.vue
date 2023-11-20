@@ -4,10 +4,18 @@
   <div
     class="card"
     @click="$emit('click', $event, file)"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <div
       class="card-option"
-      @click.stop="$emit('menuClick', $event, file)"
+      v-show="isHovered || menuOpened"
+      @click.stop="
+        menuOpened = true;
+        $emit('menuClick', $event, file, () => {
+          menuOpened = false;
+        });
+      "
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -39,9 +47,12 @@
 <script setup lang="ts">
 import { folder, document, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
 import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { EntryStat } from '@/parsec';
+
+const isHovered = ref(false);
+const menuOpened = ref(false);
 
 const props = defineProps<{
   file: EntryStat;
@@ -49,7 +60,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', event: Event, file: EntryStat): void;
-  (e: 'menuClick', event: Event, file: EntryStat): void;
+  (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
 }>();
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
