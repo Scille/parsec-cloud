@@ -33,9 +33,7 @@ env:
     --side-effects-timeout=10
     -vv
     -x
-  # TODO: We stick to PostgreSQL 12 for the moment given later versions are
-  # much slower (postgresql tests runs in ~9mn on 12 vs ~36mn on 14 !)
-  postgresql-version: 12
+  postgresql-version: 14
 
 permissions:
   contents: read
