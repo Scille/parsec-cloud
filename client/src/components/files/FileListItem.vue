@@ -158,7 +158,6 @@ function isFileSynced(): boolean {
     }
   }
 
-  &:focus,
   &:active,
   &.selected {
     --background-focused: var(--parsec-color-light-primary-100);
