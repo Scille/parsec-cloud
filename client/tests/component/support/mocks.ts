@@ -32,6 +32,8 @@ function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileS
 }
 
 function mockI18n(): void {
+  // Mocking the following import:
+  // import { useI18n } from 'vue-i18n';
   vi.mock('vue-i18n', () => {
     return {
       useI18n: (): any => {
@@ -45,4 +47,38 @@ function mockI18n(): void {
   };
 }
 
-export { mockTimeSince, mockFileSize, mockI18n, getDefaultProvideConfig };
+interface Route {
+  route: string;
+  params?: object;
+  query?: object;
+}
+
+const ROUTES_CALLED: Array<Route> = [];
+
+function mockRouter(): void {
+  // Mocking the following import:
+  // import { useRouter } from 'vue-router';
+  vi.mock('vue-router', async () => {
+    const router = await vi.importActual<typeof import('vue-router')>('vue-router');
+    return {
+      ...router,
+      useRouter: (): any => {
+        return {
+          push: (options: any): void => {
+            ROUTES_CALLED.push({ route: options.name, params: options.params, query: options.query });
+          },
+        };
+      },
+    };
+  });
+}
+
+function getRoutesCalled(): Array<Route> {
+  return ROUTES_CALLED;
+}
+
+function resetRoutesCalled(): void {
+  ROUTES_CALLED.splice(0);
+}
+
+export { mockTimeSince, mockFileSize, mockI18n, mockRouter, getDefaultProvideConfig, getRoutesCalled, resetRoutesCalled };
