@@ -138,3 +138,20 @@ class OrganizationUpdateRepSchema(BaseSchema):
 
 organization_update_req_serializer = JSONSerializer(OrganizationUpdateReqSchema)
 organization_update_rep_serializer = JSONSerializer(OrganizationUpdateRepSchema)
+
+
+# GET /administration/organizations/<organization_id>/users
+
+
+class UserItem(BaseSchema):
+    user_id = fields.String(required=True)
+    user_email = fields.String(required=True)
+    user_name = fields.String(required=True)
+    frozen = fields.Boolean(required=True)
+
+
+class UserListRepSchema(BaseSchema):
+    users = fields.List(fields.Nested(UserItem), required=True)
+
+
+user_list_rep_serializer = JSONSerializer(UserListRepSchema)

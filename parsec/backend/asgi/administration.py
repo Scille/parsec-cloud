@@ -18,6 +18,7 @@ from parsec.api.rest import (
     organization_stats_rep_serializer,
     organization_update_req_serializer,
     server_stats_rep_serializer,
+    user_list_rep_serializer,
 )
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
@@ -285,3 +286,42 @@ async def administration_server_stats() -> Response:
             },
             status=200,
         )
+
+
+@administration_bp.route(
+    "/administration/organizations/<raw_organization_id>/users", methods=["GET"]
+)
+@administration_authenticated
+async def administration_organization_list_users(raw_organization_id: str) -> Response:
+    backend: "BackendApp" = g.backend
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        await not_found_abort()
+
+    # Check whether the organization actually exists
+    try:
+        await backend.organization.get(id=organization_id)
+    except OrganizationNotFoundError:
+        await not_found_abort()
+
+    try:
+        users, _ = await backend.user.dump_users(organization_id=organization_id)
+    except OrganizationNotFoundError:
+        await not_found_abort()
+
+    return make_rep_response(
+        user_list_rep_serializer,
+        data={
+            "users": [
+                {
+                    "user_id": user.user_id.str,
+                    "user_email": user.human_handle.email,
+                    "user_name": user.human_handle.label,
+                    "frozen": user.frozen,
+                }
+                for user in users
+                if user.human_handle is not None
+            ]
+        },
+    )

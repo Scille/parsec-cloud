@@ -71,6 +71,7 @@ class User:
     revoked_on: DateTime | None = None
     revoked_user_certificate: bytes | None = None
     revoked_user_certifier: DeviceID | None = None
+    frozen: bool = False
 
 
 def validate_new_user_certificates(

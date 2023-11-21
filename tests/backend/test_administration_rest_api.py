@@ -771,3 +771,61 @@ async def test_handles_escaped_path(backend_asgi_app):
             },
         )
         assert response.status_code == 404, route
+
+
+@pytest.mark.trio
+async def test_organization_list_users(backend_asgi_app, coolorg):
+    client = backend_asgi_app.test_client()
+
+    # Invalid organization name
+    response = await client.get(
+        f"/administration/organizations/!/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Organization does not exist
+    response = await client.get(
+        f"/administration/organizations/a/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Invalid token
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer xxx"},
+    )
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": False,
+            },
+        ],
+    }
