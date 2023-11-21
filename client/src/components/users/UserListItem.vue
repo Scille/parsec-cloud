@@ -136,7 +136,6 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
     }
   }
 
-  &:focus,
   &:active,
   &.selected {
     --background-focused: var(--parsec-color-light-primary-100);
