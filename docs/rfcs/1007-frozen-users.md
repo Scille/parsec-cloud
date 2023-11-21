@@ -42,11 +42,11 @@ However, it does not contain the users that have been revoked.
 
 This route is made available as `/administration/organizations/<raw_organization_id>/users/frozen` and requires an administration token.
 
-### `PATCH` method
+### `POST` method
 
-The `PATCH` method is used to modify the `frozen` status for a given user.
+The `POST` method is used to modify the `frozen` status for a given user.
 
-The body of the `PATCH` request must be a JSON structure with either one of following formats:
+The body of the `POST` request must be a JSON structure with either one of following formats:
 
 ```jsonc
 {
@@ -66,7 +66,7 @@ Or:
 
 This way, a user can either be identified by its email or by its parsec ID.
 
-The body of the `PATCH` response is a JSON structure summarizing the updated information for the selected user:
+The body of the `POST` response is a JSON structure summarizing the updated information for the selected user:
 
 ```jsonc
 {
@@ -81,7 +81,7 @@ The body of the `PATCH` response is a JSON structure summarizing the updated inf
 
 There is a subtle difference between the two ways to identify a user. At any given time, an email address can be used to uniquely identify an non-revoked user from a given organization. In contrast, a parsec user ID identifies uniquely any user from all organizations in the parsec server, including revoked users. This means that over time, an email address can identify different parsec users with different parsec IDs, even from the same organization.
 
-The frozen status configured by the `PATCH` method is specifically associated with the parsec user ID, regardless of the identification method used in the request body. This has a the following consequence: if a user is revoked and then a new user is created with the same email address, the frozen status will **not** be applied to the new user.
+The frozen status configured by the `POST` method is specifically associated with the parsec user ID, regardless of the identification method used in the request body. This has a the following consequence: if a user is revoked and then a new user is created with the same email address, the frozen status will **not** be applied to the new user.
 
 
 ### Updating frozen status for several users at once
@@ -93,20 +93,34 @@ However, this feature might be implemented in the future if necessary.
 
 ## Error handling
 
-The following standard errors are handled the same way as for the other administration routes:
+The following standard errors are handled the same way as for the other administration routes.
 
-- Organization not found: `404` with JSON body `{"error": "not_found"}`
+For parsec v2:
+
+- Organization not found: `404` with JSON body `{"error": "not_found}`
 - Invalid administration token: `403` with JSON body `{"error": "not_allowed"}`
 - Wrong request format: `400` with JSON body `{"error": "bad_data"}`
 
-On top of it, an extra error is handled when the `PATCH` request contains a user that does not exist in the organization:
+For parsec v3 (note the different `detail` field due to the migration to `FastAPI`):
+
+- Organization not found: `404` with JSON body `{"detail": "not_found"}`
+- Invalid administration token: `403` with JSON body `{"detail": "not_allowed"}`
+- Wrong request format: `400` with JSON body `{"detail": "bad_data"}`
+
+On top of it, an extra error is handled when the `POST` request contains a user that does not exist in the organization.
+
+For parsec v2:
 
 - User not found: `404` with JSON body `{"error": "user_not_found"}`
+
+For parsec v3 (note the different `detail` field due to the migration to `FastAPI`):
+
+- User not found: `404` with JSON body `{"detail": "user_not_found"}`
 
 
 ## Implementation
 
-An extra `frozen` column is added to the  SQL table that stores the user information for each organization. This column is initialized with `False` values and is updated by the `PATCH` method.
+An extra `frozen` column is added to the  SQL table that stores the user information for each organization. This column is initialized with `False` values and is updated by the `POST` method.
 
 When an authenticated handshake is performed by a user, the server checks the `frozen` field in the `user_` table. If it is, the handshake is rejected with a result that depends on the parsec protocol that is being used.
 
