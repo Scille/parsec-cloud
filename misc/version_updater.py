@@ -43,6 +43,13 @@ def hide_patch_version(template: str, separator: str = ".") -> Callable[[str], s
     return _hide_patch_version
 
 
+def only_major_version(template: str, separator: str = ".") -> Callable[[str], str]:
+    def _only_major_version(version: str) -> str:
+        return template.format(version=version.split(separator)[0])
+
+    return _only_major_version
+
+
 POETRY_GA_VERSION = ReplaceRegex(r"poetry-version: [0-9.]+", "poetry-version: {version}")
 NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version}")
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
@@ -86,6 +93,11 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR
     / ".github/workflows/ci-python.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
+        Tool.PostgreSQL: [
+            ReplaceRegex(
+                r"postgresql-version: \d+", only_major_version("postgresql-version: {version}")
+            )
+        ],
     },
     ROOT_DIR
     / ".github/workflows/ci-rust.yml": {
