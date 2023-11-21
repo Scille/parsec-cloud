@@ -38,7 +38,7 @@ class ReplaceRegex:
 
 def hide_patch_version(template: str, separator: str = ".") -> Callable[[str], str]:
     def _hide_patch_version(version: str) -> str:
-        return template.format(version=separator.join(version.split(".")[:-1]))
+        return template.format(version=separator.join(version.split(".")[:2]))
 
     return _hide_patch_version
 
@@ -62,6 +62,7 @@ class Tool(enum.Enum):
     Nextest = "nextest"
     Parsec = "parsec"
     License = "license"
+    PostgreSQL = "postgres"
 
 
 TOOLS_VERSION: Dict[Tool, str] = {
@@ -73,6 +74,7 @@ TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Parsec: "2.16.0-a.0+dev",
     Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
+    Tool.PostgreSQL: "14.10",
 }
 
 
@@ -138,6 +140,15 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"nvm install [0-9.]+", "nvm install {version}"),
         ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
+    },
+    ROOT_DIR
+    / "docs/adminguide/hosting/parsec-server.docker.yaml": {
+        Tool.PostgreSQL: [
+            ReplaceRegex(
+                r"image: postgres:\d+.\d+-alpine",
+                hide_patch_version("image: postgres:{version}-alpine"),
+            )
+        ]
     },
     ROOT_DIR
     / "docs/conf.py": {Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]},
