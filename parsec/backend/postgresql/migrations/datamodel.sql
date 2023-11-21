@@ -83,10 +83,10 @@ CREATE TABLE user_ (
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
     profile user_profile NOT NULL,
-
-    -- This field is added in an `ALTER TABLE` statement below
+    -- This field is altered in an `ALTER TABLE` statement below
     -- in order to avoid cross-reference issues
-    -- shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
+    shamir_recovery INTEGER,
+    frozen BOOLEAN NOT NULL DEFAULT False,
 
     UNIQUE(organization, user_id)
 );
@@ -151,7 +151,7 @@ CREATE TABLE shamir_recovery_share (
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
-ALTER TABLE user_ ADD shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id);
+ALTER TABLE user_ ADD FOREIGN KEY (shamir_recovery) REFERENCES shamir_recovery_setup (_id);
 
 
 -------------------------------------------------------
