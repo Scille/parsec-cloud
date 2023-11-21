@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   parsec-postgres:
-    image: postgres:16.0-alpine
+    image: postgres:14.10-alpine
     container_name: parsec-postgres
     environment:
       POSTGRES_USER: DB_USER
