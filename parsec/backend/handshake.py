@@ -107,6 +107,10 @@ async def _do_process_authenticated_answer(
         result_req = handshake.build_revoked_device_result_req()
         return None, result_req, _make_error_infos("Revoked device")
 
+    if user.frozen:
+        result_req = handshake.build_frozen_user_result_req()
+        return None, result_req, _make_error_infos("Frozen user")
+
     context = AuthenticatedClientContext(
         api_version=handshake.backend_api_version,
         client_api_version=handshake.client_api_version,

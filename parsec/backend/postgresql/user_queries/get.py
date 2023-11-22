@@ -58,7 +58,8 @@ SELECT
     created_on,
     revoked_on,
     revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    frozen
 FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -242,6 +243,7 @@ async def _get_user(
         revoked_user_certifier=DeviceID(row["revoked_user_certifier"])
         if row["revoked_user_certifier"]
         else None,
+        frozen=row["frozen"],
     )
 
 
@@ -415,6 +417,7 @@ async def query_get_user_with_device(
         revoked_user_certifier=DeviceID(u_row["revoked_user_certifier"])
         if u_row["revoked_user_certifier"]
         else None,
+        frozen=u_row["frozen"],
     )
     return user, device
 

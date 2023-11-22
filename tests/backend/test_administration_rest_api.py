@@ -9,6 +9,7 @@ import trio
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import (
     BlockID,
+    HandshakeFrozenUser,
     HandshakeOrganizationExpired,
     OrganizationID,
     UserProfile,
@@ -832,7 +833,9 @@ async def test_organization_list_users(backend_asgi_app, coolorg):
 
 
 @pytest.mark.trio
-async def test_organization_freeze_user(backend_asgi_app, coolorg):
+async def test_organization_freeze_user(
+    backend_asgi_app, coolorg, alice, bob, adam, backend_authenticated_ws_factory
+):
     client = backend_asgi_app.test_client()
 
     # Invalid organization name
@@ -920,6 +923,22 @@ async def test_organization_freeze_user(backend_asgi_app, coolorg):
         ],
     }
 
+    # Alice is frozen
+    with pytest.raises(HandshakeFrozenUser) as context:
+        async with backend_authenticated_ws_factory(backend_asgi_app, alice):
+            pass
+    assert str(context.value) == "User has been frozen by the server administrator"
+
+    # Bob is frozen
+    with pytest.raises(HandshakeFrozenUser) as context:
+        async with backend_authenticated_ws_factory(backend_asgi_app, bob):
+            pass
+    assert str(context.value) == "User has been frozen by the server administrator"
+
+    # Adam is not frozen
+    async with backend_authenticated_ws_factory(backend_asgi_app, adam):
+        pass
+
     # Unfreeze user using parsec id
     response = await client.post(
         f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
@@ -976,6 +995,14 @@ async def test_organization_freeze_user(backend_asgi_app, coolorg):
             },
         ],
     }
+
+    # Alice, bob and adam are unfrozen
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice):
+        pass
+    async with backend_authenticated_ws_factory(backend_asgi_app, bob):
+        pass
+    async with backend_authenticated_ws_factory(backend_asgi_app, adam):
+        pass
 
     # Check idempotency
     response = await client.post(
