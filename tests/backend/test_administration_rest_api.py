@@ -844,8 +844,7 @@ async def test_organization_freeze_user(
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": False},
     )
-    x = await response.get_json()
-    assert response.status_code == 404, x
+    assert response.status_code == 404
     assert await response.get_json() == {"error": "not_found"}
 
     # Organization does not exist

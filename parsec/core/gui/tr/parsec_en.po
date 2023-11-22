@@ -120,6 +120,9 @@ msgstr "Application incompatible with the server"
 msgid "TEXT_BACKEND_STATE_REVOKED_DEVICE"
 msgstr "This device is revoked"
 
+msgid "TEXT_BACKEND_STATE_FROZEN_USER"
+msgstr "This user has been frozen by the server administrator."
+
 msgid "TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED"
 msgstr "The organization has expired"
 
