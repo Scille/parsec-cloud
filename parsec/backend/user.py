@@ -300,6 +300,18 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        frozen: bool,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
     async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         """
         Raises:
@@ -342,6 +354,25 @@ class BaseUserComponent:
             UserNotFoundError
         """
         raise NotImplementedError()
+
+    async def get_user_from_email(self, organization_id: OrganizationID, user_email: str) -> User:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        results, _ = await self.find_humans(
+            organization_id=organization_id,
+            query=user_email,
+            omit_revoked=True,
+            omit_non_human=True,
+        )
+        for item in results:
+            if item.human_handle is None:
+                continue
+            if item.human_handle.email != user_email:
+                continue
+            return await self.get_user(organization_id, item.user_id)
+        raise UserNotFoundError(f"User with email address `{user_email}` not found")
 
     async def find_humans(
         self,

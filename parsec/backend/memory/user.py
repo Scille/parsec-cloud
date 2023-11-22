@@ -343,6 +343,19 @@ class MemoryUserComponent(BaseUserComponent):
             BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )
 
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        frozen: bool,
+    ) -> None:
+        org = self._organizations[organization_id]
+        try:
+            user = org.users[user_id]
+        except KeyError:
+            raise UserNotFoundError(user_id)
+        org.users[user_id] = user.evolve(frozen=frozen)
+
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
         org = self._organizations[organization_id]
         devices: List[Device] = []

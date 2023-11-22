@@ -155,3 +155,20 @@ class UserListRepSchema(BaseSchema):
 
 
 user_list_rep_serializer = JSONSerializer(UserListRepSchema)
+
+
+# POST /administration/organizations/<organization_id>/users/frozen
+
+
+class FreezeUserReqSchema(BaseSchema):
+    user_id = fields.String(required=False)
+    user_email = fields.String(required=False)
+    frozen = fields.Boolean(required=True)
+
+
+class FreezeUserRepSchema(UserItem):
+    pass
+
+
+freeze_user_req_serializer = JSONSerializer(FreezeUserReqSchema)
+freeze_user_rep_serializer = JSONSerializer(FreezeUserRepSchema)

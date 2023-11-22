@@ -829,3 +829,164 @@ async def test_organization_list_users(backend_asgi_app, coolorg):
             },
         ],
     }
+
+
+@pytest.mark.trio
+async def test_organization_freeze_user(backend_asgi_app, coolorg):
+    client = backend_asgi_app.test_client()
+
+    # Invalid organization name
+    response = await client.post(
+        f"/administration/organizations/!/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    x = await response.get_json()
+    assert response.status_code == 404, x
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Organization does not exist
+    response = await client.post(
+        f"/administration/organizations/a/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Invalid token
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer xxx"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
+
+    # Freeze user using parsec id
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": True},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": True,
+    }
+
+    # Freeze user using email address
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_email": "bob@example.com", "frozen": True},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "bob@example.com",
+        "user_id": "bob",
+        "user_name": "Boby McBobFace",
+        "frozen": True,
+    }
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": True,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": True,
+            },
+        ],
+    }
+
+    # Unfreeze user using parsec id
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": False,
+    }
+
+    # Unfreeze user using email address
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_email": "bob@example.com", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "bob@example.com",
+        "user_id": "bob",
+        "user_name": "Boby McBobFace",
+        "frozen": False,
+    }
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": False,
+            },
+        ],
+    }
+
+    # Check idempotency
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": False,
+    }

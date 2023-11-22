@@ -11,6 +11,7 @@ from parsec.backend.postgresql.user_queries import (
     query_create_user,
     query_dump_users,
     query_find_humans,
+    query_freeze_user,
     query_get_user,
     query_get_user_with_device,
     query_get_user_with_device_and_trustchain,
@@ -111,6 +112,20 @@ class PGUserComponent(BaseUserComponent):
                 revoked_user_certificate,
                 revoked_user_certifier,
                 revoked_on,
+            )
+
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        frozen: bool,
+    ) -> None:
+        async with self.dbh.pool.acquire() as conn:
+            return await query_freeze_user(
+                conn,
+                organization_id,
+                user_id,
+                frozen,
             )
 
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
