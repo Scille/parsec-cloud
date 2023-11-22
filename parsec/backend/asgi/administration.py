@@ -373,7 +373,8 @@ async def administration_organization_freeze_user(raw_organization_id: str) -> R
     except UserNotFoundError:
         await user_not_found_abort()
 
-    # Make sure the user is valid
+    # If the provided user ID corresponds to a legacy user or a revoked user, simply
+    # consider that it's not been found (as it wouldn't make sense to freeze it)
     if user.human_handle is None or user.revoked_on is not None:
         await user_not_found_abort()
 
