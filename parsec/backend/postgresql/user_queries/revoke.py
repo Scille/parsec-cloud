@@ -99,3 +99,6 @@ async def query_freeze_user(
             frozen=frozen,
         )
     )
+    await send_signal(
+        conn, BackendEvent.USER_FROZEN, organization_id=organization_id, user_id=user_id
+    )

@@ -29,6 +29,7 @@ class BackendEvent(Enum):
     # USER_CLAIMED = "user.claimed"  # TODO: not used anymore
     USER_CREATED = "user.created"  # TODO: not needed anymore ?
     USER_REVOKED = "user.revoked"
+    USER_FROZEN = "user.frozen"
     # USER_INVITATION_CANCELLED = "user.invitation.cancelled"  # TODO: not used anymore
     ORGANIZATION_EXPIRED = "organization.expired"
     # api Event mirror
@@ -73,6 +74,13 @@ class UserCreatedSchema(BaseSchema):
 class UserRevokedSchema(BaseSchema):
     __id__ = fields.String(required=True)
     __signal__ = fields.EnumCheckedConstant(BackendEvent.USER_REVOKED, required=True)
+    organization_id = OrganizationIDField(required=True)
+    user_id = UserIDField(required=True)
+
+
+class UserFrozenSchema(BaseSchema):
+    __id__ = fields.String(required=True)
+    __signal__ = fields.EnumCheckedConstant(BackendEvent.USER_FROZEN, required=True)
     organization_id = OrganizationIDField(required=True)
     user_id = UserIDField(required=True)
 
@@ -170,6 +178,7 @@ class BackendEventSchema(OneOfSchema):
         BackendEvent.INVITE_CONDUIT_UPDATED: InviteConduitUpdatedSchema,
         BackendEvent.USER_CREATED: UserCreatedSchema,
         BackendEvent.USER_REVOKED: UserRevokedSchema,
+        BackendEvent.USER_FROZEN: UserFrozenSchema,
         BackendEvent.ORGANIZATION_EXPIRED: OrganizationExpiredSchema,
         BackendEvent.PINGED: PingedSchema,
         BackendEvent.MESSAGE_RECEIVED: MessageReceivedSchema,

@@ -5,6 +5,7 @@ from unittest.mock import ANY
 
 import pytest
 import trio
+from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import (
@@ -18,6 +19,7 @@ from parsec.api.protocol import (
 from parsec.api.rest import organization_stats_rep_serializer
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.organization import Organization
+from tests.backend.common import authenticated_ping
 from tests.common import customize_fixtures, local_device_to_backend_user
 
 
@@ -1016,3 +1018,29 @@ async def test_organization_freeze_user(
         "user_name": "Alicey McAliceFace",
         "frozen": False,
     }
+
+
+@pytest.mark.trio
+async def test_organization_disconnect_user_when_frozen(
+    backend_asgi_app, coolorg, alice, backend_authenticated_ws_factory
+):
+    client = backend_asgi_app.test_client()
+
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as ws:
+        await authenticated_ping(ws)
+        response = await client.post(
+            f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+            json={"user_id": "alice", "frozen": True},
+        )
+        assert response.status_code == 200
+        assert await response.get_json() == {
+            "user_email": "alice@example.com",
+            "user_id": "alice",
+            "user_name": "Alicey McAliceFace",
+            "frozen": True,
+        }
+        with pytest.raises(WebsocketDisconnectError):
+            await authenticated_ping(ws)

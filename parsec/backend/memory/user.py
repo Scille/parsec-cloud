@@ -355,6 +355,9 @@ class MemoryUserComponent(BaseUserComponent):
         except KeyError:
             raise UserNotFoundError(user_id)
         org.users[user_id] = user.evolve(frozen=frozen)
+        await self._send_event(
+            BackendEvent.USER_FROZEN, organization_id=organization_id, user_id=user_id
+        )
 
     async def dump_users(self, organization_id: OrganizationID) -> Tuple[List[User], List[Device]]:
         org = self._organizations[organization_id]
