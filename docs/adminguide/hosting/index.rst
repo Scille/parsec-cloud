@@ -59,8 +59,11 @@ The `Parsec`_ server depends on the following external components in order to wo
 Parsec testing infra
 ********************
 
+With Docker
+===========
+
 Generating the required TLS certificates
-========================================
+----------------------------------------
 
 For this guide, the required TLS certificates will be generated with a custom Certificate Authority (CA) created for this purpose.
 
@@ -91,12 +94,12 @@ The script will:
   For production, you should use certificates issued from a trusted CA
 
 The env files
-=============
+-------------
 
 We split the configuration of the parsec server into multiple env files so it's simpler to understand how to configure each part.
 
 The administration token
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 To be able to perform admin tasks (like creating an organization) on the server, an administration token is required.
 Below you will find a simple script to generate a token:
@@ -114,7 +117,7 @@ The script will generate a random token (:bash:`openssl rand 63 | base64 --wrap=
   It doesn't need to be encoded in ``base64`` (we encode it in the script just to have printable characters).
 
 Database configuration
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 Create the file ``parsec-db.env`` with the following content to configure the access to the PostgreSQL database:
 
@@ -123,7 +126,7 @@ Create the file ``parsec-db.env`` with the following content to configure the ac
   :linenos:
 
 SMTP configuration
-------------------
+^^^^^^^^^^^^^^^^^^
 
 Create the file ``parsec-smtp.env`` to configure the access to the SMTP server (``mailhog`` in this case).
 
@@ -134,7 +137,7 @@ We need to set the connection informations, the sender information, in which the
   :linenos:
 
 S3 service configuration
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create the file ``parsec-s3.env`` with the following content to set the URL for the S3-like service:
 
@@ -147,7 +150,7 @@ Create the file ``parsec-s3.env`` with the following content to set the URL for 
    We need to escape the ``:`` with a ``\`` when specifying the port of the service.
 
 Parsec server configuration
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create the file ``parsec.env`` with the following content to configure the ``parsec-server`` service:
 
@@ -156,7 +159,7 @@ Create the file ``parsec.env`` with the following content to configure the ``par
   :linenos:
 
 The docker-compose file
-=======================
+-----------------------
 
 You can use the following `docker-compose`_ file (``parsec-server.docker.yaml``) to deploy the Parsec server for testing:
 
@@ -179,7 +182,7 @@ It will setup 4 services:
 +---------------------+----------------------------+
 
 Starting the services
-=====================
+---------------------
 
 The docker containers can be started as follow:
 
@@ -188,12 +191,12 @@ The docker containers can be started as follow:
   docker compose -f parsec-server.docker.yaml up
 
 Initial configuration
-=====================
+---------------------
 
 On the first start, a one-time configuration is required for the database and s3 services.
 
 Applying the database migration
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 (optional) Check that the database is accessible with:
 
@@ -218,7 +221,7 @@ To bootstrap the database we just need to apply the migrations with:
   docker compose -f parsec-server.docker.yaml run parsec-server migrate
 
 Create the S3 Bucket
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Access the console at https://127.0.0.1:9090, you will need to use the credential specified in the ``docker-compose`` file at :yaml:`services.parsec-s3.environment.MINIO_ROOT_{USER,PASSWORD}`.
 
@@ -231,7 +234,7 @@ After that you will need to restart the ``parsec-server`` (that likely exited be
   docker compose -f parsec-server.docker.yaml restart parsec-server
 
 Test the SMTP configuration & server
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can test ``mailhog`` with:
 
@@ -240,6 +243,90 @@ You can test ``mailhog`` with:
   :linenos:
 
 You can then check if the email is present in the web interface at http://127.0.0.1:8025
+
+On Bare Metal
+=============
+
+If you don't want to install Parsec server via Docker, you can install it on bare metal.
+
+Requirements
+------------
+
+- Python v3.9 with ``pip`` and ``venv`` modules
+- A S3 like object storage endpoint.
+- A postgres-14 database endpoint.
+- A TLS certificate & key for the server.
+
+Configure the environment
+-------------------------
+
+1. Configure the env files, follow `the env files`_.
+
+Installation
+------------
+
+1. Set up a virtual env:
+
+  .. code-block:: bash
+
+    python -m venv venv
+
+2. Configure your shell to use the virtual env:
+
+  .. code-block:: bash
+
+    source venv/bin/activate
+
+3. Install ``parsec-server``
+
+  The ``parsec-server`` is available as a python package hosted on https://pypi.org/project/parsec-cloud/.
+
+  You need to install it with the extra ``backend`` enabled.
+
+  .. code-block:: bash
+
+    pip install 'parsec-cloud[backend]==2.16.0-a.0+dev'
+
+4. Prepare the database by applying the migrations:
+
+  .. code-block:: bash
+
+    source venv/bin/activate
+    set -a
+    source parsec-db.env
+    python -m parsec.cli backend migrate
+
+Start the server
+----------------
+
+1. Create a wrapper script ``run-parsec-server``
+
+  .. code-block:: bash
+
+    #!/bin/bash
+
+    # Load the virtualenv.
+    source venv/bin/activate
+
+    # Load the env file into the environment table.
+    set -a
+    source parsec-admin-token.env
+    source parsec-db.env
+    source parsec-smtp.env
+    source parsec-s3.env
+    source parsec.env
+    set +a
+
+    # Start the parsec server.
+    python -m parsec.cli backend run
+
+2. Execute the wrapper script ``run-parsec-server``
+
+  .. note::
+
+    To run the wrapper with only ``run-parsec-server`` you need to have set the executable mode on the script file (``chmod +x run-parsec-server``).
+    Otherwise, you need to execute it with the ``bash`` shell (``bash run-parsec-server``).
+
 
 Start using Parsec server
 *************************
