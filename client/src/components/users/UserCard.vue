@@ -22,12 +22,7 @@
     <div
       class="card-option"
       v-show="isHovered || menuOpened"
-      @click.stop="
-        menuOpened = true;
-        $emit('menuClick', $event, user, () => {
-          menuOpened = false;
-        });
-      "
+      @click.stop="onOptionsClick($event)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -61,7 +56,7 @@ const isHovered = ref(false);
 const isSelected = ref(false);
 const menuOpened = ref(false);
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'click', event: Event, user: UserInfo): void;
   (e: 'menuClick', event: Event, user: UserInfo, onFinished: () => void): void;
   (e: 'select', user: UserInfo, selected: boolean): void;
@@ -81,6 +76,13 @@ defineExpose({
   isSelected,
   getUser,
 });
+
+async function onOptionsClick(event: Event): Promise<void> {
+  menuOpened.value = true;
+  emits('menuClick', event, props.user, () => {
+    menuOpened.value = false;
+  });
+}
 </script>
 
 <style scoped lang="scss">
