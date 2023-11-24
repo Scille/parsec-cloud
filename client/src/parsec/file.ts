@@ -19,6 +19,7 @@ import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import { DateTime } from 'luxon';
 import { Path } from '@/parsec/path';
 import { needsMocks } from '@/parsec/environment';
+import { uniqueNamesGenerator, animals, adjectives } from 'unique-names-generator';
 
 export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
   const clientHandle = getParsecHandle();
@@ -76,6 +77,12 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
 }
 
 export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceFsOperationError>> {
+  function generateEntryName(prefix: string = ''): string {
+    return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}`;
+  }
+  const FOLDER_PREFIX = 'Dir_';
+  const FILE_PREFIX = 'File_';
+
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -96,7 +103,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     }
     return result as Result<EntryStat, WorkspaceFsOperationError>;
   } else {
-    if (path !== '/' && fileName !== 'Dir1') {
+    if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
       return {
         ok: true,
         value: {
@@ -127,7 +134,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           needSync: Math.floor(Math.random() * 2) === 1,
           name: fileName,
           isFile: (): boolean => false,
-          children: ['File1.txt', 'File2.jpeg', 'Dir1'],
+          children: [generateEntryName(FILE_PREFIX), generateEntryName(FILE_PREFIX), generateEntryName(FOLDER_PREFIX)],
         },
       };
     }

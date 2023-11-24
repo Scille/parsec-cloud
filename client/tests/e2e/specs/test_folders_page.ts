@@ -123,11 +123,13 @@ describe('Check folders page', () => {
     cy.get('.file-list-item').first().find('.options-button').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
-    cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete the file `File1.txt`?');
+    cy.get('.question-modal')
+      .find('.ms-alert-modal-header__text')
+      .contains(/Are you sure you want to delete the file `File_[a-z_]+`?/);
 
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
-    cy.get('@consoleLog').should('have.been.called.with', 'File File1.txt deleted');
+    cy.get('@consoleLog').should('have.been.called.with', /File File_[a-z_]+ deleted/);
   });
 
   it('Tests delete multiple files', () => {
@@ -149,10 +151,14 @@ describe('Check folders page', () => {
   it('Tests file details', () => {
     cy.get('.file-list-item').first().find('.options-button').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
-    cy.get('.file-details-modal').find('.ms-modal-header__title').contains('Details on File1.txt');
+    cy.get('.file-details-modal')
+      .find('.ms-modal-header__title')
+      .contains(/Details on File_[a-z_]+/);
     cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 8);
     cy.get('@values').eq(0).contains('File');
-    cy.get('@values').eq(1).contains('/File1.txt');
+    cy.get('@values')
+      .eq(1)
+      .contains(/\/File_[a-z_]+/);
     cy.get('@values')
       .eq(2)
       .contains(/^\d+ B|KB|MB|GB$/);
@@ -166,10 +172,14 @@ describe('Check folders page', () => {
   it('Tests folder details', () => {
     cy.get('.file-list-item').last().find('.options-button').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
-    cy.get('.file-details-modal').find('.ms-modal-header__title').contains('Details on Dir1');
+    cy.get('.file-details-modal')
+      .find('.ms-modal-header__title')
+      .contains(/Details on Dir_[a-z_]+/);
     cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 7);
     cy.get('@values').eq(0).contains('Folder');
-    cy.get('@values').eq(1).contains('/Dir1');
+    cy.get('@values')
+      .eq(1)
+      .contains(/\/Dir_[a-z_]+/);
     cy.get('@values').eq(4).contains('1');
     cy.get('@values')
       .eq(5)
