@@ -10,12 +10,7 @@
     <div
       class="card-option"
       v-show="isHovered || menuOpened"
-      @click.stop="
-        menuOpened = true;
-        $emit('menuClick', $event, file, () => {
-          menuOpened = false;
-        });
-      "
+      @click.stop="onOptionsClick($event)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -58,7 +53,7 @@ const props = defineProps<{
   file: EntryStat;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'click', event: Event, file: EntryStat): void;
   (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
 }>();
@@ -68,6 +63,13 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 
 function isFileSynced(): boolean {
   return !props.file.needSync;
+}
+
+async function onOptionsClick(event: Event): Promise<void> {
+  menuOpened.value = true;
+  emits('menuClick', event, props.file, () => {
+    menuOpened.value = false;
+  });
 }
 </script>
 
