@@ -170,7 +170,7 @@ function getTitleIcon(): string {
 
 <style lang="scss" scoped>
 .ms-modal {
-  padding: 3.5rem;
+  padding: 2.5rem;
   justify-content: start;
 }
 
