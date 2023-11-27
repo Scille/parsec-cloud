@@ -8,49 +8,53 @@
 
   /* Primary */
   --parsec-color-light-primary-30-opacity15: hsla(212, 100%, 97.1%, 0.15000000596046448);
-  --parsec-color-light-primary-30: hsla(212, 100%, 97.1%, 1);
-  --parsec-color-light-primary-50: hsla(212, 100%, 94.9%, 1);
+  --parsec-color-light-primary-30: hsla(212, 100%, 97%, 1);
+  --parsec-color-light-primary-50: hsla(212, 100%, 95%, 1);
   --parsec-color-light-primary-100: hsla(214, 100%, 90%, 1);
   --parsec-color-light-primary-200: hsla(214, 100%, 80%, 1);
   --parsec-color-light-primary-300: hsla(214, 100%, 70%, 1);
   --parsec-color-light-primary-400: hsla(214, 100%, 60%, 1);
-  --parsec-color-light-primary-500: hsla(214, 100%, 62.5%, 1);
+  --parsec-color-light-primary-500: hsla(214, 100%, 63%, 1);
   --parsec-color-light-primary-600: hsla(214, 100%, 40%, 1);
   --parsec-color-light-primary-700: hsla(214, 100%, 30%, 1);
   --parsec-color-light-primary-800: hsla(214, 100%, 20%, 1);
   --parsec-color-light-primary-900: hsla(214, 100%, 10%, 1);
 
   /* Secondary */
-  --parsec-color-light-secondary-contrast: hsla(240, 19.4%, 13.1%, 1);
-  --parsec-color-light-secondary-text: hsla(240, 20.2%, 34.9%, 1);
-  --parsec-color-light-secondary-grey: hsla(240, 19.6%, 60%, 1);
-  --parsec-color-light-secondary-light: hsla(240, 19.5%, 84.9%, 1);
-  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93.1%, 1);
-  --parsec-color-light-secondary-medium: hsla(240, 20%, 96.1%, 1);
-  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96.1%, 1);
+  --parsec-color-light-secondary-contrast: hsla(240, 19%, 13%, 1);
+  --parsec-color-light-secondary-text: hsla(240, 20%, 35%, 1);
+  --parsec-color-light-secondary-grey: hsla(240, 20%, 60%, 1);
+  --parsec-color-light-secondary-light: hsla(240, 19.5%, 85%, 1);
+  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93%, 1);
+  --parsec-color-light-secondary-medium: hsla(240, 20%, 96%, 1);
+  --parsec-color-light-secondary-premiere: hsla(240, 20%, 96%, 1);
   --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
-  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99.6%, 1);
+  --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99%, 1);
 
   /* ------ alert light------ */
-  --parsec-color-light-success-100: hsla(146, 61.5%, 94.9%, 1);
-  --parsec-color-light-success-500: hsla(144, 64.6%, 44.3%, 1);
-  --parsec-color-light-success-700: hsla(144, 64.7%, 40%, 1);
+  --parsec-color-light-info-100: hsla(212, 92%, 95%, 1);
+  --parsec-color-light-info-500: hsla(212, 60%, 50%, 1);
+  --parsec-color-light-info-700: hsla(212, 90%, 30%, 1);
 
-  --parsec-color-light-warning-100: hsla(45, 92.3%, 94.9%, 1);
-  --parsec-color-light-warning-500: hsla(46, 92.9%, 50%, 1);
-  --parsec-color-light-warning-700: hsla(45, 93.1%, 40%, 1);
+  --parsec-color-light-success-100: hsla(146, 92%, 95%, 1);
+  --parsec-color-light-success-500: hsla(144, 60%, 50%, 1);
+  --parsec-color-light-success-700: hsla(144, 90%, 30%, 1);
 
-  --parsec-color-light-danger-100: hsla(352, 60%, 95.1%, 1);
-  --parsec-color-light-danger-500: hsla(352, 60.8%, 50%, 1);
-  --parsec-color-light-danger-700: hsla(352, 60.8%, 40%, 1);
+  --parsec-color-light-warning-100: hsla(45, 92%, 95%, 1);
+  --parsec-color-light-warning-500: hsla(45, 60%, 50%, 1);
+  --parsec-color-light-warning-700: hsla(45, 90%, 30%, 1);
+
+  --parsec-color-light-danger-100: hsla(352, 60%, 95%, 1);
+  --parsec-color-light-danger-500: hsla(352, 60%, 50%, 1);
+  --parsec-color-light-danger-700: hsla(352, 90%, 30%, 1);
 
   /* ------ tags light------ */
   --parsec-color-tags-blue100: hsla(198, 100%, 92%, 1);
   --parsec-color-tags-blue500: hsla(198, 82%, 36%, 1);
   --parsec-color-tags-indigo100: hsla(247, 100%, 95%, 1);
-  --parsec-color-tags-indigo500: hsla(245, 100%, 36%, 1);
-  --parsec-color-tags-orange100: hsla(37, 100%, 95%, 1);
+  --parsec-color-tags-indigo500: hsla(247, 100%, 36%, 1);
+  --parsec-color-tags-orange100: hsla(36, 100%, 95%, 1);
   --parsec-color-tags-orange500: hsla(36, 100%, 36%, 1);
-  --parsec-color-tags-green100: hsla(68, 100%, 92%, 1);
+  --parsec-color-tags-green100: hsla(72, 100%, 92%, 1);
   --parsec-color-tags-green500: hsla(72, 90%, 32%, 1);
 }
