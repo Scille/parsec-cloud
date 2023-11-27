@@ -25,13 +25,13 @@
         "electron-is-dev": "~2.0.0",
         "electron-serve": "~1.2.0",
         "electron-unhandled": "~4.0.1",
-        "electron-updater": "~6.1.4",
+        "electron-updater": "~6.1.7",
         "electron-window-state": "~5.0.3"
     },
     "devDependencies": {
-        "electron": "^27.1.0",
-        "electron-builder": "~24.6.4",
-        "typescript": "~5.2.2"
+        "electron": "^27.1.2",
+        "electron-builder": "~24.9.1",
+        "typescript": "~5.3.2"
     },
     "keywords": [
         "capacitor",
