@@ -7,9 +7,6 @@ ion-button,
   text-transform: none;
   --border-radius: var(--parsec-radius-6);
   --box-shadow: none;
-}
-
-.sc-ion-buttons-md-s ion-button {
   margin-inline-start: 0;
   margin-inline-end: 0;
 }
@@ -18,32 +15,25 @@ ion-button,
 ion-button.button-large {
   --padding-top: 1rem;
   --padding-end: 1.25rem;
-  --padding-bottom: 1rem;
+  --padding-bottom: 1em;
   --padding-start: 1.25rem;
-  font-size: 1.12rem;
-  line-height: 22px;
-  letter-spacing: 0.02rem;
-  height: 54px;
+  min-height: 0;
 }
 
 ion-button.button-default {
-  --padding-top: 0.75rem;
-  --padding-end: 1rem;
-  --padding-bottom: 0.75rem;
-  --padding-start: 1rem;
-  font-size: 1rem;
-  line-height: 20px;
-  height: 44px;
+  --padding-top: .75rem;
+  --padding-end: 1.125rem;
+  --padding-bottom: .75rem;
+  --padding-start: 1.125rem;
+  min-height: 0;
 }
 
 ion-button.button-small {
-  --padding-top: 0.625rem;
-  --padding-end: 1rem;
-  --padding-bottom: 0.625rem;
-  --padding-start: 1rem;
-  font-size: 0.88rem;
-  line-height: 17px;
-  height: 37px;
+  --padding-top: .625rem;
+  --padding-end: .75rem;
+  --padding-bottom: .625rem;
+  --padding-start: .75rem;
+  min-height: 0;
 }
 
 /* button default */
@@ -56,6 +46,7 @@ ion-button:not(.button-outline):not(.button-clear) {
 /* button outline */
 ion-button.button-outline {
   --border-color: var(--parsec-color-light-primary-500);
+  --border-width: 1px;
   --background: none;
   --color: var(--parsec-color-light-primary-500);
   --border-color-hover: var(--parsec-color-light-primary-700);
