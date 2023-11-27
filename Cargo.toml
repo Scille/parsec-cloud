@@ -105,7 +105,7 @@ crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
 ctrlc = { version = "3.4.1", default-features = false }
 # You need base64&co ? This is the crate you need !
-data-encoding = { version = "2.4.0", default-features = false }
+data-encoding = { version = "2.5.0", default-features = false }
 diesel = { version = "2.1.4", default-features = false }
 digest = { version = "0.10.7", default-features = false }
 dirs = { version = "5.0.1", default-features = false }
@@ -141,12 +141,12 @@ log = { version = "0.4.20", default-features = false }
 miniserde = { version = "0.1.34", default-features = false }
 neon = { version = "0.10", default-features = false }
 once_cell = { version = "1.18.0", default-features = false }
-openssl = { version = "0.10.59", default-features = false }
+openssl = { version = "0.10.60", default-features = false }
 paste = { version = "1.0.14", default-features = false }
 pin-project-lite = { version = "0.2.13", default-features = false }
-percent-encoding = { version = "2.3.0", default-features = false }
+percent-encoding = { version = "2.3.1", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
-proc-macro2 = { version = "1.0.69", default-features = false }
+proc-macro2 = { version = "1.0.70", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
 quote = { version = "1.0.33", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
@@ -163,7 +163,7 @@ rstest = { version = "0.18.2", default-features = false }
 serde_bytes = { version = "0.11.12", default-features = false }
 serde_json = { version = "1.0.108", default-features = false }
 serde_test = { version = "1.0.176", default-features = false }
-serde = { version = "1.0.192", default-features = false }
+serde = { version = "1.0.193", default-features = false }
 serde_with = { version = "3.4.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
@@ -172,8 +172,8 @@ syn = { version = "2.0.39", default-features = false }
 thiserror = { version = "1.0.50", default-features = false }
 tokio = { version = "1.34.0", default-features = false }
 unicode-normalization = { version = "0.1.22", default-features = false }
-url = { version = "2.4.1", default-features = false }
-uuid = { version = "1.6.0", default-features = false }
+url = { version = "2.5.0", default-features = false }
+uuid = { version = "1.6.1", default-features = false }
 wasm-bindgen-futures = { version = "0.4.38", default-features = false }
 wasm-bindgen-test = { version = "0.3.38", default-features = false }
 wasm-bindgen = { version = "0.2.87", default-features = false }
