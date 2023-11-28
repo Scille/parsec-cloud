@@ -194,6 +194,10 @@ Function runUninstaller
       ; At this point, I'm very much puzzled as why writing NSIS installer
       ; feels like reverse engineering a taiwanese NES clone...
       ExecWait '"$R0" /S _?=$R1'
+      ; Remove the uninstaller so it hasn't removed iteself due to `_?=$R1`
+      Delete $R0
+      ; Remove the previous install directory if it's empty
+      RmDir $R1
 FunctionEnd
 
 Function checkUninstaller
