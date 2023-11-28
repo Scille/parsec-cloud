@@ -15,9 +15,11 @@
       <ion-label class="option-text">
         <span class="option-text__title body">{{ option.label }}</span>
         <span
-          v-if="option.sublabel"
+          v-if="option.description"
           class="option-text__subtitle body-sm"
-        >{{ option.sublabel }}</span>
+        >
+          {{ option.description }}
+        </span>
       </ion-label>
       <ion-icon
         slot="end"
@@ -32,6 +34,7 @@
         class="icon disabled-icon"
         v-if="option.disabled"
         @click="openTooltip($event, option.label)"
+        ref="disabledIcon"
       />
     </ion-item>
   </ion-list>
@@ -39,10 +42,13 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
+import { IonList, IonItem, IonIcon, IonLabel, popoverController } from '@ionic/vue';
 import { checkmark, informationCircle } from 'ionicons/icons';
 import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
 import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
+
+// const disabledIconRef = ref(event as HTMLElement);));
+// const iconPositionLeft = disabledIconRef.getBoundingClientRect().left;
 
 const props = defineProps<{
   defaultOption?: any;
@@ -52,7 +58,6 @@ const props = defineProps<{
 const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
 
 function onOptionClick(option?: MsDropdownOption): void {
-  console.log('BITE');
   if (option) {
     selectedOption.value = option;
   }
@@ -93,6 +98,7 @@ function openTooltip(event: Event, text: string): void {
   --inner-padding-end: 0;
   position: relative;
   z-index: 2;
+  pointer-events: auto;
 
   &:hover:not(.item-disabled) {
     background: var(--parsec-color-light-primary-50);
@@ -105,9 +111,10 @@ function openTooltip(event: Event, text: string): void {
   }
 
   &-text {
-    // display: flex;
-    // flex-direction: column;
-    // align-items: center;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
     &__subtitle {
       margin-bottom:  .25rem;
     }
