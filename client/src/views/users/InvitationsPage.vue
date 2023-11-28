@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
+    <ion-content
+      :fullscreen="true"
+      class="content-scroll"
+    >
       <!-- contextual menu -->
       <ms-action-bar id="activate-users-ms-action-bar">
         <ms-action-bar-button
@@ -18,7 +21,7 @@
       </ms-action-bar>
 
       <!-- content -->
-      <div class="invitation-container">
+      <div class="invitation-container scroll">
         <div v-if="invitations.length === 0">
           {{ $t('UsersPage.invitation.noInvitations') }}
         </div>
@@ -258,10 +261,6 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.invitation-container {
-  margin: 7em 2em 2em;
-}
-
 .right-side {
   margin-left: auto;
   display: flex;

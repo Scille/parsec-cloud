@@ -1,10 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-item-divider
-    class="toolbar ion-margin-bottom secondary"
-    sticky
-  >
+  <ion-item-divider class="toolbar ion-margin-bottom secondary">
     <div class="contextual-menu">
       <slot />
     </div>

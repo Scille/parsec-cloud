@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
+    <ion-content
+      :fullscreen="true"
+      class="content-scroll"
+    >
       <ms-action-bar id="folders-ms-action-bar">
         <div v-if="selectedFilesCount === 0">
           <ms-action-bar-button
@@ -77,13 +80,13 @@
           />
         </div>
       </ms-action-bar>
-      <div class="folder-container">
+      <div class="folder-container scroll">
         <div v-if="children.length === 0">
           {{ $t('FoldersPage.emptyFolder') }}
         </div>
 
         <div v-if="children.length && displayView === DisplayState.List">
-          <ion-list>
+          <ion-list class="list">
             <ion-list-header
               class="folder-list-header"
               lines="full"
@@ -95,19 +98,19 @@
                   v-model="allFilesSelected"
                 />
               </ion-label>
-              <ion-label class="folder-list-header__label label-name">
+              <ion-label class="folder-list-header__label cell-title label-name">
                 {{ $t('FoldersPage.listDisplayTitles.name') }}
               </ion-label>
-              <ion-label class="folder-list-header__label label-updatedBy">
+              <ion-label class="folder-list-header__label cell-title label-updatedBy">
                 {{ $t('FoldersPage.listDisplayTitles.updatedBy') }}
               </ion-label>
-              <ion-label class="folder-list-header__label label-lastUpdate">
+              <ion-label class="folder-list-header__label cell-title label-lastUpdate">
                 {{ $t('FoldersPage.listDisplayTitles.lastUpdate') }}
               </ion-label>
-              <ion-label class="folder-list-header__label label-size">
+              <ion-label class="folder-list-header__label cell-title label-size">
                 {{ $t('FoldersPage.listDisplayTitles.size') }}
               </ion-label>
-              <ion-label class="folder-list-header__label label-space" />
+              <ion-label class="folder-list-header__label cell-title label-space" />
             </ion-list-header>
             <file-list-item
               v-for="child in children"
@@ -607,15 +610,10 @@ async function resetSelection(): Promise<void> {
 
 <style scoped lang="scss">
 .folder-container {
-  margin: 7em 2em 2em;
   background-color: white;
 }
 
 .folder-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  font-weight: 600;
-  padding-inline-start: 0;
-
   &__label {
     padding: 0.75rem 1rem;
   }

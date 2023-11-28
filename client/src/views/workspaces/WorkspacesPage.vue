@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
+    <ion-content
+      :fullscreen="true"
+      class="content-scroll"
+    >
       <ms-action-bar id="workspaces-ms-action-bar">
         <!-- contextual menu -->
         <ms-action-bar-button
@@ -23,33 +26,33 @@
         </div>
       </ms-action-bar>
       <!-- workspaces -->
-      <div class="workspaces-container">
+      <div class="workspaces-container scroll">
         <div v-if="filteredWorkspaces.length === 0">
           {{ $t('WorkspacesPage.noWorkspaces') }}
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
-          <ion-list>
+          <ion-list class="list">
             <ion-list-header
               class="workspace-list-header"
               lines="full"
             >
-              <ion-label class="workspace-list-header__label label-name">
+              <ion-label class="workspace-list-header__label cell-title label-name">
                 {{ $t('WorkspacesPage.listDisplayTitles.name') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label label-role">
+              <ion-label class="workspace-list-header__label cell-title label-role">
                 {{ $t('WorkspacesPage.listDisplayTitles.role') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label label-users">
+              <ion-label class="workspace-list-header__label cell-title label-users">
                 {{ $t('WorkspacesPage.listDisplayTitles.sharedWith') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label label-update">
+              <ion-label class="workspace-list-header__label cell-title label-update">
                 {{ $t('WorkspacesPage.listDisplayTitles.lastUpdate') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label label-size">
+              <ion-label class="workspace-list-header__label cell-title label-size">
                 {{ $t('WorkspacesPage.listDisplayTitles.size') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label label-space" />
+              <ion-label class="workspace-list-header__label cell-title label-space" />
             </ion-list-header>
             <workspace-list-item
               v-for="workspace in filteredWorkspaces"
@@ -63,7 +66,7 @@
         </div>
         <div
           v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.Grid"
-          class="workspaces-container-grid"
+          class="workspaces-container-grid list"
         >
           <ion-item
             class="workspaces-grid-item"
@@ -300,15 +303,10 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
 <style lang="scss" scoped>
 .workspaces-container {
-  margin: 7em 2em 2em;
   background-color: white;
 }
 
 .workspace-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  font-weight: 600;
-  padding-inline-start: 0;
-
   &__label {
     padding: 0 1rem;
     height: 100%;

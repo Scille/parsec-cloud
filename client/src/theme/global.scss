@@ -69,3 +69,36 @@ a {
   text-decoration: none;
   color: var(--parsec-color-light-primary-500);
 }
+
+// scroll behavior: user(revoked, active, invitation)/folder/workspace
+.content-scroll {
+  --overflow: hidden;
+}
+
+.scroll {
+  overflow-y: auto;
+  padding: 0 2rem 2rem;
+  margin-bottom: 5rem;
+  height: -webkit-fill-available;
+
+  .list,
+  .users-container-grid,
+  .workspaces-container-grid,
+  .folders-container-grid,
+  .invitation-container-grid {
+    padding-top: 2rem;
+  }
+}
+
+.user-list-header,
+.workspace-list-header,
+.folder-list-header,
+.invitation-list-header {
+  color: var(--parsec-color-light-secondary-grey);
+  padding-inline-start: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--parsec-color-light-secondary-opacity30);
+  backdrop-filter: blur(10px);
+}
