@@ -62,7 +62,4 @@ async function confirm(): Promise<boolean> {
 }
 </script>
 
-<style scoped lang="scss">
-.password-input-modal {
-}
-</style>
+<style scoped lang="scss"></style>

@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton } from '@ionic/vue';
+import { IonPage, IonContent, IonButton, IonIcon } from '@ionic/vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { ref, inject, onMounted } from 'vue';
 import { getPasswordFromUser } from '@/components/core/ms-modal/MsPasswordInputModal.vue';

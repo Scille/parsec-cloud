@@ -10,6 +10,7 @@ describe('Password Input', () => {
     wrapper = mount(MsPasswordInput, {
       props: {
         label: 'A Label',
+        modelValue: '',
       },
     });
   });
@@ -23,7 +24,7 @@ describe('Password Input', () => {
 
   it('should emit enter when Enter key is pressed', async () => {
     // Setting a value
-    (wrapper.vm as any).passwordRef = 'P@ssw0rd.';
+    await wrapper.setProps({ modelValue: 'P@ssw0rd.' });
     const ionInput = wrapper.findComponent(IonInput);
     await ionInput.trigger('keyup.enter');
     expect(wrapper.emitted('onEnterKeyup')?.length).to.equal(1);
