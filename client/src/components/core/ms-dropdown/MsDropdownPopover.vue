@@ -11,13 +11,14 @@
       v-for="option in options"
       :key="option.key"
       @click="onOptionClick(option)"
-      @mouseenter="openTooltip($event, option.label)"
-      @mouseleave="option.disabled"
     >
-      <div class="option-text">
+      <ion-label class="option-text">
         <span class="option-text__title body">{{ option.label }}</span>
-        <span class="option-text__subtitle body-sm">{{ option.sublabel }}</span>
-      </div>
+        <span
+          v-if="option.sublabel"
+          class="option-text__subtitle body-sm"
+        >{{ option.sublabel }}</span>
+      </ion-label>
       <ion-icon
         slot="end"
         :icon="checkmark"
@@ -25,21 +26,12 @@
         :class="{ selected: selectedOption?.key === option.key }"
         v-if="selectedOption?.key === option.key"
       />
-      <button
-        v-tooltip
-        title="Hello World!"
-      >
-        coucou
-        <ion-icon
-          slot="end"
-          :icon="informationCircle"
-          class="icon disabled-icon"
-          v-if="option.disabled"
-        />
-      </button>
-      <ms-dropdown-tooltip
-        :text="option.label"
-        class="tooltip"
+      <ion-icon
+        slot="end"
+        :icon="informationCircle"
+        class="icon disabled-icon"
+        v-if="option.disabled"
+        @click="openTooltip($event, option.label)"
       />
     </ion-item>
   </ion-list>
@@ -51,7 +43,6 @@ import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
 import { checkmark, informationCircle } from 'ionicons/icons';
 import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
 import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
-import { tooltip } from '@ionited/tooltip-vue';
 
 const props = defineProps<{
   defaultOption?: any;
@@ -61,12 +52,28 @@ const props = defineProps<{
 const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
 
 function onOptionClick(option?: MsDropdownOption): void {
+  console.log('BITE');
   if (option) {
     selectedOption.value = option;
   }
   popoverController.dismiss({
     option: selectedOption.value,
   });
+}
+
+function openTooltip(event: Event, text: string): void {
+  event.stopPropagation();
+  console.log(event);
+  const popover = popoverController.create({
+    component: MsDropdownTooltip,
+    event: event,
+    componentProps: {
+      text,
+    },
+    cssClass: 'tooltip-popover',
+    showBackdrop: false,
+  });
+  popover.then((popoverInstance) => popoverInstance.present());
 }
 </script>
 
@@ -77,17 +84,17 @@ function onOptionClick(option?: MsDropdownOption): void {
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .option {
+  --background-hover: none;
   --color: var(--parsec-color-light-secondary-grey);
-  padding: .75rem 0 .75rem .75rem;
+  padding: .75rem;
   --background: none;
   border-radius: var(--parsec-radius-6);
   --min-height: 0;
-  display: flex;
-  align-items: center;
+  --inner-padding-end: 0;
   position: relative;
   z-index: 2;
 
-  &:hover {
+  &:hover:not(.item-disabled) {
     background: var(--parsec-color-light-primary-50);
     --background-hover: var(--parsec-color-light-primary-50);
     --color-hover: var(--parsec-color-light-primary-700);
@@ -98,10 +105,9 @@ function onOptionClick(option?: MsDropdownOption): void {
   }
 
   &-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
+    // display: flex;
+    // flex-direction: column;
+    // align-items: center;
     &__subtitle {
       margin-bottom:  .25rem;
     }
@@ -131,6 +137,7 @@ function onOptionClick(option?: MsDropdownOption): void {
 
   &.item-disabled {
     opacity: 1;
+    pointer-events: none;
 
     .option-text {
       opacity: .5;
@@ -145,6 +152,7 @@ function onOptionClick(option?: MsDropdownOption): void {
     }
 
     .disabled-icon {
+      pointer-events: initial;
       opacity: .8;
       --color: var(--parsec-color-light-secondary-grey);
       position: relative;

@@ -1,7 +1,9 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="tooltip-container">
+  <div
+    class="tooltip-container"
+  >
     <ion-text class="tooltip-text body-sm">
       {{ text }}
     </ion-text>
@@ -22,22 +24,24 @@ defineProps<{
   background: var(--parsec-color-light-primary-900);
   color: var(--parsec-color-light-primary-30);
   max-width: 14.5rem;
+  width: fit-content;
   padding: .75rem;
-  position: sticky;
+  position: relative;
   border-radius: var(--parsec-radius-6);
   box-shadow: var(--parsec-shadow-light);
   text-align: center;
+  margin-top: 10px;
 }
 
 /* Tooltip arrow */
 .tooltip-container::after {
   content: "";
   position: absolute;
-  top: 100%;
+  top: -20px;
   left: 50%;
   margin-left: -10px;
   border-width: 10px;
   border-style: solid;
-  border-color: var(--parsec-color-light-primary-900) transparent transparent transparent;
+  border-color: transparent transparent var(--parsec-color-light-primary-900) transparent;
 }
 </style>
