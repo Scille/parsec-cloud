@@ -80,19 +80,6 @@
               </settings-option>
             </ion-list>
           </div>
-          <!-- <button
-            v-tooltip
-            title="Hello World!"
-            @mouseenter="openTooltip($event, 'Hello World!')"
-          >
-            coucou
-          </button>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <ion-button color="primary" dark v-on="on">Bottom</ion-button>
-            </template>
-            <span>Bottom tooltip</span>
-          </v-tooltip> -->
           <!-- advanced -->
           <div
             v-if="settingTab === SettingsTabs.Advanced"
@@ -141,9 +128,6 @@ import { StorageManagerKey } from '@/common/injectionKeys';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
 import { MsDropdownOption } from '@/components/core/ms-types';
-// import { tooltip } from '@ionited/tooltip-vue';
-
-// Tooltip(document.querySelector('button')); // Defaults to get title attribute content
 
 const { t, locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -151,13 +135,11 @@ const storageManager = inject(StorageManagerKey)! as StorageManager;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
 
-function openTooltip(ev: Event, text: string): void {
-}
-
 const languageOptions: MsDropdownOption[] = [
   {
     key: 'en-US',
     label: t('SettingsPage.language.values.enUS'),
+
   },
   {
     key: 'fr-FR',
