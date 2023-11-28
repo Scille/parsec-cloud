@@ -2,7 +2,10 @@
 
 <template>
   <ion-page>
-    <ion-content :fullscreen="true">
+    <ion-content
+      :fullscreen="true"
+      class="content-scroll"
+    >
       <!-- contextual menu -->
       <ms-action-bar id="activate-users-ms-action-bar">
         <div v-if="selectedUsersCount === 0">
@@ -40,13 +43,13 @@
         </div>
       </ms-action-bar>
       <!-- users -->
-      <div class="users-container">
+      <div class="users-container scroll">
         <div v-if="userList.length === 0">
           {{ $t('UsersPage.emptyList') }}
         </div>
         <div v-else>
           <div v-if="displayView === DisplayState.List">
-            <ion-list>
+            <ion-list class="list">
               <ion-list-header
                 class="user-list-header"
                 lines="full"
@@ -436,14 +439,7 @@ onUnmounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.users-container {
-  margin: 7em 2em 2em;
-}
-
 .user-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  padding-inline-start: 0;
-
   &__label {
     padding: 0 1rem;
     height: 100%;
