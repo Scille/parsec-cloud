@@ -1,1 +1,0 @@
-Fix the windows installer to properly uninstall the previous parsec version (a regression introduced in parsec 2.16.0 caused the removal of parsec 2.15.0 and before to be skipped)
