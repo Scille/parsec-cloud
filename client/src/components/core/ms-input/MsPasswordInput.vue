@@ -53,7 +53,6 @@ const emits = defineEmits<{
 }>();
 
 const passwordVisible = ref(false);
-const passwordRef = ref(props.modelValue || '');
 
 function onChange(value: any): void {
   emits('update:modelValue', value);
@@ -61,8 +60,8 @@ function onChange(value: any): void {
 }
 
 function onEnterPress(): void {
-  if (passwordRef.value.length > 0) {
-    emits('onEnterKeyup', passwordRef.value);
+  if (props.modelValue && props.modelValue.length > 0) {
+    emits('onEnterKeyup', props.modelValue);
   }
 }
 </script>
