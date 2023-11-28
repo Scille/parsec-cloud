@@ -14,6 +14,7 @@ export enum MsModalResult {
 
 interface MsOption {
   label: string;
+  sublabel?: string;
   key: any;
   disabled?: boolean;
 }
