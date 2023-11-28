@@ -49,3 +49,13 @@ ion-popover::part(content) {
 .profile-header-popover::part(content) {
   background: none;
 }
+
+.tooltip-popover {
+  --background: none;
+  --box-shadow: none;
+
+  .popover-viewport {
+    border: none;
+    overflow: hidden;
+  }
+}
