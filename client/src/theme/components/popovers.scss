@@ -8,7 +8,7 @@ ion-popover {
 
 .popover-side-bottom .popover-viewport {
   border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
   overflow: hidden;
 }
 
@@ -19,7 +19,7 @@ ion-popover {
 }
 
 ion-popover::part(content) {
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
 }
 
 /* --- Option file popover --- */
