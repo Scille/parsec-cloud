@@ -47,6 +47,11 @@
 !define LICENSE_FILEPATH "${PROGRAM_FREEZE_BUILD_DIR}\LICENSE.txt"
 !define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
 
+# Uninstallation
+!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
+!define PROGRAM_UNINST_ROOT_KEY "HKLM"
+!define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
+
 # Set default compressor
 SetCompressor /FINAL /SOLID lzma
 SetCompressorDictSize 64
@@ -165,25 +170,9 @@ Function checkProgramAlreadyRunning
     notRunning:
 FunctionEnd
 
-# Check for running program instance.
-Function .onInit
-    SetRegView 64
-    Call checkProgramAlreadyRunning
-
-    ReadRegStr $R0 HKLM \
-    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}" \
-    "UninstallString"
-    StrCmp $R0 "" done
-
-    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-    "${PROGRAM_NAME} is already installed. $\n$\nClick `OK` to remove the \
-    previous version or `Cancel` to cancel this upgrade." \
-    /SD IDOK IDOK uninst
-    Abort
-
-    ;Run the uninstaller sequentially and silently
-    ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
-    uninst:
+; Run the uninstaller sequentially and silently
+; https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
+Function runUninstaller
       ; Retrieve the previous version's install directory and store it into $R1.
       ; We cannot use ${INSTDIR} instead, given the previous version might
       ; have been installed in a custom directory.
@@ -205,9 +194,56 @@ Function .onInit
       ; At this point, I'm very much puzzled as why writing NSIS installer
       ; feels like reverse engineering a taiwanese NES clone...
       ExecWait '"$R0" /S _?=$R1'
+      ; Remove the uninstaller so it hasn't removed iteself due to `_?=$R1`
+      Delete $R0
+      ; Remove the previous install directory if it's empty
+      RmDir $R1
+FunctionEnd
 
-    done:
+Function checkUninstaller
+  ; Check either 32-bit or 64-bit registry for parsec uninstaller
+  ReadRegStr $R0 ${PROGRAM_UNINST_ROOT_KEY} \
+    "${PROGRAM_UNINST_KEY}" \
+    "UninstallString"
+  StrCmp $R0 "" done
 
+  ; Check that the uninstaller file actually exists
+  IfFileExists $R0 ask_for_uninstall cleanup
+
+  ; Perform some registry cleanup if the installer wasn't found
+  cleanup:
+    DeleteRegKey ${PROGRAM_UNINST_ROOT_KEY} "${PROGRAM_UNINST_KEY}"
+    Goto done
+
+  ; Prompt the user for uninstaller the previous version of parsec
+  ask_for_uninstall:
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+      "${PROGRAM_NAME} is already installed. $\n$\nClick `OK` to remove the \
+      previous version or `Cancel` to cancel this upgrade." \
+      /SD IDOK IDOK uninstall IDCANCEL _abort
+
+  ; Abort in case the user clicked "cancel"
+  _abort:
+    Abort
+
+  ; Run the uninstaller
+  uninstall:
+    Call runUninstaller
+    Goto done
+
+  done:
+FunctionEnd
+
+# Check for running program instance.
+Function .onInit
+    Call checkProgramAlreadyRunning
+    # Check for existing installation in 32-bit registry
+    SetRegView 32
+    call checkUninstaller
+    # Check for existing installation in 64-bit registry
+    SetRegView 64
+    call checkUninstaller
+    # Leave in 64 registry mode
 FunctionEnd
 
 Function un.onUninstSuccess
@@ -265,14 +301,11 @@ FunctionEnd
 # FunctionEnd
 
 # --- Installation sections ---
-!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
-!define PROGRAM_UNINST_ROOT_KEY "HKLM"
-!define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
 
 BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
 Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
 OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
-InstallDir "$PROGRAMFILES\Parsec Cloud"
+InstallDir "$PROGRAMFILES\Parsec Cloud\${PROGRAM_VERSION}"
 
 # No need for such details
 ShowInstDetails hide
@@ -295,6 +328,11 @@ ShowUnInstDetails hide
 Section "Parsec Cloud Sharing" Section1
     !insertmacro MoveParsecShellExtension
     SectionIn RO
+
+    # Just in case, make sure that no psutil artefact remains from a previous installation
+    # See issue #5845
+    Delete "$INSTDIR\psutil\_psutil_windows*.pyd"
+
     !include "${BUILD_DIR}\install_files.nsh"
 
     SetOverwrite ifnewer
