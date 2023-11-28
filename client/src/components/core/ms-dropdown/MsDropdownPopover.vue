@@ -4,8 +4,7 @@
   <ion-list class="container">
     <ion-item
       class="option body"
-      :class="{ selected: selectedOption?.key === option.key }"
-      :disabled="option.disabled"
+      :class="{ selected: selectedOption?.key === option.key, 'item-disabled': option.disabled }"
       button
       lines="none"
       v-for="option in options"
@@ -29,12 +28,11 @@
         v-if="selectedOption?.key === option.key"
       />
       <ion-icon
+        v-if="option.disabled"
         slot="end"
         :icon="informationCircle"
         class="icon disabled-icon"
-        v-if="option.disabled"
         @click="openTooltip($event, option.label)"
-        ref="disabledIcon"
       />
     </ion-item>
   </ion-list>
@@ -46,9 +44,6 @@ import { IonList, IonItem, IonIcon, IonLabel, popoverController } from '@ionic/v
 import { checkmark, informationCircle } from 'ionicons/icons';
 import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
 import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
-
-// const disabledIconRef = ref(event as HTMLElement);));
-// const iconPositionLeft = disabledIconRef.getBoundingClientRect().left;
 
 const props = defineProps<{
   defaultOption?: any;
@@ -68,9 +63,9 @@ function onOptionClick(option?: MsDropdownOption): void {
 
 function openTooltip(event: Event, text: string): void {
   event.stopPropagation();
-  console.log(event);
   const popover = popoverController.create({
     component: MsDropdownTooltip,
+    alignment: 'center',
     event: event,
     componentProps: {
       text,
