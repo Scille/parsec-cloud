@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-button class="ms-action-bar-button body">
+  <ion-button
+    class="ms-action-bar-button button-medium"
+    size="default"
+  >
     <ion-icon
       v-show="icon"
       slot="start"

@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-item-divider class="toolbar ion-margin-bottom secondary">
+  <ion-item-divider
+    class="toolbar ion-margin-bottom secondary"
+    sticky
+  >
     <div class="contextual-menu">
       <slot />
     </div>
@@ -15,9 +18,8 @@ import { IonItemDivider } from '@ionic/vue';
 <style scoped lang="scss">
 .toolbar {
   padding: 1em 2em;
-  height: 6em;
   background-color: var(--parsec-color-light-secondary-background);
   border-top: 1px solid var(--parsec-color-light-secondary-light);
-  position: fixed;
+  margin: 0;
 }
 </style>
