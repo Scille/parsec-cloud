@@ -80,7 +80,7 @@
               </settings-option>
             </ion-list>
           </div>
-          <button
+          <!-- <button
             v-tooltip
             title="Hello World!"
             @mouseenter="openTooltip($event, 'Hello World!')"
@@ -92,7 +92,7 @@
               <ion-button color="primary" dark v-on="on">Bottom</ion-button>
             </template>
             <span>Bottom tooltip</span>
-          </v-tooltip>
+          </v-tooltip> -->
           <!-- advanced -->
           <div
             v-if="settingTab === SettingsTabs.Advanced"
@@ -141,9 +141,9 @@ import { StorageManagerKey } from '@/common/injectionKeys';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
 import { MsDropdownOption } from '@/components/core/ms-types';
-import { tooltip } from '@ionited/tooltip-vue';
+// import { tooltip } from '@ionited/tooltip-vue';
 
-Tooltip(document.querySelector('button')); // Defaults to get title attribute content
+// Tooltip(document.querySelector('button')); // Defaults to get title attribute content
 
 const { t, locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
