@@ -328,6 +328,11 @@ ShowUnInstDetails hide
 Section "Parsec Cloud Sharing" Section1
     !insertmacro MoveParsecShellExtension
     SectionIn RO
+
+    # Just in case, make sure that no psutil artefact remains from a previous installation
+    # See issue #5845
+    Delete "$INSTDIR\psutil\_psutil_windows*.pyd"
+
     !include "${BUILD_DIR}\install_files.nsh"
 
     SetOverwrite ifnewer
