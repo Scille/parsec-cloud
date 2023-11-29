@@ -47,6 +47,10 @@
 !define LICENSE_FILEPATH "${PROGRAM_FREEZE_BUILD_DIR}\LICENSE.txt"
 !define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
 
+# Icon handling
+!define ICON_HANDLER_CHECK_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ParsecCheckIconHandler"
+!define ICON_HANDLER_REFRESH_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ParsecRefreshIconHandler"
+
 # Uninstallation
 !define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
 !define PROGRAM_UNINST_ROOT_KEY "HKLM"
@@ -359,8 +363,8 @@ Section "Parsec Cloud Sharing" Section1
     ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\refresh-icon-handler.dll"'
 
     # Write Icons overlays to register
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler" "" "${CHECK_ICON_GUID}"
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler" "" "${REFRESH_ICON_GUID}"
+    WriteRegStr HKLM ${ICON_HANDLER_CHECK_KEY} "" "${CHECK_ICON_GUID}"
+    WriteRegStr HKLM ${ICON_HANDLER_REFRESH_KEY} "" "${REFRESH_ICON_GUID}"
 SectionEnd
 
 !macro InstallWinFSP
@@ -464,8 +468,13 @@ Section Uninstall
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}"
 
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ICheckIconHandler"
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\IRefreshIconHandler"
+  # Clean up older entry names for icon handling
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler"
+
+  # Clean up icon handling registry
+  DeleteRegKey HKLM ${ICON_HANDLER_CHECK_KEY}
+  DeleteRegKey HKLM ${ICON_HANDLER_REFRESH_KEY}
 
   ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\check-icon-handler.dll"'
   ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\refresh-icon-handler.dll"'
