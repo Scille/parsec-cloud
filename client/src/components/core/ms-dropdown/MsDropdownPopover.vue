@@ -158,6 +158,9 @@ function openTooltip(event: Event, text: string): void {
       opacity: .8;
       --color: var(--parsec-color-light-secondary-grey);
       position: relative;
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+      }
     }
   }
 }
