@@ -19,7 +19,7 @@ ion-popover {
 }
 
 ion-popover::part(content) {
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
 }
 
 /* --- Option file popover --- */
@@ -44,6 +44,11 @@ ion-popover::part(content) {
 .profile-header-popover {
   --offset-x: -2em;
   --offset-y: 1em;
+
+  .popover-viewport {
+    border: none;
+    border-radius: var(--parsec-radius-8);
+  }
 }
 
 .profile-header-popover::part(content) {
