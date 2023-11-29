@@ -2,12 +2,12 @@
 
 <template>
   <ion-list class="container">
+    <ion-item class="profile-email">
+      <ion-text class="body-sm">
+        {{ name }}
+      </ion-text>
+    </ion-item>
     <div class="main-list">
-      <ion-item class="main-list__item profile-email">
-        <ion-text class="body-sm">
-          {{ name }}
-        </ion-text>
-      </ion-item>
       <ion-item
         class="main-list__item"
         @click="onOptionClick(ProfilePopoverOption.MyContactDetails)"
@@ -108,41 +108,47 @@ function onOptionClick(option: ProfilePopoverOption): void {
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--parsec-color-light-secondary-medium);
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-}
-
-.main-list {
-  padding: 0.5rem;
-  gap: 0.5rem;
 }
 
 .profile-email {
   color: var(--parsec-color-light-secondary-grey);
-}
-
-.profile-email,
-.footer-list__item {
-  --padding-start: 0.5rem;
-  --padding-end: 0.5rem;
-  --padding-top: 0.5rem;
-  --padding-bottom: 0.5rem;
+  --padding-start: 1rem;
+  --padding-end: 1rem;
+  --padding-top: 1rem;
+  --padding-bottom: 0;
   --min-height: 0;
 }
 
-.main-list__item {
-  --background: none;
+.main-list {
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 
-  &:not(.profile-email) {
+  &__item {
+    --background: none;
     user-select: none;
     cursor: pointer;
     color: var(--parsec-color-light-secondary-text);
     margin-inline-end: 2px;
+    padding: 0.5rem 0.75rem;
     --min-height: 1rem;
     width: 100%;
     border-radius: 0.25rem;
 
     .item-label {
       margin: 0;
+    }
+
+    ion-icon {
+      color: var(--parsec-color-light-secondary-text);
+      margin: 0;
+      margin-inline-end: 0.5rem;
+      font-size: 1.125rem;
+    }
+
+    &::part(native) {
+      padding: 0;
     }
 
     &.logout {
@@ -153,7 +159,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
       }
 
       &:hover {
-        --background: var(--parsec-color-light-danger-100);
+        background: var(--parsec-color-light-danger-100);
         color: var(--parsec-color-light-danger-700);
 
         ion-icon {
@@ -162,18 +168,12 @@ function onOptionClick(option: ProfilePopoverOption): void {
       }
     }
 
-    ion-icon {
-      color: var(--parsec-color-light-secondary-text);
-      margin-inline-end: 0.5rem;
-      font-size: 1.125rem;
-    }
-
     &:hover {
-      background: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-primary-600);
+      background: var(--parsec-color-light-primary-30);
+      color: var(--parsec-color-light-primary-700);
 
       ion-icon {
-        color: var(--parsec-color-light-primary-600);
+        color: var(--parsec-color-light-primary-700);
       }
     }
   }
@@ -184,6 +184,11 @@ function onOptionClick(option: ProfilePopoverOption): void {
   padding: 0.5rem 0.5rem;
 
   &__item {
+    --padding-start: 0.5rem;
+    --padding-end: 0.5rem;
+    --padding-top: 0.5rem;
+    --padding-bottom: 0.5rem;
+    --min-height: 0;
     --background: none;
     color: var(--parsec-color-light-secondary-text);
     cursor: pointer;
