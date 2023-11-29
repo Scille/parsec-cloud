@@ -16,9 +16,7 @@
         fill="var(--parsec-color-light-primary-900)"
       />
     </svg>
-    <div
-      class="tooltip-content"
-    >
+    <div class="tooltip-content">
       <ion-text class="tooltip-text body-sm">
         {{ text }}
       </ion-text>
@@ -55,7 +53,7 @@ defineProps<{
   color: var(--parsec-color-light-primary-30);
   max-width: 14.5rem;
   width: fit-content;
-  padding: .75rem;
+  padding: 0.75rem;
   position: relative;
   border-radius: var(--parsec-radius-6);
   box-shadow: var(--parsec-shadow-light);

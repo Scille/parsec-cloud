@@ -139,7 +139,6 @@ const languageOptions: MsDropdownOption[] = [
   {
     key: 'en-US',
     label: t('SettingsPage.language.values.enUS'),
-
   },
   {
     key: 'fr-FR',
