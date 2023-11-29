@@ -157,18 +157,23 @@ Function GetParent
 FunctionEnd
 
 
-Function checkProgramAlreadyRunning
+!macro checkProgramAlreadyRunning un message
+Function ${un}checkProgramAlreadyRunning
     check:
         System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
         IntCmp $R0 0 notRunning
             System::Call 'kernel32::CloseHandle(i $R0)'
             MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
                 "Parsec is running, please close it first.$\n$\n \
-                Click `OK` to retry or `Cancel` to cancel this upgrade." \
+                Click `OK` to retry or `Cancel` to cancel this ${message}." \
                 /SD IDCANCEL IDOK check
             Abort
     notRunning:
 FunctionEnd
+!macroend
+!insertmacro checkProgramAlreadyRunning "" "upgrade"
+!insertmacro checkProgramAlreadyRunning "un." "removal"
+
 
 ; Run the uninstaller sequentially and silently
 ; https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
@@ -252,6 +257,7 @@ Function un.onUninstSuccess
 FunctionEnd
 
 Function un.onInit
+    Call un.checkProgramAlreadyRunning
     SetRegView 64
     MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Do you want to completely remove $(^Name)?" /SD IDYES IDYES +2
     Abort
