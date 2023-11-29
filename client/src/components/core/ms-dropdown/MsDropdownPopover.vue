@@ -79,14 +79,14 @@ function openTooltip(event: Event, text: string): void {
 
 <style lang="scss" scoped>
 .container {
-  padding: .5rem;
+  padding: 0.5rem;
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .option {
   --background-hover: none;
   --color: var(--parsec-color-light-secondary-grey);
-  padding: .75rem;
+  padding: 0.75rem;
   --background: none;
   border-radius: var(--parsec-radius-6);
   --min-height: 0;
@@ -109,9 +109,9 @@ function openTooltip(event: Event, text: string): void {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: .375rem;
+    gap: 0.375rem;
     &__subtitle {
-      margin-bottom:  .25rem;
+      margin-bottom: 0.25rem;
     }
   }
 
@@ -120,9 +120,7 @@ function openTooltip(event: Event, text: string): void {
   }
 
   &.selected {
-
     .option-text {
-
       &__title {
         color: var(--parsec-color-light-primary-700);
       }
@@ -142,7 +140,7 @@ function openTooltip(event: Event, text: string): void {
     pointer-events: none;
 
     .option-text {
-      opacity: .5;
+      opacity: 0.5;
 
       &__title {
         --color: var(--parsec-color-light-secondary-text);
@@ -155,7 +153,7 @@ function openTooltip(event: Event, text: string): void {
 
     .disabled-icon {
       pointer-events: initial;
-      opacity: .8;
+      opacity: 0.8;
       --color: var(--parsec-color-light-secondary-grey);
       position: relative;
       &:hover {
