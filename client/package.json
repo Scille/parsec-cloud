@@ -43,8 +43,6 @@
         "@ionic/storage": "^4.0.0",
         "@ionic/vue": "^7.5.5",
         "@ionic/vue-router": "^7.5.5",
-        "@ionited/tooltip": "^0.1.4",
-        "@ionited/tooltip-vue": "^0.1.4",
         "@types/luxon": "^3.3.4",
         "async-mutex": "^0.4.0",
         "luxon": "^3.4.4",
