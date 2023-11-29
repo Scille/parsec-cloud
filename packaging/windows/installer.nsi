@@ -18,7 +18,7 @@
 
 # Icon overlays GUIDS
 !define CHECK_ICON_GUID "{5449BC90-310B-40A8-9ABF-C5CFCEC7F430}"
-!define REFRESH_ICON_GUID "{41e71dd9-368d-46b2-bb9d-4359599bbbc3}"
+!define REFRESH_ICON_GUID "{41E71DD9-368D-46B2-BB9D-4359599BBBC3}"
 
 # Detect version from file
 !define BUILD_DIR "build"
