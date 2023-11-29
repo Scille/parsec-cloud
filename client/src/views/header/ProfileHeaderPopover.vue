@@ -177,7 +177,6 @@ function onOptionClick(option: ProfilePopoverOption): void {
       }
     }
   }
-
 }
 
 .footer-list {
@@ -190,7 +189,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
     cursor: pointer;
     width: fit-content;
     display: flex;
-    gap: .5rem;
+    gap: 0.5rem;
 
     &:hover {
       text-decoration: underline;
