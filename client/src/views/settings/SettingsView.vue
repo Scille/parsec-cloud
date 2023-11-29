@@ -144,7 +144,6 @@ const languageOptions: MsDropdownOption[] = [
   {
     key: 'fr-FR',
     label: t('SettingsPage.language.values.frFR'),
-    disabled: true,
   },
 ];
 
