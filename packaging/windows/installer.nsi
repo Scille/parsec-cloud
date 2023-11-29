@@ -246,16 +246,25 @@ Function checkUninstaller
   done:
 FunctionEnd
 
-# Check for running program instance.
 Function .onInit
+    # Check for running program instance.
     Call checkProgramAlreadyRunning
-    # Check for existing installation in 32-bit registry
-    SetRegView 32
-    call checkUninstaller
     # Check for existing installation in 64-bit registry
+    # Due to the regression explained in issue #5845, it's possible that parsec 2.16.0
+    # or 2.16.1 has overwritten a parsec 2.15.0 installation or older. For this reason,
+    # both 32 and 64-bit registry might point to the same uninstaller. Since the uninstaller
+    # corresponds to a 2.16.0 or 2.16.1 install, it will cleanup the 64-bit registry when it's
+    # done. This is why it makes sense to perform the 64-bit uninstall first.
     SetRegView 64
     call checkUninstaller
+    # Check for existing installation in 32-bit registry
+    # In the case explained above, the 32-bit registry points to an uninstaller that no longer
+    # exists (since the 64-bit uninstall has removed it). In this case, `checkUninstaller`
+    # cleans up the registry so Parsec does not appear in the list of installed programs.
+    SetRegView 32
+    call checkUninstaller
     # Leave in 64 registry mode
+    SetRegView 64
 FunctionEnd
 
 Function un.onUninstSuccess
