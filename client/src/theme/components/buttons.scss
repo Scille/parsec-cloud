@@ -21,18 +21,18 @@ ion-button.button-large {
 }
 
 ion-button.button-default {
-  --padding-top: .75rem;
+  --padding-top: 0.75rem;
   --padding-end: 1.125rem;
-  --padding-bottom: .75rem;
+  --padding-bottom: 0.75rem;
   --padding-start: 1.125rem;
   min-height: 0;
 }
 
 ion-button.button-small {
-  --padding-top: .625rem;
-  --padding-end: .75rem;
-  --padding-bottom: .625rem;
-  --padding-start: .75rem;
+  --padding-top: 0.625rem;
+  --padding-end: 0.75rem;
+  --padding-bottom: 0.625rem;
+  --padding-start: 0.75rem;
   min-height: 0;
 }
 
