@@ -2,77 +2,75 @@
 
 <template>
   <ion-list class="container">
-    <ion-item class="container__item profile-email">
-      <ion-text class="body-sm">
-        {{ name }}
-      </ion-text>
-    </ion-item>
-    <ion-item
-      class="container__item"
-      @click="onOptionClick(ProfilePopoverOption.MyContactDetails)"
-    >
-      <ion-icon
-        :icon="personCircle"
-        slot="start"
-      />
-      <ion-label class="body">
-        {{ $t('HomePage.topbar.myContactDetails') }}
-      </ion-label>
-    </ion-item>
-    <ion-item
-      class="container__item"
-      @click="onOptionClick(ProfilePopoverOption.MyDevices)"
-    >
-      <ion-icon
-        :icon="phonePortrait"
-        slot="start"
-      />
-      <ion-label class="body">
-        {{ $t('HomePage.topbar.myDevices') }}
-      </ion-label>
-    </ion-item>
-    <ion-item
-      class="container__item"
-      @click="onOptionClick(ProfilePopoverOption.Settings)"
-    >
-      <ion-icon
-        :icon="cog"
-        slot="start"
-      />
-      <ion-label class="body">
-        {{ $t('HomePage.topbar.settings') }}
-      </ion-label>
-    </ion-item>
-    <ion-item
-      class="container__item"
-      @click="onOptionClick(ProfilePopoverOption.Help)"
-    >
-      <ion-icon
-        :icon="helpCircle"
-        slot="start"
-      />
-      <ion-label class="body">
-        {{ $t('HomePage.topbar.help') }}
-      </ion-label>
-    </ion-item>
-    <ion-item
-      class="container__item logout"
-      @click="onOptionClick(ProfilePopoverOption.LogOut)"
-    >
-      <ion-icon
-        :icon="logOut"
-        slot="start"
-      />
-      <ion-label class="body">
-        {{ $t('HomePage.topbar.logout') }}
-      </ion-label>
-    </ion-item>
-    <ion-item
-      class="container__item version"
-      @click="onOptionClick(ProfilePopoverOption.App)"
-    >
-      <ion-text class="body-sm"> {{ $t('app.name') }} v{{ getAppVersion() }} </ion-text>
-    </ion-item>
+    <div class="main-list">
+      <ion-item class="main-list__item profile-email">
+        <ion-text class="body-sm">
+          {{ name }}
+        </ion-text>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.MyContactDetails)"
+      >
+        <ion-icon
+          :icon="personCircle"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $t('HomePage.topbar.myContactDetails') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.MyDevices)"
+      >
+        <ion-icon
+          :icon="phonePortrait"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $t('HomePage.topbar.myDevices') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Settings)"
+      >
+        <ion-icon
+          :icon="cog"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $t('HomePage.topbar.settings') }}
+        </ion-label>
+      </ion-item>
+      <ion-item
+        class="main-list__item logout"
+        @click="onOptionClick(ProfilePopoverOption.LogOut)"
+      >
+        <ion-icon
+          :icon="logOut"
+          slot="start"
+        />
+        <ion-label class="body item-label">
+          {{ $t('HomePage.topbar.logout') }}
+        </ion-label>
+      </ion-item>
+    </div>
+    <div class="footer-list">
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Help)"
+      >
+        <ion-text class="body-sm"> {{ $t('HomePage.topbar.help') }} </ion-text>
+      </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.App)"
+      >
+        <ion-text class="body-sm"> {{ $t('MenuPage.about') }} (v{{ getAppVersion() }}) </ion-text>
+      </ion-item>
+    </div>
   </ion-list>
 </template>
 
@@ -89,7 +87,7 @@ export enum ProfilePopoverOption {
 
 <script setup lang="ts">
 import { IonList, IonItem, IonIcon, IonLabel, IonText } from '@ionic/vue';
-import { phonePortrait, cog, helpCircle, logOut, personCircle } from 'ionicons/icons';
+import { phonePortrait, cog, logOut, personCircle } from 'ionicons/icons';
 import { popoverController } from '@ionic/core';
 import { getAppVersion } from '@/common/mocks';
 
@@ -106,80 +104,103 @@ function onOptionClick(option: ProfilePopoverOption): void {
 
 <style lang="scss" scoped>
 .container {
-  padding: 0.5rem;
-  border-radius: 0.5rem;
+  border-radius: var(--parsec-radius-8);
+  padding: 0;
   overflow: hidden;
-  border: 1px solid var(--parsec-color-light-secondary-light);
-  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+}
+
+.main-list {
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+.profile-email {
+  color: var(--parsec-color-light-secondary-grey);
 }
 
 .profile-email,
-.version {
-  color: var(--parsec-color-light-secondary-grey);
+.footer-list__item {
   --padding-start: 0.5rem;
   --padding-end: 0.5rem;
   --padding-top: 0.5rem;
   --padding-bottom: 0.5rem;
-  --min-height: 1rem;
+  --min-height: 0;
 }
 
-.container__item {
+.main-list__item {
   --background: none;
-  width: 100%;
-  --min-height: 1rem;
-}
 
-.container__item:not(:first-child):not(:last-child) {
-  user-select: none;
-  cursor: pointer;
-  margin-inline-end: 2px;
-  color: var(--parsec-color-light-secondary-text);
-  border-radius: 0.25rem;
+  &:not(.profile-email) {
+    user-select: none;
+    cursor: pointer;
+    color: var(--parsec-color-light-secondary-text);
+    margin-inline-end: 2px;
+    --min-height: 1rem;
+    width: 100%;
+    border-radius: 0.25rem;
 
-  &:hover {
-    --background: var(--parsec-color-light-primary-30);
-    color: var(--parsec-color-light-primary-600);
-
-    ion-icon {
-      color: var(--parsec-color-light-primary-600);
+    .item-label {
+      margin: 0;
     }
-  }
-  &.logout {
-    color: var(--parsec-color-light-danger-500);
+
+    &.logout {
+      color: var(--parsec-color-light-danger-500);
+
+      ion-icon {
+        color: var(--parsec-color-light-danger-500);
+      }
+
+      &:hover {
+        --background: var(--parsec-color-light-danger-100);
+        color: var(--parsec-color-light-danger-700);
+
+        ion-icon {
+          color: var(--parsec-color-light-danger-700);
+        }
+      }
+    }
 
     ion-icon {
-      color: var(--parsec-color-light-danger-500);
+      color: var(--parsec-color-light-secondary-text);
+      margin-inline-end: 0.5rem;
+      font-size: 1.125rem;
     }
 
     &:hover {
-      --background: var(--parsec-color-light-danger-100);
-    }
+      background: var(--parsec-color-light-secondary-medium);
+      color: var(--parsec-color-light-primary-600);
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 1px;
-      background-color: var(--parsec-color-light-secondary-disabled);
+      ion-icon {
+        color: var(--parsec-color-light-primary-600);
+      }
     }
   }
 
-  ion-icon {
-    color: var(--parsec-color-light-secondary-text);
-    margin-inline-end: 0.75rem;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-  }
 }
 
-.version {
-  cursor: pointer;
-  width: fit-content;
+.footer-list {
+  background: var(--parsec-color-light-secondary-background);
+  padding: 0.5rem 0.5rem;
 
-  &:hover {
-    text-decoration: underline;
+  &__item {
+    --background: none;
+    color: var(--parsec-color-light-secondary-text);
+    cursor: pointer;
+    width: fit-content;
+    display: flex;
+    gap: .5rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    ion-icon {
+      font-size: 1.125rem;
+      margin: 0;
+      margin-right: 0.5rem;
+    }
   }
 }
 </style>

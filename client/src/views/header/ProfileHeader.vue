@@ -129,7 +129,7 @@ async function openPopover(ev: Event): Promise<void> {
     height: 0.625rem;
     width: 0.625rem;
     border-radius: 50%;
-    border: var(--parsec-color-light-secondary-background) solid 0.125rem;
+    border: var(--parsec-color-light-secondary-background) solid 0.25rem;
     background-color: var(--parsec-color-light-success-500);
   }
 }
@@ -137,20 +137,14 @@ async function openPopover(ev: Event): Promise<void> {
 .text-icon {
   display: flex;
   align-items: center;
-  gap: 0.1em;
   color: var(--parsec-color-light-secondary-text);
 
   ion-icon {
     transition: transform ease-out 300ms;
+    font-size: 1.125rem;
     &.popover-is-open {
       transform: rotate(180deg);
     }
   }
-}
-
-.text-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 </style>
