@@ -330,7 +330,7 @@ FunctionEnd
 BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
 Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
 OutFile "${BUILD_DIR}\${INSTALLER_FILENAME}"
-InstallDir "$PROGRAMFILES\Parsec Cloud\${PROGRAM_VERSION}"
+InstallDir "$PROGRAMFILES\Parsec Cloud"
 
 # No need for such details
 ShowInstDetails hide
