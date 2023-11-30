@@ -31,6 +31,10 @@ http://ionicframework.com/docs/theming/ */
 * {
   --inner-border-width: 0px;
   --box-shadow: var(--parsec-shadow-light);
+
+  &:focus-visible {
+    outline: none;
+  }
 }
 
 .header-md,

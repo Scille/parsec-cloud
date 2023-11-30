@@ -52,7 +52,7 @@
               {{ subtitle }}
             </ms-report-text>
             <ion-text
-              class="ms-alert-modal-header__text body"
+              class="ms-modal-header__text body"
               v-else
             >
               {{ subtitle }}
@@ -174,52 +174,21 @@ function getTitleIcon(): string {
   justify-content: start;
 }
 
-.closeBtn-container {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-}
-
-.closeBtn-container,
-.closeBtn {
-  margin: 0;
-  --padding-start: 0;
-  --padding-end: 0;
-}
-
-.closeBtn {
-  width: fit-content;
-  height: fit-content;
-  --border-radius: var(--parsec-radius-4);
-  --background-hover: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-4);
-
-  &__icon {
-    padding: 4px;
-    color: var(--parsec-color-light-primary-500);
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-    }
-  }
-
-  &:active {
-    border-radius: var(--parsec-radius-4);
-    background: var(--parsec-color-light-primary-100);
-  }
-}
-
 .ms-modal-header {
-  margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 
   &__title {
     padding: 0;
-    color: var(--parsec-color-light-primary-600);
+    color: var(--parsec-color-light-primary-800);
     display: flex;
     align-items: center;
+    max-width: 22rem;
+
+    .toolbar-title {
+      text-overflow: clip !important;
+    }
 
     &-container {
       display: flex;
@@ -240,14 +209,16 @@ function getTitleIcon(): string {
 .ms-modal-content {
   --background: transparent;
   overflow: auto;
-}
 
-.ms-alert-modal-header__text {
-  color: var(--parsec-color-light-secondary-grey);
+  > :first-child {
+    margin-top: 2rem;
+  }
 }
 
 .ms-modal-footer {
-  margin-top: 2.5rem;
+  > :first-child:not([hidden]) {
+    margin-top: 2.5rem;
+  }
 
   &::before {
     background: transparent;

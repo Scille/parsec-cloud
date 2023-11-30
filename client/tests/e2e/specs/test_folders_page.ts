@@ -124,7 +124,7 @@ describe('Check folders page', () => {
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
-      .find('.ms-alert-modal-header__text')
+      .find('.ms-modal-header__text')
       .contains(/Are you sure you want to delete the file `File_[a-z_]+`?/);
 
     cy.get('.question-modal').find('#next-button').click();
@@ -136,7 +136,7 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('#button-delete').contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple elements');
-    cy.get('.question-modal').find('.ms-alert-modal-header__text').contains('Are you sure you want to delete these 3 elements?');
+    cy.get('.question-modal').find('.ms-modal-header__text').contains('Are you sure you want to delete these 3 elements?');
     cy.get('.question-modal').find('#next-button').contains('Yes').click();
     cy.get('.question-modal').should('not.exist');
 
