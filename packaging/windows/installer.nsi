@@ -6,6 +6,7 @@
 !addplugindir nsis_plugins
 !addincludedir nsis_plugins
 !include "WordFunc.nsh"
+!include "cleanup_older_artefacts.nsi"
 
 # Script version; displayed when running the installer
 !define INSTALLER_SCRIPT_VERSION "1.0"
@@ -206,8 +207,10 @@ Function runUninstaller
       ; At this point, I'm very much puzzled as why writing NSIS installer
       ; feels like reverse engineering a taiwanese NES clone...
       ExecWait '"$R0" /S _?=$R1'
-      ; Remove the uninstaller so it hasn't removed iteself due to `_?=$R1`
+      ; Remove the uninstaller since it hasn't removed iteself due to `_?=$R1`
       Delete $R0
+      ; Remove older artefacts that might remain from previous installation
+      !insertmacro CleanupOlderArtefacts "$R1"
       ; Remove the previous install directory if it's empty
       RmDir $R1
 FunctionEnd
@@ -351,6 +354,8 @@ Section "Parsec Cloud Sharing" Section1
     !insertmacro MoveParsecShellExtension
     SectionIn RO
 
+    ; Remove older artefacts that might remain from previous installation
+    !insertmacro CleanupOlderArtefacts "$INSTDIR"
     # Just in case, make sure that no psutil artefact remains from a previous installation
     # See issue #5845
     Delete "$INSTDIR\psutil\_psutil_windows*.pyd"
@@ -461,6 +466,9 @@ Section Uninstall
     Delete "$INSTDIR\homepage.url"
     Delete ${PROGRAM_UNINST_FILENAME}
     !include "${BUILD_DIR}\uninstall_files.nsh"
+    ; Remove older artefacts that might remain from previous installation
+    !insertmacro CleanupOlderArtefacts "$INSTDIR"
+    ; Remove install directory if empty
     RmDir "$INSTDIR"
 
     # Delete Start Menu items.
