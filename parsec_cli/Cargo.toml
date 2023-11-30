@@ -17,4 +17,8 @@ libparsec = { workspace = true }
 
 clap = { workspace = true, features = ["default", "derive"] }
 hex-literal = { workspace = true }
+reqwest = { workspace = true, features = ["json"] }
+serde_json = { workspace = true }
+terminal-spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+uuid = { workspace = true }
