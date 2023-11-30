@@ -336,17 +336,33 @@ InstallDir "$PROGRAMFILES\Parsec Cloud\${PROGRAM_VERSION}"
 ShowInstDetails hide
 ShowUnInstDetails hide
 
-# When upgrading or uninstalling, shell extensions may be loaded by `explorer.exe`
-# thus windows will prevent us to delete or modify the dll extensions. The trick
-# here is to move the loaded dll somewhere else (like in a temp folder) and then resume
-# the upgrade/uninstall process as usual.
+!macro DeleteOrMoveFile dir temp name
+    # This routine ensures that we are not leaving an old `${dir}\${name}` file in place
+    # Case 1: the DLL file is not used:
+    #  - it's properly deleted
+    # Case 2: the DLL file is used, and is in the same drive as `${temp}`:
+    #  - the file is moved to `${temp}`
+    # Case 3: the DLL file is used, and is not in the same drive as `${temp}`:
+    #  - the file is renamed in-place as `${temp}.old`
+    Delete "${dir}\${name}"
+    Delete "${dir}\${name}.old"
+    Delete "${temp}\${name}.old"
+    Rename "${dir}\${name}" "${dir}\${name}.old"
+    Rename "${dir}\${name}.old" "${temp}\${name}.old"
+    Delete "${temp}\${name}.old"
+!macroend
+
 !macro MoveParsecShellExtension
+    # When upgrading or uninstalling, shell extensions may be loaded by `explorer.exe`
+    # thus windows will prevent us to delete or modify the dll extensions. The trick
+    # here is to move the loaded dll somewhere else (like in a temp folder) and then resume
+    # the upgrade/uninstall process as usual.
     RmDir /r "$TEMP\parsec_tmp"
     CreateDirectory "$TEMP\parsec_tmp"
-    Rename "$INSTDIR\check-icon-handler.dll" "$TEMP\parsec_tmp\check-icon-handler.dll.old"
-    Rename "$INSTDIR\refresh-icon-handler.dll" "$TEMP\parsec_tmp\refresh-icon-handler.dll.old"
-    Rename "$INSTDIR\vcruntime140.dll" "$TEMP\parsec_tmp\vcruntime140.dll.old"
-    Rename "$INSTDIR\vcruntime140_1.dll" "$TEMP\parsec_tmp\vcruntime140_1.dll.old"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "check-icon-handler.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "refresh-icon-handler.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "vcruntime140.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "vcruntime140_1.dll"
 !macroend
 
 # Install main application
