@@ -68,5 +68,5 @@ pub async fn create_organization(create_organization: CreateOrganization) {
 
     let organization_addr_display = organization_addr.to_url();
 
-    println!("Bootstrap organization url: {YELLOW}{organization_addr_display}{RESET}")
+    println!("Organization bootstrap url: {YELLOW}{organization_addr_display}{RESET}")
 }
