@@ -4,52 +4,77 @@
 
 ion-modal::part(content) {
   border-radius: var(--parsec-radius-8);
+  min-width: var(--parsec-min-content-width);
+  width: fit-content;
+}
+
+ion-modal {
+  --height: auto;
+  --width: auto;
+  --max-width: var(--parsec-modal-width);
   --min-width: var(--parsec-modal-width);
 }
 
-/* -- modal-stepper -- */
-.modal-stepper {
-  .modal {
-    padding: 2.5rem;
-    justify-content: start;
+ion-modal .ion-page {
+  position: relative;
+  display: block;
+  contain: content;
+}
 
-    &.wizardTrue {
-      padding-top: 2.5rem;
-    }
-  }
+ion-modal .inner-content {
+  overflow: auto;
+}
 
-  .closeBtn-container {
-    position: absolute;
-    top: 2rem;
-    right: 2rem;
-  }
+// close button
+.closeBtn-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  border-radius: var(--parsec-radius-6);
 
-  .closeBtn-container,
   .closeBtn {
     margin: 0;
     --padding-start: 0;
     --padding-end: 0;
-  }
-
-  .closeBtn {
     width: fit-content;
     height: fit-content;
-    --border-radius: var(--parsec-radius-4);
-    --background-hover: var(--parsec-color-light-primary-50);
-    border-radius: var(--parsec-radius-4);
+    --background-hover: var(--parsec-color-light-secondary-medium);
+
+    &::part(native) {
+      padding: 0;
+    }
 
     &__icon {
-      padding: 4px;
-      color: var(--parsec-color-light-primary-500);
-
-      &:hover {
-        --background-hover: var(--parsec-color-light-primary-50);
-      }
+      padding: 0.25rem;
+      color: var(--parsec-color-light-secondary-grey);
     }
 
     &:active {
-      border-radius: var(--parsec-radius-4);
-      background: var(--parsec-color-light-primary-100);
+      --background: var(--parsec-color-light-secondary-medium);
+      --border-radius: var(--parsec-radius-6);
+    }
+  }
+
+  &:hover {
+    ion-icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
+  }
+}
+
+/* -- modal-stepper -- */
+.modal-stepper {
+  // global
+  .modal {
+    padding: 2.5rem;
+
+    .closeBtn-container {
+      top: 2rem;
+      right: 2rem;
+    }
+
+    &.wizardTrue {
+      padding-top: 2.5rem;
     }
   }
 
@@ -59,10 +84,11 @@ ion-modal::part(content) {
     &__title {
       padding: 0;
       margin-bottom: 1.5rem;
-      color: var(--parsec-color-light-primary-600);
+      color: var(--parsec-color-light-primary-800);
       display: flex;
       align-items: center;
       gap: 1rem;
+      max-width: var(--parsec-modal-width);
     }
 
     &__text {
@@ -81,10 +107,9 @@ ion-modal::part(content) {
   }
 
   .modal-footer {
-    margin-top: 2.5rem;
-
-    &::before {
-      background: transparent;
+    &:first-child:not([hidden]),
+    ion-button:not([style='display: none']) {
+      margin-top: 2.5rem;
     }
 
     &-buttons {
@@ -94,6 +119,7 @@ ion-modal::part(content) {
     }
   }
 
+  // specific step
   .orga-name {
     display: flex;
     flex-direction: column;
@@ -142,24 +168,6 @@ ion-modal.join-by-link-modal::part(content) {
   }
 }
 
-ion-modal {
-  --height: auto;
-  --width: auto;
-  --max-width: 842px;
-}
-
-ion-modal .ion-page {
-  position: relative;
-  display: block;
-  contain: content;
-}
-
-ion-modal .inner-content {
-  max-height: 80vh;
-  max-width: 52rem;
-  overflow: auto;
-}
-
 .settings-modal {
   --width: 842px;
   --height: 600px;
@@ -188,7 +196,10 @@ ion-modal .inner-content {
 }
 
 .greet-organization-modal {
-  --width: 842px;
+  &::part(content) {
+    width: var(--parsec-max-content-width);
+    --height: fit-content;
+  }
 
   // manage the two columns on Contact details step
   .user-info-page {

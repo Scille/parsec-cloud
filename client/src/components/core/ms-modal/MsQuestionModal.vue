@@ -4,7 +4,6 @@
   <ms-modal
     :title="title"
     :subtitle="subtitle"
-    :title-icon="helpCircle"
     :close-button="{ visible: false }"
     :cancel-button="{
       disabled: false,
@@ -70,7 +69,6 @@ export async function askQuestion(title: string, subtitle?: string, redisplayMai
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { helpCircle } from 'ionicons/icons';
 
 defineProps<{
   title: string;
