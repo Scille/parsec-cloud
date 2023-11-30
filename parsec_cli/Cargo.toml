@@ -1,0 +1,20 @@
+[package]
+name = "parsec_cli"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+
+[dependencies]
+libparsec = { workspace = true }
+
+clap = { workspace = true, features = ["default", "derive"] }
+hex-literal = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
