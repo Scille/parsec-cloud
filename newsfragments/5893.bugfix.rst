@@ -1,0 +1,1 @@
+Check that the Parsec application is not running when executing the uninstaller.
