@@ -563,7 +563,7 @@
         "actions": {
             "understand": "I understand",
             "download": "Download",
-            "backToWorkspaces": "Back to workspaces"
+            "backToDevices": "Back to my devices"
         },
         "toasts": {
             "fileDownloadOk": "The recovery file was successfully downloaded",

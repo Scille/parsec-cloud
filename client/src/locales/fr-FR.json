@@ -563,7 +563,7 @@
         "actions": {
             "understand": "J'ai compris",
             "download": "Télécharger",
-            "backToWorkspaces": "Retourner aux espaces de travail"
+            "backToDevices": "Retourner à mes appareils"
         },
         "toasts": {
             "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",

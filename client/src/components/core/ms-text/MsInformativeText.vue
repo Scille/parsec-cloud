@@ -29,6 +29,7 @@ defineProps<{
   align-items: center;
   gap: 1rem;
   background-color: none;
+  max-width: 37.5rem;
 
   &__icon {
     color: var(--parsec-color-light-primary-600);
