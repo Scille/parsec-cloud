@@ -68,7 +68,7 @@
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.App)"
       >
-        <ion-text class="body-sm"> {{ $t('MenuPage.about') }} (v{{ getAppVersion() }}) </ion-text>
+        <ion-text class="body-sm version"> {{ $t('MenuPage.about') }} (v{{ getAppVersion() }}) </ion-text>
       </ion-item>
     </div>
   </ion-list>
