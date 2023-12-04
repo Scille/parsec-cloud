@@ -34,12 +34,6 @@
             class="ms-modal-header__title-container"
             v-if="title"
           >
-            <ion-icon
-              v-if="theme || titleIcon"
-              :icon="getTitleIcon()"
-              size="large"
-              class="ms-modal-header__title-icon"
-            />
             <ion-title class="ms-modal-header__title title-h2">
               {{ title }}
             </ion-title>
@@ -125,13 +119,13 @@ export interface MsModalConfig {
 
 <script setup lang="ts">
 import { IonText, IonPage, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton, modalController, IonFooter, IonIcon } from '@ionic/vue';
-import { close, informationCircle, checkmarkCircle, warning, closeCircle } from 'ionicons/icons';
+import { close } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
 import { MsReportTheme, MsModalResult } from '@/components/core/ms-types';
 import MsReportText from '@/components/core/ms-text/MsReportText.vue';
 
 const modal: Ref<HTMLDivElement | null> = ref(null);
-const props = defineProps<MsModalConfig>();
+defineProps<MsModalConfig>();
 defineEmits<{
   (e: 'onEnterKeyup'): void;
 }>();
@@ -149,22 +143,6 @@ async function cancel(): Promise<boolean> {
 
 async function confirm(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Confirm);
-}
-
-function getTitleIcon(): string {
-  if (props.theme) {
-    switch (props.theme) {
-      case MsReportTheme.Info:
-        return informationCircle;
-      case MsReportTheme.Success:
-        return checkmarkCircle;
-      case MsReportTheme.Warning:
-        return warning;
-      case MsReportTheme.Error:
-        return closeCircle;
-    }
-  }
-  return props.titleIcon ?? '';
 }
 </script>
 
