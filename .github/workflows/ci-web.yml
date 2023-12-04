@@ -90,7 +90,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
+        uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           target: wasm32-unknown-unknown
@@ -110,7 +110,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@b61491983a082ef851796e8c4feac004b49da5be # pin v2.21.19
+      - uses: taiki-e/install-action@d211c4be5a95cbcd52a0870dda7d63a107a58368 # pin v2.21.26
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 

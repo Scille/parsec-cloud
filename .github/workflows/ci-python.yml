@@ -127,7 +127,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # pin v1.5.0
+        uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
         if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
