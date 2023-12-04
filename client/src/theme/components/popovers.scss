@@ -6,20 +6,20 @@ ion-popover {
   --width: 300px;
 }
 
-.popover-side-bottom .popover-viewport {
-  border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
-  border-radius: var(--parsec-radius-6);
-  overflow: hidden;
-}
-
-.popover-side-bottom {
+.popover-side-bottom:not(.tooltip-popover) {
   --width: 250px;
   --offset-x: -3em;
   --offset-y: 0.5em;
+
+  .popover-viewport {
+    border: var(--parsec-color-light-secondary-disabled) 1.5px solid;
+    border-radius: var(--parsec-radius-8);
+    overflow: hidden;
+  }
 }
 
 ion-popover::part(content) {
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
 }
 
 /* --- Option file popover --- */
@@ -48,4 +48,16 @@ ion-popover::part(content) {
 
 .profile-header-popover::part(content) {
   background: none;
+}
+
+/* --- tooltip popover --- */
+.tooltip-popover {
+  --background: none;
+  --box-shadow: none;
+  --width: fit-content;
+
+  .popover-viewport {
+    border: none;
+    overflow: hidden;
+  }
 }

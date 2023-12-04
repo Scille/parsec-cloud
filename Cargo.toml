@@ -19,6 +19,7 @@ members = [
     "bindings/web",
     "bindings/electron",
     "bindings/android/libparsec/rust",
+    "parsec_cli",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
 # The idea is to be able to do `cargo test` from the root and have all the libparsec&co tests run
@@ -38,6 +39,7 @@ default-members = [
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
     "libparsec/crates/types",
+    "parsec_cli",
 ]
 resolver = "2"
 
@@ -98,6 +100,7 @@ base64 = { version = "0.21.5", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.5.0", default-features = false }
 chrono = { version = "0.4.31", default-features = false }
+clap = { version = "4.4.10", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.3.2", default-features = false }
@@ -132,7 +135,7 @@ hex = { version = "0.4", default-features = false }
 instant = { version = "0.1.12", default-features = false }
 itertools = { version = "0.11.0", default-features = false }
 jni = { version = "0.21.1", default-features = false }
-js-sys = { version = "0.3.65", default-features = false }
+js-sys = { version = "0.3.66", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 libc = { version = "0.2.150", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
@@ -169,15 +172,16 @@ sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
 syn = { version = "2.0.39", default-features = false }
+terminal-spinners = { version = "0.3.2", default-features = false }
 thiserror = { version = "1.0.50", default-features = false }
 tokio = { version = "1.34.0", default-features = false }
 unicode-normalization = { version = "0.1.22", default-features = false }
 url = { version = "2.5.0", default-features = false }
 uuid = { version = "1.6.1", default-features = false }
-wasm-bindgen-futures = { version = "0.4.38", default-features = false }
-wasm-bindgen-test = { version = "0.3.38", default-features = false }
+wasm-bindgen-futures = { version = "0.4.39", default-features = false }
+wasm-bindgen-test = { version = "0.3.39", default-features = false }
 wasm-bindgen = { version = "0.2.87", default-features = false }
-web-sys = { version = "0.3.65", default-features = false }
+web-sys = { version = "0.3.66", default-features = false }
 winfsp_build = { version = "0.1.1", default-features = false }
 winfsp_wrs = { version = "0.1.0", git = "https://github.com/Scille/winfsp_wrs.git", rev = "d768c7e", default-features = false }
 x25519-dalek = { version = "2.0.0", default-features = false }

@@ -198,6 +198,7 @@ ifempty
 ifeq
 ifnewer
 ijkl
+ilog
 imgconverter
 inversed
 iodepth

@@ -154,6 +154,19 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
     ROOT_DIR
+    / "docs/adminguide/hosting/index.rst": {
+        Tool.PostgreSQL: [ReplaceRegex(r"postgres-\d+", only_major_version("postgres-{version}"))],
+        Tool.Python: [
+            ReplaceRegex(r"- Python v[0-9.]+", hide_patch_version("- Python v{version}")),
+        ],
+        Tool.Parsec: [
+            ReplaceRegex(
+                r"parsec-cloud\[backend\]==.+'",
+                "parsec-cloud[backend]=={version}'",
+            ),
+        ],
+    },
+    ROOT_DIR
     / "docs/adminguide/hosting/parsec-server.docker.yaml": {
         Tool.PostgreSQL: [
             ReplaceRegex(

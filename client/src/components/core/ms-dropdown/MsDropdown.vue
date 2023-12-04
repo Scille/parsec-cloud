@@ -28,6 +28,7 @@ import { MsDropdownOption, MsDropdownChangeEvent, getMsOptionByKey } from '@/com
 const props = defineProps<{
   defaultOption: any;
   label?: string;
+  description?: string;
   options: MsDropdownOption[];
   disabled?: boolean;
 }>();
@@ -76,6 +77,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
   background: none;
   color: var(--parsec-color-light-primary-700);
 }
+
 .option {
   --background-hover: var(--parsec-color-light-primary-50);
   --color-hover: var(--ion-color-tertiary);
@@ -85,6 +87,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     font-weight: bold;
   }
 }
+
 .ms-dropdown-icon {
   margin-left: 0.5em;
   transition: transform ease-out 300ms;
