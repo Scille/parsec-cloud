@@ -58,9 +58,9 @@ html:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-watch-html:
+watch-html: html
 	while inotifywait -e modify -e move -e create -e delete --exclude $(BUILDDIR) --recursive .; do \
-		$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html; \
+		$(MAKE) html; \
 	done
 
 dirhtml:
