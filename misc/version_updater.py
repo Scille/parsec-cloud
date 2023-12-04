@@ -263,7 +263,11 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     / "*/**/Cargo.toml": {
         Tool.License: [ReplaceRegex(r"license.workspace = true", "license.workspace = true")]
     },
-    ROOT_DIR / "Cargo.toml": {Tool.License: [TOML_LICENSE_FIELD]},
+    ROOT_DIR
+    / "Cargo.toml": {
+        Tool.License: [TOML_LICENSE_FIELD],
+        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
+    },
 }
 
 
@@ -293,12 +297,15 @@ def check_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) ->
 
 
 def update_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) -> List[str]:
+    root_cargo = filename.name == "Cargo.toml"
     try:
         regexes = compile_regexes(raw_regexes, version)
     except re.error:
         raise ValueError(f"Failed to compile regexes for file `{filename}`")
     matched = {regex[0].pattern: False for regex in regexes}
 
+    if root_cargo:
+        print(f"Update {filename}")
     with FileInput(filename, inplace=True) as f:
         for line in f:
             for regex, replaced_line in regexes:
