@@ -19,7 +19,7 @@ members = [
     "bindings/web",
     "bindings/electron",
     "bindings/android/libparsec/rust",
-    "parsec_cli",
+    "cli",
 ]
 # Ignore bindings stuff given they are special snowflakes that require exotic toolchain and dependencies
 # The idea is to be able to do `cargo test` from the root and have all the libparsec&co tests run
@@ -39,7 +39,7 @@ default-members = [
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
     "libparsec/crates/types",
-    "parsec_cli",
+    "cli",
 ]
 resolver = "2"
 
