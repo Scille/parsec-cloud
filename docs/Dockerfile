@@ -34,9 +34,9 @@ RUN apt-get update \
     inotify-tools
 
 USER parsec:parsec
-WORKDIR /data
+WORKDIR /data/docs
 
-COPY poetry.lock pyproject.toml conf.py /data/
+COPY poetry.lock pyproject.toml conf.py /data/docs/
 
 RUN python3 -m venv /home/parsec/poetry-venv && \
     source /home/parsec/poetry-venv/bin/activate && \
