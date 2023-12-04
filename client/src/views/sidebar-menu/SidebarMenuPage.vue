@@ -6,10 +6,7 @@
       class="divider"
       ref="divider"
     />
-    <ion-split-pane
-      content-id="main"
-      ref="splitPane"
-    >
+    <ion-split-pane content-id="main">
       <ion-menu
         content-id="main"
         class="sidebar"
@@ -273,7 +270,6 @@ import {
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 
 const currentRoute = useRoute();
-const splitPane = ref();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -344,12 +340,7 @@ function onEnd(): void {
 }
 
 function resizeMenu(newWidth: number): void {
-  if (splitPane.value) {
-    splitPane.value.$el.style.setProperty('--side-width', `${newWidth}px`);
-  }
-  if (divider.value) {
-    divider.value.style.setProperty('left', `${newWidth - 4}px`);
-  }
+  document.documentElement.style.setProperty('--parsec-sidebar-menu-width', `${newWidth}px`);
 }
 </script>
 
@@ -358,7 +349,7 @@ function resizeMenu(newWidth: number): void {
   width: 8px;
   height: 100%;
   position: absolute;
-  left: 296px;
+  left: calc(var(--parsec-sidebar-menu-width) - 4px);
   top: 0;
   z-index: 10000;
   cursor: ew-resize;
@@ -531,9 +522,9 @@ function resizeMenu(newWidth: number): void {
 }
 
 ion-split-pane {
-  --side-min-width: 0px;
-  --side-max-width: 500px;
-  --side-width: 300px;
+  --side-min-width: var(--parsec-sidebar-menu-min-width);
+  --side-max-width: var(--parsec-sidebar-menu-max-width);
+  --side-width: var(--parsec-sidebar-menu-width);
 }
 
 ion-menu {

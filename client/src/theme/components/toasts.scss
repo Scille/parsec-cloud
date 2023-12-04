@@ -3,6 +3,7 @@
 /* **** Parsec toasts **** */
 
 ion-toast.notification-toast {
+  --start: var(--parsec-sidebar-menu-width);
   &.ms-info {
     --ms-notification-toast-text-color: var(--parsec-color-light-primary-600);
     --ms-notification-toast-background-color: var(--parsec-color-light-primary-100);
