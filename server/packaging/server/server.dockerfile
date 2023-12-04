@@ -22,6 +22,7 @@ ADD --link \
 ADD --link libparsec/ libparsec/
 ADD --link server/ server/
 ADD --link bindings/ bindings/
+ADD --link cli/ cli/
 
 RUN bash in-docker-build.sh
 
