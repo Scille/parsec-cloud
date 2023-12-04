@@ -13,6 +13,17 @@ pub struct ClientConfig {
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
 }
 
+impl Default for ClientConfig {
+    fn default() -> Self {
+        Self {
+            config_dir: get_default_config_dir(),
+            data_base_dir: get_default_data_base_dir(),
+            mountpoint_base_dir: get_default_mountpoint_base_dir(),
+            workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        }
+    }
+}
+
 impl From<ClientConfig> for Arc<libparsec_client::ClientConfig> {
     fn from(config: ClientConfig) -> Self {
         Arc::new(config.into())
