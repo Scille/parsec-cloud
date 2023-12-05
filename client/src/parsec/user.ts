@@ -87,45 +87,6 @@ export async function listRevokedUsers(): Promise<Result<Array<UserInfo>, Client
   return result;
 }
 
-export async function listUserDevices(user: UserID): Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>> {
-  const handle = getParsecHandle();
-
-  if (handle !== null && !needsMocks()) {
-    const result = await libparsec.clientListUserDevices(handle, user);
-    if (result.ok) {
-      result.value.map((item) => {
-        item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
-        return item;
-      });
-    }
-    return result as any as Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>;
-  } else {
-    return {
-      ok: true,
-      value: [
-        {
-          id: 'device1',
-          deviceLabel: 'My First Device',
-          createdOn: DateTime.now(),
-          createdBy: 'some_device',
-        },
-        {
-          id: 'device2',
-          deviceLabel: 'My Second Device',
-          createdOn: DateTime.now(),
-          createdBy: 'device1',
-        },
-        {
-          id: 'recovery_device1',
-          deviceLabel: 'Recovery First Device',
-          createdOn: DateTime.now(),
-          createdBy: 'device1',
-        },
-      ],
-    };
-  }
-}
-
 export enum RevokeUserTag {
   Internal = 'Internal',
 }
