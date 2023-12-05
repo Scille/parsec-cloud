@@ -161,7 +161,7 @@ async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
     devices.value = result.value;
-    if (await hasRecoveryDevice(devices.value)) {
+    if (await hasRecoveryDevice()) {
       passwordSaved.value = true;
     }
   } else {
