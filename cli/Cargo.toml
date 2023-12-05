@@ -11,10 +11,12 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+testenv = []
 
 [dependencies]
 libparsec = { workspace = true }
 
+anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive"] }
 hex-literal = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

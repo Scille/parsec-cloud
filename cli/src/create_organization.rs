@@ -26,7 +26,7 @@ pub async fn create_organization_req(
     organization_id: &OrganizationID,
     addr: &BackendAddr,
     administration_token: &str,
-) -> String {
+) -> anyhow::Result<String> {
     let url = addr.to_http_url(Some("/administration/organizations"));
 
     let rep = Client::new()
@@ -36,18 +36,21 @@ pub async fn create_organization_req(
             "organization_id": organization_id,
         }))
         .send()
-        .await
-        .expect("Invalid request, maybe the server didn't start ?");
+        .await?;
 
-    let bootstrap_token = rep.json::<Value>().await.expect("Unreachable")["bootstrap_token"]
+    let rep = rep.json::<Value>().await?;
+
+    if let Some(e) = rep.get("error") {
+        return Err(anyhow::anyhow!("{e}"));
+    }
+
+    Ok(rep["bootstrap_token"]
         .as_str()
         .expect("Unreachable")
-        .into();
-
-    bootstrap_token
+        .to_string())
 }
 
-pub async fn create_organization(create_organization: CreateOrganization) {
+pub async fn create_organization(create_organization: CreateOrganization) -> anyhow::Result<()> {
     let CreateOrganization {
         organization_id,
         addr,
@@ -59,7 +62,7 @@ pub async fn create_organization(create_organization: CreateOrganization) {
         .text("Creating organization")
         .start();
 
-    let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await;
+    let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await?;
 
     handle.done();
 
@@ -68,5 +71,7 @@ pub async fn create_organization(create_organization: CreateOrganization) {
 
     let organization_addr_display = organization_addr.to_url();
 
-    println!("Organization bootstrap url: {YELLOW}{organization_addr_display}{RESET}")
+    println!("Organization bootstrap url: {YELLOW}{organization_addr_display}{RESET}");
+
+    Ok(())
 }

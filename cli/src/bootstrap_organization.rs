@@ -35,10 +35,10 @@ pub async fn bootstrap_organization_req(
     device_label: DeviceLabel,
     human_handle: HumanHandle,
     password: Password,
-) -> AvailableDevice {
+) -> anyhow::Result<AvailableDevice> {
     let on_event_callback = Arc::new(|_| ());
 
-    libparsec::bootstrap_organization(
+    Ok(libparsec::bootstrap_organization(
         client_config,
         on_event_callback,
         addr,
@@ -48,23 +48,17 @@ pub async fn bootstrap_organization_req(
         // TODO: handle sequestered organization
         None,
     )
-    .await
-    .expect("Cannot bootstrap the organization")
+    .await?)
 }
 
-pub async fn bootstrap_organization(bootstrap_organization: BootstrapOrganization) {
+pub async fn bootstrap_organization(
+    bootstrap_organization: BootstrapOrganization,
+) -> anyhow::Result<()> {
     let human_handle =
-        match HumanHandle::new(&bootstrap_organization.email, &bootstrap_organization.label) {
-            Ok(v) => v,
-            Err(e) => {
-                eprintln!("Cannot create human handle: {e}");
-                std::process::exit(1);
-            }
-        };
+        HumanHandle::new(&bootstrap_organization.email, &bootstrap_organization.label)
+            .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
-    let password = rpassword::prompt_password("password:")
-        .expect("Cannot prompt password")
-        .into();
+    let password = rpassword::prompt_password("password:")?.into();
 
     let handle = SpinnerBuilder::new()
         .spinner(&DOTS)
@@ -78,7 +72,9 @@ pub async fn bootstrap_organization(bootstrap_organization: BootstrapOrganizatio
         human_handle,
         password,
     )
-    .await;
+    .await?;
 
     handle.done();
+
+    Ok(())
 }

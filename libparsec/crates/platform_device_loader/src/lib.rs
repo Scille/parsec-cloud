@@ -56,9 +56,9 @@ pub enum LoadDeviceError {
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
-#[allow(unused)]
 pub async fn load_device(
-    config_dir: &Path,
+    // TODO: Should we set under testbed feature ?
+    #[allow(unused)] config_dir: &Path,
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     #[cfg(feature = "test-with-testbed")]

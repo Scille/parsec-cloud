@@ -169,7 +169,8 @@ async def _run_server(
             print(
                 f"{BOLD_YELLOW}All set !"
                 f"{NO_COLOR} Don't forget to export `TESTBED_SERVER_URL` environ variable:\n"
-                f"{PINK}export TESTBED_SERVER_URL='parsec://127.0.0.1:{port}?no_ssl=true'{NO_COLOR}"
+                f"{PINK}export TESTBED_SERVER_URL='parsec://127.0.0.1:{port}?no_ssl=true'{NO_COLOR}",
+                flush=True,
             )
 
 
