@@ -15,31 +15,32 @@ describe('Header breadcrumbs', () => {
   });
 
   it('Display current device', () => {
+    const NODES = [
+      {
+        id: 1,
+        display: 'First Node',
+        name: 'route1',
+        params: { param1: 1 },
+        query: { query1: 1 },
+      },
+      {
+        id: 2,
+        display: 'Second Node',
+        name: 'route2',
+        params: { param2: 2 },
+        query: { query2: 2 },
+      },
+      {
+        id: 3,
+        display: 'Third Node',
+        name: 'route3',
+        params: { param3: 3 },
+        query: { query3: 3 },
+      },
+    ];
     const wrapper = mount(HeaderBreadcrumbs, {
       props: {
-        pathNodes: [
-          {
-            id: 1,
-            display: 'First Node',
-            name: 'route1',
-            params: { param1: 1 },
-            query: { query1: 1 },
-          },
-          {
-            id: 2,
-            display: 'Second Node',
-            name: 'route2',
-            params: { param2: 2 },
-            query: { query2: 2 },
-          },
-          {
-            id: 3,
-            display: 'Third Node',
-            name: 'route3',
-            params: { param3: 3 },
-            query: { query3: 3 },
-          },
-        ],
+        pathNodes: NODES,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -52,10 +53,7 @@ describe('Header breadcrumbs', () => {
     expect(wrapper.findAllComponents('ion-breadcrumb').at(2)?.text()).to.equal('Third Node');
 
     wrapper.findAllComponents('ion-breadcrumb').at(1)?.trigger('click');
-    const routesCalled = getRoutesCalled();
-    expect(routesCalled.length).to.equal(1);
-    expect(routesCalled[0].route).to.equal('route2');
-    expect(routesCalled[0].params).to.deep.equal({ param2: 2 });
-    expect(routesCalled[0].query).to.deep.equal({ query2: 2 });
+    expect(wrapper.emitted('change')?.length).to.equal(1);
+    expect(wrapper.emitted('change')?.at(0)?.at(0)).to.deep.equal(NODES[1]);
   });
 });

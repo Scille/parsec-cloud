@@ -216,7 +216,6 @@ import { entryNameValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
-import { getPathLink, isWeb, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/services/importManager';
 import { selectFolder } from '@/views/files/FolderSelectionModal.vue';
 
@@ -235,10 +234,10 @@ const unwatchRoute = watch(currentRoute, async (newRoute) => {
 });
 const currentPath = ref('/');
 const workspaceHandle = computed(() => {
-  return parseInt(currentRoute.params.workspaceHandle as string) as WorkspaceHandle;
+  return parseInt(currentRoute.params.workspaceHandle as string) as parsec.WorkspaceHandle;
 });
 const workspaceId = computed(() => {
-  return currentRoute.query.workspaceId as WorkspaceID;
+  return currentRoute.query.workspaceId as parsec.WorkspaceID;
 });
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const children: Ref<Array<parsec.EntryStat>> = ref([]);
@@ -473,7 +472,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   }
   const entry = entries[0];
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await getPathLink(workspaceId.value, filePath);
+  const result = await parsec.getPathLink(workspaceId.value, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
       notificationManager.showToast(
@@ -626,7 +625,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
-  if (isWeb()) {
+  if (parsec.isWeb()) {
     await notificationManager.showModal(
       new Notification({
         message: t('FoldersPage.open.unavailableOnWeb'),

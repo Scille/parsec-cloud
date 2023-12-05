@@ -206,17 +206,28 @@ describe('Check folders page', () => {
     cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one element');
-    cy.get('.folder-selection-modal').find('.ms-alert-modal-header__text').contains('Current location: /Dir1');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__text')
+      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folders-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
-    cy.get('@items').eq(0).contains('Dir1').click();
+    cy.get('@items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 3);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
-    cy.get('@breadcrumbs').eq(2).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
+    cy.get('@breadcrumbs')
+      .eq(2)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -228,17 +239,28 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 elements');
-    cy.get('.folder-selection-modal').find('.ms-alert-modal-header__text').contains('Current location: /Dir1');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__text')
+      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folders-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
-    cy.get('@items').eq(0).contains('Dir1').click();
+    cy.get('@items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 3);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
-    cy.get('@breadcrumbs').eq(2).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
+    cy.get('@breadcrumbs')
+      .eq(2)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -251,17 +273,28 @@ describe('Check folders page', () => {
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one element');
-    cy.get('.folder-selection-modal').find('.ms-alert-modal-header__text').contains('Current location: /Dir1');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__text')
+      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folders-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
-    cy.get('@items').eq(0).contains('Dir1').click();
+    cy.get('@items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 3);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
-    cy.get('@breadcrumbs').eq(2).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
+    cy.get('@breadcrumbs')
+      .eq(2)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -274,17 +307,28 @@ describe('Check folders page', () => {
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 elements');
-    cy.get('.folder-selection-modal').find('.ms-alert-modal-header__text').contains('Current location: /Dir1');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__text')
+      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folders-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
-    cy.get('@items').eq(0).contains('Dir1').click();
+    cy.get('@items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 3);
-    cy.get('@breadcrumbs').eq(1).contains('Dir1');
-    cy.get('@breadcrumbs').eq(2).contains('Dir1');
+    cy.get('@breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/);
+    cy.get('@breadcrumbs')
+      .eq(2)
+      .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
