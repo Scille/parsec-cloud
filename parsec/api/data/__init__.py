@@ -18,6 +18,8 @@ from parsec._parsec import (
     SequesterServiceCertificate,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
+    ShamirRecoveryShareData,
+    ShamirShare,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -59,6 +61,8 @@ __all__ = (
     "SequesterServiceCertificate",
     "ShamirRecoveryBriefCertificate",
     "ShamirRecoveryShareCertificate",
+    "ShamirRecoveryShareData",
+    "ShamirShare",
     # Invite
     "SASCode",
     "generate_sas_codes",

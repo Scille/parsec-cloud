@@ -764,3 +764,44 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device, bob: &Device) {
     let certif2 = ShamirRecoveryBriefCertificate::unsecure_load(&data2).unwrap();
     assert_eq!(certif2, expected);
 }
+
+#[rstest]
+fn serde_shamir_recovery_share_data(alice: &Device, bob: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.1+dev)
+    // Content:
+    //   type: "shamir_recovery_share_data"
+    //   weighted_share: [hex!("0192742946caeb"), hex!("02f71c4a55f383")]
+    //
+    let data = hex!(
+        "a8c970ea89245619cb15126911e4ec5de7fddf1fb557016eae39a6c8a2e37b33ff79775bb7"
+        "cec56563504b703bebba9fa7a674c4668b77d9c2cb29403a286d06e71ead7734a65af2b879"
+        "0778bcd11078307ea7635fec8ce611b5871bc36fd6cf20b1ad51cf1dcd1ce61715b2d115d2"
+        "05581f61f6bc7d025ebe642827ff5a970b65b7de2db761b4a45ad5921ae36f0833fefcbb4b"
+        "dd64edb5ae24c9d0137cfdf81979cf72c90221253de6ed6255c678726eea0b0c1127bcf8b7"
+        "80020f5424"
+    );
+    let share_data = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        &data,
+        &bob.private_key,
+        &alice.verify_key(),
+    )
+    .unwrap();
+    let expected = ShamirRecoveryShareData {
+        weighted_share: vec![
+            hex!("0192742946caeb").as_slice().try_into().unwrap(),
+            hex!("02f71c4a55f383").as_slice().try_into().unwrap(),
+        ],
+    };
+    assert_eq!(share_data, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_sign_and_encrypt_for(&alice.signing_key, &bob.public_key());
+    // Note we cannot just compare with `data` due to signature and keys order
+    let share_data2 = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        &data2,
+        &bob.private_key,
+        &alice.verify_key(),
+    )
+    .unwrap();
+    assert_eq!(share_data2, expected);
+}

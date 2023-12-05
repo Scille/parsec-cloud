@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 
-from parsec._parsec import SequesterPublicKeyDer, SequesterVerifyKeyDer
+from parsec._parsec import SequesterPublicKeyDer, SequesterVerifyKeyDer, shamir_make_shares
 from parsec.api.data import *
 from parsec.api.protocol import *
 
@@ -181,4 +181,15 @@ display(
     "shamir recovery brief certificate",
     srbc,
     [ALICE.verify_key, "zip"],
+)
+
+
+shares = shamir_make_shares(3, b"secret", 4)
+srsd = ShamirRecoveryShareData(shares[:2]).dump_sign_and_encrypt_for(
+    ALICE.signing_key, BOB.public_key
+)
+display(
+    "shamir recovery share data",
+    srsd,
+    [BOB.private_key, ALICE.verify_key, "zip"],
 )
