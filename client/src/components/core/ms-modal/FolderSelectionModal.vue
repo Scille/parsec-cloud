@@ -57,33 +57,9 @@
   </ms-modal>
 </template>
 
-<script lang="ts">
-import FolderSelectionModal from '@/views/files/FolderSelectionModal.vue';
-import { Console } from 'console';
-
-export interface FolderSelectionOptions {
-  title: string;
-  subtitle?: string;
-  startingPath: FsPath;
-}
-
-export async function selectFolder(options: FolderSelectionOptions): Promise<FsPath | null> {
-  const modal = await modalController.create({
-    component: FolderSelectionModal,
-    canDismiss: true,
-    cssClass: 'folder-selection-modal',
-    componentProps: options,
-  });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await modal.dismiss();
-  return result.role === MsModalResult.Confirm ? result.data : null;
-}
-</script>
-
 <script setup lang="ts">
 import { home, folder, document } from 'ionicons/icons';
-import { EntryStat, FsPath, EntryStatFolder } from '@/parsec';
+import { EntryStat, EntryStatFolder } from '@/parsec';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { modalController, IonList, IonItem, IonLabel, IonIcon, IonListHeader } from '@ionic/vue';
 import { ref, Ref, onMounted } from 'vue';
@@ -91,6 +67,7 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { entryStat } from '@/parsec';
 import { MsModalResult } from '@/components/core/ms-types';
 import { Path } from '@/parsec';
+import { FolderSelectionOptions } from '@/common/inputs';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath = ref(props.startingPath);

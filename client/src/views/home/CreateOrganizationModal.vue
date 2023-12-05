@@ -191,7 +191,7 @@ import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
 import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
-import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { askQuestion, Answer } from '@/common/inputs';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,

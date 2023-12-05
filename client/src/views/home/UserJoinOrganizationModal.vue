@@ -197,7 +197,7 @@ import { MsModalResult } from '@/components/core/ms-types';
 import { Notification, NotificationManager, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { asyncComputed } from '@/common/asyncComputed';
 import { UserClaim } from '@/parsec';
-import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { askQuestion, Answer } from '@/common/inputs';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,

@@ -19,36 +19,13 @@
   </ms-modal>
 </template>
 
-<script lang="ts">
-import MsPasswordInputModal from '@/components/core/ms-modal/MsPasswordInputModal.vue';
-
-interface GetPasswordOptions {
-  title: string;
-  subtitle?: string;
-  inputLabel?: string;
-  okButtonText?: string;
-}
-
-export async function getPasswordFromUser(options: GetPasswordOptions): Promise<string | null> {
-  const modal = await modalController.create({
-    component: MsPasswordInputModal,
-    canDismiss: true,
-    cssClass: 'password-input-modal',
-    componentProps: options,
-  });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await modal.dismiss();
-  return result.role === MsModalResult.Confirm ? result.data : null;
-}
-</script>
-
 <script setup lang="ts">
 import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import { MsModalResult } from '@/components/core/ms-types';
+import { GetPasswordOptions } from '@/common/inputs';
 
 defineProps<GetPasswordOptions>();
 

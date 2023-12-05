@@ -169,7 +169,7 @@ import { DeviceClaim, parseBackendAddr, ParsedBackendAddrInvitationDevice, Parse
 import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
-import { askQuestion, Answer } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { askQuestion, Answer } from '@/common/inputs';
 
 const notificationManager = inject(NotificationKey) as NotificationManager;
 

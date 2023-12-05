@@ -142,7 +142,7 @@ import {
   getPathLink as parsecGetPathLink,
 } from '@/parsec';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
-import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { getTextInputFromUser } from '@/common/inputs';
 import { workspaceNameValidator } from '@/common/validators';
 import { writeTextToClipboard } from '@/common/clipboard';
 
