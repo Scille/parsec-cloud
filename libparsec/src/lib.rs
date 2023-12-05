@@ -31,3 +31,6 @@ pub use workspace::*;
 pub async fn list_available_devices(config_dir: &std::path::Path) -> Vec<AvailableDevice> {
     libparsec_platform_device_loader::list_available_devices(config_dir).await
 }
+
+#[cfg(feature = "cli-tests")]
+pub use libparsec_tests_fixtures::{tmp_path, TmpPath};

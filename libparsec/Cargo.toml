@@ -22,6 +22,7 @@ test-utils = [
     "libparsec_types/test-mock-time",
     "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
 ]
+cli-tests = ["dep:libparsec_tests_fixtures"]
 
 [dependencies]
 libparsec_client = { workspace = true }
@@ -35,5 +36,6 @@ libparsec_platform_storage = { workspace = true }
 libparsec_serialization_format = { workspace = true }
 
 libparsec_testbed = { workspace = true, optional = true }
+libparsec_tests_fixtures = { workspace = true, optional = true }
 
 dirs = { workspace = true }

@@ -26,6 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  poetry-version: 1.5.1
   CARGO_CI_FLAGS: --locked --profile ci-rust
   CARGO_NEXTEST_CI_FLAGS: --profile=ci --locked --cargo-profile ci-rust
   WINFSP_VERSION: 2.0.23075
@@ -88,6 +89,25 @@ jobs:
       - uses: taiki-e/install-action@a1f180f99a1c725ceb0e42382d8aa2402edf1558 # pin v2.22.5
         with:
           tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
+
+      - uses: ./.github/actions/setup-python-poetry
+        id: setup-python
+        with:
+          poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
+        timeout-minutes: 10
+
+      - name: Install python dependencies
+        run: python make.py python-dev-install
+        timeout-minutes: 10
+
+      - name: Build CLI binary
+        run: cargo build --profile ci-rust --package parsec_cli --features testenv
+        timeout-minutes: 5
+
+      - name: Test CLI
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli --features testenv
+        timeout-minutes: 10
 
       - name: Categorize workspace crates
         id: crates
@@ -224,3 +244,22 @@ jobs:
         env:
           RUST_LOG: debug
           TESTBED_SERVER: http://localhost:6777
+
+      - uses: ./.github/actions/setup-python-poetry
+        id: setup-python
+        with:
+          poetry-version: ${{ env.poetry-version }}
+          project-path: ./server
+        timeout-minutes: 10
+
+      - name: Install python dependencies
+        run: python make.py python-dev-install
+        timeout-minutes: 10
+
+      - name: Build CLI binary
+        run: cargo build --profile ci-rust --package parsec_cli --features testenv
+        timeout-minutes: 5
+
+      - name: Test CLI
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli --features testenv
+        timeout-minutes: 20

@@ -69,9 +69,7 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
     let organization_addr =
         BackendOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
-    let organization_addr_display = organization_addr.to_url();
-
-    println!("Organization bootstrap url: {YELLOW}{organization_addr_display}{RESET}");
+    println!("Organization bootstrap url: {YELLOW}{organization_addr}{RESET}");
 
     Ok(())
 }

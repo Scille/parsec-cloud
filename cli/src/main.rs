@@ -5,6 +5,8 @@ mod create_organization;
 mod list_devices;
 #[cfg(feature = "testenv")]
 mod run_testenv;
+#[cfg(all(test, feature = "testenv"))]
+mod tests;
 mod utils;
 
 use clap::{Parser, Subcommand};

@@ -25,3 +25,10 @@ serde_json = { workspace = true }
 terminal-spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 uuid = { workspace = true }
+
+[dev-dependencies]
+libparsec = { workspace = true, features = ["cli-tests"] }
+
+assert_cmd = { workspace = true }
+predicates = { workspace = true, features = ["regex"] }
+rstest = { workspace = true }
