@@ -59,6 +59,7 @@
 
 <script lang="ts">
 import FolderSelectionModal from '@/views/files/FolderSelectionModal.vue';
+import { Console } from 'console';
 
 export interface FolderSelectionOptions {
   title: string;
@@ -116,10 +117,16 @@ async function update(): Promise<void> {
   }
   currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
+  let path = '/';
   headerPath.value = [];
-  let id = 0;
-  let path = '';
-
+  headerPath.value.push({
+    id: 0,
+    display: '',
+    icon: home,
+    name: '',
+    query: { path: path },
+  });
+  let id = 1;
   for (const comp of components) {
     path = await Path.join(path, comp);
     headerPath.value.push({
@@ -147,6 +154,7 @@ async function enterFolder(entry: EntryStat): Promise<void> {
 }
 
 async function confirm(): Promise<boolean> {
+  console.log(selectedPath.value);
   return await modalController.dismiss(selectedPath.value, MsModalResult.Confirm);
 }
 
