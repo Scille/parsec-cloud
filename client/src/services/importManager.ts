@@ -175,7 +175,7 @@ class ImportManager {
       writtenData += buffer.value.byteLength;
       this.sendState(ImportState.FileProgress, {
         importData: data,
-        progress: (writtenData / data.file.size ?? 1) * 100,
+        progress: (writtenData / (data.file.size || 1)) * 100,
       });
     }
     await this.mockClose(fd);
