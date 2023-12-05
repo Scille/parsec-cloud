@@ -97,7 +97,6 @@
 <script lang="ts">
 export interface MsModalConfig {
   title?: string;
-  titleIcon?: string;
   theme?: MsReportTheme;
   subtitle?: string;
   closeButton?: {
