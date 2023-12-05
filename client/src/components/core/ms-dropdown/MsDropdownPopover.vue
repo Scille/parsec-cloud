@@ -117,6 +117,7 @@ function openTooltip(event: Event, text: string): void {
 
   .icon {
     margin: 0;
+    margin-left: 1em;
   }
 
   &.selected {

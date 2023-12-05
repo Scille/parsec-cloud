@@ -658,7 +658,7 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    reference: 'event',
+    alignment: 'end',
   });
   await popover.present();
 

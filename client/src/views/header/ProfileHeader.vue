@@ -5,10 +5,7 @@
     button
     id="click-trigger"
     class="container"
-    @click="
-      isPopoverOpen = !isPopoverOpen;
-      openPopover($event);
-    "
+    @click="openPopover($event)"
   >
     <ion-avatar
       slot="start"
@@ -52,15 +49,17 @@ const props = defineProps<{
   name: string;
 }>();
 
-async function openPopover(ev: Event): Promise<void> {
+async function openPopover(event: Event): Promise<void> {
+  isPopoverOpen.value = !isPopoverOpen.value;
   const popover = await popoverController.create({
     component: ProfileHeaderPopover,
+    cssClass: 'profile-header-popover',
     componentProps: {
       name: props.name,
     },
-    cssClass: 'profile-header-popover',
-    event: ev,
+    event: event,
     showBackdrop: false,
+    alignment: 'end',
   });
   await popover.present();
 
@@ -109,6 +108,9 @@ async function openPopover(ev: Event): Promise<void> {
   cursor: pointer;
   &:hover {
     --background-hover: none;
+  }
+  & * {
+    pointer-events: none;
   }
 }
 

@@ -79,6 +79,10 @@ function onOptionClick(option?: MsSorterOption): void {
   .checked.selected {
     color: var(--parsec-color-light-primary-700);
   }
+
+  ion-icon {
+    margin-left: 1em;
+  }
 }
 #sort-order-button {
   --background: var(--parsec-color-light-secondary-medium);
@@ -98,4 +102,3 @@ function onOptionClick(option?: MsSorterOption): void {
   }
 }
 </style>
-@/components/core/ms-sort/MsSorterOption

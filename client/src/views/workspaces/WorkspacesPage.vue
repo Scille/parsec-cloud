@@ -253,11 +253,12 @@ async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promis
 async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
   const popover = await popoverController.create({
     component: WorkspaceContextMenu,
+    cssClass: 'workspace-context-menu',
     event: event,
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    reference: 'event',
+    alignment: 'end',
   });
   await popover.present();
 

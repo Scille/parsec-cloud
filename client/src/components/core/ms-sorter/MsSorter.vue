@@ -42,16 +42,18 @@ const selectedOption: Ref<MsSorterOption | undefined> = ref(
 const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value?.label || props.label);
 
-async function openPopover(ev: Event): Promise<void> {
+async function openPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
     component: MsSorterPopover,
+    cssClass: 'sorter-popover',
     componentProps: {
       options: props.options,
       defaultOption: selectedOption.value?.key,
       sorterLabels: props.sorterLabels,
       sortByAsc: sortByAsc.value,
     },
-    event: ev,
+    event: event,
+    alignment: 'end',
     showBackdrop: false,
   });
   await popover.present();
