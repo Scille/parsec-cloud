@@ -27,8 +27,9 @@ use crate::{
 const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
 const DEFAULT_DEVICE_PASSWORD: &str = "test";
 const RESERVED_PORT_OFFSET: u16 = 1024;
+const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
-const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
+pub const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
 
 #[derive(Args)]
 pub struct RunTestenv {
@@ -42,6 +43,15 @@ pub struct RunTestenv {
     /// Skip initialization
     #[arg(short, long, default_value_t)]
     empty: bool,
+}
+
+/// Maps a process id to a port number
+///
+/// Tests are run parallelized, so multiple servers are running on localhost.
+/// Using the PID allows to retrieve the port in tests without having to store it.
+pub fn process_id_to_port(pid: u32) -> u16 {
+    // The first ports are reserved, so let's take an available port
+    pid as u16 % AVAILABLE_PORT_COUNT + RESERVED_PORT_OFFSET
 }
 
 fn create_new_device(
@@ -196,7 +206,7 @@ async fn register_new_user(
     Ok(new_device)
 }
 
-async fn initialize_test_organization(
+pub async fn initialize_test_organization(
     client_config: ClientConfig,
     addr: BackendAddr,
 ) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
@@ -270,13 +280,13 @@ async fn initialize_test_organization(
 
 /// Setup the environment variables
 /// Set stop_after_process to kill the server once the process will run down
-async fn new_environment(
+pub async fn new_environment(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     stop_after_process: u32,
     empty: bool,
 ) -> anyhow::Result<()> {
-    let port = stop_after_process as u16 + RESERVED_PORT_OFFSET;
+    let port = process_id_to_port(stop_after_process);
     let tmp_dir_str = tmp_dir.to_str().expect("Unreachable");
     let _ = std::fs::create_dir_all(&tmp_dir);
 
@@ -390,37 +400,23 @@ async fn new_environment(
     Ok(())
 }
 
-pub async fn run_local_organization(
-    tmp_dir: &Path,
-    source_file: Option<PathBuf>,
-    stop_after_process: u32,
-) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
-    let port = stop_after_process as u16 + RESERVED_PORT_OFFSET;
-    new_environment(tmp_dir, source_file, stop_after_process, false).await?;
-
-    initialize_test_organization(
-        ClientConfig::default(),
-        BackendAddr::new("127.0.0.1".into(), Some(port), false),
-    )
-    .await
-}
-
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
 
-    if run_testenv.empty {
-        new_environment(
-            &tmp_dir,
-            run_testenv.source_file,
-            run_testenv.main_process_id,
-            true,
-        )
-        .await?;
-    } else {
-        let [alice_device, other_alice_device, bob_device] = run_local_organization(
-            &tmp_dir,
-            run_testenv.source_file,
-            run_testenv.main_process_id,
+    new_environment(
+        &tmp_dir,
+        run_testenv.source_file,
+        run_testenv.main_process_id,
+        run_testenv.empty,
+    )
+    .await?;
+
+    if !run_testenv.empty {
+        let port = process_id_to_port(run_testenv.main_process_id);
+
+        let [alice_device, other_alice_device, bob_device] = initialize_test_organization(
+            ClientConfig::default(),
+            BackendAddr::new("127.0.0.1".into(), Some(port), false),
         )
         .await?;
 

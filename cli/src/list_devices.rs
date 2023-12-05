@@ -16,13 +16,14 @@ pub struct ListDevices {
 
 pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
     let config_dir = list_devices.config_dir.unwrap_or(get_default_config_dir());
+    let config_dir_str = config_dir.to_string_lossy();
     let devices = list_available_devices(&config_dir).await;
 
     if devices.is_empty() {
-        println!("No devices found in {YELLOW}{config_dir:?}{RESET}");
+        println!("No devices found in {YELLOW}{config_dir_str}{RESET}");
     } else {
         let n = devices.len();
-        println!("Found {GREEN}{n}{RESET} device(s) in {YELLOW}{config_dir:?}{RESET}:");
+        println!("Found {GREEN}{n}{RESET} device(s) in {YELLOW}{config_dir_str}{RESET}:");
         format_devices(&devices);
     }
 

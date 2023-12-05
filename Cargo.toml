@@ -92,6 +92,7 @@ libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features 
 android_logger = { version = "0.13", default-features = false }
 anyhow = { version = "1.0.75", default-features = false }
 argon2 = { version = "0.5.2", default-features = false }
+assert_cmd = { version = "2.0.12", default-features = false }
 async-lock = { version = "2.8.0", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
 async-trait = { version = "0.1.74", default-features = false }
@@ -148,6 +149,7 @@ openssl = { version = "0.10.61", default-features = false }
 paste = { version = "1.0.14", default-features = false }
 pin-project-lite = { version = "0.2.13", default-features = false }
 percent-encoding = { version = "2.3.1", default-features = false }
+predicates = { version = "3.0.4", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proc-macro2 = { version = "1.0.70", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }

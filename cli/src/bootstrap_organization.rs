@@ -58,6 +58,9 @@ pub async fn bootstrap_organization(
         HumanHandle::new(&bootstrap_organization.email, &bootstrap_organization.label)
             .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
+    #[cfg(feature = "testenv")]
+    let password = "test".to_string().into();
+    #[cfg(not(feature = "testenv"))]
     let password = rpassword::prompt_password("password:")?.into();
 
     let handle = SpinnerBuilder::new()

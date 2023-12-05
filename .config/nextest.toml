@@ -1,6 +1,8 @@
 [profile.default]
 # https://nexte.st/book/slow-tests.html
 slow-timeout = { period = "10s", terminate-after = 3 } # Timeout a test after 30s (3 * 10s)
+# Allow the server to shutdown after the tests
+leak-timeout = "500ms"
 
 [profile.ci]
 slow-timeout = { period = "10s", terminate-after = 5 } # Timeout a test after 50s (5 * 10s)
@@ -12,3 +14,5 @@ status-level = "all"
 failure-output = "immediate-final"
 # Continue even if a test fail.
 fail-fast = false
+# Allow the server to shutdown after the tests
+leak-timeout = "500ms"
