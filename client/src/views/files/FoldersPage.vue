@@ -211,13 +211,11 @@ import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import * as parsec from '@/parsec';
 import { useI18n } from 'vue-i18n';
-import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { getTextInputFromUser, Answer, askQuestion, selectFolder } from '@/common/inputs';
 import { entryNameValidator } from '@/common/validators';
-import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';
 import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/services/importManager';
-import { selectFolder } from '@/views/files/FolderSelectionModal.vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;

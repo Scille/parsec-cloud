@@ -194,7 +194,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
 import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
-import { Answer, askQuestion } from '@/components/core/ms-modal/MsQuestionModal.vue';
+import { Answer, askQuestion } from '@/common/inputs';
 
 enum GreetUserStep {
   WaitForGuest = 1,

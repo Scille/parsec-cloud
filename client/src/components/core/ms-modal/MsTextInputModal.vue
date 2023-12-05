@@ -25,42 +25,7 @@
   </ms-modal>
 </template>
 
-<script lang="ts">
-import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
-
-export interface GetTextOptions {
-  title: string;
-  subtitle?: string;
-  trim?: boolean;
-  validator?: IValidator;
-  inputLabel?: string;
-  placeholder?: string;
-  okButtonText?: string;
-  defaultValue?: string;
-}
-
-export async function getTextInputFromUser(options: GetTextOptions): Promise<string | null> {
-  const modal = await modalController.create({
-    component: MsTextInputModal,
-    canDismiss: true,
-    cssClass: 'text-input-modal',
-    componentProps: {
-      title: options.title,
-      subtitle: options.subtitle,
-      trim: options.trim,
-      validator: options.validator,
-      inputLabel: options.inputLabel,
-      placeholder: options.placeholder,
-      okButtonText: options.okButtonText,
-      defaultValue: options.defaultValue,
-    },
-  });
-  await modal.present();
-  const result = await modal.onWillDismiss();
-  await modal.dismiss();
-  return result.role === MsModalResult.Confirm ? result.data : null;
-}
-</script>
+<script lang="ts"></script>
 
 <script setup lang="ts">
 import { modalController } from '@ionic/vue';
@@ -68,8 +33,9 @@ import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { MsModalResult } from '@/components/core/ms-types';
-import { IValidator, Validity } from '@/common/validators';
+import { Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
+import { GetTextOptions } from '@/common/inputs';
 
 const props = defineProps<GetTextOptions>();
 

@@ -99,7 +99,7 @@ import {
 import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
-import { getTextInputFromUser } from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { getTextInputFromUser } from '@/common/inputs';
 import { emailValidator } from '@/common/validators';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
