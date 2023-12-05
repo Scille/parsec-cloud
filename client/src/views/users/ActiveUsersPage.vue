@@ -368,7 +368,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    reference: 'event',
+    alignment: 'end',
     componentProps: {
       isRevoked: user.isRevoked(),
     },

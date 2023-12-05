@@ -104,10 +104,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
 
 <style lang="scss" scoped>
 .container {
-  border-radius: var(--parsec-radius-8);
   padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--parsec-color-light-secondary-medium);
 }
 
 .profile-email {

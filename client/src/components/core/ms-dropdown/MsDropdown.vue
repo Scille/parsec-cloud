@@ -43,14 +43,16 @@ const selectedOption: Ref<MsDropdownOption | undefined> = ref(
 const labelRef = ref(selectedOption.value?.label || props.label);
 const isPopoverOpen = ref(false);
 
-async function openPopover(ev: Event): Promise<void> {
+async function openPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
     component: MsDropdownPopover,
+    cssClass: 'dropdown-popover',
     componentProps: {
       options: props.options,
       defaultOption: selectedOption.value?.key,
     },
-    event: ev,
+    event: event,
+    alignment: 'end',
     showBackdrop: false,
   });
   isPopoverOpen.value = true;

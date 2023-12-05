@@ -473,12 +473,13 @@ async function openAboutModal(): Promise<void> {
   await modal.onWillDismiss();
 }
 
-async function openPopover(ev: Event): Promise<void> {
+async function openPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
     component: HomePagePopover,
     cssClass: 'homepage-popover',
-    event: ev,
+    event: event,
     showBackdrop: false,
+    alignment: 'end',
   });
   await popover.present();
   const result = await popover.onWillDismiss();

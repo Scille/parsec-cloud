@@ -59,9 +59,8 @@ async function onClick(action: HomePageAction): Promise<boolean> {
 <style lang="scss" scoped>
 .container {
   padding: 0.5rem;
-  border-radius: 0.5rem;
-  overflow: hidden;
 }
+
 .container__item {
   --background: none;
   width: 100%;
