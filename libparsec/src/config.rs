@@ -5,6 +5,10 @@ use std::{path::PathBuf, sync::Arc};
 pub use libparsec_client::{ProxyConfig, WorkspaceStorageCacheSize};
 pub use libparsec_types::prelude::*;
 
+pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
+pub const PARSEC_DATA_DIR: &str = "PARSEC_DATA_DIR";
+pub const PARSEC_HOME_DIR: &str = "PARSEC_HOME_DIR";
+
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
     pub config_dir: PathBuf,
@@ -50,7 +54,12 @@ pub fn get_default_data_base_dir() -> PathBuf {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut path = dirs::data_dir().expect("Could not determine base data directory");
+        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_DATA_DIR) {
+            PathBuf::from(data_dir)
+        } else {
+            dirs::data_dir().expect("Could not determine base data directory")
+        };
+
         // TODO: temporary name to avoid clashing with stable parsec
         path.push("parsec-v3-alpha");
         path
@@ -64,8 +73,13 @@ pub fn get_default_config_dir() -> PathBuf {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        // TODO: check MacOS path correspond to Parsec v2
-        let mut path = dirs::config_dir().expect("Could not determine base config directory");
+        let mut path = if let Ok(config_dir) = std::env::var(PARSEC_CONFIG_DIR) {
+            PathBuf::from(config_dir)
+        } else {
+            // TODO: check MacOS path correspond to Parsec v2
+            dirs::config_dir().expect("Could not determine base config directory")
+        };
+
         // TODO: temporary name to avoid clashing with stable parsec
         path.push("parsec-v3-alpha");
         path
@@ -79,7 +93,12 @@ pub fn get_default_mountpoint_base_dir() -> PathBuf {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut path = dirs::home_dir().expect("Could not determine home directory");
+        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_HOME_DIR) {
+            PathBuf::from(home_dir)
+        } else {
+            dirs::home_dir().expect("Could not determine home directory")
+        };
+
         // TODO: temporary name to avoid clashing with stable parsec
         path.push("Parsec v3 Alpha");
         path

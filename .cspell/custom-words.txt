@@ -79,6 +79,7 @@ conftest
 Consts
 coordinatorlayout
 copybutton
+coreutils
 coro
 corofn
 Couldnt
@@ -566,6 +567,7 @@ tabw
 tada
 targetver
 taskid
+taskkill
 testenv
 texlive
 TEXTINCLUDE

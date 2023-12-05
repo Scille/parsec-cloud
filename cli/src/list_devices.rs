@@ -14,7 +14,7 @@ pub struct ListDevices {
     config_dir: Option<PathBuf>,
 }
 
-pub async fn list_devices(list_devices: ListDevices) {
+pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
     let config_dir = list_devices.config_dir.unwrap_or(get_default_config_dir());
     let devices = list_available_devices(&config_dir).await;
 
@@ -23,6 +23,8 @@ pub async fn list_devices(list_devices: ListDevices) {
     } else {
         let n = devices.len();
         println!("Found {GREEN}{n}{RESET} device(s) in {YELLOW}{config_dir:?}{RESET}:");
-        format_devices(&devices)
+        format_devices(&devices);
     }
+
+    Ok(())
 }

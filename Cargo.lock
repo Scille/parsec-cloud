@@ -2291,6 +2291,7 @@ dependencies = [
 name = "parsec_cli"
 version = "2.16.0-a.0+dev"
 dependencies = [
+ "anyhow",
  "clap",
  "hex-literal",
  "libparsec",
