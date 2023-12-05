@@ -28,6 +28,10 @@
 
 #button_share, #button_apply {
 	text-transform: uppercase;
+}
+
+#label_owner_warning {
+	color: #F1962B;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -64,6 +68,9 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Minimum</enum>
+       </property>
        <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
@@ -76,9 +83,28 @@
       <widget class="SpinnerWidget" name="spinner" native="true"/>
      </item>
      <item>
+      <widget class="QLabel" name="label_owner_warning">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>TEXT_NOT_ENOUGH_OWNERS_WARNING</string>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Minimum</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>

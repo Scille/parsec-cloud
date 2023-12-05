@@ -235,6 +235,7 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
         self.dialog: GreyedDialog[WorkspaceSharingWidget] | None = None
 
         self.has_changes = False
+        self.label_owner_warning.hide()
 
         self.share_success.connect(self._on_share_success)
         self.share_error.connect(self._on_share_error)
@@ -366,13 +367,20 @@ class WorkspaceSharingWidget(QWidget, Ui_WorkspaceSharingWidget):
             self.scroll_content.layout().removeItem(item)
             w.setParent(None)
         QCoreApplication.processEvents()
+        owners_count = 0
         for user_info, role in users.items():
+            if role == WorkspaceRole.OWNER:
+                owners_count += 1
             if not user_info.revoked_on:
                 self.add_participant(
                     user_info,
                     is_current_user=user_info.user_id == self.core.device.user_id,
                     role=role,
                 )
+        # If there's more than one user in the org, and the current user is an Owner, and there's no other owner, we display a warning message
+        self.label_owner_warning.setVisible(
+            owners_count == 1 and self.current_user_role == WorkspaceRole.OWNER and len(users) > 1
+        )
         self.spinner.hide()
         self.widget_users.show()
 
