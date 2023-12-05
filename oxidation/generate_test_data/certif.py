@@ -155,3 +155,30 @@ display(
     rac_deletion_planned,
     [ALICE.verify_key, "zip"],
 )
+
+
+srsc = ShamirRecoveryShareCertificate(
+    author=ALICE.device_id, timestamp=NOW, recipient=BOB.user_id, ciphered_share=b"abcd"
+).dump_and_sign(ALICE.signing_key)
+display(
+    "shamir recovery share certificate",
+    srsc,
+    [ALICE.verify_key, "zip"],
+)
+
+
+srbc = ShamirRecoveryBriefCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    threshold=3,
+    per_recipient_shares={
+        BOB.user_id: 2,
+        UserID("carl"): 1,
+        UserID("diana"): 1,
+    },
+).dump_and_sign(ALICE.signing_key)
+display(
+    "shamir recovery brief certificate",
+    srbc,
+    [ALICE.verify_key, "zip"],
+)

@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use std::collections::HashMap;
+
 use hex_literal::hex;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
@@ -685,5 +687,80 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 = RealmArchivingCertificate::unsecure_load(&data2).unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.1+dev)
+    // Content:
+    //   type: "shamir_recovery_share_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   ciphered_share: hex!("61626364")
+    //   recipient: "bob"
+    //
+    let data = hex!(
+        "59008168d41356fb52c874bc1524c9f06e1bc0f2624ab7f3e61d94a03094bfe63ada1a3cfa"
+        "abbfd861acd84a67a1a3a816567b1aecfdffc9697ad0bb007d9806789c25cc410ac2301046"
+        "e1085ec42378837a923099fc920163c2742c742b781245a80b4fe11d8a37e9b281eededb7c"
+        "8f978d15ff439f288b7a0597013afaf60acf5093b33019de74b354f44317617411c37132c9"
+        "e88d729d77a7f9be74ceb9a9015205577b8612bead131471e37e7b0a1c57ffa9303c"
+    );
+
+    let certif = ShamirRecoveryShareCertificate::unsecure_load(&data).unwrap();
+
+    let expected = ShamirRecoveryShareCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        recipient: bob.user_id().to_owned(),
+        ciphered_share: b"abcd".to_vec(),
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = ShamirRecoveryShareCertificate::unsecure_load(&data2).unwrap();
+    assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_shamir_recovery_brief_certificate(alice: &Device, bob: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.1+dev)
+    // Content:
+    //   type: "shamir_recovery_brief_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   per_recipient_shares: {"bob": 2, "carl": 1, "diana": 1}
+    //   threshold: 3
+    //
+    let data = hex!(
+        "3ea699e81d7c26fe7ee8b128ab80dfb9c3f11886fa78f0aa24bcb24c4b1efad23a6d4f75fb"
+        "1376dbcc5954bb31af23dd7150e2a7a649410abc482d6e86088607789c1dcd410ac2301046"
+        "e1564fe211bc413d4998247fc940d284c958e856f12456a1aebd4bf1262e2dae1fbcef36eb"
+        "54f039d44089c5085c1e2193b1c2e88d8328f7ec48f1a4b3862c2f8aecd0798cc74539a12a"
+        "a5b2b6a7f5f2ed9aa65934086ac8d1efdf05ff1f17c6a06603b672bddb6c770fcf34503b3b"
+        "92d8fe0028ca35f9"
+    );
+
+    let certif = ShamirRecoveryBriefCertificate::unsecure_load(&data).unwrap();
+
+    let expected = ShamirRecoveryBriefCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        threshold: 3.try_into().unwrap(),
+        per_recipient_shares: HashMap::from([
+            ((bob.user_id().to_owned()), 2.try_into().unwrap()),
+            ("carl".parse().unwrap(), 1.try_into().unwrap()),
+            ("diana".parse().unwrap(), 1.try_into().unwrap()),
+        ]),
+    };
+    assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = ShamirRecoveryBriefCertificate::unsecure_load(&data2).unwrap();
     assert_eq!(certif2, expected);
 }

@@ -16,6 +16,8 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SequesterAuthorityCertificate,
     SequesterServiceCertificate,
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryShareCertificate,
     SharingGrantedMessageContent,
     SharingReencryptedMessageContent,
     SharingRevokedMessageContent,
@@ -55,6 +57,8 @@ __all__ = (
     "RealmArchivingConfiguration",
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
+    "ShamirRecoveryBriefCertificate",
+    "ShamirRecoveryShareCertificate",
     # Invite
     "SASCode",
     "generate_sas_codes",
