@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-12-02 08:50+0100\n"
+"POT-Creation-Date: 2023-12-05 12:32+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.3\n"
+"Generated-By: Babel 2.12.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -326,26 +326,14 @@ msgstr ""
 msgid "TEXT_ORG_WIZARD_INVALID_BACKEND_ADDR"
 msgstr "The server address is invalid."
 
-msgid "ACTION_CREATE_DEVICE"
-msgstr "Create the device"
-
-msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
-msgstr "This organization name is already used."
-
-msgid "TEXT_ORG_WIZARD_INVALID_EMAIL"
-msgstr "The email is invalid."
-
-msgid "TEXT_ORG_WIZARD_INVALID_ORGANIZATION_ID"
-msgstr "The organization name is invalid."
-
-msgid "TEXT_ORG_WIZARD_OFFLINE"
-msgstr "The server is offline or you have no access to the internet."
-
 msgid "TEXT_ORG_WIZARD_INVITE_NOT_FOUND"
 msgstr "This bootstrap link is invalid."
 
 msgid "TEXT_ORG_WIZARD_INVITE_ALREADY_USED"
 msgstr "This bootstrap link was already used."
+
+msgid "TEXT_ORG_WIZARD_ORGANIZATION_ALREADY_EXISTS"
+msgstr "This organization name is already used."
 
 msgid "TEXT_ORG_WIZARD_CONNECTION_REFUSED"
 msgstr "The server refused the connection."
@@ -355,6 +343,9 @@ msgstr "Cannot connect to the server."
 
 msgid "TEXT_ORG_WIZARD_UNKNOWN_FAILURE"
 msgstr "Could not create the organization."
+
+msgid "ACTION_CREATE_DEVICE"
+msgstr "Create the device"
 
 msgid "TEXT_ORG_WIZARD_TITLE"
 msgstr "Create a new organization"
@@ -642,11 +633,11 @@ msgstr "Show status"
 msgid "ACTION_FILE_MENU_GET_FILE_LINK"
 msgstr "Get a link to the file"
 
-msgid "ACTION_FILE_MENU_GET_FOLDER_LINK"
-msgstr "Get a link to the folder"
-
 msgid "ACTION_FILE_MENU_GET_FILE_LINK_TIMESTAMP"
 msgstr "Get a link to this version of the file"
+
+msgid "ACTION_FILE_MENU_GET_FOLDER_LINK"
+msgstr "Get a link to the folder"
 
 msgid "ACTION_FILE_MENU_GET_FOLDER_LINK_TIMESTAMP"
 msgstr "Get a link to this version of the folder"
@@ -680,16 +671,16 @@ msgstr "Cannot paste this element here."
 
 msgid "TEXT_FILE_HISTORY_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Cannot show the history of multiple elements at once. Please select a single"
-" file."
+"Cannot show the history of multiple elements at once. Please select a "
+"single file."
 
 msgid "TEXT_FILE_STATUS_NO_FILE_SELECTED_ERROR"
 msgstr "No file selected."
 
 msgid "TEXT_FILE_STATUS_MULTIPLE_FILES_SELECTED_ERROR"
 msgstr ""
-"Cannot show the status of multiple elements at once. Please select a single "
-"file or folder."
+"Cannot show the status of multiple elements at once. Please select a "
+"single file or folder."
 
 msgid "TEXT_FILE_RENAME_TITLE"
 msgstr "Rename a file"
@@ -700,6 +691,9 @@ msgstr "Enter the new file name."
 msgid "TEXT_FILE_RENAME_PLACEHOLDER"
 msgstr "File name"
 
+msgid "ACTION_FILE_RENAME"
+msgstr "Rename"
+
 msgid "TEXT_FOLDER_RENAME_TITLE"
 msgstr "Rename a folder"
 
@@ -708,9 +702,6 @@ msgstr "Enter the new folder name."
 
 msgid "TEXT_FOLDER_RENAME_PLACEHOLDER"
 msgstr "Folder name"
-
-msgid "ACTION_FILE_RENAME"
-msgstr "Rename"
 
 msgid "TEXT_FILE_RENAME_MULTIPLE_TITLE_count"
 msgstr "Rename {count} elements"
@@ -729,20 +720,20 @@ msgstr "Rename"
 msgid "TEXT_FILE_DELETE_TITLE"
 msgstr "Delete a file"
 
-msgid "TEXT_FOLDER_DELETE_TITLE"
-msgstr "Delete a folder"
-
 msgid "TEXT_FILE_DELETE_INSTRUCTIONS_name"
 msgstr "Are you sure you want to delete the file <b>{name}</b>?"
-
-msgid "TEXT_FOLDER_DELETE_INSTRUCTIONS_name"
-msgstr "Are you sure you want to delete the folder <b>{name}</b>?"
 
 msgid "ACTION_FILE_DELETE"
 msgstr "Delete"
 
 msgid "ACTION_CANCEL"
 msgstr "Cancel"
+
+msgid "TEXT_FOLDER_DELETE_TITLE"
+msgstr "Delete a folder"
+
+msgid "TEXT_FOLDER_DELETE_INSTRUCTIONS_name"
+msgstr "Are you sure you want to delete the folder <b>{name}</b>?"
 
 msgid "TEXT_FILE_DELETE_MULTIPLE_TITLE_count"
 msgstr "Delete {count} elements"
@@ -1038,9 +1029,9 @@ msgstr ""
 "features to function.<br><br><a "
 "href=\"https://docs.parsec.cloud/en/latest/userguide/installation.html"
 "#macfuse-installation-on-macos-13\" title=\"FUSE_install\" style=\"font-"
-"weight: bold;\">A macFUSE installation guide is available here</a><br><br>"
-"Note: a system reboot is necessary to finalize the installation the first "
-"time."
+"weight: bold;\">A macFUSE installation guide is available "
+"here</a><br><br>Note: a system reboot is necessary to finalize the "
+"installation the first time."
 
 msgid "TEXT_MACFUSE_DOWNLOAD_BUTTON"
 msgstr "Download macFUSE"
@@ -2202,6 +2193,50 @@ msgstr "Click to enlarge"
 msgid "TEXT_CLICK_TO_CLOSE"
 msgstr "Click to close"
 
+msgid "TEXT_BLOCK_REMANENCE_ENABLED"
+msgstr "The data in this workspace is currently kept locally for offline access."
+
+msgid "TEXT_BLOCK_REMANENCE_DISABLED_cache_size"
+msgstr "Only a maximum of {cache_size} of data is kept locally for this workspace."
+
+msgid "TEXT_BLOCK_REMANENCE_WARNING_remote_size"
+msgstr ""
+"<i>Keeping data locally for offline access would require to download "
+"{remote_size} of data.</i>"
+
+msgid "ACTION_CONTINUE_IN_BACKGROUND"
+msgstr "Continue in background"
+
+msgid "TEXT_WORKSPACE_IS_EMPTY"
+msgstr "This workspace is empty."
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_DOWNLOADING"
+msgstr "Downloading missing data"
+
+msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_IDLE"
+msgstr "Data available locally"
+
+msgid "TEXT_BLOCK_DOWNLOADING_FINISHED"
+msgstr "All data has been successfully downloaded."
+
+msgid "TEXT_GET_REMANENCE_STATUS_FAILED"
+msgstr "Workspace information is not available at the moment."
+
+msgid "TEXT_ENABLE_BLOCK_REMANENCE_FAILED"
+msgstr "An error occured while enabling offline mode."
+
+msgid "TEXT_ENABLE_BLOCK_REMANENCE_SUCCESS"
+msgstr "The data in this workspace will now be kept locally for offline access."
+
+msgid "TEXT_BLOCK_DOWNLOADING_STARTED"
+msgstr "The missing data will now be downloaded."
+
+msgid "TEXT_DISABLE_BLOCK_REMANENCE_FAILED"
+msgstr "An error occured while disabling offline mode."
+
+msgid "TEXT_REMANENCE_DIALOG_TITLE_workspace_name"
+msgstr "Offline availability for workspace {workspace_name}"
+
 msgid "TEXT_SETTINGS_NEED_RESTART"
 msgstr "You will need to restart the application for the changes to take effect."
 
@@ -2246,6 +2281,18 @@ msgstr "See common workspaces"
 
 msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Revoke"
+
+msgid "TEXT_FILTER_USERS_ROLE_NONE"
+msgstr "Show all profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_ADMIN"
+msgstr "Only Administrator profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_STANDARD"
+msgstr "Only Standard profiles"
+
+msgid "TEXT_FILTER_USERS_ROLE_OUTSIDER"
+msgstr "Only Outsider profiles"
 
 msgid "TEXT_USER_INVITE_EMAIL"
 msgstr "Invite a new user"
@@ -2360,6 +2407,9 @@ msgstr "See at a given date"
 
 msgid "ACTION_WORKSPACE_REENCRYPT"
 msgstr "Reencrypt"
+
+msgid "ACTION_WORKSPACE_MANAGE_REMANENCE"
+msgstr "Manage offline availability"
 
 msgid "ACTION_WORKSPACE_DELETE"
 msgstr "Remove"
@@ -2542,7 +2592,8 @@ msgstr "Reencryption failure, workspace not found."
 msgid "TEXT_WORKSPACE_REENCRYPT_FS_ERROR"
 msgstr "Reencryption failure, workspace already in maintenance."
 
-msgid "TEXT_WORKSPACE_REENCRYPT_UNKNOWN_ERROR"
+#, fuzzy
+msgid "TEXT_WORKSPACE_REENCRYPT_UNKOWN_ERROR"
 msgstr "Reencryption failed for unknown reason."
 
 msgid "TEXT_WORKSPACE_NEW_TITLE"
@@ -2953,9 +3004,6 @@ msgstr "Your PARSEC is up-to-date!"
 msgid "LABEL_NOTIFICATIONS"
 msgstr ""
 
-msgid "ACTION_COPY_BACKEND_ADDR"
-msgstr "Copy server address"
-
 msgid "TEXT_ORG_INFO_CONFIG_TITLE"
 msgstr "Organization's configuration"
 
@@ -2967,6 +3015,9 @@ msgstr "Organization's users"
 
 msgid "TEXT_ORG_INFO_SERVER_ADDR_TITLE"
 msgstr "Server address"
+
+msgid "ACTION_COPY_BACKEND_ADDR"
+msgstr "Copy server address"
 
 msgid "TEXT_PASSWORD_WARNING"
 msgstr ""
@@ -3044,11 +3095,11 @@ msgstr "Cancel the invitation"
 msgid "ACTION_GREET_USER"
 msgstr "Onboard the user"
 
-msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
-msgstr "Filter users"
-
 msgid "ACTION_USER_INVITE_USER"
 msgstr "Invite a new user"
+
+msgid "TEXT_USERS_FILTER_USERS_PLACEHOLDER"
+msgstr "Filter users"
 
 msgid "ACTION_FILTER_REVOKED_USERS"
 msgstr "Hide revoked users"
@@ -3089,6 +3140,11 @@ msgstr "Reencrypt the workspace."
 msgid "TEXT_TIMESTAMPED_WORKSPACE_CLOSE_TOOLTIP"
 msgstr "Close the snapshot."
 
+msgid "TEXT_NOT_ENOUGH_OWNERS_WARNING"
+msgstr ""
+"We recommend that you promote someone else to Owner. This will prevent "
+"data loss if you leave the organization."
+
 msgid "TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER"
 msgstr "Filter the workspaces"
 
@@ -3100,71 +3156,3 @@ msgstr "Go to a file using a link"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Hide deactivated workspaces"
-
-#~ msgid "TEXT_RECOVERY_DEVICE_FILE_ALREADY_EXISTS"
-#~ msgstr ""
-#~ "A recovery file for this device "
-#~ "already exists in the selected location."
-
-msgid "ACTION_WORKSPACE_MANAGE_REMANENCE"
-msgstr "Manage offline availability"
-
-msgid "ACTION_CONTINUE_IN_BACKGROUND"
-msgstr "Continue in background"
-
-msgid "TEXT_REMANENCE_WAITING"
-msgstr "Please wait..."
-
-msgid "TEXT_BLOCK_REMANENCE"
-msgstr "Offline availability:"
-
-msgid "TEXT_BLOCK_REMANENCE_ENABLED"
-msgstr "The data in this workspace is currently kept locally for offline access."
-
-msgid "TEXT_BLOCK_REMANENCE_DISABLED_cache_size"
-msgstr "Only a maximum of {cache_size} of data is kept locally for this workspace."
-
-msgid "TEXT_BLOCK_REMANENCE_WARNING_remote_size"
-msgstr "<i>Keeping data locally for offline access would require to download {remote_size} of data.</i>"
-
-msgid "TEXT_GET_REMANENCE_STATUS_FAILED"
-msgstr "Workspace information is not available at the moment."
-
-msgid "TEXT_DISABLE_BLOCK_REMANENCE_FAILED"
-msgstr "An error occured while disabling offline mode."
-
-msgid "TEXT_ENABLE_BLOCK_REMANENCE_FAILED"
-msgstr "An error occured while enabling offline mode."
-
-msgid "TEXT_REMANENCE_DIALOG_TITLE_workspace_name"
-msgstr "Offline availability for workspace {workspace_name}"
-
-msgid "TEXT_ENABLE_BLOCK_REMANENCE_SUCCESS"
-msgstr "The data in this workspace will now be kept locally for offline access."
-
-msgid "TEXT_BLOCK_DOWNLOADING_STARTED"
-msgstr "The missing data will now be downloaded."
-
-msgid "TEXT_BLOCK_DOWNLOADING_FINISHED"
-msgstr "All data has been successfully downloaded."
-
-msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_IDLE"
-msgstr "Data available locally"
-
-msgid "TEXT_REMANENCE_PROGRESS_BAR_TITLE_DOWNLOADING"
-msgstr "Downloading missing data"
-
-msgid "TEXT_WORKSPACE_IS_EMPTY"
-msgstr "This workspace is empty."
-
-msgid "TEXT_FILTER_USERS_ROLE_NONE"
-msgstr "Show all profiles"
-
-msgid "TEXT_FILTER_USERS_ROLE_ADMIN"
-msgstr "Only Administrator profiles"
-
-msgid "TEXT_FILTER_USERS_ROLE_STANDARD"
-msgstr "Only Standard profiles"
-
-msgid "TEXT_FILTER_USERS_ROLE_OUTSIDER"
-msgstr "Only Outsider profiles"
