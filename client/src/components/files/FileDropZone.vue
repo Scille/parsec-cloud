@@ -74,8 +74,9 @@ function setInactive(): void {
 .drop-zone {
   border: 1px dashed var(--parsec-color-light-primary-200);
   border-radius: var(--parsec-radius-6);
-  height: 30em;
+  height: 25em;
   width: 100%;
+  padding: 5rem;
 }
 
 .drop-zone-active {

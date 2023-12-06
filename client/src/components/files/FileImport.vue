@@ -3,12 +3,9 @@
 <template>
   <div class="container">
     <div class="import-drag-drop">
-      <ion-img src="@/assets/images/image_import.svg" />
+      <img src="@/assets/images/image_import.svg" />
       <ion-text class="import-drag-drop__title title-h3">
         {{ $t('FoldersPage.importModal.dragAndDrop') }}
-      </ion-text>
-      <ion-text class="import-drag-drop__subtitle title-h4">
-        {{ $t('FoldersPage.importModal.maxSize') }}
       </ion-text>
     </div>
     <div class="divider">
@@ -23,10 +20,15 @@
         hidden
         ref="hiddenInput"
       />
-      <ion-button @click="importButtonClick">
+      <ion-button
+        @click="importButtonClick"
+        size="default"
+        class="button"
+      >
         <ion-icon
           :icon="ellipsisHorizontalCircle"
           slot="start"
+          id="browse-icon"
         />
         {{ $t('FoldersPage.importModal.browse') }}
       </ion-button>
@@ -36,7 +38,7 @@
 
 <script setup lang="ts">
 import { ellipsisHorizontalCircle } from 'ionicons/icons';
-import { IonImg, IonButton, IonText, IonIcon } from '@ionic/vue';
+import { IonButton, IonText, IonIcon } from '@ionic/vue';
 import { ref, onMounted, onUnmounted } from 'vue';
 
 const emits = defineEmits<{
@@ -89,10 +91,6 @@ function importButtonClick(): void {
   &__title {
     color: var(--parsec-color-light-primary-700);
   }
-
-  &__subtitle {
-    color: var(--parsec-color-light-secondary-grey);
-  }
 }
 
 .divider {
@@ -123,5 +121,9 @@ function importButtonClick(): void {
       height: 3rem;
     }
   }
+}
+
+#browse-icon {
+  margin-right: 0.625rem;
 }
 </style>
