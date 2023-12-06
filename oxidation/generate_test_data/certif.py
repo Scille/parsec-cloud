@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 
-from parsec._parsec import SequesterPublicKeyDer, SequesterVerifyKeyDer
+from parsec._parsec import SequesterPublicKeyDer, SequesterVerifyKeyDer, shamir_make_shares
 from parsec.api.data import *
 from parsec.api.protocol import *
 
@@ -154,4 +154,42 @@ display(
     "realm archiving certificate (deletion planned)",
     rac_deletion_planned,
     [ALICE.verify_key, "zip"],
+)
+
+
+srsc = ShamirRecoveryShareCertificate(
+    author=ALICE.device_id, timestamp=NOW, recipient=BOB.user_id, ciphered_share=b"abcd"
+).dump_and_sign(ALICE.signing_key)
+display(
+    "shamir recovery share certificate",
+    srsc,
+    [ALICE.verify_key, "zip"],
+)
+
+
+srbc = ShamirRecoveryBriefCertificate(
+    author=ALICE.device_id,
+    timestamp=NOW,
+    threshold=3,
+    per_recipient_shares={
+        BOB.user_id: 2,
+        UserID("carl"): 1,
+        UserID("diana"): 1,
+    },
+).dump_and_sign(ALICE.signing_key)
+display(
+    "shamir recovery brief certificate",
+    srbc,
+    [ALICE.verify_key, "zip"],
+)
+
+
+shares = shamir_make_shares(3, b"secret", 4)
+srsd = ShamirRecoveryShareData(shares[:2]).dump_sign_and_encrypt_for(
+    ALICE.signing_key, BOB.public_key
+)
+display(
+    "shamir recovery share data",
+    srsd,
+    [BOB.private_key, ALICE.verify_key, "zip"],
 )

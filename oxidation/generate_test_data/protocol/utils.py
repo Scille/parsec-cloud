@@ -169,7 +169,8 @@ def _format_item(value, max_width):
     elif isinstance(value, dict):
         short_repr = "{"
         short_repr += ", ".join(
-            f"{k}:" + _format_item(v, max_width=math.inf) for k, v in custom_order_iter(value)
+            f"{_format_scalar(k, max_width=math.inf)}: " + _format_item(v, max_width=math.inf)
+            for k, v in custom_order_iter(value)
         )
         short_repr += "}"
         if len(short_repr) <= max_width:
