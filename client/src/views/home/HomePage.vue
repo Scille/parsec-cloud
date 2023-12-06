@@ -20,9 +20,8 @@
             </div>
             <div class="sidebar-footer">
               <div class="sidebar-footer__logo">
-                <img
-                  src="@/assets/images/Logo/logo_row_white.svg"
-                  alt="Parsec logo"
+                <ms-image
+                  :image="LogoRowWhite"
                   class="logo-img"
                 />
               </div>
@@ -227,50 +226,47 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonPage,
-  IonCard,
-  IonCardContent,
-  IonCardTitle,
-  IonButton,
-  IonButtons,
-  IonIcon,
-  IonRow,
-  IonCol,
-  IonGrid,
-  IonText,
-  popoverController,
-  modalController,
-} from '@ionic/vue';
-// We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
-import { chevronBack, cog, logIn, informationCircle } from 'ionicons/icons';
-import { useI18n } from 'vue-i18n';
-import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
-import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
+import { Formatters, FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
+import { getAppVersion } from '@/common/mocks';
+import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
+import { MsImage, LogoRowWhite } from '@/components/core/ms-image';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
 import MsSorter from '@/components/core/ms-sorter/MsSorter.vue';
-import { MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
-import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
-import { StoredDeviceData, StorageManager } from '@/services/storageManager';
-import { DateTime } from 'luxon';
-import { useRoute, useRouter } from 'vue-router';
-import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
-import SettingsModal from '@/views/settings/SettingsModal.vue';
-import { Formatters, FormattersKey, StorageManagerKey } from '@/common/injectionKeys';
-import { MsModalResult } from '@/components/core/ms-types';
-import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
-import { getAppVersion } from '@/common/mocks';
-import AboutModal from '@/views/about/AboutModal.vue';
-import { listAvailableDevices as parsecListAvailableDevices, login as parsecLogin, AvailableDevice } from '@/parsec';
-import { isLoggedIn } from '@/parsec';
-import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
-import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
-import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
-import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
+import { MsModalResult, MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
 import { getTextInputFromUser } from '@/components/core/ms-utils';
+import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
+import { AvailableDevice, isLoggedIn, listAvailableDevices as parsecListAvailableDevices, login as parsecLogin } from '@/parsec';
+import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { StorageManager, StoredDeviceData } from '@/services/storageManager';
+import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
+import AboutModal from '@/views/about/AboutModal.vue';
+import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
+import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
+import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
+import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
+import SettingsModal from '@/views/settings/SettingsModal.vue';
+import {
+  IonButton,
+  IonButtons,
+  IonCard,
+  IonCardContent,
+  IonCardTitle,
+  IonCol,
+  IonContent,
+  IonGrid,
+  IonIcon,
+  IonPage,
+  IonRow,
+  IonText,
+  modalController,
+  popoverController,
+} from '@ionic/vue';
+import { chevronBack, cog, informationCircle, logIn } from 'ionicons/icons';
+import { DateTime } from 'luxon';
+import { Ref, computed, inject, onMounted, onUnmounted, onUpdated, ref, toRaw, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute, useRouter } from 'vue-router';
 
 const router = useRouter();
 const currentRoute = useRoute();
@@ -547,7 +543,7 @@ async function openSettingsModal(): Promise<void> {
     right: 0;
     width: 100vw;
     height: 100vh;
-    background: url('@/assets/images/shapes-bg.svg') repeat center;
+    background: url('@/assets/images/background/homepage-rectangle.svg') repeat center;
     background-size: cover;
   }
 

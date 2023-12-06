@@ -2,20 +2,7 @@
 
 <template>
   <div class="tooltip-container">
-    <svg
-      width="20"
-      height="8"
-      viewBox="0 0 20 8"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M10 0C13 0 15.9999 8 20 8L0 8C3.9749 8 7 0 10 0Z"
-        fill="var(--parsec-color-light-primary-900)"
-      />
-    </svg>
+    <ms-image :image="WavyCaretUp" />
     <div class="tooltip-content">
       <ion-text class="tooltip-text body-sm">
         {{ text }}
@@ -25,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import { MsImage, WavyCaretUp } from '@/components/core/ms-image';
 import { IonText } from '@ionic/vue';
 import { defineProps } from 'vue';
 
@@ -38,6 +26,7 @@ defineProps<{
   display: flex;
   align-items: center;
   flex-direction: column;
+  --fill-color: var(--parsec-color-light-primary-900);
 
   &.bottom {
     flex-direction: column-reverse;
