@@ -659,6 +659,10 @@
             "standard": "Standard",
             "outsider": "Externe"
         },
+        "success": {
+            "email": "Adresse mail :",
+            "profile": "Choix du profile :"
+        },
         "emptyList": "Aucun utilisateur à afficher.",
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
         "revokedEmptyList": "Aucun utilisateur révoqué",
