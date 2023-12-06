@@ -145,6 +145,8 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.layout_workspaces = FlowLayout(spacing=40)
         self.layout_content.addLayout(self.layout_workspaces)
 
+        self.button_reencrypt_all.hide()
+
         if self.core.device.is_outsider:
             self.button_add_workspace.hide()
         else:
@@ -153,6 +155,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
 
         self.button_add_workspace.apply_style()
         self.button_goto_file.apply_style()
+        self.button_reencrypt_all.apply_style()
 
         self.search_timer = QTimer()
         self.search_timer.setInterval(300)
@@ -177,6 +180,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         self.file_open_error.connect(self._on_file_open_error)
         self.check_hide_unmounted.setChecked(self.core.config.gui_hide_unmounted)
         self.check_hide_unmounted.toggled.connect(self._on_hide_unmounted_changed)
+        self.button_reencrypt_all.clicked.connect(self.reencrypt_all_clicked)
 
         self.workspace_reencryption_success.connect(self._on_workspace_reencryption_success)
         self.workspace_reencryption_error.connect(self._on_workspace_reencryption_error)
@@ -371,6 +375,7 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
                 button.open_clicked.connect(self.open_workspace)
                 button.switch_clicked.connect(self._on_switch_clicked)
                 button.manage_remanence_clicked.connect(self._on_manage_remanence_clicked)
+                button.status_refreshed.connect(self._check_reencryption_status)
             button.refresh_status()
 
             # Add the button to the new mapping
@@ -395,6 +400,41 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         label = QLabel(T("TEXT_WORKSPACE_NO_WORKSPACES"))
         label.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         self.layout_workspaces.addWidget(label)
+
+    def _check_reencryption_status(self, _: WorkspaceButton) -> None:
+        need_reencryption = any(
+            button.reencryption_needs
+            and button.reencryption_needs.need_reencryption
+            and button.workspace_id not in self.reencrypting
+            for button in self.workspace_button_mapping.values()
+        )
+        if need_reencryption:
+            self.button_reencrypt_all.show()
+        else:
+            self.button_reencrypt_all.hide()
+
+    def reencrypt_all_clicked(self) -> None:
+        r = ask_question(
+            self,
+            T("TEXT_WORKSPACE_REENCRYPT_MULTIPLE_TITLE"),
+            T("TEXT_WORKSPACE_REENCRYPT_MULTIPLE_MESSAGE"),
+            [T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"), T("ACTION_CANCEL")],
+        )
+        if r != T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
+            return
+        for button in self.workspace_button_mapping.values():
+            if button.reencryption_needs and button.reencryption_needs.need_reencryption:
+                # user_revoked and role_revoked are set to True to force the reencryption process to start
+                self.reencrypt_workspace(
+                    button.workspace_id,
+                    user_revoked=True,
+                    role_revoked=True,
+                    reencryption_already_in_progress=bool(
+                        button.reencryption_needs.reencryption_already_in_progress
+                    ),
+                    skip_question=True,
+                )
+        self.button_reencrypt_all.hide()
 
     def refresh_workspace_layout(self) -> None:
         # This user has no workspaces yet
@@ -647,27 +687,33 @@ class WorkspacesWidget(QWidget, Ui_WorkspacesWidget):
         user_revoked: bool,
         role_revoked: bool,
         reencryption_already_in_progress: bool,
+        skip_question: bool = False,
     ) -> None:
         if workspace_id in self.reencrypting or (
             not user_revoked and not role_revoked and not reencryption_already_in_progress
         ):
             return
 
-        question = ""
-        if user_revoked:
-            question += "{}\n".format(T("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED"))
-        if role_revoked:
-            question += "{}\n".format(T("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED"))
-        question += T("TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS")
+        if not skip_question:
+            question = ""
+            if user_revoked:
+                question += "{}\n".format(
+                    T("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REVOKED")
+                )
+            if role_revoked:
+                question += "{}\n".format(
+                    T("TEXT_WORKSPACE_NEED_REENCRYPTION_BECAUSE_USER_REMOVED")
+                )
+            question += T("TEXT_WORKSPACE_NEED_REENCRYPTION_INSTRUCTIONS")
 
-        r = ask_question(
-            self,
-            T("TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"),
-            question,
-            [T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"), T("ACTION_CANCEL")],
-        )
-        if r != T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
-            return
+            r = ask_question(
+                self,
+                T("TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"),
+                question,
+                [T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"), T("ACTION_CANCEL")],
+            )
+            if r != T("ACTION_WORKSPACE_REENCRYPTION_CONFIRM"):
+                return
 
         @contextmanager
         def _handle_fs_errors() -> Iterator[None]:

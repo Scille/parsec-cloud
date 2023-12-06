@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-12-05 12:32+0100\n"
+"POT-Creation-Date: 2023-12-06 04:36+0100\n"
 "PO-Revision-Date: 2020-10-15 10:30+0200\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -2518,6 +2518,16 @@ msgstr "Cannot rename the workspace."
 msgid "TEXT_WORKSPACE_NO_WORKSPACES"
 msgstr "No workspace has been created yet."
 
+msgid "TEXT_WORKSPACE_REENCRYPT_MULTIPLE_TITLE"
+msgstr "Re-encrypt multiple workspaces"
+
+msgid "TEXT_WORKSPACE_REENCRYPT_MULTIPLE_MESSAGE"
+msgstr ""
+"This will re-encrypt all workspaces requiring a re-encryption. It's an important step to guarantee your data security.<br /><br />\n\nThis can take some time, depending on the size of your data, and synchronization will be turned off during this operation.<br /><br />\n\nDo you want to continue?"
+
+msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
+msgstr "Re-encrypt"
+
 msgid "TEXT_WORKSPACE_CANNOT_MOUNT_NO_DRIVE"
 msgstr ""
 "Cannot display the content of this workspace because you have too many "
@@ -2574,9 +2584,6 @@ msgstr ""
 
 msgid "TEXT_WORKSPACE_NEED_REENCRYPTION_TITLE"
 msgstr "Reencrypt the workspace"
-
-msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
-msgstr "Reencrypt"
 
 msgid "TEXT_WORKSPACE_REENCRYPT_OFFLINE_ERROR"
 msgstr "Reencryption failure, can not reach the server."
@@ -3156,3 +3163,6 @@ msgstr "Go to a file using a link"
 
 msgid "TEXT_WORKSPACES_HIDE_UNMOUNTED"
 msgstr "Hide deactivated workspaces"
+
+msgid "ACTION_WORKSPACE_REENCRYPT_MULTIPLE"
+msgstr "Re-encrypt multiple workspaces"

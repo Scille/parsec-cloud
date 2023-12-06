@@ -20,13 +20,13 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#button_goto_file, #button_add_workspace {
+   <string notr="true">#button_goto_file, #button_add_workspace, #button_reencrypt_all {
 	background-color: none;
 	border: none;
 	color: #0092FF;
 }
 
-#button_goto_file:hover, #button_add_workspace:hover {
+#button_goto_file:hover, #button_add_workspace:hover, #button_reencrypt_all:hover {
 	color: #0070DD;
 }
 
@@ -77,24 +77,9 @@
      </property>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
-       <item>
-        <widget class="FilterLineEdit" name="line_edit_search">
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>32</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>12</pointsize>
-          </font>
-         </property>
-         <property name="placeholderText">
-          <string>TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER</string>
-         </property>
-        </widget>
-       </item>
+       <property name="spacing">
+        <number>10</number>
+       </property>
        <item>
         <widget class="Button" name="button_add_workspace">
          <property name="cursor">
@@ -156,7 +141,69 @@
         </widget>
        </item>
        <item>
+        <widget class="Button" name="button_reencrypt_all">
+         <property name="text">
+          <string>ACTION_WORKSPACE_REENCRYPT_MULTIPLE</string>
+         </property>
+         <property name="icon">
+          <iconset resource="../rc/resources.qrc">
+           <normaloff>:/icons/images/material/lock_outline.svg</normaloff>:/icons/images/material/lock_outline.svg</iconset>
+         </property>
+         <property name="iconSize">
+          <size>
+           <width>24</width>
+           <height>24</height>
+          </size>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="color" stdset="0">
+          <color>
+           <red>0</red>
+           <green>146</green>
+           <blue>255</blue>
+          </color>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item>
+        <widget class="FilterLineEdit" name="line_edit_search">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>32</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>12</pointsize>
+          </font>
+         </property>
+         <property name="placeholderText">
+          <string>TEXT_WORKSPACE_FILTER_WORKSPACES_PLACEHOLDER</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_5">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -402,7 +449,7 @@
         <x>0</x>
         <y>0</y>
         <width>928</width>
-        <height>279</height>
+        <height>243</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -464,15 +511,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>Button</class>
-   <extends>QPushButton</extends>
-   <header>parsec.core.gui.custom_widgets</header>
-  </customwidget>
-  <customwidget>
    <class>SpinnerWidget</class>
    <extends>QWidget</extends>
    <header>parsec.core.gui.custom_widgets</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Button</class>
+   <extends>QPushButton</extends>
+   <header>parsec.core.gui.custom_widgets</header>
   </customwidget>
   <customwidget>
    <class>FilterLineEdit</class>

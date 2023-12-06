@@ -49,3 +49,9 @@ Once a user is revoked, each owner of a previously shared workspace will be noti
 
     - During re-encryption, a workspace cannot be synchronized
     - Re-encryption is fairly quick since only metadata are re-encrypted
+
+Multiple workspaces can be re-encrypted at once.
+
+.. image:: screens/reencrypt_multiple.png
+    :align: center
+    :alt: Re-encrypt multiple workspaces at once
