@@ -89,25 +89,12 @@
             @on-enter-keyup="nextStep()"
             @field-update="updateCanGoForward"
           />
-          <ion-item class="input-container">
-            <ion-select
-              label="Profile"
-              label-placement="stacked"
-              ref="profileSelect"
-              :placeholder="t('UsersPage.greet.profilePlaceholder')"
-              v-model="profile"
-            >
-              <ion-select-option :value="UserProfile.Admin">
-                {{ $t('UsersPage.profile.admin') }}
-              </ion-select-option>
-              <ion-select-option :value="UserProfile.Standard">
-                {{ $t('UsersPage.profile.standard') }}
-              </ion-select-option>
-              <ion-select-option :value="UserProfile.Outsider">
-                {{ $t('UsersPage.profile.outsider') }}
-              </ion-select-option>
-            </ion-select>
-          </ion-item>
+          <ms-dropdown
+            class="dropdown"
+            :label="t('UsersPage.greet.profilePlaceholder')"
+            :options="profileOptions"
+            @change="setUserProfile($event.option.key)"
+          />
         </div>
 
         <!-- Final Step -->
@@ -175,9 +162,6 @@ import {
   IonIcon,
   IonLabel,
   IonSpinner,
-  IonSelect,
-  IonSelectOption,
-  IonItem,
   modalController,
 } from '@ionic/vue';
 
@@ -191,10 +175,11 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsModalResult, MsDropdownOption } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
 import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
 import { Answer, askQuestion } from '@/components/core/ms-utils';
+import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -220,6 +205,21 @@ const greeter = ref(new UserGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 
+const profileOptions: MsDropdownOption[] = [
+  {
+    key: UserProfile.Admin,
+    label: t('UsersPage.profile.admin'),
+  },
+  {
+    key: UserProfile.Standard,
+    label: t('UsersPage.profile.standard'),
+  },
+  {
+    key: UserProfile.Outsider,
+    label: t('UsersPage.profile.outsider'),
+  },
+];
+
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
     return [t('UsersPage.greet.titles.waitForGuest'), ''];
@@ -240,6 +240,10 @@ function getTitleAndSubtitle(): [string, string] {
     ];
   }
   return ['', ''];
+}
+
+function setUserProfile(role: string): void {
+  profile.value = role as UserProfile;
 }
 
 const unwatchProfile = watch(profile, async () => {
