@@ -114,19 +114,22 @@
         <div
           v-show="pageStep === GreetUserStep.Summary"
           v-if="guestInfoPage"
-          class="step final-step"
+          class="final-step"
         >
-          <div class="final-step__name">
-            <user-avatar-name
-              :user-name="guestInfoPage?.fullName"
-              :user-avatar="guestInfoPage?.fullName"
-            />
-          </div>
-          <div>
-            {{ guestInfoPage?.email }}
-          </div>
-          <div class="user-profile">
-            <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
+          <user-avatar-name
+            class="avatar"
+            :user-name="guestInfoPage?.fullName"
+            :user-avatar="guestInfoPage?.fullName"
+          />
+          <div class="user-info">
+            <div class="user-info__email">
+              <ion-text class="body">{{ $t('UsersPage.success.email') }}</ion-text>
+              <ion-text class="cell">{{ guestInfoPage?.email }}</ion-text>
+            </div>
+            <div class="user-info__role">
+              <ion-text class="body">{{ $t('UsersPage.success.profile') }}</ion-text>
+              <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
+            </div>
           </div>
         </div>
       </div>
@@ -232,12 +235,7 @@ function getTitleAndSubtitle(): [string, string] {
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
     return [t('UsersPage.greet.titles.contactDetails'), t('UsersPage.greet.subtitles.checkUserInfo')];
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return [
-      t('UsersPage.greet.titles.summary'),
-      t('UsersPage.greet.subtitles.summary', {
-        name: guestInfoPage.value ? guestInfoPage.value.fullName : '',
-      }),
-    ];
+    return [t('UsersPage.greet.titles.summary'), ''];
   }
   return ['', ''];
 }
@@ -430,21 +428,33 @@ onUnmounted(async () => {
 .final-step {
   width: 100%;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  background: var(--parsec-color-light-secondary-background);
-  padding: 0.75rem 1rem;
-  border-radius: var(--parsec-radius-6);
+  flex-direction: column;
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
+  gap: 1rem;
 
-  &__icon {
-    font-size: 1.5rem;
-    color: var(--parsec-color-light-primary-500);
+  .avatar {
+    padding-left: 0.725rem;
+    border-left: 2px solid var(--parsec-color-light-secondary-disabled);
   }
 
-  &__name {
-    font-weight: 500;
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: var(--parsec-color-light-secondary-background);
+    padding: 1rem;
+    border-radius: var(--parsec-radius-6);
+
+    & > [class^='user-info'] {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .body {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+    }
   }
 }
 </style>
