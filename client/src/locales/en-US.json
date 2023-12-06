@@ -339,7 +339,6 @@
         "importModal": {
             "title": "Upload your files",
             "dragAndDrop": "Drag and drop your files here",
-            "maxSize": "Maximum size: 25Mb",
             "or": "or",
             "browse": "Browse"
         },
