@@ -3,9 +3,9 @@
 <template>
   <div class="container">
     <div class="container-logo">
-      <img
-        src="@/assets/images/Logo/logo_icon_gradient.svg"
-        alt="loading-image"
+      <ms-image
+        :image="LogoIconGradient"
+        class="image"
       />
     </div>
     <ion-text class="subtitles-normal container-text">
@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
 import { IonSpinner, IonText } from '@ionic/vue';
+import { MsImage, LogoIconGradient } from '@/components/core/ms-image';
 
 defineProps<{
   title: string;
@@ -39,7 +40,7 @@ defineProps<{
   &-logo {
     max-width: 3.625rem;
 
-    img {
+    .image {
       width: 100%;
       height: auto;
     }
