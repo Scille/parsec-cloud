@@ -20,9 +20,9 @@
             </div>
             <div class="sidebar-footer">
               <div class="sidebar-footer__logo">
-                <img
-                  src="@/assets/images/Logo/logo_row_white.svg"
-                  alt="Parsec logo"
+                <ms-image
+                  :name="MsImages.LogoRowWhite"
+                  alt="Parsec Logo"
                   class="logo-img"
                 />
               </div>
@@ -243,7 +243,6 @@ import {
   popoverController,
   modalController,
 } from '@ionic/vue';
-// We're forced to import icons for the moment, see : https://github.com/ionic-team/ionicons/issues/1032
 import { chevronBack, cog, logIn, informationCircle } from 'ionicons/icons';
 import { useI18n } from 'vue-i18n';
 import { onMounted, ref, toRaw, computed, inject, Ref, onUpdated, onUnmounted, watch } from 'vue';
@@ -271,6 +270,8 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
 import { getTextInputFromUser } from '@/components/core/ms-utils';
+import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImages } from '@/components/core/ms-types';
 
 const router = useRouter();
 const currentRoute = useRoute();
@@ -547,7 +548,7 @@ async function openSettingsModal(): Promise<void> {
     right: 0;
     width: 100vw;
     height: 100vh;
-    background: url('@/assets/images/shapes-bg.svg') repeat center;
+    background: url('@/assets/images/background/homepage-rectangle.svg') repeat center;
     background-size: cover;
   }
 

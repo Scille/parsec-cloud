@@ -3,7 +3,7 @@
 <template>
   <div class="container">
     <div class="import-drag-drop">
-      <ion-img src="@/assets/images/image_import.svg" />
+      <ms-image :name="MsImages.FileImport" />
       <ion-text class="import-drag-drop__title title-h3">
         {{ $t('FoldersPage.importModal.dragAndDrop') }}
       </ion-text>
@@ -36,8 +36,10 @@
 
 <script setup lang="ts">
 import { ellipsisHorizontalCircle } from 'ionicons/icons';
-import { IonImg, IonButton, IonText, IonIcon } from '@ionic/vue';
+import { IonButton, IonText, IonIcon } from '@ionic/vue';
 import { ref, onMounted, onUnmounted } from 'vue';
+import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImages } from '@/components/core/ms-types';
 
 const emits = defineEmits<{
   (e: 'filesImport', entries: File[]): void;

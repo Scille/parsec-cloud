@@ -6,8 +6,8 @@
   </ms-informative-text>
   <div class="info-device">
     <div class="content">
-      <img
-        src="@/assets/images/device.svg"
+      <ms-image
+        :name="MsImages.Device"
         alt="device with Parsec Cloud connected"
         class="content__device"
       />
@@ -19,14 +19,14 @@
       </ion-text>
     </div>
     <div>
-      <img
-        src="@/assets/images/arrows.svg"
-        alt="arrows between device"
+      <ms-image
+        :name="MsImages.SwapArrows"
+        alt="arrows between devices"
       />
     </div>
     <div class="content">
-      <img
-        src="@/assets/images/device.svg"
+      <ms-image
+        :name="MsImages.Device"
         alt="device with Parsec Cloud connected"
         class="content__device"
       />
@@ -43,6 +43,8 @@
 <script setup lang="ts">
 import { IonText } from '@ionic/vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
+import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImages } from '@/components/core/ms-types';
 </script>
 
 <style scoped lang="scss">

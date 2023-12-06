@@ -57,8 +57,8 @@
             {{ $t('DevicesPage.restorePassword.notDone.label') }}
           </ion-label>
           <div class="restore-password-header">
-            <img
-              src="@/assets/images/password.svg"
+            <ms-image
+              :name="MsImages.PasswordLock"
               alt="password-image"
               class="info-password__img"
             />
@@ -99,8 +99,8 @@
             {{ $t('DevicesPage.restorePassword.done.label') }}
           </ion-label>
           <div class="restore-password-header">
-            <img
-              src="@/assets/images/password.svg"
+            <ms-image
+              :name="MsImages.PasswordLock"
               alt="password-image"
               class="info-password__img"
             />
@@ -143,6 +143,8 @@ import { NotificationManager, NotificationLevel, Notification } from '@/services
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { routerNavigateTo } from '@/router';
+import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImages } from '@/components/core/ms-types';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
