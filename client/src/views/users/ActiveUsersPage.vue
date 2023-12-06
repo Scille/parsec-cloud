@@ -189,7 +189,7 @@ import {
 import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
-import { Answer, askQuestion } from '@/common/inputs';
+import { Answer, askQuestion } from '@/components/core/ms-utils';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);

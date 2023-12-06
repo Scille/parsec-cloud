@@ -25,8 +25,6 @@
   </ms-modal>
 </template>
 
-<script lang="ts"></script>
-
 <script setup lang="ts">
 import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
@@ -35,7 +33,7 @@ import MsInput from '@/components/core/ms-input/MsInput.vue';
 import { MsModalResult } from '@/components/core/ms-types';
 import { Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
-import { GetTextOptions } from '@/common/inputs';
+import { GetTextOptions } from '@/components/core/ms-utils';
 
 const props = defineProps<GetTextOptions>();
 

@@ -67,7 +67,7 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { entryStat } from '@/parsec';
 import { MsModalResult } from '@/components/core/ms-types';
 import { Path } from '@/parsec';
-import { FolderSelectionOptions } from '@/common/inputs';
+import { FolderSelectionOptions } from '@/components/core/ms-utils';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath = ref(props.startingPath);

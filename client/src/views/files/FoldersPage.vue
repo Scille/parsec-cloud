@@ -211,7 +211,7 @@ import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import * as parsec from '@/parsec';
 import { useI18n } from 'vue-i18n';
-import { getTextInputFromUser, Answer, askQuestion, selectFolder } from '@/common/inputs';
+import { getTextInputFromUser, Answer, askQuestion, selectFolder } from '@/components/core/ms-utils';
 import { entryNameValidator } from '@/common/validators';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';

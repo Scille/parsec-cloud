@@ -145,7 +145,7 @@
 import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
 import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { ref, inject, onMounted } from 'vue';
-import { getPasswordFromUser } from '@/common/inputs';
+import { getPasswordFromUser } from '@/components/core/ms-utils';
 import { useI18n } from 'vue-i18n';
 import { exportRecoveryDevice, RecoveryDeviceErrorTag } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
