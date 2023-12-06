@@ -26,7 +26,7 @@ import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.v
 import { MsDropdownOption, MsDropdownChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
 
 const props = defineProps<{
-  defaultOption: any;
+  defaultOption?: any;
   label?: string;
   description?: string;
   options: MsDropdownOption[];
