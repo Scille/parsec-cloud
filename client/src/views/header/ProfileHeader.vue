@@ -39,7 +39,7 @@ import { useRouter } from 'vue-router';
 import { routerNavigateTo } from '@/router';
 import { useI18n } from 'vue-i18n';
 import { logout as parsecLogout } from '@/parsec';
-import { askQuestion, Answer } from '@/common/inputs';
+import { askQuestion, Answer } from '@/components/core/ms-utils';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 
 const isPopoverOpen = ref(false);

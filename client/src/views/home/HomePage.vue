@@ -270,7 +270,7 @@ import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import { claimUserLinkValidator, claimDeviceLinkValidator, Validity, claimLinkValidator } from '@/common/validators';
-import { getTextInputFromUser } from '@/common/inputs';
+import { getTextInputFromUser } from '@/components/core/ms-utils';
 
 const router = useRouter();
 const currentRoute = useRoute();

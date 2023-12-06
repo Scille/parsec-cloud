@@ -99,7 +99,7 @@ import {
 import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
-import { getTextInputFromUser } from '@/common/inputs';
+import { getTextInputFromUser } from '@/components/core/ms-utils';
 import { emailValidator } from '@/common/validators';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
