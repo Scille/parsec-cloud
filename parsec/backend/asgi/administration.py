@@ -320,7 +320,7 @@ async def administration_organization_list_users(raw_organization_id: str) -> Re
         data={
             "users": [
                 {
-                    "user_id": user.user_id.str,
+                    "user_id": user.user_id,
                     "user_email": user.human_handle.email,
                     "user_name": user.human_handle.label,
                     "frozen": user.frozen,
@@ -384,7 +384,7 @@ async def administration_organization_freeze_user(raw_organization_id: str) -> R
     return make_rep_response(
         freeze_user_rep_serializer,
         data={
-            "user_id": user.user_id.str,
+            "user_id": user.user_id,
             "user_email": user.human_handle.email,
             "user_name": user.human_handle.label,
             "frozen": frozen,
