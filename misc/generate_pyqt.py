@@ -113,6 +113,7 @@ def extract_translations():
         args = [
             "_",
             "update",
+            "--no-fuzzy-matching",
             "-i",
             str(tr_dir / "translation.pot"),
             "-o",
