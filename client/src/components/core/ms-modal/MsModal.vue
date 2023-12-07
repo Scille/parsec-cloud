@@ -94,34 +94,12 @@
   </ion-page>
 </template>
 
-<script lang="ts">
-export interface MsModalConfig {
-  title?: string;
-  theme?: MsReportTheme;
-  subtitle?: string;
-  closeButton?: {
-    visible: boolean;
-    onClick?: () => Promise<boolean>;
-  };
-  cancelButton?: {
-    disabled: boolean;
-    label: string;
-    onClick?: () => Promise<boolean>;
-  };
-  confirmButton?: {
-    disabled: boolean;
-    label: string;
-    onClick?: () => Promise<boolean>;
-  };
-}
-</script>
-
 <script setup lang="ts">
 import { IonText, IonPage, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton, modalController, IonFooter, IonIcon } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
-import { MsReportTheme, MsModalResult } from '@/components/core/ms-types';
-import MsReportText from '@/components/core/ms-text/MsReportText.vue';
+import { MsReportText } from '@/components/core/ms-text';
+import { MsModalConfig, MsModalResult } from '@/components/core/ms-modal/types';
 
 const modal: Ref<HTMLDivElement | null> = ref(null);
 defineProps<MsModalConfig>();

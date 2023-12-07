@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { modalController } from '@ionic/vue';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsModalResult } from '@/components/core/ms-modal/types';
 
 defineProps<{
   title: string;

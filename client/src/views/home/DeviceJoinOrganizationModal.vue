@@ -156,20 +156,15 @@ import {
 import { close, checkmarkCircle } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import { MsModalResult } from '@/components/core/ms-types';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
-import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { asyncComputed } from '@/common/asyncComputed';
 import { DeviceClaim, parseBackendAddr, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag } from '@/parsec';
 import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
-import { askQuestion, Answer } from '@/components/core/ms-utils';
+import { MsWizardStepper, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, askQuestion, Answer } from '@/components/core';
 
 const notificationManager = inject(NotificationKey) as NotificationManager;
 

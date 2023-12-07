@@ -29,18 +29,11 @@
   </div>
 </template>
 
-<script lang="ts">
-export enum MsStepStatus {
-  DEFAULT = 'default',
-  DONE = 'done',
-  ACTIVE = 'active',
-}
-</script>
-
 <script setup lang="ts">
 import { IonIcon } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
 import { defineProps } from 'vue';
+import { MsStepStatus } from '@/components/core/ms-stepper/types';
 
 defineProps<{
   status: MsStepStatus;

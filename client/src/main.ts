@@ -38,7 +38,7 @@ import { isPlatform } from '@ionic/vue';
 import '@/theme/global.scss';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
-import { Answer, askQuestion } from '@/components/core/ms-utils';
+import { Answer, askQuestion } from '@/components/core';
 import { isElectron, isHomeRoute } from '@/parsec';
 import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';

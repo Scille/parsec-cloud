@@ -21,8 +21,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed } from 'vue';
 import { UserProfile, WorkspaceRole, canChangeRole } from '@/parsec';
-import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
-import { MsDropdownOption } from '@/components/core/ms-types';
+import { MsDropdown, MsOptions } from '@/components/core';
 import { useI18n } from 'vue-i18n';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserTuple } from '@/parsec';
@@ -44,8 +43,8 @@ defineEmits<{
 
 const NOT_SHARED_KEY = 'not_shared';
 
-const options = computed((): MsDropdownOption[] => {
-  return [
+const options = computed((): MsOptions => {
+  return new MsOptions([
     {
       key: WorkspaceRole.Reader,
       label: translateWorkspaceRole(t, WorkspaceRole.Reader),
@@ -71,7 +70,7 @@ const options = computed((): MsDropdownOption[] => {
       label: translateWorkspaceRole(t, null),
       disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, null),
     },
-  ];
+  ]);
 });
 
 function getRoleFromString(role: string): WorkspaceRole | null {

@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
+import { MsInput } from '@/components/core';
 import { Validity, userNameValidator, deviceNameValidator, emailValidator } from '@/common/validators';
 
 function getDefaultDeviceName(): string {

@@ -47,7 +47,7 @@ export enum HomePageAction {
 </script>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsModalResult } from '@/components/core';
 import { IonList, IonItem, IonIcon, IonLabel, IonText, popoverController } from '@ionic/vue';
 import { addCircle, mail } from 'ionicons/icons';
 

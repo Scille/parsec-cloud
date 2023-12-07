@@ -150,11 +150,9 @@ import {
 import { close } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsWizardStepper, MsInformativeText, MsModalResult } from '@/components/core';
 import { DeviceGreet } from '@/parsec';
 import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
 

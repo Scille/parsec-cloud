@@ -31,17 +31,11 @@
   </div>
 </template>
 
-<script lang="ts">
-export enum DisplayState {
-  List = 0,
-  Grid = 1,
-}
-</script>
-
 <script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue';
 import { defineEmits } from 'vue';
 import { grid, list } from 'ionicons/icons';
+import { DisplayState } from '@/components/core/ms-toggle/types';
 
 defineProps<{
   modelValue: DisplayState;

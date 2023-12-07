@@ -45,17 +45,15 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonList, modalController } from '@ionic/vue';
-import { ref, Ref, watch, onUnmounted, onMounted, inject } from 'vue';
-import { MsModalResult } from '@/components/core/ms-types';
-import { WorkspaceID, WorkspaceRole, getWorkspaceSharing, UserTuple, shareWorkspace, UserProfile, getClientProfile } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationManager, Notification, NotificationLevel } from '@/services/notificationManager';
-import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
-import MsModal from '@/components/core/ms-modal/MsModal.vue';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { useI18n } from 'vue-i18n';
 import { translateWorkspaceRole } from '@/common/translations';
+import { MsInput, MsModal } from '@/components/core';
+import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
+import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
+import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { IonList, IonPage } from '@ionic/vue';
+import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;

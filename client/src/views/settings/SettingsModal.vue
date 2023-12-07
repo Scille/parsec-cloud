@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import SettingsView from '@/views/settings/SettingsView.vue';
-import MsModal from '@/components/core/ms-modal/MsModal.vue';
+import { MsModal } from '@/components/core';
 </script>
 
 <style lang="scss" scoped></style>

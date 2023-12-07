@@ -7,36 +7,27 @@ export enum MsReportTheme {
   Error = 'ms-error',
 }
 
-export enum MsModalResult {
-  Cancel = 'cancel',
-  Confirm = 'confirm',
-}
-
-interface MsOption {
+export interface MsOption {
   label: string;
   description?: string;
   key: any;
   disabled?: boolean;
 }
 
-export function getMsOptionByKey(options: MsOption[], key: any): MsOption | undefined {
-  return options.find((option) => {
-    return option.key === key;
-  });
-}
+export class MsOptions {
+  set: MsOption[];
 
-export type MsDropdownOption = MsOption;
-export type MsSorterOption = MsOption;
+  constructor(options: MsOption[]) {
+    this.set = options;
+  }
 
-export interface MsSorterLabels {
-  asc: string;
-  desc: string;
-}
-export interface MsDropdownChangeEvent {
-  option: MsDropdownOption;
-}
+  at(index: number): MsOption | undefined {
+    return this.set.at(index);
+  }
 
-export interface MsSorterChangeEvent {
-  option: MsSorterOption;
-  sortByAsc: boolean;
+  get(key: any): MsOption | undefined {
+    return this.set.find((option) => {
+      return option.key === key;
+    });
+  }
 }

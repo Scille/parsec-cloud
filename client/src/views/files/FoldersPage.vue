@@ -198,20 +198,25 @@ import {
 import { folderOpen, document, pencil, link, arrowRedo, trashBin, copy, informationCircle } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { computed, ref, Ref, inject, watch, onUnmounted, onMounted } from 'vue';
-import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileCard from '@/components/files/FileCard.vue';
 import FileContextMenu from '@/views/files/FileContextMenu.vue';
 import { routerNavigateTo } from '@/router';
 import { FileAction } from '@/views/files/FileContextMenu.vue';
-import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import * as parsec from '@/parsec';
 import { useI18n } from 'vue-i18n';
-import { getTextInputFromUser, Answer, askQuestion, selectFolder } from '@/components/core/ms-utils';
+import {
+  MsActionBar,
+  MsGridListToggle,
+  MsActionBarButton,
+  DisplayState,
+  getTextInputFromUser,
+  Answer,
+  askQuestion,
+  selectFolder,
+} from '@/components/core';
 import { entryNameValidator } from '@/common/validators';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { writeTextToClipboard } from '@/common/clipboard';

@@ -77,8 +77,7 @@ import {
 } from '@/parsec';
 import { IonPage, IonContent, IonText, IonChip, IonButton } from '@ionic/vue';
 import TagProfile from '@/components/users/TagProfile.vue';
-import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
-import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
+import { MsChoosePasswordInput, MsPasswordInput } from '@/components/core';
 import { Ref, ref, onMounted, inject } from 'vue';
 import { asyncComputed } from '@/common/asyncComputed';
 import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';

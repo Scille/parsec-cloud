@@ -171,18 +171,14 @@ import {
 import { close } from 'ionicons/icons';
 import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { MsModalResult, MsDropdownOption } from '@/components/core/ms-types';
 import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
 import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
-import { Answer, askQuestion } from '@/components/core/ms-utils';
-import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
+import { MsInformativeText, MsWizardStepper, MsModalResult, Answer, askQuestion, MsDropdown, MsOptions } from '@/components/core';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -208,7 +204,7 @@ const greeter = ref(new UserGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 
-const profileOptions: MsDropdownOption[] = [
+const profileOptions: MsOptions = new MsOptions([
   {
     key: UserProfile.Admin,
     label: t('UsersPage.profile.admin'),
@@ -221,7 +217,7 @@ const profileOptions: MsDropdownOption[] = [
     key: UserProfile.Outsider,
     label: t('UsersPage.profile.outsider'),
   },
-];
+]);
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {

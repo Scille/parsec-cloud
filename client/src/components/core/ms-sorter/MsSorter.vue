@@ -22,12 +22,13 @@ import { defineProps, defineEmits, Ref, ref } from 'vue';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
-import { MsSorterOption, MsSorterLabels, MsSorterChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
+import { MsSorterChangeEvent, MsSorterLabels } from '@/components/core/ms-sorter/types';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
 
 const props = defineProps<{
   defaultOption: any;
   label?: string;
-  options: MsSorterOption[];
+  options: MsOptions;
   sorterLabels?: MsSorterLabels;
   disabled?: boolean;
 }>();
@@ -36,9 +37,7 @@ const emits = defineEmits<{
   (e: 'change', value: MsSorterChangeEvent): void;
 }>();
 
-const selectedOption: Ref<MsSorterOption | undefined> = ref(
-  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : undefined,
-);
+const selectedOption: Ref<MsOption | undefined> = ref(props.defaultOption ? props.options.get(props.defaultOption) : undefined);
 const sortByAsc: Ref<boolean> = ref(true);
 const labelRef = ref(selectedOption.value?.label || props.label);
 

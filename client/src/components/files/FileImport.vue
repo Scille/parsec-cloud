@@ -37,11 +37,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, FileImport } from '@/components/core/ms-image';
+import { FileImport, MsImage } from '@/components/core';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { ellipsisHorizontalCircle } from 'ionicons/icons';
 import { onMounted, onUnmounted, ref } from 'vue';
-
 const emits = defineEmits<{
   (e: 'filesImport', entries: File[]): void;
 }>();

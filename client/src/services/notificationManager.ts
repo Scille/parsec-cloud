@@ -2,10 +2,9 @@
 
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
-import MsAlertModal, { MsAlertModalConfig } from '@/components/core/ms-modal/MsAlertModal.vue';
 import { modalController } from '@ionic/vue';
 import { ComposerTranslation } from 'vue-i18n';
-import { MsModalResult, MsReportTheme } from '@/components/core/ms-types';
+import { MsAlertModal, MsModalResult, MsReportTheme, MsAlertModalConfig } from '@/components/core';
 import { ToastManager } from '@/services/toastManager';
 
 // Re-export so everything can be imported from this file

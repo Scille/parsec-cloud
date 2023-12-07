@@ -126,14 +126,20 @@ import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
 import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
-import MsSorter from '@/components/core/ms-sorter/MsSorter.vue';
-import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import { MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
-import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
 import { useI18n } from 'vue-i18n';
 import { ref, Ref, onMounted, computed, inject } from 'vue';
-import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
+import { workspaceNameValidator } from '@/common/validators';
+import { writeTextToClipboard } from '@/common/clipboard';
+import {
+  MsSorter,
+  MsActionBarButton,
+  MsGridListToggle,
+  MsActionBar,
+  MsSorterChangeEvent,
+  MsOptions,
+  getTextInputFromUser,
+  DisplayState,
+} from '@/components/core';
 import { routerNavigateToWorkspace } from '@/router';
 import {
   WorkspaceInfo,
@@ -142,9 +148,6 @@ import {
   getPathLink as parsecGetPathLink,
 } from '@/parsec';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
-import { getTextInputFromUser } from '@/components/core/ms-utils';
-import { workspaceNameValidator } from '@/common/validators';
-import { writeTextToClipboard } from '@/common/clipboard';
 
 const { t } = useI18n();
 const sortBy = ref('name');
@@ -189,11 +192,11 @@ const filteredWorkspaces = computed(() => {
   });
 });
 
-const msSorterOptions: MsSorterOption[] = [
+const msSorterOptions: MsOptions = new MsOptions([
   { label: t('WorkspacesPage.sort.sortByName'), key: 'name' },
   { label: t('WorkspacesPage.sort.sortBySize'), key: 'size' },
   { label: t('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
-];
+]);
 
 function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortBy.value = event.option.key;
@@ -367,4 +370,3 @@ ion-item::part(native) {
   display: flex;
 }
 </style>
-@/components/core/ms-sort/MsSorterOption

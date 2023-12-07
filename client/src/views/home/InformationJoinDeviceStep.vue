@@ -36,8 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, Device, SwapArrows } from '@/components/core/ms-image';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
+import { Device, MsImage, MsInformativeText, SwapArrows } from '@/components/core';
 import { IonText } from '@ionic/vue';
 </script>
 

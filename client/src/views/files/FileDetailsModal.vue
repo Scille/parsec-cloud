@@ -90,7 +90,7 @@
 import { IonPage, IonLabel, IonItem, IonText } from '@ionic/vue';
 import {} from 'ionicons/icons';
 import { inject } from 'vue';
-import MsModal from '@/components/core/ms-modal/MsModal.vue';
+import { MsModal } from '@/components/core';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { FormattersKey, Formatters } from '@/common/injectionKeys';
 

@@ -1,18 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { modalController } from '@ionic/vue';
-import { MsModalResult } from '@/components/core/ms-types';
 import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
 import MsPasswordInputModal from '@/components/core/ms-modal/MsPasswordInputModal.vue';
 import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
-import { IValidator } from '@/common/validators';
 import FolderSelectionModal from '@/components/core/ms-modal/FolderSelectionModal.vue';
 import { FsPath } from '@/parsec';
-
-export enum Answer {
-  No = 0,
-  Yes = 1,
-}
+import { FolderSelectionOptions, GetPasswordOptions, GetTextOptions, Answer, MsModalResult } from '@/components/core/ms-modal/types';
 
 export async function askQuestion(title: string, subtitle?: string, redisplayMainModalOnYes = true): Promise<Answer> {
   const top = await modalController.getTop();
@@ -50,13 +44,6 @@ export async function askQuestion(title: string, subtitle?: string, redisplayMai
   return answer;
 }
 
-export interface GetPasswordOptions {
-  title: string;
-  subtitle?: string;
-  inputLabel?: string;
-  okButtonText?: string;
-}
-
 export async function getPasswordFromUser(options: GetPasswordOptions): Promise<string | null> {
   const modal = await modalController.create({
     component: MsPasswordInputModal,
@@ -68,17 +55,6 @@ export async function getPasswordFromUser(options: GetPasswordOptions): Promise<
   const result = await modal.onWillDismiss();
   await modal.dismiss();
   return result.role === MsModalResult.Confirm ? result.data : null;
-}
-
-export interface GetTextOptions {
-  title: string;
-  subtitle?: string;
-  trim?: boolean;
-  validator?: IValidator;
-  inputLabel?: string;
-  placeholder?: string;
-  okButtonText?: string;
-  defaultValue?: string;
 }
 
 export async function getTextInputFromUser(options: GetTextOptions): Promise<string | null> {
@@ -101,12 +77,6 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
   const result = await modal.onWillDismiss();
   await modal.dismiss();
   return result.role === MsModalResult.Confirm ? result.data : null;
-}
-
-export interface FolderSelectionOptions {
-  title: string;
-  subtitle?: string;
-  startingPath: FsPath;
 }
 
 export async function selectFolder(options: FolderSelectionOptions): Promise<FsPath | null> {

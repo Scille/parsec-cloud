@@ -23,13 +23,14 @@ import { defineProps, defineEmits, Ref, ref } from 'vue';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { caretDown } from 'ionicons/icons';
 import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
-import { MsDropdownOption, MsDropdownChangeEvent, getMsOptionByKey } from '@/components/core/ms-types';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { MsDropdownChangeEvent } from '@/components/core/ms-dropdown/types';
 
 const props = defineProps<{
   defaultOption?: any;
   label?: string;
   description?: string;
-  options: MsDropdownOption[];
+  options: MsOptions;
   disabled?: boolean;
 }>();
 
@@ -37,9 +38,7 @@ const emits = defineEmits<{
   (e: 'change', value: MsDropdownChangeEvent): void;
 }>();
 
-const selectedOption: Ref<MsDropdownOption | undefined> = ref(
-  props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : undefined,
-);
+const selectedOption: Ref<MsOption | undefined> = ref(props.defaultOption ? props.options.get(props.defaultOption) : undefined);
 const labelRef = ref(selectedOption.value?.label || props.label);
 const isPopoverOpen = ref(false);
 

@@ -23,9 +23,8 @@
 import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
-import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
-import { MsModalResult } from '@/components/core/ms-types';
-import { GetPasswordOptions } from '@/components/core/ms-utils';
+import { MsPasswordInput } from '@/components/core/ms-input';
+import { GetPasswordOptions, MsModalResult } from '@/components/core/ms-modal/types';
 
 defineProps<GetPasswordOptions>();
 
