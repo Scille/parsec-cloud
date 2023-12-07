@@ -10,14 +10,14 @@ It is possible for server administrators to freeze specific Parsec users.
 
 This feature is not part of the Parsec revocation system, but a way for system administrators to temporarily block users from connecting to the server while waiting for organization administrators to actually revoke them. It is exposed as an HTTP route that requires the administration token. This way, it is possible for existing directory services to automatically freeze users that have been removed from the directory.
 
-HTTP `users` route
-------------------
+HTTP ``users`` route
+--------------------
 
-This route is made available as `/administration/organizations/<raw_organization_id>/users` and requires an administration token.
+This route is made available as ``/administration/organizations/<raw_organization_id>/users`` and requires an administration token.
 
-It only supports the `GET` method which lists information for all users, including Parsec ID, user name, user email, and frozen status.
+It only supports the ``GET`` method which lists information for all users, including Parsec ID, user name, user email, and frozen status.
 
-Here's an example using `curl` and `jq`:
+Here's an example using ``curl`` and ``jq``:
 
   .. code-block:: bash
 
@@ -45,14 +45,14 @@ A successful request returns a JSON dictionary similar to the one below:
       ]
     }
 
-HTTP `users/frozen` route
--------------------------
+HTTP ``users/frozen`` route
+---------------------------
 
-This route is made available as `/administration/organizations/<raw_organization_id>/users/frozen` and requires an administration token.
+This route is made available as ``/administration/organizations/<raw_organization_id>/users/frozen`` and requires an administration token.
 
-It only supports the `POST` method which modifies the `frozen` status for a given user.
+It only supports the ``POST`` method which modifies the ``frozen`` status for a given user.
 
-Here's an example of generating the request data using `jq`:
+Here's an example of generating the request data using ``jq``:
 
   .. code-block:: bash
 
@@ -63,7 +63,7 @@ Here's an example of generating the request data using `jq`:
     "frozen": true
     }
 
-The request can also use the `user_email` field instead of `user_id` to identify the Parsec user:
+The request can also use the ``user_email`` field instead of ``user_id`` to identify the Parsec user:
 
   .. code-block:: bash
 
@@ -74,7 +74,7 @@ The request can also use the `user_email` field instead of `user_id` to identify
     "frozen": true
     }
 
-Here's an example of running the request using `curl` and `jq`:
+Here's an example of running the request using ``curl`` and ``jq``:
 
   .. code-block:: bash
 
@@ -98,17 +98,17 @@ User identification: email address vs Parsec ID
 
 There is a subtle difference between the two ways to identify a user. At any given time, an email address can be used to uniquely identify a non-revoked user from a given organization. In contrast, a Parsec user ID identifies uniquely any user from all organizations in the Parsec server, including revoked users. This means that over time, an email address can identify different Parsec users with different Parsec IDs, even from the same organization.
 
-The frozen status configured by the `POST` method is specifically associated with the Parsec user ID, regardless of the identification method used in the request body. This has the following consequence: if a user is revoked and then a new user is created with the same email address, the frozen status will **not** be applied to the new user.
+The frozen status configured by the ``POST`` method is specifically associated with the Parsec user ID, regardless of the identification method used in the request body. This has the following consequence: if a user is revoked and then a new user is created with the same email address, the frozen status will **not** be applied to the new user.
 
 Error handling
 --------------
 
 The following standard errors are handled the same way as for the other administration routes:
 
-- Organization not found: `404` with JSON body `{"error": "not_found}`
-- Invalid administration token: `403` with JSON body `{"error": "not_allowed"}`
-- Wrong request format: `400` with JSON body `{"error": "bad_data"}`
+- Organization not found: ``404`` with JSON body ``{"error": "not_found}``
+- Invalid administration token: ``403`` with JSON body ``{"error": "not_allowed"}``
+- Wrong request format: ``400`` with JSON body ``{"error": "bad_data"}``
 
-On top of it, an extra error is returned when the `POST` request contains a user that does not exist in the organization:
+On top of it, an extra error is returned when the ``POST`` request contains a user that does not exist in the organization:
 
-- User not found: `404` with JSON body `{"error": "user_not_found"}`
+- User not found: ``404`` with JSON body ``{"error": "user_not_found"}``
