@@ -187,17 +187,13 @@ import {
 import { close } from 'ionicons/icons';
 import { ref, computed, onMounted, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsWizardStepper, MsChoosePasswordInput, MsInformativeText, MsModalResult, askQuestion, Answer } from '@/components/core';
 import { Notification, NotificationManager, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { asyncComputed } from '@/common/asyncComputed';
 import { UserClaim } from '@/parsec';
-import { askQuestion, Answer } from '@/components/core/ms-utils';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,

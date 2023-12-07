@@ -209,7 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, CaretExpand } from '@/components/core/ms-image';
+import { CaretExpand, MsImage } from '@/components/core';
 import {
   ClientInfo,
   UserProfile,

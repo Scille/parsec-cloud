@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { toastController } from '@ionic/vue';
-import { MsReportTheme } from '@/components/core/ms-types';
+import { MsReportTheme } from '@/components/core';
 import { informationCircle, checkmarkCircle, warning, closeCircle } from 'ionicons/icons';
 import { ComposerTranslation } from 'vue-i18n';
 

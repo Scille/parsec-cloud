@@ -1,17 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MsSorterOption, MsSorterLabels } from '@/components/core/ms-types';
-import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
+import { MsOptions, MsSorterLabels } from '@/components/core';
+import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 
 describe('Select popover', () => {
   let wrapper: VueWrapper;
 
-  const defaultOptions: MsSorterOption[] = [
+  const defaultOptions: MsOptions = new MsOptions([
     { label: 'Label A', key: '1' },
     { label: 'Label B', key: '2' },
     { label: 'Label C', key: '3' },
-  ];
+  ]);
 
   const defaultSortLabels: MsSorterLabels = {
     asc: 'Asc',
@@ -33,7 +33,7 @@ describe('Select popover', () => {
     const items = wrapper.findAll('ion-item');
     expect(items.length).to.equal(4);
     // Use first option as default
-    expect((wrapper.vm as any).selectedOption).to.deep.equal(defaultOptions[0]);
+    expect((wrapper.vm as any).selectedOption).to.deep.equal(defaultOptions.at(0));
     expect((wrapper.vm as any).sortByAsc).to.be.true;
     expect(items.at(1)?.text()).to.equal('Label A');
     expect(items.at(2)?.text()).to.equal('Label B');

@@ -119,7 +119,7 @@ import { IonPage, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
 import { sparkles, construct, infinite } from 'ionicons/icons';
 import { onMounted, ref, Ref } from 'vue';
 import { getChanges, VersionChange } from '@/common/mocks';
-import MsModal from '@/components/core/ms-modal/MsModal.vue';
+import { MsModal } from '@/components/core';
 
 const changes: Ref<VersionChange[]> = ref([]);
 

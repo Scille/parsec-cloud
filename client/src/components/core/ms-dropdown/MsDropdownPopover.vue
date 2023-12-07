@@ -7,7 +7,7 @@
       :class="{ selected: selectedOption?.key === option.key, 'item-disabled': option.disabled }"
       button
       lines="none"
-      v-for="option in options"
+      v-for="option in options.set"
       :key="option.key"
       @click="onOptionClick(option)"
     >
@@ -42,17 +42,17 @@
 import { ref } from 'vue';
 import { IonList, IonItem, IonIcon, IonLabel, popoverController } from '@ionic/vue';
 import { checkmark, informationCircle } from 'ionicons/icons';
-import { MsDropdownOption, getMsOptionByKey } from '@/components/core/ms-types';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
 import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
 
 const props = defineProps<{
   defaultOption?: any;
-  options: MsDropdownOption[];
+  options: MsOptions;
 }>();
 
-const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
+const selectedOption = ref(props.defaultOption ? props.options.get(props.defaultOption) : props.options.at(0));
 
-function onOptionClick(option?: MsDropdownOption): void {
+function onOptionClick(option?: MsOption): void {
   if (option) {
     selectedOption.value = option;
   }

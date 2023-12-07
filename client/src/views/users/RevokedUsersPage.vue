@@ -130,12 +130,8 @@ import { IonContent, IonItem, IonList, IonPage, IonLabel, IonListHeader, IonChec
 import { eye } from 'ionicons/icons';
 import UserListItem from '@/components/users/UserListItem.vue';
 import UserCard from '@/components/users/UserCard.vue';
-import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import UserContextMenu from '@/views/users/UserContextMenu.vue';
-import { UserAction } from '@/views/users/UserContextMenu.vue';
-import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
+import { DisplayState, MsActionBarButton, MsGridListToggle, MsActionBar } from '@/components/core';
+import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
 import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useI18n } from 'vue-i18n';

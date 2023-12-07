@@ -73,7 +73,7 @@ export enum ServerMode {
 <script setup lang="ts">
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { ref } from 'vue';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
+import { MsInput } from '@/components/core';
 import { backendAddrValidator, Validity } from '@/common/validators';
 
 const backendAddr = ref('');

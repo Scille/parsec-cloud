@@ -229,12 +229,17 @@
 import { Formatters, FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
 import { getAppVersion } from '@/common/mocks';
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
-import { MsImage, LogoRowWhite } from '@/components/core/ms-image';
-import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
-import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
-import MsSorter from '@/components/core/ms-sorter/MsSorter.vue';
-import { MsModalResult, MsSorterChangeEvent, MsSorterOption } from '@/components/core/ms-types';
-import { getTextInputFromUser } from '@/components/core/ms-utils';
+import {
+  LogoRowWhite,
+  MsImage,
+  MsModalResult,
+  MsPasswordInput,
+  MsSearchInput,
+  MsSorter,
+  MsSorterChangeEvent,
+  MsOptions,
+  getTextInputFromUser,
+} from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isLoggedIn, listAvailableDevices as parsecListAvailableDevices, login as parsecLogin } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
@@ -286,14 +291,14 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const isPopoverOpen = ref(false);
 
-const msSorterOptions: MsSorterOption[] = [
+const msSorterOptions: MsOptions = new MsOptions([
   {
     label: t('HomePage.organizationList.sortByOrganization'),
     key: 'organization',
   },
   { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
   { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
-];
+]);
 
 const msSorterLabels = {
   asc: t('HomePage.organizationList.sortOrderAsc'),
@@ -791,4 +796,3 @@ async function openSettingsModal(): Promise<void> {
   }
 }
 </style>
-@/components/core/ms-sort/MsSorterOption

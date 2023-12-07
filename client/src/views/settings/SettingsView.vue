@@ -126,8 +126,7 @@ import { toggleDarkMode } from '@/states/darkMode';
 import { Config, StorageManager } from '@/services/storageManager';
 import { StorageManagerKey } from '@/common/injectionKeys';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
-import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
-import { MsDropdownOption } from '@/components/core/ms-types';
+import { MsDropdown, MsOptions } from '@/components/core';
 
 const { t, locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -135,7 +134,7 @@ const storageManager = inject(StorageManagerKey)! as StorageManager;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
 
-const languageOptions: MsDropdownOption[] = [
+const languageOptions: MsOptions = new MsOptions([
   {
     key: 'en-US',
     label: t('SettingsPage.language.values.enUS'),
@@ -144,9 +143,9 @@ const languageOptions: MsDropdownOption[] = [
     key: 'fr-FR',
     label: t('SettingsPage.language.values.frFR'),
   },
-];
+]);
 
-const themeOptions: MsDropdownOption[] = [
+const themeOptions: MsOptions = new MsOptions([
   {
     key: 'dark',
     label: t('SettingsPage.theme.values.dark'),
@@ -159,7 +158,7 @@ const themeOptions: MsDropdownOption[] = [
     key: 'system',
     label: t('SettingsPage.theme.values.system'),
   },
-];
+]);
 
 enum SettingsTabs {
   General = 'General',

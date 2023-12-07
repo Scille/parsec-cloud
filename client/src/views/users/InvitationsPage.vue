@@ -76,12 +76,8 @@
 import { IonPage, IonContent, IonList, IonItem, IonListHeader, IonLabel, modalController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { onUpdated, ref, Ref, onMounted, inject, watch, onUnmounted } from 'vue';
-import MsActionBar from '@/components/core/ms-action-bar/MsActionBar.vue';
-import MsActionBarButton from '@/components/core/ms-action-bar/MsActionBarButton.vue';
-import MsGridListToggle from '@/components/core/ms-toggle/MsGridListToggle.vue';
-import { DisplayState } from '@/components/core/ms-toggle/MsGridListToggle.vue';
+import { MsModalResult, DisplayState, getTextInputFromUser, MsActionBar, MsActionBarButton, MsGridListToggle } from '@/components/core';
 import { useI18n } from 'vue-i18n';
-import { MsModalResult } from '@/components/core/ms-types';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
@@ -99,7 +95,6 @@ import {
 import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
 import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
-import { getTextInputFromUser } from '@/components/core/ms-utils';
 import { emailValidator } from '@/common/validators';
 
 const invitations: Ref<UserInvitation[]> = ref([]);

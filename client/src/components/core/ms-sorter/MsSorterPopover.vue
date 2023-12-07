@@ -21,7 +21,7 @@
       :disabled="option.disabled"
       button
       lines="none"
-      v-for="option in options"
+      v-for="option in options.set"
       :key="option.key"
       @click="onOptionClick(option)"
     >
@@ -41,19 +41,20 @@
 import { ref, Ref } from 'vue';
 import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
 import { arrowUp, arrowDown, checkmark } from 'ionicons/icons';
-import { MsSorterOption, MsSorterLabels, getMsOptionByKey } from '@/components/core/ms-types';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { MsSorterLabels } from '@/components/core/ms-sorter/types';
 
 const props = defineProps<{
   defaultOption?: any;
-  options: MsSorterOption[];
+  options: MsOptions;
   sorterLabels?: MsSorterLabels;
   sortByAsc: boolean;
 }>();
 
 const sortByAsc: Ref<boolean> = ref(props.sortByAsc);
-const selectedOption = ref(props.defaultOption ? getMsOptionByKey(props.options, props.defaultOption) : props.options[0]);
+const selectedOption = ref(props.defaultOption ? props.options.get(props.defaultOption) : props.options.at(0));
 
-function onOptionClick(option?: MsSorterOption): void {
+function onOptionClick(option?: MsOption): void {
   if (option) {
     selectedOption.value = option;
   } else {

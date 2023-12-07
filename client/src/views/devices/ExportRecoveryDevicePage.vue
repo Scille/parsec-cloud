@@ -143,9 +143,8 @@
 
 <script setup lang="ts">
 import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import { ref, inject, onMounted } from 'vue';
-import { getPasswordFromUser } from '@/components/core/ms-utils';
+import { getPasswordFromUser, MsInformativeText } from '@/components/core';
 import { useI18n } from 'vue-i18n';
 import { exportRecoveryDevice, RecoveryDeviceErrorTag } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';

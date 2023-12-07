@@ -177,21 +177,14 @@ import { IonTitle, IonText, IonPage, IonHeader, IonButton, IonButtons, IonFooter
 import { chevronForward, chevronBack, checkmarkDone, close } from 'ionicons/icons';
 import { ref, Ref, inject } from 'vue';
 import { useI18n } from 'vue-i18n';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
-import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import ChooseServer from '@/components/organizations/ChooseServer.vue';
-import { ServerMode } from '@/components/organizations/ChooseServer.vue';
-import SummaryStep from '@/views/home/SummaryStep.vue';
-import { OrgInfo } from '@/views/home/SummaryStep.vue';
-import MsSpinner from '@/components/core/ms-spinner/MsSpinner.vue';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
+import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
+import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { AvailableDevice, createOrganization as parsecCreateOrganization, BootstrapOrganizationErrorTag } from '@/parsec';
-import { MsModalResult } from '@/components/core/ms-types';
 import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
 import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
-import { askQuestion, Answer } from '@/components/core/ms-utils';
+import { MsInformativeText, MsChoosePasswordInput, MsSpinner, MsInput, MsModalResult, askQuestion, Answer } from '@/components/core';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,

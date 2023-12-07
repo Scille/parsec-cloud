@@ -132,8 +132,7 @@
 
 <script setup lang="ts">
 import { NotificationKey } from '@/common/injectionKeys';
-import { MsImage, PasswordLock } from '@/components/core/ms-image';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { routerNavigateTo } from '@/router';

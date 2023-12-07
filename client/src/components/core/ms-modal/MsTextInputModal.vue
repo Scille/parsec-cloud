@@ -29,11 +29,10 @@
 import { modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
-import MsInput from '@/components/core/ms-input/MsInput.vue';
-import { MsModalResult } from '@/components/core/ms-types';
+import { MsInput } from '@/components/core/ms-input';
 import { Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
-import { GetTextOptions } from '@/components/core/ms-utils';
+import { GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 
 const props = defineProps<GetTextOptions>();
 
