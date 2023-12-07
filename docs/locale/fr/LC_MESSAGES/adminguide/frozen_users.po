@@ -1,0 +1,152 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 2.16.1+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-07 17:41+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: fr\n"
+"Language-Team: fr <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.13.0\n"
+
+#: ../../adminguide/frozen_users.rst:7
+msgid "Frozen users"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:9
+msgid ""
+"It is possible for server administrators to freeze specific Parsec users."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:11
+msgid ""
+"This feature is not part of the Parsec revocation system, but a way for "
+"system administrators to temporarily block users from connecting to the "
+"server while waiting for organization administrators to actually revoke "
+"them. It is exposed as an HTTP route that requires the administration token. "
+"This way, it is possible for existing directory services to automatically "
+"freeze users that have been removed from the directory."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:14
+msgid "HTTP `users` route"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:16
+msgid ""
+"This route is made available as `/administration/organizations/"
+"<raw_organization_id>/users` and requires an administration token."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:18
+msgid ""
+"It only supports the `GET` method which lists information for all users, "
+"including Parsec ID, user name, user email, and frozen status."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:20
+msgid "Here's an example using `curl` and `jq`:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:27 ../../adminguide/frozen_users.rst:85
+msgid ""
+"A successful request returns a JSON dictionary similar to the one below:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:49
+msgid "HTTP `users/frozen` route"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:51
+msgid ""
+"This route is made available as `/administration/organizations/"
+"<raw_organization_id>/users/frozen` and requires an administration token."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:53
+msgid ""
+"It only supports the `POST` method which modifies the `frozen` status for a "
+"given user."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:55
+msgid "Here's an example of generating the request data using `jq`:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:66
+msgid ""
+"The request can also use the `user_email` field instead of `user_id` to "
+"identify the Parsec user:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:77
+msgid "Here's an example of running the request using `curl` and `jq`:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:97
+msgid "User identification: email address vs Parsec ID"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:99
+msgid ""
+"There is a subtle difference between the two ways to identify a user. At any "
+"given time, an email address can be used to uniquely identify a non-revoked "
+"user from a given organization. In contrast, a Parsec user ID identifies "
+"uniquely any user from all organizations in the Parsec server, including "
+"revoked users. This means that over time, an email address can identify "
+"different Parsec users with different Parsec IDs, even from the same "
+"organization."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:101
+msgid ""
+"The frozen status configured by the `POST` method is specifically associated "
+"with the Parsec user ID, regardless of the identification method used in the "
+"request body. This has the following consequence: if a user is revoked and "
+"then a new user is created with the same email address, the frozen status "
+"will **not** be applied to the new user."
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:104
+msgid "Error handling"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:106
+msgid ""
+"The following standard errors are handled the same way as for the other "
+"administration routes:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:108
+msgid "Organization not found: `404` with JSON body `{\"error\": \"not_found}`"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:109
+msgid ""
+"Invalid administration token: `403` with JSON body `{\"error\": "
+"\"not_allowed\"}`"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:110
+msgid "Wrong request format: `400` with JSON body `{\"error\": \"bad_data\"}`"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:112
+msgid ""
+"On top of it, an extra error is handled when the `POST` request contains a "
+"user that does not exist in the organization:"
+msgstr ""
+
+#: ../../adminguide/frozen_users.rst:114
+msgid "User not found: `404` with JSON body `{\"error\": \"user_not_found\"}`"
+msgstr ""
