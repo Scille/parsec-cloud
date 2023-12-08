@@ -49,6 +49,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
     open_clicked = pyqtSignal(WorkspaceFS)
     switch_clicked = pyqtSignal(bool, WorkspaceFS, object)
     manage_remanence_clicked = pyqtSignal(WorkspaceFS)
+    status_refreshed = pyqtSignal(QWidget)
 
     def __init__(
         self,
@@ -178,6 +179,7 @@ class WorkspaceButton(QWidget, Ui_WorkspaceButton):
             self.core.mountpoint_manager.is_workspace_mounted(self.workspace_fs.workspace_id, None)
         )
         self.set_mountpoint_state(self.is_mounted())
+        self.status_refreshed.emit(self)
 
     def get_owner(self) -> UserInfo | None:
         if self.users_roles:
