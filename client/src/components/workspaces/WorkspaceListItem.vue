@@ -82,13 +82,13 @@
 </template>
 
 <script setup lang="ts">
-import { business, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
-import { ref, inject } from 'vue';
-import { IonIcon, IonButton, IonItem, IonLabel } from '@ionic/vue';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { WorkspaceInfo } from '@/parsec';
+import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
+import { inject, ref } from 'vue';
 
 const isSelected = ref(false);
 
@@ -107,28 +107,6 @@ const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style lang="scss" scoped>
-.workspace-list-item {
-  --background-activated: var(--parsec-color-light-primary-100);
-  border-radius: 4px;
-
-  &:hover {
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-  }
-
-  &:focus {
-    --background-focused: var(--parsec-color-light-primary-100);
-    --background-focused-opacity: 1;
-  }
-}
-
-.workspace-list-item > [class^='workspace-'] {
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  height: 4rem;
-}
-
 .workspace-name {
   padding: 0.75rem 1rem;
   width: 100%;

@@ -88,12 +88,12 @@
 </template>
 
 <script setup lang="ts">
-import { ellipsisHorizontal, cloudDone, cloudOffline, folder, document } from 'ionicons/icons';
-import { ref, inject } from 'vue';
-import { IonIcon, IonButton, IonItem, IonLabel, IonCheckbox } from '@ionic/vue';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { EntryStat, EntryStatFile } from '@/parsec';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { EntryStat, EntryStatFile } from '@/parsec';
+import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
+import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -139,43 +139,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.file-list-item {
-  border-radius: var(--parsec-radius-4);
-  --show-full-highlight: 0;
-
-  &::part(native) {
-    --padding-start: 0px;
-  }
-
-  &:hover:not(.selected) {
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-  }
-
-  &:hover,
-  &.selected {
-    .cell,
-    .options-button__icon {
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-
-  &:active,
-  &.selected {
-    --background-focused: var(--parsec-color-light-primary-100);
-    --background: var(--parsec-color-light-primary-100);
-    --background-focused-opacity: 1;
-    --border-width: 0;
-  }
-}
-
-.file-list-item > [class^='file-'] {
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  height: 4rem;
-}
-
 .file-selected {
   min-width: 4rem;
   justify-content: end;

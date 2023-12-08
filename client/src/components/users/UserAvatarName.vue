@@ -28,6 +28,8 @@ defineProps<{
 .container {
   display: flex;
   flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
 
   .avatar {
     display: flex;
@@ -61,13 +63,6 @@ defineProps<{
   &:not(.main-cell) .person-name {
     color: var(--parsec-color-light-secondary-grey);
   }
-}
-
-.person-name {
-  padding-top: 0.3em;
-  padding-left: 0.5em;
-  font-size: 1em;
-  font-weight: 500;
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
