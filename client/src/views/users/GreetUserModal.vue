@@ -156,30 +156,30 @@
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonText,
-  IonPage,
-  IonHeader,
   IonButton,
   IonButtons,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonLabel,
+  IonPage,
   IonSpinner,
+  IonText,
+  IonTitle,
   modalController,
 } from '@ionic/vue';
 
-import { close } from 'ionicons/icons';
-import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
-import { useI18n } from 'vue-i18n';
-import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
+import { MsInformativeText, MsWizardStepper, MsModalResult, Answer, askQuestion, MsDropdown, MsOptions } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import UserInformation from '@/components/users/UserInformation.vue';
+import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserInvitation, UserGreet, UserProfile } from '@/parsec';
-import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
-import { MsInformativeText, MsWizardStepper, MsModalResult, Answer, askQuestion, MsDropdown, MsOptions } from '@/components/core';
+import UserInformation from '@/components/users/UserInformation.vue';
+import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { close } from 'ionicons/icons';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -208,15 +208,18 @@ const notificationManager: NotificationManager = inject(NotificationKey)!;
 const profileOptions: MsOptions = new MsOptions([
   {
     key: UserProfile.Admin,
-    label: t('UsersPage.profile.admin'),
+    label: t('UsersPage.profile.admin.label'),
+    description: t('UsersPage.profile.admin.description'),
   },
   {
     key: UserProfile.Standard,
-    label: t('UsersPage.profile.standard'),
+    label: t('UsersPage.profile.standard.label'),
+    description: t('UsersPage.profile.standard.description'),
   },
   {
     key: UserProfile.Outsider,
-    label: t('UsersPage.profile.outsider'),
+    label: t('UsersPage.profile.outsider.label'),
+    description: t('UsersPage.profile.outsider.description'),
   },
 ]);
 

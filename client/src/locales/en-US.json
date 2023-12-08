@@ -18,11 +18,6 @@
         "failedSubtitle": "Could not open the element at `{path}`."
     },
     "workspaceRoles": {
-        "reader": "Reader",
-        "contributor": "Contributor",
-        "manager": "Manager",
-        "owner": "Owner",
-        "none": "Not shared",
         "updateRejectedReasons": {
             "outsiderProfile": "Outsiders cannot change roles",
             "outsiderLimitedRole": "Outsiders can only be Readers or Contributors",
@@ -31,7 +26,24 @@
             "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
             "managerCannotPromoteToManager": "Managers cannot promote to Manager",
             "managerCannotPromoteToOwner": "Managers cannot promote to Owner"
-        }
+        },
+        "reader": {
+            "label": "Reader",
+            "description": "Can view and open files."
+        },
+        "contributor": {
+            "label": "Contributor",
+            "description": "Can view, open and upload files."
+        },
+        "manager": {
+            "label": "Manager",
+            "description": "Manage workspace and its users."
+        },
+        "owner": {
+            "label": "Owner",
+            "description": "Owns the workspace, can manage user rights and re-encrypt the workspace."
+        },
+        "none": "Not shared"
     },
     "link": {
         "invalid": "The provided link is invalid."
@@ -665,9 +677,18 @@
         "inviteUser": "Invite a user",
         "itemCount": "No user | One user | {count} users",
         "profile": {
-            "admin": "Administrator",
-            "standard": "Standard",
-            "outsider": "Outsider"
+            "admin": {
+                "label": "Administrator",
+                "description": "Can manage the organization and its users."
+            },
+            "standard": {
+                "label": "Standard",
+                "description": "Can create workspaces."
+            },
+            "outsider": {
+                "label": "Outsider",
+                "description": "Can only access shared workspaces."
+            }
         },
         "success": {
             "email": "Email address:",

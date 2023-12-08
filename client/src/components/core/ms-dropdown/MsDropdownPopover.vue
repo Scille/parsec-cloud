@@ -12,10 +12,12 @@
       @click="onOptionClick(option)"
     >
       <ion-label class="option-text">
-        <span class="option-text__title body">{{ option.label }}</span>
+        <span class="option-text__label body">
+          {{ option.label }}
+        </span>
         <span
           v-if="option.description"
-          class="option-text__subtitle body-sm"
+          class="option-text__description body-sm"
         >
           {{ option.description }}
         </span>
@@ -39,11 +41,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { IonList, IonItem, IonIcon, IonLabel, popoverController } from '@ionic/vue';
-import { checkmark, informationCircle } from 'ionicons/icons';
-import { MsOption, MsOptions } from '@/components/core/ms-types';
 import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { checkmark, informationCircle } from 'ionicons/icons';
+import { ref } from 'vue';
 
 const props = defineProps<{
   defaultOption?: any;
@@ -80,13 +82,16 @@ function openTooltip(event: Event, text: string): void {
 <style lang="scss" scoped>
 .container {
   padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .option {
   --background-hover: none;
   --color: var(--parsec-color-light-secondary-grey);
-  padding: 0.75rem;
+  padding: 0.375rem 0.75rem;
   --background: none;
   border-radius: var(--parsec-radius-6);
   --min-height: 0;
@@ -98,7 +103,6 @@ function openTooltip(event: Event, text: string): void {
   &:hover:not(.item-disabled) {
     background: var(--parsec-color-light-primary-50);
     --background-hover: var(--parsec-color-light-primary-50);
-    --color-hover: var(--parsec-color-light-primary-700);
   }
 
   &::part(native) {
@@ -109,9 +113,10 @@ function openTooltip(event: Event, text: string): void {
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
-    &__subtitle {
-      margin-bottom: 0.25rem;
+    gap: 0.25rem;
+
+    &__label {
+      color: var(--parsec-color-light-secondary-text);
     }
   }
 
@@ -122,18 +127,18 @@ function openTooltip(event: Event, text: string): void {
 
   &.selected {
     .option-text {
-      &__title {
+      &__label {
         color: var(--parsec-color-light-primary-700);
       }
 
-      &__subtitle {
+      &__description {
         color: var(--parsec-color-light-secondary-grey);
       }
     }
-  }
 
-  .checked.selected {
-    color: var(--parsec-color-light-primary-700);
+    .icon {
+      color: var(--parsec-color-light-primary-700);
+    }
   }
 
   &.item-disabled {
@@ -143,11 +148,11 @@ function openTooltip(event: Event, text: string): void {
     .option-text {
       opacity: 0.5;
 
-      &__title {
+      &__label {
         --color: var(--parsec-color-light-secondary-text);
       }
 
-      &__subtitle {
+      &__description {
         --color: var(--parsec-color-light-secondary-grey);
       }
     }

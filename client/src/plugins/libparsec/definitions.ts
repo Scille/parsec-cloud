@@ -73,7 +73,8 @@ export type I64 = number
 export type IndexInt = number
 export type SizeInt = number
 export type U64 = number
-export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
+export type { DateTime } from 'luxon';
+import type { DateTime } from 'luxon';
 
 export interface AvailableDevice {
     keyFilePath: Path

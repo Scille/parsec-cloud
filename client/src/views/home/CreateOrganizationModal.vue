@@ -172,19 +172,19 @@
 </template>
 
 <script setup lang="ts">
-import { IonTitle, IonText, IonPage, IonHeader, IonButton, IonButtons, IonFooter, IonIcon, modalController } from '@ionic/vue';
+import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
-import { chevronForward, chevronBack, checkmarkDone, close } from 'ionicons/icons';
-import { ref, Ref, inject } from 'vue';
-import { useI18n } from 'vue-i18n';
-import UserInformation from '@/components/users/UserInformation.vue';
-import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
-import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
-import { AvailableDevice, createOrganization as parsecCreateOrganization, BootstrapOrganizationErrorTag } from '@/parsec';
-import { organizationValidator, Validity } from '@/common/validators';
 import { asyncComputed } from '@/common/asyncComputed';
-import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
+import { Validity, organizationValidator } from '@/common/validators';
 import { MsInformativeText, MsChoosePasswordInput, MsSpinner, MsInput, MsModalResult, askQuestion, Answer } from '@/components/core';
+import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
+import { AvailableDevice, BootstrapOrganizationErrorTag, createOrganization as parsecCreateOrganization } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
+import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
+import { Ref, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -386,7 +386,7 @@ async function nextStep(): Promise<void> {
       let message = '';
       switch (result.error.tag) {
         case BootstrapOrganizationErrorTag.AlreadyUsedToken:
-          message = t('CreateOrganization.errors.alreadyExists');
+          message = t('AddCreateOrganization.errors.alreadyExists');
           pageStep.value = CreateOrganizationStep.OrgNameStep;
           break;
 

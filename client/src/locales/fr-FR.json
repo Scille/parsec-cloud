@@ -18,11 +18,6 @@
         "failedSubtitle": "L'élément `{path}` m'a pas pu être ouvert."
     },
     "workspaceRoles": {
-        "reader": "Lecteur",
-        "contributor": "Contributeur",
-        "manager": "Gérant",
-        "owner": "Propriétaire",
-        "none": "Non partagé",
         "updateRejectedReasons": {
             "outsiderProfile": "Les utilisateurs externes ne peuvent pas changer les rôles",
             "outsiderLimitedRole": "Les utilisateurs externes ne peuvent être que Lecteur ou Contributeur",
@@ -31,7 +26,24 @@
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
             "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire"
-        }
+        },
+        "reader": {
+            "label": "Lecteur",
+            "description": "Voir et ouvrir les fichiers."
+        },
+        "contributor": {
+            "label": "Contributor",
+            "description": "Voir, ouvrir et ajouter des fichiers."
+        },
+        "manager": {
+            "label": "Gérant",
+            "description": "Gère l'espace de travail et les droits des utilisateurs."
+        },
+        "owner": {
+            "label": "Propriétaire",
+            "description": "Possède l'espace de travail, peut gérer les droits des utilisateurs et rechiffrer l'espace."
+        },
+        "none": "Non partagé"
     },
     "link": {
         "invalid": "Le lien fourni est invalide."
@@ -665,9 +677,18 @@
         "inviteUser": "Inviter un utilisateur",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
         "profile": {
-            "admin": "Administrateur",
-            "standard": "Standard",
-            "outsider": "Externe"
+            "admin": {
+                "label": "Administrateur",
+                "description": "Peut créer des espaces de travail, partager des fichiers et gérer l'organisation."
+            },
+            "standard": {
+                "label": "Standard",
+                "description": "Peut créer des espaces de travail et partager des fichiers."
+            },
+            "outsider": {
+                "label": "Externe",
+                "description": "Peut uniquement accéder aux espaces de travail qui lui sont partagés."
+            }
         },
         "success": {
             "email": "Adresse mail :",

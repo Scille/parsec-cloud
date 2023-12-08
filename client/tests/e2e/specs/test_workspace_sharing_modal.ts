@@ -38,7 +38,8 @@ describe('Check workspace sharing modal', () => {
 
   it('Change user role', () => {
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click();
-    cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader').click();
+    cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__description').contains('Can view and open files');
+    cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__label').contains('Reader').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
     cy.checkToastMessage("Jaheira's role has been updated to Reader.");
