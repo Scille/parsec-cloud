@@ -71,13 +71,13 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonLabel, IonIcon, IonButton, IonCheckbox } from '@ionic/vue';
-import { ellipsisHorizontal } from 'ionicons/icons';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { inject, ref } from 'vue';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import TagProfile from '@/components/users/TagProfile.vue';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserInfo } from '@/parsec';
+import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { ellipsisHorizontal } from 'ionicons/icons';
+import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
@@ -116,57 +116,6 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style scoped lang="scss">
-.user-list-item {
-  border-radius: var(--parsec-radius-4);
-  --show-full-highlight: 0;
-
-  &::part(native) {
-    --padding-start: 0px;
-  }
-
-  &:hover:not(.item-checkbox-checked) {
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-  }
-
-  &:hover,
-  &.selected {
-    .cell,
-    .options-button__icon {
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-
-  &:active,
-  &.selected {
-    --background-focused: var(--parsec-color-light-primary-100);
-    --background: var(--parsec-color-light-primary-100);
-    --background-focused-opacity: 1;
-  }
-
-  &.selected,
-  &:focus {
-    --border-width: 0;
-  }
-
-  &.item-checkbox-checked {
-    --background: var(--parsec-color-light-primary-100);
-    --background-checked-opacity: 1;
-
-    .cell,
-    .options-button__icon {
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-}
-
-.user-list-item > [class^='user-'] {
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  height: 4rem;
-}
-
 .user-selected {
   min-width: 4rem;
   justify-content: end;
