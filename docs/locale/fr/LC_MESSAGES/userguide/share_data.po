@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-26 11:54+0000\n"
+"POT-Creation-Date: 2023-12-08 14:22+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.0\n"
+"Generated-By: Babel 2.13.1\n"
 
 #: ../../userguide/share_data.rst:6
 msgid "Share data"
@@ -28,17 +28,17 @@ msgstr "Créer et partager un espace de travail"
 
 #: ../../userguide/share_data.rst:11
 msgid ""
-"In Parsec, data are stored into workspaces, each workspace having its own "
-"policy for read and write access."
+"In Parsec, data are stored into workspaces, each workspace having its own"
+" policy for read and write access."
 msgstr ""
-"Dans Parsec, les données sont stockées dans des espaces de travail, chacun "
-"ayant ses propres règles d'accès en lecture et écriture."
+"Dans Parsec, les données sont stockées dans des espaces de travail, "
+"chacun ayant ses propres règles d'accès en lecture et écriture."
 
 #: ../../userguide/share_data.rst:14
 msgid "So before adding data to Parsec we must create a workspace:"
 msgstr ""
-"De fait, avant de pouvoir ajouter des données dans Parsec il faut créer un "
-"espace de travail:"
+"De fait, avant de pouvoir ajouter des données dans Parsec il faut créer "
+"un espace de travail:"
 
 #: ../../userguide/share_data.rst:-1
 msgid "Creating workspace process"
@@ -46,12 +46,12 @@ msgstr "Processus de création d'un espace de travail"
 
 #: ../../userguide/share_data.rst:20
 msgid ""
-"The creator of the workspace automatically gets the ``Owner`` role, as shown "
-"above, and can then share the workspace with other users."
+"The creator of the workspace automatically gets the ``Owner`` role, as "
+"shown above, and can then share the workspace with other users."
 msgstr ""
 "Comme montré plus haut, le créateur de l'espace de travail obtient "
-"automatiquement le rôle ``Propriétaire`` et peut aussitôt partager l'espace "
-"de travail avec d'autres utilisateurs."
+"automatiquement le rôle ``Propriétaire`` et peut aussitôt partager "
+"l'espace de travail avec d'autres utilisateurs."
 
 #: ../../userguide/share_data.rst:-1
 msgid "Sharing workspace process"
@@ -71,43 +71,44 @@ msgstr "Contributeur : a un accès en lecture et écriture"
 
 #: ../../userguide/share_data.rst:31
 msgid ""
-"Manager: same as Contributor and can also Reader and Contributor roles to "
-"other users."
+"Manager: same as Contributor and can also Reader and Contributor roles to"
+" other users."
 msgstr ""
 "Gérant : comme le Contributeur, mais en plus donner les rôles Lecteur et "
 "Contributeur à d'autres utilisateurs."
 
 #: ../../userguide/share_data.rst:32
 msgid ""
-"Owner: same as Manager and can also give Manager and Owner roles to other "
-"users. In addition to this, Owners are responsible for maintenance tasks "
-"such as :ref:`workspace re-encryption "
+"Owner: same as Manager and can also give Manager and Owner roles to other"
+" users. In addition to this, Owners are responsible for maintenance tasks"
+" such as :ref:`workspace re-encryption "
 "<doc_userguide_revoke_user_workspace_re_encryption>`."
 msgstr ""
 "Propriétaire : comme Gérant, mais peut aussi donner les rôles Gérant et "
 "Propriétaire à d'autres utilisateurs. En plus de cela, les Propriétaires "
-"sont responsable des opérations de maintenance comme le :ref:`re-chiffrement "
-"de l'espace de travail <doc_userguide_revoke_user_workspace_re_encryption>`."
+"sont responsable des opérations de maintenance comme le :ref:`re-"
+"chiffrement de l'espace de travail "
+"<doc_userguide_revoke_user_workspace_re_encryption>`."
 
 #: ../../userguide/share_data.rst:38
 msgid ""
-"Just like a user with a single device is bad because there is no fall-back "
-"if something happens to it, having a workspace with a single user is "
-"dangerous."
+"Just like a user with a single device is bad because there is no fall-"
+"back if something happens to it, having a workspace with a single user is"
+" dangerous."
 msgstr ""
-"De la même façon qu'un utilisateur avec un seul terminal est une mauvaise "
-"idée car il ne dispose pas de moyen de récupération en cas de problème, "
+"De la même façon qu'un utilisateur avec un seul terminal est une mauvaise"
+" idée car il ne dispose pas de moyen de récupération en cas de problème, "
 "avoir un espace de travail contenant un seul utilisateur est dangereux."
 
 #: ../../userguide/share_data.rst:40
 msgid ""
-"Strong cryptographic security prevent data recovery if the user is lost or "
-"cannot log in. For this reason it is better to share the workspace with "
-"other users."
+"Strong cryptographic security prevent data recovery if the user is lost "
+"or cannot log in. For this reason it is better to share the workspace "
+"with other users."
 msgstr ""
 "Le chiffrement des données empêche toute récupération si cet utilisateur "
-"n'est plus en mesure de se connecter au système. Pour cette raison il est "
-"recommandé de partage l'espace de travail avec d'autres utilisateurs."
+"n'est plus en mesure de se connecter au système. Pour cette raison il est"
+" recommandé de partage l'espace de travail avec d'autres utilisateurs."
 
 #: ../../userguide/share_data.rst:43
 msgid "Upload data"
@@ -115,24 +116,24 @@ msgstr "Importer des données"
 
 #: ../../userguide/share_data.rst:45
 msgid ""
-"Once the workspace is created, it appears in the file explorer as a regular "
-"folder."
+"Once the workspace is created, it appears in the file explorer as a "
+"regular folder."
 msgstr ""
 "Une fois l'espace de travail créé, il apparait dans l'explorateur de "
 "fichiers comme un répertoire classique."
 
 #: ../../userguide/share_data.rst:49
 msgid ""
-"Although workspaces are mounted by default, they can be unmounted or mounted "
-"back using the toggle at the bottom left of the workspace card. When a "
-"workspace is unmounted, his data are not accessible in Parsec, and it is not "
-"reachable through the regular file explorer of the computer."
+"Although workspaces are mounted by default, they can be unmounted or "
+"mounted back using the toggle at the bottom left of the workspace card. "
+"When a workspace is unmounted, his data are not accessible in Parsec, and"
+" it is not reachable through the regular file explorer of the computer."
 msgstr ""
-"Bien que les Espaces de Travail soient montés par défaut, ils peuvent être "
-"démontés ou remontés en utilisant le bouton en bas à gauche de chaque carte "
-"d'Espace de Travail. Quand un Espace de Travail est démonté, ses données ne "
-"sont pas accessibles dans Parsec, et il n'est pas non plus accessible dans "
-"l'explorateur de fichier par défaut de l'appareil."
+"Bien que les Espaces de Travail soient montés par défaut, ils peuvent "
+"être démontés ou remontés en utilisant le bouton en bas à gauche de "
+"chaque carte d'Espace de Travail. Quand un Espace de Travail est démonté,"
+" ses données ne sont pas accessibles dans Parsec, et il n'est pas non "
+"plus accessible dans l'explorateur de fichier par défaut de l'appareil."
 
 #: ../../userguide/share_data.rst
 msgid "workspaces unmounted and mounted"
@@ -143,8 +144,8 @@ msgid ""
 "Parsec also proposes its own file manager, accessible when clicking on a "
 "mounted workspace."
 msgstr ""
-"Parsec propose aussi son propre explorateur de fichier, accessible par un "
-"clic sur un Espace de Travail monté."
+"Parsec propose aussi son propre explorateur de fichier, accessible par un"
+" clic sur un Espace de Travail monté."
 
 #: ../../userguide/share_data.rst:-1
 msgid "Parsec in file explorer"
@@ -153,25 +154,91 @@ msgstr "Parsec dans l'explorateur de fichiers"
 #: ../../userguide/share_data.rst:61
 msgid ""
 "Data copied from file explorer also appear in the Parsec client. In "
-"addition, the Parsec client also displays the current synchronization state "
-"of each file (showing whether the modifications are only present locally or "
-"they have been synced with the server and hence are visible by everyone with "
-"access to the workspace)."
+"addition, the Parsec client also displays the current synchronization "
+"state of each file (showing whether the modifications are only present "
+"locally or they have been synced with the server and hence are visible by"
+" everyone with access to the workspace)."
 msgstr ""
-"Les données copiées depuis l'explorateur de fichiers apparaissent dans le "
-"client Parsec. En plus de ça le client Parsec affiche aussi l'état de la "
-"synchronisation de chaque fichier (c'est à dire si les modifications d'un "
-"fichier sont présentent uniquement en local ou bien si elles ont été "
-"synchronisées avec le serveur Parsec et sont donc visibles par les autres "
-"utilisateurs ayant accès à l'espace de travail)."
+"Les données copiées depuis l'explorateur de fichiers apparaissent dans le"
+" client Parsec. En plus de ça le client Parsec affiche aussi l'état de la"
+" synchronisation de chaque fichier (c'est à dire si les modifications "
+"d'un fichier sont présentent uniquement en local ou bien si elles ont été"
+" synchronisées avec le serveur Parsec et sont donc visibles par les "
+"autres utilisateurs ayant accès à l'espace de travail)."
 
 #: ../../userguide/share_data.rst:65
 msgid ""
-"Parsec client can work while offline (however only data present locally are "
-"available), synchronization will occur automatically as soon as the "
+"Parsec client can work while offline (however only data present locally "
+"are available), synchronization will occur automatically as soon as the "
 "connection with the server is established."
 msgstr ""
 "Le client Parsec est capable de fonctionner sans connexion internet "
-"(toutefois seules les données présentent localement sont disponibles), la "
-"synchronisation se faisant automatiquement dès que la connexion avec le "
+"(toutefois seules les données présentent localement sont disponibles), la"
+" synchronisation se faisant automatiquement dès que la connexion avec le "
 "serveur Parsec est de nouveau disponible."
+
+#: ../../userguide/share_data.rst:70
+msgid "Assign roles to users in bulk"
+msgstr "Assigner plusieurs rôles en une fois"
+
+#: ../../userguide/share_data.rst:72
+msgid ""
+"Assigning the same roles to multiple users on multiple workspaces can be "
+"a bit annoying. Parsec provides a way to bulk assign the roles of one "
+"user to another."
+msgstr "Assigner plusieurs rôles à plusieurs utilisateurs sur plusieurs espaces de travail peut être ennuyeux. Parsec fournit une méthode pour assigner tous les rôles d'un utilisateur à un autre."
+
+#: ../../userguide/share_data.rst:74
+msgid ""
+"In the Users page, right click on the user you want to copy the roles "
+"from:"
+msgstr "Dans la page des utilisateurs, clic droit sur l'utilisateur dont vous voulez copier les rôles :"
+
+#: ../../userguide/share_data.rst:-1
+msgid "Start a bulk assignement"
+msgstr "Démarrez un assignement en gros"
+
+#: ../../userguide/share_data.rst:80
+msgid "Search the user you want to assign the roles to:"
+msgstr "Recherchez l'utilisateur à qui assigner les rôles"
+
+#: ../../userguide/share_data.rst:-1
+msgid "Select the user to assign roles to"
+msgstr "Sélectionnez l'utilisateur à qui assigner les rôles"
+
+#: ../../userguide/share_data.rst:86
+msgid ""
+"You're shown a summary of what roles are going to be assigned on each "
+"workspace. Click on `Assign roles` to complete the operation."
+msgstr "Vous obtiendrez un récapitulatif des rôles qui seront assignés sur chaque espace de travail. Cliquez sur `Assignez les rôles` pour terminer l'opération."
+
+#: ../../userguide/share_data.rst:-1
+msgid "Bulk assignment summary"
+msgstr "Assignment en gros"
+
+#: ../../userguide/share_data.rst:94
+msgid "You can only assign roles on workspaces where you are an Owner or Manager"
+msgstr "Vous ne pouvez assigner des rôles que sur les espaces de travail dont vous êtes Gérant ou Propriétaire"
+
+#: ../../userguide/share_data.rst:95
+msgid "Outsider cannot have a role higher than Contributor"
+msgstr "Les externes ne peuvent pas avoir un rôle plus haut que Contributeur"
+
+#: ../../userguide/share_data.rst:96
+msgid ""
+"Assigned roles can be downgraded if your own role on the workspace is not"
+" high enough (if you're a Manager and you're trying to assign an Owner "
+"role, it will be downgraded to Contributor)"
+msgstr "Les rôles assignés peuvent être diminués si votre propre rôle sur l'espace de travail n'est pas assez haut. (si vous êtes Gérant et que vous essayez d'assigner un Propriétaire, il sera diminué vers Contributeur)"
+
+#: ../../userguide/share_data.rst:97
+msgid ""
+"If the user already has a higher role on the workspace than the one "
+"you're trying to assign, do nothing"
+msgstr "Si un utilisateur a un rôle sur l'espace de travail plus haut que celui que vous souhaitez assigner, rien ne sera fait"
+
+#: ../../userguide/share_data.rst:98
+msgid ""
+"The option is only available if you have workspace in common with the "
+"source user and you have a role high enough"
+msgstr "Cette option est seulement disponible si vous avez un espace de travail en commun avec l'utilisateur source et que votre rôle est suffisamment haut"

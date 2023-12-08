@@ -2266,7 +2266,7 @@ msgid "TEXT_REASSIGN_ROLE_SOME_FAILED"
 msgstr "Certains rôles n'ont pas pu être assignés."
 
 msgid "TEXT_REASSIGN_WORKSPACE_ROLES"
-msgstr "Assigner les rôles"
+msgstr "Assigner les rôles des espaces de travail"
 
 msgid "TEXT_BLOCK_REMANENCE_ENABLED"
 msgstr ""
@@ -2367,7 +2367,7 @@ msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Révoquer"
 
 msgid "ACTION_USER_MENU_ASSIGN_WORKSPACE_ROLES"
-msgstr "Assigner les rôles à un autre utilisateur"
+msgstr "Assigner les rôles des espaces de travail à un autre utilisateur"
 
 msgid "TEXT_FILTER_USERS_ROLE_NONE"
 msgstr "Voir tous les profils"

@@ -2304,7 +2304,7 @@ msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Revoke"
 
 msgid "ACTION_USER_MENU_ASSIGN_WORKSPACE_ROLES"
-msgstr "Assign workspace roles to someone else"
+msgstr "Assign workspace roles to another user"
 
 msgid "TEXT_FILTER_USERS_ROLE_NONE"
 msgstr "Show all profiles"
