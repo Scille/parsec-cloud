@@ -7,7 +7,7 @@
   <div class="info-device">
     <div class="content">
       <ms-image
-        :name="MsImages.Device"
+        :name="MsImageName.Device"
         alt="device with Parsec Cloud connected"
         class="content__device"
       />
@@ -20,13 +20,13 @@
     </div>
     <div>
       <ms-image
-        :name="MsImages.SwapArrows"
+        :name="MsImageName.SwapArrows"
         alt="arrows between devices"
       />
     </div>
     <div class="content">
       <ms-image
-        :name="MsImages.Device"
+        :name="MsImageName.Device"
         alt="device with Parsec Cloud connected"
         class="content__device"
       />
@@ -41,10 +41,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
-import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
 import MsImage from '@/components/core/ms-image/MsImage.vue';
-import { MsImages } from '@/components/core/ms-types';
+import MsInformativeText from '@/components/core/ms-text/MsInformativeText.vue';
+import { MsImageName } from '@/components/core/ms-types';
+import { IonText } from '@ionic/vue';
 </script>
 
 <style scoped lang="scss">

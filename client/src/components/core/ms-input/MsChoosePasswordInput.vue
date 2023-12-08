@@ -3,7 +3,7 @@
 <template>
   <div class="info-password">
     <ms-image
-      :name="MsImages.PasswordLock"
+      :name="MsImageName.PasswordLock"
       alt="password-image"
       class="info-password__img"
     />
@@ -57,12 +57,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
-import { ref } from 'vue';
-import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import { PasswordStrength, getPasswordStrength, getPasswordStrengthText } from '@/common/passwordValidation';
 import MsImage from '@/components/core/ms-image/MsImage.vue';
-import { MsImages } from '@/components/core/ms-types';
+import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
+import { MsImageName } from '@/components/core/ms-types';
+import { IonText } from '@ionic/vue';
+import { ref } from 'vue';
 
 const password = ref('');
 const passwordConfirm = ref('');

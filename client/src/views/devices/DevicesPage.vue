@@ -58,7 +58,7 @@
           </ion-label>
           <div class="restore-password-header">
             <ms-image
-              :name="MsImages.PasswordLock"
+              :name="MsImageName.PasswordLock"
               alt="password-image"
               class="info-password__img"
             />
@@ -100,7 +100,7 @@
           </ion-label>
           <div class="restore-password-header">
             <ms-image
-              :name="MsImages.PasswordLock"
+              :name="MsImageName.PasswordLock"
               alt="password-image"
               class="info-password__img"
             />
@@ -133,18 +133,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, onMounted, inject } from 'vue';
-import { add, sparkles, download } from 'ionicons/icons';
-import { IonButton, IonList, IonItem, IonIcon, IonPage, IonContent, IonLabel, IonText, modalController } from '@ionic/vue';
-import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { listOwnDevices, OwnDeviceInfo, hasRecoveryDevice } from '@/parsec';
 import { NotificationKey } from '@/common/injectionKeys';
-import { NotificationManager, NotificationLevel, Notification } from '@/services/notificationManager';
-import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
-import { MsModalResult } from '@/components/core/ms-types';
-import { routerNavigateTo } from '@/router';
 import MsImage from '@/components/core/ms-image/MsImage.vue';
-import { MsImages } from '@/components/core/ms-types';
+import { MsImageName, MsModalResult } from '@/components/core/ms-types';
+import DeviceCard from '@/components/devices/DeviceCard.vue';
+import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
+import { routerNavigateTo } from '@/router';
+import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
+import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { add, download, sparkles } from 'ionicons/icons';
+import { Ref, inject, onMounted, ref } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;

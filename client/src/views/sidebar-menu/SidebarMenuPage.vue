@@ -34,7 +34,7 @@
                   class="organization-card__icon"
                   v-show="false"
                 >
-                  <ms-image :name="MsImages.CaretExpand" />
+                  <ms-image :name="MsImageName.CaretExpand" />
                 </div>
               </ion-card-header>
 
@@ -209,43 +209,40 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonHeader,
-  IonMenu,
-  IonSplitPane,
-  IonIcon,
-  IonText,
-  IonList,
-  IonCard,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardHeader,
-  IonLabel,
-  IonPage,
-  IonAvatar,
-  IonItem,
-  IonRouterOutlet,
-  menuController,
-  GestureDetail,
-  IonButton,
-} from '@ionic/vue';
-import { business, chevronBack, people, pieChart, informationCircle } from 'ionicons/icons';
-import { WatchStopHandle, onMounted, onUnmounted, ref, watch, Ref } from 'vue';
-import { createGesture } from '@ionic/vue';
-import { useRoute } from 'vue-router';
-import useSidebarMenu from '@/services/sidebarMenu';
-import { isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute } from '@/parsec';
-import { routerNavigateTo, routerNavigateToWorkspace } from '@/router';
-import {
-  listWorkspaces as parsecListWorkspaces,
-  getClientInfo as parsecGetClientInfo,
-  ClientInfo,
-  UserProfile,
-  WorkspaceInfo,
-} from '@/parsec';
-import { MsImages } from '@/components/core/ms-types';
 import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImageName } from '@/components/core/ms-types';
+import {
+ClientInfo,
+UserProfile,
+WorkspaceInfo, isOrganizationManagementRoute, isSpecificWorkspaceRoute, isUserRoute, getClientInfo as parsecGetClientInfo, listWorkspaces as parsecListWorkspaces
+} from '@/parsec';
+import { routerNavigateTo, routerNavigateToWorkspace } from '@/router';
+import useSidebarMenu from '@/services/sidebarMenu';
+import {
+GestureDetail,
+IonAvatar,
+IonButton,
+IonCard,
+IonCardHeader,
+IonCardSubtitle,
+IonCardTitle,
+IonContent,
+IonHeader,
+IonIcon,
+IonItem,
+IonLabel,
+IonList,
+IonMenu,
+IonPage,
+IonRouterOutlet,
+IonSplitPane,
+IonText,
+createGesture,
+menuController,
+} from '@ionic/vue';
+import { business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
+import { Ref, WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 

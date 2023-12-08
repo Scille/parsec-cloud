@@ -4,7 +4,7 @@
   <div class="container">
     <div class="container-logo">
       <ms-image
-        :name="MsImages.LogoIconGradient"
+        :name="MsImageName.LogoIconGradient"
         alt="loading-image"
         class="image"
       />
@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonSpinner, IonText } from '@ionic/vue';
 import MsImage from '@/components/core/ms-image/MsImage.vue';
-import { MsImages } from '@/components/core/ms-types';
+import { MsImageName } from '@/components/core/ms-types';
+import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{
   title: string;

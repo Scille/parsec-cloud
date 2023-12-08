@@ -44,7 +44,7 @@ export interface MsSorterChangeEvent {
 // replace this by Map to manage order of extensions and loop on it when trying to fetch file
 export const msImageExtensions: Array<string> = ['svg', 'png', 'webp'];
 
-export enum MsImages {
+export enum MsImageName {
   CaretExpand = 'caret-expand',
   Device = 'device',
   FileImport = 'file-import',
@@ -56,7 +56,7 @@ export enum MsImages {
 }
 
 export interface MsImageResource {
-  name: MsImages;
+  name: MsImageName;
   data: string;
   isSvg: boolean;
 }

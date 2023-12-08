@@ -2,7 +2,7 @@
 
 <template>
   <div class="tooltip-container">
-    <ms-image :name="MsImages.WavyCaretUp" />
+    <ms-image :name="MsImageName.WavyCaretUp" />
     <div class="tooltip-content">
       <ion-text class="tooltip-text body-sm">
         {{ text }}
@@ -12,10 +12,10 @@
 </template>
 
 <script setup lang="ts">
+import MsImage from '@/components/core/ms-image/MsImage.vue';
+import { MsImageName } from '@/components/core/ms-types';
 import { IonText } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { MsImages } from '@/components/core/ms-types';
-import MsImage from '@/components/core/ms-image/MsImage.vue';
 
 defineProps<{
   text: string;
