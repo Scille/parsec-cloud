@@ -2,68 +2,139 @@
 
 <template v-if="imageResource" class="ms-image">
   <div
-    v-if="isSvg()"
+    v-if="imageResource?.isSvg"
     class="svg-container"
-    v-html="svgData"
+    v-html="imageResource?.data"
   />
   <img
     v-else
-    :src="sourceUrl"
-    @error="onError()"
+    :src="imageResource?.data"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { MsImageExtension, MsImageResource, MsImages, msImageResourceMap } from '@/components/core/ms-types';
-import { onMounted } from 'vue';
-
-const imageResource = computed((): MsImageResource | null => {
-  return msImageResourceMap.get(props.name) || null;
-});
-
-const sourceUrl = computed((): string => {
-  if (imageResource.value && imageResource.value.extensions.at(currentExtensionIndex.value)) {
-    return `/src/assets/images/${imageResource.value.name}.${imageResource.value.extensions.at(currentExtensionIndex.value)}`;
-  }
-  return '';
-});
+import * as images from '@/assets/images/images';
+import { MsImageResource, MsImages, msImageExtensions } from '@/components/core/ms-types';
+import { Ref, onMounted, ref } from 'vue';
 
 onMounted(() => {
-  svgFileToString();
+  loadImageResource();
 });
 
-const currentExtensionIndex = ref(0);
-const svgData = ref('');
+const imageResource: Ref<MsImageResource | null> = ref(null);
+
+// eslint-disable-next-line prefer-const
+let method: number = 2;
+// eslint-disable-next-line prefer-const
+let imageUrlMethod: number = 1;
 
 const props = defineProps<{
   name: MsImages;
 }>();
 
-function onError(): void {
-  if (imageResource.value && imageResource.value.extensions.at(currentExtensionIndex.value + 1)) {
-    currentExtensionIndex.value += 1;
-  }
-}
+async function loadImageResource(): Promise<void> {
+  // iter over extensions
+  for (const extension of msImageExtensions) {
+    const imageUrl = getImageUrl(props.name, extension);
+    console.log(imageUrl);
 
-function isSvg(): boolean {
-  return imageResource.value?.extensions.at(currentExtensionIndex.value) === MsImageExtension.Svg;
-}
-
-async function svgFileToString(): Promise<string> {
-  if (sourceUrl.value && isSvg()) {
-    try {
-      const response = await fetch(sourceUrl.value);
-      if (!response.ok) {
-        throw new Error(`${response.status}`);
+    if (imageUrl) {
+      switch (method) {
+        case 1:
+          try {
+            const response = await fetch(imageUrl);
+            // failed to fetch, try next extension
+            if (!response.ok) {
+              throw new Error(`${response.status}`);
+            }
+            // if svg, we want the content
+            if (extension === 'svg') {
+              imageResource.value = {
+                name: props.name,
+                isSvg: true,
+                data: await response.text(),
+              };
+              return;
+            } else {
+              // else we want the URL
+              // console.log(await response.text());
+              imageResource.value = {
+                name: props.name,
+                isSvg: false,
+                data: imageUrl,
+              };
+              return;
+            }
+          } catch (error) {
+            console.warn('An error occurred:', error);
+          }
+          break;
+        case 2:
+          try {
+            imageFileToImport();
+            return;
+            // if (extension === 'svg') {
+            //   imageResource.value = {
+            //     name: props.name,
+            //     isSvg: true,
+            //     data: '',
+            //   };
+            //   return;
+            // } else {
+            //   // else we want the URL
+            //   // console.log(await response.text());
+            //   imageResource.value = {
+            //     name: props.name,
+            //     isSvg: false,
+            //     data: imageUrl,
+            //   };
+            //   return;
+            // }
+          } catch (error) {
+            console.warn('An error occurred:', error);
+          }
       }
-      svgData.value = await response.text();
-    } catch (error) {
-      onError();
-      console.warn('An error occurred:', error);
     }
   }
-  return '';
+  // All extensions failed, warn
+  console.warn(`Failed to load icon ${props.name}`);
+}
+
+function getImageUrl(name: MsImages, extension: string): string | null {
+  let imageUrl = null;
+  switch (imageUrlMethod) {
+    case 1:
+      return `/src/assets/images/${name}.${extension}`;
+    case 2:
+      try {
+        const path = `/src/assets/images/${name}.${extension}`;
+        imageUrl = new URL(path, import.meta.url);
+      } catch (e) {
+        if (e instanceof TypeError) {
+          // error handling procedure...
+          console.log(e);
+        } else {
+          throw e;// cause we dont know what it is or we want to only handle TypeError
+        }
+      } finally {
+        // eslint-disable-next-line no-unsafe-finally
+        return imageUrl?.href || null;
+      }
+    case 3:
+      return `/images/${name}.${extension}`;
+    default:
+      return null;
+  }
+}
+
+function imageFileToImport(): void {
+  if (props.name === MsImages.LogoRowWhite) {
+    imageResource.value = {
+      name: props.name,
+      isSvg: false,
+      data: images.logoRowWhiteWebp,
+    };
+  }
 }
 </script>
 

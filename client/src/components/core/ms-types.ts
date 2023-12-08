@@ -41,11 +41,8 @@ export interface MsSorterChangeEvent {
   sortByAsc: boolean;
 }
 
-export enum MsImageExtension {
-  Svg = 'svg',
-  Png = 'png',
-  Webp = 'webp',
-}
+// replace this by Map to manage order of extensions and loop on it when trying to fetch file
+export const msImageExtensions: Array<string> = ['svg', 'png', 'webp'];
 
 export enum MsImages {
   CaretExpand = 'caret-expand',
@@ -60,64 +57,6 @@ export enum MsImages {
 
 export interface MsImageResource {
   name: MsImages;
-  extensions: Array<MsImageExtension>;
+  data: string;
+  isSvg: boolean;
 }
-
-export const msImageResourceMap: Map<MsImages, MsImageResource> = new Map([
-  [
-    MsImages.CaretExpand,
-    {
-      name: MsImages.CaretExpand,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-  [
-    MsImages.Device,
-    {
-      name: MsImages.Device,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-  [
-    MsImages.FileImport,
-    {
-      name: MsImages.FileImport,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-  [
-    MsImages.LogoIconGradient,
-    {
-      name: MsImages.LogoIconGradient,
-      extensions: [MsImageExtension.Svg, MsImageExtension.Webp],
-    },
-  ],
-  [
-    MsImages.LogoRowWhite,
-    {
-      name: MsImages.LogoRowWhite,
-      extensions: [MsImageExtension.Svg, MsImageExtension.Webp],
-    },
-  ],
-  [
-    MsImages.PasswordLock,
-    {
-      name: MsImages.PasswordLock,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-  [
-    MsImages.SwapArrows,
-    {
-      name: MsImages.SwapArrows,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-  [
-    MsImages.WavyCaretUp,
-    {
-      name: MsImages.WavyCaretUp,
-      extensions: [MsImageExtension.Svg],
-    },
-  ],
-]);
