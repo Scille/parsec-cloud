@@ -20,13 +20,12 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, computed } from 'vue';
-import { UserProfile, WorkspaceRole, canChangeRole } from '@/parsec';
 import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
-import { useI18n } from 'vue-i18n';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserTuple } from '@/parsec';
 import { translateWorkspaceRole } from '@/common/translations';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { UserProfile, UserTuple, WorkspaceRole, canChangeRole } from '@/parsec';
+import { computed, defineEmits, defineProps } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
@@ -50,7 +49,8 @@ const options = computed((): MsOptions => {
       (role: WorkspaceRole | null) => {
         return {
           key: role === null ? NOT_SHARED_KEY : role,
-          label: translateWorkspaceRole(t, role),
+          label: translateWorkspaceRole(t, role).label,
+          description: translateWorkspaceRole(t, role).description,
           disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).authorized,
           disabledReason: canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).reason,
         };

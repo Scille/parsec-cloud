@@ -148,7 +148,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         new Notification({
           message: t('WorkspaceSharing.updateRoleSuccess', {
             user: user.humanHandle.label,
-            role: translateWorkspaceRole(t, role),
+            role: translateWorkspaceRole(t, role).label,
           }),
           level: NotificationLevel.Success,
         }),

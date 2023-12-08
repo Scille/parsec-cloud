@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
 
 // Before other imports
 mockI18n();
@@ -20,6 +20,6 @@ describe('User Avatar', () => {
       },
     });
 
-    expect(wrapper.get('.tag').text()).to.equal('UsersPage.profile.outsider');
+    expect(wrapper.get('.tag').text()).to.equal('UsersPage.profile.outsider.label');
   });
 });
