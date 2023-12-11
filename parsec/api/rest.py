@@ -158,7 +158,7 @@ class UserListRepSchema(BaseSchema):
 user_list_rep_serializer = JSONSerializer(UserListRepSchema)
 
 
-# POST /administration/organizations/<organization_id>/users/frozen
+# POST /administration/organizations/<organization_id>/users/freeze
 
 
 class FreezeUserReqSchema(BaseSchema):

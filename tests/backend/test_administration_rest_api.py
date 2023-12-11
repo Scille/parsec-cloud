@@ -842,7 +842,7 @@ async def test_organization_freeze_user(
 
     # Invalid organization name
     response = await client.post(
-        f"/administration/organizations/!/users/frozen",
+        f"/administration/organizations/!/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": False},
     )
@@ -851,7 +851,7 @@ async def test_organization_freeze_user(
 
     # Organization does not exist
     response = await client.post(
-        f"/administration/organizations/a/users/frozen",
+        f"/administration/organizations/a/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": False},
     )
@@ -860,7 +860,7 @@ async def test_organization_freeze_user(
 
     # Invalid token
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer xxx"},
         json={"user_id": "alice", "frozen": False},
     )
@@ -869,7 +869,7 @@ async def test_organization_freeze_user(
 
     # Freeze user using parsec id
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": True},
     )
@@ -883,7 +883,7 @@ async def test_organization_freeze_user(
 
     # Freeze user using email address
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_email": "bob@example.com", "frozen": True},
     )
@@ -942,7 +942,7 @@ async def test_organization_freeze_user(
 
     # Unfreeze user using parsec id
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": False},
     )
@@ -956,7 +956,7 @@ async def test_organization_freeze_user(
 
     # Unfreeze user using email address
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_email": "bob@example.com", "frozen": False},
     )
@@ -1007,7 +1007,7 @@ async def test_organization_freeze_user(
 
     # Check idempotency
     response = await client.post(
-        f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
         headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
         json={"user_id": "alice", "frozen": False},
     )
@@ -1029,7 +1029,7 @@ async def test_organization_disconnect_user_when_frozen(
     async with backend_authenticated_ws_factory(backend_asgi_app, alice) as ws:
         await authenticated_ping(ws)
         response = await client.post(
-            f"/administration/organizations/{coolorg.organization_id.str}/users/frozen",
+            f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
             headers={
                 "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
             },

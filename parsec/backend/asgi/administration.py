@@ -333,7 +333,7 @@ async def administration_organization_list_users(raw_organization_id: str) -> Re
 
 
 @administration_bp.route(
-    "/administration/organizations/<raw_organization_id>/users/frozen", methods=["POST"]
+    "/administration/organizations/<raw_organization_id>/users/freeze", methods=["POST"]
 )
 @administration_authenticated
 async def administration_organization_freeze_user(raw_organization_id: str) -> Response:

@@ -45,10 +45,10 @@ A successful request returns a JSON dictionary similar to the one below:
       ]
     }
 
-HTTP ``users/frozen`` route
+HTTP ``users/freeze`` route
 ---------------------------
 
-This route is made available as ``/administration/organizations/<raw_organization_id>/users/frozen`` and requires an administration token.
+This route is made available as ``/administration/organizations/<raw_organization_id>/users/freeze`` and requires an administration token.
 
 It only supports the ``POST`` method which modifies the ``frozen`` status for a given user.
 
@@ -78,7 +78,7 @@ Here's an example of running the request using ``curl`` and ``jq``:
 
   .. code-block:: bash
 
-    $ curl https://$server/administration/organizations/$organization/users/frozen \
+    $ curl https://$server/administration/organizations/$organization/users/freeze \
         -H "Authorization: Bearer $administration_token" \
         --request POST --data $DATA | jq
 

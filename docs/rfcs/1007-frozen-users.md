@@ -38,9 +38,9 @@ The list contains all users of the organization, including those that are not fr
 
 However, it does not contain the users that have been revoked.
 
-## HTTP `users/frozen` route
+## HTTP `users/freeze` route
 
-This route is made available as `/administration/organizations/<raw_organization_id>/users/frozen` and requires an administration token.
+This route is made available as `/administration/organizations/<raw_organization_id>/users/freeze` and requires an administration token.
 
 ### `POST` method
 
