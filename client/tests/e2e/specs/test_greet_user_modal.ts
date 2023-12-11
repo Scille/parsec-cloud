@@ -77,7 +77,8 @@ describe('Greet user into an organization', () => {
     cy.get('@nextButton').should('not.have.attr', 'disabled');
     cy.get('@nextButton').click();
     cy.get('@title').contains('User has been added successfully!');
-    cy.get('.greet-organization-modal').find('.user-profile').contains('Standard');
+    cy.get('.greet-organization-modal').find('.user-info__email').find('.cell').contains('gordon.freeman@blackmesa.nm');
+    cy.get('.greet-organization-modal').find('.user-info__role').find('.label-profile').contains('Standard');
     cy.get('@stepper').should('not.be.visible');
     cy.get('@nextButton').click();
     cy.get('.greet-organization-modal').should('not.exist');
