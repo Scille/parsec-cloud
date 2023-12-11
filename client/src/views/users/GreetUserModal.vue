@@ -344,11 +344,14 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
+  if (pageStep.value === GreetUserStep.Summary) {
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
   const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), false);
 
   if (answer === Answer.Yes) {
     await greeter.value.abort();
-    return modalController.dismiss(null, MsModalResult.Cancel);
+    return await modalController.dismiss(null, MsModalResult.Cancel);
   }
   return false;
 }
