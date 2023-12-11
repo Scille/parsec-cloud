@@ -14,4 +14,4 @@ Administrator Guide
     stats_server
     stats_organization
     hosting/index
-    frozen_users
+    freeze_users
