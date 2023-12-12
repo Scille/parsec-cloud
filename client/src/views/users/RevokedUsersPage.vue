@@ -19,6 +19,20 @@
           />
         </div>
         <div class="right-side">
+          <div class="counter">
+            <ion-text
+              class="body"
+              v-if="selectedUsersCount === 0"
+            >
+              {{ $t('UsersPage.itemCount', { count: userList.length }, userList.length) }}
+            </ion-text>
+            <ion-text
+              class="body item-selected"
+              v-if="selectedUsersCount !== 0"
+            >
+              {{ $t('UsersPage.userSelectedCount', { count: selectedUsersCount }, selectedUsersCount) }}
+            </ion-text>
+          </div>
           <ms-grid-list-toggle
             v-model="displayView"
             @update:model-value="resetSelection()"
@@ -89,34 +103,6 @@
                 :show-options="selectedUsersCount === 0"
               />
             </ion-item>
-          </div>
-        </div>
-      </div>
-      <div class="user-footer">
-        <div class="user-footer__container">
-          <ion-text
-            class="text title-h5"
-            v-if="selectedUsersCount === 0"
-          >
-            {{ $t('UsersPage.itemCount', { count: userList.length }, userList.length) }}
-          </ion-text>
-          <ion-text
-            class="text title-h5"
-            v-if="selectedUsersCount !== 0"
-          >
-            {{ $t('UsersPage.userSelectedCount', { count: selectedUsersCount }, selectedUsersCount) }}
-          </ion-text>
-          <div
-            class="content"
-            v-if="selectedUsersCount >= 1"
-          >
-            <ms-action-bar-button
-              v-show="selectedUsersCount === 1"
-              class="shortcuts-btn"
-              :icon="eye"
-              id="button-common-workspaces"
-              @click="viewCommonWorkspace()"
-            />
           </div>
         </div>
       </div>
@@ -317,11 +303,6 @@ onMounted(async (): Promise<void> => {
   height: 6em;
   background-color: var(--parsec-color-light-secondary-background);
   border-top: 1px solid var(--parsec-color-light-secondary-light);
-}
-
-.right-side {
-  margin-left: auto;
-  display: flex;
 }
 
 .users-grid-item {

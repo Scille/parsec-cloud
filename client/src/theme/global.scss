@@ -22,7 +22,6 @@ http://ionicframework.com/docs/theming/ */
 @import 'components/scrollbars';
 @import 'components/contextual-menu';
 @import 'components/tags';
-@import 'components/footerList';
 @import 'components/toggles';
 
 /**** Global CSS overloads ****/
@@ -105,4 +104,25 @@ a {
   z-index: 100;
   background: var(--parsec-color-light-secondary-opacity30);
   backdrop-filter: blur(10px);
+}
+
+/* ----- item counter ------ */
+.counter {
+  color: var(--parsec-color-light-secondary-text);
+  display: flex;
+  align-items: center;
+
+  &::after {
+    margin-inline: 1rem;
+    content: '';
+    display: block;
+    width: 1.5px;
+    height: 1.5rem;
+    background: var(--parsec-color-light-secondary-light);
+    border-radius: var(--parsec-radius-8);
+  }
+
+  .item-selected {
+    font-weight: 600;
+  }
 }

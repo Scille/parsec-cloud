@@ -256,11 +256,6 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.right-side {
-  margin-left: auto;
-  display: flex;
-}
-
 .invitation-card {
   padding: 0;
   display: flex;

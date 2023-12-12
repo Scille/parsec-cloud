@@ -15,6 +15,11 @@
           @click="openCreateWorkspaceModal()"
         />
         <div class="right-side">
+          <div class="counter">
+            <ion-text class="body">
+              {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
+            </ion-text>
+          </div>
           <ms-sorter
             id="workspace-filter-select"
             :options="msSorterOptions"
@@ -80,13 +85,6 @@
               @share-click="onWorkspaceShareClick"
             />
           </ion-item>
-        </div>
-      </div>
-      <div class="workspaces-footer">
-        <div class="folder-footer__container">
-          <ion-text class="text title-h5">
-            {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
-          </ion-text>
         </div>
       </div>
       <ion-fab
@@ -363,10 +361,5 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
 ion-item::part(native) {
   --padding-start: 0px;
-}
-
-.right-side {
-  margin-left: auto;
-  display: flex;
 }
 </style>

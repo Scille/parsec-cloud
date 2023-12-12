@@ -61,16 +61,14 @@ describe('Check active users page', () => {
     cy.get('@userItems').eq(1).find('.options-button').should('not.be.visible');
     cy.get('@userItems').eq(2).find('.options-button').should('not.be.visible');
 
-    cy.get('.user-footer__container').contains('3 users');
-    cy.get('.user-footer__container').find('#button-revoke-user').should('not.exist');
+    cy.get('.counter').contains('3 users');
 
     // Select all
     cy.get('.user-list-header').find('ion-checkbox').click();
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     checkChecked(true);
 
-    cy.get('.user-footer__container').contains('2 users selected');
-    cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
+    cy.get('.counter').contains('2 users selected');
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('not.exist');
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke these users');
 
@@ -78,8 +76,6 @@ describe('Check active users page', () => {
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
     cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('See common workspaces');
-    cy.get('.user-footer__container').find('#button-revoke-user').should('exist');
-    cy.get('.user-footer__container').find('#button-common-workspaces').should('exist');
 
     // Check all should be indeterminate
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-indeterminate');
@@ -87,12 +83,12 @@ describe('Check active users page', () => {
     // Re-select all
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(true);
-    cy.get('.user-footer__container').contains('2 users selected');
+    cy.get('.counter').contains('2 users selected');
 
     // Deselect all
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(false);
-    cy.get('.user-footer__container').contains('3 users');
+    cy.get('.counter').contains('3 users');
   });
 
   it('Tests context menu', () => {
@@ -137,7 +133,7 @@ describe('Check active users page', () => {
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
     cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('@userItems').eq(2).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.user-footer__container').contains('One user selected');
+    cy.get('.counter').contains('One user selected');
     cy.get('.contextual-menu').find('#button-revoke-user').contains('Revoke this user').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();
