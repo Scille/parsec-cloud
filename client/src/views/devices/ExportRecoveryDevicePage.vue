@@ -57,21 +57,10 @@
                 <ion-icon :icon="document" />
                 {{ $t('ExportRecoveryDevicePage.titles.recoveryFile') }}
               </div>
-              <ion-text class="file-item__description body">
-                {{ $t('ExportRecoveryDevicePage.subtitles.fileExplanation') }}
-              </ion-text>
-              <div
-                class="file-item__button"
-                v-show="!recoveryFileDownloaded"
-              >
-                <ion-button
-                  @click="downloadRecoveryFile()"
-                  id="downloadButton"
-                  size="default"
-                >
-                  <ion-icon :icon="download" />
-                  {{ $t('ExportRecoveryDevicePage.actions.download') }}
-                </ion-button>
+              <div class="file-item__subtitle">
+                <ion-text class="file-item__description body">
+                  {{ $t('ExportRecoveryDevicePage.subtitles.fileExplanation') }}
+                </ion-text>
               </div>
               <div
                 class="file-item__downloaded body"
@@ -83,27 +72,31 @@
                 />
                 {{ $t('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
               </div>
+              <div class="file-item__button">
+                <ion-button
+                  @click="downloadRecoveryFile()"
+                  id="downloadButton"
+                  size="default"
+                  :fill="recoveryFileDownloaded ? 'outline' : 'solid'"
+                >
+                  <ion-icon :icon="recoveryFileDownloaded ? reload : download" />
+                  {{
+                    recoveryFileDownloaded
+                      ? $t('ExportRecoveryDevicePage.actions.downloadAgain')
+                      : $t('ExportRecoveryDevicePage.actions.download')
+                  }}
+                </ion-button>
+              </div>
             </div>
             <div class="file-item">
               <div class="file-item__title subtitles-normal">
                 <ion-icon :icon="key" />
                 {{ $t('ExportRecoveryDevicePage.titles.recoveryKey') }}
               </div>
-              <ion-text class="file-item__description body">
-                {{ $t('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
-              </ion-text>
-              <div
-                v-show="!recoveryKeyDownloaded"
-                class="file-item__button"
-              >
-                <ion-button
-                  @click="downloadRecoveryKey()"
-                  id="downloadButton"
-                  size="default"
-                >
-                  <ion-icon :icon="download" />
-                  {{ $t('ExportRecoveryDevicePage.actions.download') }}
-                </ion-button>
+              <div class="file-item__subtitle">
+                <ion-text class="file-item__description body">
+                  {{ $t('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
+                </ion-text>
               </div>
               <div
                 class="file-item__downloaded body"
@@ -114,6 +107,21 @@
                   class="checked"
                 />
                 {{ $t('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
+              </div>
+              <div class="file-item__button">
+                <ion-button
+                  @click="downloadRecoveryKey()"
+                  id="downloadButton"
+                  size="default"
+                  :fill="recoveryKeyDownloaded ? 'outline' : 'solid'"
+                >
+                  <ion-icon :icon="recoveryKeyDownloaded ? reload : download" />
+                  {{
+                    recoveryKeyDownloaded
+                      ? $t('ExportRecoveryDevicePage.actions.downloadAgain')
+                      : $t('ExportRecoveryDevicePage.actions.download')
+                  }}
+                </ion-button>
               </div>
             </div>
           </div>
@@ -151,7 +159,7 @@ import { exportRecoveryDevice, RecoveryDeviceErrorTag } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import { routerNavigateTo } from '@/router';
-import { home, checkmarkCircle, document, key, download } from 'ionicons/icons';
+import { home, checkmarkCircle, document, key, download, reload } from 'ionicons/icons';
 
 const { t } = useI18n();
 
@@ -204,24 +212,28 @@ async function exportDevice(): Promise<void> {
 
 async function downloadRecoveryKey(): Promise<void> {
   fileDownload(code, t('ExportRecoveryDevicePage.filenames.recoveryKey', { org: orgId.value }));
-  recoveryKeyDownloaded.value = true;
-  notificationManager.showToast(
-    new Notification({
-      message: t('ExportRecoveryDevicePage.toasts.keyDownloadOk'),
-      level: NotificationLevel.Success,
-    }),
-  );
+  setTimeout(() => {
+    recoveryKeyDownloaded.value = true;
+    notificationManager.showToast(
+      new Notification({
+        message: t('ExportRecoveryDevicePage.toasts.keyDownloadOk'),
+        level: NotificationLevel.Success,
+      }),
+    );
+  }, 500);
 }
 
 async function downloadRecoveryFile(): Promise<void> {
   fileDownload(file, t('ExportRecoveryDevicePage.filenames.recoveryFile', { org: orgId.value }));
-  recoveryFileDownloaded.value = true;
-  notificationManager.showToast(
-    new Notification({
-      message: t('ExportRecoveryDevicePage.toasts.fileDownloadOk'),
-      level: NotificationLevel.Success,
-    }),
-  );
+  setTimeout(() => {
+    recoveryFileDownloaded.value = true;
+    notificationManager.showToast(
+      new Notification({
+        message: t('ExportRecoveryDevicePage.toasts.fileDownloadOk'),
+        level: NotificationLevel.Success,
+      }),
+    );
+  }, 500);
 }
 
 async function fileDownload(data: string, fileName: string): Promise<void> {
@@ -278,12 +290,16 @@ function onBackToDevicesClick(): void {
         }
       }
 
+      &__subtitle {
+        margin-bottom: 1.5rem;
+      }
+
       &__description {
         color: var(--parsec-color-light-secondary-grey);
       }
 
       &__button {
-        margin-top: 2rem;
+        margin-top: 0.5rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
@@ -307,7 +323,7 @@ function onBackToDevicesClick(): void {
       &__downloaded {
         display: flex;
         align-items: center;
-        margin-top: 2rem;
+        margin-top: 0.5rem;
         padding: 0.375rem 0;
         gap: 0.5rem;
         color: var(--parsec-color-light-secondary-grey);
