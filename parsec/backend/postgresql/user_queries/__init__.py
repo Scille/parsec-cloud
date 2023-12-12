@@ -11,7 +11,7 @@ from parsec.backend.postgresql.user_queries.get import (
     query_get_user_with_devices_and_trustchain,
     query_get_user_with_trustchain,
 )
-from parsec.backend.postgresql.user_queries.revoke import query_revoke_user
+from parsec.backend.postgresql.user_queries.revoke import query_freeze_user, query_revoke_user
 
 __all__ = (
     "query_create_user",
@@ -24,4 +24,5 @@ __all__ = (
     "query_get_user_with_device",
     "query_dump_users",
     "query_revoke_user",
+    "query_freeze_user",
 )

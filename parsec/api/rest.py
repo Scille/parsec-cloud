@@ -5,6 +5,7 @@ from parsec.api.protocol.types import (
     DeviceIDField,
     DeviceLabelField,
     OrganizationIDField,
+    UserIDField,
     UserProfileField,
 )
 from parsec.serde import BaseSchema, JSONSerializer, fields
@@ -138,3 +139,37 @@ class OrganizationUpdateRepSchema(BaseSchema):
 
 organization_update_req_serializer = JSONSerializer(OrganizationUpdateReqSchema)
 organization_update_rep_serializer = JSONSerializer(OrganizationUpdateRepSchema)
+
+
+# GET /administration/organizations/<organization_id>/users
+
+
+class UserItem(BaseSchema):
+    user_id = UserIDField(required=True)
+    user_email = fields.Email(required=True)
+    user_name = fields.String(required=True)
+    frozen = fields.Boolean(required=True)
+
+
+class UserListRepSchema(BaseSchema):
+    users = fields.List(fields.Nested(UserItem), required=True)
+
+
+user_list_rep_serializer = JSONSerializer(UserListRepSchema)
+
+
+# POST /administration/organizations/<organization_id>/users/freeze
+
+
+class FreezeUserReqSchema(BaseSchema):
+    user_id = UserIDField(required=False)
+    user_email = fields.String(required=False)
+    frozen = fields.Boolean(required=True)
+
+
+class FreezeUserRepSchema(UserItem):
+    pass
+
+
+freeze_user_req_serializer = JSONSerializer(FreezeUserReqSchema)
+freeze_user_rep_serializer = JSONSerializer(FreezeUserRepSchema)

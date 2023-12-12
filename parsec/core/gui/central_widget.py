@@ -13,6 +13,7 @@ from parsec._parsec import CoreEvent
 from parsec.api.data import EntryName
 from parsec.api.data.manifest import WorkspaceEntry
 from parsec.api.protocol import (
+    HandshakeFrozenUser,
     HandshakeOrganizationExpired,
     HandshakeRevokedDevice,
     IncompatibleAPIVersionsError,
@@ -357,6 +358,9 @@ class CentralWidget(QWidget, Ui_CentralWidget):
                 )
             elif isinstance(cause, HandshakeRevokedDevice):
                 tooltip = _("TEXT_BACKEND_STATE_REVOKED_DEVICE")
+                notif = ("WARN", tooltip)
+            elif isinstance(cause, HandshakeFrozenUser):
+                tooltip = _("TEXT_BACKEND_STATE_FROZEN_USER")
                 notif = ("WARN", tooltip)
             elif isinstance(cause, HandshakeOrganizationExpired):
                 tooltip = _("TEXT_BACKEND_STATE_ORGANIZATION_EXPIRED")

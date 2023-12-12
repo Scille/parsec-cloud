@@ -5,10 +5,12 @@ from unittest.mock import ANY
 
 import pytest
 import trio
+from quart.testing.connections import WebsocketDisconnectError
 
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.api.protocol import (
     BlockID,
+    HandshakeFrozenUser,
     HandshakeOrganizationExpired,
     OrganizationID,
     UserProfile,
@@ -17,6 +19,7 @@ from parsec.api.protocol import (
 from parsec.api.rest import organization_stats_rep_serializer
 from parsec.backend.backend_events import BackendEvent
 from parsec.backend.organization import Organization
+from tests.backend.common import authenticated_ping
 from tests.common import customize_fixtures, local_device_to_backend_user
 
 
@@ -771,3 +774,273 @@ async def test_handles_escaped_path(backend_asgi_app):
             },
         )
         assert response.status_code == 404, route
+
+
+@pytest.mark.trio
+async def test_organization_list_users(backend_asgi_app, coolorg):
+    client = backend_asgi_app.test_client()
+
+    # Invalid organization name
+    response = await client.get(
+        f"/administration/organizations/!/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Organization does not exist
+    response = await client.get(
+        f"/administration/organizations/a/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Invalid token
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer xxx"},
+    )
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": False,
+            },
+        ],
+    }
+
+
+@pytest.mark.trio
+async def test_organization_freeze_user(
+    backend_asgi_app, coolorg, alice, bob, adam, backend_authenticated_ws_factory
+):
+    client = backend_asgi_app.test_client()
+
+    # Invalid organization name
+    response = await client.post(
+        f"/administration/organizations/!/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Organization does not exist
+    response = await client.post(
+        f"/administration/organizations/a/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 404
+    assert await response.get_json() == {"error": "not_found"}
+
+    # Invalid token
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer xxx"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 403
+    assert await response.get_json() == {"error": "not_allowed"}
+
+    # Freeze user using parsec id
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": True},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": True,
+    }
+
+    # Freeze user using email address
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_email": "bob@example.com", "frozen": True},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "bob@example.com",
+        "user_id": "bob",
+        "user_name": "Boby McBobFace",
+        "frozen": True,
+    }
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": True,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": True,
+            },
+        ],
+    }
+
+    # Alice is frozen
+    with pytest.raises(HandshakeFrozenUser) as context:
+        async with backend_authenticated_ws_factory(backend_asgi_app, alice):
+            pass
+    assert str(context.value) == "User has been frozen by the server administrator"
+
+    # Bob is frozen
+    with pytest.raises(HandshakeFrozenUser) as context:
+        async with backend_authenticated_ws_factory(backend_asgi_app, bob):
+            pass
+    assert str(context.value) == "User has been frozen by the server administrator"
+
+    # Adam is not frozen
+    async with backend_authenticated_ws_factory(backend_asgi_app, adam):
+        pass
+
+    # Unfreeze user using parsec id
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": False,
+    }
+
+    # Unfreeze user using email address
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_email": "bob@example.com", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "bob@example.com",
+        "user_id": "bob",
+        "user_name": "Boby McBobFace",
+        "frozen": False,
+    }
+
+    # List users
+    response = await client.get(
+        f"/administration/organizations/{coolorg.organization_id.str}/users",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "users": [
+            {
+                "user_email": "alice@example.com",
+                "user_id": "alice",
+                "user_name": "Alicey McAliceFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "adam@example.com",
+                "user_id": "adam",
+                "user_name": "Adamy McAdamFace",
+                "frozen": False,
+            },
+            {
+                "user_email": "bob@example.com",
+                "user_id": "bob",
+                "user_name": "Boby McBobFace",
+                "frozen": False,
+            },
+        ],
+    }
+
+    # Alice, bob and adam are unfrozen
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice):
+        pass
+    async with backend_authenticated_ws_factory(backend_asgi_app, bob):
+        pass
+    async with backend_authenticated_ws_factory(backend_asgi_app, adam):
+        pass
+
+    # Check idempotency
+    response = await client.post(
+        f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+        headers={"Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"},
+        json={"user_id": "alice", "frozen": False},
+    )
+    assert response.status_code == 200
+    assert await response.get_json() == {
+        "user_email": "alice@example.com",
+        "user_id": "alice",
+        "user_name": "Alicey McAliceFace",
+        "frozen": False,
+    }
+
+
+@pytest.mark.trio
+async def test_organization_disconnect_user_when_frozen(
+    backend_asgi_app, coolorg, alice, backend_authenticated_ws_factory
+):
+    client = backend_asgi_app.test_client()
+
+    async with backend_authenticated_ws_factory(backend_asgi_app, alice) as ws:
+        await authenticated_ping(ws)
+        response = await client.post(
+            f"/administration/organizations/{coolorg.organization_id.str}/users/freeze",
+            headers={
+                "Authorization": f"Bearer {backend_asgi_app.backend.config.administration_token}"
+            },
+            json={"user_id": "alice", "frozen": True},
+        )
+        assert response.status_code == 200
+        assert await response.get_json() == {
+            "user_email": "alice@example.com",
+            "user_id": "alice",
+            "user_name": "Alicey McAliceFace",
+            "frozen": True,
+        }
+        with pytest.raises(WebsocketDisconnectError):
+            await authenticated_ping(ws)

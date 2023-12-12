@@ -300,6 +300,18 @@ class BaseUserComponent:
         """
         raise NotImplementedError()
 
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID,
+        frozen: bool,
+    ) -> None:
+        """
+        Raises:
+            UserNotFoundError
+        """
+        raise NotImplementedError()
+
     async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
         """
         Raises:
@@ -342,6 +354,31 @@ class BaseUserComponent:
             UserNotFoundError
         """
         raise NotImplementedError()
+
+    async def get_user_from_email(self, organization_id: OrganizationID, user_email: str) -> User:
+        """
+        Returns the non-revoked user associated with the given email address.
+
+        Raises:
+            UserNotFoundError
+        """
+        results, _ = await self.find_humans(
+            organization_id=organization_id,
+            query=user_email,
+            omit_revoked=True,
+            omit_non_human=True,
+        )
+        # There may be multiple Parsec users with the same email address.
+        # However, only one of them can be non-revoked at any given time.
+        # Therefore, it is safe to use the email address to uniquely identify
+        # a *non-revoked* user from a given organization.
+        for item in results:
+            if item.human_handle is None:
+                continue
+            if item.human_handle.email != user_email:
+                continue
+            return await self.get_user(organization_id, item.user_id)
+        raise UserNotFoundError(f"User with email address `{user_email}` not found")
 
     async def find_humans(
         self,

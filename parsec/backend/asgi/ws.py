@@ -76,7 +76,7 @@ async def handle_ws() -> None:
             client_ctx.cancel_scope = cancel_scope
             with backend.event_bus.connection_context() as client_ctx.event_bus_ctx:
 
-                def _on_revoked(
+                def _on_revoked_or_frozen(
                     client_ctx: AuthenticatedClientContext,
                     event: BackendEvent,
                     organization_id: OrganizationID,
@@ -97,7 +97,10 @@ async def handle_ws() -> None:
                         client_ctx.close_connection_asap()
 
                 client_ctx.event_bus_ctx.connect(
-                    BackendEvent.USER_REVOKED, partial(_on_revoked, client_ctx)
+                    BackendEvent.USER_REVOKED, partial(_on_revoked_or_frozen, client_ctx)
+                )
+                client_ctx.event_bus_ctx.connect(
+                    BackendEvent.USER_FROZEN, partial(_on_revoked_or_frozen, client_ctx)
                 )
                 client_ctx.event_bus_ctx.connect(
                     BackendEvent.ORGANIZATION_EXPIRED, partial(_on_expired, client_ctx)

@@ -62,6 +62,10 @@ class HandshakeRevokedDevice(HandshakeError):
     pass
 
 
+class HandshakeFrozenUser(HandshakeError):
+    pass
+
+
 class HandshakeOutOfBallparkError(HandshakeError):
     pass
 
@@ -299,6 +303,17 @@ class ServerHandshake:
             {"handshake": "result", "result": "revoked_device", "help": help}
         )
 
+    def build_frozen_user_result_req(
+        self, help: str = "User has been frozen by the server administrator"
+    ) -> bytes:
+        if not self.state == "answer":
+            raise HandshakeError("Invalid state.")
+
+        self.state = "result"
+        return handshake_result_serializer.dumps(
+            {"handshake": "result", "result": "frozen_user", "help": help}
+        )
+
     def build_result_req(self, verify_key: VerifyKey | None = None) -> bytes:
         if not self.state == "answer":
             raise HandshakeError("Invalid state.")
@@ -397,6 +412,9 @@ class BaseClientHandshake:
 
             elif data["result"] == "revoked_device":
                 raise HandshakeRevokedDevice(data["help"])
+
+            elif data["result"] == "frozen_user":
+                raise HandshakeFrozenUser(data["help"])
 
             if data["result"] == "bad_admin_token":
                 raise HandshakeBadAdministrationToken(data["help"])

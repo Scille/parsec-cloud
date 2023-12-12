@@ -30,6 +30,16 @@ WHERE
 """
 )
 
+_q_freeze_user = Q(
+    f"""
+UPDATE user_ SET
+    frozen = $frozen
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
 
 _q_revoke_user_error = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="revoked_on")
@@ -73,3 +83,22 @@ async def query_revoke_user(
         await send_signal(
             conn, BackendEvent.USER_REVOKED, organization_id=organization_id, user_id=user_id
         )
+
+
+@query(in_transaction=True)
+async def query_freeze_user(
+    conn: triopg._triopg.TrioConnectionProxy,
+    organization_id: OrganizationID,
+    user_id: UserID,
+    frozen: bool,
+) -> None:
+    await conn.execute(
+        *_q_freeze_user(
+            organization_id=organization_id.str,
+            user_id=user_id.str,
+            frozen=frozen,
+        )
+    )
+    await send_signal(
+        conn, BackendEvent.USER_FROZEN, organization_id=organization_id, user_id=user_id
+    )

@@ -9,21 +9,25 @@ from typing import TYPE_CHECKING, Any, Awaitable, Callable, NoReturn, TypeVar
 from quart import Blueprint, Response, current_app, g, jsonify, make_response, request
 from typing_extensions import ParamSpec
 
-from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats
+from parsec._parsec import ActiveUsersLimit, DateTime, OrganizationStats, UserID
 from parsec.api.protocol import OrganizationID, UserProfile
 from parsec.api.rest import (
+    freeze_user_rep_serializer,
+    freeze_user_req_serializer,
     organization_config_rep_serializer,
     organization_create_rep_serializer,
     organization_create_req_serializer,
     organization_stats_rep_serializer,
     organization_update_req_serializer,
     server_stats_rep_serializer,
+    user_list_rep_serializer,
 )
 from parsec.backend.organization import (
     OrganizationAlreadyExistsError,
     OrganizationNotFoundError,
     generate_bootstrap_token,
 )
+from parsec.backend.user import UserNotFoundError
 from parsec.serde import SerdePackingError, SerdeValidationError
 from parsec.serde.serializer import JSONSerializer
 
@@ -98,6 +102,11 @@ async def not_allowed_abort() -> NoReturn:
 
 async def not_found_abort() -> NoReturn:
     response = await make_response(jsonify({"error": "not_found"}), 404)
+    current_app.aborter(response)
+
+
+async def user_not_found_abort() -> NoReturn:
+    response = await make_response(jsonify({"error": "user_not_found"}), 404)
     current_app.aborter(response)
 
 
@@ -285,3 +294,99 @@ async def administration_server_stats() -> Response:
             },
             status=200,
         )
+
+
+@administration_bp.route(
+    "/administration/organizations/<raw_organization_id>/users", methods=["GET"]
+)
+@administration_authenticated
+async def administration_organization_list_users(raw_organization_id: str) -> Response:
+    backend: "BackendApp" = g.backend
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        await not_found_abort()
+
+    # Check whether the organization actually exists
+    try:
+        await backend.organization.get(id=organization_id)
+    except OrganizationNotFoundError:
+        await not_found_abort()
+
+    users, _ = await backend.user.dump_users(organization_id=organization_id)
+
+    return make_rep_response(
+        user_list_rep_serializer,
+        data={
+            "users": [
+                {
+                    "user_id": user.user_id,
+                    "user_email": user.human_handle.email,
+                    "user_name": user.human_handle.label,
+                    "frozen": user.frozen,
+                }
+                for user in users
+                if user.human_handle is not None
+            ]
+        },
+    )
+
+
+@administration_bp.route(
+    "/administration/organizations/<raw_organization_id>/users/freeze", methods=["POST"]
+)
+@administration_authenticated
+async def administration_organization_freeze_user(raw_organization_id: str) -> Response:
+    backend: "BackendApp" = g.backend
+    # Parse request data
+    data = await load_req_data(freeze_user_req_serializer)
+    frozen = data["frozen"]
+    try:
+        raw_user_id = data.get("user_id")
+        user_id = None if raw_user_id is None else UserID(raw_user_id)
+    except ValueError as exc:
+        await bad_data_abort(reason=str(exc))
+    user_email = data.get("user_email")
+    if user_id is None and user_email is None:
+        await bad_data_abort(reason="Missing either `user_id` or `user_email` field")
+    if user_id is not None and user_email is not None:
+        await bad_data_abort(reason="Both `user_id` and `user_email` fields are provided")
+
+    # Check the organization ID
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        await not_found_abort()
+    try:
+        await backend.organization.get(id=organization_id)
+    except OrganizationNotFoundError:
+        await not_found_abort()
+
+    # Get user from email address or user id
+    try:
+        if user_email is not None:
+            user = await backend.user.get_user_from_email(organization_id, user_email)
+        elif user_id is not None:
+            user = await backend.user.get_user(organization_id, user_id)
+        else:
+            assert False
+    except UserNotFoundError:
+        await user_not_found_abort()
+
+    # If the provided user ID corresponds to a legacy user or a revoked user, simply
+    # consider that it's not been found (as it wouldn't make sense to freeze it)
+    if user.human_handle is None or user.revoked_on is not None:
+        await user_not_found_abort()
+
+    # Freeze/unfreeze the user
+    await backend.user.freeze_user(organization_id, user.user_id, frozen)
+
+    return make_rep_response(
+        freeze_user_rep_serializer,
+        data={
+            "user_id": user.user_id,
+            "user_email": user.human_handle.email,
+            "user_name": user.human_handle.label,
+            "frozen": frozen,
+        },
+    )

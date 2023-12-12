@@ -14,3 +14,4 @@ Administrator Guide
     stats_server
     stats_organization
     hosting/index
+    freeze_users

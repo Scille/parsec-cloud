@@ -1,0 +1,1 @@
+Add new administration routes to freeze users and prevent them from connecting to the server.
