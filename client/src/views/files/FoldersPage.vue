@@ -80,6 +80,20 @@
           />
         </div>
         <div class="right-side">
+          <div class="counter">
+            <ion-text
+              class="body"
+              v-if="selectedFilesCount === 0"
+            >
+              {{ $t('FoldersPage.itemCount', { count: children.length }, children.length) }}
+            </ion-text>
+            <ion-text
+              class="body item-selected"
+              v-if="selectedFilesCount > 0"
+            >
+              {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
+            </ion-text>
+          </div>
           <ms-grid-list-toggle
             v-model="displayView"
             @update:model-value="resetSelection()"
@@ -147,63 +161,30 @@
           </ion-item>
         </div>
       </div>
-      <!-- number of item (selected or not) -->
-      <div class="folder-footer">
-        <div class="folder-footer__container">
-          <ion-text
-            class="text title-h5"
-            v-if="selectedFilesCount === 0"
-          >
-            {{ $t('FoldersPage.itemCount', { count: children.length }, children.length) }}
-          </ion-text>
-          <ion-text
-            class="text title-h5"
-            v-if="selectedFilesCount > 0"
-          >
-            {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
-          </ion-text>
-          <ms-action-bar-button
-            class="shortcuts-btn"
-            id="button-move-to"
-            :icon="arrowRedo"
-            @click="moveEntriesTo(getSelectedEntries())"
-            v-if="selectedFilesCount >= 1"
-          />
-          <ms-action-bar-button
-            class="shortcuts-btn"
-            id="button-delete"
-            :icon="trashBin"
-            @click="deleteEntries(getSelectedEntries())"
-            v-if="selectedFilesCount >= 1"
-          />
-        </div>
-      </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonItem,
-  IonPage,
+  IonCheckbox,
   IonContent,
+  IonItem,
+  IonLabel,
   IonList,
   IonListHeader,
-  IonLabel,
-  IonCheckbox,
-  IonText,
-  popoverController,
+  IonPage,
   modalController,
+  popoverController,
 } from '@ionic/vue';
-import { folderOpen, document, pencil, link, arrowRedo, trashBin, copy, informationCircle } from 'ionicons/icons';
+import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { useRoute } from 'vue-router';
 import { computed, ref, Ref, inject, watch, onUnmounted, onMounted } from 'vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileCard from '@/components/files/FileCard.vue';
-import FileContextMenu from '@/views/files/FileContextMenu.vue';
-import { routerNavigateTo } from '@/router';
-import { FileAction } from '@/views/files/FileContextMenu.vue';
+import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
+import { routerNavigateTo } from '@/router';
 import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import * as parsec from '@/parsec';
 import { useI18n } from 'vue-i18n';
@@ -755,10 +736,5 @@ async function resetSelection(): Promise<void> {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow-y: auto;
-}
-
-.right-side {
-  margin-left: auto;
-  display: flex;
 }
 </style>

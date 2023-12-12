@@ -619,7 +619,6 @@ async function openSettingsModal(): Promise<void> {
   width: 60vw;
   max-width: var(--parsec-max-content-width);
   background: var(--parsec-color-light-secondary-inversed-contrast);
-  display: flex;
   flex-direction: column;
   position: relative;
   z-index: -5;
