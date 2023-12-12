@@ -44,33 +44,18 @@ defineEmits<{
 const NOT_SHARED_KEY = 'not_shared';
 
 const options = computed((): MsOptions => {
-  return new MsOptions([
-    {
-      key: WorkspaceRole.Reader,
-      label: translateWorkspaceRole(t, WorkspaceRole.Reader),
-      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Reader),
-    },
-    {
-      key: WorkspaceRole.Contributor,
-      label: translateWorkspaceRole(t, WorkspaceRole.Contributor),
-      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Contributor),
-    },
-    {
-      key: WorkspaceRole.Manager,
-      label: translateWorkspaceRole(t, WorkspaceRole.Manager),
-      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Manager),
-    },
-    {
-      key: WorkspaceRole.Owner,
-      label: translateWorkspaceRole(t, WorkspaceRole.Owner),
-      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, WorkspaceRole.Owner),
-    },
-    {
-      key: NOT_SHARED_KEY,
-      label: translateWorkspaceRole(t, null),
-      disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, null),
-    },
-  ]);
+  return new MsOptions(
+    [WorkspaceRole.Reader, WorkspaceRole.Contributor, WorkspaceRole.Manager, WorkspaceRole.Owner, null].map(
+      (role: WorkspaceRole | null) => {
+        return {
+          key: role === null ? NOT_SHARED_KEY : role,
+          label: translateWorkspaceRole(t, role),
+          disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).authorized,
+          disabledReason: canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).reason,
+        };
+      },
+    ),
+  );
 });
 
 function getRoleFromString(role: string): WorkspaceRole | null {

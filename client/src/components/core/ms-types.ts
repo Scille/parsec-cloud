@@ -12,6 +12,7 @@ export interface MsOption {
   description?: string;
   key: any;
   disabled?: boolean;
+  disabledReason?: string;
 }
 
 export class MsOptions {

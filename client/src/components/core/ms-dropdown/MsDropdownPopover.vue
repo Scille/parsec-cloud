@@ -28,11 +28,11 @@
         v-if="selectedOption?.key === option.key"
       />
       <ion-icon
-        v-if="option.disabled"
+        v-if="option.disabled && option.disabledReason"
         slot="end"
         :icon="informationCircle"
         class="icon disabled-icon"
-        @click="openTooltip($event, option.label)"
+        @click="openTooltip($event, option.disabledReason)"
       />
     </ion-item>
   </ion-list>

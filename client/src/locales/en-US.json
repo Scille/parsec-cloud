@@ -22,7 +22,16 @@
         "contributor": "Contributor",
         "manager": "Manager",
         "owner": "Owner",
-        "none": "Not shared"
+        "none": "Not shared",
+        "updateRejectedReasons": {
+            "outsiderProfile": "Outsiders cannot change roles",
+            "outsiderLimitedRole": "Outsiders can only be Readers or Contributors",
+            "insufficientRole": "Only Managers and Owners can change roles",
+            "ownerImmunity": "Can't change the role of an Owner",
+            "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
+            "managerCannotPromoteToManager": "Managers cannot promote to Manager",
+            "managerCannotPromoteToOwner": "Managers cannot promote to Owner"
+        }
     },
     "link": {
         "invalid": "The provided link is invalid."

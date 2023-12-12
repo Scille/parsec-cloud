@@ -22,7 +22,16 @@
         "contributor": "Contributeur",
         "manager": "Gérant",
         "owner": "Propriétaire",
-        "none": "Non partagé"
+        "none": "Non partagé",
+        "updateRejectedReasons": {
+            "outsiderProfile": "Les utilisateurs externes ne peuvent pas changer les rôles",
+            "outsiderLimitedRole": "Les utilisateurs externes ne peuvent être que Lecteur ou Contributeur",
+            "insufficientRole": "Seuls les Gérants et les Propriétaires peuvent changer les rôles",
+            "ownerImmunity": "Impossible de changer le rôle d'un Propriétaire",
+            "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
+            "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
+            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire"
+        }
     },
     "link": {
         "invalid": "Le lien fourni est invalide."
