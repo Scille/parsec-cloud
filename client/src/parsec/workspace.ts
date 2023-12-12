@@ -25,6 +25,7 @@ import { getParsecHandle } from '@/parsec/routing';
 import { getClientInfo } from '@/parsec/login';
 import { DateTime } from 'luxon';
 import { needsMocks } from '@/parsec/environment';
+import { ComposerTranslation } from 'vue-i18n';
 
 export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const handle = getParsecHandle();
@@ -285,37 +286,47 @@ export async function getPathLink(
   }
 }
 
+interface RoleUpdateAuthorization {
+  authorized: boolean;
+  reason?: string;
+}
+
 export function canChangeRole(
   clientProfile: UserProfile,
   userProfile: UserProfile,
   clientRole: WorkspaceRole | null,
   userRole: WorkspaceRole | null,
   targetRole: WorkspaceRole | null,
-): boolean {
+  t: ComposerTranslation,
+): RoleUpdateAuthorization {
   // Outsiders cannot do anything
   if (clientProfile === UserProfile.Outsider) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.outsiderProfile') };
   }
   // Outsiders cannot be set to Managers or Owners
   if (userProfile === UserProfile.Outsider && (targetRole === WorkspaceRole.Manager || targetRole === WorkspaceRole.Owner)) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.outsiderLimitedRole') };
   }
   // Contributors or Readers cannot update roles
   if (clientRole === null || clientRole === WorkspaceRole.Contributor || clientRole === WorkspaceRole.Reader) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.insufficientRole') };
   }
   // Cannot change role of an Owner
   if (userRole === WorkspaceRole.Owner) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.ownerImmunity') };
   }
   // Managers cannot update the role of other Managers
   if (clientRole === WorkspaceRole.Manager && userRole === WorkspaceRole.Manager) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.managerCannotUpdateManagers') };
+  }
+  // Managers cannot promote to Managers
+  if (clientRole === WorkspaceRole.Manager && targetRole === WorkspaceRole.Manager) {
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.managerCannotPromoteToManager') };
   }
   // Managers cannot promote to Owners
   if (clientRole === WorkspaceRole.Manager && targetRole === WorkspaceRole.Owner) {
-    return false;
+    return { authorized: false, reason: t('workspaceRoles.updateRejectedReasons.managerCannotPromoteToOwner') };
   }
 
-  return true;
+  return { authorized: true };
 }
