@@ -13,6 +13,7 @@
       :options="options"
       :disabled="disabled"
       :default-option="role || NOT_SHARED_KEY"
+      :appearance="MsAppearance.Clear"
       @change="$emit('roleUpdate', user, getRoleFromString($event.option.key))"
     />
   </div>
@@ -21,7 +22,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed } from 'vue';
 import { UserProfile, WorkspaceRole, canChangeRole } from '@/parsec';
-import { MsDropdown, MsOptions } from '@/components/core';
+import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
 import { useI18n } from 'vue-i18n';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserTuple } from '@/parsec';

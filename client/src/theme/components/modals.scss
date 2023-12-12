@@ -222,6 +222,10 @@ ion-modal.join-by-link-modal::part(content) {
         margin: auto;
       }
     }
+
+    .dropdown-container {
+      width: calc(50% - 0.75rem);
+    }
   }
 }
 
