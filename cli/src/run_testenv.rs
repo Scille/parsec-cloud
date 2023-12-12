@@ -39,6 +39,9 @@ pub struct RunTestenv {
     /// When this process stops, the server will be automatically killed
     #[arg(long)]
     main_process_id: u32,
+    /// Skip initialization
+    #[arg(short, long, default_value_t)]
+    empty: bool,
 }
 
 fn create_new_device(
@@ -271,6 +274,7 @@ async fn new_environment(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     stop_after_process: u32,
+    empty: bool,
 ) -> anyhow::Result<()> {
     let port = stop_after_process as u16 + RESERVED_PORT_OFFSET;
     let tmp_dir_str = tmp_dir.to_str().expect("Unreachable");
@@ -280,59 +284,10 @@ async fn new_environment(
         std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
     let manifest_dir_path = Path::new(&cargo_manifest_dir);
 
-    if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
-        #[cfg(target_family = "windows")]
-        Command::new("taskkill")
-            .args(["/F", "/T", "/PID", &last_server_id])
-            .output()?;
-
-        #[cfg(target_family = "unix")]
-        Command::new("kill").args([&last_server_id]).output()?;
-    }
-
-    // Run testbed server
-    let child = Command::new("poetry")
-        .args([
-            "run",
-            "python",
-            "tests/scripts/run_testbed_server.py",
-            "--stop-after-process",
-            &stop_after_process.to_string(),
-            "--port",
-            &port.to_string(),
-        ])
-        .current_dir(
-            manifest_dir_path
-                .parent()
-                .expect("Unreachable")
-                .join("server"),
-        )
-        .stdin(Stdio::null())
-        .stderr(Stdio::null())
-        .stdout(Stdio::piped())
-        .spawn()?;
-
-    let id = child.id();
-
-    let stdout = child.stdout.expect("Unreachable");
-    let mut reader = BufReader::new(stdout);
-    let mut buf = String::new();
-
-    while reader.read_line(&mut buf).is_ok() {
-        if buf.contains("All set !") {
-            break;
-        }
-        buf.clear();
-    }
-
-    println!(
-        "Running server with the process id: {YELLOW}{id}{RESET} on port: {YELLOW}{port}{RESET}"
-    );
-
     #[cfg(target_family = "windows")]
-    let (export, env) = (
+    let (export, mut env) = (
         "set",
-        [
+        vec![
             (
                 TESTBED_SERVER_URL,
                 format!("parsec://127.0.0.1:{port}?no_ssl=true"),
@@ -340,24 +295,75 @@ async fn new_environment(
             (PARSEC_HOME_DIR, format!("{tmp_dir_str}\\cache")),
             (PARSEC_DATA_DIR, format!("{tmp_dir_str}\\share")),
             (PARSEC_CONFIG_DIR, format!("{tmp_dir_str}\\config")),
-            (LAST_SERVER_PID, id.to_string()),
         ],
     );
 
     #[cfg(target_family = "unix")]
-    let (export, env) = (
+    let (export, mut env) = (
         "export",
-        [
+        vec![
             (
-                "TESTBED_SERVER_URL",
+                TESTBED_SERVER_URL,
                 format!("parsec://127.0.0.1:{port}?no_ssl=true"),
             ),
             (PARSEC_HOME_DIR, format!("{tmp_dir_str}/cache")),
             (PARSEC_DATA_DIR, format!("{tmp_dir_str}/share")),
             (PARSEC_CONFIG_DIR, format!("{tmp_dir_str}/config")),
-            (LAST_SERVER_PID, id.to_string()),
         ],
     );
+
+    if !empty {
+        if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
+            #[cfg(target_family = "windows")]
+            Command::new("taskkill")
+                .args(["/F", "/T", "/PID", &last_server_id])
+                .output()?;
+
+            #[cfg(target_family = "unix")]
+            Command::new("kill").args([&last_server_id]).output()?;
+        }
+
+        // Run testbed server
+        let child = Command::new("poetry")
+            .args([
+                "run",
+                "python",
+                "tests/scripts/run_testbed_server.py",
+                "--stop-after-process",
+                &stop_after_process.to_string(),
+                "--port",
+                &port.to_string(),
+            ])
+            .current_dir(
+                manifest_dir_path
+                    .parent()
+                    .expect("Unreachable")
+                    .join("server"),
+            )
+            .stdin(Stdio::null())
+            .stderr(Stdio::null())
+            .stdout(Stdio::piped())
+            .spawn()?;
+
+        let id = child.id();
+
+        let stdout = child.stdout.expect("Unreachable");
+        let mut reader = BufReader::new(stdout);
+        let mut buf = String::new();
+
+        while reader.read_line(&mut buf).is_ok() {
+            if buf.contains("All set !") {
+                break;
+            }
+            buf.clear();
+        }
+
+        println!(
+            "Running server with the process id: {YELLOW}{id}{RESET} on port: {YELLOW}{port}{RESET}"
+        );
+
+        env.push((LAST_SERVER_PID, id.to_string()));
+    }
 
     if let Some(source_file) = source_file {
         println!("Your environment will be configured with the following commands:");
@@ -390,7 +396,7 @@ pub async fn run_local_organization(
     stop_after_process: u32,
 ) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
     let port = stop_after_process as u16 + RESERVED_PORT_OFFSET;
-    new_environment(tmp_dir, source_file, stop_after_process).await?;
+    new_environment(tmp_dir, source_file, stop_after_process, false).await?;
 
     initialize_test_organization(
         ClientConfig::default(),
@@ -401,23 +407,34 @@ pub async fn run_local_organization(
 
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
-    let [alice_device, other_alice_device, bob_device] = run_local_organization(
-        &tmp_dir,
-        run_testenv.source_file,
-        run_testenv.main_process_id,
-    )
-    .await?;
 
-    println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
-    println!(
-        "- {YELLOW}{}{RESET} // Alice",
-        &alice_device.slughash()[..3]
-    );
-    println!(
-        "- {YELLOW}{}{RESET} // Alice 2nd device",
-        &other_alice_device.slughash()[..3]
-    );
-    println!("- {YELLOW}{}{RESET} // Bob", &bob_device.slughash()[..3]);
+    if run_testenv.empty {
+        new_environment(
+            &tmp_dir,
+            run_testenv.source_file,
+            run_testenv.main_process_id,
+            true,
+        )
+        .await?;
+    } else {
+        let [alice_device, other_alice_device, bob_device] = run_local_organization(
+            &tmp_dir,
+            run_testenv.source_file,
+            run_testenv.main_process_id,
+        )
+        .await?;
+
+        println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
+        println!(
+            "- {YELLOW}{}{RESET} // Alice",
+            &alice_device.slughash()[..3]
+        );
+        println!(
+            "- {YELLOW}{}{RESET} // Alice 2nd device",
+            &other_alice_device.slughash()[..3]
+        );
+        println!("- {YELLOW}{}{RESET} // Bob", &bob_device.slughash()[..3]);
+    }
 
     Ok(())
 }
