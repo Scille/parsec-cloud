@@ -39,12 +39,16 @@ describe('Display export recovery device page', () => {
     cy.get('@thirdItem').contains('File downloaded').should('not.be.visible');
     cy.get('@fourthItem').contains('File downloaded').should('not.be.visible');
     cy.get('@fileDownloadButton').click();
+    cy.wait(500);
     cy.checkToastMessage('The recovery file was successfully downloaded');
-    cy.get('@thirdItem').find('#downloadButton').should('not.be.visible');
+    cy.get('@thirdItem').find('#downloadButton').should('be.visible');
+    cy.get('@thirdItem').find('#downloadButton').contains('Download again');
     cy.get('@thirdItem').contains('File downloaded').should('be.visible');
     cy.get('@keyDownloadButton').click();
+    cy.wait(500);
     cy.checkToastMessage('The secret key was successfully downloaded');
-    cy.get('@fourthItem').find('#downloadButton').should('not.be.visible');
+    cy.get('@fourthItem').find('#downloadButton').should('be.visible');
+    cy.get('@fourthItem').find('#downloadButton').contains('Download again');
     cy.get('.recovery-container').find('#back-to-devices-button').as('returnButton').should('be.visible');
     cy.get('@fourthItem').contains('File downloaded').should('be.visible');
     cy.get('@returnButton').should('not.have.class', 'button-disabled').click();

@@ -574,6 +574,7 @@
         "actions": {
             "understand": "J'ai compris",
             "download": "Télécharger",
+            "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retourner à mes appareils"
         },
         "toasts": {
