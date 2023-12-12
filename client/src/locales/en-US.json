@@ -703,7 +703,8 @@
                 "finish": "Finish",
                 "approve": "Approve"
             },
-            "profilePlaceholder": "Choose a profile",
+            "profileDropdownPlaceholder": "Choose a profile",
+            "profileDropdownTitle": "Profile",
             "errors": {
                 "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
                 "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",

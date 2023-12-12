@@ -1,37 +1,47 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-button
-    fill="clear"
-    @click="openPopover($event)"
-    id="dropdown-popover-button"
-    class="filter-button button-medium"
-    :disabled="disabled"
-  >
-    <ion-icon
-      :class="{ 'popover-is-open': isPopoverOpen }"
-      class="ms-dropdown-icon"
-      slot="end"
-      :icon="caretDown"
-    />
-    {{ labelRef }}
-  </ion-button>
+  <div class="dropdown-container">
+    <ion-text
+      class="form-label"
+      v-if="title && appearanceRef === MsAppearance.Outline"
+    >
+      {{ title }}
+    </ion-text>
+    <ion-button
+      :fill="appearanceRef"
+      @click="openPopover($event)"
+      id="dropdown-popover-button"
+      class="filter-button button-medium"
+      :disabled="disabled"
+    >
+      <ion-icon
+        :class="{ 'popover-is-open': isPopoverOpen }"
+        class="ms-dropdown-icon"
+        slot="end"
+        :icon="getIcon()"
+      />
+      {{ labelRef }}
+    </ion-button>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, defineEmits, Ref, ref } from 'vue';
-import { IonButton, IonIcon, popoverController } from '@ionic/vue';
-import { caretDown } from 'ionicons/icons';
+import { IonText, IonButton, IonIcon, popoverController } from '@ionic/vue';
+import { caretDown, chevronDown } from 'ionicons/icons';
 import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
-import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { MsOption, MsOptions, MsAppearance } from '@/components/core/ms-types';
 import { MsDropdownChangeEvent } from '@/components/core/ms-dropdown/types';
 
 const props = defineProps<{
   defaultOption?: any;
   label?: string;
+  title?: string;
   description?: string;
   options: MsOptions;
   disabled?: boolean;
+  appearance?: MsAppearance;
 }>();
 
 const emits = defineEmits<{
@@ -41,6 +51,7 @@ const emits = defineEmits<{
 const selectedOption: Ref<MsOption | undefined> = ref(props.defaultOption ? props.options.get(props.defaultOption) : undefined);
 const labelRef = ref(selectedOption.value?.label || props.label);
 const isPopoverOpen = ref(false);
+const appearanceRef = ref(props.appearance ?? MsAppearance.Outline);
 
 async function openPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -71,12 +82,23 @@ async function onDidDismissPopover(popover: any): Promise<void> {
     });
   }
 }
+
+function getIcon(): string {
+  switch (appearanceRef.value) {
+    case MsAppearance.Outline:
+      return chevronDown;
+    case MsAppearance.Clear:
+      return caretDown;
+  }
+}
 </script>
 
 <style lang="scss" scoped>
 .filter-button {
   background: none;
   color: var(--parsec-color-light-primary-700);
+  margin: 0;
+  height: 100%;
 }
 
 .option {
@@ -86,6 +108,20 @@ async function onDidDismissPopover(popover: any): Promise<void> {
   &.selected {
     color: var(--parsec-color-light-primary-700);
     font-weight: bold;
+  }
+}
+
+.dropdown-container {
+  // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
+  --offset: 2px;
+  --min-height: 3rem;
+  padding: var(--offset);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  .form-label {
+    color: var(--parsec-color-light-primary-700);
   }
 }
 

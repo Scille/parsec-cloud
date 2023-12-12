@@ -703,7 +703,8 @@
                 "finish": "Terminer",
                 "approve": "Approuver"
             },
-            "profilePlaceholder": "Choisissez un profil",
+            "profileDropdownPlaceholder": "Choisissez un profil",
+            "profileDropdownTitle": "Profil",
             "errors": {
                 "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",

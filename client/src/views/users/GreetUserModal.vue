@@ -91,7 +91,8 @@
           />
           <ms-dropdown
             class="dropdown"
-            :label="t('UsersPage.greet.profilePlaceholder')"
+            :title="t('UsersPage.greet.profileDropdownTitle')"
+            :label="t('UsersPage.greet.profileDropdownPlaceholder')"
             :options="profileOptions"
             @change="setUserProfile($event.option.key)"
           />

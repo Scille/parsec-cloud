@@ -7,6 +7,11 @@ export enum MsReportTheme {
   Error = 'ms-error',
 }
 
+export enum MsAppearance {
+  Outline = 'outline',
+  Clear = 'clear',
+}
+
 export interface MsOption {
   label: string;
   description?: string;
