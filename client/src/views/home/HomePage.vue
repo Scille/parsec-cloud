@@ -7,216 +7,33 @@
       color="secondary"
     >
       <div id="page">
-        <!-- sidebar -->
-        <div class="sidebar">
-          <div class="sidebar-content">
-            <div class="sidebar-content__titles">
-              <h1 class="title-h1-lg">
-                {{ $t('HomePage.organizationList.title') }}
-              </h1>
-              <ion-text class="subtitles-normal">
-                {{ $t('HomePage.organizationList.subtitle') }}
-              </ion-text>
-            </div>
-            <div class="sidebar-footer">
-              <div class="sidebar-footer__logo">
-                <ms-image
-                  :image="LogoRowWhite"
-                  class="logo-img"
-                />
-              </div>
-              <div
-                class="sidebar-footer__version body"
-                @click="openAboutModal"
-              >
-                <ion-icon
-                  slot="start"
-                  :icon="informationCircle"
-                  size="small"
-                />
-                <span class="version-text">
-                  {{ getAppVersion() }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <home-page-sidebar @about-click="openAboutModal" />
 
         <!-- organization list -->
         <!-- organization -->
         <div class="right-side">
           <!-- topbar -->
-          <ion-card-content class="topbar">
-            <ion-card-title
-              color="tertiary"
-              v-if="!showOrganizationList"
-            >
-              <ion-button
-                fill="clear"
-                @click="showOrganizationList = !showOrganizationList"
-                id="back-to-list-button"
-              >
-                <ion-icon
-                  slot="start"
-                  :icon="chevronBack"
-                />
-                {{ $t('HomePage.organizationLogin.backToList') }}
-              </ion-button>
-            </ion-card-title>
-            <ms-search-input
-              :label="t('HomePage.organizationList.search')"
-              v-if="showOrganizationList"
-              v-model="orgSearchString"
-              id="ms-search-input"
-              v-show="deviceList.length >= 2"
-            />
-            <ion-button
-              @click="
-                isPopoverOpen = !isPopoverOpen;
-                openPopover($event);
-              "
-              size="large"
-              id="create-organization-button"
-              class="button-default"
-            >
-              {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
-            </ion-button>
-            <ion-buttons
-              slot="primary"
-              class="topbar-icon__settings"
-            >
-              <ion-button
-                slot="icon-only"
-                id="trigger-settings-button"
-                class="topbar-button__item"
-                @click="openSettingsModal()"
-              >
-                <ion-icon
-                  slot="icon-only"
-                  :icon="cog"
-                />
-              </ion-button>
-            </ion-buttons>
-          </ion-card-content>
-          <slide-horizontal :reverse-direction="!showOrganizationList">
-            <ion-card
-              v-if="showOrganizationList"
-              class="right-side-container"
-            >
-              <template v-if="deviceList.length === 0">
-                <ion-card-content class="organization-container">
-                  <ion-card-title>
-                    {{ $t('HomePage.noDevices') }}
-                  </ion-card-title>
-                  {{ $t('HomePage.howToAddDevices') }}
-                </ion-card-content>
-              </template>
-              <template v-if="deviceList.length > 0">
-                <ion-card-content class="organization-container">
-                  <ion-card-title class="organization-filter">
-                    <!-- No use in showing the sort/filter options for less than 2 devices -->
-                    <template v-if="deviceList.length >= 2">
-                      <ms-sorter
-                        id="organization-filter-select"
-                        label="t('HomePage.organizationList.labelSortBy')"
-                        :options="msSorterOptions"
-                        default-option="organization"
-                        :sorter-labels="msSorterLabels"
-                        @change="onMsSorterChange($event)"
-                      />
-                    </template>
-                  </ion-card-title>
-                  <ion-grid class="organization-list">
-                    <ion-row class="organization-list-row">
-                      <ion-col
-                        v-for="device in filteredDevices"
-                        :key="device.slug"
-                        class="organization-list-row__col"
-                        size="2"
-                      >
-                        <ion-card
-                          button
-                          class="organization-card"
-                          @click="onOrganizationCardClick(device)"
-                        >
-                          <ion-card-content class="card-content">
-                            <ion-grid>
-                              <organization-card
-                                :device="device"
-                                class="card-content__body"
-                              />
-                              <ion-row class="card-content__footer">
-                                <ion-col size="auto">
-                                  <p>
-                                    {{ $t('HomePage.organizationList.lastLogin') }}
-                                  </p>
-                                  <p>
-                                    {{
-                                      device.slug in storedDeviceDataDict
-                                        ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--')
-                                        : '--'
-                                    }}
-                                  </p>
-                                </ion-col>
-                              </ion-row>
-                            </ion-grid>
-                          </ion-card-content>
-                        </ion-card>
-                      </ion-col>
-                    </ion-row>
-                  </ion-grid>
-                </ion-card-content>
-              </template>
-            </ion-card>
+          <home-page-header
+            class="header"
+            @back-click="backToOrganizations"
+            @create-organization-click="openCreateOrganizationModal"
+            @join-organization-click="onJoinOrganizationClicked"
+            @settings-click="openSettingsModal"
+            :show-back-button="state !== HomePageState.OrganizationList"
+          />
+
+          <slide-horizontal :reverse-direction="state === HomePageState.Login">
+            <template v-if="state === HomePageState.OrganizationList">
+              <organization-list-page @organization-select="onOrganizationSelected" />
+            </template>
             <!-- after animation -->
-            <ion-card
-              v-if="!showOrganizationList"
-              class="login-popup"
-            >
-              <ion-card-content class="organization-container">
-                <ion-text class="title-h1">
-                  {{ $t('HomePage.organizationLogin.login') }}
-                </ion-text>
-                <!-- login -->
-                <div id="login-container">
-                  <ion-card class="login-card">
-                    <ion-card-content class="login-card__content">
-                      <ion-grid>
-                        <organization-card :device="selectedDevice" />
-                        <ms-password-input
-                          :label="$t('HomePage.organizationLogin.passwordLabel')"
-                          v-model="password"
-                          @on-enter-keyup="onLoginClick()"
-                          id="ms-password-input"
-                        />
-                        <ion-button
-                          fill="clear"
-                          @click="onForgottenPasswordClick()"
-                          id="forgotten-password-button"
-                        >
-                          {{ $t('HomePage.organizationLogin.forgottenPassword') }}
-                        </ion-button>
-                      </ion-grid>
-                    </ion-card-content>
-                  </ion-card>
-                  <div class="login-button-container">
-                    <ion-button
-                      @click="onLoginClick()"
-                      size="large"
-                      :disabled="password.length == 0"
-                      class="login-button"
-                    >
-                      <ion-icon
-                        slot="start"
-                        :icon="logIn"
-                      />
-                      {{ $t('HomePage.organizationLogin.login') }}
-                    </ion-button>
-                  </div>
-                </div>
-                <!-- end of login -->
-              </ion-card-content>
-            </ion-card>
+            <template v-if="state === HomePageState.Login && selectedDevice">
+              <login-page
+                :device="selectedDevice"
+                @login-click="login"
+                @forgotten-password-click="onForgottenPasswordClicked"
+              />
+            </template>
           </slide-horizontal>
         </div>
         <!-- end of organization -->
@@ -226,129 +43,44 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
-import { getAppVersion } from '@/common/mocks';
+import { NotificationKey } from '@/common/injectionKeys';
+
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
-import {
-  LogoRowWhite,
-  MsImage,
-  MsModalResult,
-  MsPasswordInput,
-  MsSearchInput,
-  MsSorter,
-  MsSorterChangeEvent,
-  MsOptions,
-  getTextInputFromUser,
-} from '@/components/core';
-import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, isLoggedIn, listAvailableDevices as parsecListAvailableDevices, login as parsecLogin } from '@/parsec';
+import { MsModalResult, getTextInputFromUser } from '@/components/core';
+import { AvailableDevice, login as parsecLogin } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { StorageManager, StoredDeviceData } from '@/services/storageManager';
 import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
 import AboutModal from '@/views/about/AboutModal.vue';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
-import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
-import {
-  IonButton,
-  IonButtons,
-  IonCard,
-  IonCardContent,
-  IonCardTitle,
-  IonCol,
-  IonContent,
-  IonGrid,
-  IonIcon,
-  IonPage,
-  IonRow,
-  IonText,
-  modalController,
-  popoverController,
-} from '@ionic/vue';
-import { chevronBack, cog, informationCircle, logIn } from 'ionicons/icons';
+import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Ref, computed, inject, onMounted, onUnmounted, onUpdated, ref, toRaw, watch } from 'vue';
+import { inject, onUnmounted, ref, toRaw, watch, onMounted, Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { StorageManager, StoredDeviceData, StorageManagerKey } from '@/services/storageManager';
+import LoginPage from '@/views/home/LoginPage.vue';
+import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
+import HomePageHeader from '@/components/header/HomePageHeader.vue';
+import HomePageSidebar from '@/components/header/HomePageSidebar.vue';
+
+enum HomePageState {
+  OrganizationList = 'organization-list',
+  Login = 'login',
+  ForgottenPassword = 'forgotten-password',
+}
+
+const notificationManager: NotificationManager = inject(NotificationKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 const router = useRouter();
 const currentRoute = useRoute();
 const { t } = useI18n();
-const deviceList: Ref<AvailableDevice[]> = ref([]);
-let selectedDevice: AvailableDevice;
-const password = ref('');
-const orgSearchString = ref('');
-const showOrganizationList = ref(true);
-const sortBy = ref('organization');
-const sortByAsc = ref(true);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = inject(FormattersKey)! as Formatters;
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const storageManager: StorageManager = inject(StorageManagerKey)!;
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
-const isPopoverOpen = ref(false);
-
-const msSorterOptions: MsOptions = new MsOptions([
-  {
-    label: t('HomePage.organizationList.sortByOrganization'),
-    key: 'organization',
-  },
-  { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
-  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
-]);
-
-const msSorterLabels = {
-  asc: t('HomePage.organizationList.sortOrderAsc'),
-  desc: t('HomePage.organizationList.sortOrderDesc'),
-};
-
-const filteredDevices = computed(() => {
-  return deviceList.value
-    .filter((item) => {
-      const lowerSearchString = orgSearchString.value.toLocaleLowerCase();
-      return (
-        item.humanHandle.label.toLocaleLowerCase().includes(lowerSearchString) ||
-        item.organizationId.toLocaleLowerCase().includes(lowerSearchString)
-      );
-    })
-    .sort((a, b) => {
-      const aLabel = a.humanHandle.label;
-      const bLabel = b.humanHandle.label;
-      if (sortBy.value === 'organization') {
-        if (sortByAsc.value) {
-          return a.organizationId.localeCompare(b.organizationId);
-        } else {
-          return b.organizationId.localeCompare(a.organizationId);
-        }
-      } else if (sortBy.value === 'user_name' && aLabel && bLabel) {
-        if (sortByAsc.value) {
-          return aLabel?.localeCompare(bLabel ?? '');
-        } else {
-          return bLabel?.localeCompare(aLabel ?? '');
-        }
-      } else if (sortBy.value === 'last_login') {
-        const aLastLogin =
-          a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined
-            ? storedDeviceDataDict.value[a.slug].lastLogin
-            : DateTime.fromMillis(0);
-        const bLastLogin =
-          b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined
-            ? storedDeviceDataDict.value[b.slug].lastLogin
-            : DateTime.fromMillis(0);
-        if (sortByAsc.value) {
-          return bLastLogin.diff(aLastLogin).toObject().milliseconds!;
-        } else {
-          return aLastLogin.diff(bLastLogin).toObject().milliseconds!;
-        }
-      }
-      return 0;
-    });
-});
-
+const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
+const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 
 const routeUnwatch = watch(currentRoute, async (newRoute) => {
   if (newRoute.query.link) {
@@ -356,28 +88,13 @@ const routeUnwatch = watch(currentRoute, async (newRoute) => {
   }
 });
 
-onMounted(async (): Promise<void> => {
-  await refreshDeviceList();
-});
-
-onUpdated(async () => {
-  if (!isLoggedIn()) {
-    await refreshDeviceList();
-  }
+onMounted(async () => {
+  storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
 
 onUnmounted(() => {
   routeUnwatch();
 });
-
-async function refreshDeviceList(): Promise<void> {
-  deviceList.value = await parsecListAvailableDevices();
-  storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
-  if (deviceList.value.length === 1) {
-    showOrganizationList.value = false;
-    selectedDevice = deviceList.value[0];
-  }
-}
 
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
@@ -423,18 +140,14 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   }
 }
 
-function onMsSorterChange(event: MsSorterChangeEvent): void {
-  sortBy.value = event.option.key;
-  sortByAsc.value = event.sortByAsc;
+async function backToOrganizations(): Promise<void> {
+  state.value = HomePageState.OrganizationList;
+  selectedDevice.value = null;
 }
 
-function onOrganizationCardClick(device: AvailableDevice): void {
-  showOrganizationList.value = !showOrganizationList.value;
-  selectedDevice = device;
-}
-
-async function onLoginClick(): Promise<void> {
-  await login(selectedDevice, password.value);
+function onOrganizationSelected(device: AvailableDevice): void {
+  selectedDevice.value = device;
+  state.value = HomePageState.Login;
 }
 
 async function login(device: AvailableDevice, password: string): Promise<void> {
@@ -449,8 +162,8 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
 
   const result = await parsecLogin(device, password);
   if (result.ok) {
-    showOrganizationList.value = true;
     router.push({ name: 'workspaces', params: { handle: result.value } });
+    state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Notification({
       title: t('HomePage.loginNotification.title'),
@@ -461,7 +174,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   }
 }
 
-function onForgottenPasswordClick(): void {
+function onForgottenPasswordClicked(): void {
   console.log('forgotten password!');
 }
 
@@ -474,39 +187,6 @@ async function openAboutModal(): Promise<void> {
   await modal.onWillDismiss();
 }
 
-async function openPopover(event: Event): Promise<void> {
-  const popover = await popoverController.create({
-    component: HomePagePopover,
-    cssClass: 'homepage-popover',
-    event: event,
-    showBackdrop: false,
-    alignment: 'end',
-  });
-  await popover.present();
-  const result = await popover.onWillDismiss();
-  await popover.dismiss();
-  if (result.role !== MsModalResult.Confirm) {
-    return;
-  }
-  if (result.data.action === HomePageAction.CreateOrganization) {
-    await openCreateOrganizationModal();
-  } else if (result.data.action === HomePageAction.JoinOrganization) {
-    const link = await getTextInputFromUser({
-      title: t('JoinByLinkModal.pageTitle'),
-      subtitle: t('JoinByLinkModal.pleaseEnterUrl'),
-      trim: true,
-      validator: claimLinkValidator,
-      inputLabel: t('JoinOrganization.linkFormLabel'),
-      placeholder: t('JoinOrganization.linkFormPlaceholder'),
-      okButtonText: t('JoinByLinkModal.join'),
-    });
-
-    if (link) {
-      await openJoinByLinkModal(link);
-    }
-  }
-}
-
 async function openSettingsModal(): Promise<void> {
   const modal = await modalController.create({
     component: SettingsModal,
@@ -514,6 +194,22 @@ async function openSettingsModal(): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
+}
+
+async function onJoinOrganizationClicked(): Promise<void> {
+  const link = await getTextInputFromUser({
+    title: t('JoinByLinkModal.pageTitle'),
+    subtitle: t('JoinByLinkModal.pleaseEnterUrl'),
+    trim: true,
+    validator: claimLinkValidator,
+    inputLabel: t('JoinOrganization.linkFormLabel'),
+    placeholder: t('JoinOrganization.linkFormPlaceholder'),
+    okButtonText: t('JoinByLinkModal.join'),
+  });
+
+  if (link) {
+    await openJoinByLinkModal(link);
+  }
 }
 </script>
 
@@ -530,90 +226,6 @@ async function openSettingsModal(): Promise<void> {
   z-index: -4;
 }
 
-.sidebar {
-  display: flex;
-  height: 100vh;
-  width: 40vw;
-  padding: 2rem;
-  background: var(--parsec-color-light-gradient);
-  position: relative;
-  justify-content: flex-end;
-  z-index: -3;
-
-  &::before {
-    content: '';
-    position: absolute;
-    z-index: -2;
-    top: 0;
-    right: 0;
-    width: 100vw;
-    height: 100vh;
-    background: url('@/assets/images/background/homepage-rectangle.svg') repeat center;
-    background-size: cover;
-  }
-
-  .sidebar-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-left: 2rem;
-
-    &__titles {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      flex-grow: 2;
-      max-width: var(--parsec-max-title-width);
-      position: relative;
-      gap: 1rem;
-    }
-  }
-
-  .sidebar-footer {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-
-    &__logo {
-      display: flex;
-      width: 100%;
-
-      .logo-img {
-        max-height: 3em;
-        width: 30%;
-        height: 100%;
-      }
-    }
-
-    &__version {
-      cursor: pointer;
-      color: var(--parsec-color-light-secondary-premiere);
-      padding: 0.3rem 0.5rem;
-      border-radius: var(--parsec-radius-8);
-      background-color: var(--parsec-color-light-primary-30-opacity15);
-      border: 1px solid var(--parsec-color-light-primary-30-opacity15);
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 150ms linear;
-
-      .version-text {
-        line-height: 0;
-        padding: 0.8rem 0;
-      }
-
-      ion-icon {
-        font-size: 1.375rem;
-        color: var(--parsec-color-light-primary-100);
-      }
-
-      &:hover {
-        border-color: var(--parsec-color-light-primary-100);
-      }
-    }
-  }
-}
-
 .right-side {
   height: 100vh;
   width: 60vw;
@@ -622,176 +234,9 @@ async function openSettingsModal(): Promise<void> {
   flex-direction: column;
   position: relative;
   z-index: -5;
-
-  .right-side-container {
-    height: inherit;
-    margin-inline: 0px;
-    margin-top: 0px;
-    margin-bottom: 0px;
-    border-radius: 0;
-    box-shadow: none;
-    flex-grow: 0;
-    flex-shrink: 0;
-  }
 }
 
-.topbar {
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-  padding: 3.5rem 3.5rem 1.5rem;
-  display: flex;
-  align-items: center;
-
-  #create-organization-button {
-    margin-left: auto;
-    margin-right: 1.5rem;
-  }
-
-  .topbar-button__item,
-  .sc-ion-buttons-md-s .button {
-    border: 1px solid var(--parsec-color-light-secondary-light);
-    color: var(--parsec-color-light-primary-700);
-    border-radius: 50%;
-    --padding-top: 0;
-    --padding-end: 0;
-    --padding-bottom: 0;
-    --padding-start: 0;
-    width: 3em;
-    height: 3em;
-
-    &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-      background: var(--parsec-color-light-primary-50);
-      border: var(--parsec-color-light-primary-50);
-    }
-
-    ion-icon {
-      font-size: 1.375rem;
-    }
-  }
-}
-
-.organization-container {
-  padding: 1.5rem 3.5rem 0;
-  height: 100%;
-
-  .organization-filter {
-    display: flex;
-    margin: 0 0 0.5rem;
-    justify-content: flex-end;
-  }
-
-  .organization-list {
-    max-height: 80%;
-    overflow-y: auto;
-    --ion-grid-columns: 6;
-  }
-
-  .organization-list-row {
-    &__col {
-      display: flex;
-      align-items: center;
-    }
-  }
-
-  .organization-card {
-    background: var(--parsec-color-light-secondary-background);
-    user-select: none;
-    transition: box-shadow 150ms linear;
-    box-shadow: none;
-    border-radius: 0.5em;
-    margin-inline: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-    width: 100%;
-
-    &:hover {
-      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
-    }
-
-    .card-content {
-      padding-top: 0px;
-      padding-bottom: 0px;
-      padding-inline-end: 0px;
-      padding-inline-start: 0px;
-
-      &__footer {
-        padding: 0.5em 1em;
-        background: var(--parsec-color-light-secondary-medium);
-        border-top: 1px solid var(--parsec-color-light-secondary-disabled);
-        color: var(--parsec-color-light-secondary-grey);
-        height: 4.6em;
-      }
-
-      &:hover {
-        background: var(--parsec-color-light-primary-50);
-        cursor: pointer;
-
-        .card-content__footer {
-          background: var(--parsec-color-light-primary-50);
-          border-top: 1px solid var(--parsec-color-light-primary-100);
-        }
-      }
-    }
-  }
-}
-
-.login-popup {
-  box-shadow: none;
-  display: flex;
-  margin: auto 0;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  max-height: 80%;
-
-  .organization-container {
-    max-width: 62.5rem;
-    padding: 0 3.5rem 3.5rem;
-    flex-grow: 1;
-  }
-
-  .title-h1 {
-    color: var(--parsec-color-light-primary-700);
-  }
-
-  #login-container {
-    margin-top: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .login-card {
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: 8px;
-    padding: 2em;
-    box-shadow: none;
-    margin: 0;
-
-    &__content {
-      padding: 0;
-
-      #ms-password-input {
-        margin: 1.5rem 0 1rem;
-      }
-    }
-
-    .organization-card {
-      margin-bottom: 2em;
-      display: flex;
-
-      &__body {
-        padding: 0;
-      }
-    }
-  }
-
-  .login-button-container {
-    text-align: right;
-
-    .login-button {
-      margin: 0;
-    }
-  }
+.header {
+  z-index: 6;
 }
 </style>

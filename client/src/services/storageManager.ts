@@ -4,6 +4,8 @@ import { isElectron } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 
+export { StorageManagerKey } from '@/common/injectionKeys';
+
 export interface StoredDeviceData {
   lastLogin: DateTime;
 }
