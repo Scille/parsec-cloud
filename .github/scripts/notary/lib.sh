@@ -1,6 +1,6 @@
-#!bash
-
-QUERY_FOLDER=.github/scripts/notary/graphql
+#!/usr/bin/env bash
+SCRIPTDIR=${SCRIPTDIR:="$(dirname $(realpath -s "$0"))"}
+QUERY_FOLDER=$SCRIPTDIR/graphql
 
 # List project fields like `status`, `tag`, `labels` and other
 function list_project_fields() {
