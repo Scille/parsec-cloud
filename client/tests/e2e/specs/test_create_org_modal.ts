@@ -6,6 +6,10 @@ describe('Create a new organization', () => {
     cy.contains('Your organizations');
   });
 
+  afterEach(() => {
+    cy.dropTestbed();
+  });
+
   it('Open org creation modal', () => {
     cy.get('.create-organization-modal').should('not.exist');
     cy.get('#create-organization-button').click();

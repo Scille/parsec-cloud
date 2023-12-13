@@ -8,6 +8,10 @@ describe('Check invitations page', () => {
     cy.get('.user-menu__item').eq(2).click();
   });
 
+  afterEach(() => {
+    cy.dropTestbed();
+  });
+
   it('Check the initial state', () => {
     cy.get('.topbar-left__title').find('.title-h2').contains('Invitations');
     cy.get('.invitation-list').find('.invitation-list-item').as('invitations').should('have.length', 2);
