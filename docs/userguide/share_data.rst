@@ -69,7 +69,7 @@ Data copied from file explorer also appear in the Parsec client. In addition, th
 Bulk assign workspace roles to users
 ------------------------------------
 
-Assigning the same roles to multiple users on multiple workspaces can be a bit annoying. Parsec provides a way to bulk assign the roles of one user to another.
+Manually assigning the same workspace roles to multiple users can be a bit tedious and error prone. Parsec provides a way to bulk assign the roles from one user to another.
 
 1. In the Users page, right click on the user you want to copy the roles from:
 
@@ -83,7 +83,7 @@ Assigning the same roles to multiple users on multiple workspaces can be a bit a
     :align: center
     :alt: Select the user to assign roles to
 
-3. You're shown a summary of what roles are going to be assigned on each workspace. Click on `Assign roles` to complete the operation.
+3. You're shown a summary of which roles are going to be assigned on each workspace. Click on `Assign roles` to complete the operation.
 
 .. image:: screens/bulk_assign_roles_summary.png
     :align: center
@@ -91,8 +91,8 @@ Assigning the same roles to multiple users on multiple workspaces can be a bit a
 
 .. note::
 
-    1. You can only assign roles on workspaces where you are an Owner or Manager
-    2. Outsider cannot have a role higher than Contributor
+    1. You can only assign roles on a workspace where you have an Owner or Manager role
+    2. An Outsider user cannot have a role higher than Contributor
     3. You cannot assign roles higher than your own. If you have the Manager role in a workspace and you're trying to assign the Owner role, it will be downgraded to Contributor).
     4. If the user already has a higher role on the workspace than the one you're trying to assign, no change will be made to its role
     5. The option is only available if you have workspaces in common with the source user and you have a role high enough

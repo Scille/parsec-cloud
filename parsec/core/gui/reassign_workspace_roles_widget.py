@@ -69,13 +69,20 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
                 item.widget().setParent(None)
 
     def _switch_to_summary(
-        self, user_info: UserInfo, roles: dict[WorkspaceFS, WorkspaceRole]
+        self, selected_user_info: UserInfo, roles: dict[WorkspaceFS, WorkspaceRole]
     ) -> None:
         self._clear_layout()
-        summary_widget = ReassignWorkspaceRolesSummaryWidget(user_info, roles)
+        summary_widget = ReassignWorkspaceRolesSummaryWidget(selected_user_info, roles)
         summary_widget.previous_clicked.connect(self._switch_to_search)
         summary_widget.assign_clicked.connect(self._assign_roles)
         self.main_layout.insertWidget(0, summary_widget)
+        if self.dialog:
+            self.dialog.update_title(
+                T("TEXT_REASSIGN_WORKSPACE_ROLES_userFrom-userTo").format(
+                    userFrom=self.user_info.short_user_display,
+                    userTo=selected_user_info.short_user_display,
+                )
+            )
 
     def _switch_to_search(self) -> None:
         self._clear_layout()
@@ -84,6 +91,12 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         )
         search_user.user_selected.connect(self._on_user_selected)
         self.main_layout.insertWidget(0, search_user)
+        if self.dialog:
+            self.dialog.update_title(
+                T("TEXT_REASSIGN_WORKSPACE_ROLES_user").format(
+                    user=self.user_info.short_user_display
+                )
+            )
 
     def _on_user_selected(self, selected_user_info: UserInfo) -> None:
         self._clear_layout()
@@ -178,7 +191,7 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         w = cls(core=core, jobs_ctx=jobs_ctx, user_info=user_info, roles=workspaces)
         d = GreyedDialog(
             w,
-            title=T("TEXT_REASSIGN_WORKSPACE_ROLES"),
+            title=T("TEXT_REASSIGN_WORKSPACE_ROLES_user").format(user=user_info.short_user_display),
             parent=parent,
             width=1000,
         )

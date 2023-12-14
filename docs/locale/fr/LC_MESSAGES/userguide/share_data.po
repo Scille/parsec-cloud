@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-08 14:22+0100\n"
+"POT-Creation-Date: 2023-12-14 11:08+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -178,21 +178,26 @@ msgstr ""
 "serveur Parsec est de nouveau disponible."
 
 #: ../../userguide/share_data.rst:70
-msgid "Assign roles to users in bulk"
+msgid "Bulk assign workspace roles to users"
 msgstr "Assigner plusieurs rôles en une fois"
 
 #: ../../userguide/share_data.rst:72
 msgid ""
-"Assigning the same roles to multiple users on multiple workspaces can be "
-"a bit annoying. Parsec provides a way to bulk assign the roles of one "
-"user to another."
-msgstr "Assigner plusieurs rôles à plusieurs utilisateurs sur plusieurs espaces de travail peut être ennuyeux. Parsec fournit une méthode pour assigner tous les rôles d'un utilisateur à un autre."
+"Manually assigning the same workspace roles to multiple users can be a "
+"bit tedious and error prone. Parsec provides a way to bulk assign the "
+"roles from one user to another."
+msgstr ""
+"L'assignation manuelle des mêmes rôles d'espace de travail à plusieurs "
+"utilisateurs peut s'avérer fastidieuse et source d'erreurs. Parsec "
+"propose un moyen d'attribuer en bloc les rôles d'un utilisateur à un autre."
 
 #: ../../userguide/share_data.rst:74
 msgid ""
 "In the Users page, right click on the user you want to copy the roles "
 "from:"
-msgstr "Dans la page des utilisateurs, clic droit sur l'utilisateur dont vous voulez copier les rôles :"
+msgstr ""
+"Dans la page des utilisateurs, clic droit sur l'utilisateur dont vous "
+"voulez copier les rôles :"
 
 #: ../../userguide/share_data.rst:-1
 msgid "Start a bulk assignement"
@@ -208,37 +213,53 @@ msgstr "Sélectionnez l'utilisateur à qui assigner les rôles"
 
 #: ../../userguide/share_data.rst:86
 msgid ""
-"You're shown a summary of what roles are going to be assigned on each "
+"You're shown a summary of which roles are going to be assigned on each "
 "workspace. Click on `Assign roles` to complete the operation."
-msgstr "Vous obtiendrez un récapitulatif des rôles qui seront assignés sur chaque espace de travail. Cliquez sur `Assignez les rôles` pour terminer l'opération."
+msgstr ""
+"Vous obtiendrez un récapitulatif des rôles qui seront assignés sur chaque"
+" espace de travail. Cliquez sur `Assignez les rôles` pour terminer "
+"l'opération."
 
 #: ../../userguide/share_data.rst:-1
 msgid "Bulk assignment summary"
 msgstr "Assignment en gros"
 
 #: ../../userguide/share_data.rst:94
-msgid "You can only assign roles on workspaces where you are an Owner or Manager"
-msgstr "Vous ne pouvez assigner des rôles que sur les espaces de travail dont vous êtes Gérant ou Propriétaire"
+msgid ""
+"You can only assign roles on a workspace where you have an Owner or "
+"Manager role"
+msgstr ""
+"Vous ne pouvez assigner des rôles que sur les espaces de travail dont "
+"vous êtes Gérant ou Propriétaire"
 
 #: ../../userguide/share_data.rst:95
-msgid "Outsider cannot have a role higher than Contributor"
+msgid "An Outsider user cannot have a role higher than Contributor"
 msgstr "Les externes ne peuvent pas avoir un rôle plus haut que Contributeur"
 
 #: ../../userguide/share_data.rst:96
 msgid ""
-"Assigned roles can be downgraded if your own role on the workspace is not"
-" high enough (if you're a Manager and you're trying to assign an Owner "
-"role, it will be downgraded to Contributor)"
-msgstr "Les rôles assignés peuvent être diminués si votre propre rôle sur l'espace de travail n'est pas assez haut. (si vous êtes Gérant et que vous essayez d'assigner un Propriétaire, il sera diminué vers Contributeur)"
+"You cannot assign roles higher than your own. If you have the Manager "
+"role in a workspace and you're trying to assign the Owner role, it will "
+"be downgraded to Contributor)."
+msgstr ""
+"Les rôles assignés peuvent être diminués si votre propre rôle sur "
+"l'espace de travail n'est pas assez haut. (si vous êtes Gérant et que "
+"vous essayez d'assigner un Propriétaire, il sera diminué vers "
+"Contributeur)"
 
 #: ../../userguide/share_data.rst:97
 msgid ""
 "If the user already has a higher role on the workspace than the one "
-"you're trying to assign, do nothing"
-msgstr "Si un utilisateur a un rôle sur l'espace de travail plus haut que celui que vous souhaitez assigner, rien ne sera fait"
+"you're trying to assign, no change will be made to its role"
+msgstr ""
+"Si un utilisateur a un rôle sur l'espace de travail plus haut que celui "
+"que vous souhaitez assigner, rien ne sera fait"
 
 #: ../../userguide/share_data.rst:98
 msgid ""
-"The option is only available if you have workspace in common with the "
+"The option is only available if you have workspaces in common with the "
 "source user and you have a role high enough"
-msgstr "Cette option est seulement disponible si vous avez un espace de travail en commun avec l'utilisateur source et que votre rôle est suffisamment haut"
+msgstr ""
+"Cette option est seulement disponible si vous avez un espace de travail "
+"en commun avec l'utilisateur source et que votre rôle est suffisamment "
+"haut"
