@@ -802,7 +802,7 @@
         "profile": {
             "admin": {
                 "label": "Administrateur",
-                "description": "Peut créer des espaces de travail, partager des fichiers et gérer l'organisation."
+                "description": "Peut gérer l'organisation."
             },
             "standard": {
                 "label": "Standard",

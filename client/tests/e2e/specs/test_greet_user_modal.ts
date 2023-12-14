@@ -74,7 +74,7 @@ describe('Greet user into an organization', () => {
     cy.get('@select').find('ion-icon').should('have.class', 'popover-is-open');
     cy.get('.popover-viewport').should('exist').find('ion-list').find('ion-item').as('roles-popover').should('have.length', 3);
     cy.get('@roles-popover').find('.option-text__label').contains('Administrator');
-    cy.get('@roles-popover').find('.option-text__description').contains('Can manage the organization and its users.');
+    cy.get('@roles-popover').find('.option-text__description').contains('Can manage the organization');
     cy.get('@roles-popover').find('.option-text__label').contains('Standard');
     cy.get('@roles-popover').find('.option-text__description').contains('Can create workspaces.');
     cy.get('@roles-popover').find('.option-text__label').contains('Outsider');

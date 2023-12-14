@@ -206,7 +206,6 @@ onUnmounted(async (): Promise<void> => {
 .page {
   --border-radius: 8px;
   --background: none;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
 
   &-content {
     display: flex;
@@ -271,6 +270,10 @@ onUnmounted(async (): Promise<void> => {
       padding-top: 0px;
       padding-bottom: 0px;
     }
+  }
+
+  .dropdown {
+    width: 12.5rem;
   }
 }
 </style>

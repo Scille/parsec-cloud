@@ -13,6 +13,7 @@
       @click="openPopover($event)"
       id="dropdown-popover-button"
       class="filter-button button-medium"
+      :class="isPopoverOpen ? 'active' : ''"
       :disabled="disabled"
     >
       <ion-icon
@@ -21,7 +22,7 @@
         slot="end"
         :icon="getIcon()"
       />
-      {{ labelRef }}
+      <span class="input-text">{{ labelRef }}</span>
     </ion-button>
   </div>
 </template>
@@ -96,9 +97,16 @@ function getIcon(): string {
 <style lang="scss" scoped>
 .filter-button {
   background: none;
-  color: var(--parsec-color-light-primary-700);
+  color: var(--parsec-color-light-primary-800);
+  --border-color-hover: none;
   margin: 0;
-  height: 100%;
+  // height: 100%;
+
+  .input-text {
+    width: 100%;
+    text-align: left;
+    pointer-events: none;
+  }
 }
 
 .option {
@@ -119,6 +127,12 @@ function getIcon(): string {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+
+  .active {
+    --background: var(--parsec-color-light-secondary-background);
+    outline: var(--offset) solid var(--parsec-color-light-primary-300);
+    border-radius: var(--parsec-radius-6);
+  }
 
   .form-label {
     color: var(--parsec-color-light-primary-700);

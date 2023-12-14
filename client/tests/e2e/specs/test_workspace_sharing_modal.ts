@@ -37,26 +37,28 @@ describe('Check workspace sharing modal', () => {
   });
 
   it('Change user role', () => {
-    cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click();
+    // the click is force because the span inside the button get the css property pointer-events: none
+    cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click({ force: true });
     cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__description').contains('Can view and open files');
     cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__label').contains('Reader').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
     cy.checkToastMessage('success', 'Role updated', "Jaheira's role has been updated to Reader.");
-    cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Reader').click();
+    // same reason as above
+    cy.get('ion-list').find('.content').eq(1).find('.filter-button').contains('Reader').click({ force: true });
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared').click();
     // cspell:disable-next-line
     cy.checkToastMessage('success', 'Revoked access', 'The workspace is no longer shared with Korgan Bloodaxe.');
   });
 
   it('Set the same role', () => {
-    cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor').click();
+    cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor').click({ force: true });
     cy.get('.popover-viewport').find('ion-item').eq(1).find('.option-text__label').contains('Contributor').click();
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor');
     // cspell:disable-next-line
     cy.checkToastMessage('info', 'Role already assigned', 'Cernd is already Contributor on this workspace.');
 
-    cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click();
+    cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click({ force: true });
     cy.get('.popover-viewport').find('ion-item').eq(4).find('.option-text__label').contains('Not shared').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared');
     // cspell:disable-next-line

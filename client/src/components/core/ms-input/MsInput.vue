@@ -85,6 +85,7 @@ defineEmits<{
 
   .form-input-disabled {
     --background: var(--parsec-color-light-secondary-disabled);
+    background: var(--parsec-color-light-secondary-disabled);
     border: var(--parsec-color-light-secondary-disabled);
   }
 }
