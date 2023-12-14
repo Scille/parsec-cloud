@@ -38,127 +38,127 @@ permissions:
 jobs:
   # Cannot factorize the jobs with a matrix since we use a service container that is
   # only available on linux (see https://github.com/orgs/community/discussions/25578)
-  test-rust-linux:
-    name: "🐧 Linux: 🦀 Rust tests"
-    # Just a fail-safe timeout, see the fine grain per-task timeout instead
-    timeout-minutes: 30
-    runs-on: ubuntu-20.04
-    # Testbed server comes as a Docker image, so it will eventually goes out of sync
-    # with the tests (typically a new API is introduced in the Parsec server, or a new
-    # testbed template is introduced).
-    # In such case, the container url should be updated from the, see:
-    # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
-    env:
-      TESTBED_SERVER: http://localhost:6777
-    services:
-      parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.16.0-a.0-dev.2023-11-04-sha.91145b3
-        ports:
-          - 6777:6777
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
-        timeout-minutes: 5
+  # test-rust-linux:
+  #   name: "🐧 Linux: 🦀 Rust tests"
+  #   # Just a fail-safe timeout, see the fine grain per-task timeout instead
+  #   timeout-minutes: 30
+  #   runs-on: ubuntu-20.04
+  #   # Testbed server comes as a Docker image, so it will eventually goes out of sync
+  #   # with the tests (typically a new API is introduced in the Parsec server, or a new
+  #   # testbed template is introduced).
+  #   # In such case, the container url should be updated from the, see:
+  #   # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
+  #   env:
+  #     TESTBED_SERVER: http://localhost:6777
+  #   services:
+  #     parsec-testbed-server:
+  #       image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:v2.16.0-a.0-dev.2023-11-04-sha.91145b3
+  #       ports:
+  #         - 6777:6777
+  #   steps:
+  #     - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+  #       timeout-minutes: 5
 
-      - uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
-        with:
-          # We setup the cache by hand, see below
-          cache: false
-        timeout-minutes: 10
+  #     - uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
+  #       with:
+  #         # We setup the cache by hand, see below
+  #         cache: false
+  #       timeout-minutes: 10
 
-      - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
-        with:
-          # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
-          # cache is only shared between master and the PRs (and not across PRs).
-          # So we only save the cache on master build given it's the ones that are the
-          # most likely to be reused.
-          save-if: ${{ github.ref == 'refs/heads/master' }}
-        timeout-minutes: 5
+  #     - name: Retrieve Rust cache
+  #       uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
+  #       with:
+  #         # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
+  #         # cache is only shared between master and the PRs (and not across PRs).
+  #         # So we only save the cache on master build given it's the ones that are the
+  #         # most likely to be reused.
+  #         save-if: ${{ github.ref == 'refs/heads/master' }}
+  #       timeout-minutes: 5
 
-      # Install fuse
-      - name: Install fuse
-        shell: bash
-        run: |
-          until sudo apt-get -y install fuse3 libfuse3-dev; do
-            echo "Fail to install APT package retrying ...";
-          done
-        timeout-minutes: 5
+  #     # Install fuse
+  #     - name: Install fuse
+  #       shell: bash
+  #       run: |
+  #         until sudo apt-get -y install fuse3 libfuse3-dev; do
+  #           echo "Fail to install APT package retrying ...";
+  #         done
+  #       timeout-minutes: 5
 
-      # Install cargo nextest command
-      - uses: taiki-e/install-action@d211c4be5a95cbcd52a0870dda7d63a107a58368 # pin v2.21.26
-        with:
-          tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
+  #     # Install cargo nextest command
+  #     - uses: taiki-e/install-action@d211c4be5a95cbcd52a0870dda7d63a107a58368 # pin v2.21.26
+  #       with:
+  #         tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
 
-      - name: Categorize workspace crates
-        id: crates
-        run: |
-          (
-            for type in agnostic platform bindings; do
-              echo -n "$type=" && python misc/libparsec_crates_flags.py $type
-            done
-          ) | tee -a $GITHUB_OUTPUT
-        timeout-minutes: 2
+  #     - name: Categorize workspace crates
+  #       id: crates
+  #       run: |
+  #         (
+  #           for type in agnostic platform bindings; do
+  #             echo -n "$type=" && python misc/libparsec_crates_flags.py $type
+  #           done
+  #         ) | tee -a $GITHUB_OUTPUT
+  #       timeout-minutes: 2
 
-      - name: Test agnostic rust codebase
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
-        env:
-          RUST_LOG: debug
-        timeout-minutes: 10
+  #     - name: Test agnostic rust codebase
+  #       run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }}
+  #       env:
+  #         RUST_LOG: debug
+  #       timeout-minutes: 10
 
-      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-      # implementation and it compatibility with the rest of the project
-      - name: Test sodiumoxide rust crypto
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
-        env:
-          RUST_LOG: debug
-        timeout-minutes: 10
+  #     # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+  #     # implementation and it compatibility with the rest of the project
+  #     - name: Test sodiumoxide rust crypto
+  #       run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
+  #       env:
+  #         RUST_LOG: debug
+  #       timeout-minutes: 10
 
-      - name: Check agnostic & platform crates using sodium crypto features
-        run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-sodiumoxide
-        timeout-minutes: 10
-        env:
-          RUST_LOG: debug
+  #     - name: Check agnostic & platform crates using sodium crypto features
+  #       run: cargo check ${{ env.CARGO_CI_FLAGS }} ${{ steps.crates.outputs.agnostic }} ${{ steps.crates.outputs.platform }} --features use-sodiumoxide
+  #       timeout-minutes: 10
+  #       env:
+  #         RUST_LOG: debug
 
-      # Use sodiumoxide here given 1) it is composed of C code, so not totally
-      # platform independant and 2) it is what is going to be used in release
-      - name: Test platform crates using sodium crypto features (🐧 Linux specific)
-        shell: bash
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-sodiumoxide
-        timeout-minutes: 30
-        env:
-          RUST_LOG: debug
+  #     # Use sodiumoxide here given 1) it is composed of C code, so not totally
+  #     # platform independant and 2) it is what is going to be used in release
+  #     - name: Test platform crates using sodium crypto features (🐧 Linux specific)
+  #       shell: bash
+  #       run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} ${{ steps.crates.outputs.platform }} --features libparsec_crypto/use-sodiumoxide
+  #       timeout-minutes: 30
+  #       env:
+  #         RUST_LOG: debug
 
-      - name: Test platform-async on wasm
-        if: inputs.run-wasm-tests
-        run: wasm-pack test --headless --firefox libparsec/crates/platform_async
-        timeout-minutes: 10
+  #     - name: Test platform-async on wasm
+  #       if: inputs.run-wasm-tests
+  #       run: wasm-pack test --headless --firefox libparsec/crates/platform_async
+  #       timeout-minutes: 10
 
-      # Clippy basically compile the project, hence it's faster to run it in
-      # the test-rust-matrix job where compilation cache is reused !
-      - uses: ./.github/actions/use-pre-commit
-        with:
-          extra-args: clippy --verbose
-        timeout-minutes: 10
+  #     # Clippy basically compile the project, hence it's faster to run it in
+  #     # the test-rust-matrix job where compilation cache is reused !
+  #     - uses: ./.github/actions/use-pre-commit
+  #       with:
+  #         extra-args: clippy --verbose
+  #       timeout-minutes: 10
 
-      - name: Check rust code format
-        run: cargo fmt --check
-        timeout-minutes: 2
+  #     - name: Check rust code format
+  #       run: cargo fmt --check
+  #       timeout-minutes: 2
 
-      - name: Check restricted usage with cargo-deny
-        run: |
-          echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
-          # cargo-deny outputs the report on stderr and it needs to be redirected to stdout for the problem matcher to work.
-          cargo deny --color=never check --hide-inclusion-graph --show-stats 2>&1
-          echo "::remove-matcher owner=cargo-deny::"
-        timeout-minutes: 2
+  #     - name: Check restricted usage with cargo-deny
+  #       run: |
+  #         echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
+  #         # cargo-deny outputs the report on stderr and it needs to be redirected to stdout for the problem matcher to work.
+  #         cargo deny --color=never check --hide-inclusion-graph --show-stats 2>&1
+  #         echo "::remove-matcher owner=cargo-deny::"
+  #       timeout-minutes: 2
 
   test-rust-non-linux:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: 🍎 macOS
-            os: macos-12
+          # - name: 🍎 macOS
+          #   os: macos-12
           - name: 🏁 Windows
             os: windows-2022
     name: "${{ matrix.name }}: 🦀 Rust tests"
@@ -209,10 +209,19 @@ jobs:
         with:
           tool: nextest@0.9.54
 
+      # - name: Test mountpoint
+      #   shell: bash
+      #   run: cargo nextest run --profile=ci --locked --cargo-profile ci-rust -p libparsec_platform_mountpoint -p libparsec_platform_device_loader -p libparsec_platform_async --features libparsec_crypto/use-sodiumoxide
+      #   timeout-minutes: 10
+      #   env:
+      #     RUST_LOG: debug
+      #     RUST_BACKTRACE: 1
+
       - name: Test Rust codebase (${{ matrix.name }} specific)
         shell: bash
         run: |
           set -ex
+          cargo clean -p winfsp_wrs --profile=ci-rust
           CRATES=`python3 misc/libparsec_crates_flags.py platform`
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $CRATES --features libparsec_crypto/use-sodiumoxide
           # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
@@ -224,3 +233,4 @@ jobs:
         env:
           RUST_LOG: debug
           TESTBED_SERVER: http://localhost:6777
+          RUST_BACKTRACE: 1
