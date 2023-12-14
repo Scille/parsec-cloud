@@ -55,9 +55,7 @@
                           {{ $t('HomePage.organizationList.lastLogin') }}
                         </p>
                         <p>
-                          {{
-                            device.slug in storedDeviceDataDict ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
-                          }}
+                          {{ device.slug in storedDeviceDataDict ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
                         </p>
                       </ion-col>
                     </ion-row>
