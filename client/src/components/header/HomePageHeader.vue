@@ -2,46 +2,48 @@
 
 <template>
   <ion-card-content class="topbar">
-    <ion-card-title
-      color="tertiary"
-      v-if="showBackButton"
-    >
-      <ion-button
-        fill="clear"
-        @click="$emit('backClick')"
-        id="back-to-list-button"
+    <div class="topbar-content">
+      <ion-card-title
+        color="tertiary"
+        v-if="showBackButton"
       >
-        <ion-icon
-          slot="start"
-          :icon="chevronBack"
-        />
-        {{ $t('HomePage.organizationLogin.backToList') }}
+        <ion-button
+          fill="clear"
+          @click="$emit('backClick')"
+          id="back-to-list-button"
+        >
+          <ion-icon
+            slot="start"
+            :icon="chevronBack"
+          />
+          {{ $t('HomePage.organizationLogin.backToList') }}
+        </ion-button>
+      </ion-card-title>
+      <ion-button
+        @click="togglePopover"
+        size="large"
+        id="create-organization-button"
+        class="button-default"
+      >
+        {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
       </ion-button>
-    </ion-card-title>
-    <ion-button
-      @click="togglePopover"
-      size="large"
-      id="create-organization-button"
-      class="button-default"
-    >
-      {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
-    </ion-button>
-    <ion-buttons
-      slot="primary"
-      class="topbar-icon__settings"
-    >
-      <ion-button
-        slot="icon-only"
-        id="trigger-settings-button"
-        class="topbar-button__item"
-        @click="$emit('settingsClick')"
+      <ion-buttons
+        slot="primary"
+        class="topbar-icon__settings"
       >
-        <ion-icon
+        <ion-button
           slot="icon-only"
-          :icon="cog"
-        />
-      </ion-button>
-    </ion-buttons>
+          id="trigger-settings-button"
+          class="topbar-button__item"
+          @click="$emit('settingsClick')"
+        >
+          <ion-icon
+            slot="icon-only"
+            :icon="cog"
+          />
+        </ion-button>
+      </ion-buttons>
+    </div>
   </ion-card-content>
 </template>
 
@@ -94,32 +96,15 @@ async function openPopover(event: Event): Promise<void> {
 
 <style lang="scss" scoped>
 .topbar {
-
-
-  background-color: #ffe700;
-  opacity: 0.8;
-  background-image: linear-gradient(30deg, #ffe700 12%, transparent 12.5%, transparent 87%, #ffe700 87.5%, #ffe700),
-    linear-gradient(150deg, #ffe700 12%, transparent 12.5%, transparent 87%, #ffe700 87.5%, #ffe700),
-    linear-gradient(30deg, #ffe700 12%, transparent 12.5%, transparent 87%, #ffe700 87.5%, #ffe700),
-    linear-gradient(150deg, #ffe700 12%, transparent 12.5%, transparent 87%, #ffe700 87.5%, #ffe700),
-    linear-gradient(60deg, #3e4616 25%, transparent 25.5%, transparent 75%, #3e4616 75%, #3e4616),
-    linear-gradient(60deg, #3e4616 25%, transparent 25.5%, transparent 75%, #3e4616 75%, #3e4616);
-  background-size: 20px 35px;
-  background-position:
-    0 0,
-    0 0,
-    10px 18px,
-    10px 18px,
-    0 0,
-    10px 18px;
-
-
-
-
   border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-  padding: 3.5rem 3.5rem 1.5rem;
-  display: flex;
-  align-items: center;
+  padding: 0;
+
+  .topbar-content {
+    padding: 3.5rem 3.5rem 1.5rem;
+    max-width: var(--parsec-max-content-width);
+    display: flex;
+    align-items: center;
+  }
 
   #create-organization-button {
     margin-left: auto;

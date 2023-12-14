@@ -1,86 +1,79 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
-    <ion-content
-      :fullscreen="true"
-      color="secondary"
-    >
-      <ion-card class="right-side-container">
-        <template v-if="deviceList.length === 0">
-          <ion-card-content class="organization-container">
-            <ion-card-title>
-              {{ $t('HomePage.noDevices') }}
-            </ion-card-title>
-            {{ $t('HomePage.howToAddDevices') }}
-          </ion-card-content>
-        </template>
-        <template v-if="deviceList.length > 0">
-          <ion-card-content class="organization-container">
-            <ion-card-title class="organization-filter">
-              <ms-search-input
-                :label="$t('HomePage.organizationList.search')"
-                v-model="searchQuery"
-                id="ms-search-input"
-              />
-              <!-- No use in showing the sort/filter options for less than 2 devices -->
-              <template v-if="deviceList.length >= 2">
-                <ms-sorter
-                  id="organization-filter-select"
-                  label="t('HomePage.organizationList.labelSortBy')"
-                  :options="msSorterOptions"
-                  default-option="organization"
-                  :sorter-labels="msSorterLabels"
-                  @change="onMsSorterChange($event)"
-                />
-              </template>
-            </ion-card-title>
-            <ion-grid class="organization-list">
-              <ion-row class="organization-list-row">
-                <ion-col
-                  v-for="device in filteredDevices"
-                  :key="device.slug"
-                  class="organization-list-row__col"
-                  size="2"
-                >
-                  <ion-card
-                    button
-                    class="organization-card"
-                    @click="$emit('organizationSelect', device)"
-                  >
-                    <ion-card-content class="card-content">
-                      <ion-grid>
-                        <organization-card
-                          :device="device"
-                          class="card-content__body"
-                        />
-                        <ion-row class="card-content__footer">
-                          <ion-col size="auto">
-                            <p>
-                              {{ $t('HomePage.organizationList.lastLogin') }}
-                            </p>
-                            <p>
-                              {{
-                                device.slug in storedDeviceDataDict ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
-                              }}
-                            </p>
-                          </ion-col>
-                        </ion-row>
-                      </ion-grid>
-                    </ion-card-content>
-                  </ion-card>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </template>
-      </ion-card>
-    </ion-content>
-  </ion-page>
+  <ion-card class="right-side-container">
+    <template v-if="deviceList.length === 0">
+      <ion-card-content class="organization-container">
+        <ion-card-title>
+          {{ $t('HomePage.noDevices') }}
+        </ion-card-title>
+        {{ $t('HomePage.howToAddDevices') }}
+      </ion-card-content>
+    </template>
+    <template v-if="deviceList.length > 0">
+      <ion-card-content class="organization-container">
+        <ion-card-title class="organization-filter">
+          <ms-search-input
+            :label="$t('HomePage.organizationList.search')"
+            v-model="searchQuery"
+            id="ms-search-input"
+          />
+          <!-- No use in showing the sort/filter options for less than 2 devices -->
+          <template v-if="deviceList.length >= 2">
+            <ms-sorter
+              id="organization-filter-select"
+              label="t('HomePage.organizationList.labelSortBy')"
+              :options="msSorterOptions"
+              default-option="organization"
+              :sorter-labels="msSorterLabels"
+              @change="onMsSorterChange($event)"
+            />
+          </template>
+        </ion-card-title>
+        <ion-grid class="organization-list">
+          <ion-row class="organization-list-row">
+            <ion-col
+              v-for="device in filteredDevices"
+              :key="device.slug"
+              class="organization-list-row__col"
+              size="2"
+            >
+              <ion-card
+                button
+                class="organization-card"
+                @click="$emit('organizationSelect', device)"
+              >
+                <ion-card-content class="card-content">
+                  <ion-grid>
+                    <organization-card
+                      :device="device"
+                      class="card-content__body"
+                    />
+                    <ion-row class="card-content__footer">
+                      <ion-col size="auto">
+                        <p>
+                          {{ $t('HomePage.organizationList.lastLogin') }}
+                        </p>
+                        <p>
+                          {{
+                            device.slug in storedDeviceDataDict ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
+                          }}
+                        </p>
+                      </ion-col>
+                    </ion-row>
+                  </ion-grid>
+                </ion-card-content>
+              </ion-card>
+            </ion-col>
+          </ion-row>
+        </ion-grid>
+      </ion-card-content>
+    </template>
+  </ion-card>
 </template>
 
 <script setup lang="ts">
-import { IonContent, IonPage, IonCardContent, IonGrid, IonRow, IonCol, IonCard, IonCardTitle } from '@ionic/vue';
+import { IonCardContent, IonGrid, IonRow, IonCol, IonCard, IonCardTitle } from '@ionic/vue';
 import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { ref, Ref, computed, onMounted, inject, onUpdated } from 'vue';
 import { StorageManager, StoredDeviceData, StorageManagerKey } from '@/services/storageManager';
@@ -185,37 +178,30 @@ const filteredDevices = computed(() => {
 <style lang="scss" scoped>
 .right-side-container {
   height: 100%;
-
-
-
-  background-color: #ff08fc;
-  opacity: 0.8;
-  background-image: repeating-radial-gradient(circle at 0 0, transparent 0, #15f4ee 20px), repeating-linear-gradient(#ff08fc, #ff08fc);
-
-
-
-
-  margin-inline: 0px;
-  margin-top: 0px;
-  margin-bottom: 0px;
-  border-radius: 0;
   box-shadow: none;
   flex-grow: 0;
   flex-shrink: 0;
+  margin: 0;
+  width: 60vw;
 }
 
 .organization-container {
-  padding: 1.5rem 3.5rem 0;
+  padding: 2rem 3.5rem 0;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: var(--parsec-max-content-width);
 
   .organization-filter {
     display: flex;
-    margin: 0 0 0.5rem;
-    justify-content: flex-end;
+    justify-content: space-between;
+    margin: 0;
   }
 
   .organization-list {
     max-height: 80%;
+    margin: 0;
     overflow-y: auto;
     --ion-grid-columns: 6;
   }

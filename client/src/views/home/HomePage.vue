@@ -4,7 +4,6 @@
   <ion-page>
     <ion-content
       :fullscreen="true"
-      color="secondary"
     >
       <div id="page">
         <home-page-sidebar @about-click="openAboutModal" />
@@ -229,14 +228,9 @@ async function onJoinOrganizationClicked(): Promise<void> {
 .right-side {
   height: 100vh;
   width: 60vw;
-  max-width: var(--parsec-max-content-width);
   background: var(--parsec-color-light-secondary-inversed-contrast);
   flex-direction: column;
   position: relative;
   z-index: -5;
-}
-
-.header {
-  z-index: 6;
 }
 </style>

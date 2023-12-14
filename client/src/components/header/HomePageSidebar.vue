@@ -1,37 +1,35 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div id="page">
-    <div class="sidebar">
-      <div class="sidebar-content">
-        <div class="sidebar-content__titles">
-          <h1 class="title-h1-lg">
-            {{ $t('HomePage.organizationList.title') }}
-          </h1>
-          <ion-text class="subtitles-normal">
-            {{ $t('HomePage.organizationList.subtitle') }}
-          </ion-text>
+  <div class="sidebar">
+    <div class="sidebar-content">
+      <div class="sidebar-content__titles">
+        <h1 class="title-h1-lg">
+          {{ $t('HomePage.organizationList.title') }}
+        </h1>
+        <ion-text class="subtitles-normal">
+          {{ $t('HomePage.organizationList.subtitle') }}
+        </ion-text>
+      </div>
+      <div class="sidebar-footer">
+        <div class="sidebar-footer__logo">
+          <ms-image
+            :image="LogoRowWhite"
+            class="logo-img"
+          />
         </div>
-        <div class="sidebar-footer">
-          <div class="sidebar-footer__logo">
-            <ms-image
-              :image="LogoRowWhite"
-              class="logo-img"
-            />
-          </div>
-          <div
-            class="sidebar-footer__version body"
-            @click="$emit('aboutClick')"
-          >
-            <ion-icon
-              slot="start"
-              :icon="informationCircle"
-              size="small"
-            />
-            <span class="version-text">
-              {{ getAppVersion() }}
-            </span>
-          </div>
+        <div
+          class="sidebar-footer__version body"
+          @click="$emit('aboutClick')"
+        >
+          <ion-icon
+            slot="start"
+            :icon="informationCircle"
+            size="small"
+          />
+          <span class="version-text">
+            {{ getAppVersion() }}
+          </span>
         </div>
       </div>
     </div>
@@ -85,6 +83,7 @@ defineEmits<{
       flex-grow: 2;
       max-width: var(--parsec-max-title-width);
       position: relative;
+      color: var(--parsec-color-light-secondary-premiere);
       gap: 1rem;
     }
   }
