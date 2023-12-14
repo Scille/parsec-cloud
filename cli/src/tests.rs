@@ -158,3 +158,27 @@ async fn invite_device(tmp_path: TmpPath) {
             "Creating device invitation\nInvitation URL:",
         ));
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn invite_user(tmp_path: TmpPath) {
+    let id = std::process::id();
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    set_env(&tmp_path_str, id);
+
+    let [alice, ..] = run_local_organization(&tmp_path, None, id).await.unwrap();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "invite-user",
+            "--device",
+            &alice.slughash(),
+            "--email",
+            "a@b.c",
+        ])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Creating user invitation\nInvitation URL:",
+        ));
+}
