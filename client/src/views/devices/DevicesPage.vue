@@ -59,7 +59,7 @@
           <div class="restore-password-header">
             <ms-image
               :image="PasswordLock"
-              class="info-password__img"
+              class="restore-password-header-img"
             />
             <h3 class="title-h3 restore-password-header__title">
               {{ $t('DevicesPage.restorePassword.title') }}
@@ -100,7 +100,7 @@
           <div class="restore-password-header">
             <ms-image
               :image="PasswordLock"
-              class="info-password__img"
+              class="restore-password-header-img"
             />
             <h3 class="title-h3 restore-password-header__title">
               {{ $t('DevicesPage.restorePassword.title') }}
@@ -274,7 +274,7 @@ async function onAddDeviceClick(): Promise<void> {
       color: var(--parsec-color-light-primary-700);
     }
 
-    img {
+    &-img {
       width: 3.25rem;
       height: 3.25rem;
       margin-right: 0.5rem;
