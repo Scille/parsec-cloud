@@ -12,7 +12,7 @@
       v-for="path in fullPath"
       @click="navigateTo(path)"
       :path="path"
-      class="breadcrumb-element"
+      class="breadcrumb-element breadcrumb-normal"
       :key="path.id"
     >
       <ion-icon
@@ -23,6 +23,7 @@
 
       {{ path.display }}
       <ion-icon
+        class="separator-icon"
         slot="separator"
         :icon="caretForward"
       />
@@ -100,7 +101,12 @@ function navigateTo(path: RouterPathNode): void {
   cursor: pointer;
 
   .main-icon {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
+  }
+
+  .separator-icon {
+    color: var(--parsec-color-light-secondary-grey);
+    font-size: 0.75rem;
   }
 }
 </style>
