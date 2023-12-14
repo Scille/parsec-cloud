@@ -174,6 +174,7 @@ import {
   IonList,
   IonListHeader,
   IonPage,
+  IonText,
   modalController,
   popoverController,
 } from '@ionic/vue';
