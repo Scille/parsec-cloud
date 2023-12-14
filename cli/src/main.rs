@@ -3,6 +3,7 @@
 mod bootstrap_organization;
 mod create_organization;
 mod invite_device;
+mod invite_user;
 mod list_devices;
 #[cfg(feature = "testenv")]
 mod run_testenv;
@@ -28,6 +29,8 @@ enum Command {
     CreateOrganization(create_organization::CreateOrganization),
     /// Create device invitation
     InviteDevice(invite_device::InviteDevice),
+    /// Create user invitation
+    InviteUser(invite_user::InviteUser),
     /// List all devices
     ListDevices(list_devices::ListDevices),
     #[cfg(feature = "testenv")]
@@ -50,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
             create_organization::create_organization(create_organization).await
         }
         Command::InviteDevice(invite_device) => invite_device::invite_device(invite_device).await,
+        Command::InviteUser(invite_user) => invite_user::invite_user(invite_user).await,
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
