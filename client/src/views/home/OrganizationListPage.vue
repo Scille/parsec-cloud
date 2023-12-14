@@ -2,7 +2,7 @@
 
 <template>
   <ion-card class="right-side-container">
-    <template v-if="deviceList.length === 0">
+    <template v-if="deviceList.length === 0 && !querying">
       <ion-card-content class="organization-container">
         <ion-card-title>
           {{ $t('HomePage.noDevices') }}
@@ -95,6 +95,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 const searchQuery = ref('');
+const querying = ref(true);
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
@@ -120,10 +121,12 @@ onUpdated(async (): Promise<void> => {
 });
 
 async function refreshDeviceList(): Promise<void> {
+  querying.value = true;
   deviceList.value = await listAvailableDevices();
   if (deviceList.value.length === 1) {
     emits('organizationSelect', deviceList.value[0]);
   }
+  querying.value = false;
 }
 
 function onMsSorterChange(event: MsSorterChangeEvent): void {
