@@ -4,7 +4,9 @@
 :root {
   --popover-border-radius: var(--parsec-radius-8);
   --popover-default-width: 20rem;
-  --popover-option-width: 18rem;
+  --popover-option-width: 18.75rem;
+  --popover-dropdown-width: var(--popover-default-width);
+  --popover-dropdown-settings-width: 12.5rem;
 }
 
 // Global popover style
@@ -56,4 +58,16 @@ ion-popover {
 .file-context-menu,
 .user-context-menu {
   --width: var(--popover-option-width);
+}
+
+/* --- dropdown outline popover --- */
+.dropdown-popover {
+  --width: var(--popover-dropdown-width);
+
+  // an offset is required but this varies depending on the popover side (top or bottom)
+  // --offset-y: 0.5rem;
+
+  // .popover-side-top {
+  //   --offset-y: -0.5rem;
+  // }
 }

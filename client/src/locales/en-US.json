@@ -802,7 +802,7 @@
         "profile": {
             "admin": {
                 "label": "Administrator",
-                "description": "Can manage the organization and its users."
+                "description": "Can manage the organization"
             },
             "standard": {
                 "label": "Standard",

@@ -11,6 +11,12 @@
   --inner-padding-end: 16px;
 }
 
+.input,
+#dropdown-popover-button {
+  height: 3rem;
+  display: flex;
+}
+
 /* --- checkbox --- */
 .checkbox {
   margin: 0;
