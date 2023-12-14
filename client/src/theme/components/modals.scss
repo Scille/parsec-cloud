@@ -182,6 +182,10 @@ ion-modal.join-by-link-modal::part(content) {
   }
 }
 
+.user-details-modal {
+  --width: 642px;
+}
+
 .file-upload-modal {
   --width: 842px;
 }
