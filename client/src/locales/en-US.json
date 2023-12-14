@@ -776,6 +776,18 @@
             "cancel": "Cancel",
             "create": "Invite"
         },
+        "UserDetailsModal": {
+            "title": "User details",
+            "subtitles": {
+                "name": "Name",
+                "joined": "Joined",
+                "commonWorkspaces": "Shared workspaces",
+                "revoked": "Revoked"
+            },
+            "actions": {
+                "close": "Close"
+            }
+        },
         "revocation": {
             "revokeTitle": "Revoke this user? | Revoke these users?",
             "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",

@@ -776,6 +776,18 @@
             "cancel": "Annuler",
             "create": "Inviter"
         },
+        "UserDetailsModal": {
+            "title": "Détails de l'utilisateur",
+            "subtitles": {
+                "name": "Nom",
+                "joined": "Rejoint",
+                "commonWorkspaces": "Espaces de travail communs",
+                "revoked": "Révoqué"
+            },
+            "actions": {
+                "close": "Fermer"
+            }
+        },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
             "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",

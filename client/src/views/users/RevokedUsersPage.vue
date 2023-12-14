@@ -117,7 +117,19 @@ import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
-import { IonCheckbox, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonText, popoverController } from '@ionic/vue';
+import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
+import {
+  IonCheckbox,
+  IonContent,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonPage,
+  IonText,
+  modalController,
+  popoverController,
+} from '@ionic/vue';
 import { eye } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -181,7 +193,16 @@ function selectAllUsers(checked: boolean): void {
 }
 
 async function details(user: UserInfo): Promise<void> {
-  console.log(`Show details on user ${user.humanHandle.label}`);
+  const modal = await modalController.create({
+    component: UserDetailsModal,
+    cssClass: 'user-details-modal',
+    componentProps: {
+      user: user,
+    },
+  });
+  await modal.present();
+  await modal.onWillDismiss();
+  await modal.dismiss();
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
