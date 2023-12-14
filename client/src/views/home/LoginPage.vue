@@ -79,7 +79,6 @@ const password = ref('');
   align-items: center;
   flex-grow: 1;
   margin: 0;
-  max-height: 100%;
 
   .organization-container {
     max-width: 52.5rem;
