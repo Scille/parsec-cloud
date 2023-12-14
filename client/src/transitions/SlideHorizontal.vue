@@ -1,8 +1,8 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 <template>
-  <transition-group :name="!props.reverseDirection ? 'slide-left' : 'slide-right'">
+  <transition :name="!props.reverseDirection ? 'slide-left' : 'slide-right'">
     <slot />
-  </transition-group>
+  </transition>
 </template>
 
 <script setup lang="ts">

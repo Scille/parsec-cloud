@@ -2,9 +2,7 @@
 
 <template>
   <ion-page>
-    <ion-content
-      :fullscreen="true"
-    >
+    <ion-content :fullscreen="true">
       <div id="page">
         <home-page-sidebar @about-click="openAboutModal" />
 
@@ -21,19 +19,19 @@
             :show-back-button="state !== HomePageState.OrganizationList"
           />
 
-          <slide-horizontal :reverse-direction="state === HomePageState.Login">
-            <template v-if="state === HomePageState.OrganizationList">
-              <organization-list-page @organization-select="onOrganizationSelected" />
-            </template>
-            <!-- after animation -->
-            <template v-if="state === HomePageState.Login && selectedDevice">
-              <login-page
-                :device="selectedDevice"
-                @login-click="login"
-                @forgotten-password-click="onForgottenPasswordClicked"
-              />
-            </template>
-          </slide-horizontal>
+          <!-- <slide-horizontal :reverse-direction="state === HomePageState.Login"> -->
+          <template v-if="state === HomePageState.OrganizationList">
+            <organization-list-page @organization-select="onOrganizationSelected" />
+          </template>
+          <!-- after animation -->
+          <template v-if="state === HomePageState.Login && selectedDevice">
+            <login-page
+              :device="selectedDevice"
+              @login-click="login"
+              @forgotten-password-click="onForgottenPasswordClicked"
+            />
+          </template>
+          <!-- </slide-horizontal> -->
         </div>
         <!-- end of organization -->
       </div>
