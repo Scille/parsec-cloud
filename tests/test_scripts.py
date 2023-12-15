@@ -77,5 +77,5 @@ def test_run_testenv(run_testenv):
         ("Alice", "laptop"),
         ("Alice", "pc"),
         ("Bob", "laptop"),
-        ("Toto", "laptop"),
+        ("David", "laptop"),
     ]
