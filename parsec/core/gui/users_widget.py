@@ -130,7 +130,9 @@ class UserButton(QWidget, Ui_UserButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        self.jobs_ctx.submit_job(None, None, self._get_common_workspaces)
+        self.get_common_workspaces_job: QtToTrioJob[None] = self.jobs_ctx.submit_job(
+            None, None, self._get_common_workspaces
+        )
 
     async def _get_common_workspaces(self) -> None:
         try:

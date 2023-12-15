@@ -11,7 +11,7 @@ from parsec.core.gui.custom_widgets import SpinnerWidget
 from parsec.core.gui.lang import translate as T
 from parsec.core.gui.search_user_widget import SearchUserWidget
 from parsec.core.gui.snackbar_widget import SnackbarManager
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.reassign_workspace_roles_summary_widget import (
     Ui_ReassignWorkspaceRolesSummaryWidget,
 )
@@ -59,6 +59,8 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         self.roles = roles
         self.user_info = user_info
         self.dialog: GreyedDialog[ReassignWorkspaceRolesWidget] | None = None
+        self.last_assign_roles_job: QtToTrioJob[None] | None = None
+        self.last_filter_roles_job: QtToTrioJob[None] | None = None
         self._switch_to_search()
 
     def _clear_layout(self) -> None:
@@ -102,7 +104,9 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         self._clear_layout()
         sw = SpinnerWidget()
         self.main_layout.insertWidget(0, sw)
-        self.jobs_ctx.submit_job(None, None, self._filter_roles, selected_user_info, self.roles)
+        self.last_filter_roles_job = self.jobs_ctx.submit_job(
+            None, None, self._filter_roles, selected_user_info, self.roles
+        )
 
     async def _filter_roles(
         self, user_info: UserInfo, roles: dict[WorkspaceFS, tuple[WorkspaceRole, WorkspaceRole]]
@@ -177,7 +181,9 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         self.dialog.accept()
 
     def _assign_roles(self, user_info: UserInfo, roles: dict[WorkspaceFS, WorkspaceRole]) -> None:
-        self.jobs_ctx.submit_job(None, None, self._do_assign_roles, user_info, roles)
+        self.last_assign_roles_job = self.jobs_ctx.submit_job(
+            None, None, self._do_assign_roles, user_info, roles
+        )
 
     @classmethod
     def show_modal(

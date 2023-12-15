@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QWidget
 
 from parsec.api.protocol import UserID, UserProfile
 from parsec.core.gui.lang import translate as T
-from parsec.core.gui.trio_jobs import QtToTrioJobScheduler
+from parsec.core.gui.trio_jobs import QtToTrioJob, QtToTrioJobScheduler
 from parsec.core.gui.ui.search_user_widget import Ui_SearchUserWidget
 from parsec.core.gui.ui.select_user_widget import Ui_SelectUserWidget
 from parsec.core.logged_core import LoggedCore
@@ -51,18 +51,20 @@ class SearchUserWidget(QWidget, Ui_SearchUserWidget):
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
+        self.last_search_user_job: QtToTrioJob[None] | None = None
         self.search_timer = QTimer()
         self.search_timer.setInterval(200)
         self.search_timer.setSingleShot(True)
-        self.search_timer.timeout.connect(
-            lambda: self.jobs_ctx.submit_job(
-                None, None, self._search_users, self.line_search.text()
-            )
-        )
+        self.search_timer.timeout.connect(self._on_search_timer_timeout)
         self.line_search.textChanged.connect(self._on_search_changed)
         self.label_not_found.hide()
         self.user_list_scroll.hide()
         self.exclude_users = exclude_users
+
+    def _on_search_timer_timeout(self) -> None:
+        self.last_search_user_job = self.jobs_ctx.submit_job(
+            None, None, self._search_users, self.line_search.text()
+        )
 
     def _on_search_changed(self, text: str) -> None:
         if not text:
