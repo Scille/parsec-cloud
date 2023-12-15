@@ -55,7 +55,8 @@
             "help": "Help and feedback",
             "myDevices": "My devices",
             "myContactDetails": "My contact details",
-            "logoutConfirm": "Are you sure you want to log out?",
+            "logoutConfirmTitle": "Logging out",
+            "logoutConfirmQuestion": "Are you sure you want to log out?",
             "logoutFailed": "Could not log out."
         },
         "organizationList": {
@@ -171,8 +172,8 @@
             "alreadyExists": "This organization name is not available, please choose another one.",
             "generic": "Failed to create the organization (reason: {reason})."
         },
-        "cancelConfirm": "Are you sure you want to cancel the process?",
-        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
+        "cancelConfirm": "Cancellation",
+        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
     },
     "JoinByLinkModal": {
         "pageTitle": "Join by link",
@@ -552,7 +553,9 @@
             },
             "success": "The device {label} has been created!",
             "linkCopiedToClipboard": "The link has been copied to the clipboard.",
-            "copyLink": "Copy invitation link"
+            "copyLink": "Copy invitation link",
+            "cancelConfirm": "Cancellation",
+            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
         }
     },
     "Password": {
@@ -660,8 +663,8 @@
             "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet."
         },
-        "cancelConfirm": "Are you sure you want to cancel the process?",
-        "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
+        "cancelConfirm": "Cancellation",
+        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -740,8 +743,8 @@
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the process."
             },
             "success": "The user {user} has joined the organization!",
-            "cancelConfirm": "Are you sure you want to cancel the process?",
-            "cancelConfirmSubtitle": "Information will not be saved, you will have to restart."
+            "cancelConfirm": "Cancellation",
+            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
         },
         "invitation": {
             "greetUser": "Greet",

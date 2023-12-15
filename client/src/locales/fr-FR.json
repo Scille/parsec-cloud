@@ -55,7 +55,8 @@
             "help": "Aide et commentaires",
             "myDevices": "Mes appareils",
             "myContactDetails": "Mes coordonnées",
-            "logoutConfirm": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutConfirmTitle": "Déconnexion",
+            "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
             "logoutFailed": "Impossible de se déconnecter."
         },
         "organizationList": {
@@ -171,8 +172,8 @@
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason})."
         },
-        "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
-        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+        "cancelConfirm": "Annulation",
+        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
@@ -660,8 +661,8 @@
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
         },
-        "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
-        "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+        "cancelConfirm": "Annulation",
+        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -740,8 +741,8 @@
                 "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus."
             },
             "success": "L'utilisateur {user} a rejoint l'organisation !",
-            "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
-            "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+            "cancelConfirm": "Annulation",
+            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
         },
         "invitation": {
             "greetUser": "Accueillir",
