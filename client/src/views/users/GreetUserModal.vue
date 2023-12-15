@@ -344,7 +344,7 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  if (pageStep.value === GreetUserStep.Summary) {
+  if (pageStep.value === GreetUserStep.Summary || pageStep.value === GreetUserStep.WaitForGuest) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
   const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), false);

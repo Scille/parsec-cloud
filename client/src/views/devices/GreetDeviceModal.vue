@@ -147,7 +147,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import { MsInformativeText, MsModalResult, MsWizardStepper } from '@/components/core';
+import { MsWizardStepper, MsInformativeText, MsModalResult, askQuestion, Answer } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
@@ -277,8 +277,16 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  await greeter.value.abort();
-  return modalController.dismiss(null, MsModalResult.Cancel);
+  if (pageStep.value === GreetDeviceStep.WaitForGuest || pageStep.value === GreetDeviceStep.Summary) {
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  const answer = await askQuestion(t('DevicesPage.greet.cancelConfirm'), t('DevicesPage.greet.cancelConfirmSubtitle'), false);
+
+  if (answer === Answer.Yes) {
+    await greeter.value.abort();
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  return false;
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
