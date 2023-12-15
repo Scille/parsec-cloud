@@ -16,7 +16,7 @@ if [ -z "$GH_EXT_ACTIONS_CACHE" ]; then
     echo "gh extension install actions/gh-actions-cache"
     exit 1
 fi
-GH_EXT_ACTIONS_CACHE_VERSION=$(echo "$GH_EXT_ACTIONS_CACHE" | cut -f4 -d ' ')
+GH_EXT_ACTIONS_CACHE_VERSION=$(echo "$GH_EXT_ACTIONS_CACHE" | tr '\t' ' ' | cut -f4 -d ' ')
 
 echo "Using actions/gh-actions-cache at $GH_EXT_ACTIONS_CACHE_VERSION"
 
@@ -40,7 +40,7 @@ else
         (
             # We change IFS to split each entries by newline
             IFS=$'\n';
-            for entry in "$ENTRIES"; do
+            for entry in $ENTRIES; do
                 remove_cache_entry "$entry" &
             done
             wait
