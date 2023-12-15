@@ -2,8 +2,9 @@
 
 #![cfg(target_os = "windows")]
 
+use std::{path::Path, process::Command, time::Duration};
+
 use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
-use std::{path::Path, process::Command};
 
 #[test]
 fn winfsp_tests() {
@@ -16,7 +17,9 @@ fn winfsp_tests() {
         fs.stop();
     });
 
-    while !Path::new("Z:").exists() {}
+    while !Path::new("Z:").exists() {
+        std::thread::sleep(Duration::from_millis(100))
+    }
 
     let exe =
         std::env::var("WINFSP_TEST_EXE").expect("specify the path of winfsp_tests in TEST_EXE");
