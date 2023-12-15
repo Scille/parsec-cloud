@@ -11,10 +11,12 @@
   .right-side {
     margin-left: auto;
     display: flex;
+    flex-shrink: 0;
   }
 
   & > div:not(.right-side) {
     display: flex;
     gap: 1rem;
+    flex-wrap: wrap;
   }
 }

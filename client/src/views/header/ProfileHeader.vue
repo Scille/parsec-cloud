@@ -131,7 +131,7 @@ async function openPopover(event: Event): Promise<void> {
     height: 0.625rem;
     width: 0.625rem;
     border-radius: 50%;
-    border: var(--parsec-color-light-secondary-background) solid 0.25rem;
+    border: var(--parsec-color-light-secondary-white) solid 0.25rem;
     background-color: var(--parsec-color-light-success-500);
   }
 }
