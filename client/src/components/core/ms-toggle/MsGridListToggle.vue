@@ -11,9 +11,6 @@
       @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
       <ion-icon :icon="grid" />
-      <span v-if="modelValue === DisplayState.Grid">
-        {{ $t('WorkspacesPage.viewDisplay.grid') }}
-      </span>
     </ion-button>
     <!-- list -->
     <ion-button
@@ -24,9 +21,6 @@
       @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
     >
       <ion-icon :icon="list" />
-      <span v-if="modelValue === DisplayState.List">
-        {{ $t('WorkspacesPage.viewDisplay.list') }}
-      </span>
     </ion-button>
   </div>
 </template>
@@ -54,33 +48,45 @@ defineExpose({
 .ms-grid-list-toggle {
   display: flex;
   align-items: center;
+  background: var(--parsec-color-light-secondary-white);
+  padding: 0;
+  gap: 0.25rem;
 }
 
 .button-view {
-  color: var(--parsec-color-light-primary-700);
-  padding: 0.25rem;
-  border-radius: 4px;
+  color: var(--parsec-color-light-secondary-light);
+  margin: 0;
+  border-radius: var(--parsec-radius-8);
+  border: 1px solid var(--parsec-color-light-secondary-background);
   height: auto;
-
-  span {
-    margin-left: 0.5rem;
-  }
 
   &:not(.button-disabled) {
     cursor: pointer;
     --background-hover: none;
+
+    &:hover {
+      color: var(--parsec-color-light-primary-700);
+      opacity: 0.5;
+    }
+  }
+
+  &::part(native) {
+    padding-inline-start: 0px;
+    padding-inline-end: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+
+  ion-icon {
+    font-size: 1.25rem;
+    padding: 0.25rem;
   }
 }
 
 .button-disabled {
-  background: var(--parsec-color-light-secondary-inversed-contrast);
+  border: 1px solid var(--parsec-color-light-primary-700);
+  background: var(--parsec-color-light-secondary-premiere);
+  color: var(--parsec-color-light-primary-700);
   opacity: 1;
-}
-
-ion-button::part(native) {
-  padding-inline-start: 0px;
-  padding-inline-end: 0px;
-  padding-top: 0px;
-  padding-bottom: 0px;
 }
 </style>

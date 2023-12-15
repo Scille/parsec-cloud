@@ -239,9 +239,9 @@ function getTitleForRoute(): string {
 
 <style scoped lang="scss">
 .topbar {
-  --background: var(--parsec-color-light-secondary-background);
+  --background: var(--parsec-color-light-secondary-white);
   display: flex;
-  padding: 2em;
+  padding: 1.5rem 2em 1rem;
 }
 
 .topbar-right {
