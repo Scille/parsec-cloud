@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-12-06 04:36+0100\n"
+"POT-Creation-Date: 2023-12-14 11:02+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.12.1\n"
+"Generated-By: Babel 2.13.1\n"
 
 msgid "TEXT_PARSEC_VERSION_version"
 msgstr "PARSEC version {version}"
@@ -2250,6 +2250,30 @@ msgstr "Cliquer pour élargir"
 msgid "TEXT_CLICK_TO_CLOSE"
 msgstr "Cliquer pour fermer"
 
+msgid "TEXT_REASSIGN_ROLE_SUMMARY_TITLE_user"
+msgstr "Les rôles suivants seront assignés à <b>{user}</b> :"
+
+msgid "TEXT_REASSIGN_ROLE_SUMMARY_DETAIL_role_workspace"
+msgstr "<b>{role}</b> sur <b>{workspace}</b>"
+
+msgid "TEXT_REASSIGN_WORKSPACE_ROLES_userFrom-userTo"
+msgstr "Assigner les rôles des espaces de travail de {userFrom} à {userTo}"
+
+msgid "TEXT_REASSIGN_ROLES_NO_ROLE_TO_ASSIGN_user"
+msgstr "Aucun nouveau rôle à assigner à l'utilisateur {user}."
+
+msgid "TEXT_REASSIGN_ROLE_SUCCESS_user"
+msgstr "Les nouveaux rôles ont été assignés à {user}."
+
+msgid "TEXT_REASSIGN_ROLE_ALL_FAILED"
+msgstr "Les nouveaux rôles n'ont pas pu être assignés."
+
+msgid "TEXT_REASSIGN_ROLE_SOME_FAILED"
+msgstr "Certains rôles n'ont pas pu être assignés."
+
+msgid "TEXT_REASSIGN_WORKSPACE_ROLES_user"
+msgstr "Assigner les rôles des espaces de travail de {user} à :"
+
 msgid "TEXT_BLOCK_REMANENCE_ENABLED"
 msgstr ""
 "Les données de cet espace de travail sont actuellement conservées "
@@ -2347,6 +2371,9 @@ msgstr "Voir les espaces de travail en commun"
 
 msgid "ACTION_USER_MENU_REVOKE"
 msgstr "Révoquer"
+
+msgid "ACTION_USER_MENU_ASSIGN_WORKSPACE_ROLES"
+msgstr "Assigner les rôles des espaces de travail à un autre utilisateur"
 
 msgid "TEXT_FILTER_USERS_ROLE_NONE"
 msgstr "Voir tous les profils"
@@ -2600,7 +2627,15 @@ msgstr "Rechiffrer plusieurs espaces de travail"
 
 msgid "TEXT_WORKSPACE_REENCRYPT_MULTIPLE_MESSAGE"
 msgstr ""
-"Cette opération va rechiffrer tous les espaces de travail qui en ont besoin. Il s'agit d'une procédure importante pour garantir la sécurité de vos données.<br /><br />\n\nCela peut prendre un peu de temps, en fonction de la taille de vos données, et la synchronisation sera désactivée pendant le rechiffrement.<br /><br />\n\nVoulez-vous continuer ?"
+"Cette opération va rechiffrer tous les espaces de travail qui en ont "
+"besoin. Il s'agit d'une procédure importante pour garantir la sécurité de"
+" vos données.<br /><br />\n"
+"\n"
+"Cela peut prendre un peu de temps, en fonction de la taille de vos "
+"données, et la synchronisation sera désactivée pendant le "
+"rechiffrement.<br /><br />\n"
+"\n"
+"Voulez-vous continuer ?"
 
 msgid "ACTION_WORKSPACE_REENCRYPTION_CONFIRM"
 msgstr "Rechiffrer"
@@ -3129,6 +3164,24 @@ msgstr "Confirmation du mot de passe"
 
 msgid "TEXT_PASSWORD_CHOICE_MISMATCH"
 msgstr "Ne correspond pas au mot de passe."
+
+msgid "ACTION_PREVIOUS"
+msgstr "Précédent"
+
+msgid "ACTION_ASSIGN_ROLES"
+msgstr "Assigner les rôles"
+
+msgid "TEXT_SEARCH_USER_PLACEHOLDER"
+msgstr "Rechercher un utilisateur par nom ou email"
+
+msgid "TEXT_NO_MATCHING_USER_FOUND"
+msgstr "Aucun utilisateur trouvé"
+
+msgid "TEXT_SEARCH_USER"
+msgstr "Sélectionnez un utilisateur pour voir les rôles qui seront assignés."
+
+msgid "ACTION_SELECT"
+msgstr "Sélectionner"
 
 msgid "TEXT_SETTINGS_BEHAVIOR_TITLE"
 msgstr "Comportement"

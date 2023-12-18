@@ -37,7 +37,6 @@ FORMS += forms/main_window.ui \
     forms/workspace_sharing_widget.ui \
     forms/file_history_widget.ui \
     forms/timestamped_workspace_widget.ui \
-    forms/empty_workspace_widget.ui \
     forms/loading_widget.ui \
     forms/password_strength_widget.ui \
     forms/file_history_button.ui \
@@ -82,7 +81,11 @@ FORMS += forms/main_window.ui \
     forms/enrollment_widget.ui \
     forms/enrollment_button.ui \
     forms/enrollment_query_widget.ui \
-    forms/enrollment_pending_button.ui
+    forms/enrollment_pending_button.ui \
+    forms/reassign_workspace_roles_widget.ui \
+    forms/search_user_widget.ui \
+    forms/reassign_workspace_roles_summary_widget.ui \
+    forms/select_user_widget.ui
 
 RESOURCES += rc/resources.qrc \
     forms/rc/resources.qrc

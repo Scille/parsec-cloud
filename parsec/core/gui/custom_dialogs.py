@@ -236,6 +236,11 @@ class GreyedDialog(Generic[_CurrentWidget], QDialog, Ui_GreyedDialog):
             # Mypy This is the correct way to remove a parent from a widget but PyQt miss that overload
             self.setParent(None)  # type: ignore[call-overload]
 
+    def update_title(self, title: str) -> None:
+        if not self.widget_title.isVisible():
+            self.widget_title.show()
+        self.label_title.setText(title)
+
 
 def generate_dialog_method(
     sub_cls: T_CLASS, sub_method: Callable[Concatenate[QWidget | None, P], R], default_return: R

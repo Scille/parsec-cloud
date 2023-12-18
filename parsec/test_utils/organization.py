@@ -105,19 +105,19 @@ async def initialize_test_organization(
                 config_dir=config_dir, device=bob_device, password=password
             )
 
-            # Invite Toto in organization
-            toto_device = await _register_new_user(
+            # Invite David in organization
+            david_device = await _register_new_user(
                 cmds=alice_cmds,
                 author=alice_device,
                 device_label=DeviceLabel("laptop"),
-                human_handle=HumanHandle(email="toto@example.com", label="Toto"),
+                human_handle=HumanHandle(email="david@example.com", label="David"),
                 profile=UserProfile.OUTSIDER,
             )
             await user_storage_non_speculative_init(
-                data_base_dir=config.data_base_dir, device=toto_device
+                data_base_dir=config.data_base_dir, device=david_device
             )
             save_device_with_password_in_config(
-                config_dir=config_dir, device=toto_device, password=password
+                config_dir=config_dir, device=david_device, password=password
             )
             # Create Alice workspace
             alice_ws_id = await alice_core.user_fs.workspace_create(EntryName("alice_workspace"))

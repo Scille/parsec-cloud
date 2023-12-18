@@ -65,3 +65,34 @@ Data copied from file explorer also appear in the Parsec client. In addition, th
     Parsec client can work while offline (however only data present locally
     are available), synchronization will occur automatically as soon as the
     connection with the server is established.
+
+Bulk assign workspace roles to users
+------------------------------------
+
+Manually assigning the same workspace roles to multiple users can be a bit tedious and error prone. Parsec provides a way to bulk assign the roles from one user to another.
+
+1. In the Users page, right click on the user you want to copy the roles from:
+
+.. image:: screens/bulk_assign_roles_start.png
+    :align: center
+    :alt: Start a bulk assignement
+
+2. Search the user you want to assign the roles to:
+
+.. image:: screens/bulk_assign_roles_select_user.png
+    :align: center
+    :alt: Select the user to assign roles to
+
+3. You're shown a summary of which roles are going to be assigned on each workspace. Click on `Assign roles` to complete the operation.
+
+.. image:: screens/bulk_assign_roles_summary.png
+    :align: center
+    :alt: Bulk assignment summary
+
+.. note::
+
+    1. You can only assign roles on a workspace where you have an Owner or Manager role
+    2. An Outsider user cannot have a role higher than Contributor
+    3. You cannot assign roles higher than your own. If you have the Manager role in a workspace and you're trying to assign the Owner role, it will be downgraded to Contributor).
+    4. If the user already has a higher role on the workspace than the one you're trying to assign, no change will be made to its role
+    5. The option is only available if you have workspaces in common with the source user and you have a role high enough
