@@ -303,10 +303,6 @@
             "lastUpdate": "Last updated:",
             "notShared": "Not shared"
         },
-        "viewDisplay": {
-            "grid": "grid",
-            "list": "list"
-        },
         "listDisplayTitles": {
             "name": "Name",
             "role": "Role",
