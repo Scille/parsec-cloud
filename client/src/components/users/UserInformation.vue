@@ -9,6 +9,7 @@
     :disabled="!$props.nameEnabled"
     @change="$emit('fieldUpdate')"
     @on-enter-keyup="$emit('onEnterKeyup', fullName)"
+    :validator="userNameValidator"
   />
   <ms-input
     :label="$t('CreateOrganization.email')"
@@ -18,6 +19,7 @@
     :disabled="!$props.emailEnabled"
     @change="$emit('fieldUpdate')"
     @on-enter-keyup="$emit('onEnterKeyup', email)"
+    :validator="emailValidator"
   />
   <ms-input
     :label="$t('CreateOrganization.deviceNameInputLabel')"
@@ -27,6 +29,7 @@
     :disabled="!$props.deviceEnabled"
     @change="$emit('fieldUpdate')"
     @on-enter-keyup="$emit('onEnterKeyup', deviceName)"
+    :validator="deviceNameValidator"
   />
 </template>
 
@@ -84,9 +87,9 @@ defineExpose({
 
 async function areFieldsCorrect(): Promise<boolean> {
   return (
-    (await emailValidator(email.value)) === Validity.Valid &&
-    (await userNameValidator(fullName.value)) === Validity.Valid &&
-    (await deviceNameValidator(deviceName.value)) === Validity.Valid
+    (await emailValidator(email.value)).validity === Validity.Valid &&
+    (await userNameValidator(fullName.value)).validity === Validity.Valid &&
+    (await deviceNameValidator(deviceName.value)).validity === Validity.Valid
   );
 }
 </script>

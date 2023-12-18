@@ -171,7 +171,7 @@ async function importButtonClick(): Promise<void> {
 }
 
 async function checkSecretKeyValidity(): Promise<void> {
-  isSecretKeyValid.value = (await secretKeyValidator(secretKey.value)) === Validity.Valid;
+  isSecretKeyValid.value = (await secretKeyValidator(secretKey.value)).validity === Validity.Valid;
 }
 
 async function goToPasswordChange(): Promise<void> {

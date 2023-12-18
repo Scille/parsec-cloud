@@ -108,6 +108,7 @@ async function openCreateOrganizationModal(): Promise<void> {
     component: CreateOrganizationModal,
     canDismiss: true,
     cssClass: 'create-organization-modal',
+    backdropDismiss: false,
   });
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
@@ -121,9 +122,9 @@ async function openCreateOrganizationModal(): Promise<void> {
 async function openJoinByLinkModal(link: string): Promise<void> {
   let component = null;
 
-  if ((await claimUserLinkValidator(link)) === Validity.Valid) {
+  if ((await claimUserLinkValidator(link)).validity === Validity.Valid) {
     component = UserJoinOrganizationModal;
-  } else if ((await claimDeviceLinkValidator(link)) === Validity.Valid) {
+  } else if ((await claimDeviceLinkValidator(link)).validity === Validity.Valid) {
     component = DeviceJoinOrganizationModal;
   }
 
@@ -134,6 +135,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   const modal = await modalController.create({
     component: component,
     canDismiss: true,
+    backdropDismiss: false,
     cssClass: 'join-organization-modal',
     componentProps: {
       invitationLink: link,

@@ -21,6 +21,7 @@
       :placeholder="placeholder || ''"
       v-model="text"
       @on-enter-keyup="confirm()"
+      :validator="validator"
     />
   </ms-modal>
 </template>
@@ -38,7 +39,7 @@ const props = defineProps<GetTextOptions>();
 
 const text = ref(props.defaultValue || '');
 const textIsValid = asyncComputed(async () => {
-  return text.value && (!props.validator || (props.validator && (await props.validator(text.value)) === Validity.Valid));
+  return text.value && (!props.validator || (props.validator && (await props.validator(text.value)).validity === Validity.Valid));
 });
 
 async function confirm(): Promise<boolean> {

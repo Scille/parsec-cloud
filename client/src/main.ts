@@ -5,10 +5,7 @@ import { createApp } from 'vue';
 import App from '@/App.vue';
 import router, { routerNavigateTo } from '@/router';
 
-import enUS from '@/locales/en-US.json';
-import frFR from '@/locales/fr-FR.json';
 import { IonicVue } from '@ionic/vue';
-import { createI18n, useI18n } from 'vue-i18n';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -40,6 +37,7 @@ import { isElectron, isHomeRoute } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { getI18n, initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
 async function setupApp(): Promise<void> {
@@ -48,59 +46,11 @@ async function setupApp(): Promise<void> {
 
   const config = await storageManager.retrieveConfig();
 
-  /* I18n variables */
-  // Type-define 'fr-FR' as the master schema for the resource
-  type MessageSchema = typeof frFR;
-  const supportedLocales: { [key: string]: string } = {
-    fr: 'fr-FR',
-    en: 'en-US',
-    'fr-FR': 'fr-FR',
-    'en-US': 'en-US',
-  };
-  const defaultLocale = 'fr-FR';
-  const i18n = createI18n<[MessageSchema], 'fr-FR' | 'en-US'>({
-    legacy: false,
-    globalInjection: true,
-    locale: config.locale || supportedLocales[window.navigator.language] || defaultLocale,
-    messages: {
-      'fr-FR': frFR,
-      'en-US': enUS,
-    },
-    datetimeFormats: {
-      'en-US': {
-        short: {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-          hour: 'numeric',
-          minute: 'numeric',
-        },
-      },
-      'fr-FR': {
-        short: {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        },
-        long: {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          weekday: 'long',
-          hour: 'numeric',
-          minute: 'numeric',
-        },
-      },
-    },
-  });
+  initTranslations(config.locale);
+  const i18n = getI18n();
 
   const { t } = i18n.global;
+
   const notificationManager = new NotificationManager(t);
   const importManager = new ImportManager();
 
@@ -113,11 +63,11 @@ async function setupApp(): Promise<void> {
 
   app.provide(FormattersKey, {
     timeSince: (date: DateTime | undefined, defaultValue = '', format: 'long' | 'short' = 'long', roundDays?: boolean): string => {
-      const { t, d } = useI18n();
+      const { t, d } = getI18n().global;
       return formatTimeSince(date, t, d, defaultValue, format, roundDays);
     },
     fileSize: (bytes: number): string => {
-      const { t } = useI18n();
+      const { t } = getI18n().global;
       return formatFileSize(bytes, t);
     },
   });
@@ -203,7 +153,7 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('open-link', async (link: string) => {
-      if ((await fileLinkValidator(link)) === Validity.Valid || (await claimLinkValidator(link)) === Validity.Valid) {
+      if ((await fileLinkValidator(link)).validity === Validity.Valid || (await claimLinkValidator(link)).validity === Validity.Valid) {
         if (isHomeRoute()) {
           routerNavigateTo('home', {}, { link: link });
         }

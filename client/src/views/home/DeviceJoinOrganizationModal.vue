@@ -90,6 +90,7 @@
             v-model="deviceName"
             name="deviceName"
             @on-enter-keyup="nextStep()"
+            :validator="deviceNameValidator"
           />
         </div>
         <!-- part 5 (finish the process)-->
@@ -281,7 +282,7 @@ const nextButtonIsVisible = computed(() => {
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
     const validDeviceName = await deviceNameValidator(deviceName.value);
-    return (await passwordPage.value.areFieldsCorrect()) && validDeviceName === Validity.Valid;
+    return (await passwordPage.value.areFieldsCorrect()) && validDeviceName.validity === Validity.Valid;
   }
   return true;
 });
