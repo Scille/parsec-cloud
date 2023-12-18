@@ -140,3 +140,21 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             "Bootstrapping organization in the server",
         ));
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn invite_device(tmp_path: TmpPath) {
+    let id = std::process::id();
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    set_env(&tmp_path_str, id);
+
+    let [alice, ..] = run_local_organization(&tmp_path, None, id).await.unwrap();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["invite-device", "--device", &alice.slughash()])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Creating device invitation\nInvitation URL:",
+        ));
+}
