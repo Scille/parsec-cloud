@@ -3,11 +3,21 @@
 import { needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
-import { ClientListUserDevicesError, ClientListUserDevicesErrorTag, DeviceInfo, OwnDeviceInfo, Result, UserID } from '@/parsec/types';
-import { libparsec } from '@/plugins/libparsec';
+import {
+  ClientListUserDevicesError,
+  ClientListUserDevicesErrorTag,
+  DeviceFileType,
+  DeviceInfo,
+  OwnDeviceInfo,
+  Result,
+  UserID,
+} from '@/parsec/types';
+import { AvailableDevice, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
+
+export type SecretKey = string;
 
 export interface RecoveryDeviceData {
   code: string;
@@ -19,6 +29,12 @@ export enum RecoveryDeviceErrorTag {
   Invalid = 'invalid',
 }
 
+export enum RecoveryImportErrorTag {
+  Internal = 'internal',
+  KeyError = 'keyError',
+  RecoveryFileError = 'recoveryFileError',
+}
+
 export interface RecoveryDeviceError {
   tag: RecoveryDeviceErrorTag.Internal;
 }
@@ -26,6 +42,20 @@ export interface RecoveryDeviceError {
 export interface WrongAuthenticationError {
   tag: RecoveryDeviceErrorTag.Invalid;
 }
+
+export interface RecoveryImportInternalError {
+  tag: RecoveryImportErrorTag.Internal;
+}
+
+export interface RecoveryImportFileError {
+  tag: RecoveryImportErrorTag.RecoveryFileError;
+}
+
+export interface RecoveryImportKeyError {
+  tag: RecoveryImportErrorTag.KeyError;
+}
+
+export type RecoveryImportError = RecoveryImportInternalError | RecoveryImportFileError | RecoveryImportKeyError;
 
 export async function exportRecoveryDevice(_password: string): Promise<Result<RecoveryDeviceData, WrongAuthenticationError>> {
   const handle = getParsecHandle();
@@ -51,6 +81,66 @@ export async function exportRecoveryDevice(_password: string): Promise<Result<Re
       },
     };
   }
+}
+
+export async function importRecoveryDevice(
+  deviceLabel: string,
+  file: File,
+  _passphrase: string,
+): Promise<Result<DeviceInfo, RecoveryImportError>> {
+  const handle = getParsecHandle();
+
+  // cspell:disable-next-line
+  if (_passphrase !== 'ABCD-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOP') {
+    return { ok: false, error: { tag: RecoveryImportErrorTag.KeyError } };
+  }
+  if (!file.name.endsWith('.psrk')) {
+    return { ok: false, error: { tag: RecoveryImportErrorTag.RecoveryFileError } };
+  }
+  if (handle !== null && !needsMocks()) {
+    return {
+      ok: true,
+      value: {
+        id: 'fake_id',
+        deviceLabel: deviceLabel,
+        createdOn: DateTime.now(),
+        createdBy: null,
+      },
+    };
+  } else {
+    return {
+      ok: true,
+      value: {
+        id: 'fake_id',
+        deviceLabel: deviceLabel,
+        createdOn: DateTime.now(),
+        createdBy: null,
+      },
+    };
+  }
+}
+
+export async function saveDevice(deviceInfo: DeviceInfo, password: string): Promise<Result<AvailableDevice, RecoveryImportError>> {
+  // const _saveStrategy: DeviceSaveStrategyPassword = { tag: DeviceSaveStrategyTag.Password, password: password };
+  return {
+    ok: true,
+    value: {
+      keyFilePath: 'dummy',
+      organizationId: 'dummy_org',
+      deviceId: deviceInfo.id,
+      humanHandle: {
+        email: 'dummy_email@email.dum',
+        label: 'dummy_label',
+      },
+      deviceLabel: deviceInfo.deviceLabel,
+      slug: 'dummy_slug',
+      ty: DeviceFileType.Password,
+    },
+  };
+}
+
+export async function deleteDevice(device: AvailableDevice): Promise<Result<boolean>> {
+  return { ok: true, value: true };
 }
 
 export async function hasRecoveryDevice(): Promise<boolean> {

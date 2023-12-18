@@ -684,6 +684,43 @@
         "invalid": "Invalid password.",
         "otherError": "An error has occurred."
     },
+    "ImportRecoveryDevicePage": {
+        "titles": {
+            "forgottenPassword": "Forgotten password",
+            "recoveryFile": "Recovery file",
+            "recoveryKey": "Secret key",
+            "setNewPassword": "Choose a new password",
+            "passwordChanged": "The password was successfully changed!"
+        },
+        "subtitles": {
+            "recoveryFilesMustExistWarning": "You must have created recovery files in order to reset your password.",
+            "passwordAdvice": "Your password must be secure and you must remember it. We advise you to create several devices if possible and to share your workspaces.",
+            "password": "Password",
+            "confirmPassword": "Confirm password",
+            "passwordModified": "You can now login with your new password.",
+            "passwordRules": "Make sure it corresponds to a strong level: avoid repetitions, overly common words and sequences.",
+            "noFileSelected": "No file selected"
+        },
+        "actions": {
+            "browse": "Browse",
+            "next": "Next",
+            "validatePassword": "Validate password",
+            "backToLogin": "Back to login",
+            "goBackToLogin": "Go back to login"
+        },
+        "errors": {
+            "fileErrorTitle": "Invalid recovery file",
+            "fileErrorMessage": "The recovery file is invalid.",
+            "keyErrorTitle": "Invalid secret key",
+            "keyErrorMessage": "The given secret key does not match the recovery file.",
+            "passwordErrorTitle": "Invalid password",
+            "passwordErrorMessage": "The passwords does not match or aren't strong enough.",
+            "saveDeviceErrorTitle": "Could not recover device",
+            "saveDeviceErrorMessage": "An error has occurred, the device recovery failed.",
+            "internalErrorTitle": "An error has occurred",
+            "internalErrorMessage": "An error has occurred"
+        }
+    },
     "ExportRecoveryDevicePage": {
         "titles": {
             "recoveryFile": "Recovery File",
