@@ -48,6 +48,7 @@
             id="org-name-input"
             v-model="orgName"
             @on-enter-keyup="nextStep()"
+            :validator="organizationValidator"
           />
 
           <ion-text class="subtitles-sm org-name-criteria">
@@ -303,7 +304,7 @@ const canGoForward = asyncComputed(async () => {
   if (pageStep.value === CreateOrganizationStep.FinishStep || pageStep.value === CreateOrganizationStep.SpinnerStep) {
     return true;
   } else if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
-    return (await organizationValidator(orgName.value)) === Validity.Valid;
+    return (await organizationValidator(orgName.value)).validity === Validity.Valid;
   } else if (
     pageStep.value === CreateOrganizationStep.PasswordStep ||
     pageStep.value === CreateOrganizationStep.ServerStep ||

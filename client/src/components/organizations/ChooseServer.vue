@@ -93,7 +93,7 @@ defineEmits<{
 async function areFieldsCorrect(): Promise<boolean> {
   return (
     mode.value === ServerMode.SaaS ||
-    (mode.value === ServerMode.Custom && (await backendAddrValidator(backendAddr.value)) === Validity.Valid)
+    (mode.value === ServerMode.Custom && (await backendAddrValidator(backendAddr.value)).validity === Validity.Valid)
   );
 }
 </script>

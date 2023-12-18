@@ -1118,5 +1118,32 @@
                 "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
             }
         }
+    },
+    "validators": {
+        "organizationName": {
+            "tooLong": "Le nom est trop long, la limite est de 32 symboles.",
+            "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles."
+        },
+        "claimLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "missingAction": "Le lien n'inclut pas d'action.",
+            "invalidAction": "Le lien contient une action invalide.",
+            "missingToken": "Le lien n'inclut pas de jeton.",
+            "invalidToken": "Le lien contient un jeton invalide."
+        },
+        "claimUserLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "missingAction": "Le lien n'inclut pas d'action.",
+            "invalidAction": "Le lien contient une action invalide.",
+            "missingToken": "Le lien n'inclut pas de jeton.",
+            "invalidToken": "Le lien contient un jeton invalide."
+        },
+        "claimDeviceLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "missingAction": "Le lien n'inclut pas d'action.",
+            "invalidAction": "Le lien contient une action invalide.",
+            "missingToken": "Le lien n'inclut pas de jeton.",
+            "invalidToken": "Le lien contient un jeton invalide."
+        }
     }
 }

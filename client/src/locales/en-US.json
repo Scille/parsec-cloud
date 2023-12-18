@@ -1118,5 +1118,32 @@
                 "message": "Please make sure you're connected to the internet."
             }
         }
+    },
+    "validators": {
+        "organizationName": {
+            "tooLong": "Name is too long, limit is 32 characters.",
+            "forbiddenCharacters": "Only letters, digits, underscores and hyphens. No spaces."
+        },
+        "claimLink": {
+            "invalidProtocol": "Link should start with 'parsec://'.",
+            "missingAction": "Link doesn't include an action.",
+            "invalidAction": "Link contains an invalid action.",
+            "missingToken": "Link doesn't include a token.",
+            "invalidToken": "Link contains an invalid token."
+        },
+        "claimUserLink": {
+            "invalidProtocol": "Link should start with 'parsec://'.",
+            "missingAction": "Link doesn't include an action.",
+            "invalidAction": "Link contains an invalid action.",
+            "missingToken": "Link doesn't include a token.",
+            "invalidToken": "Link contains an invalid token."
+        },
+        "claimDeviceLink": {
+            "invalidProtocol": "Link should start with 'parsec://'.",
+            "missingAction": "Link doesn't include an action.",
+            "invalidAction": "Link contains an invalid action.",
+            "missingToken": "Link doesn't include a token.",
+            "invalidToken": "Link contains an invalid token."
+        }
     }
 }
