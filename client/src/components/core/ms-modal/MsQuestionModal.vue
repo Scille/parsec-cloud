@@ -7,13 +7,14 @@
     :close-button="{ visible: false }"
     :cancel-button="{
       disabled: false,
-      label: $t('QuestionModal.no'),
+      label: noText || $t('QuestionModal.no'),
       onClick: onNo,
     }"
     :confirm-button="{
       disabled: false,
-      label: $t('QuestionModal.yes'),
+      label: yesText || $t('QuestionModal.yes'),
       onClick: onYes,
+      theme: yesIsDangerous ? MsReportTheme.Error : undefined,
     }"
     @on-enter-keyup="onYes"
   />
@@ -22,11 +23,15 @@
 <script setup lang="ts">
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { MsModalResult } from '@/components/core/ms-modal/types';
+import { MsReportTheme } from '@/components/core/ms-types';
 import { modalController } from '@ionic/vue';
 
 defineProps<{
   title: string;
-  subtitle?: string;
+  subtitle: string;
+  yesText?: string;
+  noText?: string;
+  yesIsDangerous?: boolean;
 }>();
 
 async function onYes(): Promise<boolean> {

@@ -366,7 +366,11 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const subtitle = entry.isFile()
       ? t('FoldersPage.deleteOneFileQuestionSubtitle', { name: entry.name })
       : t('FoldersPage.deleteOneFolderQuestionSubtitle', { name: entry.name });
-    const answer = await askQuestion(title, subtitle);
+    const answer = await askQuestion(title, subtitle, {
+      yesIsDangerous: true,
+      yesText: entry.isFile() ? t('FoldersPage.deleteOneFileYes') : t('FoldersPage.deleteOneFolderYes'),
+      noText: entry.isFile() ? t('FoldersPage.deleteOneFileNo') : t('FoldersPage.deleteOneFolderNo'),
+    });
 
     if (answer === Answer.No) {
       return;
@@ -389,6 +393,11 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       t('FoldersPage.deleteMultipleQuestionSubtitle', {
         count: entries.length,
       }),
+      {
+        yesIsDangerous: true,
+        yesText: t('FoldersPage.deleteMultipleYes', { count: entries.length }),
+        noText: t('FoldersPage.deleteMultipleNo', { count: entries.length }),
+      },
     );
     if (answer === Answer.No) {
       return;

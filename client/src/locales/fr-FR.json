@@ -11,7 +11,9 @@
     },
     "quit": {
         "title": "Quitter l'application",
-        "subtitle": "Êtes-vous sûr(e) de vouloir quitter l'application ?"
+        "subtitle": "Êtes-vous sûr(e) de vouloir quitter l'application ?",
+        "yes": "Quitter",
+        "no": "Cancel"
     },
     "openFile": {
         "failedTitle": "Impossible d'ouvrir l'élément",
@@ -56,8 +58,10 @@
             "myDevices": "Mes appareils",
             "myContactDetails": "Mes coordonnées",
             "logoutConfirmTitle": "Déconnexion",
-            "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
-            "logoutFailed": "Impossible de se déconnecter."
+            "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
+            "logoutFailed": "Impossible de se déconnecter.",
+            "logoutYes": "Se déconnecter",
+            "logoutNo": "Rester connecté"
         },
         "organizationList": {
             "title": "Vos organisations",
@@ -173,7 +177,9 @@
             "generic": "Impossible de créer l'organisation (raison: {reason})."
         },
         "cancelConfirm": "Annulation",
-        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+        "cancelYes": "Annuler le processus",
+        "cancelNo": "Continuer"
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
@@ -395,6 +401,12 @@
         "deleteOneFolderQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer le dossier `{name}` ?",
         "deleteMultipleQuestionTitle": "Suppression de plusieurs éléments",
         "deleteMultipleQuestionSubtitle": "Êtes-vous sûr(e) de vouloir supprimer ces {count} éléments ?",
+        "deleteOneFileYes": "Supprimer le fichier",
+        "deleteOneFileNo": "Conserver le fichier",
+        "deleteOneFolderYes": "Supprimer le dossier",
+        "deleteOneFolderNo": "Conserver le dossier",
+        "deleteMultipleYes": "Supprimer {count} éléments",
+        "deleteMultipleNo": "Conserver les éléments",
         "copySelectFolderTitle": "Copier un élément | Copier {count} elements",
         "copySelectFolderSubtitle": "Emplacement actuel : {location}",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
@@ -553,7 +565,11 @@
             },
             "success": "L'appareil {label} a été créé !",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
-            "copyLink": "Copier le lien"
+            "copyLink": "Copier le lien",
+            "cancelConfirm": "Annulation de l'accueil",
+            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus d'accueil ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+            "cancelYes": "Annuler le process",
+            "cancelNo": "Continuer"
         }
     },
     "Password": {
@@ -662,7 +678,9 @@
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
         },
         "cancelConfirm": "Annulation",
-        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+        "cancelYes": "Annuler le process",
+        "cancelNo": "Continuer"
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -742,7 +760,9 @@
             },
             "success": "L'utilisateur {user} a rejoint l'organisation !",
             "cancelConfirm": "Annulation",
-            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut."
+            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus d'accueil ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+            "cancelYes": "Annuler le process",
+            "cancelNo": "Continuer"
         },
         "invitation": {
             "greetUser": "Accueillir",
@@ -794,7 +814,9 @@
             "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
             "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation ! | {count} utilisateurs ont été révoqués et ne peuvent plus accéder à l'organisation !",
-            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
+            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués.",
+            "revokeYes": "Révoquer",
+            "revokeNo": "Annuler"
         }
     },
     "AboutPage": {
@@ -847,6 +869,8 @@
         "deviceName": "Nom de l'appareil",
         "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
         "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+        "cancelYes": "Annuler le process",
+        "cancelNo": "Continuer",
         "successMessage": "Votre nouvel appareil a été créé !",
         "errors": {
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet.",

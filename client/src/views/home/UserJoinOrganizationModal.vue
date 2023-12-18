@@ -335,7 +335,12 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(t('JoinOrganization.cancelConfirm'), t('JoinOrganization.cancelConfirmSubtitle'), false);
+  const answer = await askQuestion(t('JoinOrganization.cancelConfirm'), t('JoinOrganization.cancelConfirmSubtitle'), {
+    keepMainModalHiddenOnYes: true,
+    yesText: t('JoinOrganization.cancelYes'),
+    noText: t('JoinOrganization.cancelNo'),
+    yesIsDangerous: true,
+  });
 
   if (answer === Answer.Yes) {
     await claimer.value.abort();

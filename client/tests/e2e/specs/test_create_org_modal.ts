@@ -139,8 +139,12 @@ describe('Create a new organization', () => {
     cy.get('.create-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.create-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
-    cy.get('.question-modal').find('#cancel-button').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the organization creation');
+    cy.get('.question-modal')
+      .find('.ms-modal-header__text')
+      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel the process').click();
+    cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 
     // Main modal does not dismiss.

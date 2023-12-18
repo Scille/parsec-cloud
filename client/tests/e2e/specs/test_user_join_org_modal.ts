@@ -150,8 +150,12 @@ describe('User join an organization', () => {
     cy.get('.join-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.join-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
-    cy.get('.question-modal').find('#cancel-button').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the joining process');
+    cy.get('.question-modal')
+      .find('.ms-modal-header__text')
+      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel the process');
+    cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 
     // Can't get the modal to dismiss

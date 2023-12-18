@@ -130,11 +130,16 @@ describe('Greet user into an organization', () => {
   it('Close with X button', () => {
     cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
     cy.get('.greet-organization-modal').should('exist');
+    cy.get('.greet-organization-modal').find('#next-button').click();
     cy.get('.greet-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.greet-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Are you sure you want to cancel the process?');
-    cy.get('.question-modal').find('#cancel-button').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the onboarding');
+    cy.get('.question-modal')
+      .find('.ms-modal-header__text')
+      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel the process');
+    cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 
     // Can't get the modal to dismiss
