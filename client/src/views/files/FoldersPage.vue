@@ -166,6 +166,27 @@
 </template>
 
 <script setup lang="ts">
+import { writeTextToClipboard } from '@/common/clipboard';
+import { entryNameValidator } from '@/common/validators';
+import {
+  Answer,
+  DisplayState,
+  MsActionBar,
+  MsActionBarButton,
+  MsGridListToggle,
+  askQuestion,
+  getTextInputFromUser,
+  selectFolder,
+} from '@/components/core';
+import FileCard from '@/components/files/FileCard.vue';
+import FileListItem from '@/components/files/FileListItem.vue';
+import * as parsec from '@/parsec';
+import { routerNavigateTo } from '@/router';
+import { ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
+import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
+import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import {
   IonCheckbox,
   IonContent,
@@ -179,30 +200,9 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
-import { useRoute } from 'vue-router';
-import { computed, ref, Ref, inject, watch, onUnmounted, onMounted } from 'vue';
-import FileListItem from '@/components/files/FileListItem.vue';
-import FileCard from '@/components/files/FileCard.vue';
-import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
-import FileUploadModal from '@/views/files/FileUploadModal.vue';
-import { routerNavigateTo } from '@/router';
-import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
-import * as parsec from '@/parsec';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import {
-  MsActionBar,
-  MsGridListToggle,
-  MsActionBarButton,
-  DisplayState,
-  getTextInputFromUser,
-  Answer,
-  askQuestion,
-  selectFolder,
-} from '@/components/core';
-import { entryNameValidator } from '@/common/validators';
-import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
-import { writeTextToClipboard } from '@/common/clipboard';
-import { ImportManager, ImportManagerKey, StateData, ImportState } from '@/services/importManager';
+import { useRoute } from 'vue-router';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;

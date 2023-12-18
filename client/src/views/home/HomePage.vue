@@ -44,24 +44,23 @@ import { NotificationKey } from '@/common/injectionKeys';
 
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
+import HomePageHeader from '@/components/header/HomePageHeader.vue';
+import HomePageSidebar from '@/components/header/HomePageSidebar.vue';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import SlideHorizontal from '@/transitions/SlideHorizontal.vue';
+import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AboutModal from '@/views/about/AboutModal.vue';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
+import LoginPage from '@/views/home/LoginPage.vue';
+import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { inject, onUnmounted, ref, toRaw, watch, onMounted, Ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { StorageManager, StoredDeviceData, StorageManagerKey } from '@/services/storageManager';
-import LoginPage from '@/views/home/LoginPage.vue';
-import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
-import HomePageHeader from '@/components/header/HomePageHeader.vue';
-import HomePageSidebar from '@/components/header/HomePageSidebar.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',

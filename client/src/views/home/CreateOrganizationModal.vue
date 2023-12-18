@@ -176,7 +176,7 @@ import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText,
 
 import { asyncComputed } from '@/common/asyncComputed';
 import { Validity, organizationValidator } from '@/common/validators';
-import { MsInformativeText, MsChoosePasswordInput, MsSpinner, MsInput, MsModalResult, askQuestion, Answer } from '@/components/core';
+import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { AvailableDevice, BootstrapOrganizationErrorTag, createOrganization as parsecCreateOrganization } from '@/parsec';

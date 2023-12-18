@@ -10,8 +10,8 @@
 </template>
 
 <script setup lang="ts">
-import AboutView from '@/views/about/AboutView.vue';
 import { MsModal } from '@/components/core';
+import AboutView from '@/views/about/AboutView.vue';
 </script>
 
 <style lang="scss" scoped></style>

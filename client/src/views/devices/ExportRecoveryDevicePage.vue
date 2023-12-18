@@ -150,15 +150,15 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonButton, IonIcon, IonText } from '@ionic/vue';
-import { ref, inject, onMounted } from 'vue';
-import { getPasswordFromUser, MsInformativeText } from '@/components/core';
-import { useI18n } from 'vue-i18n';
-import { exportRecoveryDevice, RecoveryDeviceErrorTag } from '@/parsec';
+import { MsInformativeText, getPasswordFromUser } from '@/components/core';
+import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
-import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
 import { routerNavigateTo } from '@/router';
-import { home, checkmarkCircle, document, key, download, reload } from 'ionicons/icons';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
+import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
+import { inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 

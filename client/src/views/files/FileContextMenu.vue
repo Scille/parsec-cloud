@@ -133,9 +133,9 @@ export enum FileAction {
 </script>
 
 <script setup lang="ts">
-import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
-import { copy, arrowRedo, pencil, link, informationCircle, download, time, open, trashBin } from 'ionicons/icons';
 import { isDesktop } from '@/parsec';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { arrowRedo, copy, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
 
 async function onClick(action: FileAction): Promise<boolean> {
   return await popoverController.dismiss({ action: action });

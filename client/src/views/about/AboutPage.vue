@@ -13,9 +13,9 @@
 </template>
 
 <script setup lang="ts">
+import AboutView from '@/views/about/AboutView.vue';
 import { IonContent, IonPage } from '@ionic/vue';
 import { useI18n } from 'vue-i18n';
-import AboutView from '@/views/about/AboutView.vue';
 
 useI18n();
 </script>

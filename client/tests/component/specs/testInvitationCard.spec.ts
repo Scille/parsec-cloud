@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import InvitationCard from '@/components/users/InvitationCard.vue';
-import { mount } from '@vue/test-utils';
-import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { InvitationStatus, UserInvitation } from '@/parsec';
 import { InviteListItemTag } from '@/plugins/libparsec';
+import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { mount } from '@vue/test-utils';
+import { DateTime } from 'luxon';
 
 mockI18n();
 

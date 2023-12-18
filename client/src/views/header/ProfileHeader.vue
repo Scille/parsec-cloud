@@ -27,17 +27,16 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonIcon, IonAvatar, IonText, popoverController } from '@ionic/vue';
-import { chevronDown, personCircle } from 'ionicons/icons';
-import { defineProps, ref, inject } from 'vue';
-import ProfileHeaderPopover from '@/views/header/ProfileHeaderPopover.vue';
-import { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
-import { useRouter } from 'vue-router';
-import { routerNavigateTo } from '@/router';
-import { useI18n } from 'vue-i18n';
+import { Answer, askQuestion } from '@/components/core';
 import { logout as parsecLogout } from '@/parsec';
-import { askQuestion, Answer } from '@/components/core';
-import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
+import { routerNavigateTo } from '@/router';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
+import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
+import { chevronDown, personCircle } from 'ionicons/icons';
+import { defineProps, inject, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 
 const isPopoverOpen = ref(false);
 const router = useRouter();

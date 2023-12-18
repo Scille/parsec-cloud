@@ -2,10 +2,10 @@
 
 import { libparsec } from '@/plugins/libparsec';
 
-import { Result, UserInfo, UserProfile, ClientListUsersError, UserID, DeviceInfo, ClientListUserDevicesError } from '@/parsec/types';
-import { getParsecHandle } from '@/parsec/routing';
-import { DateTime } from 'luxon';
 import { needsMocks } from '@/parsec/environment';
+import { getParsecHandle } from '@/parsec/routing';
+import { ClientListUsersError, Result, UserID, UserInfo, UserProfile } from '@/parsec/types';
+import { DateTime } from 'luxon';
 
 export async function listUsers(skipRevoked = true): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
   const handle = getParsecHandle();

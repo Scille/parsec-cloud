@@ -31,9 +31,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { Validity, deviceNameValidator, emailValidator, userNameValidator } from '@/common/validators';
 import { MsInput } from '@/components/core';
-import { Validity, userNameValidator, deviceNameValidator, emailValidator } from '@/common/validators';
+import { ref } from 'vue';
 
 function getDefaultDeviceName(): string {
   return 'my_device';

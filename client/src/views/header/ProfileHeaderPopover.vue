@@ -86,10 +86,10 @@ export enum ProfilePopoverOption {
 </script>
 
 <script setup lang="ts">
-import { IonList, IonItem, IonIcon, IonLabel, IonText } from '@ionic/vue';
-import { phonePortrait, cog, logOut, personCircle } from 'ionicons/icons';
-import { popoverController } from '@ionic/core';
 import { getAppVersion } from '@/common/mocks';
+import { popoverController } from '@ionic/core';
+import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
+import { cog, logOut, personCircle, phonePortrait } from 'ionicons/icons';
 
 defineProps<{
   name: string;

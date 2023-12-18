@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { IValidator } from '@/common/validators';
-import { FsPath } from '@/parsec';
 import { MsReportTheme } from '@/components/core/ms-types';
+import { FsPath } from '@/parsec';
 
 export enum Answer {
   No = 0,

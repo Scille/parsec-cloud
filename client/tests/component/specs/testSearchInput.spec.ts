@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { mount, VueWrapper } from '@vue/test-utils';
-import { IonInput } from '@ionic/vue';
 import MsSearchInput from '@/components/core/ms-input/MsSearchInput.vue';
+import { IonInput } from '@ionic/vue';
+import { mount, VueWrapper } from '@vue/test-utils';
 
 describe('Search Input', () => {
   let wrapper: VueWrapper;

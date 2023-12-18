@@ -57,14 +57,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonLabel, IonButtons, IonButton, IonItem, IonText } from '@ionic/vue';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
-import { defineProps, inject } from 'vue';
-import { UserInvitation } from '@/parsec';
-import { Notification, NotificationManager, NotificationKey, NotificationLevel } from '@/services/notificationManager';
-import { useI18n } from 'vue-i18n';
-import { translateInvitationStatus } from '@/common/translations';
 import { writeTextToClipboard } from '@/common/clipboard';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { translateInvitationStatus } from '@/common/translations';
+import { UserInvitation } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
+import { defineProps, inject } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
   invitation: UserInvitation;

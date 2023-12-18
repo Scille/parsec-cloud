@@ -19,8 +19,8 @@
 </template>
 
 <script setup lang="ts">
+import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
 import { IonSpinner, IonText } from '@ionic/vue';
-import { MsImage, LogoIconGradient } from '@/components/core/ms-image';
 
 defineProps<{
   title: string;

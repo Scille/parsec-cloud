@@ -18,12 +18,12 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, Ref, ref } from 'vue';
-import { IonButton, IonIcon, popoverController } from '@ionic/vue';
-import { swapVertical } from 'ionicons/icons';
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { MsSorterChangeEvent, MsSorterLabels } from '@/components/core/ms-sorter/types';
 import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { IonButton, IonIcon, popoverController } from '@ionic/vue';
+import { swapVertical } from 'ionicons/icons';
+import { Ref, defineEmits, defineProps, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption: any;

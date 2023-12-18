@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { formatTimeSince } from '@/common/date';
-import { it, vi } from 'vitest';
 import { DateTime } from 'luxon';
+import { it, vi } from 'vitest';
 
 function mockT(translationString: string, args?: object, count?: number): string {
   return `${translationString} ${JSON.stringify(args)} ${count}`;

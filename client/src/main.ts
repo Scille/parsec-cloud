@@ -2,14 +2,13 @@
 
 import { createApp } from 'vue';
 
-// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
-import App from './App.vue';
+import App from '@/App.vue';
 import router, { routerNavigateTo } from '@/router';
 
+import enUS from '@/locales/en-US.json';
+import frFR from '@/locales/fr-FR.json';
 import { IonicVue } from '@ionic/vue';
 import { createI18n, useI18n } from 'vue-i18n';
-import frFR from '@/locales/fr-FR.json';
-import enUS from '@/locales/en-US.json';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -20,28 +19,28 @@ import '@ionic/vue/css/structure.css';
 import '@ionic/vue/css/typography.css';
 
 /* Optional CSS utils that can be commented out */
-import '@ionic/vue/css/padding.css';
+import '@ionic/vue/css/display.css';
+import '@ionic/vue/css/flex-utils.css';
 import '@ionic/vue/css/float-elements.css';
+import '@ionic/vue/css/padding.css';
 import '@ionic/vue/css/text-alignment.css';
 import '@ionic/vue/css/text-transformation.css';
-import '@ionic/vue/css/flex-utils.css';
-import '@ionic/vue/css/display.css';
 
 import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/filesize';
+import { FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
 import { Config, StorageManager } from '@/services/storageManager';
-import { DateTime } from 'luxon';
-import { FormattersKey, StorageManagerKey, NotificationKey } from '@/common/injectionKeys';
 import { isPlatform } from '@ionic/vue';
+import { DateTime } from 'luxon';
 
 /* Theme variables */
-import '@/theme/global.scss';
-import { Platform, libparsec } from '@/plugins/libparsec';
-import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
+import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
 import { isElectron, isHomeRoute } from '@/parsec';
-import { fileLinkValidator, claimLinkValidator, Validity } from '@/common/validators';
+import { Platform, libparsec } from '@/plugins/libparsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
+import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import '@/theme/global.scss';
 
 async function setupApp(): Promise<void> {
   const storageManager = new StorageManager();

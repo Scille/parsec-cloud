@@ -37,10 +37,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonIcon } from '@ionic/vue';
-import { informationCircle } from 'ionicons/icons';
 import { getAppVersion } from '@/common/mocks';
-import { MsImage, LogoRowWhite } from '@/components/core';
+import { LogoRowWhite, MsImage } from '@/components/core';
+import { IonIcon, IonText } from '@ionic/vue';
+import { informationCircle } from 'ionicons/icons';
 
 defineEmits<{
   (e: 'aboutClick'): void;

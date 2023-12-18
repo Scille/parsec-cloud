@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ComposerTranslation } from 'vue-i18n';
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
+import { ComposerTranslation } from 'vue-i18n';
 
 export enum PasswordStrength {
   None = 0,

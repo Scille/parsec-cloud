@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import router from '@/router';
 import { Handle, WorkspaceHandle } from '@/parsec';
+import router from '@/router';
 
 export function getParsecHandle(): Handle | null {
   const currentRoute = router.currentRoute.value;

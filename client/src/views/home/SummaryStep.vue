@@ -98,8 +98,8 @@ export enum OrgInfo {
 </script>
 
 <script setup lang="ts">
-import { IonList, IonItem, IonLabel, IonText, IonButton } from '@ionic/vue';
 import { ServerMode } from '@/components/organizations/ChooseServer.vue';
+import { IonButton, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { useI18n } from 'vue-i18n';
 
 useI18n();

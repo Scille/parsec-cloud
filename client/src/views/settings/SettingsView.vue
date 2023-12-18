@@ -117,16 +117,16 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonList, IonRadioGroup, IonRadio, IonText, IonIcon, IonToggle, isPlatform } from '@ionic/vue';
+import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 
-import { cog, options } from 'ionicons/icons';
-import { ref, inject, toRaw, watch, onMounted, onUnmounted } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { toggleDarkMode } from '@/states/darkMode';
-import { Config, StorageManager } from '@/services/storageManager';
 import { StorageManagerKey } from '@/common/injectionKeys';
-import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { MsDropdown, MsOptions } from '@/components/core';
+import SettingsOption from '@/components/settings/SettingsOption.vue';
+import { Config, StorageManager } from '@/services/storageManager';
+import { toggleDarkMode } from '@/states/darkMode';
+import { cog, options } from 'ionicons/icons';
+import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const { t, locale } = useI18n();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

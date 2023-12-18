@@ -67,22 +67,22 @@
 </template>
 
 <script setup lang="ts">
+import { asyncComputed } from '@/common/asyncComputed';
+import { MsChoosePasswordInput, MsPasswordInput } from '@/components/core';
+import TagProfile from '@/components/users/TagProfile.vue';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
-  getClientInfo,
-  ClientInfo,
   AvailableDevice,
+  ChangeAuthErrorTag,
+  ClientInfo,
+  getClientInfo,
   getCurrentAvailableDevice,
   changePassword as parsecChangePassword,
-  ChangeAuthErrorTag,
 } from '@/parsec';
-import { IonPage, IonContent, IonText, IonChip, IonButton } from '@ionic/vue';
-import TagProfile from '@/components/users/TagProfile.vue';
-import { MsChoosePasswordInput, MsPasswordInput } from '@/components/core';
-import { Ref, ref, onMounted, inject } from 'vue';
-import { asyncComputed } from '@/common/asyncComputed';
-import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { IonButton, IonChip, IonContent, IonPage, IonText } from '@ionic/vue';
+import { Ref, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice: Ref<AvailableDevice | null> = ref(null);

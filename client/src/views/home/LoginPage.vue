@@ -49,12 +49,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonCard, IonCardContent, IonIcon, IonGrid, IonText } from '@ionic/vue';
-import { logIn } from 'ionicons/icons';
-import { AvailableDevice } from '@/parsec';
-import { ref } from 'vue';
-import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { MsPasswordInput } from '@/components/core';
+import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
+import { AvailableDevice } from '@/parsec';
+import { IonButton, IonCard, IonCardContent, IonGrid, IonIcon, IonText } from '@ionic/vue';
+import { logIn } from 'ionicons/icons';
+import { ref } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;

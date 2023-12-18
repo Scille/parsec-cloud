@@ -27,12 +27,12 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, Ref, ref } from 'vue';
-import { IonText, IonButton, IonIcon, popoverController } from '@ionic/vue';
-import { caretDown, chevronDown } from 'ionicons/icons';
 import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
-import { MsOption, MsOptions, MsAppearance } from '@/components/core/ms-types';
 import { MsDropdownChangeEvent } from '@/components/core/ms-dropdown/types';
+import { MsAppearance, MsOption, MsOptions } from '@/components/core/ms-types';
+import { IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
+import { caretDown, chevronDown } from 'ionicons/icons';
+import { Ref, defineEmits, defineProps, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption?: any;

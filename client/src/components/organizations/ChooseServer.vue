@@ -71,10 +71,10 @@ export enum ServerMode {
 </script>
 
 <script setup lang="ts">
+import { Validity, backendAddrValidator } from '@/common/validators';
+import { MsInput } from '@/components/core';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { ref } from 'vue';
-import { MsInput } from '@/components/core';
-import { backendAddrValidator, Validity } from '@/common/validators';
 
 const backendAddr = ref('');
 const mode = ref(ServerMode.SaaS);

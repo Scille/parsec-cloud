@@ -32,10 +32,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonIcon } from '@ionic/vue';
-import { defineEmits } from 'vue';
-import { grid, list } from 'ionicons/icons';
 import { DisplayState } from '@/components/core/ms-toggle/types';
+import { IonButton, IonIcon } from '@ionic/vue';
+import { grid, list } from 'ionicons/icons';
+import { defineEmits } from 'vue';
 
 defineProps<{
   modelValue: DisplayState;

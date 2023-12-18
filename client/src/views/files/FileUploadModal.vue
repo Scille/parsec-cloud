@@ -14,13 +14,12 @@
 </template>
 
 <script setup lang="ts">
-import FileImport from '@/components/files/FileImport.vue';
-import FileDropZone from '@/components/files/FileDropZone.vue';
 import { MsModal } from '@/components/core';
-import { Path } from '@/parsec';
-import { createFolder, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { inject } from 'vue';
+import FileDropZone from '@/components/files/FileDropZone.vue';
+import FileImport from '@/components/files/FileImport.vue';
+import { createFolder, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
+import { inject } from 'vue';
 
 const importManager = inject(ImportManagerKey) as ImportManager;
 

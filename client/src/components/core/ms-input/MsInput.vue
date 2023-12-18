@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonItem, IonInput } from '@ionic/vue';
+import { IonInput, IonItem } from '@ionic/vue';
 
 defineProps<{
   label?: string;

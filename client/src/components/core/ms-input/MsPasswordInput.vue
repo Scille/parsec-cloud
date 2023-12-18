@@ -37,9 +37,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { IonGrid, IonCol, IonRow, IonItem, IonInput, IonIcon, IonText } from '@ionic/vue';
+import { IonCol, IonGrid, IonIcon, IonInput, IonItem, IonRow, IonText } from '@ionic/vue';
 import { eye, eyeOff } from 'ionicons/icons';
+import { ref } from 'vue';
 
 const props = defineProps<{
   label: string;

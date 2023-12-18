@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { modalController } from '@ionic/vue';
-import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
-import MsPasswordInputModal from '@/components/core/ms-modal/MsPasswordInputModal.vue';
-import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 import FolderSelectionModal from '@/components/core/ms-modal/FolderSelectionModal.vue';
+import MsPasswordInputModal from '@/components/core/ms-modal/MsPasswordInputModal.vue';
+import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
+import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
+import { Answer, FolderSelectionOptions, GetPasswordOptions, GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { FsPath } from '@/parsec';
-import { FolderSelectionOptions, GetPasswordOptions, GetTextOptions, Answer, MsModalResult } from '@/components/core/ms-modal/types';
+import { modalController } from '@ionic/vue';
 
 export async function askQuestion(title: string, subtitle?: string, redisplayMainModalOnYes = true): Promise<Answer> {
   const top = await modalController.getTop();

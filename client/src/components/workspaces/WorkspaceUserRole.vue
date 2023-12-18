@@ -20,8 +20,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
 import { translateWorkspaceRole } from '@/common/translations';
+import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, UserTuple, WorkspaceRole, canChangeRole } from '@/parsec';
 import { computed, defineEmits, defineProps } from 'vue';

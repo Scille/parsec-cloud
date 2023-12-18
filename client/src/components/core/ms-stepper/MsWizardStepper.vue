@@ -21,10 +21,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonText } from '@ionic/vue';
 import MsWizardStepperStep from '@/components/core/ms-stepper/MsWizardStepperStep.vue';
-import { defineProps } from 'vue';
 import { MsStepStatus } from '@/components/core/ms-stepper/types';
+import { IonText } from '@ionic/vue';
+import { defineProps } from 'vue';
 
 defineProps<{
   titles: string[];

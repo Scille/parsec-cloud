@@ -13,4 +13,5 @@
             },
         },
     ],
+    plugins: ['prettier-plugin-organize-imports'],
 }

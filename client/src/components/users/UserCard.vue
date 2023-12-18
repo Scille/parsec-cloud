@@ -44,13 +44,12 @@
 </template>
 
 <script setup lang="ts">
-import { ellipsisHorizontal } from 'ionicons/icons';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { IonAvatar, IonIcon, IonText, IonTitle, IonCheckbox } from '@ionic/vue';
-import { defineProps } from 'vue';
 import { UserInfo } from '@/parsec';
-import { defineEmits, defineExpose, ref } from 'vue';
+import { IonAvatar, IonCheckbox, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { ellipsisHorizontal } from 'ionicons/icons';
+import { defineEmits, defineExpose, defineProps, ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);

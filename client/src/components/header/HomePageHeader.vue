@@ -48,11 +48,11 @@
 </template>
 
 <script setup lang="ts">
-import { popoverController, IonButtons, IonButton, IonIcon, IonCardTitle, IonCardContent } from '@ionic/vue';
-import { cog, chevronBack } from 'ionicons/icons';
-import { ref } from 'vue';
-import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
 import { MsModalResult } from '@/components/core';
+import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
+import { IonButton, IonButtons, IonCardContent, IonCardTitle, IonIcon, popoverController } from '@ionic/vue';
+import { chevronBack, cog } from 'ionicons/icons';
+import { ref } from 'vue';
 
 defineProps<{
   showBackButton: boolean;

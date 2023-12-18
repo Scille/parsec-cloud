@@ -104,30 +104,29 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonHeader,
-  IonToolbar,
-  IonButton,
-  IonIcon,
-  IonMenuButton,
-  IonButtons,
-  isPlatform,
-  IonContent,
-  IonRouterOutlet,
-  IonPage,
-  IonLabel,
-} from '@ionic/vue';
-import { menu, search, home, notifications } from 'ionicons/icons';
-import { useI18n } from 'vue-i18n';
-import { onMounted, Ref, ref, watch, onUnmounted } from 'vue';
-import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
-import ProfileHeader from '@/views/header/ProfileHeader.vue';
-import useSidebarMenu from '@/services/sidebarMenu';
-import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
-import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
-import { getClientInfo, ClientInfo, WorkspaceName, getWorkspaceName, WorkspaceID, hasHistory, isDocumentRoute, Path } from '@/parsec';
+import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { ClientInfo, Path, WorkspaceID, WorkspaceName, getClientInfo, getWorkspaceName, hasHistory, isDocumentRoute } from '@/parsec';
 import { routerNavigateTo } from '@/router';
+import useSidebarMenu from '@/services/sidebarMenu';
+import ProfileHeader from '@/views/header/ProfileHeader.vue';
+import {
+  IonButton,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonIcon,
+  IonLabel,
+  IonMenuButton,
+  IonPage,
+  IonRouterOutlet,
+  IonToolbar,
+  isPlatform,
+} from '@ionic/vue';
+import { home, menu, notifications, search } from 'ionicons/icons';
+import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');

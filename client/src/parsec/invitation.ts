@@ -1,21 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec, InviteListItem, InviteListItemTag } from '@/plugins/libparsec';
-import { getParsecHandle } from '@/parsec/routing';
-import { DateTime } from 'luxon';
 import { needsMocks } from '@/parsec/environment';
+import { getParsecHandle } from '@/parsec/routing';
 import {
-  Result,
+  DeleteInvitationError,
+  InvitationEmailSentStatus,
+  InvitationStatus,
+  InvitationToken,
+  ListInvitationsError,
+  NewDeviceInvitationError,
   NewInvitationInfo,
   NewUserInvitationError,
-  InvitationEmailSentStatus,
-  InvitationToken,
-  NewDeviceInvitationError,
+  Result,
   UserInvitation,
-  ListInvitationsError,
-  InvitationStatus,
-  DeleteInvitationError,
 } from '@/parsec/types';
+import { InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
+import { DateTime } from 'luxon';
 
 export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, NewUserInvitationError>> {
   const handle = getParsecHandle();

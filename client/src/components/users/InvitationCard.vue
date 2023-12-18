@@ -29,11 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonLabel, IonButtons, IonButton, IonIcon, IonText } from '@ionic/vue';
+import { translateInvitationStatus } from '@/common/translations';
+import { UserInvitation } from '@/parsec';
+import { IonButton, IonButtons, IonIcon, IonLabel, IonText } from '@ionic/vue';
 import { time } from 'ionicons/icons';
 import { defineProps } from 'vue';
-import { UserInvitation } from '@/parsec';
-import { translateInvitationStatus } from '@/common/translations';
 
 defineProps<{
   invitation: UserInvitation;

@@ -1,30 +1,30 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec, WorkspaceStopError } from '@/plugins/libparsec';
+import { needsMocks } from '@/parsec/environment';
+import { getClientInfo } from '@/parsec/login';
+import { getParsecHandle } from '@/parsec/routing';
 import {
-  Result,
-  WorkspaceInfo,
-  ClientListWorkspacesError,
-  WorkspaceID,
-  WorkspaceRole,
-  UserTuple,
-  GetWorkspaceNameError,
-  WorkspaceName,
+  BackendOrganizationFileLinkAddr,
   ClientCreateWorkspaceError,
+  ClientListWorkspacesError,
   ClientListWorkspaceUsersError,
   ClientShareWorkspaceError,
-  UserID,
-  WorkspaceHandle,
   ClientStartWorkspaceError,
+  GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
-  UserProfile,
-  BackendOrganizationFileLinkAddr,
   LinkError,
+  Result,
+  UserID,
+  UserProfile,
+  UserTuple,
+  WorkspaceHandle,
+  WorkspaceID,
+  WorkspaceInfo,
+  WorkspaceName,
+  WorkspaceRole,
 } from '@/parsec/types';
-import { getParsecHandle } from '@/parsec/routing';
-import { getClientInfo } from '@/parsec/login';
+import { libparsec, WorkspaceStopError } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
-import { needsMocks } from '@/parsec/environment';
 import { ComposerTranslation } from 'vue-i18n';
 
 export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {

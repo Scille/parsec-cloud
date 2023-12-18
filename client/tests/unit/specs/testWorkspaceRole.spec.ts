@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { it } from 'vitest';
 import { canChangeRole, UserProfile, WorkspaceRole } from '@/parsec';
+import { it } from 'vitest';
 
 describe('Workspace role', () => {
   it.each([

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { FsPath, EntryName } from '@/parsec/types';
+import { EntryName, FsPath } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
 
 async function parse(path: FsPath): Promise<EntryName[]> {

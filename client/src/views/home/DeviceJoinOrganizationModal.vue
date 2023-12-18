@@ -140,31 +140,31 @@
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonText,
-  IonPage,
-  IonHeader,
   IonButton,
   IonButtons,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonLabel,
+  IonPage,
   IonSpinner,
+  IonText,
+  IonTitle,
   modalController,
 } from '@ionic/vue';
 
-import { close, checkmarkCircle } from 'ionicons/icons';
-import { ref, computed, onMounted, inject } from 'vue';
-import { useI18n } from 'vue-i18n';
-import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { asyncComputed } from '@/common/asyncComputed';
-import { DeviceClaim, parseBackendAddr, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag } from '@/parsec';
-import { Notification, NotificationManager, NotificationLevel } from '@/services/notificationManager';
 import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
-import { MsWizardStepper, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, askQuestion, Answer } from '@/components/core';
+import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
+import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
+import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
+import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
+import { checkmarkCircle, close } from 'ionicons/icons';
+import { computed, inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const notificationManager = inject(NotificationKey) as NotificationManager;
 

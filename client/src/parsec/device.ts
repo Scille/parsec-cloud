@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Result, OwnDeviceInfo, ClientListUserDevicesError, UserID, ClientListUserDevicesErrorTag, DeviceInfo } from '@/parsec/types';
-import { getParsecHandle } from '@/parsec/routing';
 import { needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
-import { DateTime } from 'luxon';
+import { getParsecHandle } from '@/parsec/routing';
+import { ClientListUserDevicesError, ClientListUserDevicesErrorTag, DeviceInfo, OwnDeviceInfo, Result, UserID } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
+import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
 

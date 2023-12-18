@@ -4,23 +4,23 @@ import { DeviceSaveStrategyTag, UserOrDeviceClaimInitialInfoTag, libparsec } fro
 
 import {
   AvailableDevice,
-  ClientEvent,
-  Handle,
-  Result,
-  UserClaimInProgress3Info,
   ClaimInProgressError,
-  UserOrDeviceClaimInitialInfoUser,
+  ClaimerRetrieveInfoError,
+  ClientEvent,
+  DeviceFileType,
+  Handle,
+  HumanHandle,
+  Result,
+  SASCode,
+  UserClaimFinalizeInfo,
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,
-  UserClaimFinalizeInfo,
-  SASCode,
-  HumanHandle,
-  ClaimerRetrieveInfoError,
-  DeviceFileType,
+  UserClaimInProgress3Info,
+  UserOrDeviceClaimInitialInfoUser,
 } from '@/parsec/types';
 
-import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 import { needsMocks } from '@/parsec/environment';
+import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 
 export class UserClaim {
   handle: Handle | null;

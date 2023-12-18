@@ -25,9 +25,9 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
-import { IonLabel, IonIcon, IonButton } from '@ionic/vue';
+import { useRouter } from 'vue-router';
 
 defineProps<{
   short: boolean;
