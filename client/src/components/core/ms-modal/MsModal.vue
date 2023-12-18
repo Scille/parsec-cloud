@@ -70,6 +70,7 @@
                 fill="clear"
                 size="default"
                 id="cancel-button"
+                :color="themeToButtonColor(cancelButton.theme)"
                 @click="cancelButton && cancelButton.onClick ? cancelButton.onClick() : cancel()"
                 :disabled="cancelButton.disabled"
               >
@@ -81,6 +82,7 @@
                 size="default"
                 id="next-button"
                 type="submit"
+                :color="themeToButtonColor(confirmButton.theme)"
                 @click="confirmButton && confirmButton.onClick ? confirmButton.onClick() : confirm()"
                 :disabled="confirmButton.disabled"
               >
@@ -97,6 +99,7 @@
 <script setup lang="ts">
 import { MsModalConfig, MsModalResult } from '@/components/core/ms-modal/types';
 import { MsReportText } from '@/components/core/ms-text';
+import { MsReportTheme } from '@/components/core/ms-types';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -113,6 +116,25 @@ onMounted(() => {
     modal.value?.focus();
   }, 100);
 });
+
+function themeToButtonColor(_theme?: MsReportTheme): string | undefined {
+  // Buttons do not correctly handle colors right now.
+  // Once they do, remove the early return and uncomment the switch/case.
+
+  return undefined;
+
+  // switch (theme) {
+  //   case MsReportTheme.Success:
+  //     return 'success';
+  //   case MsReportTheme.Warning:
+  //     return 'warning';
+  //   case MsReportTheme.Error:
+  //     return 'error';
+  //   case MsReportTheme.Info:
+  //   default:
+  //     return undefined;
+  // }
+}
 
 async function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);

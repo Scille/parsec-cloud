@@ -347,7 +347,12 @@ async function cancelModal(): Promise<boolean> {
   if (pageStep.value === GreetUserStep.Summary || pageStep.value === GreetUserStep.WaitForGuest) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), false);
+  const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), {
+    yesIsDangerous: true,
+    keepMainModalHiddenOnYes: true,
+    yesText: t('UsersPage.greet.cancelYes'),
+    noText: t('UsersPage.greet.cancelNo'),
+  });
 
   if (answer === Answer.Yes) {
     await greeter.value.abort();

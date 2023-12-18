@@ -8,7 +8,14 @@ import { Answer, FolderSelectionOptions, GetPasswordOptions, GetTextOptions, MsM
 import { FsPath } from '@/parsec';
 import { modalController } from '@ionic/vue';
 
-export async function askQuestion(title: string, subtitle?: string, redisplayMainModalOnYes = true): Promise<Answer> {
+export interface QuestionOptions {
+  yesText?: string;
+  noText?: string;
+  keepMainModalHiddenOnYes?: boolean;
+  yesIsDangerous?: boolean;
+}
+
+export async function askQuestion(title: string, subtitle: string, options?: QuestionOptions): Promise<Answer> {
   const top = await modalController.getTop();
   if (top) {
     top.classList.add('overlapped-modal');
@@ -22,6 +29,9 @@ export async function askQuestion(title: string, subtitle?: string, redisplayMai
     componentProps: {
       title: title,
       subtitle: subtitle,
+      yesText: options?.yesText,
+      noText: options?.noText,
+      yesIsDangerous: options?.yesIsDangerous,
     },
   });
   await modal.present();
@@ -37,7 +47,7 @@ export async function askQuestion(title: string, subtitle?: string, redisplayMai
     // In most cases, we use askQuestion to dismiss a main modal process,
     // If we don't keep the main modal hidden on Yes, there is a disgraceful blink before the dismiss.
     // It's not really pretty but worst case is you forget to set the argument and the main modal blinks, instead of causing potentiel bugs.
-    if (answer === Answer.Yes && redisplayMainModalOnYes) {
+    if (answer === Answer.Yes && !options?.keepMainModalHiddenOnYes) {
       top.classList.remove('overlapped-modal');
     }
   }

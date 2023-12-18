@@ -11,7 +11,9 @@
     },
     "quit": {
         "title": "Exit application",
-        "subtitle": "Are you sure you want to exit the application?"
+        "subtitle": "Are you sure you want to exit the application?",
+        "yes": "Quit",
+        "no": "Cancel"
     },
     "openFile": {
         "failedTitle": "Failed to open the element",
@@ -57,7 +59,9 @@
             "myContactDetails": "My contact details",
             "logoutConfirmTitle": "Logging out",
             "logoutConfirmQuestion": "Are you sure you want to log out?",
-            "logoutFailed": "Could not log out."
+            "logoutFailed": "Could not log out.",
+            "logoutYes": "Log out",
+            "logoutNo": "Stay logged in"
         },
         "organizationList": {
             "title": "Your organizations",
@@ -172,8 +176,10 @@
             "alreadyExists": "This organization name is not available, please choose another one.",
             "generic": "Failed to create the organization (reason: {reason})."
         },
-        "cancelConfirm": "Cancellation",
-        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
+        "cancelConfirm": "Cancel the organization creation",
+        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
+        "cancelYes": "Cancel the process",
+        "cancelNo": "Resume"
     },
     "JoinByLinkModal": {
         "pageTitle": "Join by link",
@@ -393,14 +399,20 @@
         "deleteOneFileQuestionSubtitle": "Are you sure you want to delete the file `{name}`?",
         "deleteOneFolderQuestionTitle": "Delete one folder",
         "deleteOneFolderQuestionSubtitle": "Are you sure you want to delete the folder `{name}`?",
-        "deleteMultipleQuestionTitle": "Delete multiple elements",
-        "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} elements?",
-        "copySelectFolderTitle": "Copy one element | Copy {count} elements",
+        "deleteMultipleQuestionTitle": "Delete multiple items",
+        "deleteMultipleQuestionSubtitle": "Are you sure you want to delete these {count} items?",
+        "deleteOneFileYes": "Delete the file",
+        "deleteOneFileNo": "Keep the file",
+        "deleteOneFolderYes": "Delete the folder",
+        "deleteOneFolderNo": "Keep the folder",
+        "deleteMultipleYes": "Delete {count} items",
+        "deleteMultipleNo": "Keep the items",
+        "copySelectFolderTitle": "Copy one item | Copy {count} items",
         "copySelectFolderSubtitle": "Current location: {location}",
-        "moveSelectFolderTitle": "Move one element | Move {count} elements",
+        "moveSelectFolderTitle": "Move one item | Move {count} items",
         "moveSelectFolderSubtitle": "Current location: {location}",
-        "moveSuccess": "One element moved! | {count} elements moved!",
-        "copySuccess": "One element copied! | {count} elements copied!",
+        "moveSuccess": "One item moved! | {count} items moved!",
+        "copySuccess": "One item copied! | {count} items copied!",
         "open": {
             "fileFailedTitle": "Failed to open the file",
             "fileFailedSubtitle": "Could not open file `{name}`",
@@ -554,8 +566,10 @@
             "success": "The device {label} has been created!",
             "linkCopiedToClipboard": "The link has been copied to the clipboard.",
             "copyLink": "Copy invitation link",
-            "cancelConfirm": "Cancellation",
-            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
+            "cancelConfirm": "Cancel the greeting process",
+            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
+            "cancelYes": "Cancel the process",
+            "cancelNo": "Resume"
         }
     },
     "Password": {
@@ -663,8 +677,10 @@
             "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet."
         },
-        "cancelConfirm": "Cancellation",
-        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
+        "cancelConfirm": "Cancel the joining process",
+        "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
+        "cancelYes": "Cancel the process",
+        "cancelNo": "Resume"
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -743,8 +759,10 @@
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the process."
             },
             "success": "The user {user} has joined the organization!",
-            "cancelConfirm": "Cancellation",
-            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart."
+            "cancelConfirm": "Cancel the onboarding",
+            "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
+            "cancelYes": "Cancel the process",
+            "cancelNo": "Resume"
         },
         "invitation": {
             "greetUser": "Greet",
@@ -784,7 +802,9 @@
             "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
             "revokeFailed": "Failed to revoke this user. | Failed to revoke any user.",
             "revokeSuccess": "{user} has been revoked and can no longer access this organization! | {count} users have been revoked and can no longer access this organization!",
-            "revokeSomeFailed": "Some users could not be revoked."
+            "revokeSomeFailed": "Some users could not be revoked.",
+            "revokeYes": "Revoke",
+            "revokeNo": "Cancel"
         }
     },
     "AboutPage": {
@@ -837,6 +857,8 @@
         "deviceName": "Device name",
         "cancelConfirm": "Are you sure you want to cancel the process?",
         "cancelConfirmSubtitle": "Information will not be saved, you will have to restart.",
+        "cancelYes": "Cancel the process",
+        "cancelNo": "Resume",
         "successMessage": "Your new device has been successfully created!",
         "errors": {
             "startFailed": "Failed to start the process. Please make sure the link is correct and that you are connected to the internet.",

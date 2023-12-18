@@ -69,7 +69,10 @@ async function openPopover(event: Event): Promise<void> {
       return;
     }
     if (value.data.option === ProfilePopoverOption.LogOut) {
-      const answer = await askQuestion(t('HomePage.topbar.logoutConfirmTitle'), t('HomePage.topbar.logoutConfirmQuestion'));
+      const answer = await askQuestion(t('HomePage.topbar.logoutConfirmTitle'), t('HomePage.topbar.logoutConfirmQuestion'), {
+        yesText: t('HomePage.topbar.logoutYes'),
+        noText: t('HomePage.topbar.logoutNo'),
+      });
 
       if (answer === Answer.Yes) {
         const result = await parsecLogout();

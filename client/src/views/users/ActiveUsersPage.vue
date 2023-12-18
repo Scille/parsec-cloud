@@ -255,6 +255,11 @@ async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
     t('UsersPage.revocation.revokeTitle', 1),
     t('UsersPage.revocation.revokeQuestion', { user: user.humanHandle.label }, 1),
+    {
+      yesIsDangerous: true,
+      yesText: t('UsersPage.revocation.revokeYes'),
+      noText: t('UsersPage.revocation.revokeNo'),
+    },
   );
   if (answer === Answer.No) {
     return;

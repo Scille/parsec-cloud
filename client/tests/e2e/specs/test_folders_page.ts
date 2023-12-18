@@ -135,9 +135,9 @@ describe('Check folders page', () => {
   it('Tests delete multiple files', () => {
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('#button-delete').contains('Delete').click();
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple elements');
-    cy.get('.question-modal').find('.ms-modal-header__text').contains('Are you sure you want to delete these 3 elements?');
-    cy.get('.question-modal').find('#next-button').contains('Yes').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple items');
+    cy.get('.question-modal').find('.ms-modal-header__text').contains('Are you sure you want to delete these 3 items?');
+    cy.get('.question-modal').find('#next-button').contains('Delete 3 items').click();
     cy.get('.question-modal').should('not.exist');
 
     // Absolutely no idea why this doesn't work. It's exactly the same as for one file,
@@ -205,7 +205,7 @@ describe('Check folders page', () => {
     cy.get('.folder-container').find('.file-list-item').eq(2).click();
     cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one element');
+    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
     cy.get('.folder-selection-modal')
       .find('.ms-modal-header__text')
       .contains(/Current location: \/Dir_[a-z_]+/);
@@ -231,14 +231,14 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('One element moved!');
+    cy.checkToastMessage('One item moved!');
   });
 
   it('Tests move files', () => {
     cy.get('.folder-container').find('.file-list-item').eq(2).click();
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 elements');
+    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 items');
     cy.get('.folder-selection-modal')
       .find('.ms-modal-header__text')
       .contains(/Current location: \/Dir_[a-z_]+/);
@@ -264,7 +264,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('3 elements moved!');
+    cy.checkToastMessage('3 items moved!');
   });
 
   it('Tests copy one file', () => {
@@ -272,7 +272,7 @@ describe('Check folders page', () => {
     cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one element');
+    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
     cy.get('.folder-selection-modal')
       .find('.ms-modal-header__text')
       .contains(/Current location: \/Dir_[a-z_]+/);
@@ -298,7 +298,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('One element copied!');
+    cy.checkToastMessage('One item copied!');
   });
 
   it('Tests copy files', () => {
@@ -306,7 +306,7 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 elements');
+    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 items');
     cy.get('.folder-selection-modal')
       .find('.ms-modal-header__text')
       .contains(/Current location: \/Dir_[a-z_]+/);
@@ -332,6 +332,6 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('3 elements copied!');
+    cy.checkToastMessage('3 items copied!');
   });
 });

@@ -194,7 +194,10 @@ async function setupApp(): Promise<void> {
 
   if (isElectron()) {
     window.electronAPI.receive('close-request', async () => {
-      const answer = await askQuestion(t('quit.title'), t('quit.subtitle'));
+      const answer = await askQuestion(t('quit.title'), t('quit.subtitle'), {
+        yesText: 'quit.yes',
+        noText: 'quit.no',
+      });
       if (answer === Answer.Yes) {
         window.electronAPI.closeApp();
       }

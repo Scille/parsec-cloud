@@ -350,7 +350,12 @@ async function cancelModal(): Promise<boolean> {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
 
-  const answer = await askQuestion(t('CreateOrganization.cancelConfirm'), t('CreateOrganization.cancelConfirmSubtitle'), false);
+  const answer = await askQuestion(t('CreateOrganization.cancelConfirm'), t('CreateOrganization.cancelConfirmSubtitle'), {
+    keepMainModalHiddenOnYes: true,
+    yesText: t('CreateOrganization.cancelYes'),
+    noText: t('CreateOrganization.cancelNo'),
+    yesIsDangerous: true,
+  });
 
   if (answer === Answer.Yes) {
     return await modalController.dismiss(null, MsModalResult.Cancel);

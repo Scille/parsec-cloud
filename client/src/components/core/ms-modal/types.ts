@@ -51,11 +51,13 @@ export interface MsModalConfig {
     disabled: boolean;
     label: string;
     onClick?: () => Promise<boolean>;
+    theme?: MsReportTheme;
   };
   confirmButton?: {
     disabled: boolean;
     label: string;
     onClick?: () => Promise<boolean>;
+    theme?: MsReportTheme;
   };
 }
 
