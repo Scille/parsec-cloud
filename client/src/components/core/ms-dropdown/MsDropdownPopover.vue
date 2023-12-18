@@ -29,22 +29,18 @@
         :class="{ selected: selectedOption?.key === option.key }"
         v-if="selectedOption?.key === option.key"
       />
-      <ion-icon
+      <ms-information-tooltip-icon
         v-if="option.disabled && option.disabledReason"
-        slot="end"
-        :icon="informationCircle"
-        class="icon disabled-icon"
-        @click="openTooltip($event, option.disabledReason)"
+        :text="option.disabledReason"
       />
     </ion-item>
   </ion-list>
 </template>
 
 <script setup lang="ts">
-import MsDropdownTooltip from '@/components/core/ms-dropdown/MsDropdownTooltip.vue';
-import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { MsInformationTooltipIcon, MsOption, MsOptions } from '@/components/core';
 import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
-import { checkmark, informationCircle } from 'ionicons/icons';
+import { checkmark } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -54,28 +50,13 @@ const props = defineProps<{
 
 const selectedOption = ref(props.defaultOption ? props.options.get(props.defaultOption) : props.options.at(0));
 
-function onOptionClick(option?: MsOption): void {
+async function onOptionClick(option?: MsOption): Promise<void> {
   if (option) {
     selectedOption.value = option;
   }
-  popoverController.dismiss({
+  await popoverController.dismiss({
     option: selectedOption.value,
   });
-}
-
-function openTooltip(event: Event, text: string): void {
-  event.stopPropagation();
-  const popover = popoverController.create({
-    component: MsDropdownTooltip,
-    alignment: 'center',
-    event: event,
-    componentProps: {
-      text,
-    },
-    cssClass: 'tooltip-popover',
-    showBackdrop: false,
-  });
-  popover.then((popoverInstance) => popoverInstance.present());
 }
 </script>
 
@@ -154,16 +135,6 @@ function openTooltip(event: Event, text: string): void {
 
       &__description {
         --color: var(--parsec-color-light-secondary-grey);
-      }
-    }
-
-    .disabled-icon {
-      pointer-events: initial;
-      opacity: 0.8;
-      --color: var(--parsec-color-light-secondary-grey);
-      position: relative;
-      &:hover {
-        color: var(--parsec-color-light-secondary-text);
       }
     }
   }
