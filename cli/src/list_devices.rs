@@ -10,12 +10,12 @@ use crate::utils::*;
 #[derive(Args)]
 pub struct ListDevices {
     /// Parsec config directory
-    #[arg(short, long)]
-    config_dir: Option<PathBuf>,
+    #[arg(short, long, default_value_os_t = get_default_config_dir())]
+    config_dir: PathBuf,
 }
 
 pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
-    let config_dir = list_devices.config_dir.unwrap_or(get_default_config_dir());
+    let config_dir = list_devices.config_dir;
     let config_dir_str = config_dir.to_string_lossy();
     let devices = list_available_devices(&config_dir).await;
 
