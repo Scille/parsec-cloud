@@ -34,6 +34,12 @@
                 @forgotten-password-click="onForgottenPasswordClicked"
               />
             </template>
+            <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
+              <import-recovery-device-page
+                :device="selectedDevice"
+                @finished="backToOrganizations"
+              />
+            </template>
           </slide-horizontal>
         </div>
         <!-- end of organization -->
@@ -52,6 +58,7 @@ import { Notification, NotificationLevel, NotificationManager } from '@/services
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { Position, SlideHorizontal } from '@/transitions';
 import AboutModal from '@/views/about/AboutModal.vue';
+import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
@@ -174,8 +181,9 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
   }
 }
 
-function onForgottenPasswordClicked(): void {
-  console.log('forgotten password!');
+function onForgottenPasswordClicked(device: AvailableDevice): void {
+  selectedDevice.value = device;
+  state.value = HomePageState.ForgottenPassword;
 }
 
 async function openAboutModal(): Promise<void> {

@@ -684,6 +684,43 @@
         "invalid": "Mot de passe invalide.",
         "otherError": "Une erreur est survenue."
     },
+    "ImportRecoveryDevicePage": {
+        "titles": {
+            "forgottenPassword": "Mot de passe oublié",
+            "recoveryFile": "Fichier de récupération",
+            "recoveryKey": "Clé secrète",
+            "setNewPassword": "Définissez un nouveau mot de passe",
+            "passwordChanged": "Le mot de passe a bien été modifié"
+        },
+        "subtitles": {
+            "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre mot de passe.",
+            "passwordAdvice": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
+            "password": "Mot de passe",
+            "confirmPassword": "Confirmation du mot de passe",
+            "passwordModified": "Vous pouvez vous connecter avec votre nouveau mot de passe.",
+            "passwordRules": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
+            "noFileSelected": "Aucun fichier sélectionné"
+        },
+        "actions": {
+            "browse": "Parcourir",
+            "next": "Suivant",
+            "validatePassword": "Valider mon mot de passe",
+            "backToLogin": "Retour à la connexion",
+            "goBackToLogin": "Revenir à la connexion"
+        },
+        "errors": {
+            "fileErrorTitle": "Fichier de récupération invalide",
+            "fileErrorMessage": "Le fichier de récupération est invalide.",
+            "keyErrorTitle": "Clé secrète invalide",
+            "keyErrorMessage": "La clé secrète ne correspond pas au fichier de récupération.",
+            "passwordErrorTitle": "Mot de passe invalide",
+            "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
+            "saveDeviceErrorTitle": "Impossible de récupérer l'appareil",
+            "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
+            "internalErrorTitle": "Une erreur est survenue",
+            "internalErrorMessage": "Une erreur est survenue"
+        }
+    },
     "ExportRecoveryDevicePage": {
         "titles": {
             "recoveryFile": "Fichier de récupération",

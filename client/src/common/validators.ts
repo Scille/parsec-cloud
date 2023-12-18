@@ -145,3 +145,11 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
   }
   return Validity.Invalid;
 };
+
+export const secretKeyValidator: IValidator = async function (value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return Validity.Intermediate;
+  }
+  return /^([A-Z0-9]{4}-){12}[A-Z0-9]{4}$/.test(value) ? Validity.Valid : Validity.Invalid;
+};
