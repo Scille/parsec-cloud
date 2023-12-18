@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { parse, join } from '@/common/path';
+import { join, parse } from '@/common/path';
 
 describe('Path', () => {
   it('test path parsing', async () => {

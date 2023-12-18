@@ -111,15 +111,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, onMounted, inject } from 'vue';
-import { IonContent, IonItem, IonList, IonPage, IonLabel, IonListHeader, IonCheckbox, IonText, popoverController } from '@ionic/vue';
-import { eye } from 'ionicons/icons';
-import UserListItem from '@/components/users/UserListItem.vue';
+import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle } from '@/components/core';
 import UserCard from '@/components/users/UserCard.vue';
-import { DisplayState, MsActionBarButton, MsGridListToggle, MsActionBar } from '@/components/core';
-import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
+import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
-import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
+import { IonCheckbox, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonText, popoverController } from '@ionic/vue';
+import { eye } from 'ionicons/icons';
+import { Ref, computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const displayView = ref(DisplayState.List);

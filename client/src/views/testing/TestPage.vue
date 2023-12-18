@@ -14,10 +14,16 @@
 </template>
 
 <script setup lang="ts">
+import {
+  BootstrapOrganizationErrorTag,
+  ClientConfig,
+  ClientEvent,
+  DeviceSaveStrategyTag,
+  WorkspaceStorageCacheSizeTag,
+  libparsec,
+} from '@/plugins/libparsec';
 import { IonContent, IonHeader, IonPage, IonTitle } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
-import { libparsec, DeviceSaveStrategyTag, WorkspaceStorageCacheSizeTag, BootstrapOrganizationErrorTag } from '@/plugins/libparsec';
-import { ClientEvent, ClientConfig } from '@/plugins/libparsec';
+import { onMounted, ref } from 'vue';
 
 const logs = ref('');
 

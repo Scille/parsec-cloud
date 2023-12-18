@@ -134,27 +134,27 @@
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonText,
-  IonPage,
-  IonHeader,
   IonButton,
   IonButtons,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonLabel,
+  IonPage,
   IonSpinner,
+  IonText,
+  IonTitle,
   modalController,
 } from '@ionic/vue';
 
-import { close } from 'ionicons/icons';
-import { ref, computed, onMounted, inject } from 'vue';
-import { useI18n } from 'vue-i18n';
-import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
+import { MsInformativeText, MsModalResult, MsWizardStepper } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import { MsWizardStepper, MsInformativeText, MsModalResult } from '@/components/core';
+import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
-import { NotificationManager, NotificationKey, Notification, NotificationLevel } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { close } from 'ionicons/icons';
+import { computed, inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,

@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DateTime } from 'luxon';
 import { FormattersKey, NotificationKey } from '@/common/injectionKeys';
-import { vi } from 'vitest';
 import { config } from '@vue/test-utils';
+import { DateTime } from 'luxon';
+import { vi } from 'vitest';
 
 function mockTimeSince(_date: DateTime | undefined, _default: string, _format: string): string {
   return 'One minute ago';
@@ -81,4 +81,4 @@ function resetRoutesCalled(): void {
   ROUTES_CALLED.splice(0);
 }
 
-export { mockTimeSince, mockFileSize, mockI18n, mockRouter, getDefaultProvideConfig, getRoutesCalled, resetRoutesCalled };
+export { getDefaultProvideConfig, getRoutesCalled, mockFileSize, mockI18n, mockRouter, mockTimeSince, resetRoutesCalled };

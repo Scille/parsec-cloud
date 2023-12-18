@@ -43,9 +43,9 @@ export interface RouterPathNode {
 </script>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
+import { Ref, computed, ref } from 'vue';
 
 const props = defineProps<{
   pathNodes: RouterPathNode[];

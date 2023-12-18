@@ -30,10 +30,10 @@
 </template>
 
 <script setup lang="ts">
+import { MsStepStatus } from '@/components/core/ms-stepper/types';
 import { IonIcon } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
 import { defineProps } from 'vue';
-import { MsStepStatus } from '@/components/core/ms-stepper/types';
 
 defineProps<{
   status: MsStepStatus;

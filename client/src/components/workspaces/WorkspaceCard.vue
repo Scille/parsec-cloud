@@ -56,12 +56,12 @@
 </template>
 
 <script setup lang="ts">
-import { business, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
-import { IonAvatar, IonIcon, IonText, IonTitle, IonLabel } from '@ionic/vue';
-import { inject } from 'vue';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { WorkspaceInfo } from '@/parsec';
+import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
+import { inject } from 'vue';
 
 defineProps<{
   workspace: WorkspaceInfo;

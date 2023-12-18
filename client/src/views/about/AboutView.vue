@@ -122,11 +122,11 @@ async function showChangelog(): Promise<void> {
 </script>
 
 <script setup lang="ts">
-import { IonText, IonLabel, IonItem, IonIcon, IonList, IonButton } from '@ionic/vue';
+import { getAppVersion } from '@/common/mocks';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { getAppVersion } from '@/common/mocks';
 
 const upToDate = ref(false);
 

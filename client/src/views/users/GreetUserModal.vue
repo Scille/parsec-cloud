@@ -169,7 +169,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import { MsInformativeText, MsWizardStepper, MsModalResult, Answer, askQuestion, MsDropdown, MsOptions } from '@/components/core';
+import { Answer, MsDropdown, MsInformativeText, MsModalResult, MsOptions, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';

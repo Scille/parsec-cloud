@@ -1,25 +1,25 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { needsMocks } from '@/parsec/environment';
+import { Path } from '@/parsec/path';
+import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import {
-  FsPath,
-  FileID,
-  WorkspaceFsOperationError,
-  Result,
-  EntryStatFolder,
-  EntryStatFile,
   EntryName,
-  FileType,
   EntryStat,
-  WorkspaceHandle,
+  EntryStatFile,
+  EntryStatFolder,
+  FileID,
+  FileType,
+  FsPath,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
+  Result,
+  WorkspaceFsOperationError,
+  WorkspaceHandle,
 } from '@/parsec/types';
-import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
-import { Path } from '@/parsec/path';
-import { needsMocks } from '@/parsec/environment';
-import { uniqueNamesGenerator, animals, adjectives } from 'unique-names-generator';
+import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
 export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
   const clientHandle = getParsecHandle();

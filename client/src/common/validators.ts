@@ -1,13 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
-  parseBackendAddr,
-  isValidUserName,
-  isValidEmail,
   isValidDeviceName,
-  isValidWorkspaceName,
+  isValidEmail,
   isValidEntryName,
   isValidOrganizationName,
+  isValidUserName,
+  isValidWorkspaceName,
+  parseBackendAddr,
 } from '@/parsec';
 import { ParsedBackendAddrTag } from '@/plugins/libparsec';
 

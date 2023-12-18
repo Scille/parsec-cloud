@@ -103,49 +103,48 @@
 
 <script setup lang="ts">
 import {
-  IonLabel,
-  IonIcon,
-  IonPage,
   IonContent,
-  popoverController,
-  isPlatform,
   IonFab,
   IonFabButton,
-  modalController,
+  IonIcon,
+  IonItem,
+  IonLabel,
   IonList,
   IonListHeader,
-  IonItem,
+  IonPage,
   IonText,
+  isPlatform,
+  modalController,
+  popoverController,
 } from '@ionic/vue';
 
-import { addCircle } from 'ionicons/icons';
-import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
-import WorkspaceContextMenu from '@/views/workspaces/WorkspaceContextMenu.vue';
-import { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
-import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
-import { useI18n } from 'vue-i18n';
-import { ref, Ref, onMounted, computed, inject } from 'vue';
-import { workspaceNameValidator } from '@/common/validators';
 import { writeTextToClipboard } from '@/common/clipboard';
+import { workspaceNameValidator } from '@/common/validators';
 import {
-  MsSorter,
+  DisplayState,
+  MsActionBar,
   MsActionBarButton,
   MsGridListToggle,
-  MsActionBar,
-  MsSorterChangeEvent,
   MsOptions,
+  MsSorter,
+  MsSorterChangeEvent,
   getTextInputFromUser,
-  DisplayState,
 } from '@/components/core';
-import { routerNavigateToWorkspace } from '@/router';
+import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
+import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   WorkspaceInfo,
-  listWorkspaces as parsecListWorkspaces,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
+  listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
-import { NotificationManager, Notification, NotificationKey, NotificationLevel } from '@/services/notificationManager';
+import { routerNavigateToWorkspace } from '@/router';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
+import { addCircle } from 'ionicons/icons';
+import { Ref, computed, inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 const sortBy = ref('name');

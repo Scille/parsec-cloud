@@ -54,8 +54,8 @@ export enum UserAction {
 </script>
 
 <script setup lang="ts">
-import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
-import { personRemove, informationCircle } from 'ionicons/icons';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { informationCircle, personRemove } from 'ionicons/icons';
 
 defineProps<{
   isRevoked: boolean;

@@ -9,21 +9,21 @@ import {
   libparsec,
 } from '@/plugins/libparsec';
 
+import { needsMocks } from '@/parsec/environment';
+import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
+import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  DeviceAccessStrategyPassword,
   ClientEvent,
-  Handle,
-  ClientStartError,
-  Result,
-  ClientStopError,
   ClientInfo,
   ClientInfoError,
+  ClientStartError,
+  ClientStopError,
+  DeviceAccessStrategyPassword,
+  Handle,
+  Result,
   UserProfile,
 } from '@/parsec/types';
-import { getParsecHandle } from '@/parsec/routing';
-import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
-import { needsMocks } from '@/parsec/environment';
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());

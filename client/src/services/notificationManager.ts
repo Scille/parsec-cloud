@@ -1,11 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { MsAlertModal, MsAlertModalConfig, MsModalResult, MsReportTheme } from '@/components/core';
+import { ToastManager } from '@/services/toastManager';
+import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
-import { modalController } from '@ionic/vue';
 import { ComposerTranslation } from 'vue-i18n';
-import { MsAlertModal, MsModalResult, MsReportTheme, MsAlertModalConfig } from '@/components/core';
-import { ToastManager } from '@/services/toastManager';
 
 // Re-export so everything can be imported from this file
 export { NotificationKey } from '@/common/injectionKeys';

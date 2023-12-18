@@ -115,11 +115,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonIcon, IonList, IonItem, IonText } from '@ionic/vue';
-import { sparkles, construct, infinite } from 'ionicons/icons';
-import { onMounted, ref, Ref } from 'vue';
-import { getChanges, VersionChange } from '@/common/mocks';
+import { VersionChange, getChanges } from '@/common/mocks';
 import { MsModal } from '@/components/core';
+import { IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
+import { construct, infinite, sparkles } from 'ionicons/icons';
+import { Ref, onMounted, ref } from 'vue';
 
 const changes: Ref<VersionChange[]> = ref([]);
 

@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Notification as MsNotification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { vi } from 'vitest';
-import { DateTime } from 'luxon';
 import { modalController, toastController } from '@ionic/vue';
+import { DateTime } from 'luxon';
+import { vi } from 'vitest';
 
 describe('Notification Manager', () => {
   // mock ComposerTranslation

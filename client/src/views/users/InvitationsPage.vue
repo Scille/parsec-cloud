@@ -73,29 +73,29 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonList, IonItem, IonListHeader, IonLabel, modalController } from '@ionic/vue';
-import { personAdd } from 'ionicons/icons';
-import { onUpdated, ref, Ref, onMounted, inject, watch, onUnmounted } from 'vue';
-import { MsModalResult, DisplayState, getTextInputFromUser, MsActionBar, MsActionBarButton, MsGridListToggle } from '@/components/core';
-import { useI18n } from 'vue-i18n';
-import GreetUserModal from '@/views/users/GreetUserModal.vue';
+import { emailValidator } from '@/common/validators';
+import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, MsModalResult, getTextInputFromUser } from '@/components/core';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import {
-  isRoute,
-  UserInvitation,
-  listUserInvitations as parsecListUserInvitations,
-  inviteUser as parsecInviteUser,
-  cancelInvitation as parsecCancelInvitation,
-  isAdmin as parsecIsAdmin,
+  DeleteInvitationErrorTag,
   InvitationEmailSentStatus,
   InvitationErrorTag,
-  DeleteInvitationErrorTag,
+  UserInvitation,
+  isRoute,
+  cancelInvitation as parsecCancelInvitation,
+  inviteUser as parsecInviteUser,
+  isAdmin as parsecIsAdmin,
+  listUserInvitations as parsecListUserInvitations,
 } from '@/parsec';
-import { NotificationManager, NotificationKey, NotificationLevel, Notification } from '@/services/notificationManager';
-import { useRoute } from 'vue-router';
 import { routerNavigateTo } from '@/router';
-import { emailValidator } from '@/common/validators';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import GreetUserModal from '@/views/users/GreetUserModal.vue';
+import { IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
+import { personAdd } from 'ionicons/icons';
+import { Ref, inject, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const { t } = useI18n();

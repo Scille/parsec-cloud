@@ -21,8 +21,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonCard, IonAvatar, IonCardHeader, IonCardTitle, IonCardContent } from '@ionic/vue';
 import { AvailableDevice } from '@/parsec';
+import { IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle } from '@ionic/vue';
 
 defineProps<{
   device: AvailableDevice;

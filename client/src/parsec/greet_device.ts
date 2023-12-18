@@ -1,24 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BackendInvitationAddr, InvitationToken, libparsec, SASCode } from '@/plugins/libparsec';
+import { needsMocks } from '@/parsec/environment';
+import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
+import { getParsecHandle } from '@/parsec/routing';
 import {
-  Handle,
   ClientStartInvitationGreetError,
-  DeviceGreetInitialInfo,
-  Result,
   DeviceGreetInProgress1Info,
-  GreetInProgressError,
   DeviceGreetInProgress2Info,
   DeviceGreetInProgress3Info,
   DeviceGreetInProgress4Info,
+  DeviceGreetInitialInfo,
   DeviceLabel,
-  NewInvitationInfo,
-  NewDeviceInvitationError,
+  GreetInProgressError,
+  Handle,
   InvitationEmailSentStatus,
+  NewDeviceInvitationError,
+  NewInvitationInfo,
+  Result,
 } from '@/parsec/types';
-import { wait, MOCK_WAITING_TIME, DEFAULT_HANDLE } from '@/parsec/internals';
-import { getParsecHandle } from '@/parsec/routing';
-import { needsMocks } from '@/parsec/environment';
+import { BackendInvitationAddr, InvitationToken, SASCode, libparsec } from '@/plugins/libparsec';
 
 export class DeviceGreet {
   handle: Handle | null;

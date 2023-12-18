@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { VueWrapper, mount } from '@vue/test-utils';
 import { mockI18n } from '@tests/component/support/mocks';
+import { VueWrapper, mount } from '@vue/test-utils';
 
 mockI18n();
 

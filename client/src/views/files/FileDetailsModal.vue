@@ -87,12 +87,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonLabel, IonItem, IonText } from '@ionic/vue';
-import {} from 'ionicons/icons';
-import { inject } from 'vue';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import { MsModal } from '@/components/core';
 import { EntryStat, EntryStatFile } from '@/parsec';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
+import { IonItem, IonLabel, IonPage, IonText } from '@ionic/vue';
+import {} from 'ionicons/icons';
+import { inject } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { fileSize } = inject(FormattersKey)! as Formatters;

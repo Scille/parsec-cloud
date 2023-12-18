@@ -38,11 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
-import { IonList, IonItem, IonIcon, popoverController } from '@ionic/vue';
-import { arrowUp, arrowDown, checkmark } from 'ionicons/icons';
-import { MsOption, MsOptions } from '@/components/core/ms-types';
 import { MsSorterLabels } from '@/components/core/ms-sorter/types';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { IonIcon, IonItem, IonList, popoverController } from '@ionic/vue';
+import { arrowDown, arrowUp, checkmark } from 'ionicons/icons';
+import { Ref, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption?: any;

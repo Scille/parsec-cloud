@@ -144,24 +144,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, onMounted, inject, watch, onUnmounted } from 'vue';
-import { IonContent, IonItem, IonList, IonPage, IonLabel, IonListHeader, IonCheckbox, IonText, popoverController } from '@ionic/vue';
-import { personRemove, personAdd, eye } from 'ionicons/icons';
-import UserListItem from '@/components/users/UserListItem.vue';
+import { Answer, DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, askQuestion } from '@/components/core';
 import UserCard from '@/components/users/UserCard.vue';
-import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
-import { DisplayState, Answer, askQuestion, MsActionBarButton, MsActionBar, MsGridListToggle } from '@/components/core';
-import { routerNavigateTo } from '@/router';
+import UserListItem from '@/components/users/UserListItem.vue';
 import {
-  listUsers as parsecListUsers,
-  UserInfo,
   ClientInfo,
-  getClientInfo as parsecGetClientInfo,
-  UserProfile,
   UserID,
+  UserInfo,
+  UserProfile,
+  getClientInfo as parsecGetClientInfo,
+  listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { NotificationManager, Notification, NotificationLevel, NotificationKey } from '@/services/notificationManager';
+import { routerNavigateTo } from '@/router';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
+import { IonCheckbox, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonText, popoverController } from '@ionic/vue';
+import { eye, personAdd, personRemove } from 'ionicons/icons';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 

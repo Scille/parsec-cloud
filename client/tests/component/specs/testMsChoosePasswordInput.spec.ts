@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { VueWrapper, mount } from '@vue/test-utils';
+import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { IonInput } from '@ionic/vue';
 import { mockI18n } from '@tests/component/support/mocks';
-import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
+import { VueWrapper, mount } from '@vue/test-utils';
 
 mockI18n();
 

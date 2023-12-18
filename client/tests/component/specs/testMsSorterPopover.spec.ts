@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { VueWrapper, mount } from '@vue/test-utils';
 import { MsOptions, MsSorterLabels } from '@/components/core';
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
+import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Select popover', () => {
   let wrapper: VueWrapper;

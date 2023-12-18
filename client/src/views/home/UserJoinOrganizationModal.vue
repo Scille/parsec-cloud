@@ -171,29 +171,29 @@
 
 <script setup lang="ts">
 import {
-  IonTitle,
-  IonText,
-  IonPage,
-  IonHeader,
   IonButton,
   IonButtons,
   IonFooter,
+  IonHeader,
   IonIcon,
   IonLabel,
+  IonPage,
   IonSpinner,
+  IonText,
+  IonTitle,
   modalController,
 } from '@ionic/vue';
 
-import { close } from 'ionicons/icons';
-import { ref, computed, onMounted, inject } from 'vue';
-import { useI18n } from 'vue-i18n';
-import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import UserInformation from '@/components/users/UserInformation.vue';
-import { MsWizardStepper, MsChoosePasswordInput, MsInformativeText, MsModalResult, askQuestion, Answer } from '@/components/core';
-import { Notification, NotificationManager, NotificationLevel, NotificationKey } from '@/services/notificationManager';
 import { asyncComputed } from '@/common/asyncComputed';
+import { Answer, MsChoosePasswordInput, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
+import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
+import UserInformation from '@/components/users/UserInformation.vue';
 import { UserClaim } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { close } from 'ionicons/icons';
+import { computed, inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,

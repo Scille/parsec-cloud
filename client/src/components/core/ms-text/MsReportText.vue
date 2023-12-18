@@ -17,9 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonIcon, IonText } from '@ionic/vue';
-import { informationCircle, checkmarkCircle, warning, closeCircle } from 'ionicons/icons';
 import { MsReportTheme } from '@/components/core/ms-types';
+import { IonIcon, IonText } from '@ionic/vue';
+import { checkmarkCircle, closeCircle, informationCircle, warning } from 'ionicons/icons';
 
 const props = defineProps<{
   theme?: MsReportTheme;

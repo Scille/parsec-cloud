@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonGrid, IonRow, IonCol, IonButton } from '@ionic/vue';
+import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/vue';
 
 defineProps<{
   choices: string[];

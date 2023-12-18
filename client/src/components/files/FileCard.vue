@@ -40,11 +40,11 @@
 </template>
 
 <script setup lang="ts">
-import { folder, document, ellipsisHorizontal, cloudDone, cloudOffline } from 'ionicons/icons';
-import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
-import { inject, ref } from 'vue';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import { EntryStat } from '@/parsec';
+import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
+import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);

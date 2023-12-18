@@ -95,11 +95,11 @@
 </template>
 
 <script setup lang="ts">
-import { IonText, IonPage, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton, modalController, IonFooter, IonIcon } from '@ionic/vue';
-import { close } from 'ionicons/icons';
-import { onMounted, ref, Ref } from 'vue';
-import { MsReportText } from '@/components/core/ms-text';
 import { MsModalConfig, MsModalResult } from '@/components/core/ms-modal/types';
+import { MsReportText } from '@/components/core/ms-text';
+import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
+import { close } from 'ionicons/icons';
+import { Ref, onMounted, ref } from 'vue';
 
 const modal: Ref<HTMLDivElement | null> = ref(null);
 defineProps<MsModalConfig>();

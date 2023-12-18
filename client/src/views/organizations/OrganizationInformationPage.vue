@@ -193,10 +193,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonLabel, IonChip, IonItem, IonList, IonListHeader, IonTitle } from '@ionic/vue';
-import { onMounted, ref, Ref, inject } from 'vue';
-import { getClientInfo, getOrganizationInfo, OrganizationInfo, ClientInfo } from '@/parsec';
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { ClientInfo, OrganizationInfo, getClientInfo, getOrganizationInfo } from '@/parsec';
+import { IonChip, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonTitle } from '@ionic/vue';
+import { Ref, inject, onMounted, ref } from 'vue';
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 const clientInfo: Ref<ClientInfo | null> = ref(null);

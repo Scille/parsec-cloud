@@ -25,9 +25,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { IonItem, IonInput, IonIcon } from '@ionic/vue';
+import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { search } from 'ionicons/icons';
+import { ref } from 'vue';
 
 defineProps<{
   label: string;

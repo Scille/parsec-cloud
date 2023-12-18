@@ -71,15 +71,15 @@
 </template>
 
 <script setup lang="ts">
-import { IonCardContent, IonGrid, IonRow, IonCol, IonCard, IonCardTitle } from '@ionic/vue';
-import { AvailableDevice, listAvailableDevices } from '@/parsec';
-import { ref, Ref, computed, onMounted, inject, onUpdated } from 'vue';
-import { StorageManager, StoredDeviceData, StorageManagerKey } from '@/services/storageManager';
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
-import { DateTime } from 'luxon';
-import { MsOptions, MsSorterChangeEvent, MsSorter, MsSearchInput } from '@/components/core';
-import { useI18n } from 'vue-i18n';
+import { MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
+import { AvailableDevice, listAvailableDevices } from '@/parsec';
+import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
+import { IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/vue';
+import { DateTime } from 'luxon';
+import { Ref, computed, inject, onMounted, onUpdated, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;

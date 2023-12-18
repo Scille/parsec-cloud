@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import UserListItem from '@/components/users/UserListItem.vue';
+import { UserInfo, UserProfile } from '@/parsec';
+import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { mockI18n, getDefaultProvideConfig } from '@tests/component/support/mocks';
-import { UserProfile, UserInfo } from '@/parsec';
 
 mockI18n();
 

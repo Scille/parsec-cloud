@@ -118,8 +118,8 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
-import { IonContent, IonItem, IonLabel, IonList, popoverController, IonIcon, IonItemGroup } from '@ionic/vue';
-import { cloudy, pencil, link, informationCircle, shareSocial, time, open } from 'ionicons/icons';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });

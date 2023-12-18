@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { mockI18n, mockRouter, getDefaultProvideConfig, getRoutesCalled, resetRoutesCalled } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig, mockI18n, mockRouter, resetRoutesCalled } from '@tests/component/support/mocks';
 
 // Before importing anything else
 mockI18n();

@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { v4 as uuid4 } from 'uuid';
-import { wait } from '@/parsec/internals';
 import { createFile, FsPath, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { wait } from '@/parsec/internals';
 import { Mutex } from 'async-mutex';
+import { v4 as uuid4 } from 'uuid';
 
 enum ImportState {
   FileProgress,
@@ -223,8 +223,8 @@ class ImportManager {
   }
 }
 
-export { ImportManager, ImportState, ImportData };
 export { ImportManagerKey } from '@/common/injectionKeys';
+export { ImportData, ImportManager, ImportState };
 
 /*
 

@@ -30,10 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { desktopOutline } from 'ionicons/icons';
+import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import { IonIcon, IonText } from '@ionic/vue';
+import { desktopOutline } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { FormattersKey, Formatters } from '@/common/injectionKeys';
 import { defineProps, inject } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

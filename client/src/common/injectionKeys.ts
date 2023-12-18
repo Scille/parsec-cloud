@@ -12,4 +12,4 @@ const StorageManagerKey = 'storageManager';
 const NotificationKey = 'notification';
 const ImportManagerKey = 'importManager';
 
-export { FormattersKey, StorageManagerKey, NotificationKey, ImportManagerKey };
+export { FormattersKey, ImportManagerKey, NotificationKey, StorageManagerKey };

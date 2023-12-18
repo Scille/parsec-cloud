@@ -58,15 +58,13 @@
 </template>
 
 <script setup lang="ts">
-import { home, folder, document } from 'ionicons/icons';
-import { EntryStat, EntryStatFolder } from '@/parsec';
-import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { modalController, IonList, IonItem, IonLabel, IonIcon, IonListHeader } from '@ionic/vue';
-import { ref, Ref, onMounted } from 'vue';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
-import { entryStat } from '@/parsec';
-import { Path } from '@/parsec';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
+import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import { EntryStat, EntryStatFolder, Path, entryStat } from '@/parsec';
+import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, modalController } from '@ionic/vue';
+import { document, folder, home } from 'ionicons/icons';
+import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath = ref(props.startingPath);
