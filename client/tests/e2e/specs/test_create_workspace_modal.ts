@@ -22,15 +22,15 @@ describe('Check create workspace modal', () => {
   });
 
   it('Create workspace', () => {
-    // Fails sometimes
-    // cy.get('#button-new-workspace').click();
-    // cy.get('.text-input-modal').should('exist');
-    // cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('createButton').contains('Create');
-    // cy.get('@createButton').should('have.class', 'button-disabled');
-    // cy.get('.input').eq(0).find('input').type('MyWorkspace');
-    // cy.get('@createButton').should('not.have.class', 'button-disabled');
-    // cy.get('@createButton').click();
-    // cy.get('.text-input-modal').should('not.exist');
+    cy.get('#button-new-workspace').click();
+    cy.get('.text-input-modal').should('exist');
+    cy.get('.text-input-modal').find('.ms-modal-footer-buttons').find('ion-button').eq(1).as('createButton').contains('Create');
+    cy.get('@createButton').should('have.class', 'button-disabled');
+    cy.get('.text-input-modal').find('.input').find('input').type('MyWorkspace');
+    cy.get('@createButton').should('not.have.class', 'button-disabled');
+    cy.get('@createButton').click();
+    cy.get('.text-input-modal').should('not.exist');
+    cy.checkToastMessage('success', "The workspace 'MyWorkspace' has been created!");
   });
 
   it('Close modal', () => {

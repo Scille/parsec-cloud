@@ -116,7 +116,7 @@ describe('Check workspaces page', () => {
     cy.get('.card').eq(0).find('.card-option').click();
     cy.get('.popover-viewport').find('.menu-list').find('ion-item').eq(8).click();
 
-    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         expect(text).to.eq(

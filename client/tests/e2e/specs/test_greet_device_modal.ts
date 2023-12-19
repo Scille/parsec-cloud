@@ -29,7 +29,7 @@ describe('Greet a new device', () => {
   it('Copy invitation link', () => {
     cy.get('.devices-container').find('ion-button').contains('Add').click();
     cy.get('.greet-organization-modal').find('#copy-link').click();
-    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
@@ -91,7 +91,7 @@ describe('Greet a new device', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage("You didn't select the correct code. Please restart the process.");
+    cy.checkToastMessage('error', "You didn't select the correct code. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');
@@ -109,7 +109,7 @@ describe('Greet a new device', () => {
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None shown').click();
-    cy.checkToastMessage("If you didn't see the correct code, it could be a security concern. Please restart the process.");
+    cy.checkToastMessage('error', "If you didn't see the correct code, it could be a security concern. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');

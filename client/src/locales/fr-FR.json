@@ -237,7 +237,9 @@
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
         "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
         "updateRoleFailure": "Impossible de modifier le rôle de {user}.",
-        "listFailure": "Impossible de récupérer les informations de partage de cet espace de travail."
+        "listFailure": "Impossible de récupérer les informations de partage de cet espace de travail.",
+        "alreadyNotShared": "Cet espace de travail n'est pas partagé avec {user}.",
+        "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
     },
     "SettingsPage": {
         "pageTitle": "Paramètres",
