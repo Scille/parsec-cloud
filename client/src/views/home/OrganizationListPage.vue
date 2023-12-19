@@ -78,7 +78,7 @@ import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Ref, computed, inject, onMounted, onUpdated, ref } from 'vue';
+import { Ref, computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emits = defineEmits<{
@@ -111,10 +111,6 @@ const msSorterLabels = {
 
 onMounted(async (): Promise<void> => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
-  await refreshDeviceList();
-});
-
-onUpdated(async (): Promise<void> => {
   await refreshDeviceList();
 });
 

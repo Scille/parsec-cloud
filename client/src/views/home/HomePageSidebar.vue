@@ -49,12 +49,14 @@ defineEmits<{
 
 <style lang="scss" scoped>
 .sidebar {
+  position: sticky;
+  top: 0;
+  left: 0;
   display: flex;
-  height: 100vh;
+  height: 100%;
   width: 40vw;
   padding: 2rem;
   background: var(--parsec-color-light-gradient);
-  position: relative;
   justify-content: flex-end;
   z-index: -3;
 

@@ -1,24 +1,29 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-card-content class="topbar">
+  <div class="topbar">
     <div class="topbar-content">
-      <ion-card-title
-        color="tertiary"
-        v-if="showBackButton"
+      <slide-horizontal
+        :appear-from="Position.Right"
+        :disappear-to="Position.Right"
       >
-        <ion-button
-          fill="clear"
-          @click="$emit('backClick')"
-          id="back-to-list-button"
+        <div
+          color="tertiary"
+          v-if="showBackButton"
         >
-          <ion-icon
-            slot="start"
-            :icon="chevronBack"
-          />
-          {{ $t('HomePage.organizationLogin.backToList') }}
-        </ion-button>
-      </ion-card-title>
+          <ion-button
+            fill="clear"
+            @click="$emit('backClick')"
+            id="back-to-list-button"
+          >
+            <ion-icon
+              slot="start"
+              :icon="chevronBack"
+            />
+            {{ $t('HomePage.organizationLogin.backToList') }}
+          </ion-button>
+        </div>
+      </slide-horizontal>
       <ion-button
         @click="togglePopover"
         size="large"
@@ -44,13 +49,14 @@
         </ion-button>
       </ion-buttons>
     </div>
-  </ion-card-content>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { MsModalResult } from '@/components/core';
+import { Position, SlideHorizontal } from '@/transitions';
 import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
-import { IonButton, IonButtons, IonCardContent, IonCardTitle, IonIcon, popoverController } from '@ionic/vue';
+import { IonButton, IonButtons, IonIcon, popoverController } from '@ionic/vue';
 import { chevronBack, cog } from 'ionicons/icons';
 import { ref } from 'vue';
 

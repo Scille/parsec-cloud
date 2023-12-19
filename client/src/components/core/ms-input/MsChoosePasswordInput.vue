@@ -18,6 +18,7 @@
         name="password"
         @change="onPasswordChange()"
         @on-enter-keyup="$emit('onEnterKeyup', password)"
+        :autofocus="true"
       />
     </div>
     <div class="ms-password-inputs-container">
