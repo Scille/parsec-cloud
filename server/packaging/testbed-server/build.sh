@@ -1,10 +1,11 @@
-#! /bin/bash
+#!/usr/bin/env bash
+
 # Execute the script like `bash packaging/testbed-server/build.sh ...`
 
 set -e -o pipefail
 
 # Allow the user to overwrite `SCRIPTDIR` by exporting it beforehand.
-SCRIPTDIR=${SCRIPTDIR:=$(dirname $(realpath -s "$0"))}
+SCRIPTDIR=${SCRIPTDIR:=$(dirname "$(realpath -s "$0")")}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
 ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
@@ -33,7 +34,7 @@ echo "On top of that the image will use the following prefix \`$PREFIX\`"
 DOCKER_BUILDKIT=1 docker build \
     -f $SCRIPTDIR/testbed-server.dockerfile \
     -t $PREFIX/parsec-testbed-server:$UNIQ_TAG \
-    $ROOTDIR $@
+    $ROOTDIR "$@"
 
 echo "You can now test/use the docker image with:"
 echo "docker run --publish 6777:6777 --rm --name=parsec-testbed-server $PREFIX/parsec-testbed-server:$UNIQ_TAG"
