@@ -12,6 +12,8 @@ Frozen users will be temporarily blocked from connecting to the Parsec server wh
 
 The freeze mechanism allows to automatically block users who have been deleted from a directory service (such as ``OpenLDAP`` or ``AD``), as it is exposed in the form of HTTP routes that only requires an administration token.
 
+It is also exposed as a command line interface (CLI) command, see :ref:`the section about CLI commands <cli-freeze-user-command>`.
+
 HTTP ``users`` route
 --------------------
 
@@ -110,8 +112,8 @@ There is a subtle difference between the two ways to identify a user. At any giv
 
 The frozen status configured by the ``POST`` method is specifically associated with the Parsec user ID, regardless of the identification method used in the request body. This has the following consequence: if a user is revoked and then a new user is created with the same email address, the frozen status will **not** be applied to the new user.
 
-Error handling
---------------
+HTTP Error handling
+-------------------
 
 The following errors can be returned by the both the ``users`` and ``users/freeze`` routes:
 
@@ -122,3 +124,45 @@ The following errors can be returned by the both the ``users`` and ``users/freez
 Another error can also be returned when the ``users/freeze`` request contains a user that does not exist in the organization:
 
 - User not found: ``404`` with JSON body ``{"error": "user_not_found"}``
+
+.. _cli-freeze-user-command:
+
+CLI ``list_users`` and ``freeze_user`` commands
+-----------------------------------------------
+
+The ``list_users`` command lists all users from a given organization, including their frozen status:
+
+  .. code-block:: bash
+
+    $ parsec core list_users -B "parsec://$server" -T $administration_token $organization
+    • Alice <alice@example.com>
+      - Parsec ID: 67ee640058aa45ca9281717c866baa06
+      - Status: Not frozen
+
+    • Bob <bob@example.com>
+      - Parsec ID: 0d22530361484b86b28e5b2c3a089772
+      - Status: Frozen
+
+    • David <david@example.com>
+      - Parsec ID: 1f1b81052fa947babdbacd6b147b3622
+      - Status: Not Frozen
+
+The ``freeze_user`` command allows to freeze a user from a given organization:
+
+    .. code-block:: bash
+
+      $ parsec core freeze_user -B "parsec://$server" -T $administration_token $organization $user_id
+      David <david@example.com>
+      - Parsec ID: 1f1b81052fa947babdbacd6b147b3622
+      - Status: Frozen
+
+It can also be used to unfreeze a given user:
+
+    .. code-block:: bash
+
+      $ parsec core freeze_user -B "parsec://$server" -T $administration_token --unfreeze $organization $user_id
+      David <david@example.com>
+      - Parsec ID: 1f1b81052fa947babdbacd6b147b3622
+      - Status: Not frozen
+
+The provided ``$user`` can either be a parsec ID or an email address. Use the ``--help`` for more information.
