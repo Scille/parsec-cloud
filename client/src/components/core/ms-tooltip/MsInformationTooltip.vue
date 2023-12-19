@@ -2,9 +2,9 @@
 
 <template>
   <ion-icon
-    slot="end"
+    :slot="slot"
     :icon="informationCircle"
-    class="icon disabled-icon"
+    class="icon"
     @click="openInformationTooltip($event, text)"
   />
 </template>
@@ -16,20 +16,14 @@ import { informationCircle } from 'ionicons/icons';
 
 defineProps<{
   text: string;
+  slot: string;
 }>();
 </script>
 
 <style scoped lang="scss">
 .icon {
-  margin: 0;
-  margin-left: 1em;
-}
-
-.disabled-icon {
-  pointer-events: initial;
-  opacity: 0.8;
   --color: var(--parsec-color-light-secondary-grey);
-  position: relative;
+
   &:hover {
     color: var(--parsec-color-light-secondary-text);
   }

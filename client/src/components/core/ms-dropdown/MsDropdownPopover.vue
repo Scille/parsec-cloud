@@ -29,16 +29,18 @@
         :class="{ selected: selectedOption?.key === option.key }"
         v-if="selectedOption?.key === option.key"
       />
-      <ms-information-tooltip-icon
+      <ms-information-tooltip
         v-if="option.disabled && option.disabledReason"
         :text="option.disabledReason"
+        class="icon disabled-icon"
+        slot="end"
       />
     </ion-item>
   </ion-list>
 </template>
 
 <script setup lang="ts">
-import { MsInformationTooltipIcon, MsOption, MsOptions } from '@/components/core';
+import { MsInformationTooltip, MsOption, MsOptions } from '@/components/core';
 import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
 import { ref } from 'vue';
@@ -136,6 +138,12 @@ async function onOptionClick(option?: MsOption): Promise<void> {
       &__description {
         --color: var(--parsec-color-light-secondary-grey);
       }
+    }
+
+    .disabled-icon {
+      pointer-events: initial;
+      opacity: 0.8;
+      position: relative;
     }
   }
 }
