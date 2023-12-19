@@ -190,7 +190,7 @@ describe('Check folders page', () => {
   it('Tests get file link', () => {
     cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
-    cy.checkToastMessage('The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         expect(text).to.eq(
@@ -231,7 +231,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('One item moved!');
+    cy.checkToastMessage('success', 'One item moved!');
   });
 
   it('Tests move files', () => {
@@ -264,7 +264,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('3 items moved!');
+    cy.checkToastMessage('success', '3 items moved!');
   });
 
   it('Tests copy one file', () => {
@@ -298,7 +298,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('One item copied!');
+    cy.checkToastMessage('success', 'One item copied!');
   });
 
   it('Tests copy files', () => {
@@ -332,6 +332,6 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('3 items copied!');
+    cy.checkToastMessage('success', '3 items copied!');
   });
 });

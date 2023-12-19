@@ -132,6 +132,27 @@ onUnmounted(() => {
 });
 
 async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Promise<void> {
+  const current = userRoles.value.find((item) => item[0].id === user.id);
+
+  // Trying to set the same role again
+  if (current && current[1] === role) {
+    if (role === null) {
+      notificationManager.showToast(
+        new Notification({
+          message: t('WorkspaceSharing.alreadyNotShared', { user: user.humanHandle.label }),
+          level: NotificationLevel.Info,
+        }),
+      );
+    } else {
+      notificationManager.showToast(
+        new Notification({
+          message: t('WorkspaceSharing.alreadyHasRole', { user: user.humanHandle.label, role: translateWorkspaceRole(t, role).label }),
+          level: NotificationLevel.Info,
+        }),
+      );
+    }
+    return;
+  }
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {

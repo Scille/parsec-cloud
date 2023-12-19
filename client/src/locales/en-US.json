@@ -237,7 +237,9 @@
         "unshareSuccess": "The workspace is no longer shared with {user}.",
         "updateRoleSuccess": "{user}'s role has been updated to {role}.",
         "updateRoleFailure": "Could not update {user}'s role.",
-        "listFailure": "Could not get the sharing information for this workspace."
+        "listFailure": "Could not get the sharing information for this workspace.",
+        "alreadyNotShared": "This workspace is not shared with {user}.",
+        "alreadyHasRole": "{user} is already {role} on this workspace."
     },
     "SettingsPage": {
         "pageTitle": "Settings",
