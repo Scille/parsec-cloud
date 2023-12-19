@@ -2339,7 +2339,6 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
- "hex-literal",
  "libparsec",
  "predicates",
  "reqwest",

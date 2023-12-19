@@ -2,7 +2,9 @@
 
 mod bootstrap_organization;
 mod cancel_invitation;
+mod claim_invitation;
 mod create_organization;
+mod greet_invitation;
 mod invite_device;
 mod invite_user;
 mod list_devices;
@@ -28,12 +30,16 @@ enum Command {
     BootstrapOrganization(bootstrap_organization::BootstrapOrganization),
     /// Cancel invitation
     CancelInvitation(cancel_invitation::CancelInvitation),
+    /// Claim invitation
+    ClaimInvitation(claim_invitation::ClaimInvitation),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
     /// Create device invitation
     InviteDevice(invite_device::InviteDevice),
     /// Create user invitation
     InviteUser(invite_user::InviteUser),
+    /// Greet invitation
+    GreetInvitation(greet_invitation::GreetInvitation),
     /// List all devices
     ListDevices(list_devices::ListDevices),
     #[cfg(feature = "testenv")]
@@ -55,11 +61,17 @@ async fn main() -> anyhow::Result<()> {
         Command::CancelInvitation(cancel_invitation) => {
             cancel_invitation::cancel_invitation(cancel_invitation).await
         }
+        Command::ClaimInvitation(claim_invitation) => {
+            claim_invitation::claim_invitation(claim_invitation).await
+        }
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
         }
         Command::InviteDevice(invite_device) => invite_device::invite_device(invite_device).await,
         Command::InviteUser(invite_user) => invite_user::invite_user(invite_user).await,
+        Command::GreetInvitation(greet_invitation) => {
+            greet_invitation::greet_invitation(greet_invitation).await
+        }
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,

@@ -4,7 +4,8 @@ use std::{future::Future, path::PathBuf, sync::Arc};
 
 use libparsec::{
     list_available_devices, load_device, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
-    DeviceFileType, LocalDevice, ProxyConfig,
+    DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
+    UserProfile,
 };
 use terminal_spinners::{SpinnerBuilder, SpinnerHandle, DOTS};
 
@@ -108,4 +109,83 @@ where
 
 pub fn start_spinner(text: &'static str) -> SpinnerHandle {
     SpinnerBuilder::new().spinner(&DOTS).text(text).start()
+}
+
+pub fn choose_password() -> anyhow::Result<Password> {
+    loop {
+        let password = rpassword::prompt_password("Enter password for the new device:")?.into();
+        let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
+
+        if password == confirm_password {
+            return Ok(password);
+        } else {
+            eprintln!("Password mismatch")
+        }
+    }
+}
+
+pub fn choose_device_label(input: &mut String) -> anyhow::Result<DeviceLabel> {
+    loop {
+        println!("Enter device label:");
+        input.clear();
+        std::io::stdin().read_line(input)?;
+
+        match input.trim().parse() {
+            Ok(device_label) => return Ok(device_label),
+            Err(e) => eprintln!("{e}"),
+        }
+    }
+}
+
+pub fn choose_human_handle(input: &mut String) -> anyhow::Result<HumanHandle> {
+    loop {
+        println!("Enter email:");
+        input.clear();
+        std::io::stdin().read_line(input)?;
+
+        let email = input.trim().to_string();
+
+        println!("Enter name:");
+        input.clear();
+        std::io::stdin().read_line(input)?;
+
+        let name = input.trim();
+
+        match HumanHandle::new(&email, name) {
+            Ok(human_handle) => return Ok(human_handle),
+            Err(e) => eprintln!("{e}"),
+        }
+    }
+}
+
+pub fn choose_sas_code(
+    input: &mut String,
+    sas_codes: &[SASCode],
+    expected: &SASCode,
+) -> anyhow::Result<()> {
+    std::io::stdin().read_line(input)?;
+
+    match sas_codes.get(input.trim().parse::<usize>()?) {
+        Some(sas_code) if sas_code == expected => Ok(()),
+        Some(_) => Err(anyhow::anyhow!("Invalid SAS code")),
+        None => Err(anyhow::anyhow!("Invalid input")),
+    }
+}
+
+pub fn choose_user_profile(input: &mut String) -> anyhow::Result<UserProfile> {
+    println!("Which profile ? (0, 1, 2)");
+    println!(" 0 - {YELLOW}Standard{RESET}");
+    println!(" 1 - {YELLOW}Admin{RESET}");
+    println!(" 2 - {YELLOW}Outsider{RESET}");
+    loop {
+        input.clear();
+        std::io::stdin().read_line(input)?;
+
+        match input.trim() {
+            "0" => return Ok(UserProfile::Standard),
+            "1" => return Ok(UserProfile::Admin),
+            "2" => return Ok(UserProfile::Outsider),
+            _ => eprintln!("Invalid input, choose between 0, 1 or 2"),
+        }
+    }
 }
