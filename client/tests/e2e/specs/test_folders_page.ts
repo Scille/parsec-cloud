@@ -75,7 +75,7 @@ describe('Check folders page', () => {
     checkMenuItems();
   });
 
-  it('Tests select a file', () => {
+  it('Tests select a file in list view', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
@@ -94,7 +94,26 @@ describe('Check folders page', () => {
     cy.get('.counter').contains('3 items');
   });
 
-  it('Tests select all files', () => {
+  it('Tests select a file in grid view', () => {
+    cy.get('#folders-ms-action-bar').find('#grid-view').as('gridButton').click();
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').should('not.be.visible');
+    cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
+    // Make the checkbox appear
+    cy.get('.file-card-item').eq(0).trigger('mouseenter');
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').should('be.visible');
+    // Select the first file
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').click();
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.counter').contains('1 selected item');
+    // Unselect the first file
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').click();
+    cy.get('.file-card-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
+    cy.get('.counter').contains('3 items');
+  });
+
+  it('Tests select all files in list view', () => {
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').should('not.have.class', 'checkbox-checked');
     // Select all
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
@@ -119,8 +138,24 @@ describe('Check folders page', () => {
     cy.get('.counter').contains('2 selected item');
   });
 
-  it('Tests delete one file', () => {
+  it('Tests delete one file in list view', () => {
+    // list view
     cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
+    cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
+    cy.get('.question-modal')
+      .find('.ms-modal-header__text')
+      .contains(/Are you sure you want to delete the file `File_[a-z_]+`?/);
+
+    cy.get('.question-modal').find('#next-button').click();
+    cy.get('.question-modal').should('not.exist');
+    cy.get('@consoleLog').should('have.been.called.with', /File File_[a-z_]+ deleted/);
+  });
+
+  it('Tests delete one file in grid view', () => {
+    cy.get('#folders-ms-action-bar').find('#grid-view').as('gridButton');
+    cy.get('@gridButton').click();
+    cy.get('.file-card-item').first().find('.card-option').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
@@ -139,13 +174,8 @@ describe('Check folders page', () => {
     cy.get('.question-modal').find('.ms-modal-header__text').contains('Are you sure you want to delete these 3 items?');
     cy.get('.question-modal').find('#next-button').contains('Delete 3 items').click();
     cy.get('.question-modal').should('not.exist');
-
-    // Absolutely no idea why this doesn't work. It's exactly the same as for one file,
-    // but somehow it does nothing: the question dialog is dismissed, the files are not deleted,
-    // nothing is logged.
-
-    // cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    // cy.get('@consoleLog').should('have.been.called.with', '3 entries deleted');
+    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('@consoleLog').should('have.been.called.with', '3 entries deleted');
   });
 
   it('Tests file details', () => {

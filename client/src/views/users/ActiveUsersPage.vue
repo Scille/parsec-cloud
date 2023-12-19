@@ -112,30 +112,22 @@
             v-else
             class="users-container-grid"
           >
-            <ion-item
-              class="users-grid-item"
+            <user-card
               :disabled="true"
-            >
-              <user-card
-                :user="userList.find((user) => isCurrentUser(user.id))!"
-                :show-checkbox="false"
-                :show-options="false"
-              />
-            </ion-item>
-            <ion-item
-              class="users-grid-item"
+              :user="userList.find((user) => isCurrentUser(user.id))!"
+              :show-checkbox="false"
+              :show-options="false"
+            />
+            <user-card
               v-for="user in userList.filter((user) => !isCurrentUser(user.id))"
               :key="user.id"
-            >
-              <user-card
-                ref="userGridItemRefs"
-                :user="user"
-                :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                @menu-click="openUserContextMenu"
-                @select="onUserSelect"
-                :show-options="selectedUsersCount === 0"
-              />
-            </ion-item>
+              :user="user"
+              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
+              :show-options="selectedUsersCount === 0"
+              @menu-click="openUserContextMenu"
+              @select="onUserSelect"
+              ref="userGridItemRefs"
+            />
           </div>
         </div>
       </div>
@@ -163,7 +155,6 @@ import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import {
   IonCheckbox,
   IonContent,
-  IonItem,
   IonLabel,
   IonList,
   IonListHeader,
@@ -503,15 +494,15 @@ onUnmounted(async () => {
   }
 }
 
+.users-container > div {
+  height: 100%;
+}
+
 .users-container-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 1.5em;
   overflow-y: auto;
-}
-
-.users-grid-item {
-  --inner-padding-end: 0px;
-  --inner-padding-start: 0px;
+  height: 100%;
 }
 </style>

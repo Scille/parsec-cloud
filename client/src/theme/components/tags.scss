@@ -6,6 +6,7 @@
   padding: 0.25rem 0.5rem;
   min-height: auto;
   margin: 0;
+  cursor: default;
 }
 
 .label-role {
@@ -35,6 +36,7 @@
 }
 
 .profile {
+  pointer-events: none;
   .admin {
     background-color: var(--parsec-color-tags-indigo100);
     color: var(--parsec-color-tags-indigo500);

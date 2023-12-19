@@ -27,6 +27,8 @@ describe('File Card Item', () => {
     const wrapper = mount(FileCard, {
       props: {
         file: FILE,
+        showCheckbox: true,
+        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -61,6 +63,8 @@ describe('File Card Item', () => {
     const wrapper = mount(FileCard, {
       props: {
         file: FOLDER,
+        showCheckbox: true,
+        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

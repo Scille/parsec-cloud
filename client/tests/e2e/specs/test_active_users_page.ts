@@ -38,7 +38,7 @@ describe('Check active users page', () => {
     cy.get('@userItems').eq(2).find('.label-profile').contains('Admin');
   });
 
-  it('Tests selection', () => {
+  it('Tests selection list item', () => {
     function checkChecked(checked: boolean): void {
       for (let i = 1; i < 3; i++) {
         cy.get('@userItems')
@@ -89,6 +89,21 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(false);
     cy.get('.counter').contains('3 users');
+  });
+
+  it('Tests selection grid item', () => {
+    cy.get('#activate-users-ms-action-bar').find('#grid-view').as('gridButton').click();
+
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
+    cy.get('.users-container-grid').find('.user-card-item').as('userItems').should('have.length', 3);
+
+    cy.get('@userItems').eq(1).realHover().find('.checkbox').should('be.visible');
+
+    cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('exist');
+
+    cy.get('@userItems').eq(2).realHover().find('.checkbox').click();
+    cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
+    cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('View details');
   });
 
   it('Tests context menu', () => {

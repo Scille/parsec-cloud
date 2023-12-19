@@ -1,12 +1,23 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="card"
+  <ion-item
+    class="file-card-item ion-no-padding"
+    :class="{ selected: isSelected }"
     @click="$emit('click', $event, file)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
+    <div class="card-checkbox">
+      <ion-checkbox
+        aria-label=""
+        class="checkbox"
+        v-model="isSelected"
+        v-show="isSelected || isHovered || showCheckbox"
+        @click.stop
+        @ion-change="$emit('select', file, isSelected)"
+      />
+    </div>
     <div
       class="card-option"
       v-show="isHovered || menuOpened"
@@ -15,9 +26,9 @@
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
     <div class="card-content">
-      <ion-avatar class="card-content-icons">
+      <ion-avatar class="card-content__icons">
         <ion-icon
-          class="card-content-icons__item"
+          class="icon-item"
           :icon="file.isFile() ? document : folder"
         />
         <ion-icon
@@ -27,7 +38,7 @@
         />
       </ion-avatar>
 
-      <ion-title class="card-content__title body-lg">
+      <ion-title class="card-content__title body">
         {{ file.name }}
       </ion-title>
 
@@ -36,27 +47,35 @@
         <span>{{ timeSince(file.updated, '--', 'short') }}</span>
       </ion-text>
     </div>
-  </div>
+  </ion-item>
 </template>
 
 <script setup lang="ts">
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import { EntryStat } from '@/parsec';
-import { IonAvatar, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
 import { inject, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+const isSelected = ref(false);
 
 const props = defineProps<{
   file: EntryStat;
+  showCheckbox: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'click', event: Event, file: EntryStat): void;
   (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
+  (e: 'select', file: EntryStat, selected: boolean): void;
 }>();
+
+defineExpose({
+  isSelected,
+  props,
+});
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
@@ -74,87 +93,116 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.card {
-  padding: 2rem 1em 1em;
+.file-card-item {
+  position: relative;
   cursor: pointer;
   text-align: center;
-  background-color: var(--parsec-color-light-secondary-background);
+  --background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
   user-select: none;
-  border-radius: 8px;
-  width: 14rem;
+  border-radius: var(--parsec-radius-12);
+  width: 10.5rem;
+
+  &::part(native) {
+    --inner-padding-end: 0px;
+  }
 
   &:hover {
-    background-color: var(--parsec-color-light-primary-30);
-    // box-shadow: var(--parsec-shadow-light);
+    --background: var(--parsec-color-light-primary-30);
+    --background-hover: var(--parsec-color-light-primary-30);
+    --background-hover-opacity: 1;
   }
+
+  &.selected {
+    --background: var(--parsec-color-light-primary-100);
+    --background-hover: var(--parsec-color-light-primary-100);
+    border: 1px solid var(--parsec-color-light-primary-100);
+  }
+}
+
+.card-option,
+.card-checkbox {
+  position: absolute;
+}
+
+.card-checkbox {
+  left: 0.5rem;
+  top: 0.5rem;
 }
 
 .card-option {
   color: var(--parsec-color-light-secondary-grey);
   text-align: right;
-  position: absolute;
   display: flex;
   align-items: center;
   top: 0;
-  right: 1rem;
+  right: 0;
   font-size: 1.5rem;
   padding: 0.5rem;
+  cursor: pointer;
 
   &:hover {
     color: var(--parsec-color-light-primary-500);
   }
 }
 
-.card-content-icons {
-  margin: 0 auto 0.5rem;
-  position: relative;
-  height: fit-content;
+.card-content {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  color: var(--parsec-color-light-primary-600);
+  justify-content: center;
+  padding: 1.5rem 0.5rem;
   width: 100%;
+  margin: auto;
 
-  &__item {
-    font-size: 2.5rem;
+  &__icons {
+    position: relative;
+    color: var(--parsec-color-light-primary-600);
+    height: fit-content;
+    width: fit-content;
+    margin: 0 auto 0.875rem;
+
+    .icon-item {
+      font-size: 3rem;
+    }
+
+    .cloud-overlay {
+      position: absolute;
+      font-size: 1.25rem;
+      left: 58%;
+      bottom: -2px;
+      padding: 2px;
+      background: var(--parsec-color-light-secondary-background);
+      border-radius: 50%;
+    }
+
+    .cloud-overlay-ok {
+      color: var(--parsec-color-light-primary-500);
+    }
+
+    .cloud-overlay-ko {
+      color: var(--parsec-color-light-secondary-text);
+    }
   }
 
-  .cloud-overlay {
-    position: absolute;
-    font-size: 1.25rem;
-    bottom: -10px;
-    left: 54%;
-    padding: 2px;
-    background: white;
-    border-radius: 50%;
-  }
-
-  .cloud-overlay-ok {
-    color: var(--parsec-color-light-primary-500);
-  }
-
-  .cloud-overlay-ko {
-    color: var(--parsec-color-light-secondary-text);
-  }
-}
-
-.card-content__title {
-  color: var(--parsec-color-light-primary-900);
-  font-size: 18px;
-  text-align: center;
-
-  ion-text {
-    width: 100%;
-    overflow: hidden;
+  &__title {
+    color: var(--parsec-color-light-primary-900);
+    text-align: center;
+    padding: 0 0 0.25rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+    width: inherit;
+
+    ion-text {
+      width: 100%;
+      overflow: hidden;
+    }
   }
 }
 
 .card-content-last-update {
   color: var(--parsec-color-light-secondary-grey);
   text-align: center;
-  margin: 0.5rem 0 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
