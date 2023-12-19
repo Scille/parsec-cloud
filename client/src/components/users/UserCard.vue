@@ -1,8 +1,8 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="card"
+  <ion-item
+    class="user-card-item ion-no-padding"
     :detail="false"
     :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
     @click="$emit('click', $event, user)"
@@ -36,18 +36,18 @@
       <ion-text class="user-name body">
         {{ user.humanHandle.label }}
       </ion-text>
-      <ion-title class="user-profile body-lg">
+      <div class="user-profile">
         <tag-profile :profile="user.currentProfile" />
-      </ion-title>
+      </div>
     </div>
-  </div>
+  </ion-item>
 </template>
 
 <script setup lang="ts">
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserInfo } from '@/parsec';
-import { IonAvatar, IonCheckbox, IonIcon, IonText, IonTitle } from '@ionic/vue';
+import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { defineEmits, defineExpose, defineProps, ref } from 'vue';
 
@@ -85,25 +85,27 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.card {
-  border: 1px solid var(--parsec-color-light-secondary-light);
-  padding: 1rem 0.5rem 1.5rem;
-  min-width: 11.25rem;
-  border-radius: var(--parsec-radius-6);
-  overflow: hidden;
+.user-card-item {
+  --background: none;
+  --background-hover: none;
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  width: 10.5rem;
+  border-radius: var(--parsec-radius-12);
   position: relative;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  transition: box-shadow 150ms ease-in-out;
-  overflow: visible;
-  padding: 1rem;
+  height: fit-content;
 
-  &:hover {
-    background: var(--parsec-color-light-primary-30);
-    box-shadow: var(--parsec-shadow-light);
+  &::part(native) {
+    --inner-padding-end: 0px;
   }
 
-  &.item-checkbox-checked {
-    background: var(--parsec-color-light-primary-100);
+  &:hover:not(.item-disabled) {
+    background: var(--parsec-color-light-primary-30);
+  }
+
+  &.selected {
+    --background: var(--parsec-color-light-primary-100);
+    border: 1px solid var(--parsec-color-light-primary-100);
   }
 }
 
@@ -113,13 +115,24 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .card-checkbox {
-  left: 1rem;
+  left: 0.5rem;
+  top: 0.5rem;
 }
 
 .card-option {
-  right: 1rem;
-  font-size: 1.5rem;
   color: var(--parsec-color-light-secondary-grey);
+  text-align: right;
+  display: flex;
+  align-items: center;
+  top: 0;
+  right: 0;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--parsec-color-light-primary-500);
+  }
 }
 
 .card-content {
@@ -128,10 +141,9 @@ async function onOptionsClick(event: Event): Promise<void> {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  padding: 1.5rem 0.5rem;
+  width: 100%;
+  margin: auto;
   color: var(--parsec-color-light-secondary-text);
-
-  .card-content-avatar {
-    margin: 1rem;
-  }
 }
 </style>

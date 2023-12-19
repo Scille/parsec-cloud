@@ -94,10 +94,7 @@
               {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
             </ion-text>
           </div>
-          <ms-grid-list-toggle
-            v-model="displayView"
-            @update:model-value="resetSelection()"
-          />
+          <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
       <div class="folder-container scroll">
@@ -140,7 +137,7 @@
               @click="onFileClick"
               @menu-click="openFileContextMenu"
               @select="onFileSelect"
-              ref="fileItemRefs"
+              ref="fileListItemRefs"
             />
           </ion-list>
         </div>
@@ -148,17 +145,16 @@
           v-if="children.length && displayView === DisplayState.Grid"
           class="folders-container-grid"
         >
-          <ion-item
+          <file-card
             class="folder-grid-item"
             v-for="child in children"
             :key="child.id"
-          >
-            <file-card
-              :file="child"
-              @click="onFileClick"
-              @menu-click="openFileContextMenu"
-            />
-          </ion-item>
+            :file="child"
+            :show-checkbox="selectedFilesCount > 0"
+            @click="onFileClick"
+            @menu-click="openFileContextMenu"
+            ref="fileGridItemRefs"
+          />
         </div>
       </div>
     </ion-content>
@@ -190,7 +186,6 @@ import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import {
   IonCheckbox,
   IonContent,
-  IonItem,
   IonLabel,
   IonList,
   IonListHeader,
@@ -206,7 +201,8 @@ import { useRoute } from 'vue-router';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const fileItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
+const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
+const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
 const allFilesSelected = ref(false);
 const currentRoute = useRoute();
 const unwatchRoute = watch(currentRoute, async (newRoute) => {
@@ -226,11 +222,10 @@ const workspaceId = computed(() => {
 });
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const children: Ref<Array<parsec.EntryStat>> = ref([]);
-const selectedFilesCount = computed(() => {
-  const count = fileItemRefs.value.filter((item) => item.isSelected).length;
-  return count;
-});
 const displayView = ref(DisplayState.List);
+const selectedFilesCount = computed(() => {
+  return getSelectedEntries().length;
+});
 const { t } = useI18n();
 const importManager = inject(ImportManagerKey) as ImportManager;
 let callbackId: string | null = null;
@@ -345,7 +340,7 @@ async function importFiles(): Promise<void> {
 }
 
 function selectAllFiles(checked: boolean): void {
-  for (const item of fileItemRefs.value || []) {
+  for (const item of displayView.value === DisplayState.List ? fileListItemRefs.value : fileGridItemRefs.value) {
     item.isSelected = checked;
     item.showCheckbox = checked;
   }
@@ -353,10 +348,11 @@ function selectAllFiles(checked: boolean): void {
 }
 
 function getSelectedEntries(): parsec.EntryStat[] {
-  if (!fileItemRefs.value) {
-    return [];
+  if (displayView.value === DisplayState.List) {
+    return fileListItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
+  } else {
+    return fileGridItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
   }
-  return fileItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
 }
 
 async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
@@ -701,11 +697,6 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
   if (onFinished) {
     onFinished();
   }
-}
-
-async function resetSelection(): Promise<void> {
-  fileItemRefs.value = [];
-  allFilesSelected.value = false;
 }
 </script>
 

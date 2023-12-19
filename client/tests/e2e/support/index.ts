@@ -30,6 +30,7 @@
 export {};
 
 import 'cypress-file-upload';
+import 'cypress-real-events/support';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
