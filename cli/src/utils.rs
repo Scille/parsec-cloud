@@ -65,7 +65,7 @@ where
                             password,
                         };
 
-                        // The password is invalid or the binary is compiled with fast crypto
+                        // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
                         load_device(&config_dir, &access).await?
                     }
                     DeviceFileType::Smartcard => {
