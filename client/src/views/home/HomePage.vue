@@ -19,19 +19,22 @@
             :show-back-button="state !== HomePageState.OrganizationList"
           />
 
-          <!-- <slide-horizontal :reverse-direction="state === HomePageState.Login"> -->
-          <template v-if="state === HomePageState.OrganizationList">
-            <organization-list-page @organization-select="onOrganizationSelected" />
-          </template>
-          <!-- after animation -->
-          <template v-if="state === HomePageState.Login && selectedDevice">
-            <login-page
-              :device="selectedDevice"
-              @login-click="login"
-              @forgotten-password-click="onForgottenPasswordClicked"
-            />
-          </template>
-          <!-- </slide-horizontal> -->
+          <slide-horizontal
+            :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
+            :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
+          >
+            <template v-if="state === HomePageState.OrganizationList">
+              <organization-list-page @organization-select="onOrganizationSelected" />
+            </template>
+            <!-- after animation -->
+            <template v-if="state === HomePageState.Login && selectedDevice">
+              <login-page
+                :device="selectedDevice"
+                @login-click="login"
+                @forgotten-password-click="onForgottenPasswordClicked"
+              />
+            </template>
+          </slide-horizontal>
         </div>
         <!-- end of organization -->
       </div>
@@ -44,14 +47,15 @@ import { NotificationKey } from '@/common/injectionKeys';
 
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
-import HomePageHeader from '@/components/header/HomePageHeader.vue';
-import HomePageSidebar from '@/components/header/HomePageSidebar.vue';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
+import { Position, SlideHorizontal } from '@/transitions';
 import AboutModal from '@/views/about/AboutModal.vue';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
+import HomePageHeader from '@/views/home/HomePageHeader.vue';
+import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
@@ -217,13 +221,13 @@ async function onJoinOrganizationClicked(): Promise<void> {
   flex-direction: row;
   overflow: hidden;
   margin: 0 auto;
-  align-items: center;
+  align-items: self-start;
   position: relative;
   z-index: -4;
 }
 
 .right-side {
-  height: 100vh;
+  height: 100%;
   width: 60vw;
   background: var(--parsec-color-light-secondary-inversed-contrast);
   flex-direction: column;

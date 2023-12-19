@@ -74,15 +74,18 @@ const password = ref('');
 
 <style lang="scss" scoped>
 .login-popup {
+  height: 100%;
   box-shadow: none;
   display: flex;
-  align-items: center;
   flex-grow: 1;
   margin: 0;
+  flex-shrink: 0;
+  margin: 0;
+  width: 60vw;
 
   .organization-container {
     max-width: 52.5rem;
-    padding: 0 3.5rem 8.5rem;
+    padding: 2rem 3.5rem 0;
     flex-grow: 1;
   }
 

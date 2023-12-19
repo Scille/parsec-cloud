@@ -15,6 +15,7 @@
       :label="inputLabel || ''"
       v-model="password"
       @on-enter-keyup="confirm()"
+      :autofocus="true"
     />
   </ms-modal>
 </template>

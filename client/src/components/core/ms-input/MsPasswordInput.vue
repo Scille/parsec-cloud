@@ -17,9 +17,9 @@
             @ion-input="onChange($event.target.value)"
             :value="modelValue"
             @keyup.enter="onEnterPress()"
-            :autofocus="true"
             id="ms-password-input"
             :clear-on-edit="false"
+            :autofocus="autofocus || false"
           />
           <div
             class="input-icon"
@@ -44,6 +44,7 @@ import { ref } from 'vue';
 const props = defineProps<{
   label: string;
   modelValue?: string;
+  autofocus?: boolean;
 }>();
 
 const emits = defineEmits<{
