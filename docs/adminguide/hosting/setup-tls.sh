@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 function generate_cert_conf() {
     local name=$1
@@ -66,12 +66,12 @@ for service in parsec-{s3,server}; do
     fi
 done
 
-if [ $(stat -c %g parsec-server.key) -ne 1234 ]; then
+if [ "$(stat -c %g parsec-server.key)" -ne 1234 ]; then
     echo "Changing group id of parsec-server.key to 1234"
     sudo chown $USER:1234 parsec-server.key
 fi
 
-if [ $(stat -c %a parsec-server.key) -ne 640 ]; then
+if [ "$(stat -c %a parsec-server.key)" -ne 640 ]; then
     echo "Changing permission of parsec-server.key to 640"
     chmod 640 parsec-server.key
 fi

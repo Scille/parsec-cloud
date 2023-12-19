@@ -1,10 +1,11 @@
-#! /bin/bash
+#!/usr/bin/env bash
+
 # Execute the script line `bash packaging/backend/build.sh ...`
 
 set -e -o pipefail
 
 # Allow the user to overwrite `SCRIPTDIR` by exporting it beforehand.
-SCRIPTDIR=${SCRIPTDIR:=$(dirname $(realpath -s "$0"))}
+SCRIPTDIR=${SCRIPTDIR:=$(dirname "$(realpath -s "$0")")}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
 ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
@@ -28,7 +29,7 @@ DOCKER_BUILDKIT=1 docker build \
     -f $SCRIPTDIR/server.dockerfile \
     -t $PREFIX/$IMAGE_NAME:latest \
     -t $PREFIX/$IMAGE_NAME:$UNIQ_TAG \
-    $ROOTDIR $@
+    $ROOTDIR "$@"
 
 echo
 echo "You can now test/use the docker image with:"

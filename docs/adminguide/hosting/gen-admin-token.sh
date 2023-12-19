@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ENV_FILE=parsec-admin-token.env
 if [ ! -f $ENV_FILE ]; then

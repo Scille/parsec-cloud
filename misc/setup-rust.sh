@@ -1,15 +1,11 @@
-#!bash
+#!/usr/bin/env bash
 
-# Script that install the specific rust toolchain
-#
-# It will install rust with the minimal profile
+# Installs the specific rust toolchain with the minimal profile
 #
 # Basic usage:
-#
 # ```bash
 # $ bash setup-rust.sh
 # ```
-
 
 set -eux
 set -o pipefail

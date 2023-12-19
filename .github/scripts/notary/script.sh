@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-SCRIPTDIR=${SCRIPTDIR:="$(dirname $(realpath -s "$0"))"}
+
+SCRIPTDIR=${SCRIPTDIR:="$(dirname "$(realpath -s "$0")")"}
 source "$SCRIPTDIR"/lib.sh
 
 if [ $# -ne 2 ]; then

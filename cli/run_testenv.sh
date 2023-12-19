@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
-: '
-Create a temporary environment and initialize a test setup for parsec.
 
-Run `tests/scripts/run_testenv.sh --help` for more information.
-
-For MacOS, please install coreutils from brew to get realpath:
-`brew install coreutils`
-'
+# Create a temporary environment and initialize a test setup for Parsec.
+#
+# For MacOS, please install coreutils from brew to get realpath:
+#`brew install coreutils`
 
 # Make sure this script is sourced
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]
 then
-    echo "This script must be sourced. Use --help for more information."
+    echo "This script must be sourced:"
+    echo ". ./run_testenv.sh"
     exit 1
 fi
 
-# Prevent pre-commit from losing it work dir
+# Prevent pre-commit from losing its work dir
 if [[ -z "$PRE_COMMIT_HOME" ]]
 then
     if [[ -z "$XDG_CACHE_HOME" ]]
@@ -29,10 +27,10 @@ fi
 # In Python we trust (aka shell's tempfile&mktemp doesn't work on all platforms)
 SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
-cargo run --package parsec_cli --features testenv run-testenv --main-process-id $$ --source-file "$SOURCE_FILE" $@ || return $?
-source $SOURCE_FILE
+cargo run --package parsec_cli --features testenv run-testenv --main-process-id $$ --source-file "$SOURCE_FILE" "$@" || return $?
+source "$SOURCE_FILE"
 
 # Clean up
-rm $SOURCE_FILE
+rm "$SOURCE_FILE"
 unset SOURCE_FILE
 unset SCRIPT_DIR

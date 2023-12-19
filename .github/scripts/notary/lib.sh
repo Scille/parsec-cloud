@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-SCRIPTDIR=${SCRIPTDIR:="$(dirname $(realpath -s "$0"))"}
+
+SCRIPTDIR=${SCRIPTDIR:="$(dirname "$(realpath -s "$0")")"}
 QUERY_FOLDER=$SCRIPTDIR/graphql
 
 # List project fields like `status`, `tag`, `labels` and other
@@ -10,7 +11,7 @@ function list_project_fields() {
 
     gh api graphql \
         -f project="$project_id" \
-        -f query="$(<$QUERY_FILE)" \
+        -f query="$(<"$QUERY_FILE")" \
         --jq .data.node.fields.nodes | cat
 }
 
@@ -23,8 +24,8 @@ function update_project_item_field() {
         -f project="$1" \
         -f item="$2" \
         -f field="$3" \
-        -f field_value="$4"
-        -f query="$(<$QUERY_FILE)" | cat
+        -f field_value="$4" \
+        -f query="$(<"$QUERY_FILE")" | cat
 }
 
 # Retrieve the organization project identified by:
@@ -43,7 +44,7 @@ function get_project_v2() {
     gh api graphql \
         -f organization="$organization" \
         -F number="$project_number" \
-        -f query="$(<${QUERY_FILE})" \
+        -f query="$(<"$QUERY_FILE")" \
         --jq .data.organization.projectV2 | cat
 }
 
@@ -57,7 +58,7 @@ function add_item_to_project() {
     gh api graphql \
         -f project="$project_id" \
         -f item="$item_id" \
-        -f query="$(<$QUERY_FILE)" \
+        -f query="$(<"$QUERY_FILE")" \
         --jq .data.addProjectV2ItemById.item | cat
 }
 
@@ -66,5 +67,5 @@ function project_status_field_with_init_value() {
     local project_id=$1
     local init_status_name=$2
 
-    list_project_fields $project_id | jq ". | map(select(.name == \"Status\"))[0] | {\"name\": .name, \"id\": .id, \"init_status_id\": .options | map(select(.name == \"$init_status_name\"))[0].id }"
+    list_project_fields "$project_id" | jq ". | map(select(.name == \"Status\"))[0] | {\"name\": .name, \"id\": .id, \"init_status_id\": .options | map(select(.name == \"$init_status_name\"))[0].id }"
 }
