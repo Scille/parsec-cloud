@@ -2,6 +2,6 @@
 
 export * from '@/components/core/ms-tooltip/utils';
 
-import MsInformationTooltipIcon from '@/components/core/ms-tooltip/MsInformationTooltipIcon.vue';
+import MsInformationTooltip from '@/components/core/ms-tooltip/MsInformationTooltip.vue';
 
-export { MsInformationTooltipIcon };
+export { MsInformationTooltip };
