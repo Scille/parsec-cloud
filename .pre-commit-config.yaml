@@ -80,6 +80,24 @@ repos:
           - "@cspell/dict-shell"
           - "@cspell/dict-win32"
 
+  # ShellCheck, the static analysis tool for shell scripts
+  #
+  # We do not use the official pre-commit hook [0] because it requires
+  # docker executable (see [1]).
+  # To learn more about a specific error or warning, take a look at
+  # shellcheck's wiki (e.g. for SC1090 directive, see [2]).
+  # [0] https://github.com/koalaman/shellcheck-precommit
+  # [1] https://github.com/koalaman/shellcheck/issues/2495
+  # [2] https://www.shellcheck.net/wiki/SC1090
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.9.0.6
+    hooks:
+      - id: shellcheck
+        args: [
+          --exclude=SC1090,    # Do not follow non-constant sources
+          --severity=warning,  # Optionally only show errors and warnings
+        ]
+
   ########
   # Python
 
