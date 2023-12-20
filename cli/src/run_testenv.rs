@@ -364,7 +364,7 @@ pub async fn new_environment(
         while reader.read_line(&mut buf).is_ok() {
             if buf.contains("All set !") {
                 #[cfg(target_os = "windows")]
-                std::thread::sleep(std::time::Duration::from_millis(500));
+                std::thread::sleep(std::time::Duration::from_millis(100));
                 break;
             }
             buf.clear();
