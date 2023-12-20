@@ -3,7 +3,6 @@
 use clap::Args;
 use reqwest::Client;
 use serde_json::Value;
-use terminal_spinners::{SpinnerBuilder, DOTS};
 
 use libparsec::{BackendAddr, BackendOrganizationBootstrapAddr, OrganizationID};
 
@@ -57,10 +56,7 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
         token,
     } = create_organization;
 
-    let handle = SpinnerBuilder::new()
-        .spinner(&DOTS)
-        .text("Creating organization")
-        .start();
+    let handle = start_spinner("Creating organization");
 
     let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await?;
 

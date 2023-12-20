@@ -2,12 +2,13 @@
 
 use clap::Args;
 use std::sync::Arc;
-use terminal_spinners::{SpinnerBuilder, DOTS};
 
 use libparsec::{
     AvailableDevice, BackendOrganizationBootstrapAddr, ClientConfig, DeviceLabel,
     DeviceSaveStrategy, HumanHandle, Password,
 };
+
+use crate::utils::*;
 
 #[derive(Args)]
 pub struct BootstrapOrganization {
@@ -60,10 +61,7 @@ pub async fn bootstrap_organization(
     #[cfg(not(feature = "testenv"))]
     let password = rpassword::prompt_password("password:")?.into();
 
-    let handle = SpinnerBuilder::new()
-        .spinner(&DOTS)
-        .text("Bootstrapping organization in the server")
-        .start();
+    let handle = start_spinner("Bootstrapping organization in the server");
 
     bootstrap_organization_req(
         ClientConfig::default(),
