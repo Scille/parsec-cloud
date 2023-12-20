@@ -16,12 +16,15 @@ rust-web-binding: &rust-web-binding bindings/web/**
 
 rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**
 
+rust-cli: &rust-cli cli/**
+
 rust-changes: &rust-changes
   - *rust-dependencies-workspace
   - *rust-libparsec
   - *rust-toolchain
   - *rust-python-binding
   - *rust-web-binding
+  - *rust-cli
 
 # The rust jobs need to watch for:
 # - The change on the rust code.
