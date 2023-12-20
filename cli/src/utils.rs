@@ -6,6 +6,7 @@ use libparsec::{
     list_available_devices, load_device, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
     DeviceFileType, LocalDevice, ProxyConfig,
 };
+use terminal_spinners::{SpinnerBuilder, SpinnerHandle, DOTS};
 
 pub const GREEN: &str = "\x1B[92m";
 pub const RESET: &str = "\x1B[39m";
@@ -103,4 +104,8 @@ where
     }
 
     Ok(())
+}
+
+pub fn start_spinner(text: &'static str) -> SpinnerHandle {
+    SpinnerBuilder::new().spinner(&DOTS).text(text).start()
 }

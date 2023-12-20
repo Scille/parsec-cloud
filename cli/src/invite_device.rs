@@ -2,7 +2,6 @@
 
 use clap::Args;
 use std::path::PathBuf;
-use terminal_spinners::{SpinnerBuilder, DOTS};
 
 use libparsec::{
     authenticated_cmds::latest::invite_new::{self, InviteNewRep, UserOrDevice},
@@ -26,10 +25,7 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
         invite_device.config_dir,
         invite_device.device,
         |cmds, device| async move {
-            let handle = SpinnerBuilder::new()
-                .spinner(&DOTS)
-                .text("Creating device invitation")
-                .start();
+            let handle = start_spinner("Creating device invitation");
 
             let rep = cmds
                 .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
