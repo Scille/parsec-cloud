@@ -31,6 +31,7 @@ jobs:
       python: ${{ steps.need-check.outputs.python }}
       python-style-only: ${{ steps.need-check.outputs.python_style_only }}
       rust-platform-crates: ${{ steps.need-check.outputs.rust_platform_crates }}
+      rust-dependencies: ${{ steps.need-check.outputs.rust_dependencies }}
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
     steps:
@@ -61,6 +62,7 @@ jobs:
           # Thus don't require to run the python test.
           NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' && steps.changes.outputs.any-python-files == 'true' }}
           NEED_CHECK_rust_platform_crates: ${{ steps.changes.outputs.rust-platform-crates == 'true' }}
+          NEED_CHECK_rust_dependencies: ${{ steps.changes.outputs.rust-dependencies-workspace == 'true' }}
           NEED_CHECK_docs: ${{ steps.changes.outputs.docs-jobs == 'true' }}
 
   # Github PR merging is configured to only require this job to pass
@@ -194,7 +196,8 @@ jobs:
     if: needs.dispatch.outputs.rust == 'true'
     uses: ./.github/workflows/ci-rust.yml
     with:
-      run-wasm-tests: ${{ needs.dispatch.outputs.rust-platform-crates == 'true'}}
+      run-wasm-tests: ${{ needs.dispatch.outputs.rust-platform-crates == 'true' }}
+      check-cargo-deny: ${{ needs.dispatch.outputs.rust-dependencies == 'true' }}
 
   web:
     needs:

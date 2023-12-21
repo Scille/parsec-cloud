@@ -8,10 +8,20 @@ on:
         required: true
         default: false
         type: boolean
+      check-cargo-deny:
+        description: Run cargo-deny
+        required: true
+        default: false
+        type: boolean
   workflow_dispatch:
     inputs:
       run-wasm-tests:
         description: Run wasm test
+        required: true
+        default: false
+        type: boolean
+      check-cargo-deny:
+        description: Run cargo-deny
         required: true
         default: false
         type: boolean
@@ -165,6 +175,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Check restricted usage with cargo-deny
+        if: inputs.check-cargo-deny
         run: |
           echo "::add-matcher::.github/custom-problem-matchers/cargo-deny.json"
           # cargo-deny outputs the report on stderr and it needs to be redirected to stdout for the problem matcher to work.
