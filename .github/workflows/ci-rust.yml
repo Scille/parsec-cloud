@@ -154,10 +154,9 @@ jobs:
         timeout-minutes: 10
 
       # Clippy basically compile the project, hence it's faster to run it in
-      # the test-rust-matrix job where compilation cache is reused !
-      - uses: ./.github/actions/use-pre-commit
-        with:
-          extra-args: clippy --verbose
+      # the job where compilation cache is reused !
+      - name: Check cargo-clippy
+        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose
         timeout-minutes: 10
 
       - name: Check rust code format
