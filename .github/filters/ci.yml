@@ -6,6 +6,7 @@ rust-libparsec: &rust-libparsec libparsec/**
 
 rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
+  - "**/Cargo.toml"
   - Cargo.lock
 
 rust-toolchain: &rust-toolchain rust-toolchain.toml
