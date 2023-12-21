@@ -17,5 +17,6 @@ User Guide
     recovery_device
     share_data
     revoke_user
+    workspace_offline_mode
 
 You can also use the simplified `Parsec User Guide [French] <https://parsec.cloud/wp-content/uploads/2022/04/GU-a-jour-Android-new-1.pdf>`_
