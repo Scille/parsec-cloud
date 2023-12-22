@@ -100,17 +100,6 @@ jobs:
         with:
           tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
 
-      - uses: ./.github/actions/setup-python-poetry
-        id: setup-python
-        with:
-          poetry-version: ${{ env.poetry-version }}
-          project-path: ./server
-        timeout-minutes: 10
-
-      - name: Install python dependencies
-        run: python make.py python-dev-install
-        timeout-minutes: 10
-
       - name: Build CLI binary
         run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec_cli --features testenv
         timeout-minutes: 5
