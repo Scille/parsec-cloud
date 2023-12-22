@@ -16,7 +16,7 @@ describe('Check user details modal', () => {
 
   it('Tests user details modal', () => {
     cy.get('.user-details-modal').as('modal').find('ion-header').contains('User details');
-    cy.get('@modal').find('.ms-modal-content').as('modal-content').find('ion-text').eq(0).contains('Name');
+    cy.get('@modal').find('.ms-modal').as('modal-content').find('ion-text').eq(0).contains('Name');
     // cspell:disable-next-line
     cy.get('@modal-content').find('ion-text').eq(1).contains('Jaheira');
     cy.get('@modal-content').find('ion-text').eq(2).contains('Joined');
