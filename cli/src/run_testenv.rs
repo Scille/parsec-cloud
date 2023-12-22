@@ -39,7 +39,7 @@ pub struct RunTestenv {
     /// Main process id.
     /// When this process stops, the server will be automatically killed
     #[arg(long)]
-    main_process_id: u32,
+    main_process_id: Option<u32>,
     /// Skip initialization
     #[arg(short, long, default_value_t)]
     empty: bool,
@@ -209,9 +209,8 @@ async fn register_new_user(
 pub async fn initialize_test_organization(
     client_config: ClientConfig,
     addr: BackendAddr,
+    organization_id: OrganizationID,
 ) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
-    let organization_id: OrganizationID = "Org".parse().expect("Unreachable");
-
     // Create organization
     let bootstrap_token =
         create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
@@ -278,111 +277,60 @@ pub async fn initialize_test_organization(
     Ok([alice_device, other_alice_device, bob_device])
 }
 
+pub enum TestenvConfig {
+    ConnectToServer(BackendAddr),
+    StartNewServer { stop_after_process: u32 },
+}
+
 /// Setup the environment variables
 /// Set stop_after_process to kill the server once the process will run down
 pub async fn new_environment(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
-    stop_after_process: u32,
+    config: TestenvConfig,
     empty: bool,
-) -> anyhow::Result<()> {
-    let port = process_id_to_port(stop_after_process);
-    let tmp_dir_str = tmp_dir.to_str().expect("Unreachable");
-    let _ = std::fs::create_dir_all(&tmp_dir);
+) -> anyhow::Result<Option<BackendAddr>> {
+    let _ = std::fs::create_dir_all(tmp_dir);
 
-    let cargo_manifest_dir =
-        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
-    let manifest_dir_path = Path::new(&cargo_manifest_dir);
+    let (export_keyword, mut env) = get_env_variables(tmp_dir);
 
-    #[cfg(target_family = "windows")]
-    let (export, mut env) = (
-        "set",
-        vec![
-            (
-                TESTBED_SERVER_URL,
-                format!("parsec://127.0.0.1:{port}?no_ssl=true"),
-            ),
-            (PARSEC_HOME_DIR, format!("{tmp_dir_str}\\cache")),
-            (PARSEC_DATA_DIR, format!("{tmp_dir_str}\\share")),
-            (PARSEC_CONFIG_DIR, format!("{tmp_dir_str}\\config")),
-        ],
-    );
-
-    #[cfg(target_family = "unix")]
-    let (export, mut env) = (
-        "export",
-        vec![
-            (
-                TESTBED_SERVER_URL,
-                format!("parsec://127.0.0.1:{port}?no_ssl=true"),
-            ),
-            (PARSEC_HOME_DIR, format!("{tmp_dir_str}/cache")),
-            (PARSEC_DATA_DIR, format!("{tmp_dir_str}/share")),
-            (PARSEC_CONFIG_DIR, format!("{tmp_dir_str}/config")),
-        ],
-    );
-
-    if !empty {
-        if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
-            #[cfg(target_family = "windows")]
-            Command::new("taskkill")
-                .args(["/F", "/T", "/PID", &last_server_id])
-                .output()?;
-
-            #[cfg(target_family = "unix")]
-            Command::new("kill").args([&last_server_id]).output()?;
+    let url = match config {
+        TestenvConfig::ConnectToServer(url) => {
+            println!("Using testbed server: {YELLOW}{url}{RESET}");
+            env.push((TESTBED_SERVER_URL, url.to_string()));
+            Some(url)
         }
-
-        // Run testbed server
-        let child = Command::new("poetry")
-            .args([
-                "run",
-                "python",
-                "tests/scripts/run_testbed_server.py",
-                "--stop-after-process",
-                &stop_after_process.to_string(),
-                "--port",
-                &port.to_string(),
-            ])
-            .current_dir(
-                manifest_dir_path
-                    .parent()
-                    .expect("Unreachable")
-                    .join("server"),
-            )
-            .stdin(Stdio::null())
-            .stderr(Stdio::null())
-            .stdout(Stdio::piped())
-            .spawn()?;
-
-        let id = child.id();
-
-        let stdout = child.stdout.expect("Unreachable");
-        let mut reader = BufReader::new(stdout);
-        let mut buf = String::new();
-
-        while reader.read_line(&mut buf).is_ok() {
-            if buf.contains("All set !") {
-                #[cfg(target_os = "windows")]
-                std::thread::sleep(std::time::Duration::from_millis(100));
-                break;
+        TestenvConfig::StartNewServer { stop_after_process } if !empty => {
+            println!("Start a new server");
+            if let Ok(last_server_id) = std::env::var(LAST_SERVER_PID) {
+                kill_last_testbed_server(last_server_id)?;
             }
-            buf.clear();
+
+            let port_from_pid = process_id_to_port(stop_after_process);
+
+            // Run testbed server
+            let child = start_testbed_server(stop_after_process, port_from_pid)?;
+
+            let id = child.id();
+
+            println!(
+                "Running server with the process id {YELLOW}{id}{RESET} on port {YELLOW}{port_from_pid}{RESET}"
+            );
+
+            let backend_addr = BackendAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
+            env.push((TESTBED_SERVER_URL, backend_addr.to_url().to_string()));
+            env.push((LAST_SERVER_PID, id.to_string()));
+            Some(backend_addr)
         }
-
-        println!(
-            "Running server with the process id: {YELLOW}{id}{RESET} on port: {YELLOW}{port}{RESET}"
-        );
-
-        env.push((LAST_SERVER_PID, id.to_string()));
-    }
+        _ => None,
+    };
 
     if let Some(source_file) = source_file {
         println!("Your environment will be configured with the following commands:");
         let mut buf = String::new();
 
         for (key, value) in &env {
-            let export_key_value = format!("{export} {key}={value}\n");
+            let export_key_value = format!("{export_keyword} {key}={value}\n");
             buf.push_str(&export_key_value);
         }
 
@@ -396,31 +344,139 @@ pub async fn new_environment(
         // We set var for the current process
         std::env::set_var(key, &value);
 
-        println!("   {export} {key}={value}");
+        println!("   {export_keyword} {key}={value}");
     }
 
+    Ok(url)
+}
+
+fn get_env_variables(tmp_dir: &Path) -> (&'static str, Vec<(&'static str, String)>) {
+    #[cfg(target_family = "windows")]
+    return (
+        "set",
+        vec![
+            (
+                PARSEC_HOME_DIR,
+                format!("{dir}\\cache", dir = tmp_dir.display()),
+            ),
+            (
+                PARSEC_DATA_DIR,
+                format!("{dir}\\share", dir = tmp_dir.display()),
+            ),
+            (
+                PARSEC_CONFIG_DIR,
+                format!("{dir}\\config", dir = tmp_dir.display()),
+            ),
+        ],
+    );
+
+    #[cfg(target_family = "unix")]
+    return (
+        "export",
+        vec![
+            (
+                PARSEC_HOME_DIR,
+                format!("{dir}/cache", dir = tmp_dir.display()),
+            ),
+            (
+                PARSEC_DATA_DIR,
+                format!("{dir}/share", dir = tmp_dir.display()),
+            ),
+            (
+                PARSEC_CONFIG_DIR,
+                format!("{dir}/config", dir = tmp_dir.display()),
+            ),
+        ],
+    );
+}
+
+fn kill_last_testbed_server(last_server_id: String) -> anyhow::Result<()> {
+    #[cfg(target_family = "windows")]
+    Command::new("taskkill")
+        .args(["/F", "/T", "/PID", &last_server_id])
+        .output()?;
+    #[cfg(target_family = "unix")]
+    Command::new("kill").args([&last_server_id]).output()?;
     Ok(())
+}
+
+fn start_testbed_server(stop_after_process: u32, port: u16) -> anyhow::Result<std::process::Child> {
+    let cargo_manifest_dir =
+        std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
+    let manifest_dir_path = Path::new(&cargo_manifest_dir);
+
+    let mut child = Command::new("poetry")
+        .args([
+            "run",
+            "python",
+            "tests/scripts/run_testbed_server.py",
+            "--stop-after-process",
+            &stop_after_process.to_string(),
+            "--port",
+            &port.to_string(),
+        ])
+        .current_dir(
+            manifest_dir_path
+                .parent()
+                .expect("Unreachable")
+                .join("server"),
+        )
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .stdout(Stdio::piped())
+        .spawn()
+        .map_err(anyhow::Error::from)?;
+
+    wait_testbed_server_to_be_ready(&mut child);
+
+    Ok(child)
+}
+
+fn wait_testbed_server_to_be_ready(child: &mut std::process::Child) {
+    let stdout = child.stdout.as_mut().expect("Unreachable");
+    let mut reader = BufReader::new(stdout);
+    let mut buf = String::new();
+
+    while reader.read_line(&mut buf).is_ok() {
+        if buf.contains("All set !") {
+            #[cfg(target_os = "windows")]
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            break;
+        }
+        buf.clear();
+    }
 }
 
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
 
-    new_environment(
+    let testenv_config = match (run_testenv.main_process_id, std::env::var("TESTBED_SERVER")) {
+        (_, Ok(testbed_server)) => {
+            let url = backend_addr_from_http_url(&testbed_server);
+            TestenvConfig::ConnectToServer(url)
+        }
+        (Some(main_process_id), _) => TestenvConfig::StartNewServer {
+            stop_after_process: main_process_id,
+        },
+        (None, Err(_)) => panic!(concat!(
+            "You must at least provide a main process id (via the CLI) ",
+            "or set the testbed server url (via the env variable TESTBED_SERVER)"
+        )),
+    };
+
+    let url = new_environment(
         &tmp_dir,
         run_testenv.source_file,
-        run_testenv.main_process_id,
+        testenv_config,
         run_testenv.empty,
     )
     .await?;
 
     if !run_testenv.empty {
-        let port = process_id_to_port(run_testenv.main_process_id);
-
-        let [alice_device, other_alice_device, bob_device] = initialize_test_organization(
-            ClientConfig::default(),
-            BackendAddr::new("127.0.0.1".into(), Some(port), false),
-        )
-        .await?;
+        let url = url.expect("Mismatch condition in new_environment when starting a new server");
+        let org_id = "Org".parse().expect("Unreachable");
+        let [alice_device, other_alice_device, bob_device] =
+            initialize_test_organization(ClientConfig::default(), url, org_id).await?;
 
         println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
         println!(
@@ -435,4 +491,17 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+pub fn backend_addr_from_http_url(url: &str) -> BackendAddr {
+    let url = if url.starts_with("http://") {
+        url.replacen("http", "parsec", 1) + "?no_ssl=true"
+    } else if url.starts_with("https://") {
+        url.replacen("https", "parsec", 1)
+    } else if !url.starts_with("parsec://") {
+        format!("parsec://{url}")
+    } else {
+        url.to_string()
+    };
+    BackendAddr::from_any(&url).expect("Invalid testbed url")
 }

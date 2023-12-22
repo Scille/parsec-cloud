@@ -11,7 +11,7 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-testenv = []
+testenv = ["dep:url"]
 
 [dependencies]
 libparsec = { workspace = true }
@@ -25,6 +25,7 @@ serde_json = { workspace = true }
 terminal-spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 uuid = { workspace = true }
+url = { workspace = true, optional = true}
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
@@ -32,3 +33,4 @@ libparsec = { workspace = true, features = ["cli-tests"] }
 assert_cmd = { workspace = true }
 predicates = { workspace = true, features = ["regex"] }
 rstest = { workspace = true }
+uuid = { workspace = true, features = ["v6", "std", "rng"] }

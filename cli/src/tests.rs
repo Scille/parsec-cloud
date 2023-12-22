@@ -7,44 +7,56 @@ use std::{
 };
 
 use libparsec::{
-    tmp_path, BackendAddr, BackendOrganizationBootstrapAddr, ClientConfig, LocalDevice, TmpPath,
-    PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    tmp_path, BackendAddr, BackendOrganizationBootstrapAddr, ClientConfig, LocalDevice,
+    OrganizationID, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
     create_organization::create_organization_req,
     run_testenv::{
-        initialize_test_organization, new_environment, process_id_to_port, TESTBED_SERVER_URL,
+        backend_addr_from_http_url, initialize_test_organization, new_environment, TestenvConfig,
+        TESTBED_SERVER_URL,
     },
     utils::*,
 };
 
-fn set_env(tmp_dir: &str, pid: u32) -> u16 {
-    let port = process_id_to_port(pid);
-    std::env::set_var(
-        TESTBED_SERVER_URL,
-        format!("parsec://127.0.0.1:{port}?no_ssl=true"),
-    );
+fn get_testenv_config() -> TestenvConfig {
+    if let Ok(testbed_server) = std::env::var("TESTBED_SERVER") {
+        TestenvConfig::ConnectToServer(backend_addr_from_http_url(&testbed_server))
+    } else {
+        TestenvConfig::StartNewServer {
+            stop_after_process: std::process::id(),
+        }
+    }
+}
+
+fn set_env(tmp_dir: &str, url: &BackendAddr) {
+    std::env::set_var(TESTBED_SERVER_URL, url.to_url().to_string());
     std::env::set_var(PARSEC_HOME_DIR, format!("{tmp_dir}/cache"));
     std::env::set_var(PARSEC_DATA_DIR, format!("{tmp_dir}/share"));
     std::env::set_var(PARSEC_CONFIG_DIR, format!("{tmp_dir}/config"));
+}
 
-    port
+fn unique_org_id() -> OrganizationID {
+    let uuid = uuid::Uuid::new_v4();
+    format!("TestOrg-{}", &uuid.as_hyphenated().to_string()[..24])
+        .parse()
+        .unwrap()
 }
 
 async fn run_local_organization(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
-    stop_after_process: u32,
-) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
-    let port = process_id_to_port(stop_after_process);
-    new_environment(tmp_dir, source_file, stop_after_process, false).await?;
+    config: TestenvConfig,
+) -> anyhow::Result<(BackendAddr, [Arc<LocalDevice>; 3])> {
+    let url = new_environment(tmp_dir, source_file, config, false)
+        .await?
+        .unwrap();
 
-    initialize_test_organization(
-        ClientConfig::default(),
-        BackendAddr::new("127.0.0.1".into(), Some(port), false),
-    )
-    .await
+    println!("Initializing test organization to {url}");
+    initialize_test_organization(ClientConfig::default(), url.clone(), unique_org_id())
+        .await
+        .map(|v| (url, v))
 }
 
 #[test]
@@ -59,12 +71,12 @@ fn version() {
 #[rstest::rstest]
 #[tokio::test]
 async fn list_devices(tmp_path: TmpPath) {
-    let id = std::process::id();
     let tmp_path_str = tmp_path.to_str().unwrap();
-
-    set_env(&tmp_path_str, id);
-
-    run_local_organization(&tmp_path, None, id).await.unwrap();
+    let config = get_testenv_config();
+    let (url, _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
 
     let path = tmp_path.join("config").join("parsec-v3-alpha");
     let path_str = path.to_string_lossy();
@@ -81,18 +93,19 @@ async fn list_devices(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn create_organization(tmp_path: TmpPath) {
-    let id = std::process::id();
     let tmp_path_str = tmp_path.to_str().unwrap();
-    set_env(&tmp_path_str, id);
-
-    run_local_organization(&tmp_path, None, id).await.unwrap();
+    let config = get_testenv_config();
+    let (url, _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
             "create-organization",
             "--organization-id",
-            "Org1",
+            &unique_org_id().to_string(),
             "--addr",
             &std::env::var(TESTBED_SERVER_URL).unwrap(),
             "--token",
@@ -107,15 +120,17 @@ async fn create_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn bootstrap_organization(tmp_path: TmpPath) {
-    let id = std::process::id();
     let tmp_path_str = tmp_path.to_str().unwrap();
-    set_env(&tmp_path_str, id);
+    let config = get_testenv_config();
+    let (url, _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
 
-    run_local_organization(&tmp_path, None, id).await.unwrap();
-
-    let organization_id = "Org1".parse().unwrap();
+    let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER_URL).unwrap().parse().unwrap();
 
+    println!("Creating organization {organization_id}");
     let bootstrap_token = create_organization_req(&organization_id, &addr, "s3cr3t")
         .await
         .unwrap();
@@ -144,11 +159,12 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_device(tmp_path: TmpPath) {
-    let id = std::process::id();
     let tmp_path_str = tmp_path.to_str().unwrap();
-    set_env(&tmp_path_str, id);
-
-    let [alice, ..] = run_local_organization(&tmp_path, None, id).await.unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -162,11 +178,12 @@ async fn invite_device(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user(tmp_path: TmpPath) {
-    let id = std::process::id();
     let tmp_path_str = tmp_path.to_str().unwrap();
-    set_env(&tmp_path_str, id);
-
-    let [alice, ..] = run_local_organization(&tmp_path, None, id).await.unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
