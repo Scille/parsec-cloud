@@ -2,6 +2,7 @@
 
 use assert_cmd::Command;
 use std::{
+    io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -59,6 +60,18 @@ async fn run_local_organization(
     initialize_test_organization(ClientConfig::default(), url.clone(), unique_org_id())
         .await
         .map(|v| (url, v))
+}
+
+fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
+    buf.clear();
+    while let Ok(_) = reader.read_line(buf) {
+        if buf.is_empty() {
+            break;
+        } else if buf.contains(text) {
+            break;
+        }
+        buf.clear();
+    }
 }
 
 #[test]
@@ -252,4 +265,216 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         .stdout(predicates::str::contains(
             "Deleting invitation\nInvitation deleted",
         ));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn invite_device_dance(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
+
+    let cmds = AuthenticatedCmds::new(
+        &get_default_config_dir(),
+        alice.clone(),
+        ProxyConfig::new_from_env().unwrap(),
+    )
+    .unwrap();
+
+    let rep = cmds
+        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .await
+        .unwrap();
+
+    let invitation_addr = match rep {
+        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+            alice.organization_addr.clone(),
+            alice.organization_id().clone(),
+            InvitationType::Device,
+            token,
+        ),
+        rep => {
+            panic!("Server refused to create device invitation: {rep:?}");
+        }
+    };
+
+    let token = invitation_addr.token();
+
+    let p_greeter = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--profile=ci-rust",
+            "--package=parsec_cli",
+            "--features=testenv",
+            "greet-invitation",
+            "--token",
+            &format!("{}", token.as_simple()),
+            "--device",
+            &alice.slughash(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let p_claimer = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--profile=ci-rust",
+            "--package=parsec_cli",
+            "--features=testenv",
+            "claim-invitation",
+            "--addr",
+            &invitation_addr.to_url().to_string(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let mut stdout_greeter = BufReader::new(p_greeter.stdout.unwrap());
+    let mut stdout_claimer = BufReader::new(p_claimer.stdout.unwrap());
+    let mut stdin_greeter = p_greeter.stdin.unwrap();
+    let mut stdin_claimer = p_claimer.stdin.unwrap();
+    let mut buf = String::new();
+
+    wait_for(&mut stdout_greeter, &mut buf, "Code to provide to claimer");
+    let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
+    wait_for(&mut stdout_claimer, &mut buf, &sas_code);
+    let sas_code_index = &buf[1..2].to_string();
+    wait_for(&mut stdout_claimer, &mut buf, "Select code");
+    stdin_claimer
+        .write_all(format!("{sas_code_index}\n").as_bytes())
+        .unwrap();
+
+    wait_for(&mut stdout_claimer, &mut buf, "Code to provide to greeter");
+    let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
+    wait_for(&mut stdout_greeter, &mut buf, &sas_code);
+    let sas_code_index = &buf[1..2].to_string();
+    wait_for(&mut stdout_greeter, &mut buf, "Select code");
+    stdin_greeter
+        .write_all(format!("{sas_code_index}\n").as_bytes())
+        .unwrap();
+
+    wait_for(&mut stdout_claimer, &mut buf, "Enter device label");
+    stdin_claimer.write_all(b"DeviceLabelTest\n").unwrap();
+
+    wait_for(&mut stdout_greeter, &mut buf, "Creating the device");
+    wait_for(&mut stdout_claimer, &mut buf, "Saved");
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn invite_user_dance(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    set_env(&tmp_path_str, &url);
+
+    let cmds = AuthenticatedCmds::new(
+        &get_default_config_dir(),
+        alice.clone(),
+        ProxyConfig::new_from_env().unwrap(),
+    )
+    .unwrap();
+
+    let rep = cmds
+        .send(invite_new::Req(UserOrDevice::User {
+            claimer_email: "a@b.c".into(),
+            send_email: false,
+        }))
+        .await
+        .unwrap();
+
+    let invitation_addr = match rep {
+        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+            alice.organization_addr.clone(),
+            alice.organization_id().clone(),
+            InvitationType::Device,
+            token,
+        ),
+        rep => {
+            panic!("Server refused to create user invitation: {rep:?}");
+        }
+    };
+
+    let token = invitation_addr.token();
+
+    let p_greeter = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--profile=ci-rust",
+            "--package=parsec_cli",
+            "--features=testenv",
+            "greet-invitation",
+            "--token",
+            &format!("{}", token.as_simple()),
+            "--device",
+            &alice.slughash(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let p_claimer = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--profile=ci-rust",
+            "--package=parsec_cli",
+            "--features=testenv",
+            "claim-invitation",
+            "--addr",
+            &invitation_addr.to_url().to_string(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let mut stdout_greeter = BufReader::new(p_greeter.stdout.unwrap());
+    let mut stdout_claimer = BufReader::new(p_claimer.stdout.unwrap());
+    let mut stdin_greeter = p_greeter.stdin.unwrap();
+    let mut stdin_claimer = p_claimer.stdin.unwrap();
+    let mut buf = String::new();
+
+    wait_for(&mut stdout_greeter, &mut buf, "Code to provide to claimer");
+    let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
+    wait_for(&mut stdout_claimer, &mut buf, &sas_code);
+    let sas_code_index = &buf[1..2].to_string();
+    wait_for(&mut stdout_claimer, &mut buf, "Select code");
+    stdin_claimer
+        .write_all(format!("{sas_code_index}\n").as_bytes())
+        .unwrap();
+
+    wait_for(&mut stdout_claimer, &mut buf, "Code to provide to greeter");
+    let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
+    wait_for(&mut stdout_greeter, &mut buf, &sas_code);
+    let sas_code_index = &buf[1..2].to_string();
+    wait_for(&mut stdout_greeter, &mut buf, "Select code");
+    stdin_greeter
+        .write_all(format!("{sas_code_index}\n").as_bytes())
+        .unwrap();
+
+    wait_for(&mut stdout_claimer, &mut buf, "Enter device label");
+    stdin_claimer.write_all(b"DeviceLabelTest\n").unwrap();
+    wait_for(&mut stdout_claimer, &mut buf, "Enter email");
+    stdin_claimer.write_all(b"alice2@example.com\n").unwrap();
+    wait_for(&mut stdout_claimer, &mut buf, "Enter name");
+    stdin_claimer.write_all(b"alice2\n").unwrap();
+
+    wait_for(&mut stdout_greeter, &mut buf, "Which profile?");
+    stdin_greeter.write_all(b"0\n").unwrap();
+
+    wait_for(&mut stdout_greeter, &mut buf, "Creating the user");
+    wait_for(&mut stdout_claimer, &mut buf, "Saved");
 }
