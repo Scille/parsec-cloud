@@ -26,36 +26,124 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitleAndSubtitle()[0] }}
+          {{ getTitleAndSubtitle().title }}
         </ion-title>
-        <ion-text class="modal-header__text body">
-          {{ getTitleAndSubtitle()[1] }}
+        <ion-text
+          class="modal-header__text body"
+          v-show="getTitleAndSubtitle().subtitle"
+        >
+          {{ getTitleAndSubtitle().subtitle }}
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
         <!-- waiting step -->
         <div
           v-show="pageStep === GreetDeviceStep.WaitForGuest"
-          class="step"
+          class="first-step"
         >
           <ms-informative-text>
-            {{ $t('DevicesPage.greet.subtitles.waitForGuest1') }}
+            {{ $t('DevicesPage.greet.subtitles.waitForGuest') }}
           </ms-informative-text>
-          <ms-informative-text>
-            {{ $t('DevicesPage.greet.subtitles.waitForGuest2') }}
-          </ms-informative-text>
-          <ion-buttons slot="start">
-            <ion-button
-              fill="solid"
-              size="default"
-              id="copy-link"
-              @click="copyLink"
-            >
-              <span>
-                {{ $t('DevicesPage.greet.copyLink') }}
+          <div class="first-step-content">
+            <!-- title -->
+            <ion-text class="content-title">
+              <span class="content-title__blue">
+                {{ $t('DevicesPage.greet.subtitles.scanOrShare1') }}
               </span>
-            </ion-button>
-          </ion-buttons>
+              <span class="content-title__grey">
+                {{ $t('DevicesPage.greet.subtitles.scanOrShare2') }}
+              </span>
+              <span class="content-title__blue">
+                {{ $t('DevicesPage.greet.subtitles.scanOrShare3') }}
+              </span>
+            </ion-text>
+            <!-- qr code, link and button -->
+            <div class="content-sharing">
+              <!-- left element: qr code -->
+              <figure class="qrcode">
+                <!-- #4294FF is light-primary-500 -->
+                <q-r-code-vue3
+                  :value="greeter.invitationLink"
+                  :key="greeter.invitationLink"
+                  :image="LogoIconGradient"
+                  :image-options="{ hideBackgroundDots: true, imageSize: 1, margin: 1 }"
+                  :qr-options="{ errorCorrectionLevel: 'L' }"
+                  :dots-options="{
+                    type: 'dots',
+                    color: '#4294FF',
+                  }"
+                  :background-options="{ color: '#ffffff' }"
+                  :corners-square-options="{ type: 'extra-rounded', color: '#4294FF' }"
+                  :corners-dot-options="{ type: 'dot', color: '#4294FF' }"
+                />
+              </figure>
+              <div class="divider">
+                <ion-text class="title-h4">
+                  {{ $t('FoldersPage.importModal.or') }}
+                </ion-text>
+              </div>
+              <!-- right element: invite link, copy button, email button -->
+              <div class="right-side">
+                <ion-card class="card">
+                  <ion-card-content class="card-content">
+                    <ion-text
+                      v-if="!linkCopiedToClipboard"
+                      class="card-content__text body"
+                    >
+                      {{ greeter.invitationLink }}
+                    </ion-text>
+                    <ion-text
+                      v-else
+                      class="card-content__text body copied"
+                    >
+                      {{ $t('DevicesPage.greet.subtitles.copiedToClipboard') }}
+                    </ion-text>
+                    <ion-button
+                      fill="clear"
+                      size="small"
+                      id="copy-link-btn"
+                      @click="copyLink"
+                      v-if="!linkCopiedToClipboard"
+                    >
+                      <ion-icon
+                        class="icon-copy"
+                        :icon="copy"
+                      />
+                    </ion-button>
+                    <ion-icon
+                      v-else
+                      class="icon-checkmark"
+                      :icon="checkmarkCircle"
+                    />
+                  </ion-card-content>
+                </ion-card>
+                <div class="email">
+                  <ion-button
+                    class="email-button"
+                    @click="sendEmail"
+                    fill="outline"
+                  >
+                    <span v-if="!isEmailSent">
+                      {{ $t('DevicesPage.greet.actions.sendEmail') }}
+                    </span>
+                    <span v-if="isEmailSent">
+                      {{ $t('DevicesPage.greet.actions.reSendEmail') }}
+                    </span>
+                  </ion-button>
+                  <ion-text
+                    v-if="isEmailSent"
+                    class="small-text subtitles-sm"
+                  >
+                    {{ $t('DevicesPage.greet.emailSent') }}
+                    <ion-icon
+                      class="email-button__icon"
+                      :icon="checkmarkCircle"
+                    />
+                  </ion-text>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- give code step -->
@@ -133,9 +221,17 @@
 </template>
 
 <script setup lang="ts">
+import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
+import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
+import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
+import { DeviceGreet } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import {
   IonButton,
   IonButtons,
+  IonCard,
+  IonCardContent,
   IonFooter,
   IonHeader,
   IonIcon,
@@ -146,13 +242,8 @@ import {
   IonTitle,
   modalController,
 } from '@ionic/vue';
-
-import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
-import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
-import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { DeviceGreet } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { close } from 'ionicons/icons';
+import { checkmarkCircle, close, copy } from 'ionicons/icons';
+import QRCodeVue3 from 'qrcode-vue3';
 import { computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -169,23 +260,30 @@ const { t } = useI18n();
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
+const isEmailSent = ref(false);
 const greeter = ref(new DeviceGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
+const linkCopiedToClipboard = ref(false);
 
-function getTitleAndSubtitle(): [string, string] {
+interface GreetDeviceTitle {
+  title: string;
+  subtitle?: string;
+}
+
+function getTitleAndSubtitle(): GreetDeviceTitle {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return [t('DevicesPage.greet.titles.waitForGuest'), ''];
+    return { title: t('DevicesPage.greet.titles.waitForGuest') };
   } else if (pageStep.value === GreetDeviceStep.ProvideHostSasCode) {
-    return [t('DevicesPage.greet.titles.provideHostCode'), t('DevicesPage.greet.subtitles.provideHostCode')];
+    return { title: t('DevicesPage.greet.titles.provideHostCode'), subtitle: t('DevicesPage.greet.subtitles.provideHostCode') };
   } else if (pageStep.value === GreetDeviceStep.GetGuestSasCode) {
-    return [t('DevicesPage.greet.titles.getGuestCode'), t('DevicesPage.greet.subtitles.getGuestCode')];
+    return { title: t('DevicesPage.greet.titles.getGuestCode'), subtitle: t('DevicesPage.greet.subtitles.getGuestCode') };
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
-    return [t('DevicesPage.greet.titles.deviceDetails'), ''];
+    return { title: t('DevicesPage.greet.titles.deviceDetails') };
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return [t('DevicesPage.greet.titles.summary'), ''];
+    return { title: t('DevicesPage.greet.titles.summary') };
   }
-  return ['', ''];
+  return { title: '' };
 }
 
 async function updateCanGoForward(): Promise<void> {
@@ -282,11 +380,11 @@ async function cancelModal(): Promise<boolean> {
   if (pageStep.value === GreetDeviceStep.WaitForGuest || pageStep.value === GreetDeviceStep.Summary) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(t('DevicesPage.greet.cancelConfirm'), t('DevicesPage.greet.cancelConfirmSubtitle'), {
+  const answer = await askQuestion(t('DevicesPage.greet.titles.cancelGreet'), t('DevicesPage.greet.subtitles.cancelGreet'), {
     keepMainModalHiddenOnYes: true,
     yesIsDangerous: true,
-    yesText: t('DevicesPage.greet.cancelYes'),
-    noText: t('DevicesPage.greet.cancelNo'),
+    yesText: t('DevicesPage.greet.actions.cancelGreet.yes'),
+    noText: t('DevicesPage.greet.actions.cancelGreet.no'),
   });
 
   if (answer === Answer.Yes) {
@@ -358,6 +456,10 @@ async function nextStep(): Promise<void> {
 
 async function copyLink(): Promise<void> {
   await navigator.clipboard.writeText(greeter.value.invitationLink);
+  linkCopiedToClipboard.value = true;
+  setTimeout(() => {
+    linkCopiedToClipboard.value = false;
+  }, 5000);
   notificationManager.showToast(
     new Notification({
       title: t('DevicesPage.greet.linkCopiedToClipboard.title'),
@@ -367,6 +469,20 @@ async function copyLink(): Promise<void> {
   );
 }
 
+async function sendEmail(): Promise<void> {
+  if (await greeter.value.sendEmail()) {
+    isEmailSent.value = true;
+  } else {
+    notificationManager.showToast(
+      new Notification({
+        title: t('DevicesPage.greet.errors.emailFailed.title'),
+        message: t('DevicesPage.greet.errors.emailFailed.subtitle'),
+        level: NotificationLevel.Error,
+      }),
+    );
+  }
+}
+
 onMounted(async () => {
   await greeter.value.createInvitation(true);
   await startProcess();
@@ -374,6 +490,188 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.first-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  flex-shrink: 0;
+}
+.first-step-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 37.5rem;
+  background-color: var(--parsec-color-light-secondary-background);
+  border-radius: var(--parsec-radius-6);
+  padding: 2rem 0;
+
+  .content-title {
+    text-align: center;
+    /* Titles/H3 */
+    font-family: Montserrat;
+    font-size: 1.125rem;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 120%;
+
+    &__blue {
+      color: var(--parsec-color-light-primary-600);
+    }
+
+    &__grey {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+  }
+
+  .content-sharing {
+    display: flex;
+    align-items: center;
+    margin-top: 1.5rem;
+    gap: 1.5rem;
+
+    .qrcode {
+      display: flex;
+      width: 7.5rem;
+      padding: 0.3rem;
+      background: var(--parsec-color-light-secondary-white);
+      position: relative;
+      margin: 0;
+    }
+
+    .divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      ion-text {
+        color: var(--parsec-color-light-secondary-light);
+        text-transform: uppercase;
+
+        &::before {
+          content: '';
+          margin: auto;
+          display: flex;
+          margin-bottom: 1rem;
+          background: var(--parsec-color-light-secondary-light);
+          width: 1.5px;
+          height: 3rem;
+        }
+        &::after {
+          content: '';
+          margin: auto;
+          display: flex;
+          margin-top: 1rem;
+          background: var(--parsec-color-light-secondary-light);
+          width: 1.5px;
+          height: 3rem;
+        }
+      }
+    }
+
+    .right-side {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      width: 20rem;
+
+      .card {
+        margin: 0;
+        background-color: var(--parsec-color-light-secondary-white);
+        border-radius: var(--parsec-radius-6);
+        border: 1px solid var(--parsec-color-light-secondary-disabled);
+        box-shadow: none;
+
+        .card-content {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          padding: 0.5rem;
+          position: relative;
+
+          &__text {
+            margin: 0;
+            overflow: hidden;
+            color: var(--parsec-color-light-secondary-text);
+            white-space: nowrap;
+            text-overflow: ellipsis;
+
+            &.copied {
+              color: var(--parsec-color-light-success-700);
+            }
+          }
+
+          #copy-link-btn {
+            color: var(--parsec-color-light-secondary-text);
+            margin: 0;
+
+            &::part(native) {
+              padding: 0.5rem;
+              border-radius: var(--parsec-radius-6);
+            }
+
+            &:hover {
+              color: var(--parsec-color-light-primary-600);
+            }
+          }
+
+          ion-icon[class^='icon-'] {
+            display: flex;
+            width: 1rem;
+            height: 1rem;
+            margin: 0;
+          }
+
+          .icon-checkmark {
+            position: relative;
+            color: var(--parsec-color-light-success-700);
+            padding: 0.5rem;
+          }
+        }
+      }
+
+      .email {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        position: relative;
+      }
+
+      .email-button {
+        display: flex;
+        width: fit-content;
+        position: relative;
+        margin: 0;
+        color: var(--parsec-color-light-secondary-text);
+
+        &::part(native) {
+          border: 1px solid var(--parsec-color-light-secondary-text);
+        }
+
+        &:hover {
+          &::part(native) {
+            border: 1px solid var(--parsec-color-light-secondary-contrast);
+          }
+        }
+
+        &__icon {
+          font-size: 1rem;
+        }
+      }
+
+      .small-text {
+        color: var(--parsec-color-light-success-700);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: absolute;
+        bottom: -2rem;
+      }
+    }
+  }
+}
+
 .final-step {
   width: 100%;
   display: flex;

@@ -624,15 +624,21 @@
                 "provideHostCode": "Partagez votre code",
                 "getGuestCode": "Récupérez le code invité",
                 "deviceDetails": "En attente des informations de l'appareil",
-                "summary": "L'appareil a été créé !"
+                "summary": "L'appareil a été créé !",
+                "cancelGreet": "Annuler"
             },
             "subtitles": {
                 "provideHostCode": "Cliquez sur le code ci-dessous sur l'appareil invité.",
                 "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché par l'invité.",
                 "summary": "L'appareil {label} a été créé.",
                 "getDeviceInfo": "En attente des informations de l'invité.",
-                "waitForGuest1": "Pour créer un nouvel appareil, vous devez avoir Parsec lancé sur les deux appareils. Veuillez utiliser le lien d'invitation sur votre second appareil pour lancer la démarche.",
-                "waitForGuest2": "Veuillez ne pas fermer cette fenêtre pendant le processus."
+                "waitForGuest": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l'inscription.",
+                "scanOrShare1": "Scanner le QR Code ",
+                "scanOrShare2": "ou ",
+                "scanOrShare3": "partager le lien",
+                "emailSentTo": "Envoyé à :",
+                "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?",
+                "copiedToClipboard": "Copié dans le presse-papier"
             },
             "errors": {
                 "retrieveDeviceInfoFailed": {
@@ -649,12 +655,22 @@
                     "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
                 },
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus."
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
+                "emailFailed": {
+                    "title": "L'envoi d'email a échoué",
+                    "subtitle": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet."
+                }
             },
             "actions": {
                 "approve": "Approuver",
                 "finish": "Terminer",
-                "start": "Démarrer"
+                "start": "Démarrer",
+                "sendEmail": "Envoyer le lien par mail",
+                "reSendEmail": "Renvoyer le mail",
+                "cancelGreet": {
+                    "yes": "Annuler le processus",
+                    "no": "Continuer"
+                }
             },
             "success": {
                 "title": "{label} a été ajouté !",
@@ -664,7 +680,8 @@
                 "title": "Lien copié",
                 "message": "Le lien a été copié dans le presse-papier."
             },
-            "copyLink": "Copier le lien"
+            "copyLink": "Copier le lien",
+            "emailSent": "L'email a été envoyé !"
         }
     },
     "Password": {

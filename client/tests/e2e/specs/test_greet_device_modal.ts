@@ -28,7 +28,7 @@ describe('Greet a new device', () => {
 
   it('Copy invitation link', () => {
     cy.get('.devices-container').find('ion-button').contains('Add').click();
-    cy.get('.greet-organization-modal').find('#copy-link').click();
+    cy.get('.greet-organization-modal').find('#copy-link-btn').click();
     cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
