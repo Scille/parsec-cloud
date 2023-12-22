@@ -99,6 +99,16 @@ export class DeviceGreet {
     }
   }
 
+  async sendEmail(): Promise<boolean> {
+    const clientHandle = getParsecHandle();
+    if (clientHandle !== null && !needsMocks()) {
+      const result = await libparsec.clientNewDeviceInvitation(clientHandle, true);
+      return result.ok;
+    } else {
+      return true;
+    }
+  }
+
   async startGreet(): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>> {
     this._assertState(true, true);
     const clientHandle = getParsecHandle();

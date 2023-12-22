@@ -624,15 +624,21 @@
                 "provideHostCode": "Share your code",
                 "getGuestCode": "Get guest code",
                 "deviceDetails": "Waiting for the device information",
-                "summary": "Device created!"
+                "summary": "Device created!",
+                "cancelGreet": "Cancel"
             },
             "subtitles": {
                 "provideHostCode": "Click the code below on the guest.",
                 "getGuestCode": "Click on the code that appears on the guest.",
                 "summary": "The device {label} has been created.",
                 "getDeviceInfo": "Waiting for you to fill the information on the guest.",
-                "waitForGuest1": "To create a new device, you need to have Parsec open on both devices. Use the invitation link on your second device to start the process.",
-                "waitForGuest2": "Please don't close this window during the process."
+                "waitForGuest": "You need to have Parsec open on both devices for the inscription duration.",
+                "scanOrShare1": "Scan the QR Code ",
+                "scanOrShare2": "or ",
+                "scanOrShare3": "share the link",
+                "emailSentTo": "Sent to:",
+                "cancelGreet": "Are you sure you want to cancel the greeting process?",
+                "copiedToClipboard": "Copied to clipboard"
             },
             "errors": {
                 "retrieveDeviceInfoFailed": {
@@ -649,12 +655,22 @@
                     "message": "Please make sure that you are connected to the internet."
                 },
                 "invalidCodeSelected": "You didn't select the correct code. Please restart the process.",
-                "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process."
+                "noneCodeSelected": "If you didn't see the correct code, it could be a security concern. Please restart the process.",
+                "emailFailed": {
+                    "title": "Failed to send email",
+                    "subtitle": "An error occurred when trying to send the email. Please check your internet connection."
+                }
             },
             "actions": {
                 "approve": "Approve",
                 "finish": "Finish",
-                "start": "Start"
+                "start": "Start",
+                "sendEmail": "Send link by email",
+                "reSendEmail": "Resend email",
+                "cancelGreet": {
+                    "yes": "Cancel the process",
+                    "no": "Resume"
+                }
             },
             "success": {
                 "title": "{label} has been created!",
@@ -664,7 +680,8 @@
                 "title": "Link copied",
                 "message": "The link has been copied to the clipboard."
             },
-            "copyLink": "Copy invitation link"
+            "copyLink": "Copy invitation link",
+            "emailSent": "Email sent!"
         }
     },
     "Password": {
