@@ -112,6 +112,9 @@ pub fn start_spinner(text: &'static str) -> SpinnerHandle {
 }
 
 pub fn choose_password() -> anyhow::Result<Password> {
+    #[cfg(feature = "testenv")]
+    return Ok("test".to_string().into());
+    #[cfg(not(feature = "testenv"))]
     loop {
         let password = rpassword::prompt_password("Enter password for the new device:")?.into();
         let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
