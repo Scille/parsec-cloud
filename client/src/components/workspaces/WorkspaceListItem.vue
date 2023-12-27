@@ -83,7 +83,7 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { WorkspaceInfo } from '@/parsec';

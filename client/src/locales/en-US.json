@@ -507,6 +507,13 @@
         "getLinkError": {
             "title": "Could not get a link to the file",
             "message": "Reason: {reason}."
+        },
+        "ImportFile": {
+            "title": "Importation",
+            "cancel": "cancel",
+            "failed": "failed",
+            "failedDetails": "Please check you internet connection.",
+            "browse": "Go to location"
         }
     },
     "FileDetails": {

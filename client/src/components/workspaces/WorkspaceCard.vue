@@ -57,7 +57,7 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';

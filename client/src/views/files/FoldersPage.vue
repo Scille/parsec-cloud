@@ -157,6 +157,7 @@
           />
         </div>
       </div>
+      <file-upload-menu />
     </ion-content>
   </ion-page>
 </template>
@@ -179,11 +180,12 @@ import FileListItem from '@/components/files/FileListItem.vue';
 import * as parsec from '@/parsec';
 
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
-import { ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
+import { ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
+import FileUploadMenu from '@/views/files/FileUploadMenu.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import {
   IonCheckbox,
@@ -223,6 +225,7 @@ const selectedFilesCount = computed(() => {
 });
 const importManager = inject(ImportManagerKey) as ImportManager;
 let callbackId: string | null = null;
+let fileUploadModal: HTMLIonModalElement | null = null;
 
 onMounted(async () => {
   callbackId = await importManager.registerCallback(onFileImportState);
@@ -236,8 +239,10 @@ onUnmounted(async () => {
   routeWatchCancel();
 });
 
-async function onFileImportState(state: ImportState, data: StateData): Promise<void> {
-  console.log(state, data);
+async function onFileImportState(state: ImportState, _importData?: ImportData, _stateData?: StateData): Promise<void> {
+  if (fileUploadModal && state === ImportState.FileAdded) {
+    await fileUploadModal?.dismiss();
+  }
 }
 
 async function listFolder(): Promise<void> {
@@ -322,7 +327,10 @@ async function createFolder(): Promise<void> {
 }
 
 async function importFiles(): Promise<void> {
-  const modal = await modalController.create({
+  if (fileUploadModal) {
+    return;
+  }
+  fileUploadModal = await modalController.create({
     component: FileUploadModal,
     cssClass: 'file-upload-modal',
     componentProps: {
@@ -331,9 +339,9 @@ async function importFiles(): Promise<void> {
       workspaceId: getWorkspaceId(),
     },
   });
-  await modal.present();
-  await modal.onWillDismiss();
-  await modal.dismiss();
+  await fileUploadModal.present();
+  await fileUploadModal.onDidDismiss();
+  fileUploadModal = null;
 }
 
 function selectAllFiles(checked: boolean): void {

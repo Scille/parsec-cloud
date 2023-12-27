@@ -193,7 +193,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import { ClientInfo, OrganizationInfo, getClientInfo, getOrganizationInfo } from '@/parsec';
 import { IonChip, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonTitle } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';

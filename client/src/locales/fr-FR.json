@@ -507,6 +507,13 @@
         "getLinkError": {
             "title": "Impossible de récupérer un lien vers le fichier",
             "message": "Raison: {reason}"
+        },
+        "ImportFile": {
+            "title": "Importation",
+            "cancel": "annulé",
+            "failed": "échoué",
+            "failedDetails": "Please check you internet connection.",
+            "browse": "Aller à l'emplacement"
         }
     },
     "FileDetails": {

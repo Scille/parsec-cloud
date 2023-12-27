@@ -23,10 +23,22 @@ async function filename(path: FsPath): Promise<FsPath | null> {
   return await libparsec.pathFilename(path);
 }
 
+function getFileExtension(path: FsPath): string {
+  while (path.startsWith('.')) {
+    path = path.slice(1);
+  }
+  const pathComponents = path.split('.');
+  if (pathComponents.length === 1 || pathComponents.length === 0) {
+    return '';
+  }
+  return pathComponents[pathComponents.length - 1].toLowerCase();
+}
+
 export const Path = {
   parse,
   join,
   normalize,
   parent,
   filename,
+  getFileExtension,
 };

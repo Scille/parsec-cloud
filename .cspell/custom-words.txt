@@ -179,6 +179,7 @@ getfileinfo
 getplugin
 GetRandom
 gloo
+gifv
 gradlew
 grapheq
 gtod
@@ -205,6 +206,7 @@ ifempty
 ifeq
 ifnewer
 ijkl
+ilbm
 ilog
 imgconverter
 inversed
@@ -393,6 +395,7 @@ parnotsec
 parsecdoc
 Passw0rd
 patchelf
+pcss
 pdflatex
 pemfile
 pems
@@ -486,6 +489,7 @@ reseted
 retrier
 Richcmp
 Rlib
+rmvb
 rngs
 ROOTDIR
 ROOTDIRS
@@ -563,6 +567,7 @@ SRSC
 staticlib
 structlog
 stucking
+styl
 subcode
 subsec
 swiftclient

@@ -89,7 +89,7 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
