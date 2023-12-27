@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import { initTranslations } from '@/services/translation';
 import { it } from 'vitest';
 

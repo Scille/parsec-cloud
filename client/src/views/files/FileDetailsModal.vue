@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize } from '@/common/filesize';
+import { formatFileSize } from '@/common/file';
 import { MsModal } from '@/components/core';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonItem, IonLabel, IonPage, IonText } from '@ionic/vue';
