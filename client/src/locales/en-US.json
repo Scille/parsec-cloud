@@ -995,6 +995,8 @@
         "revocation": {
             "revokeTitle": "Revoke this user? | Revoke these users?",
             "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
+            "revokeYes": "Revoke",
+            "revokeNo": "Cancel",
             "revokeFailed": {
                 "title": "Failed to revoke this user | Failed to revoke any user",
                 "message": "Please try again"
