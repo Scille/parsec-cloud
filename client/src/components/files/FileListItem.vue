@@ -146,9 +146,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 .file-name {
   padding: 0.75rem 1rem;
-  width: 100%;
   white-space: nowrap;
   overflow: hidden;
+  flex-grow: 1;
 
   &__icons {
     position: relative;

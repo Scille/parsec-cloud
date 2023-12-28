@@ -108,7 +108,6 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   padding: 0 1rem;
   display: flex;
   align-items: center;
-  height: 4rem;
 }
 
 .invitation-list-item {
@@ -133,7 +132,8 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 }
 
 .invitation-email {
-  width: 100%;
+  width: auto;
+  flex-grow: 1;
   max-width: 30vw;
   white-space: nowrap;
   overflow: hidden;
@@ -155,8 +155,6 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 }
 
 .invitation-action {
-  width: 100%;
-
   &-buttons {
     opacity: 0;
     gap: 1rem;
