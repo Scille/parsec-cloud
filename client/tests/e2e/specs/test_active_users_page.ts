@@ -75,7 +75,7 @@ describe('Check active users page', () => {
     // Deselect [2], only [1] is selected
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
-    cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('See common workspaces');
+    cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('View details');
 
     // Check all should be indeterminate
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-indeterminate');

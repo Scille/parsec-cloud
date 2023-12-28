@@ -24,15 +24,15 @@
             class="danger"
             id="button-revoke-user"
             :button-label="$t('UsersPage.userContextMenu.actionRevoke', selectedUsersCount)"
-            @click="revokeSelectedUsers()"
+            @click="revokeSelectedUsers"
             v-show="isAdmin"
           />
           <ms-action-bar-button
-            :icon="eye"
+            :icon="informationCircle"
             v-show="selectedUsersCount === 1"
             id="button-common-workspaces"
-            :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
-            @click="viewCommonWorkspace()"
+            :button-label="$t('UsersPage.userContextMenu.actionDetails')"
+            @click="openSelectedUserDetails"
           />
         </div>
         <div class="right-side">
@@ -172,7 +172,7 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { eye, personAdd, personRemove } from 'ionicons/icons';
+import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -229,10 +229,6 @@ function getSelectedUsers(): UserInfo[] {
 
 async function inviteUser(): Promise<void> {
   routerNavigateTo('invitations', {}, { openInvite: true });
-}
-
-function viewCommonWorkspace(): void {
-  console.log('View common workspace clicked');
 }
 
 function onUserSelect(_user: UserInfo, _selected: boolean): void {
@@ -353,7 +349,7 @@ async function revokeSelectedUsers(): Promise<void> {
   await refreshUserList();
 }
 
-async function details(user: UserInfo): Promise<void> {
+async function openUserDetails(user: UserInfo): Promise<void> {
   const modal = await modalController.create({
     component: UserDetailsModal,
     cssClass: 'user-details-modal',
@@ -364,6 +360,14 @@ async function details(user: UserInfo): Promise<void> {
   await modal.present();
   await modal.onWillDismiss();
   await modal.dismiss();
+}
+
+async function openSelectedUserDetails(): Promise<void> {
+  const selectedUsers = getSelectedUsers();
+
+  if (selectedUsers.length === 1) {
+    return await openUserDetails(selectedUsers[0]);
+  }
 }
 
 function isCurrentUser(userId: UserID): boolean {
@@ -388,7 +392,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   const { data } = await popover.onDidDismiss();
   const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
-    [UserAction.Details, details],
+    [UserAction.Details, openUserDetails],
   ]);
 
   if (!data) {

@@ -993,6 +993,11 @@
             },
             "actions": {
                 "close": "Fermer"
+            },
+            "noSharedWorkspaces": "Vous n'avez pas d'espaces de travail en commun avec cet utilisateur.",
+            "failedToListWorkspaces": {
+                "title": "Erreur",
+                "message": "Impossible de lister les espaces de travail."
             }
         },
         "revocation": {

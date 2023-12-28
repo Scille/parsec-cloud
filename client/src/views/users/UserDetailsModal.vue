@@ -46,10 +46,13 @@
         <ion-text class="subtitles-sm workspace-title">
           {{ $t('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}
         </ion-text>
-        <div class="workspace-list">
+        <div
+          class="workspace-list"
+          v-show="sharedWorkspaces.length > 0"
+        >
           <ion-card
-            v-for="workspace in workspaces"
-            :key="workspace.id"
+            v-for="sharedWorkspace in sharedWorkspaces"
+            :key="sharedWorkspace.workspace.id"
             :disabled="user.isRevoked()"
             class="workspace-list-item"
           >
@@ -59,14 +62,20 @@
                 :icon="business"
               />
               <ion-text class="item-container__name cell">
-                {{ workspace.name }}
+                {{ sharedWorkspace.workspace.name }}
               </ion-text>
               <workspace-tag-role
                 class="item-container__tag"
-                :role="workspace.role"
+                :role="sharedWorkspace.userRole"
               />
             </ion-card-content>
           </ion-card>
+        </div>
+        <div
+          class="workspace-empty body"
+          v-show="sharedWorkspaces.length === 0"
+        >
+          {{ $t('UsersPage.UserDetailsModal.noSharedWorkspaces') }}
         </div>
       </ion-list>
     </ms-modal>
@@ -77,31 +86,38 @@
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
-import { UserInfo, WorkspaceRole } from '@/parsec';
+import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
-import { defineProps, inject } from 'vue';
+import { Ref, defineProps, inject, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
-const workspaces = [
-  {
-    id: 'fake1',
-    name: 'Workspace1',
-    role: WorkspaceRole.Owner,
-    availableOffline: true,
-  },
-  {
-    id: 'fake2',
-    name: 'Workspace2',
-    role: WorkspaceRole.Contributor,
-    availableOffline: false,
-  },
-];
+const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
+const notificationManager: NotificationManager = inject(NotificationKey)!;
+const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   user: UserInfo;
 }>();
+
+onMounted(async () => {
+  const result = await getWorkspacesSharedWith(props.user.id);
+
+  if (result.ok) {
+    sharedWorkspaces.value = result.value;
+  } else {
+    notificationManager.showToast(
+      new Notification({
+        title: t('UsersPage.UserDetailsModal.failedToListWorkspaces.title'),
+        message: t('UsersPage.UserDetailsModal.failedToListWorkspaces.message'),
+        level: NotificationLevel.Error,
+      }),
+    );
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -147,6 +163,12 @@ defineProps<{
 
   &-title {
     color: var(--parsec-color-light-secondary-text);
+  }
+
+  &-empty {
+    display: flex;
+    flex-direction: column;
+    color: var(--parsec-color-light-secondary-grey);
   }
 
   &-list {
