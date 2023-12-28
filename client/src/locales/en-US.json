@@ -60,7 +60,10 @@
             "help": "Help and feedback",
             "myDevices": "My devices",
             "myContactDetails": "My contact details",
-            "logoutConfirm": "Are you sure you want to log out?",
+            "logoutConfirmTitle": "Log out",
+            "logoutConfirmQuestion": "Are you sure you want to log out?",
+            "logoutYes": "Log out",
+            "logoutNo": "Stay connected",
             "logoutFailed": {
                 "title": "Failed to log out",
                 "message": "An error occured while logging out."

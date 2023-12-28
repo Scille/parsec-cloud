@@ -60,7 +60,10 @@
             "help": "Aide et commentaires",
             "myDevices": "Mes appareils",
             "myContactDetails": "Mes coordonnées",
-            "logoutConfirm": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutConfirmTitle": "Déconnexion",
+            "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutYes": "Se déconnecter",
+            "logoutNo": "Rester connecté",
             "logoutFailed": {
                 "title": "Impossible de se déconnecter",
                 "message": "Une erreur est survenue lors de la déconnexion."
