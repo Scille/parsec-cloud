@@ -15,6 +15,10 @@
 #dropdown-popover-button {
   height: 3rem;
   display: flex;
+  --background: var(--parsec-color-light-secondary-white);
+  background: var(--parsec-color-light-secondary-white);
+  flex-grow: 1;
+  width: auto;
 }
 
 /* --- checkbox --- */

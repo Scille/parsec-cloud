@@ -272,6 +272,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 .invitation-list-header {
   color: var(--parsec-color-light-secondary-grey);
   padding-inline-start: 0;
+  width: 100%;
 
   &__label {
     padding: 0 1rem;

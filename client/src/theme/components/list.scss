@@ -4,13 +4,20 @@
 
 .workspace-list-item,
 .file-list-item,
-.user-list-item {
+.user-list-item,
+.invitation-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
+  width: 100%;
 
   &::part(native) {
     border: none;
     --padding-start: 0px;
+    width: 100%;
+  }
+
+  .input-wrapper {
+    flex-wrap: nowrap;
   }
 
   &:not(.selected)::after {
@@ -69,7 +76,8 @@
 
 .workspace-list-item > [class^='workspace-'],
 .file-list-item > [class^='file-'],
-.user-list-item > [class^='user-'] {
+.user-list-item > [class^='user-'],
+.invitation-list-item > [class^='invitation-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;

@@ -119,11 +119,13 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 .user-selected {
   min-width: 4rem;
   justify-content: end;
+  width: auto;
 }
 
 .user-name {
   padding: 0.75rem 1rem;
-  width: 100%;
+  width: auto;
+  flex-grow: 1;
   max-width: 20vw;
   min-width: 11.25rem;
   white-space: nowrap;
@@ -132,6 +134,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 
 .user-email {
   min-width: 17.5rem;
+  width: auto;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);
 }
@@ -139,11 +142,13 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 .user-profile {
   min-width: 11.5rem;
   max-width: 10vw;
+  width: auto;
   flex-grow: 2;
 }
 
 .user-join {
   min-width: 11.25rem;
+  width: auto;
   flex-grow: 0;
   overflow: hidden;
   color: var(--parsec-color-light-secondary-grey);
@@ -151,6 +156,7 @@ const { timeSince } = inject(FormattersKey)! as Formatters;
 
 .user-options {
   min-width: 4rem;
+  width: auto;
   flex-grow: 0;
   margin-left: auto;
 

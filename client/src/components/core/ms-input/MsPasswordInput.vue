@@ -10,7 +10,7 @@
         >
           {{ label }}
         </ion-text>
-        <ion-item class="input">
+        <ion-item class="input ion-no-padding">
           <ion-input
             aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
@@ -68,6 +68,11 @@ function onEnterPress(): void {
 </script>
 
 <style lang="scss" scoped>
+#ms-password-input {
+  width: auto;
+  flex-grow: 1;
+}
+
 .input-grid {
   width: 100%;
 }
@@ -89,9 +94,10 @@ function onEnterPress(): void {
     border-radius: var(--parsec-radius-6);
     overflow: hidden;
     color: var(--parsec-color-light-primary-800);
+    padding-left: 1rem;
 
     &:focus-within {
-      --background: var(--parsec-color-light-secondary-background);
+      --background: var(--parsec-color-light-secondary-white);
       outline: var(--offset) solid var(--parsec-color-light-primary-300);
     }
 
