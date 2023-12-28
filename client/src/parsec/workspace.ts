@@ -186,7 +186,7 @@ export async function getWorkspaceSharing(
     const value: Array<[UserTuple, WorkspaceRole | null]> = [
       [
         {
-          id: '1',
+          id: 'id1',
           // cspell:disable-next-line
           humanHandle: { label: 'Korgan Bloodaxe', email: 'korgan@gmail.com' },
           profile: UserProfile.Standard,
@@ -195,7 +195,7 @@ export async function getWorkspaceSharing(
       ],
       [
         {
-          id: '2',
+          id: 'id2',
           // cspell:disable-next-line
           humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
           profile: UserProfile.Admin,
@@ -218,7 +218,7 @@ export async function getWorkspaceSharing(
     if (includeAllUsers) {
       value.push([
         {
-          id: '3',
+          id: 'id3',
           // cspell:disable-next-line
           humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
           profile: UserProfile.Outsider,
@@ -284,6 +284,38 @@ export async function getPathLink(
   } else {
     return { ok: true, value: link };
   }
+}
+
+export interface SharedWithInfo {
+  workspace: WorkspaceInfo;
+  user: UserID;
+  userRole: WorkspaceRole;
+}
+
+export async function getWorkspacesSharedWith(user: UserID): Promise<Result<Array<SharedWithInfo>, ClientListWorkspacesError>> {
+  const result = await listWorkspaces();
+
+  if (!result.ok) {
+    return result;
+  }
+  const retValue: Array<SharedWithInfo> = [];
+
+  for (const workspace of result.value) {
+    const sharing = workspace.sharing.find((item) => item[0].id === user);
+
+    if (sharing && sharing[1]) {
+      retValue.push({
+        workspace: workspace,
+        user: user,
+        userRole: sharing[1],
+      });
+    }
+  }
+
+  return {
+    ok: true,
+    value: retValue,
+  };
 }
 
 interface RoleUpdateAuthorization {

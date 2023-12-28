@@ -11,11 +11,11 @@
         <!-- view common workspace -->
         <div v-if="selectedUsersCount >= 1">
           <ms-action-bar-button
-            :icon="eye"
+            :icon="informationCircle"
             v-show="selectedUsersCount === 1"
             id="button-common-workspaces"
-            :button-label="$t('UsersPage.userContextMenu.actionSeeCommonWorkspaces')"
-            @click="viewCommonWorkspace()"
+            :button-label="$t('UsersPage.userContextMenu.actionDetails')"
+            @click="openSelectedUserDetails"
           />
         </div>
         <div class="right-side">
@@ -40,7 +40,7 @@
         </div>
       </ms-action-bar>
       <!-- users -->
-      <div class="users-container scroll">
+      <div class="revoked-users-container scroll">
         <div v-if="userList.length === 0">
           {{ $t('UsersPage.revokedEmptyList') }}
         </div>
@@ -130,7 +130,7 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-import { eye } from 'ionicons/icons';
+import { informationCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -160,8 +160,23 @@ const selectedUsersCount = computed(() => {
   }
 });
 
-function viewCommonWorkspace(): void {
-  console.log('View common workspace clicked');
+function getSelectedUsers(): UserInfo[] {
+  const selectedUsers: UserInfo[] = [];
+
+  if (displayView.value === DisplayState.List) {
+    for (const item of userListItemRefs.value) {
+      if (item.isSelected) {
+        selectedUsers.push(item.getUser());
+      }
+    }
+  } else {
+    for (const item of userGridItemRefs.value) {
+      if (item.isSelected) {
+        selectedUsers.push(item.getUser());
+      }
+    }
+  }
+  return selectedUsers;
 }
 
 function onUserSelect(_user: UserInfo, _selected: boolean): void {
@@ -192,7 +207,7 @@ function selectAllUsers(checked: boolean): void {
   }
 }
 
-async function details(user: UserInfo): Promise<void> {
+async function openUserDetails(user: UserInfo): Promise<void> {
   const modal = await modalController.create({
     component: UserDetailsModal,
     cssClass: 'user-details-modal',
@@ -203,6 +218,14 @@ async function details(user: UserInfo): Promise<void> {
   await modal.present();
   await modal.onWillDismiss();
   await modal.dismiss();
+}
+
+async function openSelectedUserDetails(): Promise<void> {
+  const selectedUsers = getSelectedUsers();
+
+  if (selectedUsers.length === 1) {
+    return await openUserDetails(selectedUsers[0]);
+  }
 }
 
 async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: () => void): Promise<void> {
@@ -221,7 +244,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([[UserAction.Details, details]]);
+  const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([[UserAction.Details, openUserDetails]]);
 
   if (!data) {
     if (onFinished) {
