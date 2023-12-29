@@ -3,7 +3,6 @@
 <template>
   <ms-modal
     :title="title"
-    :subtitle="subtitle"
     :close-button="{ visible: true }"
     :cancel-button="{
       label: $t('TextInputModal.cancel'),
@@ -11,49 +10,61 @@
       onClick: cancel,
     }"
     :confirm-button="{
-      label: $t('TextInputModal.ok'),
+      label: $t('TextInputModal.moveHere'),
       disabled: selectedPath === startingPath,
       onClick: confirm,
     }"
   >
-    <header-breadcrumbs
-      :path-nodes="headerPath"
-      @change="onPathChange"
-    />
-    <div>
-      <ion-list>
-        <ion-list-header
-          class="folder-list-header"
-          lines="full"
+    <div class="navigation">
+      <ion-buttons>
+        <ion-button
+          fill="clear"
+          @click="goBack()"
+          class="navigation-back-button"
+          :class="{ disabled: selectedPath === startingPath }"
+          ref="backButtonDisabled"
         >
-          <ion-label class="folder-list-header__label label-name">
-            {{ $t('FoldersPage.listDisplayTitles.name') }}
-          </ion-label>
-        </ion-list-header>
-        <div class="folders-container">
-          <ion-item
-            class="file-list-item"
-            v-for="entry in currentEntries"
-            :key="entry.id"
-            :disabled="entry.isFile()"
-            @click="enterFolder(entry)"
-          >
-            <div class="file-name">
-              <div class="file-name__icons">
-                <ion-icon
-                  class="main-icon"
-                  :icon="entry.isFile() ? document : folder"
-                  size="default"
-                />
-              </div>
-              <ion-label class="file-name__label cell">
-                {{ entry.name }}
-              </ion-label>
-            </div>
-          </ion-item>
-        </div>
-      </ion-list>
+          <ion-icon :icon="chevronBack" />
+        </ion-button>
+        <ion-button
+          fill="clear"
+          @click="goForward()"
+          class="navigation-back-button"
+          :class="{ disabled: backButtonDisabled }"
+        >
+          <ion-icon :icon="chevronForward" />
+        </ion-button>
+      </ion-buttons>
+      <header-breadcrumbs
+        :path-nodes="headerPath"
+        @change="onPathChange"
+        class="navigation-breadcrumb"
+      />
     </div>
+    <ion-list class="file-list">
+      <div class="file-container">
+        <ion-item
+          class="file-list-item"
+          v-for="entry in currentEntries"
+          :key="entry.id"
+          :disabled="entry.isFile()"
+          @click="enterFolder(entry)"
+        >
+          <div class="file-name">
+            <div class="file-name__icons">
+              <ion-icon
+                class="main-icon"
+                :icon="entry.isFile() ? document : folder"
+                size="default"
+              />
+            </div>
+            <ion-label class="file-name__label cell">
+              {{ entry.name }}
+            </ion-label>
+          </div>
+        </ion-item>
+      </div>
+    </ion-list>
   </ms-modal>
 </template>
 
@@ -61,15 +72,18 @@
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, EntryStatFolder, Path, entryStat } from '@/parsec';
-import { IonIcon, IonItem, IonLabel, IonList, IonListHeader, modalController } from '@ionic/vue';
-import { document, folder, home } from 'ionicons/icons';
+import { EntryStat, EntryStatFolder, Path, entryStat, getWorkspaceName } from '@/parsec';
+import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { chevronBack, chevronForward, document, folder } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const currentEntries: Ref<EntryStat[]> = ref([]);
+const backButtonDisabled = ref(true);
 
 onMounted(async () => {
   await update();
@@ -91,12 +105,17 @@ async function update(): Promise<void> {
   }
   currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
+  let workspaceName = '';
+  const workspaceResult = await getWorkspaceName(props.workspaceId);
+  if (workspaceResult.ok) {
+    workspaceName = workspaceResult.value;
+  }
+
   let path = '/';
   headerPath.value = [];
   headerPath.value.push({
     id: 0,
-    display: '',
-    icon: home,
+    display: workspaceName,
     name: '',
     query: { path: path },
   });
@@ -106,7 +125,6 @@ async function update(): Promise<void> {
     headerPath.value.push({
       id: id,
       display: comp === '/' ? '' : comp,
-      icon: comp === '/' ? home : undefined,
       name: '',
       query: { path: path },
     });
@@ -135,34 +153,42 @@ async function confirm(): Promise<boolean> {
 async function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
+
+function goBack(): void {
+  backButtonDisabled.value = false;
+  router.back();
+}
+
+function goForward(): void {
+  router.forward();
+}
 </script>
 
 <style scoped lang="scss">
-.folder-list-header {
-  color: var(--parsec-color-light-secondary-grey);
-  font-weight: 600;
-  padding-inline-start: 0;
+.navigation {
+  display: flex;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-light);
 
-  &__label {
-    padding: 0.75rem 1rem;
-  }
-
-  .label-name {
-    width: 100%;
-    min-width: 11.25rem;
-    white-space: nowrap;
-    overflow: hidden;
+  .disabled {
+    pointer-events: none;
+    color: var(--parsec-color-light-secondary-disabled);
   }
 }
 
-.folders-container {
-  max-height: 15em;
+.file-list {
+  overflow-y: auto;
+}
+
+.file-container {
   overflow-y: auto;
 }
 
 .file-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
+  cursor: pointer;
 
   &::part(native) {
     --padding-start: 0px;
@@ -181,12 +207,6 @@ async function cancel(): Promise<boolean> {
   }
 }
 
-.file-list-item > [class^='file-'] {
-  padding: 0 1rem;
-  display: flex;
-  align-items: center;
-  height: 4rem;
-}
 .file-name {
   padding: 0.75rem 1rem;
   width: 100%;

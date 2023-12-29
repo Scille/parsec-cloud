@@ -20,7 +20,6 @@
         v-if="path.icon"
         :icon="path.icon"
       />
-
       {{ path.display }}
       <ion-icon
         class="separator-icon"
@@ -86,27 +85,40 @@ function navigateTo(path: RouterPathNode): void {
   padding: 0;
   color: var(--parsec-color-light-secondary-grey);
 
+  &-element {
+    .main-icon {
+      font-size: 1.125rem;
+    }
+
+    .separator-icon {
+      color: var(--parsec-color-light-secondary-grey);
+      font-size: 0.75rem;
+    }
+
+    &::part(native) {
+      cursor: pointer;
+    }
+
+    &::part(separator) {
+      margin-inline: 0;
+      cursor: default;
+    }
+  }
+
   // Defined by ionic
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
   &-active {
     color: var(--parsec-color-light-primary-700);
+    pointer-events: none;
+
+    &::part(native) {
+      cursor: default;
+    }
 
     .main-icon {
       color: var(--parsec-color-light-primary-700);
       margin-right: 0.5rem;
     }
-  }
-}
-.breadcrumb-element {
-  cursor: pointer;
-
-  .main-icon {
-    font-size: 1.125rem;
-  }
-
-  .separator-icon {
-    color: var(--parsec-color-light-secondary-grey);
-    font-size: 0.75rem;
   }
 }
 </style>

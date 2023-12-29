@@ -206,9 +206,6 @@ describe('Check folders page', () => {
     cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__text')
-      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
     cy.get('@breadcrumbs')
@@ -239,9 +236,6 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 items');
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__text')
-      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
     cy.get('@breadcrumbs')
@@ -273,9 +267,6 @@ describe('Check folders page', () => {
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__text')
-      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
     cy.get('@breadcrumbs')
@@ -307,9 +298,6 @@ describe('Check folders page', () => {
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 items');
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__text')
-      .contains(/Current location: \/Dir_[a-z_]+/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
     cy.get('@breadcrumbs')
