@@ -32,8 +32,9 @@
         <div class="text-btn">
           <ion-text class="app-info-value"> v{{ getAppVersion() }} </ion-text>
           <ion-button
-            @click="showChangelog"
             class="changelog-btn button-outline"
+            target="_blank"
+            :href="$t('app.history')"
           >
             {{ $t('AboutPage.update.showChangelog') }}
           </ion-button>
@@ -93,6 +94,9 @@
 </template>
 
 <script lang="ts">
+/*
+ * Keeping it in case we decide to use it
+
 import ChangesModal from '@/views/about/ChangesModal.vue';
 import { modalController } from '@ionic/vue';
 
@@ -119,6 +123,7 @@ async function showChangelog(): Promise<void> {
     }
   }
 }
+*/
 </script>
 
 <script setup lang="ts">
