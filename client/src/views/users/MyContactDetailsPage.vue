@@ -17,7 +17,10 @@
           </div>
 
           <!-- change avatar -->
-          <div class="avatar">
+          <!--
+          <div
+            class="avatar"
+          >
             <h3 class="title-h3 avatar-title">
               {{ $t('ContactDetailsPage.avatarTitle') }}
             </h3>
@@ -29,6 +32,7 @@
               {{ $t('ContactDetailsPage.avatarUnavailable') }}
             </ion-chip>
           </div>
+          -->
 
           <!-- change password -->
           <div class="password-change">
@@ -59,7 +63,7 @@
           </div>
         </template>
         <template v-else>
-          {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation') }}
+          {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation.title') }}
         </template>
       </div>
     </ion-content>
@@ -70,7 +74,7 @@
 import { asyncComputed } from '@/common/asyncComputed';
 import { MsChoosePasswordInput, MsPasswordInput } from '@/components/core';
 import TagProfile from '@/components/users/TagProfile.vue';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
+// import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
   AvailableDevice,
   ChangeAuthErrorTag,
@@ -80,7 +84,7 @@ import {
   changePassword as parsecChangePassword,
 } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { IonButton, IonChip, IonContent, IonPage, IonText } from '@ionic/vue';
+import { IonButton, IonContent, IonPage, IonText } from '@ionic/vue';
 import { Ref, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
