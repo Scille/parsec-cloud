@@ -503,8 +503,8 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   }
   const folder = await selectFolder({
     title: t('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
-    subtitle: t('FoldersPage.moveSelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
+    workspaceId: workspaceId.value,
   });
   if (!folder) {
     return;
@@ -572,6 +572,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     title: t('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: t('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
+    workspaceId: workspaceId.value,
   });
   if (!folder) {
     return;

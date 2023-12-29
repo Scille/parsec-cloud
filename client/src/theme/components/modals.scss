@@ -244,3 +244,25 @@ ion-modal.join-by-link-modal::part(content) {
     --box-shadow: var(--parsec-shadow-light) !important;
   }
 }
+
+.folder-selection-modal {
+  &::part(content) {
+    width: 782px;
+    height: 615px;
+  }
+
+  .modal,
+  .modal > div,
+  .ms-modal {
+    height: 100%;
+  }
+
+  .ms-modal-content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .ms-modal-footer {
+    margin-top: auto;
+  }
+}

@@ -200,7 +200,7 @@
         "no": "Non"
     },
     "TextInputModal": {
-        "ok": "Ok",
+        "moveHere": "Déplacer ici",
         "cancel": "Annuler"
     },
     "MenuPage": {

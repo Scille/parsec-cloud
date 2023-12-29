@@ -13,6 +13,7 @@ export interface FolderSelectionOptions {
   title: string;
   subtitle?: string;
   startingPath: FsPath;
+  workspaceId: string;
 }
 
 export interface GetTextOptions {
