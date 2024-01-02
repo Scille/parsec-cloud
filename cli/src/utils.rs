@@ -10,6 +10,7 @@ use libparsec::{
 use terminal_spinners::{SpinnerBuilder, SpinnerHandle, DOTS};
 
 pub const GREEN: &str = "\x1B[92m";
+pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";
 pub const YELLOW: &str = "\x1B[33m";
 
