@@ -59,4 +59,9 @@
   --parsec-color-tags-orange500: hsla(36, 100%, 36%, 1);
   --parsec-color-tags-green100: hsla(72, 100%, 92%, 1);
   --parsec-color-tags-green500: hsla(72, 90%, 32%, 1);
+
+  /* ------ scrollbar light------ */
+  --parsec-color-light-scrollbar-thumb: hsl(240, 5%, 74%);
+  --parsec-color-light-scrollbar-thumb-hover: hsl(240, 5%, 55%);
+  --parsec-color-light-scrollbar-track: hsla(0, 0%, 100%, 0);
 }
