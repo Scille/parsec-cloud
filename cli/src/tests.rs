@@ -7,8 +7,10 @@ use std::{
 };
 
 use libparsec::{
-    tmp_path, BackendAddr, BackendOrganizationBootstrapAddr, ClientConfig, LocalDevice,
-    OrganizationID, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    authenticated_cmds::latest::invite_new::{self, InviteNewRep, UserOrDevice},
+    get_default_config_dir, tmp_path, AuthenticatedCmds, BackendAddr, BackendInvitationAddr,
+    BackendOrganizationBootstrapAddr, ClientConfig, InvitationType, LocalDevice, OrganizationID,
+    ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
@@ -197,5 +199,57 @@ async fn invite_user(tmp_path: TmpPath) {
         .assert()
         .stdout(predicates::str::contains(
             "Creating user invitation\nInvitation URL:",
+        ));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn cancel_invitation(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    let cmds = AuthenticatedCmds::new(
+        &get_default_config_dir(),
+        alice.clone(),
+        ProxyConfig::new_from_env().unwrap(),
+    )
+    .unwrap();
+
+    let rep = cmds
+        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .await
+        .unwrap();
+
+    let invitation_addr = match rep {
+        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+            alice.organization_addr.clone(),
+            alice.organization_id().clone(),
+            InvitationType::Device,
+            token,
+        ),
+        rep => {
+            panic!("Server refused to create device invitation: {rep:?}");
+        }
+    };
+
+    let token = invitation_addr.token();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "cancel-invitation",
+            "--device",
+            &alice.slughash(),
+            "--token",
+            &format!("{}", token.as_simple()),
+        ])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Deleting invitation\nInvitation deleted",
         ));
 }

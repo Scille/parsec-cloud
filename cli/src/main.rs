@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod bootstrap_organization;
+mod cancel_invitation;
 mod create_organization;
 mod invite_device;
 mod invite_user;
@@ -25,6 +26,8 @@ struct Arg {
 enum Command {
     /// Configure new organization
     BootstrapOrganization(bootstrap_organization::BootstrapOrganization),
+    /// Cancel invitation
+    CancelInvitation(cancel_invitation::CancelInvitation),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
     /// Create device invitation
@@ -48,6 +51,9 @@ async fn main() -> anyhow::Result<()> {
     match arg.command {
         Command::BootstrapOrganization(bootstrap_organization) => {
             bootstrap_organization::bootstrap_organization(bootstrap_organization).await
+        }
+        Command::CancelInvitation(cancel_invitation) => {
+            cancel_invitation::cancel_invitation(cancel_invitation).await
         }
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
