@@ -324,6 +324,35 @@ async fn stats_organization(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn export_recovery_device(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    let output = tmp_path.join("recovery_device");
+
+    set_env(&tmp_path_str, &url);
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "export-recovery-device",
+            "--device",
+            &alice.slughash(),
+            "--output",
+            &output.to_string_lossy(),
+        ])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Saving recovery device file\nSaved in",
+        ));
+
+    assert!(output.exists());
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
