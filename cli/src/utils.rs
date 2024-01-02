@@ -176,7 +176,7 @@ pub fn choose_sas_code(
 }
 
 pub fn choose_user_profile(input: &mut String) -> anyhow::Result<UserProfile> {
-    println!("Which profile ? (0, 1, 2)");
+    println!("Which profile? (0, 1, 2)");
     println!(" 0 - {YELLOW}Standard{RESET}");
     println!(" 1 - {YELLOW}Admin{RESET}");
     println!(" 2 - {YELLOW}Outsider{RESET}");
