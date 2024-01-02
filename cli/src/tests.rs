@@ -412,6 +412,61 @@ async fn stats_server(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn list_invitations(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["list-invitations", "--device", &alice.slughash()])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Listing invitations\nNo invitation.",
+        ));
+
+    let cmds = AuthenticatedCmds::new(
+        &get_default_config_dir(),
+        alice.clone(),
+        ProxyConfig::new_from_env().unwrap(),
+    )
+    .unwrap();
+
+    let rep = cmds
+        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .await
+        .unwrap();
+
+    let invitation_addr = match rep {
+        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+            alice.organization_addr.clone(),
+            alice.organization_id().clone(),
+            InvitationType::Device,
+            token,
+        ),
+        rep => {
+            panic!("Server refused to create device invitation: {rep:?}");
+        }
+    };
+
+    let token = invitation_addr.token();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["list-invitations", "--device", &alice.slughash()])
+        .assert()
+        .stdout(predicates::str::contains(format!(
+            "Listing invitations\n{}\t{YELLOW}idle{RESET}\tdevice",
+            token.as_simple()
+        )));
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();

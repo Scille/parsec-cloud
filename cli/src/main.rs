@@ -9,6 +9,7 @@ mod greet_invitation;
 mod invite_device;
 mod invite_user;
 mod list_devices;
+mod list_invitations;
 mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;
@@ -48,6 +49,8 @@ enum Command {
     GreetInvitation(greet_invitation::GreetInvitation),
     /// List all devices
     ListDevices(list_devices::ListDevices),
+    /// List invitations
+    ListInvitations(list_invitations::ListInvitations),
     /// Remove device
     RemoveDevice(remove_device::RemoveDevice),
     #[cfg(feature = "testenv")]
@@ -88,6 +91,9 @@ async fn main() -> anyhow::Result<()> {
             greet_invitation::greet_invitation(greet_invitation).await
         }
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
+        Command::ListInvitations(list_invitations) => {
+            list_invitations::list_invitations(list_invitations).await
+        }
         Command::RemoveDevice(remove_device) => remove_device::remove_device(remove_device).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,

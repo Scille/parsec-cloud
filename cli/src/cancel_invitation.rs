@@ -44,7 +44,7 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
                 InviteDeleteRep::Ok => (),
                 rep => {
                     return Err(anyhow::anyhow!(
-                        "Server error while cancelling invitation:: {rep:?}"
+                        "Server error while cancelling invitation: {rep:?}"
                     ));
                 }
             };
