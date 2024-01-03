@@ -443,6 +443,42 @@ async fn stats_server(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn status_organization(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, _, org_id) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    let expect = format!(
+        "{:#}\n",
+        serde_json::json!({
+            "active_users_limit": null,
+            "is_bootstrapped": true,
+            "is_expired": false,
+            "user_profile_outsider_allowed": true
+        })
+    );
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "status-organization",
+            "--organization-id",
+            &org_id.to_string(),
+            "--addr",
+            &url.to_string(),
+            "--token",
+            DEFAULT_ADMINISTRATION_TOKEN,
+        ])
+        .assert()
+        .stdout(expect);
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn list_invitations(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
