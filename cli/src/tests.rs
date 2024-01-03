@@ -533,3 +533,50 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     wait_for(&mut stdout_greeter, &mut buf, "Creating the user");
     wait_for(&mut stdout_claimer, &mut buf, "Saved");
 }
+
+#[rstest::rstest]
+#[tokio::test]
+async fn remove_device(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    let process = std::process::Command::new("cargo")
+        .args([
+            "run",
+            "--profile=ci-rust",
+            "--package=parsec_cli",
+            "--features=testenv",
+            "remove-device",
+            "--device",
+            &alice.slughash(),
+        ])
+        .stdin(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let mut stdout = BufReader::new(process.stdout.unwrap());
+    let mut stdin = process.stdin.unwrap();
+    let mut buf = String::new();
+
+    let alice_device_file = tmp_path
+        .join("config")
+        .join("parsec-v3-alpha")
+        .join("devices")
+        .join(format!("{}.keys", alice.slughash()));
+
+    assert!(alice_device_file.exists());
+
+    wait_for(&mut stdout, &mut buf, "Are you sure? (y/n)");
+    stdin.write_all(b"y\n").unwrap();
+
+    wait_for(&mut stdout, &mut buf, "The device has been removed");
+
+    assert!(!alice_device_file.exists());
+}

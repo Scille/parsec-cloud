@@ -8,6 +8,7 @@ mod greet_invitation;
 mod invite_device;
 mod invite_user;
 mod list_devices;
+mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;
 mod stats_organization;
@@ -43,6 +44,8 @@ enum Command {
     GreetInvitation(greet_invitation::GreetInvitation),
     /// List all devices
     ListDevices(list_devices::ListDevices),
+    /// Remove device
+    RemoveDevice(remove_device::RemoveDevice),
     #[cfg(feature = "testenv")]
     /// Create a temporary environment and initialize a test setup for parsec.
     /// #### WARNING: it also leaves an in-memory server running in the background.
@@ -76,6 +79,7 @@ async fn main() -> anyhow::Result<()> {
             greet_invitation::greet_invitation(greet_invitation).await
         }
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
+        Command::RemoveDevice(remove_device) => remove_device::remove_device(remove_device).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
         Command::StatsOrganization(stats_organization) => {
