@@ -188,7 +188,7 @@ async function confirm(): Promise<boolean> {
   overflow: auto;
 
   > :first-child {
-    margin-top: 2rem;
+    padding-top: 2rem;
   }
 }
 

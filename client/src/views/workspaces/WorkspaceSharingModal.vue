@@ -7,7 +7,7 @@
       :close-button="{ visible: true }"
     >
       <!-- content -->
-      <div>
+      <div class="modal-container">
         <ms-input
           v-model="search"
           :label="$t('WorkspaceSharing.searchLabel')"
@@ -203,17 +203,24 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
 .ms-modal {
   display: flex;
   flex-direction: column;
-  max-height: 45em;
 
   .inner-content {
-    overflow-y: auto;
+    overflow-y: hidden;
     height: 100%;
   }
 }
 </style>
 
 <style scoped lang="scss">
+.modal-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .user-list {
-  padding: 0.5rem;
+  margin-top: 0.5rem;
+  padding-right: 0.5rem;
+  overflow-y: auto;
 }
 </style>
