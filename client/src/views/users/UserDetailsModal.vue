@@ -124,6 +124,7 @@ onMounted(async () => {
 .details {
   display: flex;
   margin-bottom: 1rem;
+
   .details-item {
     display: flex;
     flex-direction: column;
@@ -160,6 +161,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  overflow-y: auto;
 
   &-title {
     color: var(--parsec-color-light-secondary-text);
@@ -175,10 +177,14 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    overflow: auto;
+    height: 100%;
+    min-height: min-content;
 
     .workspace-list-item {
       background: var(--parsec-color-light-secondary-background);
       border: 1px solid var(--parsec-color-light-secondary-disabled);
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       padding: 1rem 1.5rem 1rem 1rem;

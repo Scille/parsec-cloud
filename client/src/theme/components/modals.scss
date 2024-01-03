@@ -9,16 +9,36 @@ ion-modal::part(content) {
 }
 
 ion-modal {
-  --height: auto;
-  --width: auto;
+  --width: var(--parsec-modal-width);
   --max-width: var(--parsec-modal-width);
-  --min-width: var(--parsec-modal-width);
+  --height: auto;
+  --max-height: var(--parsec-modal-max-height);
 }
 
 ion-modal .ion-page {
   position: relative;
   display: block;
   contain: content;
+  height: -webkit-fill-available;
+
+  & > div {
+    height: 100%;
+  }
+
+  .ms-modal {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    &-footer {
+      margin-top: auto;
+    }
+  }
 }
 
 ion-modal .inner-content {
@@ -76,46 +96,46 @@ ion-modal .inner-content {
     &.wizardTrue {
       padding-top: 2.5rem;
     }
-  }
 
-  .modal-header {
-    margin-bottom: 2rem;
+    &-header {
+      margin-bottom: 2rem;
 
-    &__title {
-      padding: 0;
-      margin-bottom: 1.5rem;
-      color: var(--parsec-color-light-primary-800);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      max-width: var(--parsec-modal-width);
+      &__title {
+        padding: 0;
+        margin-bottom: 1.5rem;
+        color: var(--parsec-color-light-primary-800);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        max-width: var(--parsec-modal-width);
+      }
+
+      &__text {
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
 
-    &__text {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-  }
+    &-content {
+      --background: transparent;
 
-  .modal-content {
-    --background: transparent;
-
-    .step {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-  }
-
-  .modal-footer {
-    &:first-child:not([hidden]),
-    ion-button:not([style='display: none']) {
-      margin-top: 2.5rem;
+      .step {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
     }
 
-    &-buttons {
-      display: flex;
-      justify-content: end;
-      gap: 1rem;
+    &-footer {
+      &:first-child:not([hidden]),
+      ion-button:not([style='display: none']) {
+        margin-top: 2.5rem;
+      }
+
+      &-buttons {
+        display: flex;
+        justify-content: end;
+        gap: 1rem;
+      }
     }
   }
 
@@ -174,7 +194,12 @@ ion-modal.join-by-link-modal::part(content) {
 }
 
 .workspace-sharing-modal {
-  --height: 700px;
+  --width: 642px;
+  --height: 636px;
+
+  &::part(content) {
+    height: 100%;
+  }
 
   .ion-page {
     position: absolute;
@@ -184,6 +209,10 @@ ion-modal.join-by-link-modal::part(content) {
 
 .user-details-modal {
   --width: 642px;
+
+  &::part(content) {
+    height: 100%;
+  }
 }
 
 .file-upload-modal {
