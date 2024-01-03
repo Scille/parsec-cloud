@@ -2,10 +2,7 @@
 
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import { IonButton } from '@ionic/vue';
-import { mockI18n } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
-
-mockI18n();
 
 describe('Sas code choice', () => {
   let wrapper: VueWrapper;
@@ -25,7 +22,7 @@ describe('Sas code choice', () => {
     expect(buttons.at(1)?.text()).to.contain('BBBB');
     expect(buttons.at(2)?.text()).to.contain('CCCC');
     expect(buttons.at(3)?.text()).to.contain('DDDD');
-    expect(buttons.at(4)?.text()).to.contain('SasCodeChoice.noneOfTheChoices');
+    expect(buttons.at(4)?.text()).to.contain('None shown');
   });
 
   it('should emit select with the clicked value', async () => {

@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
-
-mockI18n();
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { mount } from '@vue/test-utils';

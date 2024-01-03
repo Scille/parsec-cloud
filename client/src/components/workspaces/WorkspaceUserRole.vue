@@ -20,14 +20,12 @@
 </template>
 
 <script setup lang="ts">
-import { translateWorkspaceRole } from '@/common/translations';
 import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserProfile, UserTuple, WorkspaceRole, canChangeRole } from '@/parsec';
+import { canChangeRole } from '@/components/workspaces/utils';
+import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
+import { translateWorkspaceRole } from '@/services/translation';
 import { computed, defineEmits, defineProps } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
 
 const props = defineProps<{
   user: UserTuple;
@@ -49,10 +47,10 @@ const options = computed((): MsOptions => {
       (role: WorkspaceRole | null) => {
         return {
           key: role === null ? NOT_SHARED_KEY : role,
-          label: translateWorkspaceRole(t, role).label,
-          description: translateWorkspaceRole(t, role).description,
-          disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).authorized,
-          disabledReason: canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role, t).reason,
+          label: translateWorkspaceRole(role).label,
+          description: translateWorkspaceRole(role).description,
+          disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role).authorized,
+          disabledReason: canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role).reason,
         };
       },
     ),

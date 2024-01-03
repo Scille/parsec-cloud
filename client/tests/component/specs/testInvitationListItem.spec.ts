@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
-
-mockI18n();
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import { InvitationStatus, UserInvitation } from '@/parsec';
@@ -30,12 +28,12 @@ describe('User Invitation List Item', () => {
       },
     });
 
-    expect(wrapper.get('.invitation-status').text()).to.equal('UsersPage.invitation.status.ready');
+    expect(wrapper.get('.invitation-status').text()).to.equal('Ready');
     expect(wrapper.get('.invitation-email').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
-    expect(buttons.at(0)?.text()).to.equal('UsersPage.invitation.copyLink');
-    expect(buttons.at(1)?.text()).to.equal('UsersPage.invitation.rejectUser');
-    expect(buttons.at(2)?.text()).to.equal('UsersPage.invitation.greetUser');
+    expect(buttons.at(0)?.text()).to.equal('Copy the link');
+    expect(buttons.at(1)?.text()).to.equal('Reject');
+    expect(buttons.at(2)?.text()).to.equal('Greet');
 
     buttons.at(1)?.trigger('click');
     expect(wrapper.emitted('rejectUser')?.length).to.equal(1);

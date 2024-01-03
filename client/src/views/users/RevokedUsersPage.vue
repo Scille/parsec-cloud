@@ -116,6 +116,7 @@ import UserCard from '@/components/users/UserCard.vue';
 import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import {
@@ -132,15 +133,12 @@ import {
 } from '@ionic/vue';
 import { informationCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
 const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const { t } = useI18n();
 
 const allUsersSelected = computed({
   get: (): boolean => selectedUsersCount.value === userList.value.length,
@@ -274,8 +272,8 @@ async function refreshUserList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.listRevokedUsersFailed.title'),
-        message: t('UsersPage.listRevokedUsersFailed.message'),
+        title: translate('UsersPage.listRevokedUsersFailed.title'),
+        message: translate('UsersPage.listRevokedUsersFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

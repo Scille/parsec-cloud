@@ -18,13 +18,9 @@ describe('Password validation', () => {
   });
 
   it('Checks password strength texts', () => {
-    function t(s: string): string {
-      return s;
-    }
-
-    expect(getPasswordStrengthText(t, PasswordStrength.None)).to.equal('');
-    expect(getPasswordStrengthText(t, PasswordStrength.Low)).to.equal('Password.passwordLevelLow');
-    expect(getPasswordStrengthText(t, PasswordStrength.Medium)).to.equal('Password.passwordLevelMedium');
-    expect(getPasswordStrengthText(t, PasswordStrength.High)).to.equal('Password.passwordLevelHigh');
+    expect(getPasswordStrengthText(PasswordStrength.None)).to.equal('');
+    expect(getPasswordStrengthText(PasswordStrength.Low)).to.equal('Low');
+    expect(getPasswordStrengthText(PasswordStrength.Medium)).to.equal('Moderate');
+    expect(getPasswordStrengthText(PasswordStrength.High)).to.equal('Strong');
   });
 });

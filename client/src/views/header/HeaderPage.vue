@@ -109,6 +109,7 @@ import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBre
 import { ClientInfo, Path, WorkspaceID, WorkspaceName, getClientInfo, getWorkspaceName, hasHistory, isDocumentRoute } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { translate } from '@/services/translation';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import {
   IonButton,
@@ -125,12 +126,10 @@ import {
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
 
 const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
-const { t } = useI18n();
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
@@ -162,7 +161,7 @@ async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
     // Always put the document route first
     finalPath.push({
       id: 0,
-      display: routePath.length >= 2 ? '' : t('HeaderPage.titles.workspaces'),
+      display: routePath.length >= 2 ? '' : translate('HeaderPage.titles.workspaces'),
       icon: home,
       name: 'workspaces',
       params: { deviceId: currentRoute.params.deviceId },
@@ -211,25 +210,25 @@ function getTitleForRoute(): string {
   const route = currentRoute.name;
 
   if (route === 'settings') {
-    return t('HeaderPage.titles.settings');
+    return translate('HeaderPage.titles.settings');
   } else if (route === 'devices') {
-    return t('HeaderPage.titles.devices');
+    return translate('HeaderPage.titles.devices');
   } else if (route === 'activeUsers') {
-    return t('HeaderPage.titles.users.activeUsers');
+    return translate('HeaderPage.titles.users.activeUsers');
   } else if (route === 'revokedUsers') {
-    return t('HeaderPage.titles.users.revokedUsers');
+    return translate('HeaderPage.titles.users.revokedUsers');
   } else if (route === 'invitations') {
-    return t('HeaderPage.titles.users.invitations');
+    return translate('HeaderPage.titles.users.invitations');
   } else if (route === 'storage') {
-    return t('HeaderPage.titles.organization.storage');
+    return translate('HeaderPage.titles.organization.storage');
   } else if (route === 'organization') {
-    return t('HeaderPage.titles.organization.information');
+    return translate('HeaderPage.titles.organization.information');
   } else if (route === 'about') {
-    return t('HeaderPage.titles.about');
+    return translate('HeaderPage.titles.about');
   } else if (route === 'myContactDetails') {
-    return t('HeaderPage.titles.myContactDetails');
+    return translate('HeaderPage.titles.myContactDetails');
   } else if (route === 'recoveryExport') {
-    return t('HeaderPage.titles.recoveryExport');
+    return translate('HeaderPage.titles.recoveryExport');
   }
 
   return '';

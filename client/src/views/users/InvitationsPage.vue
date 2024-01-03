@@ -86,18 +86,16 @@ import {
 } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonContent, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
-const { t } = useI18n();
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const currentRoute = useRoute();
 
@@ -132,8 +130,8 @@ async function refreshInvitationsList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.invitation.invitationsListFailed.title'),
-        message: t('UsersPage.invitation.invitationsListFailed.message'),
+        title: translate('UsersPage.invitation.invitationsListFailed.title'),
+        message: translate('UsersPage.invitation.invitationsListFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -142,12 +140,12 @@ async function refreshInvitationsList(): Promise<void> {
 
 async function inviteUser(): Promise<void> {
   const email = await getTextInputFromUser({
-    title: t('UsersPage.CreateUserInvitationModal.pageTitle'),
+    title: translate('UsersPage.CreateUserInvitationModal.pageTitle'),
     trim: true,
     validator: emailValidator,
-    inputLabel: t('UsersPage.CreateUserInvitationModal.label'),
-    placeholder: t('UsersPage.CreateUserInvitationModal.placeholder'),
-    okButtonText: t('UsersPage.CreateUserInvitationModal.create'),
+    inputLabel: translate('UsersPage.CreateUserInvitationModal.label'),
+    placeholder: translate('UsersPage.CreateUserInvitationModal.placeholder'),
+    okButtonText: translate('UsersPage.CreateUserInvitationModal.create'),
   });
 
   if (!email) {
@@ -161,8 +159,8 @@ async function inviteUser(): Promise<void> {
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
       notificationManager.showToast(
         new Notification({
-          title: t('UsersPage.invitation.inviteSuccessMailSent.title'),
-          message: t('UsersPage.invitation.inviteSuccessMailSent.message', {
+          title: translate('UsersPage.invitation.inviteSuccessMailSent.title'),
+          message: translate('UsersPage.invitation.inviteSuccessMailSent.message', {
             email: email,
           }),
           level: NotificationLevel.Success,
@@ -171,8 +169,8 @@ async function inviteUser(): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          title: t('UsersPage.invitation.inviteSuccessNoMail.title'),
-          message: t('UsersPage.invitation.inviteSuccessNoMail.message', {
+          title: translate('UsersPage.invitation.inviteSuccessNoMail.title'),
+          message: translate('UsersPage.invitation.inviteSuccessNoMail.message', {
             email: email,
           }),
           level: NotificationLevel.Success,
@@ -183,16 +181,16 @@ async function inviteUser(): Promise<void> {
     let message = '';
     switch (result.error.tag) {
       case InvitationErrorTag.AlreadyMember:
-        message = t('UsersPage.invitation.inviteFailedAlreadyMember');
+        message = translate('UsersPage.invitation.inviteFailedAlreadyMember');
         break;
       case InvitationErrorTag.Offline:
-        message = t('UsersPage.invitation.inviteFailedOffline');
+        message = translate('UsersPage.invitation.inviteFailedOffline');
         break;
       case InvitationErrorTag.NotAllowed:
-        message = t('UsersPage.invitation.inviteFailedNotAllowed');
+        message = translate('UsersPage.invitation.inviteFailedNotAllowed');
         break;
       default:
-        message = t('UsersPage.invitation.inviteFailedUnknown', {
+        message = translate('UsersPage.invitation.inviteFailedUnknown', {
           reason: result.error.tag,
         });
         break;
@@ -200,7 +198,7 @@ async function inviteUser(): Promise<void> {
 
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.invitation.inviteFailedUnknown.title'),
+        title: translate('UsersPage.invitation.inviteFailedUnknown.title'),
         message,
         level: NotificationLevel.Error,
       }),
@@ -233,8 +231,8 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   if (result.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.invitation.cancelSuccess.title'),
-        message: t('UsersPage.invitation.cancelSuccess.message'),
+        title: translate('UsersPage.invitation.cancelSuccess.title'),
+        message: translate('UsersPage.invitation.cancelSuccess.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -247,8 +245,8 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          title: t('UsersPage.invitation.cancelFailed.title'),
-          message: t('UsersPage.invitation.cancelFailed.message'),
+          title: translate('UsersPage.invitation.cancelFailed.title'),
+          message: translate('UsersPage.invitation.cancelFailed.message'),
           level: NotificationLevel.Error,
         }),
       );

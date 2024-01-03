@@ -13,11 +13,9 @@
 
 <script setup lang="ts">
 import { UserProfile } from '@/parsec';
+import { translate } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 import { defineProps } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
 
 defineProps<{
   profile: UserProfile;
@@ -25,11 +23,11 @@ defineProps<{
 
 function translateProfile(profile: UserProfile): string {
   if (profile === UserProfile.Admin) {
-    return t('UsersPage.profile.admin.label');
+    return translate('UsersPage.profile.admin.label');
   } else if (profile === UserProfile.Standard) {
-    return t('UsersPage.profile.standard.label');
+    return translate('UsersPage.profile.standard.label');
   } else if (profile === UserProfile.Outsider) {
-    return t('UsersPage.profile.outsider.label');
+    return translate('UsersPage.profile.outsider.label');
   }
   return '';
 }

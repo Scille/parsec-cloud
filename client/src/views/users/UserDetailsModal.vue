@@ -88,16 +88,14 @@ import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
 import { Ref, defineProps, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const { timeSince } = inject(FormattersKey)! as Formatters;
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const { t } = useI18n();
 
 const props = defineProps<{
   user: UserInfo;
@@ -111,8 +109,8 @@ onMounted(async () => {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.UserDetailsModal.failedToListWorkspaces.title'),
-        message: t('UsersPage.UserDetailsModal.failedToListWorkspaces.message'),
+        title: translate('UsersPage.UserDetailsModal.failedToListWorkspaces.title'),
+        message: translate('UsersPage.UserDetailsModal.failedToListWorkspaces.message'),
         level: NotificationLevel.Error,
       }),
     );

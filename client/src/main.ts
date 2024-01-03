@@ -28,7 +28,6 @@ import { formatFileSize } from '@/common/filesize';
 import { FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
 import { Config, StorageManager } from '@/services/storageManager';
 import { isPlatform } from '@ionic/vue';
-import { DateTime } from 'luxon';
 
 /* Theme variables */
 import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
@@ -37,7 +36,7 @@ import { isElectron, isHomeRoute } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { getI18n, initTranslations } from '@/services/translation';
+import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
 async function setupApp(): Promise<void> {
@@ -46,12 +45,11 @@ async function setupApp(): Promise<void> {
 
   const config = await storageManager.retrieveConfig();
 
-  initTranslations(config.locale);
-  const i18n = getI18n();
+  const i18n = initTranslations(config.locale);
 
   const { t } = i18n.global;
 
-  const notificationManager = new NotificationManager(t);
+  const notificationManager = new NotificationManager();
   const importManager = new ImportManager();
 
   const app = createApp(App)
@@ -62,14 +60,8 @@ async function setupApp(): Promise<void> {
     .use(i18n);
 
   app.provide(FormattersKey, {
-    timeSince: (date: DateTime | undefined, defaultValue = '', format: 'long' | 'short' = 'long', roundDays?: boolean): string => {
-      const { t, d } = getI18n().global;
-      return formatTimeSince(date, t, d, defaultValue, format, roundDays);
-    },
-    fileSize: (bytes: number): string => {
-      const { t } = getI18n().global;
-      return formatFileSize(bytes, t);
-    },
+    timeSince: formatTimeSince,
+    fileSize: formatFileSize,
   });
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationManager);

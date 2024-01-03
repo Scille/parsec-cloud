@@ -15,9 +15,6 @@
 <script setup lang="ts">
 import AboutView from '@/views/about/AboutView.vue';
 import { IonContent, IonPage } from '@ionic/vue';
-import { useI18n } from 'vue-i18n';
-
-useI18n();
 </script>
 
 <style scoped lang="scss">

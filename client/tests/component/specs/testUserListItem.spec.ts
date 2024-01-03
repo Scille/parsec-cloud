@@ -2,11 +2,9 @@
 
 import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, UserProfile } from '@/parsec';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('User List Item', () => {
   it('Display item for user', () => {

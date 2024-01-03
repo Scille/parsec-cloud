@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { translate } from '@/services/translation';
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
-import { ComposerTranslation } from 'vue-i18n';
 
 export enum PasswordStrength {
   None = 0,
@@ -34,13 +34,13 @@ export function getPasswordStrength(password: string): PasswordStrength {
   return PasswordStrength.High;
 }
 
-export function getPasswordStrengthText(t: ComposerTranslation, strength: PasswordStrength): string {
+export function getPasswordStrengthText(strength: PasswordStrength): string {
   if (strength === PasswordStrength.Low) {
-    return t('Password.passwordLevelLow');
+    return translate('Password.passwordLevelLow');
   } else if (strength === PasswordStrength.Medium) {
-    return t('Password.passwordLevelMedium');
+    return translate('Password.passwordLevelMedium');
   } else if (strength === PasswordStrength.High) {
-    return t('Password.passwordLevelHigh');
+    return translate('Password.passwordLevelHigh');
   }
   return '';
 }

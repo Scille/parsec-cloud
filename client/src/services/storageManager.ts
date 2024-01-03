@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { isElectron } from '@/parsec';
+import { Locale } from '@/services/translation';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 
@@ -11,7 +12,7 @@ export interface StoredDeviceData {
 }
 
 export interface Config {
-  locale: string;
+  locale?: Locale;
   theme: string;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
@@ -26,7 +27,6 @@ export class StorageManager {
   // TODO: CHANGE BACK THEME TO SYSTEM WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427
   static get DEFAULT_CONFIG(): Config {
     return {
-      locale: '',
       theme: 'light',
       enableTelemetry: true,
       minimizeToTray: true,

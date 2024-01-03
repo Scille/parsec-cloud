@@ -100,9 +100,6 @@ export enum OrgInfo {
 <script setup lang="ts">
 import { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import { IonButton, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
-import { useI18n } from 'vue-i18n';
-
-useI18n();
 
 defineEmits<{
   (e: 'update-request', info: OrgInfo): void;

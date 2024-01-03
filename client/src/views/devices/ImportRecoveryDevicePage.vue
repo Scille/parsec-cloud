@@ -153,12 +153,10 @@ import { MsChoosePasswordInput, MsInformativeText, MsInput, MsReportText, MsRepo
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, defineEmits, defineProps, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
 
 enum ImportDevicePageState {
   Start = 'start',
@@ -219,16 +217,16 @@ async function goToPasswordChange(): Promise<void> {
 
     switch (result.error.tag) {
       case RecoveryImportErrorTag.KeyError:
-        notificationInfo.title = t('ImportRecoveryDevicePage.errors.keyErrorTitle');
-        notificationInfo.message = t('ImportRecoveryDevicePage.errors.keyErrorMessage');
+        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.keyErrorTitle');
+        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.keyErrorMessage');
         break;
       case RecoveryImportErrorTag.RecoveryFileError:
-        notificationInfo.title = t('ImportRecoveryDevicePage.errors.fileErrorTitle');
-        notificationInfo.message = t('ImportRecoveryDevicePage.errors.fileErrorMessage');
+        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.fileErrorTitle');
+        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.fileErrorMessage');
         break;
       case RecoveryImportErrorTag.Internal:
-        notificationInfo.title = t('ImportRecoveryDevicePage.errors.internalErrorTitle');
-        notificationInfo.message = t('ImportRecoveryDevicePage.errors.internalErrorMessage');
+        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.internalErrorTitle');
+        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.internalErrorMessage');
         break;
     }
     notificationManager.showToast(new Notification(notificationInfo));
@@ -240,8 +238,8 @@ async function createNewDevice(): Promise<void> {
   if (!choosePasswordInput.value || !(await choosePasswordInput.value.areFieldsCorrect())) {
     notificationManager.showToast(
       new Notification({
-        title: t('ImportRecoveryDevicePage.errors.passwordErrorTitle'),
-        message: t('ImportRecoveryDevicePage.errors.passwordErrorMessage'),
+        title: translate('ImportRecoveryDevicePage.errors.passwordErrorTitle'),
+        message: translate('ImportRecoveryDevicePage.errors.passwordErrorMessage'),
         level: NotificationLevel.Error,
       }),
     );
@@ -251,8 +249,8 @@ async function createNewDevice(): Promise<void> {
   if (!newDeviceInfo.value) {
     notificationManager.showToast(
       new Notification({
-        title: t('ImportRecoveryDevicePage.errors.internalErrorTitle'),
-        message: t('ImportRecoveryDevicePage.errors.internalErrorMessage'),
+        title: translate('ImportRecoveryDevicePage.errors.internalErrorTitle'),
+        message: translate('ImportRecoveryDevicePage.errors.internalErrorMessage'),
         level: NotificationLevel.Error,
       }),
     );
@@ -262,8 +260,8 @@ async function createNewDevice(): Promise<void> {
   if (!(await saveDevice(newDeviceInfo.value, 'newPassword')).ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('ImportRecoveryDevicePage.errors.saveDeviceErrorTitle'),
-        message: t('ImportRecoveryDevicePage.errors.saveDeviceErrorMessage'),
+        title: translate('ImportRecoveryDevicePage.errors.saveDeviceErrorTitle'),
+        message: translate('ImportRecoveryDevicePage.errors.saveDeviceErrorMessage'),
         level: NotificationLevel.Error,
       }),
     );

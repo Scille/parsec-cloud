@@ -150,6 +150,7 @@ import {
 } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import {
@@ -165,7 +166,6 @@ import {
 } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 
 const displayView = ref(DisplayState.List);
@@ -176,7 +176,6 @@ const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const { t } = useI18n();
 const currentRoute = useRoute();
 
 const allUsersSelected = computed({
@@ -252,12 +251,12 @@ function selectAllUsers(checked: boolean): void {
 
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
-    t('UsersPage.revocation.revokeTitle', 1),
-    t('UsersPage.revocation.revokeQuestion', { user: user.humanHandle.label }, 1),
+    translate('UsersPage.revocation.revokeTitle', {}, 1),
+    translate('UsersPage.revocation.revokeQuestion', { user: user.humanHandle.label }, 1),
     {
       yesIsDangerous: true,
-      yesText: t('UsersPage.revocation.revokeYes'),
-      noText: t('UsersPage.revocation.revokeNo'),
+      yesText: translate('UsersPage.revocation.revokeYes'),
+      noText: translate('UsersPage.revocation.revokeNo'),
     },
   );
   if (answer === Answer.No) {
@@ -268,16 +267,16 @@ async function revokeUser(user: UserInfo): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.revocation.revokeFailed.title'),
-        message: t('UsersPage.revocation.revokeFailed.message', 1),
+        title: translate('UsersPage.revocation.revokeFailed.title'),
+        message: translate('UsersPage.revocation.revokeFailed.message', {}, 1),
         level: NotificationLevel.Error,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.revocation.revokeSuccess.title'),
-        message: t('UsersPage.revocation.revokeSuccess.message', { user: user.humanHandle.label }, 1),
+        title: translate('UsersPage.revocation.revokeSuccess.title'),
+        message: translate('UsersPage.revocation.revokeSuccess.message', { user: user.humanHandle.label }, 1),
         level: NotificationLevel.Success,
       }),
     );
@@ -293,12 +292,12 @@ async function revokeSelectedUsers(): Promise<void> {
   }
 
   const answer = await askQuestion(
-    t('UsersPage.revocation.revokeTitle', selectedUsers.length),
-    t('UsersPage.revocation.revokeQuestion', { count: selectedUsers.length }, selectedUsers.length),
+    translate('UsersPage.revocation.revokeTitle', {}, selectedUsers.length),
+    translate('UsersPage.revocation.revokeQuestion', { count: selectedUsers.length }, selectedUsers.length),
     {
       yesIsDangerous: true,
-      yesText: t('UsersPage.revocation.revokeYes'),
-      noText: t('UsersPage.revocation.revokeNo'),
+      yesText: translate('UsersPage.revocation.revokeYes'),
+      noText: translate('UsersPage.revocation.revokeNo'),
     },
   );
   if (answer === Answer.No) {
@@ -315,24 +314,24 @@ async function revokeSelectedUsers(): Promise<void> {
   if (errorCount === 0) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.revocation.revokeSuccess.title', { count: selectedUsers.length }, selectedUsers.length),
-        message: t('UsersPage.revocation.revokeSuccess.message', { count: selectedUsers.length }, selectedUsers.length),
+        title: translate('UsersPage.revocation.revokeSuccess.title', { count: selectedUsers.length }, selectedUsers.length),
+        message: translate('UsersPage.revocation.revokeSuccess.message', { count: selectedUsers.length }, selectedUsers.length),
         level: NotificationLevel.Success,
       }),
     );
   } else if (errorCount < selectedUsers.length) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.revocation.revokeSomeFailed.title'),
-        message: t('UsersPage.revocation.revokeSomeFailed.message'),
+        title: translate('UsersPage.revocation.revokeSomeFailed.title'),
+        message: translate('UsersPage.revocation.revokeSomeFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.revocation.revokeFailed.title'),
-        message: t('UsersPage.revocation.revokeFailed.message', selectedUsers.length),
+        title: translate('UsersPage.revocation.revokeFailed.title'),
+        message: translate('UsersPage.revocation.revokeFailed.message', {}, selectedUsers.length),
         level: NotificationLevel.Error,
       }),
     );
@@ -414,9 +413,9 @@ async function refreshUserList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.listUsersFailed.title'),
+        title: translate('UsersPage.listUsersFailed.title'),
 
-        message: t('UsersPage.listUsersFailed.message'),
+        message: translate('UsersPage.listUsersFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

@@ -47,7 +47,7 @@
         <div class="bar-item" />
       </div>
       <ion-text class="subtitles-sm password-level__text">
-        {{ getPasswordStrengthText($t, passwordStrength) }}
+        {{ getPasswordStrengthText(passwordStrength) }}
       </ion-text>
     </div>
     <ion-text class="subtitles-sm password-criteria">

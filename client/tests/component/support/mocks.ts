@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FormattersKey, NotificationKey } from '@/common/injectionKeys';
+import { translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
 import { DateTime } from 'luxon';
 import { vi } from 'vitest';
@@ -32,18 +33,8 @@ function getDefaultProvideConfig(timeSince = mockTimeSince, fileSize = mockFileS
 }
 
 function mockI18n(): void {
-  // Mocking the following import:
-  // import { useI18n } from 'vue-i18n';
-  vi.mock('vue-i18n', () => {
-    return {
-      useI18n: (): any => {
-        return { t: (key: string): string => key };
-      },
-    };
-  });
-
   config.global.mocks = {
-    $t: (key: string): string => key,
+    $t: (key: string, attrs?: object, count?: number): string => translate(key, attrs, count),
   };
 }
 

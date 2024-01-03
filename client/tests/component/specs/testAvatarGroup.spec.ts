@@ -1,10 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
-
-mockI18n();
-
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 
 describe('User Avatar', () => {

@@ -1,19 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { formatFileSize } from '@/common/filesize';
+import { initTranslations } from '@/services/translation';
 import { it } from 'vitest';
 
 describe('File size', () => {
-  function t(key: string): string {
-    const map = new Map<string, string>([
-      ['common.filesize.bytes', 'B'],
-      ['common.filesize.kilobytes', 'KB'],
-      ['common.filesize.megabytes', 'MB'],
-      ['common.filesize.gigabytes', 'GB'],
-      ['common.filesize.terabytes', 'TB'],
-    ]);
-    return map.get(key) as string;
-  }
+  beforeEach(() => {
+    initTranslations('en-US');
+  });
 
   // Values taken for the Python test:
   // https://github.com/Scille/parsec-cloud/blob/ed3599f46e74248da51bc876a58cd1bfd8475885/tests/core/gui/test_file_size_display.py
@@ -76,10 +70,10 @@ describe('File size', () => {
     ['9.99 GB', 10_737_418_239],
     ['10.0 GB', 10_737_418_240],
   ])('Gets the right format for the size', async (expected, bytes) => {
-    expect(formatFileSize(bytes, t)).to.equal(expected);
+    expect(formatFileSize(bytes)).to.equal(expected);
   });
 
   it('Handles negative bytes', async () => {
-    expect(() => formatFileSize(-1234, t)).to.throw('Bytes must be >= 0');
+    expect(() => formatFileSize(-1234)).to.throw('Bytes must be >= 0');
   });
 });

@@ -140,13 +140,12 @@ import {
 } from '@/parsec';
 import { routerNavigateToWorkspace } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
 const sortBy = ref('name');
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
@@ -154,8 +153,8 @@ const displayView = ref(DisplayState.Grid);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const msSorterLabels = {
-  asc: t('HomePage.organizationList.sortOrderAsc'),
-  desc: t('HomePage.organizationList.sortOrderDesc'),
+  asc: translate('HomePage.organizationList.sortOrderAsc'),
+  desc: translate('HomePage.organizationList.sortOrderDesc'),
 };
 
 onMounted(async (): Promise<void> => {
@@ -169,8 +168,8 @@ async function refreshWorkspacesList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('WorkspacesPage.listError.title'),
-        message: t('WorkspacesPage.listError.message'),
+        title: translate('WorkspacesPage.listError.title'),
+        message: translate('WorkspacesPage.listError.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -191,9 +190,9 @@ const filteredWorkspaces = computed(() => {
 });
 
 const msSorterOptions: MsOptions = new MsOptions([
-  { label: t('WorkspacesPage.sort.sortByName'), key: 'name' },
-  { label: t('WorkspacesPage.sort.sortBySize'), key: 'size' },
-  { label: t('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
+  { label: translate('WorkspacesPage.sort.sortByName'), key: 'name' },
+  { label: translate('WorkspacesPage.sort.sortBySize'), key: 'size' },
+  { label: translate('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
 ]);
 
 function onMsSorterChange(event: MsSorterChangeEvent): void {
@@ -203,12 +202,12 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
 
 async function openCreateWorkspaceModal(): Promise<void> {
   const workspaceName = await getTextInputFromUser({
-    title: t('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
+    title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
     trim: true,
     validator: workspaceNameValidator,
-    inputLabel: t('WorkspacesPage.CreateWorkspaceModal.label'),
-    placeholder: t('WorkspacesPage.CreateWorkspaceModal.placeholder'),
-    okButtonText: t('WorkspacesPage.CreateWorkspaceModal.create'),
+    inputLabel: translate('WorkspacesPage.CreateWorkspaceModal.label'),
+    placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
+    okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
   });
 
   if (workspaceName) {
@@ -216,8 +215,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
     if (result.ok) {
       notificationManager.showToast(
         new Notification({
-          title: t('WorkspacesPage.newWorkspaceSuccess.title'),
-          message: t('WorkspacesPage.newWorkspaceSuccess.message', {
+          title: translate('WorkspacesPage.newWorkspaceSuccess.title'),
+          message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
             workspace: workspaceName,
           }),
           level: NotificationLevel.Success,
@@ -227,8 +226,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
     } else {
       notificationManager.showToast(
         new Notification({
-          title: t('WorkspacesPage.newWorkspaceError.title'),
-          message: t('WorkspacesPage.newWorkspaceError.message'),
+          title: translate('WorkspacesPage.newWorkspaceError.title'),
+          message: translate('WorkspacesPage.newWorkspaceError.message'),
           level: NotificationLevel.Error,
         }),
       );
@@ -282,16 +281,16 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       notificationManager.showToast(
         new Notification({
-          title: t('WorkspacesPage.linkNotCopiedToClipboard.title'),
-          message: t('WorkspacesPage.linkNotCopiedToClipboard.message'),
+          title: translate('WorkspacesPage.linkNotCopiedToClipboard.title'),
+          message: translate('WorkspacesPage.linkNotCopiedToClipboard.message'),
           level: NotificationLevel.Error,
         }),
       );
     } else {
       notificationManager.showToast(
         new Notification({
-          title: t('WorkspacesPage.linkCopiedToClipboard.title'),
-          message: t('WorkspacesPage.linkCopiedToClipboard.message'),
+          title: translate('WorkspacesPage.linkCopiedToClipboard.title'),
+          message: translate('WorkspacesPage.linkCopiedToClipboard.message'),
           level: NotificationLevel.Info,
         }),
       );
@@ -299,8 +298,8 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('WorkspacesPage.getLinkError.title'),
-        message: t('WorkspacesPage.getLinkError.message', { reason: result.error.tag }),
+        title: translate('WorkspacesPage.getLinkError.title'),
+        message: translate('WorkspacesPage.getLinkError.message', { reason: result.error.tag }),
         level: NotificationLevel.Error,
       }),
     );

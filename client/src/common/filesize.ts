@@ -15,7 +15,7 @@ More specifically:
 - And so on for MB, GB and TB
 */
 
-import { ComposerTranslation } from 'vue-i18n';
+import { translate } from '@/services/translation';
 
 function size(bytes: number, system: [number, string][]): string {
   if (bytes < 0) {
@@ -51,13 +51,13 @@ function size(bytes: number, system: [number, string][]): string {
   return `${formattedAmount} ${suffix}`;
 }
 
-export function formatFileSize(bytesize: number, t: ComposerTranslation): string {
+export function formatFileSize(bytesize: number): string {
   const SYSTEM: [number, string][] = [
-    [Math.pow(1024, 0), t('common.filesize.bytes')],
-    [Math.pow(1024, 1), t('common.filesize.kilobytes')],
-    [Math.pow(1024, 2), t('common.filesize.megabytes')],
-    [Math.pow(1024, 3), t('common.filesize.gigabytes')],
-    [Math.pow(1024, 4), t('common.filesize.terabytes')],
+    [Math.pow(1024, 0), translate('common.filesize.bytes')],
+    [Math.pow(1024, 1), translate('common.filesize.kilobytes')],
+    [Math.pow(1024, 2), translate('common.filesize.megabytes')],
+    [Math.pow(1024, 3), translate('common.filesize.gigabytes')],
+    [Math.pow(1024, 4), translate('common.filesize.terabytes')],
   ];
   return size(bytesize, SYSTEM);
 }

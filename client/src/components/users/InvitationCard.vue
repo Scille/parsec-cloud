@@ -5,7 +5,7 @@
     <div class="invitation-card-item__waiting">
       <ion-icon :icon="time" />
       <ion-text class="caption-caption">
-        {{ translateInvitationStatus($t, $props.invitation.status) }}
+        {{ translateInvitationStatus($props.invitation.status) }}
       </ion-text>
     </div>
     <ion-label class="body invitation-card-item__label">
@@ -31,8 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { translateInvitationStatus } from '@/common/translations';
 import { UserInvitation } from '@/parsec';
+import { translateInvitationStatus } from '@/services/translation';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { time } from 'ionicons/icons';
 import { defineProps } from 'vue';
