@@ -10,6 +10,7 @@ mod invite_user;
 mod list_devices;
 #[cfg(feature = "testenv")]
 mod run_testenv;
+mod stats_organization;
 #[cfg(all(test, feature = "testenv"))]
 mod tests;
 mod utils;
@@ -48,6 +49,8 @@ enum Command {
     /// This command creates three users, `Alice`, `Bob` and `Toto`,
     /// To run testenv, see the script run_testenv in the current directory.
     RunTestenv(run_testenv::RunTestenv),
+    /// Get data & user statistics on organization
+    StatsOrganization(stats_organization::StatsOrganization),
 }
 
 #[tokio::main]
@@ -75,5 +78,8 @@ async fn main() -> anyhow::Result<()> {
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
+        Command::StatsOrganization(stats_organization) => {
+            stats_organization::stats_organization(stats_organization).await
+        }
     }
 }

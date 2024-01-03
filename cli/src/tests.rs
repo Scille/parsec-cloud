@@ -18,7 +18,7 @@ use crate::{
     create_organization::create_organization_req,
     run_testenv::{
         backend_addr_from_http_url, initialize_test_organization, new_environment, TestenvConfig,
-        TESTBED_SERVER_URL,
+        DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER_URL,
     },
     utils::*,
 };
@@ -51,15 +51,16 @@ async fn run_local_organization(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
-) -> anyhow::Result<(BackendAddr, [Arc<LocalDevice>; 3])> {
+) -> anyhow::Result<(BackendAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
     let url = new_environment(tmp_dir, source_file, config, false)
         .await?
         .unwrap();
 
     println!("Initializing test organization to {url}");
-    initialize_test_organization(ClientConfig::default(), url.clone(), unique_org_id())
+    let org_id = unique_org_id();
+    initialize_test_organization(ClientConfig::default(), url.clone(), org_id.clone())
         .await
-        .map(|v| (url, v))
+        .map(|v| (url, v, org_id))
 }
 
 fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
@@ -88,7 +89,7 @@ fn version() {
 async fn list_devices(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, _) = run_local_organization(&tmp_path, None, config)
+    let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -110,7 +111,7 @@ async fn list_devices(tmp_path: TmpPath) {
 async fn create_organization(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, _) = run_local_organization(&tmp_path, None, config)
+    let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -137,7 +138,7 @@ async fn create_organization(tmp_path: TmpPath) {
 async fn bootstrap_organization(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, _) = run_local_organization(&tmp_path, None, config)
+    let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -176,7 +177,7 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
 async fn invite_device(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -195,7 +196,7 @@ async fn invite_device(tmp_path: TmpPath) {
 async fn invite_user(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -220,7 +221,7 @@ async fn invite_user(tmp_path: TmpPath) {
 async fn cancel_invitation(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
 
@@ -269,10 +270,64 @@ async fn cancel_invitation(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn stats_organization(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, _, org_id) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    let expect = format!(
+        "{:#}\n",
+        serde_json::json!({
+            "active_users": 3,
+            "data_size": 0,
+            "metadata_size": 0,
+            "realms": 0,
+            "users": 3,
+            "users_per_profile_detail": [
+                {
+                    "active": 1,
+                    "profile": "ADMIN",
+                    "revoked": 0
+                },
+                {
+                    "active": 1,
+                    "profile": "STANDARD",
+                    "revoked": 0
+                },
+                {
+                    "active": 1,
+                    "profile": "OUTSIDER",
+                    "revoked": 0
+                }
+            ]
+        })
+    );
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "stats-organization",
+            "--organization-id",
+            &org_id.to_string(),
+            "--addr",
+            &url.to_string(),
+            "--token",
+            DEFAULT_ADMINISTRATION_TOKEN,
+        ])
+        .assert()
+        .stdout(expect);
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
@@ -373,7 +428,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 async fn invite_user_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
-    let (url, [alice, ..]) = run_local_organization(&tmp_path, None, config)
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
     set_env(&tmp_path_str, &url);
