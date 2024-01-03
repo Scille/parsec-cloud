@@ -5,8 +5,8 @@
     class="breadcrumb"
     @ion-collapsed-click="expandCollapsed()"
     :max-items="maxBreadcrumbs"
-    :items-before-collapse="2"
-    :items-after-collapse="2"
+    :items-before-collapse="itemsBeforeCollapse"
+    :items-after-collapse="itemsAfterCollapse"
   >
     <ion-breadcrumb
       v-for="path in fullPath"
@@ -48,6 +48,8 @@ import { Ref, computed, ref } from 'vue';
 
 const props = defineProps<{
   pathNodes: RouterPathNode[];
+  itemsBeforeCollapse?: number;
+  itemsAfterCollapse: number;
 }>();
 
 const emits = defineEmits<{
@@ -80,6 +82,14 @@ function navigateTo(path: RouterPathNode): void {
 }
 </script>
 
+<style lang="scss">
+  .bredcrumb-colloapsed-indicator {
+    border-radius: var(--parsec-radius-8);
+    background: var(--parsec-color-light-secondary-medium);
+    color: var(--parsec-color-light-secondary-grey);
+  }
+</style>
+
 <style scoped lang="scss">
 .breadcrumb {
   padding: 0;
@@ -102,6 +112,22 @@ function navigateTo(path: RouterPathNode): void {
     &::part(separator) {
       margin-inline: 0;
       cursor: default;
+    }
+
+    &:hover:not(.breadcrumb-collapsed) {
+      color: var(--parsec-color-light-secondary-text);
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 4px;
+        left: 0.75rem;
+        width: calc(100% - 2.1rem);
+        height: 1px;
+        background: var(--parsec-color-light-secondary-text);
+        z-index: 1000;
+      }
     }
   }
 

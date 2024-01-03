@@ -44,6 +44,8 @@
             <header-breadcrumbs
               :path-nodes="fullPath"
               @change="onNodeSelected"
+              :items-before-collapse="2"
+              :items-after-collapse="2"
             />
           </div>
         </div>

@@ -16,7 +16,7 @@
     }"
   >
     <div class="navigation">
-      <ion-buttons>
+      <!-- <ion-buttons>
         <ion-button
           fill="clear"
           @click="goBack()"
@@ -34,15 +34,17 @@
         >
           <ion-icon :icon="chevronForward" />
         </ion-button>
-      </ion-buttons>
+      </ion-buttons> -->
       <header-breadcrumbs
         :path-nodes="headerPath"
         @change="onPathChange"
         class="navigation-breadcrumb"
+        :items-before-collapse="1"
+        :items-after-collapse="2"
       />
     </div>
-    <ion-list class="file-list">
-      <div class="file-container">
+    <ion-list class="folder-list">
+      <div class="folder-container">
         <ion-item
           class="file-list-item"
           v-for="entry in currentEntries"
@@ -73,19 +75,22 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, EntryStatFolder, Path, entryStat, getWorkspaceName } from '@/parsec';
-import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward, document, folder } from 'ionicons/icons';
+import { IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { document, folder } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
-const router = useRouter();
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const currentEntries: Ref<EntryStat[]> = ref([]);
-const backButtonDisabled = ref(true);
+let workspaceName = '';
 
 onMounted(async () => {
+  // get workspace name only once
+  const result = await getWorkspaceName(props.workspaceId);
+  if (result.ok) {
+    workspaceName = result.value;
+  }
   await update();
 });
 
@@ -105,7 +110,6 @@ async function update(): Promise<void> {
   }
   currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
-  let workspaceName = '';
   const workspaceResult = await getWorkspaceName(props.workspaceId);
   if (workspaceResult.ok) {
     workspaceName = workspaceResult.value;
@@ -153,15 +157,6 @@ async function confirm(): Promise<boolean> {
 async function cancel(): Promise<boolean> {
   return modalController.dismiss(null, MsModalResult.Cancel);
 }
-
-function goBack(): void {
-  backButtonDisabled.value = false;
-  router.back();
-}
-
-function goForward(): void {
-  router.forward();
-}
 </script>
 
 <style scoped lang="scss">
@@ -171,17 +166,17 @@ function goForward(): void {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--parsec-color-light-secondary-light);
 
-  .disabled {
-    pointer-events: none;
-    color: var(--parsec-color-light-secondary-disabled);
-  }
+  // .disabled {
+  //   pointer-events: none;
+  //   color: var(--parsec-color-light-secondary-disabled);
+  // }
 }
 
-.file-list {
+.folder-list {
   overflow-y: auto;
 }
 
-.file-container {
+.folder-container {
   overflow-y: auto;
 }
 
