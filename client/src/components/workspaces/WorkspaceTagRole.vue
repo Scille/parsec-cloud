@@ -6,14 +6,14 @@
       class="caption-caption tag"
       :class="getClassForProfile(role)"
     >
-      {{ translateWorkspaceRole($t, role).label }}
+      {{ translateWorkspaceRole(role).label }}
     </ion-chip>
   </ion-label>
 </template>
 
 <script setup lang="ts">
-import { translateWorkspaceRole } from '@/common/translations';
 import { WorkspaceRole } from '@/parsec';
+import { translateWorkspaceRole } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 import { defineProps } from 'vue';
 

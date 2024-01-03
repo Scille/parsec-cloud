@@ -54,6 +54,7 @@ if (platform === 'web') {
 // https://vitejs.dev/config/
 const config: UserConfigExport = () => ({
   test: {
+    setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
     globals: true,
     alias: {
       '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),

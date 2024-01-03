@@ -155,12 +155,10 @@ import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
 
 enum ExportDevicePageState {
   Start = 'start',
@@ -183,10 +181,10 @@ onMounted(async (): Promise<void> => {
 
 async function exportDevice(): Promise<void> {
   const password = await getPasswordFromUser({
-    title: t('PasswordInputModal.passwordNeeded'),
-    subtitle: t('PasswordInputModal.enterPassword', { org: orgId.value }),
-    inputLabel: t('PasswordInputModal.password'),
-    okButtonText: t('PasswordInputModal.validate'),
+    title: translate('PasswordInputModal.passwordNeeded'),
+    subtitle: translate('PasswordInputModal.enterPassword', { org: orgId.value }),
+    inputLabel: translate('PasswordInputModal.password'),
+    okButtonText: translate('PasswordInputModal.validate'),
   });
   if (!password) {
     return;
@@ -194,11 +192,13 @@ async function exportDevice(): Promise<void> {
   const result = await exportRecoveryDevice(password);
   if (!result.ok) {
     const notificationMsg =
-      result.error.tag === RecoveryDeviceErrorTag.Invalid ? t('PasswordInputModal.invalid') : t('PasswordInputModal.otherError');
+      result.error.tag === RecoveryDeviceErrorTag.Invalid
+        ? translate('PasswordInputModal.invalid')
+        : translate('PasswordInputModal.otherError');
     // toast atm but to be changed
     notificationManager.showToast(
       new Notification({
-        title: t('PasswordInputModal.invalid'),
+        title: translate('PasswordInputModal.invalid'),
         message: notificationMsg,
         level: NotificationLevel.Error,
       }),
@@ -211,13 +211,13 @@ async function exportDevice(): Promise<void> {
 }
 
 async function downloadRecoveryKey(): Promise<void> {
-  fileDownload(code, t('ExportRecoveryDevicePage.filenames.recoveryKey', { org: orgId.value }));
+  fileDownload(code, translate('ExportRecoveryDevicePage.filenames.recoveryKey', { org: orgId.value }));
   setTimeout(() => {
     recoveryKeyDownloaded.value = true;
     notificationManager.showToast(
       new Notification({
-        title: t('ExportRecoveryDevicePage.toasts.keyDownloadOk.title'),
-        message: t('ExportRecoveryDevicePage.toasts.keyDownloadOk.message'),
+        title: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk.title'),
+        message: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -225,13 +225,13 @@ async function downloadRecoveryKey(): Promise<void> {
 }
 
 async function downloadRecoveryFile(): Promise<void> {
-  fileDownload(file, t('ExportRecoveryDevicePage.filenames.recoveryFile', { org: orgId.value }));
+  fileDownload(file, translate('ExportRecoveryDevicePage.filenames.recoveryFile', { org: orgId.value }));
   setTimeout(() => {
     recoveryFileDownloaded.value = true;
     notificationManager.showToast(
       new Notification({
-        title: t('ExportRecoveryDevicePage.toasts.fileDownloadOk.title'),
-        message: t('ExportRecoveryDevicePage.toasts.fileDownloadOk.message'),
+        title: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk.title'),
+        message: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk.message'),
         level: NotificationLevel.Success,
       }),
     );

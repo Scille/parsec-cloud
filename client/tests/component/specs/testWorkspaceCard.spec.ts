@@ -3,11 +3,9 @@
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { IonAvatar } from '@ionic/vue';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('Workspace Card', () => {
   let wrapper: VueWrapper;
@@ -78,7 +76,7 @@ describe('Workspace Card', () => {
   it('Display the workspace card', () => {
     expect(wrapper.get('.card-content__title').text()).to.equal('My Workspace');
     expect(wrapper.get('.label-file-size').text()).to.equal('1MB');
-    expect(wrapper.get('.card-content-last-update').text()).to.equal('WorkspacesPage.Workspace.lastUpdateOne minute ago');
+    expect(wrapper.get('.card-content-last-update').text()).to.equal('Last updated:One minute ago');
     const avatars = wrapper.get('.shared-group').findAllComponents(IonAvatar);
     expect(avatars.length).to.equal(3);
     expect(avatars.at(0).text()).to.equal('AU');

@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('Device Card', () => {
   it('Display current device', () => {
@@ -24,9 +22,9 @@ describe('Device Card', () => {
     });
 
     expect(wrapper.get('.device-name').text()).to.equal('My Device');
-    expect(wrapper.get('.join-date').text()).to.equal('DevicesPage.joinedOn One minute ago');
+    expect(wrapper.get('.join-date').text()).to.equal('Joined: One minute ago');
     expect(wrapper.get('.badge').isVisible()).to.be.true;
-    expect(wrapper.get('.badge').text()).to.equal('DevicesPage.activeDeviceBadge');
+    expect(wrapper.get('.badge').text()).to.equal('Current');
   });
 
   it('Display not current device', () => {
@@ -45,7 +43,7 @@ describe('Device Card', () => {
     });
 
     expect(wrapper.get('.device-name').text()).to.equal('My Other Device');
-    expect(wrapper.get('.join-date').text()).to.equal('DevicesPage.joinedOn One minute ago');
+    expect(wrapper.get('.join-date').text()).to.equal('Joined: One minute ago');
     expect((wrapper.vm as any).isCurrent).to.be.false;
     expect(wrapper.get('.badge').isVisible()).to.be.false;
   });

@@ -227,6 +227,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import {
   IonButton,
   IonButtons,
@@ -245,7 +246,6 @@ import {
 import { checkmarkCircle, close, copy } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,
@@ -254,8 +254,6 @@ enum GreetDeviceStep {
   WaitForGuestInfo = 4,
   Summary = 5,
 }
-
-const { t } = useI18n();
 
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
@@ -273,15 +271,18 @@ interface GreetDeviceTitle {
 
 function getTitleAndSubtitle(): GreetDeviceTitle {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return { title: t('DevicesPage.greet.titles.waitForGuest') };
+    return { title: translate('DevicesPage.greet.titles.waitForGuest') };
   } else if (pageStep.value === GreetDeviceStep.ProvideHostSasCode) {
-    return { title: t('DevicesPage.greet.titles.provideHostCode'), subtitle: t('DevicesPage.greet.subtitles.provideHostCode') };
+    return {
+      title: translate('DevicesPage.greet.titles.provideHostCode'),
+      subtitle: translate('DevicesPage.greet.subtitles.provideHostCode'),
+    };
   } else if (pageStep.value === GreetDeviceStep.GetGuestSasCode) {
-    return { title: t('DevicesPage.greet.titles.getGuestCode'), subtitle: t('DevicesPage.greet.subtitles.getGuestCode') };
+    return { title: translate('DevicesPage.greet.titles.getGuestCode'), subtitle: translate('DevicesPage.greet.subtitles.getGuestCode') };
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
-    return { title: t('DevicesPage.greet.titles.deviceDetails') };
+    return { title: translate('DevicesPage.greet.titles.deviceDetails') };
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return { title: t('DevicesPage.greet.titles.summary') };
+    return { title: translate('DevicesPage.greet.titles.summary') };
   }
   return { title: '' };
 }
@@ -296,16 +297,16 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return t('DevicesPage.greet.actions.start');
+    return translate('DevicesPage.greet.actions.start');
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return t('DevicesPage.greet.actions.finish');
+    return translate('DevicesPage.greet.actions.finish');
   }
   return '';
 }
 
 async function selectGuestSas(code: string | null): Promise<void> {
   if (!code) {
-    await showErrorAndRestart(t('DevicesPage.greet.errors.noneCodeSelected'));
+    await showErrorAndRestart(translate('DevicesPage.greet.errors.noneCodeSelected'));
     return;
   }
   if (code === greeter.value.correctSASCode) {
@@ -313,10 +314,10 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else {
-    await showErrorAndRestart(t('DevicesPage.greet.errors.invalidCodeSelected'));
+    await showErrorAndRestart(translate('DevicesPage.greet.errors.invalidCodeSelected'));
   }
 }
 
@@ -332,8 +333,8 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('DevicesPage.greet.errors.startFailed.title'),
-        message: t('DevicesPage.greet.errors.startFailed.message'),
+        title: translate('DevicesPage.greet.errors.startFailed.title'),
+        message: translate('DevicesPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -344,8 +345,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('DevicesPage.greet.errors.startFailed.title'),
-        message: t('DevicesPage.greet.errors.startFailed.message'),
+        title: translate('DevicesPage.greet.errors.startFailed.title'),
+        message: translate('DevicesPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -380,12 +381,16 @@ async function cancelModal(): Promise<boolean> {
   if (pageStep.value === GreetDeviceStep.WaitForGuest || pageStep.value === GreetDeviceStep.Summary) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(t('DevicesPage.greet.titles.cancelGreet'), t('DevicesPage.greet.subtitles.cancelGreet'), {
-    keepMainModalHiddenOnYes: true,
-    yesIsDangerous: true,
-    yesText: t('DevicesPage.greet.actions.cancelGreet.yes'),
-    noText: t('DevicesPage.greet.actions.cancelGreet.no'),
-  });
+  const answer = await askQuestion(
+    translate('DevicesPage.greet.titles.cancelGreet'),
+    translate('DevicesPage.greet.subtitles.cancelGreet'),
+    {
+      keepMainModalHiddenOnYes: true,
+      yesIsDangerous: true,
+      yesText: translate('DevicesPage.greet.actions.cancelGreet.yes'),
+      noText: translate('DevicesPage.greet.actions.cancelGreet.no'),
+    },
+  );
 
   if (answer === Answer.Yes) {
     await greeter.value.abort();
@@ -397,7 +402,7 @@ async function cancelModal(): Promise<boolean> {
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
-      title: t('DevicesPage.greet.errors.unexpected.title'),
+      title: translate('DevicesPage.greet.errors.unexpected.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -413,10 +418,10 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetDeviceStep.Summary) {
     notificationManager.showToast(
       new Notification({
-        title: t('DevicesPage.greet.success.title', {
+        title: translate('DevicesPage.greet.success.title', {
           label: greeter.value.requestedDeviceLabel,
         }),
-        message: t('DevicesPage.greet.success.message'),
+        message: translate('DevicesPage.greet.success.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -435,7 +440,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.unexpected.message', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected.message', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -444,12 +449,12 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       const createResult = await greeter.value.createDevice();
       if (!createResult.ok) {
-        await showErrorAndRestart(t('DevicesPage.greet.errors.createDeviceFailed'));
+        await showErrorAndRestart(translate('DevicesPage.greet.errors.createDeviceFailed'));
         return;
       }
       await nextStep();
     } else {
-      await showErrorAndRestart(t('DevicesPage.greet.errors.retrieveDeviceInfoFailed'));
+      await showErrorAndRestart(translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed'));
     }
   }
 }
@@ -462,8 +467,8 @@ async function copyLink(): Promise<void> {
   }, 5000);
   notificationManager.showToast(
     new Notification({
-      title: t('DevicesPage.greet.linkCopiedToClipboard.title'),
-      message: t('DevicesPage.greet.linkCopiedToClipboard.message'),
+      title: translate('DevicesPage.greet.linkCopiedToClipboard.title'),
+      message: translate('DevicesPage.greet.linkCopiedToClipboard.message'),
       level: NotificationLevel.Info,
     }),
   );
@@ -475,8 +480,8 @@ async function sendEmail(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('DevicesPage.greet.errors.emailFailed.title'),
-        message: t('DevicesPage.greet.errors.emailFailed.subtitle'),
+        title: translate('DevicesPage.greet.errors.emailFailed.title'),
+        message: translate('DevicesPage.greet.errors.emailFailed.subtitle'),
         level: NotificationLevel.Error,
       }),
     );

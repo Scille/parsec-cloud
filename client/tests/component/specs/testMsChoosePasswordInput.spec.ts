@@ -2,10 +2,7 @@
 
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { IonInput } from '@ionic/vue';
-import { mockI18n } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
-
-mockI18n();
 
 describe('Choose password', () => {
   let wrapper: VueWrapper<any>;

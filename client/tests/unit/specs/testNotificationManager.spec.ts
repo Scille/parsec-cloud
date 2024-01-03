@@ -6,16 +6,11 @@ import { DateTime } from 'luxon';
 import { vi } from 'vitest';
 
 describe('Notification Manager', () => {
-  // mock ComposerTranslation
-  function t(key: string): string {
-    const map = new Map<string, string>([['Notification.nextButton', 'nextButton']]);
-    return map.get(key) as string;
-  }
   let NOTIFS: MsNotification[];
   let notificationManager: NotificationManager;
 
   beforeEach(() => {
-    notificationManager = new NotificationManager(t);
+    notificationManager = new NotificationManager();
 
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2000, 1, 1));
@@ -71,7 +66,7 @@ describe('Notification Manager', () => {
   });
 
   it('Check initial state', async () => {
-    const notificationManager = new NotificationManager(t);
+    const notificationManager = new NotificationManager();
 
     expect(notificationManager.notifications).to.deep.equal([]);
     expect(notificationManager.getNotifications()).to.deep.equal([]);

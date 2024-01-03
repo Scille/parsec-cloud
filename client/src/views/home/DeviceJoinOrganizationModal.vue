@@ -162,10 +162,10 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 const notificationManager = inject(NotificationKey) as NotificationManager;
 
@@ -176,8 +176,6 @@ enum DeviceJoinOrganizationStep {
   Password = 3,
   Finish = 4,
 }
-
-const { t } = useI18n();
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
 const deviceName = ref('');
@@ -200,30 +198,30 @@ function getTitleAndSubtitle(): Title {
   switch (pageStep.value) {
     case DeviceJoinOrganizationStep.Information: {
       return {
-        title: t('ClaimDeviceModal.titles.claimDevice'),
+        title: translate('ClaimDeviceModal.titles.claimDevice'),
       };
     }
     case DeviceJoinOrganizationStep.GetHostSasCode: {
       return {
-        title: t('ClaimDeviceModal.titles.getCode'),
-        subtitle: t('ClaimDeviceModal.subtitles.getCode'),
+        title: translate('ClaimDeviceModal.titles.getCode'),
+        subtitle: translate('ClaimDeviceModal.subtitles.getCode'),
       };
     }
     case DeviceJoinOrganizationStep.ProvideGuestCode: {
       return {
-        title: t('ClaimDeviceModal.titles.provideCode'),
-        subtitle: t('ClaimDeviceModal.subtitles.provideCode'),
+        title: translate('ClaimDeviceModal.titles.provideCode'),
+        subtitle: translate('ClaimDeviceModal.subtitles.provideCode'),
       };
     }
     case DeviceJoinOrganizationStep.Password: {
       return {
-        title: t('ClaimDeviceModal.titles.password'),
-        subtitle: t('ClaimDeviceModal.subtitles.password'),
+        title: translate('ClaimDeviceModal.titles.password'),
+        subtitle: translate('ClaimDeviceModal.subtitles.password'),
       };
     }
     case DeviceJoinOrganizationStep.Finish: {
       return {
-        title: t('ClaimDeviceModal.titles.done', {
+        title: translate('ClaimDeviceModal.titles.done', {
           org: backendAddr?.organizationId || '',
         }),
       };
@@ -233,7 +231,7 @@ function getTitleAndSubtitle(): Title {
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    await showErrorAndRestart(t('ClaimDeviceModal.errors.noneCodeSelected'));
+    await showErrorAndRestart(translate('ClaimDeviceModal.errors.noneCodeSelected'));
     return;
   }
   if (selectedCode === claimer.value.correctSASCode) {
@@ -241,17 +239,17 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
     if (result.ok) {
       nextStep();
     } else {
-      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected'));
+      await showErrorAndRestart(translate('ClaimDeviceModal.errors.unexpected'));
     }
   } else {
-    await showErrorAndRestart(t('ClaimDeviceModal.errors.invalidCodeSelected'));
+    await showErrorAndRestart(translate('ClaimDeviceModal.errors.invalidCodeSelected'));
   }
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
-      title: t('ClaimDeviceModal.errors.title'),
+      title: translate('ClaimDeviceModal.errors.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -261,11 +259,11 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === DeviceJoinOrganizationStep.Information) {
-    return t('ClaimDeviceModal.buttons.understand');
+    return translate('ClaimDeviceModal.buttons.understand');
   } else if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    return t('ClaimDeviceModal.buttons.password');
+    return translate('ClaimDeviceModal.buttons.password');
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return t('ClaimDeviceModal.buttons.login');
+    return translate('ClaimDeviceModal.buttons.login');
   }
 
   return '';
@@ -288,11 +286,11 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(t('ClaimDeviceModal.cancelConfirm'), t('ClaimDeviceModal.cancelConfirmSubtitle'), {
+  const answer = await askQuestion(translate('ClaimDeviceModal.cancelConfirm'), translate('ClaimDeviceModal.cancelConfirmSubtitle'), {
     yesIsDangerous: true,
     keepMainModalHiddenOnYes: true,
-    yesText: t('ClaimDeviceModal.cancelYes'),
-    noText: t('ClaimDeviceModal.cancelNo'),
+    yesText: translate('ClaimDeviceModal.cancelYes'),
+    noText: translate('ClaimDeviceModal.cancelNo'),
   });
 
   if (answer === Answer.Yes) {
@@ -315,21 +313,21 @@ async function nextStep(): Promise<void> {
       if (!result.ok) {
         notificationManager.showToast(
           new Notification({
-            title: t('ClaimDeviceModal.errors.saveDeviceFailed.title'),
-            message: t('ClaimDeviceModal.errors.saveDeviceFailed.message'),
+            title: translate('ClaimDeviceModal.errors.saveDeviceFailed.title'),
+            message: translate('ClaimDeviceModal.errors.saveDeviceFailed.message'),
             level: NotificationLevel.Error,
           }),
         );
         return;
       }
     } else {
-      await showErrorAndRestart(t('ClaimDeviceModal.errors.sendDeviceInfoFailed'));
+      await showErrorAndRestart(translate('ClaimDeviceModal.errors.sendDeviceInfoFailed'));
       return;
     }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
     const notification = new Notification({
-      title: t('ClaimDeviceModal.successMessage.title'),
-      message: t('ClaimDeviceModal.successMessage.message'),
+      title: translate('ClaimDeviceModal.successMessage.title'),
+      message: translate('ClaimDeviceModal.successMessage.message'),
       level: NotificationLevel.Success,
     });
     notificationManager.showToast(notification, { trace: true });
@@ -346,7 +344,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart(t('ClaimDeviceModal.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('ClaimDeviceModal.errors.unexpected', { reason: result.error.tag }));
     }
   }
 }
@@ -361,8 +359,8 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        title: t('ClaimDeviceModal.errors.startFailed.title'),
-        message: t('ClaimDeviceModal.errors.startFailed.message'),
+        title: translate('ClaimDeviceModal.errors.startFailed.title'),
+        message: translate('ClaimDeviceModal.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -374,8 +372,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        title: t('ClaimDeviceModal.errors.startFailed.title'),
-        message: t('ClaimDeviceModal.errors.startFailed.message'),
+        title: translate('ClaimDeviceModal.errors.startFailed.title'),
+        message: translate('ClaimDeviceModal.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n, mockRouter } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig, mockRouter } from '@tests/component/support/mocks';
 import { it } from 'vitest';
 
 // Mock before importing anything else
-mockI18n();
 mockRouter();
 
 import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
@@ -33,6 +32,6 @@ describe('Workspace user role selector', () => {
     });
 
     expect(wrapper.findComponent(UserAvatarName).text()).to.equal('A A User');
-    expect(wrapper.findComponent(MsDropdown).text()).to.equal('workspaceRoles.contributor.label');
+    expect(wrapper.findComponent(MsDropdown).text()).to.equal('Contributor');
   });
 });

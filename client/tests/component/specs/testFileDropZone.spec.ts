@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import FileDropZone from '@/components/files/FileDropZone.vue';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { vi } from 'vitest';
-
-mockI18n();
 
 describe('File Drop Zone', () => {
   it('Handles dropped file', async () => {

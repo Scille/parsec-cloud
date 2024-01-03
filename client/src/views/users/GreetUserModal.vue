@@ -91,8 +91,8 @@
           />
           <ms-dropdown
             class="dropdown"
-            :title="t('UsersPage.greet.profileDropdownTitle')"
-            :label="t('UsersPage.greet.profileDropdownPlaceholder')"
+            :title="$t('UsersPage.greet.profileDropdownTitle')"
+            :label="$t('UsersPage.greet.profileDropdownPlaceholder')"
             :options="profileOptions"
             @change="setUserProfile($event.option.key)"
           />
@@ -177,9 +177,9 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -189,8 +189,6 @@ enum GreetUserStep {
   CheckGuestInfo = 5,
   Summary = 6,
 }
-
-const { t } = useI18n();
 
 const pageStep = ref(GreetUserStep.WaitForGuest);
 const props = defineProps<{
@@ -208,34 +206,34 @@ const notificationManager: NotificationManager = inject(NotificationKey)!;
 const profileOptions: MsOptions = new MsOptions([
   {
     key: UserProfile.Admin,
-    label: t('UsersPage.profile.admin.label'),
-    description: t('UsersPage.profile.admin.description'),
+    label: translate('UsersPage.profile.admin.label'),
+    description: translate('UsersPage.profile.admin.description'),
   },
   {
     key: UserProfile.Standard,
-    label: t('UsersPage.profile.standard.label'),
-    description: t('UsersPage.profile.standard.description'),
+    label: translate('UsersPage.profile.standard.label'),
+    description: translate('UsersPage.profile.standard.description'),
   },
   {
     key: UserProfile.Outsider,
-    label: t('UsersPage.profile.outsider.label'),
-    description: t('UsersPage.profile.outsider.description'),
+    label: translate('UsersPage.profile.outsider.label'),
+    description: translate('UsersPage.profile.outsider.description'),
   },
 ]);
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return [t('UsersPage.greet.titles.waitForGuest'), ''];
+    return [translate('UsersPage.greet.titles.waitForGuest'), ''];
   } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
-    return [t('UsersPage.greet.titles.provideHostCode'), t('UsersPage.greet.subtitles.provideHostCode')];
+    return [translate('UsersPage.greet.titles.provideHostCode'), translate('UsersPage.greet.subtitles.provideHostCode')];
   } else if (pageStep.value === GreetUserStep.GetGuestSasCode) {
-    return [t('UsersPage.greet.titles.getGuestCode'), t('UsersPage.greet.subtitles.getGuestCode')];
+    return [translate('UsersPage.greet.titles.getGuestCode'), translate('UsersPage.greet.subtitles.getGuestCode')];
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
-    return [t('UsersPage.greet.titles.contactDetails'), ''];
+    return [translate('UsersPage.greet.titles.contactDetails'), ''];
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return [t('UsersPage.greet.titles.contactDetails'), t('UsersPage.greet.subtitles.checkUserInfo')];
+    return [translate('UsersPage.greet.titles.contactDetails'), translate('UsersPage.greet.subtitles.checkUserInfo')];
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return [t('UsersPage.greet.titles.summary'), ''];
+    return [translate('UsersPage.greet.titles.summary'), ''];
   }
   return ['', ''];
 }
@@ -260,18 +258,18 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return t('UsersPage.greet.actions.start');
+    return translate('UsersPage.greet.actions.start');
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return t('UsersPage.greet.actions.finish');
+    return translate('UsersPage.greet.actions.finish');
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return t('UsersPage.greet.actions.approve');
+    return translate('UsersPage.greet.actions.approve');
   }
   return '';
 }
 
 async function selectGuestSas(code: string | null): Promise<void> {
   if (!code) {
-    await showErrorAndRestart(t('UsersPage.greet.errors.noneCodeSelected'));
+    await showErrorAndRestart(translate('UsersPage.greet.errors.noneCodeSelected'));
     return;
   }
   if (code === greeter.value.correctSASCode) {
@@ -279,10 +277,10 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else {
-    await showErrorAndRestart(t('UsersPage.greet.errors.invalidCodeSelected'));
+    await showErrorAndRestart(translate('UsersPage.greet.errors.invalidCodeSelected'));
   }
 }
 
@@ -298,8 +296,8 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.greet.errors.startFailed.title'),
-        message: t('UsersPage.greet.errors.startFailed.message'),
+        title: translate('UsersPage.greet.errors.startFailed.title'),
+        message: translate('UsersPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -310,8 +308,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.greet.errors.startFailed.title'),
-        message: t('UsersPage.greet.errors.startFailed.message'),
+        title: translate('UsersPage.greet.errors.startFailed.title'),
+        message: translate('UsersPage.greet.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -349,11 +347,11 @@ async function cancelModal(): Promise<boolean> {
   if (pageStep.value === GreetUserStep.Summary || pageStep.value === GreetUserStep.WaitForGuest) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(t('UsersPage.greet.cancelConfirm'), t('UsersPage.greet.cancelConfirmSubtitle'), {
+  const answer = await askQuestion(translate('UsersPage.greet.cancelConfirm'), translate('UsersPage.greet.cancelConfirmSubtitle'), {
     yesIsDangerous: true,
     keepMainModalHiddenOnYes: true,
-    yesText: t('UsersPage.greet.cancelYes'),
-    noText: t('UsersPage.greet.cancelNo'),
+    yesText: translate('UsersPage.greet.cancelYes'),
+    noText: translate('UsersPage.greet.cancelNo'),
   });
 
   if (answer === Answer.Yes) {
@@ -366,7 +364,7 @@ async function cancelModal(): Promise<boolean> {
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
-      title: t('UsersPage.greet.errors.createUserFailed.title'),
+      title: translate('UsersPage.greet.errors.createUserFailed.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -382,8 +380,8 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.greet.success.title'),
-        message: t('UsersPage.greet.success.message', {
+        title: translate('UsersPage.greet.success.title'),
+        message: translate('UsersPage.greet.success.message', {
           user: guestInfoPage.value?.fullName,
         }),
         level: NotificationLevel.Success,
@@ -398,7 +396,7 @@ async function nextStep(): Promise<void> {
       profile.value,
     );
     if (!result.ok) {
-      await showErrorAndRestart(t('UsersPage.greet.errors.createUserFailed'));
+      await showErrorAndRestart(translate('UsersPage.greet.errors.createUserFailed'));
       return;
     }
   }
@@ -414,7 +412,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(t('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -426,7 +424,7 @@ async function nextStep(): Promise<void> {
       guestInfoPage.value.deviceName = greeter.value.requestedDeviceLabel;
       await nextStep();
     } else {
-      await showErrorAndRestart(t('UsersPage.greet.errors.retrieveUserInfoFailed'));
+      await showErrorAndRestart(translate('UsersPage.greet.errors.retrieveUserInfoFailed'));
     }
   }
 }

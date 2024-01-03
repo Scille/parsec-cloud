@@ -61,6 +61,7 @@ import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
+import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
 import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
@@ -74,7 +75,6 @@ import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Ref, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 
 enum HomePageState {
@@ -88,7 +88,6 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 const router = useRouter();
 const currentRoute = useRoute();
-const { t } = useI18n();
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
@@ -179,8 +178,8 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Notification({
-      title: t('HomePage.loginNotification.title'),
-      message: t('HomePage.loginNotification.message'),
+      title: translate('HomePage.loginNotification.title'),
+      message: translate('HomePage.loginNotification.message'),
       level: NotificationLevel.Error,
     });
     notificationManager.showToast(notification);
@@ -212,13 +211,13 @@ async function openSettingsModal(): Promise<void> {
 
 async function onJoinOrganizationClicked(): Promise<void> {
   const link = await getTextInputFromUser({
-    title: t('JoinByLinkModal.pageTitle'),
-    subtitle: t('JoinByLinkModal.pleaseEnterUrl'),
+    title: translate('JoinByLinkModal.pageTitle'),
+    subtitle: translate('JoinByLinkModal.pleaseEnterUrl'),
     trim: true,
     validator: claimLinkValidator,
-    inputLabel: t('JoinOrganization.linkFormLabel'),
-    placeholder: t('JoinOrganization.linkFormPlaceholder'),
-    okButtonText: t('JoinByLinkModal.join'),
+    inputLabel: translate('JoinOrganization.linkFormLabel'),
+    placeholder: translate('JoinOrganization.linkFormPlaceholder'),
+    okButtonText: translate('JoinByLinkModal.join'),
   });
 
   if (link) {

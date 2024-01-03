@@ -123,40 +123,38 @@ import { StorageManagerKey } from '@/common/injectionKeys';
 import { MsDropdown, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { Config, StorageManager } from '@/services/storageManager';
+import { Locale, changeLocale, translate } from '@/services/translation';
 import { toggleDarkMode } from '@/states/darkMode';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-const { t, locale } = useI18n();
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const storageManager = inject(StorageManagerKey)! as StorageManager;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
 
 const languageOptions: MsOptions = new MsOptions([
   {
     key: 'en-US',
-    label: t('SettingsPage.language.values.enUS'),
+    label: translate('SettingsPage.language.values.enUS'),
   },
   {
     key: 'fr-FR',
-    label: t('SettingsPage.language.values.frFR'),
+    label: translate('SettingsPage.language.values.frFR'),
   },
 ]);
 
 const themeOptions: MsOptions = new MsOptions([
   {
     key: 'dark',
-    label: t('SettingsPage.theme.values.dark'),
+    label: translate('SettingsPage.theme.values.dark'),
   },
   {
     key: 'light',
-    label: t('SettingsPage.theme.values.light'),
+    label: translate('SettingsPage.theme.values.light'),
   },
   {
     key: 'system',
-    label: t('SettingsPage.theme.values.system'),
+    label: translate('SettingsPage.theme.values.system'),
   },
 ]);
 
@@ -178,9 +176,9 @@ const configUnwatch = watch(
   { deep: true },
 );
 
-async function changeLang(selectedLang: string): Promise<void> {
-  config.value.locale = selectedLang;
-  locale.value = selectedLang;
+async function changeLang(lang: Locale): Promise<void> {
+  config.value.locale = lang;
+  changeLocale(lang);
 }
 
 async function changeTheme(selectedTheme: string): Promise<void> {

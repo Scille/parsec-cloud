@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { canChangeRole, UserProfile, WorkspaceRole } from '@/parsec';
+import { canChangeRole } from '@/components/workspaces/utils';
+import { UserProfile, WorkspaceRole } from '@/parsec';
 import { it } from 'vitest';
 
 describe('Workspace role', () => {
@@ -13,7 +14,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Reader,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     [
       UserProfile.Standard,
@@ -22,7 +23,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Reader,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     [
       UserProfile.Outsider,
@@ -31,7 +32,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Reader,
       WorkspaceRole.Reader,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     // client is contributor, can not change role of anyone
     [
@@ -41,7 +42,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Contributor,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     [
       UserProfile.Standard,
@@ -50,7 +51,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Contributor,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     [
       UserProfile.Outsider,
@@ -59,7 +60,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Contributor,
       WorkspaceRole.Reader,
       false,
-      'workspaceRoles.updateRejectedReasons.insufficientRole',
+      'Only Managers and Owners can change roles',
     ],
     // user is outsider, can be reader or contributor
     [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, undefined],
@@ -72,7 +73,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Owner,
       WorkspaceRole.Manager,
       false,
-      'workspaceRoles.updateRejectedReasons.outsiderLimitedRole',
+      'Outsiders can only be Readers or Contributors',
     ],
     [
       UserProfile.Outsider,
@@ -81,7 +82,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Owner,
       WorkspaceRole.Owner,
       false,
-      'workspaceRoles.updateRejectedReasons.outsiderLimitedRole',
+      'Outsiders can only be Readers or Contributors',
     ],
     // both are managers, cannot change role
     [
@@ -91,7 +92,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Manager,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.managerCannotUpdateManagers',
+      'Managers cannot change the role of other managers',
     ],
     // both are owners, cannot change role
     [
@@ -101,7 +102,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Owner,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.ownerImmunity',
+      "Can't change the role of an Owner",
     ],
     // client is outsider, can't do anything
     [
@@ -111,7 +112,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Manager,
       WorkspaceRole.Contributor,
       false,
-      'workspaceRoles.updateRejectedReasons.outsiderProfile',
+      'Outsiders cannot change roles',
     ],
     [
       UserProfile.Standard,
@@ -120,7 +121,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Manager,
       WorkspaceRole.Reader,
       false,
-      'workspaceRoles.updateRejectedReasons.outsiderProfile',
+      'Outsiders cannot change roles',
     ],
     // few cases that should be no problem
     // reader to contributor
@@ -134,11 +135,7 @@ describe('Workspace role', () => {
     // manager back to reader
     [UserProfile.Standard, WorkspaceRole.Manager, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, undefined],
   ])('test workspace role can change', async (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
-    function translate(s: string): string {
-      return s;
-    }
-
-    expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole, translate).authorized).to.equal(expected);
-    expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole, translate).reason).to.equal(reason);
+    expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).authorized).to.equal(expected);
+    expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason).to.equal(reason);
   });
 });

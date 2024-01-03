@@ -23,7 +23,7 @@
     <!-- invitation status -->
     <div class="invitation-status">
       <ion-text class="cell">
-        {{ translateInvitationStatus($t, $props.invitation.status) }}
+        {{ translateInvitationStatus($props.invitation.status) }}
       </ion-text>
     </div>
 
@@ -59,12 +59,11 @@
 <script setup lang="ts">
 import { writeTextToClipboard } from '@/common/clipboard';
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
-import { translateInvitationStatus } from '@/common/translations';
 import { UserInvitation } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate, translateInvitationStatus } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { defineProps, inject } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 defineProps<{
   invitation: UserInvitation;
@@ -79,23 +78,22 @@ defineEmits<{
 const { timeSince } = inject(FormattersKey)! as Formatters;
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const { t } = useI18n();
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
   if (result) {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.invitation.linkCopiedToClipboard.title'),
-        message: t('UsersPage.invitation.linkCopiedToClipboard.message'),
+        title: translate('UsersPage.invitation.linkCopiedToClipboard.title'),
+        message: translate('UsersPage.invitation.linkCopiedToClipboard.message'),
         level: NotificationLevel.Info,
       }),
     );
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('UsersPage.invitation.linkNotCopiedToClipboard.title'),
-        message: t('UsersPage.invitation.linkNotCopiedToClipboard.message'),
+        title: translate('UsersPage.invitation.linkNotCopiedToClipboard.title'),
+        message: translate('UsersPage.invitation.linkNotCopiedToClipboard.message'),
         level: NotificationLevel.Error,
       }),
     );

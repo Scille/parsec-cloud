@@ -84,9 +84,9 @@ import {
   changePassword as parsecChangePassword,
 } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonPage, IonText } from '@ionic/vue';
 import { Ref, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
@@ -94,7 +94,6 @@ const oldPassword = ref('');
 const choosePasswordInput: Ref<typeof MsChoosePasswordInput | null> = ref(null);
 const fieldsUpdated = ref(false);
 const notificationManager = inject(NotificationKey) as NotificationManager;
-const { t } = useI18n();
 
 const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
   // forces the update
@@ -112,8 +111,8 @@ async function changePassword(): Promise<void> {
   if (result.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('ContactDetailsPage.passwordUpdated.title'),
-        message: t('ContactDetailsPage.passwordUpdated.message'),
+        title: translate('ContactDetailsPage.passwordUpdated.title'),
+        message: translate('ContactDetailsPage.passwordUpdated.message'),
         level: NotificationLevel.Success,
       }),
     );
@@ -125,8 +124,8 @@ async function changePassword(): Promise<void> {
       case ChangeAuthErrorTag.DecryptionFailed: {
         notificationManager.showToast(
           new Notification({
-            title: t('ContactDetailsPage.errors.wrongPassword.title'),
-            message: t('ContactDetailsPage.errors.wrongPassword.message'),
+            title: translate('ContactDetailsPage.errors.wrongPassword.title'),
+            message: translate('ContactDetailsPage.errors.wrongPassword.message'),
             level: NotificationLevel.Error,
           }),
         );
@@ -135,8 +134,8 @@ async function changePassword(): Promise<void> {
       default:
         notificationManager.showToast(
           new Notification({
-            title: t('ContactDetailsPage.errors.cannotChangePassword.title'),
-            message: t('ContactDetailsPage.errors.cannotChangePassword.message'),
+            title: translate('ContactDetailsPage.errors.cannotChangePassword.title'),
+            message: translate('ContactDetailsPage.errors.cannotChangePassword.message'),
             level: NotificationLevel.Error,
           }),
         );
@@ -151,8 +150,8 @@ onMounted(async () => {
   if (!result.ok || !deviceResult.ok) {
     notificationManager.showToast(
       new Notification({
-        title: t('ContactDetailsPage.errors.failedToRetrieveInformation.title'),
-        message: t('ContactDetailsPage.errors.failedToRetrieveInformation.message'),
+        title: translate('ContactDetailsPage.errors.failedToRetrieveInformation.title'),
+        message: translate('ContactDetailsPage.errors.failedToRetrieveInformation.message'),
         level: NotificationLevel.Error,
       }),
     );

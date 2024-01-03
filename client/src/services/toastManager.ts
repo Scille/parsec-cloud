@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsReportTheme } from '@/components/core';
+import { translate } from '@/services/translation';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
-import { ComposerTranslation } from 'vue-i18n';
 
 const DEFAULT_TOAST_DURATION = 3000;
 
@@ -11,9 +11,8 @@ export class ToastManager {
   toasts: HTMLIonToastElement[];
   currentToast: HTMLIonToastElement | null = null;
 
-  constructor(public t: ComposerTranslation) {
+  constructor() {
     this.toasts = [];
-    this.t = t;
   }
 
   async createAndPresent(toastConfig: {
@@ -33,7 +32,7 @@ export class ToastManager {
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,
       buttons: [
         {
-          text: toastConfig.confirmButtonLabel ?? this.t('Notification.nextButton'),
+          text: toastConfig.confirmButtonLabel ?? translate('Notification.nextButton'),
           role: 'confirm',
           side: 'end',
         },

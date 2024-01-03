@@ -182,10 +182,10 @@ import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServe
 import UserInformation from '@/components/users/UserInformation.vue';
 import { AvailableDevice, BootstrapOrganizationErrorTag, createOrganization as parsecCreateOrganization } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
 import { Ref, inject, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -196,8 +196,6 @@ enum CreateOrganizationStep {
   SpinnerStep = 6,
   FinishStep = 7,
 }
-
-const { t, d } = useI18n();
 
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
@@ -233,53 +231,53 @@ const titles = new Map<CreateOrganizationStep, Title>([
   [
     CreateOrganizationStep.OrgNameStep,
     {
-      title: t('CreateOrganization.title.create'),
-      subtitle: t('CreateOrganization.subtitle.nameYourOrg'),
+      title: translate('CreateOrganization.title.create'),
+      subtitle: translate('CreateOrganization.subtitle.nameYourOrg'),
     },
   ],
   [
     CreateOrganizationStep.UserInfoStep,
     {
-      title: t('CreateOrganization.title.personalDetails'),
-      subtitle: t('CreateOrganization.subtitle.personalDetails'),
+      title: translate('CreateOrganization.title.personalDetails'),
+      subtitle: translate('CreateOrganization.subtitle.personalDetails'),
     },
   ],
   [
     CreateOrganizationStep.ServerStep,
     {
-      title: t('CreateOrganization.title.server'),
-      subtitle: t('CreateOrganization.subtitle.server'),
+      title: translate('CreateOrganization.title.server'),
+      subtitle: translate('CreateOrganization.subtitle.server'),
     },
   ],
   [
     CreateOrganizationStep.PasswordStep,
     {
-      title: t('CreateOrganization.title.password'),
-      subtitle: t('CreateOrganization.subtitle.password'),
+      title: translate('CreateOrganization.title.password'),
+      subtitle: translate('CreateOrganization.subtitle.password'),
     },
   ],
   [
     CreateOrganizationStep.SummaryStep,
     {
-      title: t('CreateOrganization.title.overview'),
-      subtitle: t('CreateOrganization.subtitle.overview'),
+      title: translate('CreateOrganization.title.overview'),
+      subtitle: translate('CreateOrganization.subtitle.overview'),
     },
   ],
   [
     CreateOrganizationStep.FinishStep,
     {
-      title: t('CreateOrganization.title.done'),
+      title: translate('CreateOrganization.title.done'),
     },
   ],
 ]);
 
 function getNextButtonText(): string {
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
-    return t('CreateOrganization.button.create');
+    return translate('CreateOrganization.button.create');
   } else if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    return t('CreateOrganization.button.done');
+    return translate('CreateOrganization.button.done');
   } else {
-    return t('CreateOrganization.button.next');
+    return translate('CreateOrganization.button.next');
   }
 }
 
@@ -351,10 +349,10 @@ async function cancelModal(): Promise<boolean> {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
 
-  const answer = await askQuestion(t('CreateOrganization.cancelConfirm'), t('CreateOrganization.cancelConfirmSubtitle'), {
+  const answer = await askQuestion(translate('CreateOrganization.cancelConfirm'), translate('CreateOrganization.cancelConfirmSubtitle'), {
     keepMainModalHiddenOnYes: true,
-    yesText: t('CreateOrganization.cancelYes'),
-    noText: t('CreateOrganization.cancelNo'),
+    yesText: translate('CreateOrganization.cancelYes'),
+    noText: translate('CreateOrganization.cancelNo'),
     yesIsDangerous: true,
   });
 
@@ -392,25 +390,25 @@ async function nextStep(): Promise<void> {
       let message = '';
       switch (result.error.tag) {
         case BootstrapOrganizationErrorTag.AlreadyUsedToken:
-          message = t('AddCreateOrganization.errors.alreadyExists');
+          message = translate('AddCreateOrganization.errors.alreadyExists');
           pageStep.value = CreateOrganizationStep.OrgNameStep;
           break;
 
         case BootstrapOrganizationErrorTag.Offline:
-          message = t('CreateOrganization.errors.offline');
+          message = translate('CreateOrganization.errors.offline');
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
         case BootstrapOrganizationErrorTag.BadTimestamp:
-          message = t('CreateOrganization.errors.badTimestamp', {
-            clientTime: d(result.error.clientTimestamp.toJSDate(), 'long'),
-            serverTime: d(result.error.serverTimestamp.toJSDate(), 'long'),
+          message = translate('CreateOrganization.errors.badTimestamp', {
+            clientTime: formatDate(result.error.clientTimestamp, 'long'),
+            serverTime: formatDate(result.error.serverTimestamp, 'long'),
           });
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
         default:
-          message = t('CreateOrganization.errors.generic', {
+          message = translate('CreateOrganization.errors.generic', {
             reason: result.error.tag,
           });
           pageStep.value = CreateOrganizationStep.SummaryStep;
@@ -418,7 +416,7 @@ async function nextStep(): Promise<void> {
       }
       notificationManager.showToast(
         new Notification({
-          title: t('CreateOrganization.errors.title'),
+          title: translate('CreateOrganization.errors.title'),
           message: message,
           level: NotificationLevel.Error,
         }),

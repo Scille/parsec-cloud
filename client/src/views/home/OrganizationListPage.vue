@@ -88,11 +88,11 @@ import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent 
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
+import { translate } from '@/services/translation';
 import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow, IonText, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -100,7 +100,6 @@ const emits = defineEmits<{
   (e: 'joinOrganizationClick'): void;
 }>();
 
-const { t } = useI18n();
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -112,16 +111,16 @@ const querying = ref(true);
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
-    label: t('HomePage.organizationList.sortByOrganization'),
+    label: translate('HomePage.organizationList.sortByOrganization'),
     key: 'organization',
   },
-  { label: t('HomePage.organizationList.sortByUserName'), key: 'user_name' },
-  { label: t('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
+  { label: translate('HomePage.organizationList.sortByUserName'), key: 'user_name' },
+  { label: translate('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
 ]);
 
 const msSorterLabels = {
-  asc: t('HomePage.organizationList.sortOrderAsc'),
-  desc: t('HomePage.organizationList.sortOrderDesc'),
+  asc: translate('HomePage.organizationList.sortOrderAsc'),
+  desc: translate('HomePage.organizationList.sortOrderDesc'),
 };
 
 const isPopoverOpen = ref(false);

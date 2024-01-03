@@ -1,9 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n, mockRouter, resetRoutesCalled } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig, mockRouter, resetRoutesCalled } from '@tests/component/support/mocks';
 
 // Before importing anything else
-mockI18n();
 mockRouter();
 
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';

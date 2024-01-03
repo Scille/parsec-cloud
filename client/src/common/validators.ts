@@ -10,7 +10,7 @@ import {
   parseBackendAddr,
 } from '@/parsec';
 import { ParsedBackendAddrTag } from '@/plugins/libparsec';
-import { getI18n } from '@/services/translation';
+import { translate } from '@/services/translation';
 
 export enum Validity {
   Invalid = 0,
@@ -25,11 +25,6 @@ export interface ValidationResult {
 
 export interface IValidator {
   (value: string): Promise<ValidationResult>;
-}
-
-function translate(key: string): string {
-  const { t } = getI18n().global;
-  return t(key);
 }
 
 export const emailValidator: IValidator = async function (value: string) {
@@ -138,7 +133,6 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
     reason = 'validators.claimLink.invalidToken';
   }
-  console.log(reason);
   return { validity: Validity.Invalid, reason: reason ? translate(reason) : '' };
 };
 

@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
-
-mockI18n();
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { WorkspaceRole } from '@/parsec';
@@ -19,6 +17,6 @@ describe('User Avatar', () => {
       },
     });
 
-    expect(wrapper.get('.tag').text()).to.equal('workspaceRoles.manager.label');
+    expect(wrapper.get('.tag').text()).to.equal('Manager');
   });
 });

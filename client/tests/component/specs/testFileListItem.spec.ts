@@ -2,11 +2,9 @@
 
 import FileListItem from '@/components/files/FileListItem.vue';
 import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('File List Item', () => {
   it('Display item for file', () => {

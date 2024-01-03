@@ -131,15 +131,12 @@ import { getAppVersion } from '@/common/mocks';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 const upToDate = ref(false);
 
 async function update(): Promise<void> {
   console.log('update');
 }
-
-useI18n();
 </script>
 
 <style scoped lang="scss">

@@ -3,11 +3,9 @@
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import { InvitationStatus, UserInvitation } from '@/parsec';
 import { InviteListItemTag } from '@/plugins/libparsec';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('User Invitation Card', () => {
   it('Display invitation', () => {
@@ -29,11 +27,11 @@ describe('User Invitation Card', () => {
       },
     });
 
-    expect(wrapper.get('.caption-caption').text()).to.equal('UsersPage.invitation.status.ready');
+    expect(wrapper.get('.caption-caption').text()).to.equal('Ready');
     expect(wrapper.get('.invitation-card-item__label').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
-    expect(buttons.at(0)?.text()).to.equal('UsersPage.invitation.rejectUser');
-    expect(buttons.at(1)?.text()).to.equal('UsersPage.invitation.greetUser');
+    expect(buttons.at(0)?.text()).to.equal('Reject');
+    expect(buttons.at(1)?.text()).to.equal('Greet');
 
     buttons.at(0)?.trigger('click');
     expect(wrapper.emitted('rejectUser')?.length).to.equal(1);

@@ -137,17 +137,15 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const passwordSaved = ref(false);
-const { t } = useI18n();
 
 onMounted(async () => {
   await refreshDevicesList();
@@ -167,8 +165,8 @@ async function refreshDevicesList(): Promise<void> {
   } else {
     notificationManager.showToast(
       new Notification({
-        title: t('DevicesPage.greet.errors.retrieveDeviceInfoFailed.title'),
-        message: t('DevicesPage.greet.errors.retrieveDeviceInfoFailed.message'),
+        title: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed.title'),
+        message: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed.message'),
         level: NotificationLevel.Error,
       }),
     );

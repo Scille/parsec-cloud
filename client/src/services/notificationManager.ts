@@ -5,7 +5,6 @@ import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
-import { ComposerTranslation } from 'vue-i18n';
 
 // Re-export so everything can be imported from this file
 export { NotificationKey } from '@/common/injectionKeys';
@@ -51,10 +50,9 @@ export class NotificationManager {
   notifications: Notification[];
   toastManager: ToastManager;
 
-  constructor(public t: ComposerTranslation) {
+  constructor() {
     this.notifications = [];
-    this.t = t;
-    this.toastManager = new ToastManager(this.t);
+    this.toastManager = new ToastManager();
   }
 
   async showModal(notification: Notification, options?: NotificationOptions): Promise<void> {

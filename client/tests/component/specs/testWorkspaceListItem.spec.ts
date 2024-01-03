@@ -3,11 +3,9 @@
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import { UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { IonAvatar } from '@ionic/vue';
-import { getDefaultProvideConfig, mockI18n } from '@tests/component/support/mocks';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-
-mockI18n();
 
 describe('Workspace List Item', () => {
   let wrapper: VueWrapper;

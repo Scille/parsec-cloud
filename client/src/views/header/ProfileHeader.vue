@@ -31,18 +31,17 @@ import { Answer, askQuestion } from '@/components/core';
 import { logout as parsecLogout } from '@/parsec';
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, inject, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
 const isPopoverOpen = ref(false);
 const router = useRouter();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const { t } = useI18n();
 
 const props = defineProps<{
   name: string;
@@ -69,18 +68,22 @@ async function openPopover(event: Event): Promise<void> {
       return;
     }
     if (value.data.option === ProfilePopoverOption.LogOut) {
-      const answer = await askQuestion(t('HomePage.topbar.logoutConfirmTitle'), t('HomePage.topbar.logoutConfirmQuestion'), {
-        yesText: t('HomePage.topbar.logoutYes'),
-        noText: t('HomePage.topbar.logoutNo'),
-      });
+      const answer = await askQuestion(
+        translate('HomePage.topbar.logoutConfirmTitle'),
+        translate('HomePage.topbar.logoutConfirmQuestion'),
+        {
+          yesText: translate('HomePage.topbar.logoutYes'),
+          noText: translate('HomePage.topbar.logoutNo'),
+        },
+      );
 
       if (answer === Answer.Yes) {
         const result = await parsecLogout();
         if (!result.ok) {
           notificationManager.showToast(
             new Notification({
-              title: t('HomePage.topbar.logoutFailed.title'),
-              message: t('HomePage.topbar.logoutFailed.message'),
+              title: translate('HomePage.topbar.logoutFailed.title'),
+              message: translate('HomePage.topbar.logoutFailed.message'),
               level: NotificationLevel.Error,
             }),
           );
@@ -93,7 +96,7 @@ async function openPopover(event: Event): Promise<void> {
     } else if (value.data.option === ProfilePopoverOption.MyDevices) {
       routerNavigateTo('devices');
     } else if (value.data.option === ProfilePopoverOption.Help) {
-      window.open(t('MenuPage.helpLink'), '_blank');
+      window.open(translate('MenuPage.helpLink'), '_blank');
     } else if (value.data.option === ProfilePopoverOption.App) {
       routerNavigateTo('about');
     } else if (value.data.option === ProfilePopoverOption.MyContactDetails) {

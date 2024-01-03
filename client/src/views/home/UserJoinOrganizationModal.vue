@@ -191,9 +191,9 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserClaim } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -204,11 +204,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-
-const { t } = useI18n();
-
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const passwordPage = ref();
@@ -231,43 +227,43 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
   [
     UserJoinOrganizationStep.WaitForHost,
     {
-      title: t('JoinOrganization.titles.waitForHost'),
-      subtitle: t('JoinOrganization.subtitles.waitForHost'),
+      title: translate('JoinOrganization.titles.waitForHost'),
+      subtitle: translate('JoinOrganization.subtitles.waitForHost'),
     },
   ],
   [
     UserJoinOrganizationStep.GetHostSasCode,
     {
-      title: t('JoinOrganization.titles.getHostCode'),
-      subtitle: t('JoinOrganization.subtitles.getHostCode'),
+      title: translate('JoinOrganization.titles.getHostCode'),
+      subtitle: translate('JoinOrganization.subtitles.getHostCode'),
     },
   ],
   [
     UserJoinOrganizationStep.ProvideGuestCode,
     {
-      title: t('JoinOrganization.titles.provideGuestCode'),
-      subtitle: t('JoinOrganization.subtitles.provideGuestCode'),
+      title: translate('JoinOrganization.titles.provideGuestCode'),
+      subtitle: translate('JoinOrganization.subtitles.provideGuestCode'),
     },
   ],
   [
     UserJoinOrganizationStep.GetUserInfo,
     {
-      title: t('JoinOrganization.titles.getUserInfo'),
-      subtitle: t('JoinOrganization.subtitles.getUserInfo'),
+      title: translate('JoinOrganization.titles.getUserInfo'),
+      subtitle: translate('JoinOrganization.subtitles.getUserInfo'),
     },
   ],
   [
     UserJoinOrganizationStep.GetPassword,
     {
-      title: t('JoinOrganization.titles.getPassword'),
-      subtitle: t('JoinOrganization.subtitles.getPassword'),
+      title: translate('JoinOrganization.titles.getPassword'),
+      subtitle: translate('JoinOrganization.subtitles.getPassword'),
     },
   ],
   [
     UserJoinOrganizationStep.Finish,
     {
-      title: t('JoinOrganization.titles.finish', { org: '' }),
-      subtitle: t('JoinOrganization.subtitles.finish'),
+      title: translate('JoinOrganization.titles.finish', { org: '' }),
+      subtitle: translate('JoinOrganization.subtitles.finish'),
     },
   ],
 ]);
@@ -275,7 +271,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 async function showErrorAndRestart(message: string): Promise<void> {
   notificationManager.showToast(
     new Notification({
-      title: t('JoinOrganization.errors.title'),
+      title: translate('JoinOrganization.errors.title'),
       message: message,
       level: NotificationLevel.Error,
     }),
@@ -285,30 +281,30 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    await showErrorAndRestart(t('JoinOrganization.errors.noneCodeSelected'));
+    await showErrorAndRestart(translate('JoinOrganization.errors.noneCodeSelected'));
   } else {
     if (selectedCode === claimer.value.correctSASCode) {
       const result = await claimer.value.signifyTrust();
       if (result.ok) {
         await nextStep();
       } else {
-        await showErrorAndRestart(t('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
+        await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
       }
     } else {
-      await showErrorAndRestart(t('JoinOrganization.errors.invalidCodeSelected'));
+      await showErrorAndRestart(translate('JoinOrganization.errors.invalidCodeSelected'));
     }
   }
 }
 
 function getNextButtonText(): string {
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
-    return t('JoinOrganization.validateUserInfo');
+    return translate('JoinOrganization.validateUserInfo');
   } else if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
-    return t('JoinOrganization.createDevice');
+    return translate('JoinOrganization.createDevice');
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    return t('JoinOrganization.logIn');
+    return translate('JoinOrganization.logIn');
   } else if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
-    return t('JoinOrganization.understand');
+    return translate('JoinOrganization.understand');
   }
 
   return '';
@@ -336,10 +332,10 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(t('JoinOrganization.cancelConfirm'), t('JoinOrganization.cancelConfirmSubtitle'), {
+  const answer = await askQuestion(translate('JoinOrganization.cancelConfirm'), translate('JoinOrganization.cancelConfirmSubtitle'), {
     keepMainModalHiddenOnYes: true,
-    yesText: t('JoinOrganization.cancelYes'),
-    noText: t('JoinOrganization.cancelNo'),
+    yesText: translate('JoinOrganization.cancelYes'),
+    noText: translate('JoinOrganization.cancelNo'),
     yesIsDangerous: true,
   });
 
@@ -362,8 +358,8 @@ async function nextStep(): Promise<void> {
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
       notificationManager.showToast(
         new Notification({
-          title: t('JoinOrganization.errors.saveDeviceFailed.title'),
-          message: t('JoinOrganization.errors.saveDeviceFailed.message'),
+          title: translate('JoinOrganization.errors.saveDeviceFailed.title'),
+          message: translate('JoinOrganization.errors.saveDeviceFailed.message'),
           level: NotificationLevel.Error,
         }),
       );
@@ -373,14 +369,14 @@ async function nextStep(): Promise<void> {
     waitingForHost.value = true;
     const result = await claimer.value.doClaim(userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
     if (!result.ok) {
-      await showErrorAndRestart(t('JoinOrganization.errors.sendUserInfoFailed'));
+      await showErrorAndRestart(translate('JoinOrganization.errors.sendUserInfoFailed'));
       return;
     }
     waitingForHost.value = false;
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Notification({
-      title: t('JoinOrganization.successMessage.title'),
-      message: t('JoinOrganization.successMessage.message'),
+      title: translate('JoinOrganization.successMessage.title'),
+      message: translate('JoinOrganization.successMessage.message'),
       level: NotificationLevel.Success,
     });
     notificationManager.showToast(notification, { trace: true });
@@ -397,7 +393,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart(t('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
     }
   }
 }
@@ -410,8 +406,8 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        title: t('JoinOrganization.errors.startFailed.title'),
-        message: t('JoinOrganization.errors.startFailed.message'),
+        title: translate('JoinOrganization.errors.startFailed.title'),
+        message: translate('JoinOrganization.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
@@ -425,8 +421,8 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await notificationManager.showModal(
       new Notification({
-        title: t('JoinOrganization.errors.startFailed.title'),
-        message: t('JoinOrganization.errors.startFailed.message'),
+        title: translate('JoinOrganization.errors.startFailed.title'),
+        message: translate('JoinOrganization.errors.startFailed.message'),
         level: NotificationLevel.Error,
       }),
     );
