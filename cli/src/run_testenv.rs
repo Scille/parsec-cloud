@@ -24,7 +24,7 @@ use crate::{
     create_organization::create_organization_req, utils::*,
 };
 
-const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
+pub const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
 const DEFAULT_DEVICE_PASSWORD: &str = "test";
 const RESERVED_PORT_OFFSET: u16 = 1024;
 const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
