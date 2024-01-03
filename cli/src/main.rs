@@ -6,6 +6,7 @@ mod claim_invitation;
 mod create_organization;
 mod export_recovery_device;
 mod greet_invitation;
+mod import_recovery_device;
 mod invite_device;
 mod invite_user;
 mod list_devices;
@@ -41,6 +42,8 @@ enum Command {
     CreateOrganization(create_organization::CreateOrganization),
     /// Export recovery device
     ExportRecoveryDevice(export_recovery_device::ExportRecoveryDevice),
+    /// Import recovery device
+    ImportRecoveryDevice(import_recovery_device::ImportRecoveryDevice),
     /// Create device invitation
     InviteDevice(invite_device::InviteDevice),
     /// Create user invitation
@@ -84,6 +87,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::ExportRecoveryDevice(export_recovery_device) => {
             export_recovery_device::export_recovery_device(export_recovery_device).await
+        }
+        Command::ImportRecoveryDevice(import_recovery_device) => {
+            import_recovery_device::import_recovery_device(import_recovery_device).await
         }
         Command::InviteDevice(invite_device) => invite_device::invite_device(invite_device).await,
         Command::InviteUser(invite_user) => invite_user::invite_user(invite_user).await,
