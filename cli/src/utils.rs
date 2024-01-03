@@ -53,7 +53,7 @@ where
                 format_devices(&devices);
             }
             1 => {
-                let device = &possible_devices[0];
+                let device = possible_devices[0];
 
                 let device = match device.ty {
                     DeviceFileType::Password => {
