@@ -13,6 +13,7 @@ mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;
 mod stats_organization;
+mod stats_server;
 #[cfg(all(test, feature = "testenv"))]
 mod tests;
 mod utils;
@@ -57,6 +58,8 @@ enum Command {
     RunTestenv(run_testenv::RunTestenv),
     /// Get data & user statistics on organization
     StatsOrganization(stats_organization::StatsOrganization),
+    /// Get a per-organization report of server usage
+    StatsServer(stats_server::StatsServer),
 }
 
 #[tokio::main]
@@ -91,5 +94,6 @@ async fn main() -> anyhow::Result<()> {
         Command::StatsOrganization(stats_organization) => {
             stats_organization::stats_organization(stats_organization).await
         }
+        Command::StatsServer(stats_server) => stats_server::stats_server(stats_server).await,
     }
 }

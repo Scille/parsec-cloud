@@ -353,6 +353,65 @@ async fn export_recovery_device(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn stats_server(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, _, _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    let expect_empty = format!(
+        "{:#}\n",
+        serde_json::json!({
+            "stats": []
+        })
+    );
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "stats-server",
+            "--addr",
+            &url.to_string(),
+            "--token",
+            DEFAULT_ADMINISTRATION_TOKEN,
+        ])
+        .assert()
+        .stdout(predicates::prelude::predicate::ne(expect_empty.clone()));
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "stats-server",
+            "--addr",
+            &url.to_string(),
+            "--token",
+            DEFAULT_ADMINISTRATION_TOKEN,
+            "--format",
+            "csv",
+        ])
+        .assert()
+        .stdout(predicates::str::contains("organization_id,data_size,metadata_size,realms,active_users,admin_users_active,admin_users_revoked,standard_users_active,standard_users_revoked,outsider_users_active,outsider_users_revoked\r\n"));
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "stats-server",
+            "--addr",
+            &url.to_string(),
+            "--token",
+            DEFAULT_ADMINISTRATION_TOKEN,
+            "--end-date",
+            "2024-01-01T00:00:00-00:00",
+        ])
+        .assert()
+        .stdout(expect_empty);
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
