@@ -353,6 +353,37 @@ async fn export_recovery_device(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn import_recovery_device(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+    let input = tmp_path.join("recovery_device");
+
+    set_env(&tmp_path_str, &url);
+
+    let passphrase = libparsec::save_recovery_device(&input, &alice)
+        .await
+        .unwrap();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "import-recovery-device",
+            "--input",
+            &input.to_string_lossy(),
+            "--passphrase",
+            &passphrase,
+        ])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Saving new device\nSaved new device",
+        ));
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn stats_server(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
