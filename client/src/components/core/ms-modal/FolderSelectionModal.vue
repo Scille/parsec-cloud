@@ -110,11 +110,6 @@ async function update(): Promise<void> {
   }
   currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
-  const workspaceResult = await getWorkspaceName(props.workspaceId);
-  if (workspaceResult.ok) {
-    workspaceName = workspaceResult.value;
-  }
-
   let path = '/';
   headerPath.value = [];
   headerPath.value.push({

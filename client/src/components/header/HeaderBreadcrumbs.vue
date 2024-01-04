@@ -46,11 +46,17 @@ import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
 import { Ref, computed, ref } from 'vue';
 
-const props = defineProps<{
-  pathNodes: RouterPathNode[];
-  itemsBeforeCollapse?: number;
-  itemsAfterCollapse: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    pathNodes: RouterPathNode[];
+    itemsBeforeCollapse?: number;
+    itemsAfterCollapse?: number;
+  }>(),
+  {
+    itemsBeforeCollapse: 2,
+    itemsAfterCollapse: 2,
+  },
+);
 
 const emits = defineEmits<{
   (e: 'change', node: RouterPathNode): void;
@@ -82,14 +88,6 @@ function navigateTo(path: RouterPathNode): void {
 }
 </script>
 
-<style lang="scss">
-  .bredcrumb-colloapsed-indicator {
-    border-radius: var(--parsec-radius-8);
-    background: var(--parsec-color-light-secondary-medium);
-    color: var(--parsec-color-light-secondary-grey);
-  }
-</style>
-
 <style scoped lang="scss">
 .breadcrumb {
   padding: 0;
@@ -112,6 +110,12 @@ function navigateTo(path: RouterPathNode): void {
     &::part(separator) {
       margin-inline: 0;
       cursor: default;
+    }
+
+    &::part(collapsed-indicator) {
+      border-radius: var(--parsec-radius-8);
+      background: var(--parsec-color-light-secondary-medium);
+      color: var(--parsec-color-light-secondary-grey);
     }
 
     &:hover:not(.breadcrumb-collapsed) {
