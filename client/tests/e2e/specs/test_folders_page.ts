@@ -231,9 +231,10 @@ describe('Check folders page', () => {
     });
   });
 
-  function checkCurrentPath(depth: number): void {
+  function checkCurrentPath(workspace: string, depth: number): void {
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', depth);
-    for(let i = 1; i < depth; i++) {
+    cy.get('@breadcrumbs').eq(0).contains(workspace);
+    for (let i = 1; i < depth; i++) {
       cy.get('@breadcrumbs')
         .eq(i)
         .contains(/Dir_[a-z_]+/);
@@ -262,7 +263,7 @@ describe('Check folders page', () => {
       .eq(0)
       .contains(/Dir_[a-z_]+/)
       .click();
-    checkCurrentPath(3);
+    checkCurrentPath('The Copper Coronet', 3);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -276,7 +277,7 @@ describe('Check folders page', () => {
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 items');
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    checkCurrentPath(2);
+    checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
@@ -284,7 +285,7 @@ describe('Check folders page', () => {
       .eq(0)
       .contains(/Dir_[a-z_]+/)
       .click();
-    checkCurrentPath(3);
+    checkCurrentPath('The Copper Coronet', 3);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -298,7 +299,7 @@ describe('Check folders page', () => {
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    checkCurrentPath(2);
+    checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
@@ -306,7 +307,7 @@ describe('Check folders page', () => {
       .eq(0)
       .contains(/Dir_[a-z_]+/)
       .click();
-    checkCurrentPath(3);
+    checkCurrentPath('The Copper Coronet', 3);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
@@ -320,7 +321,7 @@ describe('Check folders page', () => {
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 items');
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    checkCurrentPath(2);
+    checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
     cy.get('@items').should('have.length', 3);
@@ -328,7 +329,7 @@ describe('Check folders page', () => {
       .eq(0)
       .contains(/Dir_[a-z_]+/)
       .click();
-    checkCurrentPath(3);
+    checkCurrentPath('The Copper Coronet', 3);
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
