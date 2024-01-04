@@ -335,4 +335,69 @@ describe('Check folders page', () => {
     cy.get('.folder-selection-modal').should('not.exist');
     cy.checkToastMessage('success', '3 elements copied', 'All the elements have been copied to the chosen folder.');
   });
+
+  it('Test move file back/forward', () => {
+    cy.get('.folder-container').find('.file-list-item').eq(2).click();
+    cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
+    cy.get('#button-moveto').contains('Move to').click();
+    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
+    cy.get('.folder-selection-modal').find('.navigation-back-button').as('backButton').should('have.class', 'button-disabled');
+    cy.get('.folder-selection-modal').find('.navigation-forward-button').as('forwardButton').should('have.class', 'button-disabled');
+
+    checkCurrentPath('The Copper Coronet', 2);
+
+    // Down one more folder
+    cy.get('.folder-selection-modal')
+      .find('.folder-container')
+      .find('.file-list-item')
+      .as('items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
+    checkCurrentPath('The Copper Coronet', 3);
+
+    // Back enabled, forward disabled
+    cy.get('@backButton').should('not.have.class', 'button-disabled');
+    cy.get('@forwardButton').should('have.class', 'button-disabled');
+
+    // Go back
+    cy.get('@backButton').click();
+    checkCurrentPath('The Copper Coronet', 2);
+    // Forward enabled, back disabled
+    cy.get('@backButton').should('have.class', 'button-disabled');
+    cy.get('@forwardButton').should('not.have.class', 'button-disabled');
+
+    // Go forward
+    cy.get('@forwardButton').click();
+    checkCurrentPath('The Copper Coronet', 3);
+    // Back enabled, forward disabled
+    cy.get('@backButton').should('not.have.class', 'button-disabled');
+    cy.get('@forwardButton').should('have.class', 'button-disabled');
+
+    // Down one more folders
+    cy.get('@items')
+      .eq(0)
+      .contains(/Dir_[a-z_]+/)
+      .click();
+    checkCurrentPath('The Copper Coronet', 4);
+
+    // Back enabled, forward disabled
+    cy.get('@backButton').should('not.have.class', 'button-disabled');
+    cy.get('@forwardButton').should('have.class', 'button-disabled');
+
+    // Go back to enabled forward
+    cy.get('@backButton').click();
+    cy.get('@backButton').should('not.have.class', 'button-disabled');
+    cy.get('@forwardButton').should('not.have.class', 'button-disabled');
+
+    // Back to first folder using breadcrumbs
+    cy.get('.folder-selection-modal')
+      .find('ion-breadcrumb')
+      .as('breadcrumbs')
+      .eq(1)
+      .contains(/Dir_[a-z_]+/)
+      .click();
+    cy.get('@backButton').should('not.have.class', 'button-disabled');
+    cy.get('@forwardButton').should('have.class', 'button-disabled');
+  });
 });
