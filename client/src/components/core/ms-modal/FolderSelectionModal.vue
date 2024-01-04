@@ -15,26 +15,29 @@
       onClick: confirm,
     }"
   >
+    <!-- :disabled="backStack.length === 0" -->
     <div class="navigation">
-      <!-- <ion-buttons>
+      <ion-buttons>
         <ion-button
           fill="clear"
-          @click="goBack()"
+          @click="back()"
           class="navigation-back-button"
-          :class="{ disabled: selectedPath === startingPath }"
+          :disabled="backStack.length === 0"
+          :class="{ disabled: backStack.length === 0 }"
           ref="backButtonDisabled"
         >
           <ion-icon :icon="chevronBack" />
         </ion-button>
         <ion-button
           fill="clear"
-          @click="goForward()"
-          class="navigation-back-button"
-          :class="{ disabled: backButtonDisabled }"
+          @click="forward()"
+          :disabled="forwardStack.length === 0"
+          :class="{ disabled: forwardStack.length === 0 }"
+          class="navigation-forward-button"
         >
           <ion-icon :icon="chevronForward" />
         </ion-button>
-      </ion-buttons> -->
+      </ion-buttons>
       <header-breadcrumbs
         :path-nodes="headerPath"
         @change="onPathChange"
@@ -74,16 +77,18 @@
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, EntryStatFolder, Path, entryStat, getWorkspaceName } from '@/parsec';
-import { IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
-import { document, folder } from 'ionicons/icons';
+import { EntryStat, EntryStatFolder, FsPath, Path, entryStat, getWorkspaceName } from '@/parsec';
+import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
+import { chevronBack, chevronForward, document, folder } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
-const selectedPath = ref(props.startingPath);
+const selectedPath: Ref<FsPath> = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const currentEntries: Ref<EntryStat[]> = ref([]);
 let workspaceName = '';
+const backStack: FsPath[] = [];
+const forwardStack: FsPath[] = [];
 
 onMounted(async () => {
   // get workspace name only once
@@ -131,7 +136,30 @@ async function update(): Promise<void> {
   }
 }
 
+async function forward(): Promise<void> {
+  const forwardPath = forwardStack.pop();
+
+  if (!forwardPath) {
+    return;
+  }
+  backStack.push(selectedPath.value);
+  selectedPath.value = forwardPath;
+  await update();
+}
+
+async function back(): Promise<void> {
+  const backPath = backStack.pop();
+
+  if (!backPath) {
+    return;
+  }
+  forwardStack.push(selectedPath.value);
+  selectedPath.value = backPath;
+  await update();
+}
+
 async function onPathChange(node: RouterPathNode): Promise<void> {
+  forwardStack.splice(0, forwardStack.length);
   selectedPath.value = node.query.path;
   await update();
 }
@@ -140,12 +168,12 @@ async function enterFolder(entry: EntryStat): Promise<void> {
   if (entry.isFile()) {
     return;
   }
+  backStack.push(selectedPath.value);
   selectedPath.value = await Path.join(selectedPath.value, entry.name);
   await update();
 }
 
 async function confirm(): Promise<boolean> {
-  console.log(selectedPath.value);
   return await modalController.dismiss(selectedPath.value, MsModalResult.Confirm);
 }
 
@@ -161,10 +189,11 @@ async function cancel(): Promise<boolean> {
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--parsec-color-light-secondary-light);
 
-  // .disabled {
-  //   pointer-events: none;
-  //   color: var(--parsec-color-light-secondary-disabled);
-  // }
+  .disabled {
+    pointer-events: none;
+    color: var(--parsec-color-light-secondary-light);
+    opacity: 1;
+  }
 }
 
 .folder-list {
