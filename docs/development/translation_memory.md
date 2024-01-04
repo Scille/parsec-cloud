@@ -9,7 +9,7 @@ It is therefore not intended to cover translation for every possible term.
 |---------------------------------|--------------------|
 | Workspace                       | Espace de travail  |
 | Device                          | Appareil           |
-| Outsider (organization profile) | Externe            |
+| Outsider (user profile)         | Externe            |
 | Owner (workspace role)          | Propriétaire       |
 | Manager (workspace role)        | Gestionnaire       |
 | Contributor (workspace role)    | Contributeur       |
