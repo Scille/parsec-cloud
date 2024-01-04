@@ -2,6 +2,30 @@
 
 # Glossary
 
+- [Glossary](#glossary)
+  - [General terms](#general-terms)
+    - [Organization](#organization)
+    - [Workspace](#workspace)
+    - [User](#user)
+    - [Device](#device)
+  - [User Profile](#user-profile)
+    - [Standard](#standard)
+    - [Administrator](#administrator)
+    - [Outsider](#outsider)
+  - [Workspace Role](#workspace-role)
+    - [Reader](#reader)
+    - [Contributor](#contributor)
+    - [Manager](#manager)
+    - [Owner](#owner)
+  - [Operations](#operations)
+    - [Invitation](#invitation)
+    - [Onboarding](#onboarding)
+    - [Joining](#joining)
+  - [Internals](#internals)
+    - [Parsec Server](#parsec-server)
+  - [Other terms](#other-terms)
+    - [Passphrase](#passphrase)
+
 ## General terms
 
 ### Organization
@@ -24,15 +48,15 @@ It represents the device (computer, mobile phone) registered by the user to acce
 
 It defines the user rights *within an Organization* and is set during the onboarding procedure.
 
-### Standard profile
+### Standard
 
 It allows to create and share Workspaces with other users within the Organization as well as to access data within Workspaces (depending on its *workspace role*). Essentially it enables all Parsec features except for user management.
 
-### Administrator profile
+### Administrator
 
 In addition to all the functionalities allowed by the Standard profile, the Administrator profile enables user management. That is, the ability to invite and revoke other users in the Organization.
 
-### Outsider profile
+### Outsider
 
 It allows to collaborate (read, write) on Workspaces they are invited to, but does not allow to create or share Workspaces.
 
@@ -71,7 +95,7 @@ A Workspace can have multiple owners. The Workspace creator has the Owner role b
 The action of inviting a new user to join an existing Organization. Tipically the user receive an email to start the Onboarding process.
 
 <!-- TODO: Confirm following terms to avoid -->
-* Terms to avoid: *Enroll*, *Enlist*, *Onboard*, *Greet*, *Join*.
+- Terms to avoid: *Enroll*, *Enlist*, *Onboard*, *Greet*, *Join*
 
 > Note that *invitation* is specifically used for users. For devices, the term *adding* should be used instead.
 
@@ -91,7 +115,7 @@ A user joins an Organization when the Onboarding process is finalized successful
 
 The **Parsec server** is the application hosted on a remote computer interacting with the S3 data storage and the metadata PostgreSQL database.
 
-* Terms to avoid: *Backend*
+- Terms to avoid: *Backend*
 
 ## Other terms
 
