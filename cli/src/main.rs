@@ -12,6 +12,7 @@ mod invite_device;
 mod invite_user;
 mod list_devices;
 mod list_invitations;
+mod list_users;
 mod list_workspaces;
 mod remove_device;
 #[cfg(feature = "testenv")]
@@ -59,6 +60,8 @@ enum Command {
     ListDevices(list_devices::ListDevices),
     /// List invitations
     ListInvitations(list_invitations::ListInvitations),
+    /// List users
+    ListUsers(list_users::ListUsers),
     /// List workspaces
     ListWorkspaces(list_workspaces::ListWorkspaces),
     /// Remove device
@@ -112,6 +115,7 @@ async fn main() -> anyhow::Result<()> {
         Command::ListInvitations(list_invitations) => {
             list_invitations::list_invitations(list_invitations).await
         }
+        Command::ListUsers(list_users) => list_users::list_users(list_users).await,
         Command::ListWorkspaces(list_workspaces) => {
             list_workspaces::list_workspaces(list_workspaces).await
         }
