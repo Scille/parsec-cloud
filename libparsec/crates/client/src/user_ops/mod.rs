@@ -82,8 +82,7 @@ impl UserOps {
         message::process_last_messages(self, latest_known_index).await
     }
 
-    #[allow(unused)]
-    pub(crate) async fn sync(&self) -> Result<(), SyncError> {
+    pub async fn sync(&self) -> Result<(), SyncError> {
         sync::sync(self).await
     }
 

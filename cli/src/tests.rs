@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use assert_cmd::Command;
+use predicates::prelude::PredicateBooleanExt;
 use std::{
     io::{BufRead, BufReader, Write},
     path::{Path, PathBuf},
@@ -562,6 +563,29 @@ async fn create_workspace(tmp_path: TmpPath) {
         .args(["list-workspaces", "--device", &alice.slughash()])
         .assert()
         .stdout(predicates::str::contains("new-workspace"));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn list_users(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["list-users", "--device", &alice.slughash()])
+        .assert()
+        .stdout(
+            predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)",))
+                .and(predicates::str::contains("Alice"))
+                .and(predicates::str::contains("Bob"))
+                .and(predicates::str::contains("Toto")),
+        );
 }
 
 #[rstest::rstest]
