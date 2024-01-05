@@ -138,6 +138,8 @@ where
         )
         .await?;
 
+        client.user_ops.sync().await?;
+
         function(client).await
     })
     .await

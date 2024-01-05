@@ -30,11 +30,11 @@ pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Resu
     load_client_and_run(config_dir, device, |client| async move {
         let handle = start_spinner("Creating workspace");
 
-        client.user_ops.create_workspace(name).await?;
+        let id = client.user_ops.create_workspace(name).await?.simple();
 
         handle.done();
 
-        println!("Workspace has been created");
+        println!("Workspace has been created with id: {YELLOW}{id}{RESET}");
 
         client.stop().await;
 

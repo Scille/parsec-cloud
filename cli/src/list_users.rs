@@ -28,7 +28,6 @@ pub async fn list_users(list_users: ListUsers) -> anyhow::Result<()> {
     } = list_users;
 
     load_client_and_run(config_dir, device, |client| async move {
-        client.user_ops.sync().await?;
         let users = client.certificates_ops.list_users(skip_revoked, None, None).await?;
 
         if users.is_empty() {
