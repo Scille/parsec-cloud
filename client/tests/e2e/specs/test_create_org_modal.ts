@@ -87,10 +87,10 @@ describe('Create a new organization', () => {
     cy.get('.org-server').find('ion-input').should('be.visible');
 
     // Type 'parsec' as server addr, it's invalid
-    cy.get('.org-server').find('ion-input').find('input').type('parsec');
+    cy.get('.org-server').find('ion-input').find('input').type('parsec', { delay: 0 });
     cy.get('#next-button').should('have.class', 'button-disabled');
     // Adds the last part of the server addr
-    cy.get('.org-server').find('ion-input').find('input').type('://localhost?no_ssl=true');
+    cy.get('.org-server').find('ion-input').find('input').type('://localhost?no_ssl=true', { delay: 0 });
     cy.get('#next-button').should('not.have.class', 'button-disabled');
     cy.get('#next-button').click();
 
