@@ -26,52 +26,43 @@ pub struct GreetInvitation {
     #[arg(short, long)]
     device: Option<String>,
     /// Invitation token
-    #[arg(short, long)]
-    token: String,
+    #[arg(short, long, value_parser = InvitationToken::from_hex)]
+    token: InvitationToken,
 }
 
 pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Result<()> {
-    load_cmds_and_run(
-        greet_invitation.config_dir,
-        greet_invitation.device,
-        |cmds, device| async move {
-            let invitation_token = InvitationToken::from_hex(&greet_invitation.token)
-                .map_err(|e| anyhow::anyhow!(e))?;
+    let GreetInvitation {
+        config_dir,
+        device,
+        token,
+    } = greet_invitation;
 
-            let invitation = step0(&cmds, invitation_token).await?;
+    load_cmds_and_run(config_dir, device, |cmds, device| async move {
+        let invitation = step0(&cmds, token).await?;
 
-            match invitation {
-                InviteListItem::User { .. } => {
-                    let ctx = UserGreetInitialCtx::new(
-                        device,
-                        Arc::new(cmds),
-                        EventBus::default(),
-                        invitation_token,
-                    );
+        match invitation {
+            InviteListItem::User { .. } => {
+                let ctx =
+                    UserGreetInitialCtx::new(device, Arc::new(cmds), EventBus::default(), token);
 
-                    let ctx = step1_user(ctx).await?;
-                    let ctx = step2_user(ctx).await?;
-                    let ctx = step3_user(ctx).await?;
-                    let ctx = step4_user(ctx).await?;
-                    step5_user(ctx).await
-                }
-                InviteListItem::Device { .. } => {
-                    let ctx = DeviceGreetInitialCtx::new(
-                        device,
-                        Arc::new(cmds),
-                        EventBus::default(),
-                        invitation_token,
-                    );
-
-                    let ctx = step1_device(ctx).await?;
-                    let ctx = step2_device(ctx).await?;
-                    let ctx = step3_device(ctx).await?;
-                    let ctx = step4_device(ctx).await?;
-                    step5_device(ctx).await
-                }
+                let ctx = step1_user(ctx).await?;
+                let ctx = step2_user(ctx).await?;
+                let ctx = step3_user(ctx).await?;
+                let ctx = step4_user(ctx).await?;
+                step5_user(ctx).await
             }
-        },
-    )
+            InviteListItem::Device { .. } => {
+                let ctx =
+                    DeviceGreetInitialCtx::new(device, Arc::new(cmds), EventBus::default(), token);
+
+                let ctx = step1_device(ctx).await?;
+                let ctx = step2_device(ctx).await?;
+                let ctx = step3_device(ctx).await?;
+                let ctx = step4_device(ctx).await?;
+                step5_device(ctx).await
+            }
+        }
+    })
     .await
 }
 
