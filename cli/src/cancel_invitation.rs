@@ -19,42 +19,41 @@ pub struct CancelInvitation {
     #[arg(short, long)]
     device: Option<String>,
     /// Invitation token
-    #[arg(short, long)]
-    token: String,
+    #[arg(short, long, value_parser = InvitationToken::from_hex)]
+    token: InvitationToken,
 }
 
 pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::Result<()> {
-    load_cmds_and_run(
-        cancel_invitation.config_dir,
-        cancel_invitation.device,
-        |cmds, _| async move {
-            let token = InvitationToken::from_hex(&cancel_invitation.token)
-                .map_err(|e| anyhow::anyhow!(e))?;
+    let CancelInvitation {
+        config_dir,
+        device,
+        token,
+    } = cancel_invitation;
 
-            let handle = start_spinner("Deleting invitation");
+    load_cmds_and_run(config_dir, device, |cmds, _| async move {
+        let handle = start_spinner("Deleting invitation");
 
-            let rep = cmds
-                .send(invite_delete::Req {
-                    token,
-                    reason: InvitationDeletedReason::Cancelled,
-                })
-                .await?;
+        let rep = cmds
+            .send(invite_delete::Req {
+                token,
+                reason: InvitationDeletedReason::Cancelled,
+            })
+            .await?;
 
-            match rep {
-                InviteDeleteRep::Ok => (),
-                rep => {
-                    return Err(anyhow::anyhow!(
-                        "Server error while cancelling invitation: {rep:?}"
-                    ));
-                }
-            };
+        match rep {
+            InviteDeleteRep::Ok => (),
+            rep => {
+                return Err(anyhow::anyhow!(
+                    "Server error while cancelling invitation: {rep:?}"
+                ));
+            }
+        };
 
-            handle.done();
+        handle.done();
 
-            println!("Invitation deleted");
+        println!("Invitation deleted");
 
-            Ok(())
-        },
-    )
+        Ok(())
+    })
     .await
 }
