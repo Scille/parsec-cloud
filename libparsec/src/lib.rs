@@ -30,7 +30,7 @@ pub use workspace::*;
 
 pub mod internal {
     pub use libparsec_client::{
-        claimer_retrieve_info, DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx,
+        claimer_retrieve_info, Client, DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx,
         DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx,
         DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
         DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus, UserClaimFinalizeCtx,

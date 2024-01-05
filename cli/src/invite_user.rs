@@ -27,7 +27,7 @@ pub struct InviteUser {
 }
 
 pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
-    load_device_and_run(
+    load_cmds_and_run(
         invite_user.config_dir,
         invite_user.device,
         |cmds, device| async move {

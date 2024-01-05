@@ -4,6 +4,7 @@ mod bootstrap_organization;
 mod cancel_invitation;
 mod claim_invitation;
 mod create_organization;
+mod create_workspace;
 mod export_recovery_device;
 mod greet_invitation;
 mod import_recovery_device;
@@ -41,6 +42,8 @@ enum Command {
     ClaimInvitation(claim_invitation::ClaimInvitation),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
+    /// Create new workspace
+    CreateWorkspace(create_workspace::CreateWorkspace),
     /// Export recovery device
     ExportRecoveryDevice(export_recovery_device::ExportRecoveryDevice),
     /// Import recovery device
@@ -87,6 +90,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
+        }
+        Command::CreateWorkspace(create_workspace) => {
+            create_workspace::create_workspace(create_workspace).await
         }
         Command::ExportRecoveryDevice(export_recovery_device) => {
             export_recovery_device::export_recovery_device(export_recovery_device).await

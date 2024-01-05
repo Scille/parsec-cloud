@@ -3,9 +3,10 @@
 use std::{future::Future, path::PathBuf, sync::Arc};
 
 use libparsec::{
-    list_available_devices, load_device, AuthenticatedCmds, AvailableDevice, DeviceAccessStrategy,
-    DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
-    UserProfile,
+    internal::{Client, EventBus},
+    list_available_devices, load_device, AuthenticatedCmds, AvailableDevice, ClientConfig,
+    DeviceAccessStrategy, DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password,
+    ProxyConfig, SASCode, UserProfile,
 };
 use terminal_spinners::{SpinnerBuilder, SpinnerHandle, DOTS};
 
@@ -34,7 +35,7 @@ pub async fn load_device_and_run<F, Fut>(
     function: F,
 ) -> anyhow::Result<()>
 where
-    F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
+    F: FnOnce(Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
     let devices = list_available_devices(&config_dir).await;
@@ -86,13 +87,7 @@ where
                     }
                 };
 
-                let cmds = AuthenticatedCmds::new(
-                    &config_dir,
-                    device.clone(),
-                    ProxyConfig::new_from_env()?,
-                )?;
-
-                function(cmds, device.clone()).await?;
+                function(device).await?;
             }
             _ => {
                 println!("Multiple devices found for `{device_slughash}`:");
@@ -106,6 +101,46 @@ where
     }
 
     Ok(())
+}
+
+pub async fn load_cmds_and_run<F, Fut>(
+    config_dir: PathBuf,
+    device_slughash: Option<String>,
+    function: F,
+) -> anyhow::Result<()>
+where
+    F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
+    Fut: Future<Output = anyhow::Result<()>>,
+{
+    load_device_and_run(config_dir.clone(), device_slughash, |device| async move {
+        let cmds =
+            AuthenticatedCmds::new(&config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
+
+        function(cmds, device).await
+    })
+    .await
+}
+
+pub async fn load_client_and_run<F, Fut>(
+    config_dir: PathBuf,
+    device_slughash: Option<String>,
+    function: F,
+) -> anyhow::Result<()>
+where
+    F: FnOnce(Client) -> Fut,
+    Fut: Future<Output = anyhow::Result<()>>,
+{
+    load_device_and_run(config_dir, device_slughash, |device| async move {
+        let client = Client::start(
+            Arc::new(ClientConfig::default().into()),
+            EventBus::default(),
+            device,
+        )
+        .await?;
+
+        function(client).await
+    })
+    .await
 }
 
 pub fn start_spinner(text: &'static str) -> SpinnerHandle {

@@ -24,7 +24,7 @@ pub struct CancelInvitation {
 }
 
 pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::Result<()> {
-    load_device_and_run(
+    load_cmds_and_run(
         cancel_invitation.config_dir,
         cancel_invitation.device,
         |cmds, _| async move {
