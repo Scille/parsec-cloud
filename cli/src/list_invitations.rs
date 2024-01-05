@@ -21,7 +21,7 @@ pub struct ListInvitations {
 }
 
 pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Result<()> {
-    load_device_and_run(
+    load_cmds_and_run(
         list_invitations.config_dir,
         list_invitations.device,
         |cmds, _| async move {

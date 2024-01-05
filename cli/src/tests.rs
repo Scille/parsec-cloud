@@ -534,6 +534,32 @@ async fn list_invitations(tmp_path: TmpPath) {
 
 #[rstest::rstest]
 #[tokio::test]
+async fn create_workspace(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "create-workspace",
+            "--device",
+            &alice.slughash(),
+            "--name",
+            "new-workspace",
+        ])
+        .assert()
+        .stdout(predicates::str::contains(
+            "Creating workspace\nWorkspace has been created",
+        ));
+}
+
+#[rstest::rstest]
+#[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();

@@ -31,7 +31,7 @@ pub struct GreetInvitation {
 }
 
 pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Result<()> {
-    load_device_and_run(
+    load_cmds_and_run(
         greet_invitation.config_dir,
         greet_invitation.device,
         |cmds, device| async move {

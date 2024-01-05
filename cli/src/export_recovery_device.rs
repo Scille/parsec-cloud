@@ -26,7 +26,7 @@ pub async fn export_recovery_device(
     load_device_and_run(
         export_recovery_device.config_dir,
         export_recovery_device.device,
-        |_, device| async move {
+        |device| async move {
             let handle = start_spinner("Saving recovery device file");
 
             let passphrase = save_recovery_device(&export_recovery_device.output, &device).await?;
