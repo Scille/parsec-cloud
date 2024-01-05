@@ -197,6 +197,20 @@ impl RealmRole {
     }
 }
 
+impl std::str::FromStr for RealmRole {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "owner" => Ok(Self::Owner),
+            "manager" => Ok(Self::Manager),
+            "contributor" => Ok(Self::Contributor),
+            "reader" => Ok(Self::Reader),
+            _ => Err("Failed to parse RealmRole"),
+        }
+    }
+}
+
 /*
  * WorkspaceEntry
  */

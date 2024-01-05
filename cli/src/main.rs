@@ -17,6 +17,7 @@ mod list_workspaces;
 mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;
+mod share_workspace;
 mod stats_organization;
 mod stats_server;
 mod status_organization;
@@ -72,6 +73,8 @@ enum Command {
     /// This command creates three users, `Alice`, `Bob` and `Toto`,
     /// To run testenv, see the script run_testenv in the current directory.
     RunTestenv(run_testenv::RunTestenv),
+    /// Share workspace
+    ShareWorkspace(share_workspace::ShareWorkspace),
     /// Get data & user statistics on organization
     StatsOrganization(stats_organization::StatsOrganization),
     /// Get a per-organization report of server usage
@@ -122,6 +125,9 @@ async fn main() -> anyhow::Result<()> {
         Command::RemoveDevice(remove_device) => remove_device::remove_device(remove_device).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
+        Command::ShareWorkspace(share_workspace) => {
+            share_workspace::share_workspace(share_workspace).await
+        }
         Command::StatsOrganization(stats_organization) => {
             stats_organization::stats_organization(stats_organization).await
         }

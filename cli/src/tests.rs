@@ -11,8 +11,8 @@ use std::{
 use libparsec::{
     authenticated_cmds::latest::invite_new::{self, InviteNewRep, UserOrDevice},
     get_default_config_dir, tmp_path, AuthenticatedCmds, BackendAddr, BackendInvitationAddr,
-    BackendOrganizationBootstrapAddr, ClientConfig, InvitationType, LocalDevice, OrganizationID,
-    ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    BackendOrganizationBootstrapAddr, ClientConfig, HumanHandle, InvitationType, LocalDevice,
+    OrganizationID, ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
@@ -586,6 +586,68 @@ async fn list_users(tmp_path: TmpPath) {
                 .and(predicates::str::contains("Bob"))
                 .and(predicates::str::contains("Toto")),
         );
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn share_workspace(tmp_path: TmpPath) {
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, [alice, _, bob], _) = run_local_organization(&tmp_path, None, config)
+        .await
+        .unwrap();
+
+    set_env(&tmp_path_str, &url);
+
+    load_client_and_run(
+        get_default_config_dir(),
+        Some(alice.slughash()),
+        |client| async move {
+            let wid = client
+                .user_ops
+                .create_workspace("new-workspace".parse().unwrap())
+                .await?;
+
+            let users = client
+                .certificates_ops
+                .list_users(false, None, None)
+                .await
+                .unwrap();
+            let bob_id = &users
+                .iter()
+                .find(|x| x.human_handle == HumanHandle::new("bob@example.com", "Bob").unwrap())
+                .unwrap()
+                .id;
+
+            Command::cargo_bin("parsec_cli")
+                .unwrap()
+                .args([
+                    "share-workspace",
+                    "--device",
+                    &alice.slughash(),
+                    "--workspace-id",
+                    &wid.simple().to_string(),
+                    "--user-id",
+                    &bob_id.to_string(),
+                    "--role",
+                    "contributor",
+                ])
+                .assert()
+                .stdout(predicates::str::contains(
+                    "Sharing workspace\nWorkspace has been shared",
+                ));
+
+            Ok(())
+        },
+    )
+    .await
+    .unwrap();
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["list-workspaces", "--device", &bob.slughash()])
+        .assert()
+        .stdout(predicates::str::contains("new-workspace"));
 }
 
 #[rstest::rstest]
