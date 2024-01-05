@@ -25,7 +25,7 @@ describe('User join an organization', () => {
     cy.get('@joinButton').should('have.attr', 'disabled');
 
     cy.wait(WAIT_TIME);
-    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK, { delay: 0 });
 
     cy.get('@joinButton').should('not.have.attr', 'disabled');
     cy.get('@joinButton').click();
@@ -60,7 +60,7 @@ describe('User join an organization', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').last().click();
     cy.wait(WAIT_TIME);
-    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK, { delay: 0 });
     cy.get('.text-input-modal').find('#next-button').click();
 
     cy.get('.join-organization-modal').should('exist');
@@ -143,7 +143,7 @@ describe('User join an organization', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').last().click();
     cy.wait(WAIT_TIME);
-    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK);
+    cy.get('.text-input-modal').find('ion-input').find('input').type(INVITATION_LINK), { delay: 0 };
     cy.get('.text-input-modal').find('#next-button').click();
 
     cy.get('.join-organization-modal').should('exist');

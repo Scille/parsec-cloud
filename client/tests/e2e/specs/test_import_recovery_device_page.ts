@@ -27,12 +27,12 @@ describe('Display import recovery device page', () => {
     cy.get('@file').contains('splash.png');
     // Input incomplete secret key
     cy.get('@file-item').eq(1).as('key').contains('Secret key');
-    cy.get('@key').find('#secret-key-input').as('key-input').type('ABCD');
+    cy.get('@key').find('#secret-key-input').as('key-input').type('ABCD', { delay: 0 });
     cy.get('@key').find('#checkmark-icon').should('not.be.visible');
     cy.get('.import-recovery-container').find('#to-password-change-btn').should('have.class', 'button-disabled');
     // Input 64-char secret key with one invalid character
     // cspell:disable-next-line
-    cy.get('@key-input').type('-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOp');
+    cy.get('@key-input').type('-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOp', { delay: 0 });
     cy.get('@key').find('#checkmark-icon').should('not.be.visible');
     // Input valid key but not the expected one
     cy.get('@key-input').type('{backspace}O');
