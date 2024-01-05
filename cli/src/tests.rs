@@ -556,6 +556,12 @@ async fn create_workspace(tmp_path: TmpPath) {
         .stdout(predicates::str::contains(
             "Creating workspace\nWorkspace has been created",
         ));
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["list-workspaces", "--device", &alice.slughash()])
+        .assert()
+        .stdout(predicates::str::contains("new-workspace"));
 }
 
 #[rstest::rstest]
