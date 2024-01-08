@@ -68,6 +68,7 @@ cfoo
 chacha
 CHECKICONHANDLER
 choco
+chgtime
 cibuildwheel
 cipherkey
 classattr
