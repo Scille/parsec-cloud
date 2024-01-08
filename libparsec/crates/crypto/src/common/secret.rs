@@ -67,18 +67,18 @@ macro_rules! impl_secret_key {
                 };
 
                 // Actual base32 decoding
-                let rawkey = {
-                    // Return an empty rawkey if the decoding failed, this will be
+                let raw_key = {
+                    // Return an empty raw_key if the decoding failed, this will be
                     // handled in the final conversion.
-                    let rawkey = ::data_encoding::BASE32_NOPAD
+                    let raw_key = ::data_encoding::BASE32_NOPAD
                         .decode(b32.as_ref())
                         .unwrap_or_else(|_| vec![]);
 
-                    Zeroizing::new(rawkey)
+                    Zeroizing::new(raw_key)
                 };
 
                 // Final conversion
-                Self::try_from(&rawkey[..])
+                Self::try_from(&raw_key[..])
             }
         }
 

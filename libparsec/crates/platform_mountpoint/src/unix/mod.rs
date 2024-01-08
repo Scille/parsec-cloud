@@ -404,7 +404,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         _req: &Request<'_>,
         parent: u64,
         name: &OsStr,
-        newparent: u64,
+        new_parent: u64,
         newname: &OsStr,
         _flags: u32,
         reply: ReplyEmpty,
@@ -422,8 +422,8 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         let source = parent_path.join(name);
 
         // Safety: Parent should exists (resolved by lookup method)
-        let newparent_path = unsafe { self.get_path(Inode::from(newparent)) };
-        let destination = newparent_path.join(newname);
+        let new_parent_path = unsafe { self.get_path(Inode::from(new_parent)) };
+        let destination = new_parent_path.join(newname);
 
         match self.interface.entry_rename(&source, &destination, true) {
             Ok(_) => {

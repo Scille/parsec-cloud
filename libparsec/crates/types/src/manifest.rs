@@ -256,8 +256,8 @@ impl WorkspaceEntry {
  */
 
 // Prior to Parsec version 1.14, author field in manifest was only mandatory
-// for non-zero manifest version (i.e. unsynced local data had empty author field)
-// TODO: remove this code ? (considering it is unlikely to still have unsynced
+// for non-zero manifest version (i.e. un-synced local data had empty author field)
+// TODO: remove this code ? (considering it is unlikely to still have un-synced
 // data created from version < 1.14)
 
 const LOCAL_AUTHOR_LEGACY_PLACEHOLDER: &str =

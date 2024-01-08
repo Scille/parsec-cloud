@@ -18,6 +18,9 @@ dictionaryDefinitions:
   - name: custom-ext
     path: ./custom-ext.txt
     addWords: true
+  - name: jinja
+    path: ./jinja.txt
+    addWords: true
 dictionaries:
   - en_us
   - en-gb
@@ -42,6 +45,7 @@ dictionaries:
   - typescript
   - sql
   - win32
+  - jinja
 words:
   - libparsec
   - schemafile
@@ -54,6 +58,7 @@ ignoreWords:
   - AIAA
   - ApiV
   - Assss
+  - devel
   - Crefreshiconhandler
   - Cwindowsiconhandler
   - DWXJ
@@ -79,7 +84,6 @@ ignoreWords:
   - YVPZ
   - ZGIQ
   - ZOXKGGIMTY
-  - abcefg
   - abcefg
   - ackup
   - csdef

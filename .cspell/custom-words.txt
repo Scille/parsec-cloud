@@ -20,7 +20,11 @@ asyncness
 asyncpg
 athrow
 authurl
+archs
+STRINGTABLE
 autobuild
+crtime
+bkuptime
 autojump
 autotools
 autouse
