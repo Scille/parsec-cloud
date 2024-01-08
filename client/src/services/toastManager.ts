@@ -40,6 +40,11 @@ export class ToastManager {
       ],
     });
     this.toasts.push(toast);
+    const toastActive = toast;
+    // when the class active is added progress bar width is set to 0%
+    setTimeout(() => {
+      toastActive.classList.add('active');
+    }, 100);
 
     await this.managePresentQueue();
 
@@ -66,6 +71,5 @@ export class ToastManager {
       case MsReportTheme.Error:
         return closeCircle;
     }
-    return '';
   }
 }
