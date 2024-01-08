@@ -62,7 +62,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Generate build metadata
-        uses: docker/metadata-action@9dc751fe249ad99385a2583ee0d084c400eee04e # v5.4.0
+        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
         id: metadata
         with:
           images:
