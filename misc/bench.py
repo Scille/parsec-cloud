@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# cspell:words filecount threadcount
+
 ############################# Naive-Bench ###################################
 # https://github.com/bkryza/naive-bench
 #

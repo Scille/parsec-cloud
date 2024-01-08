@@ -2,6 +2,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+# cspell:words exitstatus
+
 """
 Why this an not just pytest_xdist ?
 
