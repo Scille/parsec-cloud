@@ -53,18 +53,14 @@
           </ion-list>
         </div>
         <div v-if="invitations.length > 0 && displayView === DisplayState.Grid">
-          <ion-list class="invitation-card">
-            <ion-item
+          <ion-list class="invitation-container-grid">
+            <invitation-card
               v-for="invitation in invitations"
               :key="invitation.token[0]"
-              class="invitation-card-item"
-            >
-              <invitation-card
-                :invitation="invitation"
-                @greet-user="greetUser"
-                @reject-user="rejectUser"
-              />
-            </ion-item>
+              :invitation="invitation"
+              @greet-user="greetUser"
+              @reject-user="rejectUser"
+            />
           </ion-list>
         </div>
       </div>
@@ -91,7 +87,7 @@ import {
 import { routerNavigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
+import { IonContent, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -262,13 +258,6 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.invitation-card {
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
 .invitation-list-header {
   color: var(--parsec-color-light-secondary-grey);
   padding-inline-start: 0;
@@ -307,20 +296,10 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   }
 }
 
-.invitation-card-item {
-  width: 20rem;
-  padding: 1rem;
-  border: var(--parsec-color-light-secondary-disabled) 1px solid;
-  --background: var(--parsec-color-light-secondary-background);
-  background: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-6);
-  position: relative;
-  z-index: 2;
-
-  &::part(native) {
-    display: flex;
-    flex-direction: column;
-    padding: 0;
-  }
+.invitation-container-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  height: 100%;
 }
 </style>

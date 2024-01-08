@@ -30,7 +30,7 @@ describe('User Invitation Card', () => {
     });
 
     expect(wrapper.get('.caption-caption').text()).to.equal('UsersPage.invitation.status.ready');
-    expect(wrapper.get('.invitation-list-item__label').text()).to.equal('dung.eater@lands-between');
+    expect(wrapper.get('.invitation-card-item__label').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
     expect(buttons.at(0)?.text()).to.equal('UsersPage.invitation.rejectUser');
     expect(buttons.at(1)?.text()).to.equal('UsersPage.invitation.greetUser');
