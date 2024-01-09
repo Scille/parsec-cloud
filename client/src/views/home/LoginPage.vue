@@ -1,58 +1,64 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-card class="login-popup">
-    <ion-card-content class="organization-container">
-      <ion-text class="title-h1">
+  <div class="login-popup">
+    <!-- login -->
+    <div class="login-header">
+      <ion-title class="login-header__title title-h1">
         {{ $t('HomePage.organizationLogin.login') }}
-      </ion-text>
-      <!-- login -->
-      <div id="login-container">
-        <ion-card class="login-card">
-          <ion-card-content class="login-card__content">
-            <ion-grid>
-              <organization-card :device="device" />
-              <ms-password-input
-                :label="$t('HomePage.organizationLogin.passwordLabel')"
-                v-model="password"
-                @on-enter-keyup="onLoginClick()"
-                id="ms-password-input"
-              />
-              <ion-button
-                fill="clear"
-                @click="$emit('forgottenPasswordClick', device)"
-                id="forgotten-password-button"
-              >
-                {{ $t('HomePage.organizationLogin.forgottenPassword') }}
-              </ion-button>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-        <div class="login-button-container">
+      </ion-title>
+    </div>
+    <ion-card class="login-card">
+      <ion-card-header class="login-card-header">
+        <organization-card :device="device" />
+      </ion-card-header>
+      <ion-card-content class="login-card-content">
+        <ms-input
+          :label="$t('HomePage.organizationLogin.emailLabel')"
+          :placeholder="device.humanHandle.email"
+          id="ms-input"
+          :disabled="true"
+        />
+        <div class="login-card-content__password">
+          <ms-password-input
+            :label="$t('HomePage.organizationLogin.passwordLabel')"
+            v-model="password"
+            @on-enter-keyup="onLoginClick()"
+            id="ms-password-input"
+          />
           <ion-button
-            @click="onLoginClick()"
-            size="large"
-            :disabled="password.length == 0"
-            class="login-button"
+            fill="clear"
+            @click="$emit('forgottenPasswordClick', device)"
+            id="forgotten-password-button"
           >
-            <ion-icon
-              slot="start"
-              :icon="logIn"
-            />
-            {{ $t('HomePage.organizationLogin.login') }}
+            {{ $t('HomePage.organizationLogin.forgottenPassword') }}
           </ion-button>
         </div>
-      </div>
-      <!-- end of login -->
-    </ion-card-content>
-  </ion-card>
+      </ion-card-content>
+      <ion-footer class="login-card-footer">
+        <ion-button
+          @click="onLoginClick()"
+          size="large"
+          :disabled="password.length == 0"
+          class="login-button"
+        >
+          <ion-icon
+            slot="start"
+            :icon="logIn"
+          />
+          {{ $t('HomePage.organizationLogin.login') }}
+        </ion-button>
+      </ion-footer>
+    </ion-card>
+    <!-- end of login -->
+  </div>
 </template>
 
 <script setup lang="ts">
-import { MsPasswordInput } from '@/components/core';
+import { MsInput, MsPasswordInput } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice } from '@/parsec';
-import { IonButton, IonCard, IonCardContent, IonGrid, IonIcon, IonText } from '@ionic/vue';
+import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { ref } from 'vue';
 
@@ -74,62 +80,104 @@ const password = ref('');
 
 <style lang="scss" scoped>
 .login-popup {
-  height: 100%;
-  box-shadow: none;
+  height: auto;
+  width: 100%;
+  max-width: 26rem;
+  margin: auto;
   display: flex;
-  flex-grow: 1;
-  margin: 0;
-  flex-shrink: 0;
-  margin: 0;
-  width: 60vw;
+  flex-direction: column;
+  justify-content: center;
+  box-shadow: none;
 
-  .organization-container {
-    max-width: 52.5rem;
-    padding: 2rem 3.5rem 0;
-    flex-grow: 1;
-  }
-
-  .title-h1 {
-    color: var(--parsec-color-light-primary-700);
-  }
-
-  #login-container {
-    margin-top: 2.5rem;
+  .login-header {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    align-items: center;
+
+    &__title {
+      padding: 0;
+      margin-bottom: 2rem;
+      color: var(--parsec-color-light-secondary-white);
+    }
   }
 
   .login-card {
-    background: var(--parsec-color-light-secondary-background);
-    border-radius: 8px;
+    background: var(--parsec-color-light-secondary-white);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
     padding: 2em;
-    box-shadow: none;
     margin: 0;
+    border-radius: var(--parsec-radius-8);
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    transition: box-shadow 150ms ease-in-out;
 
-    &__content {
+    &:has(.has-focus) {
+      box-shadow: var(--parsec-shadow-card);
+    }
+
+    &-header {
+      padding: 0;
+    }
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
       padding: 0;
 
+      &__password {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 0;
+      }
+
       #ms-password-input {
-        margin: 1.5rem 0 1rem;
+        margin: 0;
+      }
+
+      #forgotten-password-button {
+        margin: 0;
+        position: relative;
+        width: fit-content;
+        color: var(--parsec-color-light-secondary-grey);
+
+        &::part(native) {
+          --background-hover: none;
+          padding: 0 0 0 2px;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          bottom: 0.25rem;
+          width: 0%;
+          height: 1px;
+          left: 0;
+          transition: all 200ms ease-in-out;
+        }
+
+        &:hover {
+          color: var(--parsec-color-light-primary-500);
+
+          &::after {
+            background: var(--parsec-color-light-primary-500);
+            width: 100%;
+          }
+        }
       }
     }
 
-    .organization-card {
-      margin-bottom: 2em;
+    &-footer {
+      padding: 0;
+      width: 100%;
       display: flex;
 
-      &__body {
-        padding: 0;
+      .login-button {
+        width: 100%;
       }
-    }
-  }
-
-  .login-button-container {
-    text-align: right;
-
-    .login-button {
-      margin: 0;
     }
   }
 }

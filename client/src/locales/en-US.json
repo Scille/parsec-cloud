@@ -56,6 +56,7 @@
     "HomePage": {
         "topbar": {
             "settings": "Settings",
+            "contactUs": "Contact us",
             "logout": "Log out",
             "help": "Help and feedback",
             "myDevices": "My devices",
@@ -71,7 +72,6 @@
         },
         "organizationList": {
             "title": "Your organizations",
-            "subtitle": "With Parsec, keep complete control over your data and make sure that it stays safe.",
             "lastLogin": "Last login on this device:",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
@@ -93,7 +93,8 @@
         },
         "organizationLogin": {
             "backToList": "Return to organizations",
-            "forgottenPassword": "Forgot you password?",
+            "forgottenPassword": "Forgot your password?",
+            "emailLabel": "Email",
             "passwordLabel": "Password",
             "login": "Log in"
         },

@@ -4,34 +4,21 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div id="page">
-        <home-page-sidebar @about-click="openAboutModal" />
-
         <!-- organization list -->
         <!-- organization -->
-        <div class="right-side">
-          <!-- topbar -->
-          <home-page-header
-            class="header"
-            @back-click="backToOrganizations"
-            @create-organization-click="openCreateOrganizationModal"
-            @join-organization-click="onJoinOrganizationClicked"
-            @settings-click="openSettingsModal"
-            :show-back-button="state !== HomePageState.OrganizationList"
-          />
-
+        <div
+          class="content"
+          :class="{ 'login-fullscreen': state === HomePageState.Login }"
+        >
           <slide-horizontal
             :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
             :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
           >
             <template v-if="state === HomePageState.OrganizationList">
-              <organization-list-page @organization-select="onOrganizationSelected" />
-            </template>
-            <!-- after animation -->
-            <template v-if="state === HomePageState.Login && selectedDevice">
-              <login-page
-                :device="selectedDevice"
-                @login-click="login"
-                @forgotten-password-click="onForgottenPasswordClicked"
+              <organization-list-page
+                @create-organization-click="openCreateOrganizationModal"
+                @organization-select="onOrganizationSelected"
+                @join-organization-click="onJoinOrganizationClicked"
               />
             </template>
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
@@ -40,7 +27,26 @@
                 @finished="backToOrganizations"
               />
             </template>
+            <!-- after animation -->
+            <template v-if="state === HomePageState.Login && selectedDevice">
+              <login-page
+                :device="selectedDevice"
+                :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
+                @login-click="login"
+                @forgotten-password-click="onForgottenPasswordClicked"
+                @back-click="backToOrganizations"
+                @settings-click="openSettingsModal"
+              />
+            </template>
           </slide-horizontal>
+          <!-- topbar -->
+          <home-page-header
+            class="header"
+            @settings-click="openSettingsModal"
+            @about-click="openAboutModal"
+            @back-click="backToOrganizations"
+            :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
+          />
         </div>
         <!-- end of organization -->
       </div>
@@ -50,7 +56,6 @@
 
 <script setup lang="ts">
 import { NotificationKey } from '@/common/injectionKeys';
-
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
@@ -62,7 +67,6 @@ import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.v
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
-import HomePageSidebar from '@/views/home/HomePageSidebar.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
@@ -225,23 +229,40 @@ async function onJoinOrganizationClicked(): Promise<void> {
 
 <style lang="scss" scoped>
 #page {
-  height: 100vh;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  display: flex;
-  flex-direction: row;
-  overflow: hidden;
-  margin: 0 auto;
-  align-items: self-start;
   position: relative;
-  z-index: -4;
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+  padding: 0 2rem;
+  align-items: self-start;
+  z-index: -10;
+  background: var(--parsec-color-light-gradient);
+
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: -2;
+    top: 0;
+    right: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('@/assets/images/background/homepage-rectangle.svg') repeat center;
+    background-size: cover;
+  }
+
+  .content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
 }
 
-.right-side {
-  height: 100%;
-  width: 60vw;
-  background: var(--parsec-color-light-secondary-inversed-contrast);
-  flex-direction: column;
-  position: relative;
-  z-index: -5;
+// login view
+
+.login-fullscreen {
+  width: 100%;
+  margin: auto;
 }
 </style>

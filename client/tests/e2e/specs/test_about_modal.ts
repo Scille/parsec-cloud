@@ -4,7 +4,8 @@ describe('Check about modal', () => {
   beforeEach(() => {
     cy.visitApp('coolorg');
     cy.contains('Your organizations');
-    cy.get('.sidebar-footer__version').click();
+    // Should force the click because the element is not visible on script execution
+    cy.get('.version-text').click({ force: true });
   });
 
   afterEach(() => {

@@ -2,50 +2,60 @@
 
 <template>
   <div class="topbar">
-    <div class="topbar-content">
-      <slide-horizontal
-        :appear-from="Position.Right"
-        :disappear-to="Position.Right"
+    <div class="topbar-left">
+      <div
+        class="topbar-left__logo"
+        @click="$emit('backClick')"
+        v-if="!showBackButton"
       >
-        <div
-          color="tertiary"
-          v-if="showBackButton"
-        >
-          <ion-button
-            fill="clear"
-            @click="$emit('backClick')"
-            id="back-to-list-button"
-          >
-            <ion-icon
-              slot="start"
-              :icon="chevronBack"
-            />
-            {{ $t('HomePage.organizationLogin.backToList') }}
-          </ion-button>
-        </div>
-      </slide-horizontal>
+        <ms-image
+          :image="LogoRowWhite"
+          class="logo-img"
+        />
+      </div>
+      <div
+        class="topbar-left__version body"
+        @click="$emit('aboutClick')"
+        v-if="!showBackButton"
+      >
+        <ion-icon
+          slot="start"
+          :icon="informationCircle"
+          size="small"
+        />
+        <span class="version-text">
+          {{ getAppVersion() }}
+        </span>
+      </div>
       <ion-button
-        @click="togglePopover"
-        size="large"
-        id="create-organization-button"
-        class="button-default"
+        @click="$emit('backClick')"
+        v-if="showBackButton"
+        class="topbar-left__back-button"
       >
-        {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
+        <ion-icon
+          slot="start"
+          :icon="arrowBack"
+        />
+        {{ $t('HomePage.organizationLogin.backToList') }}
       </ion-button>
-      <ion-buttons
-        slot="primary"
-        class="topbar-icon__settings"
-      >
+    </div>
+    <div class="topbar-right">
+      <ion-buttons class="topbar-right-buttons">
+        <ion-button
+          class="topbar-right-buttons__item"
+          :disabled="true"
+        >
+          <ion-icon :icon="chatbubbles" />
+          {{ $t('HomePage.topbar.contactUs') }}
+        </ion-button>
         <ion-button
           slot="icon-only"
           id="trigger-settings-button"
-          class="topbar-button__item"
+          class="topbar-right-buttons__item"
           @click="$emit('settingsClick')"
         >
-          <ion-icon
-            slot="icon-only"
-            :icon="cog"
-          />
+          <ion-icon :icon="cog" />
+          {{ $t('HomePage.topbar.settings') }}
         </ion-button>
       </ion-buttons>
     </div>
@@ -53,90 +63,131 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core';
-import { Position, SlideHorizontal } from '@/transitions';
-import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
-import { IonButton, IonButtons, IonIcon, popoverController } from '@ionic/vue';
-import { chevronBack, cog } from 'ionicons/icons';
-import { ref } from 'vue';
+import { getAppVersion } from '@/common/mocks';
+import { LogoRowWhite, MsImage } from '@/components/core';
+import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
+import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
 
 defineProps<{
   showBackButton: boolean;
 }>();
 
-const emits = defineEmits<{
-  (e: 'createOrganizationClick'): void;
-  (e: 'joinOrganizationClick'): void;
+defineEmits<{
   (e: 'settingsClick'): void;
+  (e: 'aboutClick'): void;
   (e: 'backClick'): void;
 }>();
-
-const isPopoverOpen = ref(false);
-
-async function togglePopover(event: Event): Promise<void> {
-  isPopoverOpen.value = !isPopoverOpen.value;
-  openPopover(event);
-}
-
-async function openPopover(event: Event): Promise<void> {
-  const popover = await popoverController.create({
-    component: HomePagePopover,
-    cssClass: 'homepage-popover',
-    event: event,
-    showBackdrop: false,
-    alignment: 'end',
-  });
-  await popover.present();
-  const result = await popover.onWillDismiss();
-  await popover.dismiss();
-  if (result.role !== MsModalResult.Confirm) {
-    return;
-  }
-  if (result.data.action === HomePageAction.CreateOrganization) {
-    emits('createOrganizationClick');
-  } else if (result.data.action === HomePageAction.JoinOrganization) {
-    emits('joinOrganizationClick');
-  }
-}
 </script>
 
 <style lang="scss" scoped>
 .topbar {
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: var(--parsec-max-content-width);
   padding: 0;
+  margin: 2rem auto 0;
+}
 
-  .topbar-content {
-    padding: 3.5rem 3.5rem 1.5rem;
-    max-width: var(--parsec-max-content-width);
-    display: flex;
-    align-items: center;
+.topbar-left {
+  display: flex;
+  margin: auto;
+  width: 100%;
+  align-items: center;
+  gap: 1.5rem;
+
+  &__logo {
+    width: 8rem;
+    height: 1.5rem;
+    display: block;
+
+    .logo-img {
+      width: 100%;
+      height: 100%;
+    }
   }
 
-  #create-organization-button {
-    margin-left: auto;
-    margin-right: 1.5rem;
-  }
+  &__back-button {
+    &::part(native) {
+      background: none;
+      --background-hover: none;
+      border-radius: var(--parsec-radius-32);
+      padding: 0.5rem 0.75rem;
+    }
 
-  .topbar-button__item,
-  .sc-ion-buttons-md-s .button {
-    border: 1px solid var(--parsec-color-light-secondary-light);
-    color: var(--parsec-color-light-primary-700);
-    border-radius: 50%;
-    --padding-top: 0;
-    --padding-end: 0;
-    --padding-bottom: 0;
-    --padding-start: 0;
-    width: 3em;
-    height: 3em;
+    ion-icon {
+      margin-right: 0.5rem;
+      transition: margin-right 150ms linear;
+    }
 
     &:hover {
-      --background-hover: var(--parsec-color-light-primary-50);
-      background: var(--parsec-color-light-primary-50);
-      border: var(--parsec-color-light-primary-50);
+      border-color: transparent;
+
+      ion-icon {
+        margin-right: 0.75rem;
+      }
+    }
+  }
+
+  &__version {
+    cursor: pointer;
+    color: var(--parsec-color-light-secondary-premiere);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--parsec-radius-32);
+    border: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 150ms linear;
+
+    .version-text {
+      line-height: 0;
     }
 
     ion-icon {
       font-size: 1.375rem;
+    }
+
+    &:hover {
+      border-color: var(--parsec-color-light-primary-100);
+    }
+  }
+}
+
+.topbar-right {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+
+  &-buttons {
+    display: flex;
+    gap: 1rem;
+
+    &__item {
+      background: var(--parsec-color-light-primary-30-opacity15);
+      color: var(--parsec-color-light-secondary-white);
+      border-radius: var(--parsec-radius-32);
+      transition: all 150ms linear;
+
+      &::part(native) {
+        --background-hover: none;
+        border-radius: var(--parsec-radius-32);
+        padding: 0.5rem 0.75rem;
+      }
+
+      &:hover {
+        background: var(--parsec-color-light-primary-100);
+        color: var(--parsec-color-light-primary-600);
+        box-shadow: var(--parsec-shadow-strong);
+      }
+
+      ion-icon {
+        font-size: 1.25rem;
+        margin-right: 0.5rem;
+      }
     }
   }
 }
