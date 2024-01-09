@@ -25,9 +25,10 @@ body:
       description: On which platforms have you seen the problem?
       multiple: true
       options:
-        - Windows
+        - Any
         - Linux
         - MacOS
+        - Windows
         - Android
         - Web
     validations:
