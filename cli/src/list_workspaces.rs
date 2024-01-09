@@ -21,7 +21,7 @@ pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<
     let ListWorkspaces { config_dir, device } = list_workspaces;
 
     load_client_and_run(config_dir, device, |client| async move {
-        let workspaces = client.user_ops.list_workspaces();
+        let workspaces = client.list_workspaces().await?;
 
         if workspaces.is_empty() {
             println!("No workspaces found");
@@ -29,9 +29,11 @@ pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<
             let n = workspaces.len();
             println!("Found {GREEN}{n}{RESET} workspace(s)");
 
-            for (id, name) in workspaces {
-                let id = id.hex();
-                println!("{YELLOW}{id}{RESET} - {name}");
+            for ws in workspaces {
+                let id = ws.id.hex();
+                let name = ws.name;
+                let role = ws.self_current_role;
+                println!("{YELLOW}{id}{RESET} - {name}: {role}");
             }
         }
 
