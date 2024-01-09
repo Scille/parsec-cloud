@@ -10,7 +10,7 @@
       size="default"
       class="container-textinfo__icon"
     />
-    <ion-text class="subtitles-normal container-textinfo__text">
+    <ion-text class="body container-textinfo__text">
       <slot />
     </ion-text>
   </div>
@@ -75,7 +75,7 @@ function getIcon(): string {
   }
 
   &__text {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-text);
   }
   &.ms-info,
   &.ms-success,

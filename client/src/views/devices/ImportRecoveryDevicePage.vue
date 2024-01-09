@@ -1,105 +1,136 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div v-if="state === ImportDevicePageState.Start">
-    <div>
-      <ion-card class="login-popup">
-        <ion-card-content class="import-recovery-container">
-          <ms-report-text
-            :theme="MsReportTheme.Warning"
-            id="warning-text"
-          >
-            {{ $t('ImportRecoveryDevicePage.subtitles.recoveryFilesMustExistWarning') }}
-          </ms-report-text>
-          <ion-text class="title-h2">
-            {{ $t('ImportRecoveryDevicePage.titles.forgottenPassword') }}
-          </ion-text>
-          <div class="file-list">
-            <div class="file-item">
-              <div class="file-item__title subtitles-normal">
-                <ion-icon :icon="document" />
-                {{ $t('ImportRecoveryDevicePage.titles.recoveryFile') }}
-              </div>
-              <div class="file-item__button">
-                <input
-                  type="file"
-                  hidden
-                  ref="hiddenInput"
-                />
-                <div v-if="!recoveryFile">
-                  {{ $t('ImportRecoveryDevicePage.subtitles.noFileSelected') }}
-                </div>
-                <div v-else>
-                  {{ recoveryFile.name }}
-                </div>
-                <ion-button
-                  id="browse-button"
-                  @click="importButtonClick()"
-                  fill="outline"
-                >
-                  {{ $t('ImportRecoveryDevicePage.actions.browse') }}
-                </ion-button>
-              </div>
-            </div>
-            <div class="file-item">
-              <div class="file-item__title subtitles-normal">
-                <ion-icon :icon="key" />
-                {{ $t('ImportRecoveryDevicePage.titles.recoveryKey') }}
-              </div>
-              <div class="file-item__button">
-                <ms-input
-                  class="file-item__input"
-                  id="secret-key-input"
-                  :placeholder="secretKeyPlaceholder"
-                  v-model="secretKey"
-                  @change="checkSecretKeyValidity()"
-                />
-                <ion-icon
-                  id="checkmark-icon"
-                  v-show="isSecretKeyValid"
-                  :icon="checkmarkCircle"
-                />
-              </div>
-            </div>
-          </div>
-          <div class="next-button">
-            <ion-button
-              slot="start"
-              id="to-password-change-btn"
-              @click="goToPasswordChange()"
-              :disabled="!isSecretKeyValid || !recoveryFile"
-            >
-              {{ $t('ImportRecoveryDevicePage.actions.next') }}
-            </ion-button>
-          </div>
-        </ion-card-content>
-      </ion-card>
+  <!-- step 1: recovery file -->
+  <div
+    v-if="state === ImportDevicePageState.Start"
+    class="recovery-content"
+  >
+    <div class="recovery-header">
+      <ion-title class="recovery-header__title title-h1">
+        {{ $t('ImportRecoveryDevicePage.titles.forgottenPassword') }}
+      </ion-title>
     </div>
+    <ion-card class="recovery-card">
+      <ion-card-content class="card-container">
+        <organization-card :device="device" />
+        <ms-report-text
+          :theme="MsReportTheme.Warning"
+          id="warning-text"
+        >
+          {{ $t('ImportRecoveryDevicePage.subtitles.recoveryFilesMustExistWarning') }}
+        </ms-report-text>
+        <div class="recovery-list">
+          <!-- recovery item -->
+          <div class="recovery-list-item">
+            <div class="recovery-list-item__title subtitles-normal">
+              <span class="number subtitles-normal">1</span>
+              {{ $t('ImportRecoveryDevicePage.titles.recoveryFile') }}
+            </div>
+            <div class="recovery-list-item__button">
+              <input
+                type="file"
+                hidden
+                ref="hiddenInput"
+              />
+              <div
+                v-if="!recoveryFile"
+                class="body"
+              >
+                {{ $t('ImportRecoveryDevicePage.subtitles.noFileSelected') }}
+              </div>
+              <div
+                v-else
+                class="body file-added"
+                @click="importButtonClick()"
+              >
+                {{ recoveryFile.name }}
+              </div>
+              <ion-button
+                id="browse-button"
+                @click="importButtonClick()"
+                fill="outline"
+              >
+                {{ $t('ImportRecoveryDevicePage.actions.browse') }}
+              </ion-button>
+            </div>
+          </div>
+
+          <!-- ----- -->
+          <div class="recovery-divider" />
+
+          <!-- recovery item -->
+          <div
+            class="recovery-list-item"
+            :class="{ disabled: !recoveryFile }"
+          >
+            <div class="recovery-list-item__title subtitles-normal">
+              <span class="number">2</span>
+              {{ $t('ImportRecoveryDevicePage.titles.recoveryKey') }}
+            </div>
+            <div class="recovery-list-item__button">
+              <ms-input
+                class="recovery-list-item__input"
+                id="secret-key-input"
+                :placeholder="secretKeyPlaceholder"
+                v-model="secretKey"
+                @change="checkSecretKeyValidity()"
+              />
+              <ion-icon
+                id="checkmark-icon"
+                v-show="isSecretKeyValid"
+                :icon="checkmarkCircle"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="next-button">
+          <ion-button
+            slot="start"
+            id="to-password-change-btn"
+            @click="goToPasswordChange()"
+            :disabled="!isSecretKeyValid || !recoveryFile"
+          >
+            {{ $t('ImportRecoveryDevicePage.actions.next') }}
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
   </div>
+  <!-- step 2: new password -->
   <div
     v-else-if="state === ImportDevicePageState.Password"
-    class="password-input"
+    class="recovery-content password-input"
   >
-    <ms-choose-password-input
-      :password-label="$t('ImportRecoveryDevicePage.titles.setNewPassword')"
-      @on-enter-keyup="createNewDevice()"
-      ref="choosePasswordInput"
-    />
-    <ion-button
-      id="validate-password-btn"
-      class="validate-button"
-      :disabled="!changeButtonIsEnabled"
-      @click="createNewDevice()"
-    >
-      {{ $t('ImportRecoveryDevicePage.actions.validatePassword') }}
-    </ion-button>
+    <div class="recovery-header">
+      <ion-title class="recovery-header__title title-h1">
+        {{ $t('ImportRecoveryDevicePage.titles.setNewPassword') }}
+      </ion-title>
+    </div>
+    <ion-card class="recovery-card">
+      <ms-choose-password-input
+        :password-label="$t('ImportRecoveryDevicePage.titles.setNewPassword')"
+        @on-enter-keyup="createNewDevice()"
+        ref="choosePasswordInput"
+      />
+      <ion-button
+        id="validate-password-btn"
+        class="validate-button"
+        :disabled="!changeButtonIsEnabled"
+        @click="createNewDevice()"
+      >
+        {{ $t('ImportRecoveryDevicePage.actions.validatePassword') }}
+      </ion-button>
+    </ion-card>
   </div>
+  <!-- step 3: done -->
   <div
-    id="success-step"
     v-else-if="state === ImportDevicePageState.Done"
+    id="success-step"
+    class="recovery-content"
   >
-    <ion-card class="success-card">
-      <ion-card-title class="success-card__title">
+    <ion-card class="recovery-card success-card">
+      <ion-card-title class="success-card__title title-h2">
         {{ $t('ImportRecoveryDevicePage.titles.passwordChanged') }}
       </ion-card-title>
       <ms-informative-text>
@@ -107,7 +138,7 @@
       </ms-informative-text>
       <ion-button
         class="success-card__button"
-        @click="goToHome()"
+        @click="onLoginClick()"
       >
         {{ $t('ImportRecoveryDevicePage.actions.goBackToLogin') }}
       </ion-button>
@@ -119,10 +150,11 @@
 import { asyncComputed } from '@/common/asyncComputed';
 import { Validity, secretKeyValidator } from '@/common/validators';
 import { MsChoosePasswordInput, MsInformativeText, MsInput, MsReportText, MsReportTheme } from '@/components/core';
+import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonText } from '@ionic/vue';
-import { checkmarkCircle, document, key } from 'ionicons/icons';
+import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
+import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, defineEmits, defineProps, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -149,7 +181,7 @@ const isSecretKeyValid = ref(false);
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 const emits = defineEmits<{
-  (e: 'finished'): void;
+  (e: 'organizationSelected', device: AvailableDevice): void;
 }>();
 
 const props = defineProps<{
@@ -243,87 +275,137 @@ async function createNewDevice(): Promise<void> {
   state.value = ImportDevicePageState.Done;
 }
 
-async function goToHome(): Promise<void> {
-  state.value = ImportDevicePageState.Start;
-  emits('finished');
+async function onLoginClick(): Promise<void> {
+  emits('organizationSelected', props.device);
 }
 </script>
 
 <style lang="scss" scoped>
-.login-popup {
-  box-shadow: none;
+.recovery-content {
+  height: 100%;
+  width: 60vw;
+  max-width: var(--parsec-max-forgotten-pwd-width);
   display: flex;
-  margin: 1.5rem 1.5rem;
+  margin: auto;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  justify-content: left;
-  flex-grow: 1;
-  max-height: 80%;
-  .title-h2 {
-    color: var(--parsec-color-light-primary-700);
+  gap: 2rem;
+}
+
+.recovery-header {
+  &__title {
+    color: var(--parsec-color-light-secondary-white);
   }
 }
-.import-recovery-container {
+
+.recovery-card {
+  height: auto;
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  padding: 2rem;
+  margin: 0;
+  border-radius: var(--parsec-radius-12);
+  box-shadow: var(--parsec-shadow-light);
+  background: var(--parsec-color-light-secondary-white);
+}
+
+.card-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
   gap: 2rem;
-  .file-list {
+
+  .recovery-list {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    .file-item {
-      padding: 1.5rem;
+    gap: 2rem;
+
+    &-item {
       border-radius: var(--parsec-radius-8);
-      background: var(--parsec-color-light-secondary-background);
       width: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+
       &__title {
-        gap: 1rem;
-        display: flex;
-        align-items: center;
         color: var(--parsec-color-light-primary-700);
-        ion-icon {
-          font-size: 1.5rem;
-        }
-      }
-      &__button {
-        margin-top: 1.5rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        color: var(--parsec-color-light-primary-700);
+
+        .number {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-radius: var(--parsec-radius-32);
+          width: 1.25rem;
+          height: 1.25rem;
+          color: var(--parsec-color-light-secondary-white);
+          background: var(--parsec-color-light-primary-700);
+        }
+      }
+
+      &__button {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: var(--parsec-color-light-secondary-grey);
+
+        .file-added {
+          color: var(--parsec-color-light-secondary-text);
+
+          &:hover {
+            cursor: pointer;
+            text-decoration: underline;
+          }
+        }
+
         ion-button {
           margin: 0;
         }
         ion-icon {
-          font-size: 1rem;
+          font-size: 1.25rem;
           color: var(--parsec-color-light-success-500);
         }
       }
+
       &__input {
-        width: 95%;
+        width: 100%;
+      }
+
+      &.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+        user-select: none;
       }
     }
   }
+
+  .recovery-divider {
+    width: 100%;
+    height: 1px;
+    background-color: var(--parsec-color-light-secondary-medium);
+  }
 }
+
+.validate-button,
 .next-button {
-  margin-left: auto;
-}
-.password-input {
-  margin: 1.5rem;
-}
-.validate-button {
   display: flex;
   width: fit-content;
   margin-left: auto;
 }
+
 .success-card {
-  box-shadow: none;
-  margin: 20% 1.5rem;
-  background-color: var(--parsec-color-light-primary-background);
   &__title {
     color: var(--parsec-color-light-primary-700);
     margin-bottom: 1.5rem;
   }
+
   &__button {
+    margin-top: 2.5rem;
     display: flex;
     width: fit-content;
     margin-left: auto;
