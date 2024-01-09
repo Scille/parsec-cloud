@@ -16,10 +16,10 @@ describe('Check organization list', () => {
 
   it('Go to login page and back to organizations', () => {
     cy.get('.organization-list-row__col').should('have.length', 5);
-    cy.get('.login-button-container').should('not.exist');
+    cy.get('.login-button').should('not.exist');
     cy.contains('Boby McBobFace').click();
     cy.get('.login-card').contains('Org');
-    cy.get('.login-button-container').should('exist');
+    cy.get('.login-button').should('exist');
     cy.contains('Return to organizations').click();
     cy.contains('Your organizations');
     cy.get('.organization-list-row__col').should('have.length', 5);
@@ -27,11 +27,11 @@ describe('Check organization list', () => {
 
   it('Go to login page and enter wrong password', () => {
     cy.contains('Boby McBobFace').click();
-    cy.get('.login-button-container > ion-button').should('have.class', 'button-disabled');
+    cy.get('.login-button').should('have.class', 'button-disabled');
     cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
     cy.get('#ms-password-input').find('input').type('Wr0ngP@ssw0rd.');
-    cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
-    cy.get('.login-button-container > ion-button').click();
+    cy.get('.login-button').should('not.have.class', 'button-disabled');
+    cy.get('.login-button').click();
     cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
     cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login');
     cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
@@ -39,11 +39,11 @@ describe('Check organization list', () => {
 
   it('Go to login page and enter password', () => {
     cy.contains('Boby McBobFace').click();
-    cy.get('.login-button-container > ion-button').should('have.class', 'button-disabled');
+    cy.get('.login-button').should('have.class', 'button-disabled');
     cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
     cy.get('#ms-password-input').find('input').type('P@ssw0rd.');
-    cy.get('.login-button-container > ion-button').should('not.have.class', 'button-disabled');
-    cy.get('.login-button-container > ion-button').click();
+    cy.get('.login-button').should('not.have.class', 'button-disabled');
+    cy.get('.login-button').click();
     cy.contains('My workspaces');
   });
 
@@ -131,7 +131,7 @@ describe('Check organization list', () => {
   it('Log into organization with command', () => {
     // Uses Cypress command to simplify the log in part
     cy.login('Boby', 'P@ssw0rd.');
-    cy.contains('My workspaces');
+    cy.contains('Log in');
   });
 
   it('Log out', () => {

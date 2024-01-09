@@ -8,21 +8,19 @@
           <span>{{ device.organizationId?.substring(0, 2) }}</span>
         </ion-avatar>
         <div class="orga-text">
-          <ion-card-title class="card-title subtitles-normal">
-            {{ device.organizationId }}
+          <ion-card-title class="card-title">
+            <span class="subtitles-normal">{{ device.organizationId }}</span>
+            <span class="subtitles-sm">{{ device.humanHandle.label }}</span>
           </ion-card-title>
         </div>
       </div>
     </ion-card-header>
-    <ion-card-content>
-      {{ device.humanHandle.label }}
-    </ion-card-content>
   </ion-card>
 </template>
 
 <script setup lang="ts">
 import { AvailableDevice } from '@/parsec';
-import { IonAvatar, IonCard, IonCardContent, IonCardHeader, IonCardTitle } from '@ionic/vue';
+import { IonAvatar, IonCard, IonCardHeader, IonCardTitle } from '@ionic/vue';
 
 defineProps<{
   device: AvailableDevice;
@@ -34,7 +32,6 @@ defineProps<{
   user-select: none;
   box-shadow: none;
   background: none;
-  padding: 1.5rem 1rem;
   margin: 0;
 
   .card-content {
@@ -62,7 +59,16 @@ defineProps<{
     }
 
     .card-title {
-      color: var(--parsec-color-light-primary-700);
+      display: flex;
+      flex-direction: column;
+
+      span:first-child {
+        color: var(--parsec-color-light-primary-700);
+      }
+
+      span:last-child {
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
   }
 }

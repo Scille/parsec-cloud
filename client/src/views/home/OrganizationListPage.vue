@@ -1,17 +1,21 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-card class="right-side-container">
+  <ion-card class="organization">
+    <ion-text class="organization-title title-h1">
+      {{ $t('HomePage.organizationList.title') }}
+    </ion-text>
     <template v-if="deviceList.length === 0 && !querying">
-      <ion-card-content class="organization-container">
-        <ion-card-title>
+      <ion-card-content class="organization-content no-devices">
+        <ion-card-title class="title-h3">
           {{ $t('HomePage.noDevices') }}
         </ion-card-title>
-        {{ $t('HomePage.howToAddDevices') }}
+        <span class="body">{{ $t('HomePage.howToAddDevices') }}</span>
+        <home-page-popover class="no-devices-buttons" />
       </ion-card-content>
     </template>
     <template v-if="deviceList.length > 0">
-      <ion-card-content class="organization-container">
+      <ion-card-content class="organization-content">
         <ion-card-title class="organization-filter">
           <ms-search-input
             :label="$t('HomePage.organizationList.search')"
@@ -28,6 +32,14 @@
               :sorter-labels="msSorterLabels"
               @change="onMsSorterChange($event)"
             />
+            <ion-button
+              @click="togglePopover"
+              size="default"
+              id="create-organization-button"
+              class="button-default"
+            >
+              {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
+            </ion-button>
           </template>
         </ion-card-title>
         <ion-grid class="organization-list">
@@ -72,17 +84,20 @@
 
 <script setup lang="ts">
 import { Formatters, FormattersKey } from '@/common/injectionKeys';
-import { MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
+import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import { IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow } from '@ionic/vue';
+import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
+import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow, IonText, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
+  (e: 'createOrganizationClick'): void;
+  (e: 'joinOrganizationClick'): void;
 }>();
 
 const { t } = useI18n();
@@ -108,6 +123,34 @@ const msSorterLabels = {
   asc: t('HomePage.organizationList.sortOrderAsc'),
   desc: t('HomePage.organizationList.sortOrderDesc'),
 };
+
+const isPopoverOpen = ref(false);
+
+async function togglePopover(event: Event): Promise<void> {
+  isPopoverOpen.value = !isPopoverOpen.value;
+  openPopover(event);
+}
+
+async function openPopover(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: HomePagePopover,
+    cssClass: 'homepage-popover',
+    event: event,
+    showBackdrop: false,
+    alignment: 'end',
+  });
+  await popover.present();
+  const result = await popover.onWillDismiss();
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
+    return;
+  }
+  if (result.data.action === HomePageAction.CreateOrganization) {
+    emits('createOrganizationClick');
+  } else if (result.data.action === HomePageAction.JoinOrganization) {
+    emits('joinOrganizationClick');
+  }
+}
 
 onMounted(async (): Promise<void> => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
@@ -173,34 +216,63 @@ const filteredDevices = computed(() => {
 </script>
 
 <style lang="scss" scoped>
-.right-side-container {
-  height: 100%;
-  box-shadow: none;
-  flex-grow: 0;
-  flex-shrink: 0;
-  margin: 0;
+.organization {
+  background: none;
+  height: auto;
   width: 60vw;
+  max-width: var(--parsec-max-organization-width);
+  margin: auto;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 2rem;
+
+  &-title {
+    text-align: center;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    color: var(--parsec-color-light-secondary-white);
+  }
 }
 
-.organization-container {
-  padding: 2rem 3.5rem 0;
-  height: 100%;
+.organization-content {
   display: flex;
+  padding: 2rem 2.5rem 0.5rem;
   flex-direction: column;
   gap: 1.5rem;
   max-width: var(--parsec-max-content-width);
+  background: var(--parsec-color-light-secondary-white);
+  border-radius: var(--parsec-radius-12);
+  width: 100%;
+
+  &.no-devices {
+    min-height: 50vh;
+
+    ion-card-title {
+      color: var(--parsec-color-light-primary-700);
+    }
+  }
 
   .organization-filter {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin: 0;
+
+    #organization-filter-select {
+      margin-left: auto;
+      margin-right: 1rem;
+    }
   }
 
   .organization-list {
-    max-height: 80%;
     margin: 0;
     overflow-y: auto;
     --ion-grid-columns: 6;
+    max-height: 50vh;
+    min-height: 50vh;
   }
 
   .organization-list-row {
@@ -214,6 +286,7 @@ const filteredDevices = computed(() => {
     background: var(--parsec-color-light-secondary-background);
     user-select: none;
     transition: box-shadow 150ms linear;
+    border: 1px solid var(--parsec-color-light-secondary-medium);
     box-shadow: none;
     border-radius: 0.5em;
     margin-inline: 0;
@@ -230,6 +303,10 @@ const filteredDevices = computed(() => {
       padding-bottom: 0px;
       padding-inline-end: 0px;
       padding-inline-start: 0px;
+
+      .card-content__body {
+        padding: 1.5em 0em 1.5rem 1rem;
+      }
 
       &__footer {
         padding: 0.5em 1em;

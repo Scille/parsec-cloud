@@ -66,6 +66,7 @@ certifs
 CFFI
 cfoo
 chacha
+chatbubbles
 CHECKICONHANDLER
 choco
 chgtime
