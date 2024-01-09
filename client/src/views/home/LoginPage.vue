@@ -82,11 +82,12 @@ const password = ref('');
 .login-popup {
   height: auto;
   width: 100%;
-  max-width: 26rem;
+  max-width: 25rem;
   margin: auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   box-shadow: none;
 
   .login-header {
@@ -111,6 +112,7 @@ const password = ref('');
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    width: 100%;
     transition: box-shadow 150ms ease-in-out;
 
     &:has(.has-focus) {

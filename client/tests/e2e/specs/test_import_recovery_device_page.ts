@@ -13,12 +13,10 @@ describe('Display import recovery device page', () => {
 
   it('Check import recovery device', () => {
     // First state: file upload and secret key input
-    cy.get('.import-recovery-container').find('.title-h2').contains('Forgotten password');
-    cy.get('.import-recovery-container')
-      .find('#warning-text')
-      .contains('You must have created recovery files in order to reset your password.');
-    cy.get('.import-recovery-container').find('#to-password-change-btn').should('have.class', 'button-disabled');
-    cy.get('.import-recovery-container').find('.file-item').as('file-item').should('have.length', 2);
+    cy.get('.recovery-content').find('.recovery-header__title').contains('Forgotten password');
+    cy.get('.recovery-content').find('#warning-text').contains('You must have created recovery files in order to reset your password.');
+    cy.get('.recovery-content').find('#to-password-change-btn').should('have.class', 'button-disabled');
+    cy.get('.recovery-content').find('.recovery-list-item').as('file-item').should('have.length', 2);
     cy.get('@file-item').eq(0).as('file').contains('Recovery file');
     cy.get('@file').contains('No file selected');
     // Upload invalid file
@@ -29,7 +27,7 @@ describe('Display import recovery device page', () => {
     cy.get('@file-item').eq(1).as('key').contains('Secret key');
     cy.get('@key').find('#secret-key-input').as('key-input').type('ABCD', { delay: 0 });
     cy.get('@key').find('#checkmark-icon').should('not.be.visible');
-    cy.get('.import-recovery-container').find('#to-password-change-btn').should('have.class', 'button-disabled');
+    cy.get('.recovery-content').find('#to-password-change-btn').should('have.class', 'button-disabled');
     // Input 64-char secret key with one invalid character
     // cspell:disable-next-line
     cy.get('@key-input').type('-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOp', { delay: 0 });
@@ -37,11 +35,7 @@ describe('Display import recovery device page', () => {
     // Input valid key but not the expected one
     cy.get('@key-input').type('{backspace}O');
     cy.get('@key').find('#checkmark-icon').should('be.visible');
-    cy.get('.import-recovery-container')
-      .find('#to-password-change-btn')
-      .as('toPassword')
-      .should('not.have.class', 'button-disabled')
-      .click();
+    cy.get('.recovery-content').find('#to-password-change-btn').as('toPassword').should('not.have.class', 'button-disabled').click();
     cy.checkToastMessage('error', 'Invalid secret key', 'The given secret key does not match the recovery file.');
     // Input valid and expected secret key
     cy.get('@key-input').type('{backspace}P');
@@ -78,6 +72,6 @@ We advise you to create several devices if possible and to share workspaces.',
       .should('contain', 'The password was successfully changed!')
       .and('contain', 'You can now login with your new password.');
     cy.get('#success-step').find('ion-button').contains('Go back to login').click();
-    cy.get('import-recovery-container').should('not.exist');
+    cy.get('#forgotten-password-button').should('exist');
   });
 });

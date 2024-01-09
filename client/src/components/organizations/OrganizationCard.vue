@@ -56,6 +56,7 @@ defineProps<{
       flex-shrink: 0;
       position: relative;
       z-index: 1;
+      border: 1px solid var(--parsec-color-light-secondary-medium);
     }
 
     .card-title {

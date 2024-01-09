@@ -24,7 +24,7 @@
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
               <import-recovery-device-page
                 :device="selectedDevice"
-                @finished="backToOrganizations"
+                @organization-selected="onOrganizationSelected"
               />
             </template>
             <!-- after animation -->
@@ -257,6 +257,13 @@ async function onJoinOrganizationClicked(): Promise<void> {
     flex-direction: column;
     position: relative;
   }
+}
+
+// login view
+
+.login-fullscreen {
+  width: 100%;
+  margin: auto;
 }
 
 // login view

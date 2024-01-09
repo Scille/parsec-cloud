@@ -189,6 +189,10 @@ defineEmits<{
         margin-right: 0.5rem;
       }
     }
+
+    &:hover {
+      border-color: var(--parsec-color-light-primary-100);
+    }
   }
 }
 </style>

@@ -124,3 +124,12 @@ a {
     border-radius: var(--parsec-radius-8);
   }
 }
+
+// temporary fix for password input
+.recovery-content {
+  .ms-password-inputs {
+    flex-direction: column;
+    margin-top: 2rem;
+    margin-bottom: 1.5rem;
+  }
+}
