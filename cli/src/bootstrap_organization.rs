@@ -52,9 +52,15 @@ pub async fn bootstrap_organization_req(
 pub async fn bootstrap_organization(
     bootstrap_organization: BootstrapOrganization,
 ) -> anyhow::Result<()> {
-    let human_handle =
-        HumanHandle::new(&bootstrap_organization.email, &bootstrap_organization.label)
-            .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
+    let BootstrapOrganization {
+        email,
+        label,
+        addr,
+        device_label,
+    } = bootstrap_organization;
+
+    let human_handle = HumanHandle::new(&email, &label)
+        .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
     #[cfg(feature = "testenv")]
     let password = "test".to_string().into();
@@ -65,8 +71,8 @@ pub async fn bootstrap_organization(
 
     bootstrap_organization_req(
         ClientConfig::default(),
-        bootstrap_organization.addr,
-        bootstrap_organization.device_label,
+        addr,
+        device_label,
         human_handle,
         password,
     )

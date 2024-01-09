@@ -23,19 +23,21 @@ pub struct ImportRecoveryDevice {
 pub async fn import_recovery_device(
     import_recovery_device: ImportRecoveryDevice,
 ) -> anyhow::Result<()> {
+    let ImportRecoveryDevice {
+        input,
+        passphrase,
+        config_dir,
+    } = import_recovery_device;
+
     let handle = start_spinner("Loading recovery device file");
 
-    let device = load_recovery_device(
-        &import_recovery_device.input,
-        import_recovery_device.passphrase.into(),
-    )
-    .await?;
+    let device = load_recovery_device(&input, passphrase.into()).await?;
 
     handle.done();
 
     let password = choose_password()?;
 
-    let key_file = libparsec::get_default_key_file(&import_recovery_device.config_dir, &device);
+    let key_file = libparsec::get_default_key_file(&config_dir, &device);
 
     let access = DeviceAccessStrategy::Password { key_file, password };
 
