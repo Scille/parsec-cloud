@@ -29,13 +29,13 @@ pub fn format_devices(devices: &[AvailableDevice]) {
     }
 }
 
-pub async fn load_device_and_run<F, Fut>(
+pub async fn load_device_file_and_run<F, Fut>(
     config_dir: PathBuf,
     device_slughash: Option<String>,
     function: F,
 ) -> anyhow::Result<()>
 where
-    F: FnOnce(Arc<LocalDevice>) -> Fut,
+    F: FnOnce(AvailableDevice) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
     let devices = list_available_devices(&config_dir).await;
@@ -55,39 +55,7 @@ where
                 format_devices(&devices);
             }
             1 => {
-                let device = possible_devices[0];
-
-                let device = match device.ty {
-                    DeviceFileType::Password => {
-                        #[cfg(feature = "testenv")]
-                        let password = "test".to_string().into();
-                        #[cfg(not(feature = "testenv"))]
-                        let password = rpassword::prompt_password("password:")?.into();
-
-                        let access = DeviceAccessStrategy::Password {
-                            key_file: device.key_file_path.clone(),
-                            password,
-                        };
-
-                        // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-                        load_device(&config_dir, &access).await?
-                    }
-                    DeviceFileType::Smartcard => {
-                        let access = DeviceAccessStrategy::Smartcard {
-                            key_file: device.key_file_path.clone(),
-                        };
-
-                        load_device(&config_dir, &access).await?
-                    }
-                    DeviceFileType::Recovery => {
-                        return Err(anyhow::anyhow!(
-                            "Unsupported device file authentication `{:?}`",
-                            device.ty
-                        ));
-                    }
-                };
-
-                function(device).await?;
+                function(possible_devices[0].clone()).await?;
             }
             _ => {
                 println!("Multiple devices found for `{device_slughash}`:");
@@ -101,6 +69,51 @@ where
     }
 
     Ok(())
+}
+
+pub async fn load_device_and_run<F, Fut>(
+    config_dir: PathBuf,
+    device_slughash: Option<String>,
+    function: F,
+) -> anyhow::Result<()>
+where
+    F: FnOnce(Arc<LocalDevice>) -> Fut,
+    Fut: Future<Output = anyhow::Result<()>>,
+{
+    load_device_file_and_run(config_dir.clone(), device_slughash, |device| async move {
+        let device = match device.ty {
+            DeviceFileType::Password => {
+                #[cfg(feature = "testenv")]
+                let password = "test".to_string().into();
+                #[cfg(not(feature = "testenv"))]
+                let password = rpassword::prompt_password("password:")?.into();
+
+                let access = DeviceAccessStrategy::Password {
+                    key_file: device.key_file_path.clone(),
+                    password,
+                };
+
+                // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
+                load_device(&config_dir, &access).await?
+            }
+            DeviceFileType::Smartcard => {
+                let access = DeviceAccessStrategy::Smartcard {
+                    key_file: device.key_file_path.clone(),
+                };
+
+                load_device(&config_dir, &access).await?
+            }
+            DeviceFileType::Recovery => {
+                return Err(anyhow::anyhow!(
+                    "Unsupported device file authentication `{:?}`",
+                    device.ty
+                ));
+            }
+        };
+
+        function(device).await
+    })
+    .await
 }
 
 pub async fn load_cmds_and_run<F, Fut>(

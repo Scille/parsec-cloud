@@ -21,55 +21,53 @@ pub struct ListInvitations {
 }
 
 pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Result<()> {
-    load_cmds_and_run(
-        list_invitations.config_dir,
-        list_invitations.device,
-        |cmds, _| async move {
-            let handle = start_spinner("Listing invitations");
+    let ListInvitations { config_dir, device } = list_invitations;
 
-            let rep = cmds.send(invite_list::Req).await?;
+    load_cmds_and_run(config_dir, device, |cmds, _| async move {
+        let handle = start_spinner("Listing invitations");
 
-            let invitations = match rep {
-                InviteListRep::Ok { invitations } => invitations,
-                rep => {
-                    return Err(anyhow::anyhow!(
-                        "Server error while listing invitations: {rep:?}"
-                    ));
-                }
-            };
+        let rep = cmds.send(invite_list::Req).await?;
 
-            handle.done();
-
-            if invitations.is_empty() {
-                println!("No invitation.");
-            } else {
-                for invitation in invitations {
-                    let (token, status, display_type) = match invitation {
-                        InviteListItem::User {
-                            claimer_email,
-                            status,
-                            token,
-                            ..
-                        } => (token, status, format!("user (email={claimer_email}")),
-                        InviteListItem::Device { status, token, .. } => {
-                            (token, status, "device".into())
-                        }
-                    };
-
-                    let token = token.as_simple();
-
-                    let display_status = match status {
-                        InvitationStatus::Idle => format!("{YELLOW}idle{RESET}"),
-                        InvitationStatus::Ready => format!("{GREEN}ready{RESET}"),
-                        InvitationStatus::Deleted => format!("{RED}deleted{RESET}"),
-                    };
-
-                    println!("{token}\t{display_status}\t{display_type}")
-                }
+        let invitations = match rep {
+            InviteListRep::Ok { invitations } => invitations,
+            rep => {
+                return Err(anyhow::anyhow!(
+                    "Server error while listing invitations: {rep:?}"
+                ));
             }
+        };
 
-            Ok(())
-        },
-    )
+        handle.done();
+
+        if invitations.is_empty() {
+            println!("No invitation.");
+        } else {
+            for invitation in invitations {
+                let (token, status, display_type) = match invitation {
+                    InviteListItem::User {
+                        claimer_email,
+                        status,
+                        token,
+                        ..
+                    } => (token, status, format!("user (email={claimer_email}")),
+                    InviteListItem::Device { status, token, .. } => {
+                        (token, status, "device".into())
+                    }
+                };
+
+                let token = token.as_simple();
+
+                let display_status = match status {
+                    InvitationStatus::Idle => format!("{YELLOW}idle{RESET}"),
+                    InvitationStatus::Ready => format!("{GREEN}ready{RESET}"),
+                    InvitationStatus::Deleted => format!("{RED}deleted{RESET}"),
+                };
+
+                println!("{token}\t{display_status}\t{display_type}")
+            }
+        }
+
+        Ok(())
+    })
     .await
 }

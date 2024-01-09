@@ -27,41 +27,43 @@ pub struct InviteUser {
 }
 
 pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
-    load_cmds_and_run(
-        invite_user.config_dir,
-        invite_user.device,
-        |cmds, device| async move {
-            let claimer_email = invite_user.email;
-            let handle = start_spinner("Creating user invitation");
+    let InviteUser {
+        config_dir,
+        device,
+        email,
+        send_email,
+    } = invite_user;
 
-            let rep = cmds
-                .send(invite_new::Req(UserOrDevice::User {
-                    claimer_email,
-                    send_email: invite_user.send_email,
-                }))
-                .await?;
+    load_cmds_and_run(config_dir, device, |cmds, device| async move {
+        let handle = start_spinner("Creating user invitation");
 
-            let url = match rep {
-                InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
-                    device.organization_addr.clone(),
-                    device.organization_id().clone(),
-                    InvitationType::Device,
-                    token,
-                )
-                .to_url(),
-                rep => {
-                    return Err(anyhow::anyhow!(
-                        "Server refused to create user invitation: {rep:?}"
-                    ));
-                }
-            };
+        let rep = cmds
+            .send(invite_new::Req(UserOrDevice::User {
+                claimer_email: email,
+                send_email,
+            }))
+            .await?;
 
-            handle.done();
+        let url = match rep {
+            InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+                device.organization_addr.clone(),
+                device.organization_id().clone(),
+                InvitationType::Device,
+                token,
+            )
+            .to_url(),
+            rep => {
+                return Err(anyhow::anyhow!(
+                    "Server refused to create user invitation: {rep:?}"
+                ));
+            }
+        };
 
-            println!("Invitation URL: {YELLOW}{url}{RESET}");
+        handle.done();
 
-            Ok(())
-        },
-    )
+        println!("Invitation URL: {YELLOW}{url}{RESET}");
+
+        Ok(())
+    })
     .await
 }

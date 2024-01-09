@@ -23,24 +23,26 @@ pub struct ExportRecoveryDevice {
 pub async fn export_recovery_device(
     export_recovery_device: ExportRecoveryDevice,
 ) -> anyhow::Result<()> {
-    load_device_and_run(
-        export_recovery_device.config_dir,
-        export_recovery_device.device,
-        |device| async move {
-            let handle = start_spinner("Saving recovery device file");
+    let ExportRecoveryDevice {
+        config_dir,
+        device,
+        output,
+    } = export_recovery_device;
 
-            let passphrase = save_recovery_device(&export_recovery_device.output, &device).await?;
+    load_device_and_run(config_dir, device, |device| async move {
+        let handle = start_spinner("Saving recovery device file");
 
-            handle.done();
+        let passphrase = save_recovery_device(&output, &device).await?;
 
-            println!("Saved in {}", export_recovery_device.output.display());
-            println!(
-                "{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
-                passphrase.as_str()
-            );
+        handle.done();
 
-            Ok(())
-        },
-    )
+        println!("Saved in {}", output.display());
+        println!(
+            "{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
+            passphrase.as_str()
+        );
+
+        Ok(())
+    })
     .await
 }

@@ -21,37 +21,35 @@ pub struct InviteDevice {
 }
 
 pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
-    load_cmds_and_run(
-        invite_device.config_dir,
-        invite_device.device,
-        |cmds, device| async move {
-            let handle = start_spinner("Creating device invitation");
+    let InviteDevice { config_dir, device } = invite_device;
 
-            let rep = cmds
-                .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
-                .await?;
+    load_cmds_and_run(config_dir, device, |cmds, device| async move {
+        let handle = start_spinner("Creating device invitation");
 
-            let url = match rep {
-                InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
-                    device.organization_addr.clone(),
-                    device.organization_id().clone(),
-                    InvitationType::Device,
-                    token,
-                )
-                .to_url(),
-                rep => {
-                    return Err(anyhow::anyhow!(
-                        "Server refused to create device invitation: {rep:?}"
-                    ));
-                }
-            };
+        let rep = cmds
+            .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+            .await?;
 
-            handle.done();
+        let url = match rep {
+            InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+                device.organization_addr.clone(),
+                device.organization_id().clone(),
+                InvitationType::Device,
+                token,
+            )
+            .to_url(),
+            rep => {
+                return Err(anyhow::anyhow!(
+                    "Server refused to create device invitation: {rep:?}"
+                ));
+            }
+        };
 
-            println!("Invitation URL: {YELLOW}{url}{RESET}");
+        handle.done();
 
-            Ok(())
-        },
-    )
+        println!("Invitation URL: {YELLOW}{url}{RESET}");
+
+        Ok(())
+    })
     .await
 }

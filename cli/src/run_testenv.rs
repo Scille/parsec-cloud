@@ -448,9 +448,15 @@ fn wait_testbed_server_to_be_ready(child: &mut std::process::Child) {
 }
 
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
+    let RunTestenv {
+        main_process_id,
+        source_file,
+        empty,
+    } = run_testenv;
+
     let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
 
-    let testenv_config = match (run_testenv.main_process_id, std::env::var("TESTBED_SERVER")) {
+    let testenv_config = match (main_process_id, std::env::var("TESTBED_SERVER")) {
         (_, Ok(testbed_server)) => {
             let url = backend_addr_from_http_url(&testbed_server);
             TestenvConfig::ConnectToServer(url)
@@ -464,15 +470,9 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
         )),
     };
 
-    let url = new_environment(
-        &tmp_dir,
-        run_testenv.source_file,
-        testenv_config,
-        run_testenv.empty,
-    )
-    .await?;
+    let url = new_environment(&tmp_dir, source_file, testenv_config, empty).await?;
 
-    if !run_testenv.empty {
+    if !empty {
         let url = url.expect("Mismatch condition in new_environment when starting a new server");
         let org_id = "Org".parse().expect("Unreachable");
         let [alice_device, other_alice_device, bob_device] =
