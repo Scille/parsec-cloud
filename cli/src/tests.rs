@@ -562,7 +562,7 @@ async fn create_workspace(tmp_path: TmpPath) {
         .unwrap()
         .args(["list-workspaces", "--device", &alice.slughash()])
         .assert()
-        .stdout(predicates::str::contains("new-workspace"));
+        .stdout(predicates::str::contains("new-workspace: owner"));
 }
 
 #[rstest::rstest]
@@ -647,7 +647,7 @@ async fn share_workspace(tmp_path: TmpPath) {
         .unwrap()
         .args(["list-workspaces", "--device", &bob.slughash()])
         .assert()
-        .stdout(predicates::str::contains("new-workspace"));
+        .stdout(predicates::str::contains("new-workspace: contributor"));
 }
 
 #[rstest::rstest]
