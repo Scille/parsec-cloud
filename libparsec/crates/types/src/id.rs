@@ -600,7 +600,7 @@ impl FromStr for UserProfile {
             "ADMIN" => Ok(Self::Admin),
             "STANDARD" => Ok(Self::Standard),
             "OUTSIDER" => Ok(Self::Outsider),
-            _ => Err("Invalid InvitationType"),
+            _ => Err("Invalid UserProfile"),
         }
     }
 }
