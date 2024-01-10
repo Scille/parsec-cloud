@@ -82,13 +82,15 @@ impl UserOps {
         message::process_last_messages(self, latest_known_index).await
     }
 
-    pub async fn sync(&self) -> Result<(), SyncError> {
-        sync::sync(self).await
-    }
-
     /*
      * Public interface
      */
+
+    // TODO: It has been moved in the public interface, because some of the commands in the CLI didn't sync automatically.
+    // But it is something low level that we don't really want to expose, so it should be fixed to keep it private.
+    pub async fn sync(&self) -> Result<(), SyncError> {
+        sync::sync(self).await
+    }
 
     pub fn realm_id(&self) -> VlobID {
         self.device.user_realm_id
