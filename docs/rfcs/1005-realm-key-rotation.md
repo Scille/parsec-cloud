@@ -60,7 +60,7 @@ The idea is as follow:
 - All those keys are serialized together in a `RealmKeysBundle` which is encrypted by the
   "keys-bundle key" symmetric key and stored in a dedicate table in the server database.
 - The "keys-bundle key" is serialized in a `RealmKeysBundleAccess`. This document is for
-  each member of the realm with their public key.
+  each member of the realm and is encrypted with their public key.
 - For sharing a realm, the last `RealmKeysBundleAccess` is encrypted for the new user.
 - Keys-bundle & keys-bundle access are never stored on-disk client-side: they are instead
   lazily fetched from server when needed and kept on RAM.
