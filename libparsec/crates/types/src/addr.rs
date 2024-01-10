@@ -24,7 +24,7 @@ const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 /// So instead we have to rely on a hack and manually replace our scheme by http before
 /// handing it to Url :'(
 /// see. https://github.com/servo/rust-url/issues/763
-struct ParsecUrlAsHTTPScheme(pub Url);
+struct ParsecUrlAsHTTPScheme(Url);
 
 impl ParsecUrlAsHTTPScheme {
     fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
