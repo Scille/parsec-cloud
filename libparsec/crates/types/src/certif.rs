@@ -174,16 +174,16 @@ pub enum CertificateSignerRef<'a> {
 }
 
 impl<'a> From<Option<&'a DeviceID>> for CertificateSignerRef<'a> {
-    fn from(item: Option<&'a DeviceID>) -> CertificateSignerRef {
+    fn from(item: Option<&'a DeviceID>) -> Self {
         match item {
-            Some(device_id) => CertificateSignerRef::User(device_id),
-            None => CertificateSignerRef::Root,
+            Some(device_id) => Self::User(device_id),
+            None => Self::Root,
         }
     }
 }
 
 impl<'a> From<CertificateSignerRef<'a>> for Option<&'a DeviceID> {
-    fn from(item: CertificateSignerRef<'a>) -> Option<&'a DeviceID> {
+    fn from(item: CertificateSignerRef<'a>) -> Self {
         match item {
             CertificateSignerRef::User(device_id) => Some(device_id),
             CertificateSignerRef::Root => None,
