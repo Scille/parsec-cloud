@@ -410,11 +410,9 @@
                         You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
                         organization on Parsec.
                         {% endif %}
-                        <br>
-                        If you don't already have it, you should Download
-                        the Parsec client via the following link:
-
                       </p>
+                      <p>Your next steps:</p>
+                      <p>1. If you haven't already, download the Parsec client via the following link:</p>
                       <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                         <tbody>
                           <tr>
@@ -434,7 +432,7 @@
                           </tr>
                         </tbody>
                       </table>
-                      <p>Once installed, click on the following link to proceed to Parsec:</p>
+                      <p>2. Once installed, click on the following link to proceed to Parsec:</p>
                       <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                         <tbody>
                           <tr>
@@ -455,21 +453,18 @@
                         </tbody>
                       </table>
                       <p>
-
                         {% if greeter %}
-                        You should then get in touch with <b>{{ greeter }}</b> and follow the next steps on the Parsec
-                        client.
+                        3. Get in touch with <b>{{ greeter }}</b> and follow the next steps on the Parsec client.
                         {% else %}
-                        You should then start the invitation process from a device already part of the organization,
+                        3. Start the invitation process from a device already part of the organization,
                         then follow the steps on the Parsec client.
                         {% endif %}
-                        <br>
-                        <br>
+                      </p>
+                      <p>
                         <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
                           origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                        For more information you can consult the <a href="https://docs.parsec.cloud"
+                          For more information please refer to <a href="https://docs.parsec.cloud"
                           rel="noopener noreferrer" target="_blank">Parsec documentation</a>
-
                       </p>
                     </td>
                   </tr>
@@ -488,8 +483,8 @@
                 <td class="content-block">
                   <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
                     origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                  <br>Parsec by <a href="http://scille.eu" rel="noopener noreferrer" target="_blank">Scille</a>.
-                  <span class="apple-link">&copy;2020</span>
+                  <br><a href="https://parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec by Scille</a>.
+                  <span class="apple-link">&copy;{{ copyright_year }}</span>
                 </td>
               </tr>
             </table>
