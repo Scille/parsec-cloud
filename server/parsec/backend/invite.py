@@ -6,7 +6,6 @@ import ssl
 import sys
 import tempfile
 from collections import defaultdict
-from datetime import datetime
 from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
@@ -163,7 +162,6 @@ def generate_invite_email(
         organization_id=organization_id.str,
         invitation_url=invitation_url,
         backend_url=backend_url,
-        copyright_year=datetime.today().year,  # no need for a specific timezone
     )
     text = get_template("invitation_mail.txt").render(
         greeter=greeter_name,
