@@ -447,7 +447,7 @@ async fn fetch_remote_user_manifest(
         encryption_revision: 1,
         timestamp: None,
         version,
-        vlob_id: VlobID::from(ops.device.user_realm_id.as_ref().to_owned()),
+        vlob_id: ops.device.user_realm_id,
     };
 
     let rep = ops.cmds.send(req).await?;
