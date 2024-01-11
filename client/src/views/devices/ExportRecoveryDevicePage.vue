@@ -133,7 +133,7 @@
             <ion-button
               class="return-btn button-outline"
               fill="outline"
-              @click="onBackToDevicesClick()"
+              @click="routerGoBack()"
               id="back-to-devices-button"
             >
               <ion-icon
@@ -153,7 +153,7 @@
 import { MsInformativeText, getPasswordFromUser } from '@/components/core';
 import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
-import { routerNavigateTo } from '@/router';
+import { routerGoBack } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
@@ -242,14 +242,6 @@ async function fileDownload(data: string, fileName: string): Promise<void> {
   downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8, ${encodeURIComponent(data)}`);
   downloadLink.value.setAttribute('download', fileName);
   downloadLink.value.click();
-}
-
-// Placeholder page reset causing visual flickering
-function onBackToDevicesClick(): void {
-  recoveryFileDownloaded.value = false;
-  recoveryKeyDownloaded.value = false;
-  state.value = ExportDevicePageState.Start;
-  routerNavigateTo('devices');
 }
 </script>
 

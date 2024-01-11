@@ -4,7 +4,7 @@
   <div class="back-button-container">
     <ion-button
       fill="clear"
-      @click="goBack()"
+      @click="routerGoBack()"
       class="back-button"
     >
       <ion-icon :icon="chevronBack" />
@@ -25,19 +25,13 @@
 </template>
 
 <script setup lang="ts">
+import { routerGoBack } from '@/router';
 import { IonButton, IonIcon, IonLabel } from '@ionic/vue';
 import { chevronBack } from 'ionicons/icons';
-import { useRouter } from 'vue-router';
 
 defineProps<{
   short: boolean;
 }>();
-
-const router = useRouter();
-
-function goBack(): void {
-  router.go(-1);
-}
 </script>
 
 <style scoped lang="scss">

@@ -127,3 +127,7 @@ export function routerNavigateToWorkspace(workspaceId: WorkspaceID, path = '/'):
     }
   });
 }
+
+export function routerGoBack(): void {
+  router.go(-1);
+}
