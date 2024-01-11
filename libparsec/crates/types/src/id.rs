@@ -278,7 +278,7 @@ new_string_based_id_type!(pub DeviceLabel, match_device_label);
 
 impl DeviceLabel {
     pub fn new_redacted(device_name: &DeviceName) -> Self {
-        Self(device_name.as_ref().to_owned())
+        Self(device_name.to_string())
     }
 }
 impl_from_maybe!(Option<DeviceLabel>);
