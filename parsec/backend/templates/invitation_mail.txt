@@ -6,19 +6,19 @@ You have received an invitation to add a new device to the {{ organization_id}} 
 You have received an invitation to start a recovery procedure on the {{ organization_id }} organization on Parsec.
 {% endif %}
 
-If you don't already have it, you should Download the Parsec client via the following link: https://parsec.cloud/get-parsec
+Your next steps:
 
-Once installed, click on the following link to proceed to Parsec: {{ invitation_url }}
+1. If you haven't already, download the Parsec client via the following link: https://parsec.cloud/get-parsec
+
+2. Once installed, click on the following link to proceed to Parsec: {{ invitation_url }}
 
 {% if is_user_invitation %}
-You should then get in touch with {{ greeter }} and follow the next steps on
-the Parsec client.
+3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
 {% elif is_device_invitation %}
-You should then start the invitation process from a device already part of the organization,
+3. Start the invitation process from a device already part of the organization,
 then follow the steps on the Parsec client.
 {% elif is_shamir_recovery_invitation %}
-You should then get in touch with {{ greeter }} and follow the next steps on
-the Parsec client.
+3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
 {% endif %}
 
-For more information you can consult the Parsec documentation: https://docs.parsec.cloud
+For more information please refer to Parsec documentation: https://docs.parsec.cloud
