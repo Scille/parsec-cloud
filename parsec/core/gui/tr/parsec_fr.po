@@ -2740,7 +2740,7 @@ msgid "ACTION_WORKSPACE_NEW_CREATE"
 msgstr "Créer"
 
 msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
-msgstr "Développé par <a href=\"https://scille.eu\">Scille</a>."
+msgstr "Développé par <a href=\"https://parsec.cloud\">Scille</a>."
 
 msgid "TEXT_ATTRIBUTE_ICONS"
 msgstr ""
