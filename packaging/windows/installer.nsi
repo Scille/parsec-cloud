@@ -6,6 +6,7 @@
 !addplugindir nsis_plugins
 !addincludedir nsis_plugins
 !include "WordFunc.nsh"
+!include "cleanup_older_artefacts.nsi"
 
 # Script version; displayed when running the installer
 !define INSTALLER_SCRIPT_VERSION "1.0"
@@ -18,7 +19,7 @@
 
 # Icon overlays GUIDS
 !define CHECK_ICON_GUID "{5449BC90-310B-40A8-9ABF-C5CFCEC7F430}"
-!define REFRESH_ICON_GUID "{41e71dd9-368d-46b2-bb9d-4359599bbbc3}"
+!define REFRESH_ICON_GUID "{41E71DD9-368D-46B2-BB9D-4359599BBBC3}"
 
 # Detect version from file
 !define BUILD_DIR "build"
@@ -46,6 +47,18 @@
 # Python files generated
 !define LICENSE_FILEPATH "${PROGRAM_FREEZE_BUILD_DIR}\LICENSE.txt"
 !define INSTALLER_FILENAME "parsec-${PROGRAM_VERSION}-${PROGRAM_PLATFORM}-setup.exe"
+
+# Icon handling
+# Not the space before ` ParsecCheckIconHandler` and ` ParsecRefreshIconHandler`
+# This is useful to prioritize our handlers since the number of icon handlers is limited to 15.
+# Note that OneDrive already uses this trick.
+!define ICON_HANDLER_CHECK_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ ParsecCheckIconHandler"
+!define ICON_HANDLER_REFRESH_KEY "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ ParsecRefreshIconHandler"
+
+# Uninstallation
+!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
+!define PROGRAM_UNINST_ROOT_KEY "HKLM"
+!define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
 
 # Set default compressor
 SetCompressor /FINAL /SOLID lzma
@@ -152,38 +165,27 @@ Function GetParent
 FunctionEnd
 
 
-Function checkProgramAlreadyRunning
+!macro checkProgramAlreadyRunning un message
+Function ${un}checkProgramAlreadyRunning
     check:
         System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "parsec-cloud") i .R0'
         IntCmp $R0 0 notRunning
             System::Call 'kernel32::CloseHandle(i $R0)'
             MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
                 "Parsec is running, please close it first.$\n$\n \
-                Click `OK` to retry or `Cancel` to cancel this upgrade." \
+                Click `OK` to retry or `Cancel` to cancel this ${message}." \
                 /SD IDCANCEL IDOK check
             Abort
     notRunning:
 FunctionEnd
+!macroend
+!insertmacro checkProgramAlreadyRunning "" "upgrade"
+!insertmacro checkProgramAlreadyRunning "un." "removal"
 
-# Check for running program instance.
-Function .onInit
-    SetRegView 64
-    Call checkProgramAlreadyRunning
 
-    ReadRegStr $R0 HKLM \
-    "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}" \
-    "UninstallString"
-    StrCmp $R0 "" done
-
-    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
-    "${PROGRAM_NAME} is already installed. $\n$\nClick `OK` to remove the \
-    previous version or `Cancel` to cancel this upgrade." \
-    /SD IDOK IDOK uninst
-    Abort
-
-    ;Run the uninstaller sequentially and silently
-    ;https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
-    uninst:
+; Run the uninstaller sequentially and silently
+; https://nsis.sourceforge.io/Docs/Chapter3.html#installerusageuninstaller
+Function runUninstaller
       ; Retrieve the previous version's install directory and store it into $R1.
       ; We cannot use ${INSTDIR} instead, given the previous version might
       ; have been installed in a custom directory.
@@ -205,9 +207,67 @@ Function .onInit
       ; At this point, I'm very much puzzled as why writing NSIS installer
       ; feels like reverse engineering a taiwanese NES clone...
       ExecWait '"$R0" /S _?=$R1'
+      ; Remove the uninstaller since it hasn't removed iteself due to `_?=$R1`
+      Delete $R0
+      ; Remove older artefacts that might remain from previous installation
+      !insertmacro CleanupOlderArtefacts "$R1"
+      ; Remove the previous install directory if it's empty
+      RmDir $R1
+FunctionEnd
 
-    done:
+Function checkUninstaller
+  ; Check either 32-bit or 64-bit registry for parsec uninstaller
+  ReadRegStr $R0 ${PROGRAM_UNINST_ROOT_KEY} \
+    "${PROGRAM_UNINST_KEY}" \
+    "UninstallString"
+  StrCmp $R0 "" done
 
+  ; Check that the uninstaller file actually exists
+  IfFileExists $R0 ask_for_uninstall cleanup
+
+  ; Perform some registry cleanup if the installer wasn't found
+  cleanup:
+    DeleteRegKey ${PROGRAM_UNINST_ROOT_KEY} "${PROGRAM_UNINST_KEY}"
+    Goto done
+
+  ; Prompt the user for uninstaller the previous version of parsec
+  ask_for_uninstall:
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+      "${PROGRAM_NAME} is already installed. $\n$\nClick `OK` to remove the \
+      previous version or `Cancel` to cancel this upgrade." \
+      /SD IDOK IDOK uninstall IDCANCEL _abort
+
+  ; Abort in case the user clicked "cancel"
+  _abort:
+    Abort
+
+  ; Run the uninstaller
+  uninstall:
+    Call runUninstaller
+    Goto done
+
+  done:
+FunctionEnd
+
+Function .onInit
+    # Check for running program instance.
+    Call checkProgramAlreadyRunning
+    # Check for existing installation in 64-bit registry
+    # Due to the regression explained in issue #5845, it's possible that parsec 2.16.0
+    # or 2.16.1 has overwritten a parsec 2.15.0 installation or older. For this reason,
+    # both 32 and 64-bit registry might point to the same uninstaller. Since the uninstaller
+    # corresponds to a 2.16.0 or 2.16.1 install, it will cleanup the 64-bit registry when it's
+    # done. This is why it makes sense to perform the 64-bit uninstall first.
+    SetRegView 64
+    call checkUninstaller
+    # Check for existing installation in 32-bit registry
+    # In the case explained above, the 32-bit registry points to an uninstaller that no longer
+    # exists (since the 64-bit uninstall has removed it). In this case, `checkUninstaller`
+    # cleans up the registry so Parsec does not appear in the list of installed programs.
+    SetRegView 32
+    call checkUninstaller
+    # Leave in 64 registry mode
+    SetRegView 64
 FunctionEnd
 
 Function un.onUninstSuccess
@@ -216,6 +276,7 @@ Function un.onUninstSuccess
 FunctionEnd
 
 Function un.onInit
+    Call un.checkProgramAlreadyRunning
     SetRegView 64
     MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "Do you want to completely remove $(^Name)?" /SD IDYES IDYES +2
     Abort
@@ -265,9 +326,6 @@ FunctionEnd
 # FunctionEnd
 
 # --- Installation sections ---
-!define PROGRAM_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PROGRAM_NAME}"
-!define PROGRAM_UNINST_ROOT_KEY "HKLM"
-!define PROGRAM_UNINST_FILENAME "$INSTDIR\uninstall.exe"
 
 BrandingText "${PROGRAM_NAME} Windows Installer v${INSTALLER_SCRIPT_VERSION}"
 Name "${PROGRAM_NAME} ${PROGRAM_VERSION}"
@@ -278,23 +336,46 @@ InstallDir "$PROGRAMFILES\Parsec Cloud"
 ShowInstDetails hide
 ShowUnInstDetails hide
 
-# When upgrading or uninstalling, shell extensions may be loaded by `explorer.exe`
-# thus windows will prevent us to delete or modify the dll extensions. The trick
-# here is to move the loaded dll somewhere else (like in a temp folder) and then resume
-# the upgrade/uninstall process as usual.
+!macro DeleteOrMoveFile dir temp name
+    # This routine ensures that we are not leaving an old `${dir}\${name}` file in place
+    # Case 1: the DLL file is not used:
+    #  - it's properly deleted
+    # Case 2: the DLL file is used, and is in the same drive as `${temp}`:
+    #  - the file is moved to `${temp}`
+    # Case 3: the DLL file is used, and is not in the same drive as `${temp}`:
+    #  - the file is renamed in-place as `${temp}.old`
+    Delete "${dir}\${name}"
+    Delete "${dir}\${name}.old"
+    Delete "${temp}\${name}.old"
+    Rename "${dir}\${name}" "${dir}\${name}.old"
+    Rename "${dir}\${name}.old" "${temp}\${name}.old"
+    Delete "${temp}\${name}.old"
+!macroend
+
 !macro MoveParsecShellExtension
+    # When upgrading or uninstalling, shell extensions may be loaded by `explorer.exe`
+    # thus windows will prevent us to delete or modify the dll extensions. The trick
+    # here is to move the loaded dll somewhere else (like in a temp folder) and then resume
+    # the upgrade/uninstall process as usual.
     RmDir /r "$TEMP\parsec_tmp"
     CreateDirectory "$TEMP\parsec_tmp"
-    Rename "$INSTDIR\check-icon-handler.dll" "$TEMP\parsec_tmp\check-icon-handler.dll.old"
-    Rename "$INSTDIR\refresh-icon-handler.dll" "$TEMP\parsec_tmp\refresh-icon-handler.dll.old"
-    Rename "$INSTDIR\vcruntime140.dll" "$TEMP\parsec_tmp\vcruntime140.dll.old"
-    Rename "$INSTDIR\vcruntime140_1.dll" "$TEMP\parsec_tmp\vcruntime140_1.dll.old"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "check-icon-handler.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "refresh-icon-handler.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "vcruntime140.dll"
+    !insertmacro DeleteOrMoveFile "$INSTDIR" "$TEMP\parsec_tmp" "vcruntime140_1.dll"
 !macroend
 
 # Install main application
 Section "Parsec Cloud Sharing" Section1
     !insertmacro MoveParsecShellExtension
     SectionIn RO
+
+    ; Remove older artefacts that might remain from previous installation
+    !insertmacro CleanupOlderArtefacts "$INSTDIR"
+    # Just in case, make sure that no psutil artefact remains from a previous installation
+    # See issue #5845
+    Delete "$INSTDIR\psutil\_psutil_windows*.pyd"
+
     !include "${BUILD_DIR}\install_files.nsh"
 
     SetOverwrite ifnewer
@@ -310,13 +391,18 @@ Section "Parsec Cloud Sharing" Section1
         SetShellVarContext current
     !insertmacro MUI_STARTMENU_WRITE_END
 
+    # Clean up older entry names for icon handling
+    # This is useful since the number of icon handler is limited to 15
+    DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler"
+    DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler"
+
     # Call regsvr32
     ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\check-icon-handler.dll"'
     ExecWait '$SYSDIR\regsvr32.exe /s /n /i:user "$INSTDIR\refresh-icon-handler.dll"'
 
-    # Write Icons overlays to register
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler" "" "${CHECK_ICON_GUID}"
-    WriteRegStr HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler" "" "${REFRESH_ICON_GUID}"
+    # Write Icons overlays to registry
+    WriteRegStr HKLM "${ICON_HANDLER_CHECK_KEY}" "" "${CHECK_ICON_GUID}"
+    WriteRegStr HKLM "${ICON_HANDLER_REFRESH_KEY}" "" "${REFRESH_ICON_GUID}"
 SectionEnd
 
 !macro InstallWinFSP
@@ -396,6 +482,9 @@ Section Uninstall
     Delete "$INSTDIR\homepage.url"
     Delete ${PROGRAM_UNINST_FILENAME}
     !include "${BUILD_DIR}\uninstall_files.nsh"
+    ; Remove older artefacts that might remain from previous installation
+    !insertmacro CleanupOlderArtefacts "$INSTDIR"
+    ; Remove install directory if empty
     RmDir "$INSTDIR"
 
     # Delete Start Menu items.
@@ -420,8 +509,13 @@ Section Uninstall
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\Desktop\NameSpace\{${APPGUID}"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{${APPGUID}"
 
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\ICheckIconHandler"
-  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\IRefreshIconHandler"
+  # Clean up older entry names for icon handling
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\CheckIconHandler"
+  DeleteRegKey HKLM "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\ShellIconOverlayIdentifiers\RefreshIconHandler"
+
+  # Clean up icon handling registry
+  DeleteRegKey HKLM "${ICON_HANDLER_CHECK_KEY}"
+  DeleteRegKey HKLM "${ICON_HANDLER_REFRESH_KEY}"
 
   ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\check-icon-handler.dll"'
   ExecWait '$SYSDIR\regsvr32.exe /s /u /i:user "$INSTDIR\refresh-icon-handler.dll"'

@@ -5,6 +5,31 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.16.3 (2023-12-01)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Check that the Parsec application is not running when executing the
+  uninstaller (and other improvements to the Windows installer)
+  (`#5893 <https://github.com/Scille/parsec-cloud/issues/5893>`__)
+
+
+
+Parsec v2.16.2 (2023-11-28)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the Windows installer to properly uninstall the previous Parsec version (a
+  regression introduced in the Parsec 2.16.0 installer prevented Parsec 2.15.0 and
+  before to be properly uninstalled)
+  (`#5845 <https://github.com/Scille/parsec-cloud/issues/5845>`__)
+
+
+
 Parsec v2.16.1 (2023-11-13)
 ---------------------------
 
