@@ -2662,7 +2662,7 @@ msgstr "Create"
 
 msgid "TEXT_PARSEC_DEVELOPMENT_INFO"
 msgstr ""
-"Developed by <a href=\"https://scille.eu\" title=\"Scille\" "
+"Developed by <a href=\"https://parsec.cloud\" title=\"Scille\" "
 "style=\"color: #0092FF; font-weight: bold;\">Scille</a>"
 
 msgid "TEXT_ATTRIBUTE_ICONS"
