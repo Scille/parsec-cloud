@@ -17,7 +17,7 @@ from parsec.core.cli.utils import (
 from parsec.core.config import get_default_config_dir
 
 
-@click.command()
+@click.command(short_help="List local devices")
 @click.option("--config-dir", type=click.Path(exists=True, file_okay=False))
 @cli_command_base_options
 def list_devices(
@@ -25,6 +25,7 @@ def list_devices(
     debug: bool,
     **kwargs: Any,
 ) -> None:
+    """List all the Parsec devices registered on this machine."""
     with cli_exception_handler(debug):
         config_dir = Path(config_dir) if config_dir else get_default_config_dir(os.environ)
         devices = list_available_devices(config_dir)
@@ -34,7 +35,7 @@ def list_devices(
         click.echo(format_available_devices(devices))
 
 
-@click.command()
+@click.command(short_help="Remove a local device")
 @cli_command_base_options
 @core_config_and_available_device_options
 def remove_device(
@@ -42,6 +43,7 @@ def remove_device(
     debug: bool,
     **kwargs: Any,
 ) -> None:
+    """Remove a local Parsec device from this machine."""
     with cli_exception_handler(debug):
         click.echo("You are about to remove the following device:")
         click.echo(format_available_devices([device]))

@@ -9,6 +9,7 @@ from parsec.core.cli import (
     bootstrap_organization,
     create_organization,
     create_workspace,
+    freeze_user,
     human_find,
     invitation,
     list_devices,
@@ -61,6 +62,8 @@ core_cmd_group.add_command(stats_organization.stats_organization, "stats_organiz
 core_cmd_group.add_command(status_organization.status_organization, "status_organization")
 core_cmd_group.add_command(stats_organization.stats_server, "stats_server")
 core_cmd_group.add_command(bootstrap_organization.bootstrap_organization, "bootstrap_organization")
+core_cmd_group.add_command(freeze_user.list_users, "list_users")
+core_cmd_group.add_command(freeze_user.freeze_user, "freeze_user")
 
 core_cmd_group.add_command(pki.pki_enrollment_submit, "pki_enrollment_submit")
 core_cmd_group.add_command(pki.pki_enrollment_poll, "pki_enrollment_poll")

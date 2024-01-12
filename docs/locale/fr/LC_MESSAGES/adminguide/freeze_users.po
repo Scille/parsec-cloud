@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 2.16.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-12-11 21:49+0100\n"
+"POT-Creation-Date: 2023-12-19 16:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -52,11 +52,19 @@ msgstr ""
 "car il est exposé sous la forme de routes HTTP qui ne nécessitent qu'un "
 "jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:16
+#: ../../adminguide/freeze_users.rst:15
+msgid ""
+"It is also exposed as a command line interface (CLI) command, see :ref:`the "
+"section about CLI commands <cli-freeze-user-command>`."
+msgstr ""
+"Il est également exposé via une interface en ligne de commande (CLI), voir :ref:`la "
+"section sur les commandes CLI <cli-freeze-user-command>`."
+
+#: ../../adminguide/freeze_users.rst:18
 msgid "HTTP ``users`` route"
 msgstr "Route HTTP ``users``"
 
-#: ../../adminguide/freeze_users.rst:18
+#: ../../adminguide/freeze_users.rst:20
 msgid ""
 "This route is made available as ``/administration/organizations/"
 "<raw_organization_id>/users`` and requires an administration token."
@@ -64,7 +72,7 @@ msgstr ""
 "Cette route est disponible via ``/administration/organizations/"
 "<raw_organization_id>/users`` et nécessite un jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:20
+#: ../../adminguide/freeze_users.rst:22
 msgid ""
 "It only supports the ``GET`` method which lists information for all users, "
 "including:"
@@ -72,36 +80,36 @@ msgstr ""
 "Elle ne prend en charge que la méthode ``GET`` qui liste les informations "
 "suivantes pour chacun des utilisateurs actifs :"
 
-#: ../../adminguide/freeze_users.rst:22
+#: ../../adminguide/freeze_users.rst:24
 msgid "Parsec ID"
 msgstr "identifiant Parsec"
 
-#: ../../adminguide/freeze_users.rst:23
+#: ../../adminguide/freeze_users.rst:25
 msgid "user name"
 msgstr "nom d'utilisateur"
 
-#: ../../adminguide/freeze_users.rst:24
+#: ../../adminguide/freeze_users.rst:26
 msgid "user email"
 msgstr "adresse e-mail de l'utilisateur"
 
-#: ../../adminguide/freeze_users.rst:25
+#: ../../adminguide/freeze_users.rst:27
 msgid "frozen status"
 msgstr "statut gelé ou non"
 
-#: ../../adminguide/freeze_users.rst:27
+#: ../../adminguide/freeze_users.rst:29
 msgid "Here's an example using ``curl`` and ``jq``:"
 msgstr "Voici un exemple utilisant ``curl`` et ``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:34
+#: ../../adminguide/freeze_users.rst:36
 msgid ""
 "A successful request returns a JSON object with the following structure:"
 msgstr "Une requête réussie renvoie un objet JSON avec la structure suivante:"
 
-#: ../../adminguide/freeze_users.rst:56
+#: ../../adminguide/freeze_users.rst:58
 msgid "HTTP ``users/freeze`` route"
 msgstr "Route HTTP ``users/frozen``"
 
-#: ../../adminguide/freeze_users.rst:58
+#: ../../adminguide/freeze_users.rst:60
 msgid ""
 "This route is made available as ``/administration/organizations/"
 "<raw_organization_id>/users/freeze`` and requires an administration token."
@@ -109,7 +117,7 @@ msgstr ""
 "Cette route est disponible via ``/administration/organizations/"
 "<raw_organization_id>/users/frozen`` et nécessite un jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:60
+#: ../../adminguide/freeze_users.rst:62
 msgid ""
 "It only supports the ``POST`` method which modifies the ``frozen`` status "
 "for a given user."
@@ -117,13 +125,13 @@ msgstr ""
 "Elle ne prend en charge que la méthode ``POST`` qui modifie le statut "
 "``gelé`` pour un utilisateur donné."
 
-#: ../../adminguide/freeze_users.rst:62
+#: ../../adminguide/freeze_users.rst:64
 msgid "Here's an example of generating the request data using ``jq``:"
 msgstr ""
 "Voici un exemple de génération des données de la requête en utilisant "
 "``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:73
+#: ../../adminguide/freeze_users.rst:75
 msgid ""
 "The request can also use the ``user_email`` field instead of ``user_id`` to "
 "identify the Parsec user (see the :ref:`notes on user identification <notes-"
@@ -133,21 +141,21 @@ msgstr ""
 "``user_id`` pour identifier l'utilisateur Parsec (voir les :ref:`notes sur "
 "l'identification des utilisateurs <notes-on-user-identification>`):"
 
-#: ../../adminguide/freeze_users.rst:84
+#: ../../adminguide/freeze_users.rst:86
 msgid "Here's an example of running the request using ``curl`` and ``jq``:"
 msgstr ""
 "Voici un exemple d'exécution de la requête en utilisant ``curl`` et ``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:92
+#: ../../adminguide/freeze_users.rst:94
 msgid ""
 "A successful request returns a JSON dictionary similar to the one below:"
 msgstr "Une requête réussie renvoie un dictionnaire JSON similaire à celui-ci:"
 
-#: ../../adminguide/freeze_users.rst:106
+#: ../../adminguide/freeze_users.rst:108
 msgid "Notes on user identification"
 msgstr "Notes sur l'identification des utilisateurs"
 
-#: ../../adminguide/freeze_users.rst:109
+#: ../../adminguide/freeze_users.rst:111
 msgid ""
 "There is a subtle difference between the two ways to identify a user. At any "
 "given time, an email address can be used to uniquely identify a non-revoked "
@@ -167,7 +175,7 @@ msgstr ""
 "avec des identifiants Parsec différents, même au sein de la même "
 "organisation."
 
-#: ../../adminguide/freeze_users.rst:111
+#: ../../adminguide/freeze_users.rst:113
 msgid ""
 "The frozen status configured by the ``POST`` method is specifically "
 "associated with the Parsec user ID, regardless of the identification method "
@@ -182,11 +190,11 @@ msgstr ""
 "créé avec la même adresse e-mail, le statut gelé ne sera **pas** appliqué au "
 "nouvel utilisateur."
 
-#: ../../adminguide/freeze_users.rst:114
-msgid "Error handling"
-msgstr "Gestion des erreurs"
-
 #: ../../adminguide/freeze_users.rst:116
+msgid "HTTP Error handling"
+msgstr "Gestion des erreurs HTTP"
+
+#: ../../adminguide/freeze_users.rst:118
 msgid ""
 "The following errors can be returned by the both the ``users`` and ``users/"
 "freeze`` routes:"
@@ -194,14 +202,14 @@ msgstr ""
 "Les erreurs suivantes peuvent être renvoyées par les routes ``users`` et "
 "``users/freeze`` :"
 
-#: ../../adminguide/freeze_users.rst:118
+#: ../../adminguide/freeze_users.rst:120
 msgid ""
 "Organization not found: ``404`` with JSON body ``{\"error\": \"not_found}``"
 msgstr ""
 "Organisation introuvable : ``404`` avec le corps JSON ``{\"error\": "
 "\"not_found}``"
 
-#: ../../adminguide/freeze_users.rst:119
+#: ../../adminguide/freeze_users.rst:121
 msgid ""
 "Invalid administration token: ``403`` with JSON body ``{\"error\": "
 "\"not_allowed\"}``"
@@ -209,14 +217,14 @@ msgstr ""
 "Jeton d'administration invalide : ``403`` avec le corps JSON ``{\"error\": "
 "\"not_allowed\"}``"
 
-#: ../../adminguide/freeze_users.rst:120
+#: ../../adminguide/freeze_users.rst:122
 msgid ""
 "Wrong request format: ``400`` with JSON body ``{\"error\": \"bad_data\"}``"
 msgstr ""
 "Format de requête incorrect : ``400`` avec le corps JSON ``{\"error\": "
 "\"bad_data\"}``"
 
-#: ../../adminguide/freeze_users.rst:122
+#: ../../adminguide/freeze_users.rst:124
 msgid ""
 "Another error can also be returned when the ``users/freeze`` request "
 "contains a user that does not exist in the organization:"
@@ -224,9 +232,41 @@ msgstr ""
 "Une autre erreur peut également être renvoyée lorsque la requête ``users/"
 "freeze`` contient un utilisateur qui n'existe pas dans l'organisation :"
 
-#: ../../adminguide/freeze_users.rst:124
+#: ../../adminguide/freeze_users.rst:126
 msgid ""
 "User not found: ``404`` with JSON body ``{\"error\": \"user_not_found\"}``"
 msgstr ""
 "Utilisateur introuvable : ``404`` avec le corps JSON ``{\"error\": "
 "\"user_not_found\"}``"
+
+#: ../../adminguide/freeze_users.rst:131
+msgid "CLI ``list_users`` and ``freeze_user`` commands"
+msgstr "Commandes CLI ``list_users`` et ``freeze_user``"
+
+#: ../../adminguide/freeze_users.rst:133
+msgid ""
+"The ``list_users`` command lists all users from a given organization, "
+"including their frozen status:"
+msgstr ""
+"La commande ``list_users`` liste tous les utilisateurs d'une organisation "
+"donnée, y compris leur statut gelé ou non-gelé:"
+
+#: ../../adminguide/freeze_users.rst:150
+msgid ""
+"The ``freeze_user`` command allows to freeze a user from a given "
+"organization:"
+msgstr ""
+"La commande ``freeze_user`` permet de geler un utilisateur d'une "
+"organisation donnée :"
+
+#: ../../adminguide/freeze_users.rst:159
+msgid "It can also be used to unfreeze a given user:"
+msgstr "Elle peut également être utilisée pour dégeler un utilisateur donné :"
+
+#: ../../adminguide/freeze_users.rst:168
+msgid ""
+"The provided ``$user`` can either be a parsec ID or an email address. Use "
+"the ``--help`` for more information."
+msgstr ""
+"L'utilisateur ``$user`` fourni peut être soit un identifiant parsec, soit une adresse "
+"e-mail. Utilisez l'option ``--help`` pour plus d'informations."
