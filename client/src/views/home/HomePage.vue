@@ -174,7 +174,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
 
   const result = await parsecLogin(device, password);
   if (result.ok) {
-    router.push({ name: 'workspaces', params: { handle: result.value } });
+    router.replace({ name: 'workspaces', params: { handle: result.value } });
     state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Notification({
