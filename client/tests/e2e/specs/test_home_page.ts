@@ -84,7 +84,7 @@ describe('Check organization list', () => {
   it('Test join org link validation', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').eq(1).click();
-    cy.get('.text-input-modal').find('.input').as('input').should('have.class', 'input-default');
+    cy.get('.text-input-modal').find('.input-item').as('input').should('have.class', 'input-default');
     cy.get('.text-input-modal').find('#next-button').as('okButton').should('have.class', 'button-disabled');
     cy.get('.text-input-modal').find('.form-error').as('error').should('not.be.visible');
 
