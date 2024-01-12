@@ -10,7 +10,7 @@
     </span>
 
     <ion-item
-      class="input"
+      class="input-item"
       :class="{
         'form-input-disabled': $props.disabled,
         'input-valid': validity === Validity.Valid,
@@ -19,7 +19,7 @@
       }"
     >
       <ion-input
-        class="form-input"
+        class="form-input input"
         :autofocus="true"
         :placeholder="$props.placeholder"
         :value="modelValue"
@@ -76,38 +76,10 @@ async function onChange(value: string): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.input-container {
-  // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
-  --offset: 2px;
-  padding: var(--offset);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-
-  .form-label {
-    color: var(--parsec-color-light-primary-700);
-  }
-
-  .input {
-    border-radius: var(--parsec-radius-6);
-    overflow: hidden;
-    color: var(--parsec-color-light-primary-800);
-  }
-
-  .form-input-disabled {
-    --background: var(--parsec-color-light-secondary-disabled);
-    background: var(--parsec-color-light-secondary-disabled);
-    border: var(--parsec-color-light-secondary-disabled);
-  }
-}
-
-.input-default {
-  border: 1px solid var(--parsec-color-light-primary-300);
-
-  &:focus-within {
-    --background: var(--parsec-color-light-secondary-background);
-    outline: var(--offset) solid var(--parsec-color-light-primary-300);
-  }
+.form-input-disabled {
+  --background: var(--parsec-color-light-secondary-disabled);
+  background: var(--parsec-color-light-secondary-disabled);
+  border: var(--parsec-color-light-secondary-disabled);
 }
 
 .input-valid {

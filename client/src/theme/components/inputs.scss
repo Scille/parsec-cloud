@@ -2,23 +2,70 @@
 
 /* **** Parsec inputs **** */
 
-.input-label-placement-start.sc-ion-input-md-h .label-text-wrapper.sc-ion-input-md {
-  -webkit-margin-start: 0;
-  margin-inline-start: 0;
-}
-
-.input-wrapper {
-  --inner-padding-end: 16px;
-}
-
-.input,
-#dropdown-popover-button {
-  height: 3rem;
+.input-container {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 10;
+  padding: 0.25rem;
+}
+
+.input-item {
+  display: inline-flex;
   --background: var(--parsec-color-light-secondary-white);
   background: var(--parsec-color-light-secondary-white);
   flex-grow: 1;
   width: auto;
+  --inner-padding-end: 0;
+  --padding-start: 0;
+  border: 1px solid var(--parsec-color-light-primary-300);
+  border-radius: var(--parsec-radius-8);
+  color: var(--parsec-color-light-primary-800);
+  padding-left: 1rem;
+  transition: all 0.2s ease-in-out;
+  position: relative;
+
+  &:focus-within {
+    border: 1px solid var(--parsec-color-light-primary-400);
+    --background: var(--parsec-color-light-secondary-white);
+    outline: 0.25rem solid var(--parsec-color-light-outline);
+  }
+}
+
+.form-label {
+  color: var(--parsec-color-light-primary-700);
+}
+
+.input {
+  -webkit-margin-start: 0;
+  margin-inline-start: 0;
+  padding: 0.625rem 1rem;
+  min-height: 1rem;
+  width: auto;
+  flex-grow: 1;
+}
+
+.input-icon,
+.input-clear-icon {
+  padding: 0.25rem;
+  margin-right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--parsec-color-light-secondary-grey);
+  font-size: 1.2rem;
+
+  &:hover {
+    background: var(--parsec-color-light-secondary-medium);
+    border-radius: var(--parsec-radius-6);
+    color: var(--parsec-color-light-primary-700);
+  }
+}
+
+.input-clear-icon {
+  margin-inline-end: 0.55rem !important;
+  color: var(--parsec-color-light-secondary-grey) !important;
 }
 
 /* --- checkbox --- */

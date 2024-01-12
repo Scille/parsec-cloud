@@ -23,7 +23,7 @@ describe('Create a new organization', () => {
   it('Test org name validation', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.get('.create-organization-modal').find('.org-name').find('.input').as('input').should('have.class', 'input-default');
+    cy.get('.create-organization-modal').find('.org-name').find('.input-item').as('input').should('have.class', 'input-default');
     cy.get('.create-organization-modal').find('#next-button').as('okButton').should('have.class', 'button-disabled');
     cy.get('.create-organization-modal').find('.org-name').find('.form-error').as('error').should('not.be.visible');
 

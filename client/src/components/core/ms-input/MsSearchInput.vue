@@ -3,15 +3,17 @@
 <template>
   <!-- Here we still use ion-item to wrap ion-input because of lack of support of ion-icon with new v7 standalone ion-input -->
   <!-- TODO: Migrate from legacy to modern syntax following this issue: https://github.com/ionic-team/ionic-framework/issues/26297 -->
-  <ion-item class="container">
+  <ion-item
+    class="input-item ms-search-input"
+    id="ms-search-input"
+  >
     <ion-icon
       :icon="search"
       slot="start"
       class="icon"
     />
     <ion-input
-      id="ms-search-input"
-      class="ms-search-input form-input"
+      class="form-input input"
       v-model="searchRef"
       :value="modelValue"
       :placeholder="label"
@@ -55,27 +57,25 @@ function onChange(value: any): void {
 </script>
 
 <style scoped lang="scss">
-.container {
+.ms-search-input {
   border: 1px solid var(--parsec-color-light-secondary-light);
-  border-radius: 6px;
-  --min-height: 1rem;
-  height: fit-content;
-  --highlight-color-focused: blue;
-  &:focus {
-    --background: var(--parsec-color-light-secondary-background);
-    --border-color: var(--parsec-color-light-primary-700);
-    --border-style: solid;
-    --border-width: 1px;
+  flex-grow: 0;
+  margin-right: 1rem;
+  max-width: 30rem;
+
+  &:focus-within {
+    flex-grow: 1;
   }
+  .input {
+    --placeholder-color: var(--parsec-color-light-secondary-light);
+    --placeholder-opacity: 0.8;
+    min-height: 1rem;
+  }
+
   .icon {
     font-size: 1.125em;
-    margin-inline-end: 1rem;
+    margin-inline-end: 0.5rem;
     color: var(--parsec-color-light-secondary-light);
   }
-}
-.ms-search-input {
-  --placeholder-color: var(--parsec-color-light-secondary-light);
-  --placeholder-opacity: 0.8;
-  min-height: 1rem;
 }
 </style>
