@@ -1,11 +1,11 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="container">
+  <ion-list class="sorter-container">
     <ion-item
       v-if="sorterLabels"
       id="sort-order-button"
-      class="option body-small"
+      class="order-button body-sm"
       button
       @click="onOptionClick()"
     >
@@ -15,25 +15,27 @@
         slot="end"
       />
     </ion-item>
-    <ion-item
-      class="option body"
-      :class="{ selected: selectedOption?.key === option.key }"
-      :disabled="option.disabled"
-      button
-      lines="none"
-      v-for="option in options.set"
-      :key="option.key"
-      @click="onOptionClick(option)"
-    >
-      {{ option.label }}
-      <ion-icon
-        slot="end"
-        :icon="checkmark"
-        class="checked"
+    <div class="sorter-list">
+      <ion-item
+        class="sorter-list-item body"
         :class="{ selected: selectedOption?.key === option.key }"
-        v-if="selectedOption?.key === option.key"
-      />
-    </ion-item>
+        :disabled="option.disabled"
+        button
+        lines="none"
+        v-for="option in options.set"
+        :key="option.key"
+        @click="onOptionClick(option)"
+      >
+        <span class="body">{{ option.label }}</span>
+        <ion-icon
+          slot="end"
+          :icon="checkmark"
+          class="checked"
+          :class="{ selected: selectedOption?.key === option.key }"
+          v-if="selectedOption?.key === option.key"
+        />
+      </ion-item>
+    </div>
   </ion-list>
 </template>
 
@@ -68,38 +70,83 @@ function onOptionClick(option?: MsOption): void {
 </script>
 
 <style lang="scss" scoped>
-.option {
-  --background-hover: var(--parsec-color-light-primary-50);
-  --background-hover-opacity: 1;
-  --color: var(--parsec-color-light-secondary-grey);
-  --color-hover: var(--parsec-color-light-primary-700);
+.sorter-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
-  &.selected {
-    color: var(--parsec-color-light-primary-700);
+#sort-order-button {
+  --background: none;
+  --color: var(--parsec-color-light-secondary-grey);
+  --border-radius: var(--parsec-radius-4);
+  --padding-top: 0.375rem;
+  --padding-bottom: 0.375rem;
+  --padding-start: 0.75rem;
+  --padding-end: 0.75rem;
+  --inner-padding-end: 0;
+  padding: 0.25rem;
+  width: 100%;
+  margin-left: auto;
+  transition: transform 0.2s ease-in-out;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+  cursor: pointer;
+
+  &::part(native) {
+    width: auto;
+    margin-left: auto;
   }
-  .checked.selected {
-    color: var(--parsec-color-light-primary-700);
+
+  &:hover {
+    background: var(--parsec-color-light-secondary-background);
+    --background-hover: none;
+    --color-hover: var(--parsec-color-light-secondary-text);
+
+    ion-icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
   }
 
   ion-icon {
-    margin-left: 1em;
+    color: var(--parsec-color-light-secondary-grey);
+    margin: 0;
+    padding-left: 0.375rem;
+    font-size: 1rem;
   }
 }
-#sort-order-button {
-  --background: var(--parsec-color-light-secondary-medium);
-  --color: var(--parsec-color-light-secondary-text);
-  --color-hover: var(--parsec-color-light-secondary-text);
-  --border-radius: 25px;
-  width: fit-content;
-  padding-right: 0.5rem;
-  margin-left: auto;
-  margin-bottom: 0.5rem;
-  --min-height: 2rem;
 
-  ion-icon {
-    margin: 0;
-    padding-left: 0.5rem;
-    font-size: 1.25rem;
+.sorter-list {
+  padding: 0.25rem;
+
+  &-item {
+    --background-hover: var(--parsec-color-light-secondary-medium);
+    --background-hover-opacity: 1;
+    --color: var(--parsec-color-light-secondary-grey);
+    --color-hover: var(--parsec-color-light-secondary-text);
+    --border-radius: var(--parsec-radius-4);
+    --padding-top: 0.25rem;
+    --padding-bottom: 0.25rem;
+    --padding-start: 0.75rem;
+    --padding-end: 0.75rem;
+    --inner-padding-end: 0;
+
+    &.selected {
+      color: var(--parsec-color-light-primary-700);
+      --background-hover: none;
+
+      span {
+        font-weight: 600;
+      }
+    }
+    .checked.selected {
+      color: var(--parsec-color-light-primary-700);
+    }
+
+    ion-icon {
+      margin: 0 0 0 1em;
+      font-size: 1.25rem;
+    }
   }
 }
 </style>
