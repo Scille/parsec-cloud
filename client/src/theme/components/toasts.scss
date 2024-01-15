@@ -50,6 +50,7 @@ ion-toast.notification-toast {
   }
 
   &::part(container) {
+    background-color: var(--parsec-color-light-secondary-inversed-contrast);
     border-radius: var(--parsec-radius-12);
     overflow: hidden;
     max-width: 27rem;
