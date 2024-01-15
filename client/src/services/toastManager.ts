@@ -5,7 +5,7 @@ import { translate } from '@/services/translation';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
 
-const DEFAULT_TOAST_DURATION = 3000;
+const DEFAULT_TOAST_DURATION = 5000;
 
 export class ToastManager {
   toasts: HTMLIonToastElement[];
@@ -23,12 +23,14 @@ export class ToastManager {
     confirmButtonLabel?: string;
     duration?: number;
   }): Promise<any> {
+    const duration = toastConfig.duration || DEFAULT_TOAST_DURATION;
+
     const toast = await toastController.create({
       header: toastConfig.title,
       message: toastConfig.message,
       cssClass: ['notification-toast', toastConfig.theme],
       mode: 'ios',
-      duration: toastConfig.duration ?? DEFAULT_TOAST_DURATION,
+      duration: duration,
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,
       buttons: [
         {
@@ -38,13 +40,8 @@ export class ToastManager {
         },
       ],
     });
-    this.toasts.push(toast);
-    const toastActive = toast;
-    // when the class active is added progress bar width is set to 0%
-    setTimeout(() => {
-      toastActive.classList.add('active');
-    }, 100);
 
+    this.toasts.push(toast);
     await this.managePresentQueue();
 
     const result = await toast.onDidDismiss();
@@ -56,7 +53,16 @@ export class ToastManager {
   }
 
   async managePresentQueue(): Promise<any> {
-    await this.toasts.at(0)?.present();
+    const currentToast = this.toasts.at(0);
+
+    if (currentToast) {
+      document.documentElement.style.setProperty('--ms-toast-duration', `${currentToast.duration}ms`);
+      // when the class active is added progress bar width is set to 0%
+      setTimeout(() => {
+        currentToast.classList.add('active');
+      }, 100);
+      await currentToast.present();
+    }
   }
 
   private _getIcon(theme: MsReportTheme): string {

@@ -85,7 +85,7 @@ ion-toast.notification-toast {
     &::part(container) {
       &::after {
         width: 0%;
-        transition: width 5s ease-in-out;
+        transition: width var(--ms-toast-duration) ease-in-out;
       }
     }
   }
