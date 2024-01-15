@@ -5,7 +5,7 @@
     fill="clear"
     @click="openPopover($event)"
     id="select-popover-button"
-    class="filter-button button-medium"
+    class="filter-button button-small"
     :disabled="disabled"
   >
     <ion-icon
@@ -78,14 +78,12 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 .filter-button {
   background: none;
   color: var(--parsec-color-light-primary-700);
-}
-.option {
-  --background-hover: var(--parsec-color-light-primary-50);
-  --color-hover: var(--ion-color-tertiary);
+  height: fit-content;
+  margin-right: 1rem;
+  --background-hover: var(--parsec-color-light-secondary-medium);
 
-  &.selected {
-    color: var(--parsec-color-light-primary-700);
-    font-weight: bold;
+  &::part(native) {
+    padding: 0.5rem;
   }
 }
 .ms-sorter-icon {

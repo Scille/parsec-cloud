@@ -61,11 +61,12 @@ describe('Check organization list', () => {
     cy.get('@orgList').should('have.length', 5);
     // Change sort order
     cy.get('#organization-filter-select').contains('Organization').click();
-    cy.get('.option').should('have.length', 4);
-    cy.get('.option').eq(2).contains('User Name').click();
+    cy.get('.sorter-container').find('ion-item').as('item').should('have.length', 4);
+    cy.get('@item').should('have.length', 4);
+    cy.get('@item').eq(2).contains('User Name').click();
     cy.get('#organization-filter-select').contains('User Name').click();
-    cy.get('.option').should('have.length', 4);
-    cy.get('.option').first().contains('Ascending').click();
+    cy.get('@item').should('have.length', 4);
+    cy.get('@item').first().contains('Ascending').click();
     // Now sorted by user name desc
     cy.get('@orgList').first().contains('Malloryy McMalloryFace');
     cy.get('@orgList').last().contains('Alicey McAliceFace');

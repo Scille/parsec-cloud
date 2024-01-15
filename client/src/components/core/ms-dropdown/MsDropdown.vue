@@ -109,16 +109,6 @@ function getIcon(): string {
   }
 }
 
-.option {
-  --background-hover: var(--parsec-color-light-primary-50);
-  --color-hover: var(--ion-color-tertiary);
-
-  &.selected {
-    color: var(--parsec-color-light-primary-700);
-    font-weight: bold;
-  }
-}
-
 .dropdown-container {
   // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
   --offset: 2px;
