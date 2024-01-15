@@ -54,7 +54,7 @@ jobs:
 
       - name: Restore cspell cache
         id: cache
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
+        uses: actions/cache/restore@e12d46a63a90f2fae62d114769bbf2a179198b5c # pin v3.3.3
         with:
           path: |
             package-lock.json
@@ -91,7 +91,7 @@ jobs:
         if: >-
           steps.installation.outputs.previous-cache-hash != hashFiles('.cspellcache')
           && contains(github.ref, 'gh-readonly-queue') != 'true'
-        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
+        uses: actions/cache/save@e12d46a63a90f2fae62d114769bbf2a179198b5c # pin v3.3.3
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |

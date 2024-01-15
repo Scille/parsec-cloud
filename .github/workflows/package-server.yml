@@ -139,14 +139,14 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@da1493208a5b2c79ad2d7dff9fd50693851da51a # pin v2.24.1
+      - uses: taiki-e/install-action@98cdbf3892eb5b31fc9b26666699439be4d9d88a # pin v2.25.1
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-Wheel-${{ matrix.platform }}.spdx.json .
 
-      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # pin v4.0.0
+      - uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595 # pin v4.1.0
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: |
