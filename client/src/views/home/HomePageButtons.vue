@@ -4,7 +4,7 @@
   <ion-list class="container">
     <ion-item
       class="container__item"
-      @click="onClick(HomePageAction.CreateOrganization)"
+      @click="clicked(HomePageAction.CreateOrganization)"
     >
       <ion-icon
         :icon="addCircle"
@@ -21,7 +21,7 @@
     </ion-item>
     <ion-item
       class="container__item"
-      @click="onClick(HomePageAction.JoinOrganization)"
+      @click="clicked(HomePageAction.JoinOrganization)"
     >
       <ion-icon
         :icon="mail"
@@ -47,12 +47,23 @@ export enum HomePageAction {
 </script>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core';
-import { IonIcon, IonItem, IonLabel, IonList, IonText, popoverController } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { addCircle, mail } from 'ionicons/icons';
 
-async function onClick(action: HomePageAction): Promise<boolean> {
-  return await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
+const emits = defineEmits<{
+  (e: 'click', action: HomePageAction): void;
+}>();
+
+const props = defineProps<{
+  replaceEmit?: (action: HomePageAction) => Promise<void>;
+}>();
+
+async function clicked(action: HomePageAction): Promise<void> {
+  if (props.replaceEmit) {
+    await props.replaceEmit(action);
+  } else {
+    emits('click', action);
+  }
 }
 </script>
 

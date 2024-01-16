@@ -11,36 +11,35 @@
           {{ $t('HomePage.noDevices') }}
         </ion-card-title>
         <span class="body">{{ $t('HomePage.howToAddDevices') }}</span>
-        <home-page-popover class="no-devices-buttons" />
+        <home-page-buttons @click="onAction" />
       </ion-card-content>
     </template>
-    <template v-if="deviceList.length > 0">
+    <template v-else>
       <ion-card-content class="organization-content">
         <ion-card-title class="organization-filter">
+          <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
             :label="$t('HomePage.organizationList.search')"
             v-model="searchQuery"
             id="ms-search-input"
           />
-          <!-- No use in showing the sort/filter options for less than 2 devices -->
-          <template v-if="deviceList.length >= 2">
-            <ms-sorter
-              id="organization-filter-select"
-              label="t('HomePage.organizationList.labelSortBy')"
-              :options="msSorterOptions"
-              default-option="organization"
-              :sorter-labels="msSorterLabels"
-              @change="onMsSorterChange($event)"
-            />
-            <ion-button
-              @click="togglePopover"
-              size="default"
-              id="create-organization-button"
-              class="button-default"
-            >
-              {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
-            </ion-button>
-          </template>
+          <ms-sorter
+            v-show="deviceList.length > 1"
+            id="organization-filter-select"
+            label="t('HomePage.organizationList.labelSortBy')"
+            :options="msSorterOptions"
+            default-option="organization"
+            :sorter-labels="msSorterLabels"
+            @change="onMsSorterChange($event)"
+          />
+          <ion-button
+            @click="togglePopover"
+            size="default"
+            id="create-organization-button"
+            class="button-default"
+          >
+            {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
+          </ion-button>
         </ion-card-title>
         <ion-grid class="organization-list">
           <ion-row class="organization-list-row">
@@ -89,7 +88,7 @@ import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
-import HomePagePopover, { HomePageAction } from '@/views/home/HomePagePopover.vue';
+import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow, IonText, popoverController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
@@ -132,11 +131,14 @@ async function togglePopover(event: Event): Promise<void> {
 
 async function openPopover(event: Event): Promise<void> {
   const popover = await popoverController.create({
-    component: HomePagePopover,
+    component: HomePageButtons,
     cssClass: 'homepage-popover',
     event: event,
     showBackdrop: false,
     alignment: 'end',
+    componentProps: {
+      replaceEmit: dismissPopover,
+    },
   });
   await popover.present();
   const result = await popover.onWillDismiss();
@@ -151,6 +153,18 @@ async function openPopover(event: Event): Promise<void> {
   }
 }
 
+async function dismissPopover(action: HomePageAction): Promise<void> {
+  await popoverController.dismiss({ action: action }, MsModalResult.Confirm);
+}
+
+async function onAction(action: HomePageAction): Promise<void> {
+  if (action === HomePageAction.CreateOrganization) {
+    emits('createOrganizationClick');
+  } else if (action === HomePageAction.JoinOrganization) {
+    emits('joinOrganizationClick');
+  }
+}
+
 onMounted(async (): Promise<void> => {
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   await refreshDeviceList();
@@ -159,9 +173,6 @@ onMounted(async (): Promise<void> => {
 async function refreshDeviceList(): Promise<void> {
   querying.value = true;
   deviceList.value = await listAvailableDevices();
-  if (deviceList.value.length === 1) {
-    emits('organizationSelect', deviceList.value[0]);
-  }
   querying.value = false;
 }
 
