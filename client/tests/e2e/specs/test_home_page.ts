@@ -128,17 +128,13 @@ describe('Check organization list', () => {
     cy.get('@error').should('not.be.visible');
   });
 
-  it('Log into organization with command', () => {
+  it('Log into organization with command and log out', () => {
     // Uses Cypress command to simplify the log in part
-    cy.login('Boby', 'P@ssw0rd.');
-    cy.contains('Log in');
-  });
-
-  it('Log out', () => {
     cy.login('Boby', 'P@ssw0rd.');
     cy.contains('My workspaces');
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Log out').click();
+    cy.get('.ion-page').find('.ms-modal').find('ion-buttons').contains('Log out').click();
     cy.contains('Your organizations');
   });
 });
