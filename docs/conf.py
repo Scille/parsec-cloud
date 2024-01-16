@@ -144,13 +144,13 @@ html_theme_options = {
 # html_title.
 # html_short_title = None
 
-# VCS options: https://docs.readthedocs.io/en/latest/vcs.html#github
+# Edit source options for github: https://docs.readthedocs.io/en/latest/guides/edit-source-links-sphinx.html#github
 html_context = {
     "display_github": True,  # Integrate GitHub
-    "github_user": "Parsec",  # Username
+    "github_user": "Scille",  # Username
     "github_repo": "parsec-cloud",  # Repo name
-    "github_version": "master",  # Version
-    "conf_py_path": "/",  # Path in the checkout to the docs root
+    "github_version": "dev/v2",  # Version
+    "conf_py_path": "/docs/",  # Path in the checkout to the docs root
 }
 
 # The name of an image file (relative to this directory) to place at the
