@@ -34,7 +34,7 @@
             "description": "Voir et ouvrir les fichiers."
         },
         "contributor": {
-            "label": "Contributor",
+            "label": "Contributeur",
             "description": "Voir, ouvrir et ajouter des fichiers."
         },
         "manager": {
@@ -951,7 +951,7 @@
             "greetUser": "Accueillir",
             "rejectUser": "Refuser",
             "emailTitle": "Email",
-            "dateTitle": "Invitation date",
+            "dateTitle": "Date d'invitation",
             "statusTitle": "Statut",
             "noInvitations": "Aucune invitation en cours",
             "invitationsListFailed": {
