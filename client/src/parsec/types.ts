@@ -70,7 +70,6 @@ export type {
   VlobID as FileID,
   FsPath,
   GreetInProgressError,
-  Handle,
   InvitationToken,
   ListInvitationsError,
   NewDeviceInvitationError,
@@ -108,6 +107,7 @@ import type {
   DateTime,
   DeviceInfo,
   EntryName,
+  Handle,
   HumanHandle,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
@@ -120,9 +120,10 @@ import type {
 
 import { RealmRole as WorkspaceRole } from '@/plugins/libparsec';
 
-type WorkspaceHandle = number;
+type WorkspaceHandle = Handle;
 type EntryID = VlobID;
 type WorkspaceName = EntryName;
+type ConnectionHandle = Handle;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
@@ -227,6 +228,7 @@ interface OrganizationInfo {
 }
 
 export {
+  ConnectionHandle,
   DateTime,
   EntryID,
   EntryStat,

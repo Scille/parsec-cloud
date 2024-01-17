@@ -7,8 +7,8 @@ import {
   ClaimInProgressError,
   ClaimerRetrieveInfoError,
   ClientEvent,
+  ConnectionHandle,
   DeviceFileType,
-  Handle,
   HumanHandle,
   Result,
   SASCode,
@@ -23,8 +23,8 @@ import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 
 export class UserClaim {
-  handle: Handle | null;
-  canceller: Handle | null;
+  handle: ConnectionHandle | null;
+  canceller: ConnectionHandle | null;
   SASCodeChoices: SASCode[];
   correctSASCode: SASCode;
   guestSASCode: SASCode;

@@ -138,7 +138,7 @@ import {
   getPathLink as parsecGetPathLink,
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
-import { routerNavigateToWorkspace } from '@/router';
+import { navigateToWorkspace } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
@@ -235,8 +235,8 @@ async function openCreateWorkspaceModal(): Promise<void> {
   }
 }
 
-function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): void {
-  routerNavigateToWorkspace(workspace.id);
+async function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): Promise<void> {
+  await navigateToWorkspace(workspace.id);
 }
 
 async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promise<void> {

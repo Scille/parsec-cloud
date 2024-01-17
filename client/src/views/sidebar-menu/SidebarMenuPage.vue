@@ -12,7 +12,7 @@
         class="sidebar"
       >
         <ion-header class="sidebar__header">
-          <div v-show="!isOrganizationManagementRoute()">
+          <div v-show="!currentRouteIsOrganizationManagementRoute()">
             <!-- active organization -->
             <ion-card class="organization-card">
               <ion-card-header class="organization-card__header">
@@ -41,7 +41,7 @@
               <div
                 class="organization-card__manageBtn"
                 v-show="userInfo && userInfo.currentProfile != UserProfile.Outsider"
-                @click="routerNavigateTo('activeUsers')"
+                @click="navigateTo(Routes.ActiveUsers)"
               >
                 <ion-text
                   class="subtitles-sm"
@@ -57,10 +57,10 @@
             </ion-card>
             <!-- end of active organization -->
           </div>
-          <div v-show="isOrganizationManagementRoute()">
+          <div v-show="currentRouteIsOrganizationManagementRoute()">
             <div
               class="back-organization"
-              @click="routerNavigateTo('workspaces')"
+              @click="navigateTo(Routes.Workspaces)"
             >
               <ion-button
                 fill="clear"
@@ -84,7 +84,7 @@
 
         <ion-content class="ion-padding">
           <div
-            v-show="!isOrganizationManagementRoute()"
+            v-show="!currentRouteIsOrganizationManagementRoute()"
             class="workspaces-organization"
           >
             <!-- list of workspaces -->
@@ -92,7 +92,7 @@
               <ion-header
                 lines="none"
                 button
-                @click="navigateToWorkspaceList()"
+                @click="goToWorkspaceList()"
                 class="list-workspaces__header menu-default"
               >
                 {{ $t('SideMenu.allWorkspaces') }}
@@ -103,8 +103,8 @@
                 button
                 v-for="workspace in workspaces"
                 :key="workspace.id"
-                @click="navigateToWorkspace(workspace.id)"
-                :class="isSpecificWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
+                @click="goToWorkspace(workspace.id)"
+                :class="currentRouteIsWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item"
               >
                 <ion-icon
@@ -117,7 +117,7 @@
             <!-- list of workspaces -->
           </div>
           <div
-            v-show="isOrganizationManagementRoute()"
+            v-show="currentRouteIsOrganizationManagementRoute()"
             class="manage-organization"
           >
             <!-- user actions -->
@@ -125,8 +125,8 @@
               <ion-item
                 lines="none"
                 class="sidebar-item users-title menu-default"
-                :class="isUserRoute() ? 'item-selected' : 'item-not-selected'"
-                @click="routerNavigateTo('activeUsers')"
+                :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
+                @click="navigateTo(Routes.ActiveUsers)"
               >
                 <ion-icon
                   :icon="people"
@@ -140,8 +140,8 @@
                   lines="none"
                   button
                   class="user-menu__item body"
-                  :class="currentRoute.name === 'activeUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="routerNavigateTo('activeUsers')"
+                  :class="currentRouteIs(Routes.ActiveUsers) ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="navigateTo(Routes.ActiveUsers)"
                 >
                   <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
                 </ion-item>
@@ -149,8 +149,8 @@
                   lines="none"
                   button
                   class="user-menu__item body"
-                  :class="currentRoute.name === 'revokedUsers' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="routerNavigateTo('revokedUsers')"
+                  :class="currentRouteIs(Routes.RevokedUsers) ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="navigateTo(Routes.RevokedUsers)"
                 >
                   <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
                 </ion-item>
@@ -159,8 +159,8 @@
                   lines="none"
                   button
                   class="user-menu__item body"
-                  :class="currentRoute.name === 'invitations' ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="routerNavigateTo('invitations')"
+                  :class="currentRouteIs(Routes.Invitations) ? 'user-menu-selected' : 'user-menu-not-selected'"
+                  @click="navigateTo(Routes.Invitations)"
                 >
                   <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
                 </ion-item>
@@ -174,8 +174,8 @@
               <ion-item
                 lines="none"
                 class="sidebar-item storage-title menu-default"
-                :class="currentRoute.name === 'storage' ? 'item-selected' : 'item-not-selected'"
-                @click="routerNavigateTo('storage')"
+                :class="currentRouteIs(Routes.Storage) ? 'item-selected' : 'item-not-selected'"
+                @click="navigateTo(Routes.Storage)"
               >
                 <ion-icon
                   :icon="pieChart"
@@ -189,8 +189,8 @@
               <ion-item
                 lines="none"
                 class="sidebar-item organization-title menu-default"
-                :class="currentRoute.name === 'organization' ? 'item-selected' : 'item-not-selected'"
-                @click="routerNavigateTo('organization')"
+                :class="currentRouteIs(Routes.Organization) ? 'item-selected' : 'item-not-selected'"
+                @click="navigateTo(Routes.Organization)"
               >
                 <ion-icon
                   :icon="informationCircle"
@@ -214,13 +214,18 @@ import {
   ClientInfo,
   UserProfile,
   WorkspaceInfo,
-  isOrganizationManagementRoute,
-  isSpecificWorkspaceRoute,
-  isUserRoute,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
-import { routerNavigateTo, routerNavigateToWorkspace } from '@/router';
+import {
+  Routes,
+  currentRouteIs,
+  currentRouteIsOrganizationManagementRoute,
+  currentRouteIsUserRoute,
+  currentRouteIsWorkspaceRoute,
+  navigateTo,
+  navigateToWorkspace,
+} from '@/router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import {
   GestureDetail,
@@ -246,11 +251,9 @@ import {
 } from '@ionic/vue';
 import { business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
 import { Ref, WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 
-const currentRoute = useRoute();
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -263,14 +266,14 @@ const unwatch: WatchStopHandle = watch(wasReset, (value) => {
   }
 });
 
-function navigateToWorkspace(workspaceId: string): void {
-  routerNavigateToWorkspace(workspaceId);
-  menuController.close();
+async function goToWorkspace(workspaceId: string): Promise<void> {
+  await navigateToWorkspace(workspaceId);
+  await menuController.close();
 }
 
-function navigateToWorkspaceList(): void {
-  routerNavigateTo('workspaces');
-  menuController.close();
+async function goToWorkspaceList(): Promise<void> {
+  await navigateTo(Routes.Workspaces);
+  await menuController.close();
 }
 
 onMounted(async () => {

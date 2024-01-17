@@ -31,8 +31,9 @@ describe('Check about page', () => {
   });
 
   it('Go back to workspaces', () => {
+    cy.get('.topbar-left').find('.topbar-left__title').contains('About');
     cy.get('.topbar-left__breadcrumb').should('not.contain', 'My workspaces');
     cy.get('.topbar-left').find('.back-button').click();
-    cy.get('.topbar-left__breadcrumb').should('contain', 'My workspaces');
+    cy.get('.topbar-left__breadcrumb').contains('My workspaces');
   });
 });

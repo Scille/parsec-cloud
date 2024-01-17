@@ -25,11 +25,11 @@
             id="back-block"
             v-if="hasHistory()"
           >
-            <header-back-button :short="isDocumentRoute() ? true : false" />
+            <header-back-button :short="currentRouteIsFileRoute() ? true : false" />
           </div>
 
           <div
-            v-if="!isDocumentRoute()"
+            v-if="!currentRouteIsFileRoute()"
             class="topbar-left__title"
           >
             <ion-label
@@ -106,8 +106,19 @@
 <script setup lang="ts">
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { ClientInfo, Path, WorkspaceID, WorkspaceName, getClientInfo, getWorkspaceName, hasHistory, isDocumentRoute } from '@/parsec';
-import { routerNavigateTo } from '@/router';
+import { ClientInfo, Path, WorkspaceName, getClientInfo, getWorkspaceName } from '@/parsec';
+import {
+  Routes,
+  currentRouteIs,
+  currentRouteIsFileRoute,
+  getCurrentRouteName,
+  getCurrentRouteParams,
+  getDocumentPath,
+  getWorkspaceId,
+  hasHistory,
+  navigateTo,
+  watchRoute,
+} from '@/router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
@@ -125,71 +136,79 @@ import {
   isPlatform,
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
-import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
-import { RouteLocationNormalizedLoaded, useRoute } from 'vue-router';
+import { Ref, onMounted, onUnmounted, ref } from 'vue';
 
-const currentRoute = useRoute();
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 
-const unwatchRoute = watch(currentRoute, async (newRoute) => {
-  await parseRoute(newRoute);
+const routeWatchCancel = watchRoute(async () => {
+  await updateRoute();
 });
 
 async function onNodeSelected(node: RouterPathNode): Promise<void> {
-  routerNavigateTo(node.name, node.params, node.query);
+  await navigateTo(node.name as Routes, { params: node.params, query: node.query });
 }
 
-async function parseRoute(route: RouteLocationNormalizedLoaded): Promise<void> {
-  if (route.query && route.query.workspaceId) {
-    const result = await getWorkspaceName(route.query.workspaceId as WorkspaceID);
-    if (result.ok) {
-      workspaceName.value = result.value;
-    } else {
-      console.log('Could not get workspace name', result.error);
-    }
+async function updateRoute(): Promise<void> {
+  if (!currentRouteIsFileRoute()) {
+    fullPath.value = [];
+    return;
   }
 
-  // Parse path and remove /deviceId
-  const routePath = (await Path.parse(currentRoute.path)).slice(1);
-  const finalPath: RouterPathNode[] = [];
-
-  // If route is 'workspaces' and we have an id, we're visiting a workspace
-  if (routePath[0] === 'workspaces') {
-    // Always put the document route first
-    finalPath.push({
-      id: 0,
-      display: routePath.length >= 2 ? '' : translate('HeaderPage.titles.workspaces'),
-      icon: home,
-      name: 'workspaces',
-      params: { deviceId: currentRoute.params.deviceId },
-    });
-
-    if (routePath.length >= 2 && currentRoute.query.path) {
-      const rebuildPath: string[] = [];
-      const workspacePath = await Path.parse(currentRoute.query.path as string);
-      finalPath.push({
-        id: 1,
-        display: workspaceName.value,
-        name: 'folder',
-        query: { path: '/' },
-        params: currentRoute.params,
-      });
-      for (let i = 0; i < workspacePath.length; i++) {
-        rebuildPath.push(workspacePath[i]);
-        finalPath.push({
-          id: i + 2,
-          display: workspacePath[i],
-          name: 'folder',
-          query: { path: `/${rebuildPath.join('/')}` },
-          params: currentRoute.params,
-        });
+  if (currentRouteIs(Routes.Workspaces)) {
+    fullPath.value = [
+      {
+        id: 0,
+        display: translate('HeaderPage.titles.workspaces'),
+        icon: home,
+        name: Routes.Workspaces,
+        params: {},
+      },
+    ];
+  } else if (currentRouteIs(Routes.Documents)) {
+    const workspaceId = getWorkspaceId();
+    if (workspaceId !== '') {
+      const result = await getWorkspaceName(workspaceId);
+      if (result.ok) {
+        workspaceName.value = result.value;
+      } else {
+        console.warn('Could not get workspace name', result.error);
       }
     }
+
+    const finalPath: RouterPathNode[] = [];
+    finalPath.push({
+      id: 0,
+      display: '',
+      icon: home,
+      name: Routes.Workspaces,
+      params: {},
+    });
+
+    const rebuildPath: string[] = [];
+    const workspacePath = await Path.parse(getDocumentPath());
+    finalPath.push({
+      id: 1,
+      display: workspaceName.value,
+      name: Routes.Documents,
+      query: { path: '/' },
+      params: getCurrentRouteParams(),
+    });
+    for (let i = 0; i < workspacePath.length; i++) {
+      rebuildPath.push(workspacePath[i]);
+      finalPath.push({
+        id: i + 2,
+        display: workspacePath[i],
+        name: Routes.Documents,
+        query: { path: `/${rebuildPath.join('/')}` },
+        params: getCurrentRouteParams(),
+      });
+    }
+
+    fullPath.value = finalPath;
   }
-  fullPath.value = finalPath;
 }
 
 onMounted(async () => {
@@ -199,38 +218,38 @@ onMounted(async () => {
   } else {
     console.log('Could not get user info', result.error);
   }
-  await parseRoute(currentRoute);
+  await updateRoute();
 });
 
 onUnmounted(async () => {
-  unwatchRoute();
+  routeWatchCancel();
 });
 
 function getTitleForRoute(): string {
-  const route = currentRoute.name;
-
-  if (route === 'settings') {
-    return translate('HeaderPage.titles.settings');
-  } else if (route === 'devices') {
-    return translate('HeaderPage.titles.devices');
-  } else if (route === 'activeUsers') {
-    return translate('HeaderPage.titles.users.activeUsers');
-  } else if (route === 'revokedUsers') {
-    return translate('HeaderPage.titles.users.revokedUsers');
-  } else if (route === 'invitations') {
-    return translate('HeaderPage.titles.users.invitations');
-  } else if (route === 'storage') {
-    return translate('HeaderPage.titles.organization.storage');
-  } else if (route === 'organization') {
-    return translate('HeaderPage.titles.organization.information');
-  } else if (route === 'about') {
-    return translate('HeaderPage.titles.about');
-  } else if (route === 'myContactDetails') {
-    return translate('HeaderPage.titles.myContactDetails');
-  } else if (route === 'recoveryExport') {
-    return translate('HeaderPage.titles.recoveryExport');
+  switch (getCurrentRouteName()) {
+    case Routes.Settings:
+      return translate('HeaderPage.titles.settings');
+    case Routes.Devices:
+      return translate('HeaderPage.titles.devices');
+    case Routes.ActiveUsers:
+      return translate('HeaderPage.titles.users.activeUsers');
+    case Routes.RevokedUsers:
+      return translate('HeaderPage.titles.users.revokedUsers');
+    case Routes.Invitations:
+      return translate('HeaderPage.titles.users.invitations');
+    case Routes.Storage:
+      return translate('HeaderPage.titles.organization.storage');
+    case Routes.Organization:
+      return translate('HeaderPage.titles.organization.information');
+    case Routes.About:
+      return translate('HeaderPage.titles.about');
+    case Routes.ContactDetails:
+      return translate('HeaderPage.titles.myContactDetails');
+    case Routes.RecoveryExport:
+      return translate('HeaderPage.titles.recoveryExport');
+    case null:
+      return '';
   }
-
   return '';
 }
 </script>

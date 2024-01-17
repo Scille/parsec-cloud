@@ -36,8 +36,8 @@ export interface RouterPathNode {
   display: string;
   icon?: string;
   name: string;
-  params?: any;
-  query?: any;
+  params?: object;
+  query?: object;
 }
 </script>
 

@@ -160,8 +160,10 @@ async function back(): Promise<void> {
 
 async function onPathChange(node: RouterPathNode): Promise<void> {
   forwardStack.splice(0, forwardStack.length);
-  selectedPath.value = node.query.path;
-  await update();
+  if (node.query && 'path' in node.query) {
+    selectedPath.value = node.query.path as string;
+    await update();
+  }
 }
 
 async function enterFolder(entry: EntryStat): Promise<void> {

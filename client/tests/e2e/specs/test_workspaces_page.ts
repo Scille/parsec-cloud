@@ -4,6 +4,7 @@ describe('Check workspaces page', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
+    cy.get('.workspaces-container').find('.workspaces-grid-item').should('have.length', 2);
   });
 
   afterEach(() => {
@@ -19,6 +20,8 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').should('have.length', 0);
     cy.get('.card').first().contains('The Copper Coronet');
     cy.get('.card').last().contains('Trademeet');
+    // Test sometimes fails because reasons without that wait
+    cy.wait(300);
   });
 
   it('Checks submenu', () => {
@@ -114,7 +117,7 @@ describe('Check workspaces page', () => {
 
   it('Get link to the workspace', () => {
     cy.get('.card').eq(0).find('.card-option').click();
-    cy.get('.popover-viewport').find('.menu-list').find('ion-item').eq(8).click();
+    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
 
     cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {

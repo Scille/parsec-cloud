@@ -59,6 +59,7 @@ import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
+import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -74,8 +75,7 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Ref, inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -85,16 +85,14 @@ enum HomePageState {
 
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-
-const router = useRouter();
-const currentRoute = useRoute();
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 
-const routeUnwatch = watch(currentRoute, async (newRoute) => {
-  if (newRoute.query.link) {
-    await openJoinByLinkModal(newRoute.query.link as string);
+const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  if ('link' in query && query.link) {
+    await openJoinByLinkModal(query.link as string);
   }
 });
 
@@ -103,7 +101,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  routeUnwatch();
+  routeWatchCancel();
 });
 
 async function openCreateOrganizationModal(): Promise<void> {
@@ -163,18 +161,20 @@ function onOrganizationSelected(device: AvailableDevice): void {
 }
 
 async function login(device: AvailableDevice, password: string): Promise<void> {
-  if (!storedDeviceDataDict.value[device.slug]) {
-    storedDeviceDataDict.value[device.slug] = {
-      lastLogin: DateTime.now(),
-    };
-  } else {
-    storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
-  }
-  await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
-
   const result = await parsecLogin(device, password);
   if (result.ok) {
-    router.replace({ name: 'workspaces', params: { handle: result.value } });
+    if (!storedDeviceDataDict.value[device.slug]) {
+      storedDeviceDataDict.value[device.slug] = {
+        lastLogin: DateTime.now(),
+      };
+    } else {
+      storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
+    }
+    await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
+
+    const options: NavigationOptions = { params: { handle: result.value }, replace: true };
+
+    await navigateTo(Routes.Workspaces, options);
     state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Notification({
