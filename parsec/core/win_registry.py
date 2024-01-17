@@ -61,7 +61,7 @@ def try_winreg() -> ModuleType | None:
         return None
 
 
-def winreg_read_user_dword(key: str, name: str) -> object:
+def winreg_read_user_dword(key: str, name: str) -> int:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     with winreg.OpenKey(hkcu, key, access=winreg.KEY_READ) as key_obj:
@@ -74,22 +74,25 @@ def winreg_read_user_dword(key: str, name: str) -> object:
 def winreg_write_user_dword(key: str, name: str, value: int) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
-    with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
+    with winreg.CreateKey(hkcu, key) as key_obj:
         winreg.SetValueEx(key_obj, name, None, winreg.REG_DWORD, value)
 
 
 def winreg_write_user_string(key: str, name: str, value: str) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
-    with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
+    with winreg.CreateKey(hkcu, key) as key_obj:
         winreg.SetValueEx(key_obj, name, None, winreg.REG_SZ, value)
 
 
 def winreg_delete_user_dword(key: str, name: str) -> None:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
-    with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
-        winreg.DeleteValue(key_obj, name)
+    try:
+        with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
+            winreg.DeleteValue(key_obj, name)
+    except FileNotFoundError:
+        pass
 
 
 def winreg_has_user_key(key: str) -> bool:
@@ -148,7 +151,7 @@ def del_acrobat_app_container_enabled() -> None:
 # Drive icon management
 
 
-def get_parsec_drive_icon(letter: str) -> tuple[str | None, object | None]:
+def get_parsec_drive_icon(letter: str) -> tuple[str | None, int | None]:
     winreg = get_winreg()
     hkcu = winreg.HKEY_CURRENT_USER
     assert len(letter) == 1 and letter.upper() in string.ascii_uppercase
