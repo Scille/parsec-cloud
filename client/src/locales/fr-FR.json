@@ -13,7 +13,7 @@
         "title": "Quitter l'application",
         "subtitle": "Êtes-vous sûr(e) de vouloir quitter l'application ?",
         "yes": "Quitter",
-        "no": "Cancel"
+        "no": "Annuler"
     },
     "openFile": {
         "failedTitle": "Impossible d'ouvrir l'élément",

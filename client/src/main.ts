@@ -137,8 +137,8 @@ async function setupApp(): Promise<void> {
   if (isElectron()) {
     window.electronAPI.receive('close-request', async () => {
       const answer = await askQuestion(t('quit.title'), t('quit.subtitle'), {
-        yesText: 'quit.yes',
-        noText: 'quit.no',
+        yesText: t('quit.yes'),
+        noText: t('quit.no'),
       });
       if (answer === Answer.Yes) {
         window.electronAPI.closeApp();
