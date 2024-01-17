@@ -91,7 +91,7 @@ def winreg_delete_user_dword(key: str, name: str) -> None:
     try:
         with winreg.OpenKey(hkcu, key, access=winreg.KEY_SET_VALUE) as key_obj:
             winreg.DeleteValue(key_obj, name)
-    except OSError:
+    except FileNotFoundError:
         pass
 
 
