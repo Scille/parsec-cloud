@@ -200,7 +200,7 @@ export class ElectronCapacitorApp {
 
     // When the tray icon is enabled, setup the options.
     if (this.CapacitorFileConfig.electron?.trayIconAndMenuEnabled) {
-      this.TrayIcon = new Tray(icon);
+      this.TrayIcon = new Tray(icon.resize({ width: 16, height: 16 }));
 
       const trayToggleVisibility = () => {
         if (this.isMainWindowVisible()) {
