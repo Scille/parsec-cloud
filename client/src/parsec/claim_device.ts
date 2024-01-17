@@ -7,13 +7,13 @@ import {
   ClaimInProgressError,
   ClaimerRetrieveInfoError,
   ClientEvent,
+  ConnectionHandle,
   DeviceClaimFinalizeInfo,
   DeviceClaimInProgress1Info,
   DeviceClaimInProgress2Info,
   DeviceClaimInProgress3Info,
   DeviceFileType,
   DeviceLabel,
-  Handle,
   HumanHandle,
   Result,
   SASCode,
@@ -24,8 +24,8 @@ import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
 
 export class DeviceClaim {
-  handle: Handle | null;
-  canceller: Handle | null;
+  handle: ConnectionHandle | null;
+  canceller: ConnectionHandle | null;
   SASCodeChoices: SASCode[];
   correctSASCode: SASCode;
   guestSASCode: SASCode;

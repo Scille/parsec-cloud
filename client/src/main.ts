@@ -3,7 +3,7 @@
 import { createApp } from 'vue';
 
 import App from '@/App.vue';
-import router, { routerNavigateTo } from '@/router';
+import { Routes, currentRouteIs, getRouter, navigateTo } from '@/router';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -32,7 +32,7 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
-import { isElectron, isHomeRoute } from '@/parsec';
+import { isElectron } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
@@ -51,6 +51,7 @@ async function setupApp(): Promise<void> {
 
   const notificationManager = new NotificationManager();
   const importManager = new ImportManager();
+  const router = getRouter();
 
   const app = createApp(App)
     .use(IonicVue, {
@@ -67,18 +68,11 @@ async function setupApp(): Promise<void> {
   app.provide(NotificationKey, notificationManager);
   app.provide(ImportManagerKey, importManager);
 
-  // We can start the app with different cases :
-  // - dev with a testbed Parsec server with the default devices
-  // - dev or prod where devices are fetched from the local storage
-  // - tests with Cypress where the testbed instantiation is done by Cypress
-
-  // We get the app element and we set and attribute to indicate that we are waiting for
-  // the config path
+  // We get the app element
   const appElem = document.getElementById('app');
   if (!appElem) {
     throw Error('Cannot retrieve #app');
   }
-  appElem.setAttribute('app-state', 'waiting-for-config-path');
 
   // nextStage() finally mounts the app using the configPath provided
   // Note this function cause a deadlock on `router.isReady` if it is awaited
@@ -113,6 +107,10 @@ async function setupApp(): Promise<void> {
     appElem.setAttribute('app-state', 'ready');
   };
 
+  // We can start the app with different cases :
+  // - dev with a testbed Parsec server with the default devices
+  // - dev or prod where devices are fetched from the local storage
+  // - tests with Cypress where the testbed instantiation is done by Cypress
   if ('Cypress' in window) {
     // Cypress handle the testbed and provides the configPath
     window.nextStageHook = (): any => {
@@ -126,6 +124,9 @@ async function setupApp(): Promise<void> {
     // Prod or using devices in local storage
     nextStage(); // Fire-and-forget call
   }
+  // Only set the attribute once nextStageHook has been set
+  appElem.setAttribute('app-state', 'initializing');
+
   if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
     const x = async (): Promise<void> => {
       await router.isReady();
@@ -146,8 +147,8 @@ async function setupApp(): Promise<void> {
     });
     window.electronAPI.receive('open-link', async (link: string) => {
       if ((await fileLinkValidator(link)).validity === Validity.Valid || (await claimLinkValidator(link)).validity === Validity.Valid) {
-        if (isHomeRoute()) {
-          routerNavigateTo('home', {}, { link: link });
+        if (currentRouteIs(Routes.Home)) {
+          await navigateTo(Routes.Home, { query: { link: link } });
         }
       } else {
         await notificationManager.showModal(

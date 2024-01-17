@@ -29,17 +29,15 @@
 <script setup lang="ts">
 import { Answer, askQuestion } from '@/components/core';
 import { logout as parsecLogout } from '@/parsec';
-import { routerNavigateTo } from '@/router';
+import { Routes, navigateTo } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
 import { defineProps, inject, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 const isPopoverOpen = ref(false);
-const router = useRouter();
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 
@@ -88,19 +86,19 @@ async function openPopover(event: Event): Promise<void> {
             }),
           );
         } else {
-          router.replace({ name: 'home' });
+          await navigateTo(Routes.Home, { replace: true, skipHandle: true });
         }
       }
     } else if (value.data.option === ProfilePopoverOption.Settings) {
-      routerNavigateTo('settings');
+      await navigateTo(Routes.Settings);
     } else if (value.data.option === ProfilePopoverOption.MyDevices) {
-      routerNavigateTo('devices');
+      await navigateTo(Routes.Devices);
     } else if (value.data.option === ProfilePopoverOption.Help) {
       window.open(translate('MenuPage.helpLink'), '_blank');
     } else if (value.data.option === ProfilePopoverOption.App) {
-      routerNavigateTo('about');
+      await navigateTo(Routes.About);
     } else if (value.data.option === ProfilePopoverOption.MyContactDetails) {
-      routerNavigateTo('myContactDetails');
+      await navigateTo(Routes.ContactDetails);
     }
   });
 }

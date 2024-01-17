@@ -177,7 +177,8 @@ import {
 import FileCard from '@/components/files/FileCard.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import * as parsec from '@/parsec';
-import { routerNavigateTo } from '@/router';
+
+import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
@@ -196,30 +197,24 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
 const allFilesSelected = ref(false);
-const currentRoute = useRoute();
-const unwatchRoute = watch(currentRoute, async (newRoute) => {
-  if (newRoute.query && newRoute.query.path !== currentPath.value) {
-    currentPath.value = newRoute.query.path as string;
+
+const routeWatchCancel = watchRoute(async () => {
+  const newPath = getDocumentPath();
+  if (newPath !== currentPath.value) {
+    currentPath.value = newPath;
   }
   if (currentPath.value) {
     await listFolder();
   }
 });
 const currentPath = ref('/');
-const workspaceHandle = computed(() => {
-  return parseInt(currentRoute.params.workspaceHandle as string) as parsec.WorkspaceHandle;
-});
-const workspaceId = computed(() => {
-  return currentRoute.query.workspaceId as parsec.WorkspaceID;
-});
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const children: Ref<Array<parsec.EntryStat>> = ref([]);
 const displayView = ref(DisplayState.List);
@@ -238,7 +233,7 @@ onUnmounted(async () => {
   if (callbackId) {
     importManager.removeCallback(callbackId);
   }
-  unwatchRoute();
+  routeWatchCancel();
 });
 
 async function onFileImportState(state: ImportState, data: StateData): Promise<void> {
@@ -288,7 +283,10 @@ function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
 async function onFileClick(_event: Event, file: parsec.EntryStat): Promise<void> {
   if (!file.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, file.name);
-    routerNavigateTo('folder', { workspaceHandle: workspaceHandle.value }, { path: newPath, workspaceId: currentRoute.query.workspaceId });
+    navigateTo(Routes.Documents, {
+      params: { workspaceHandle: getWorkspaceHandle() },
+      query: { path: newPath, workspaceId: getWorkspaceId() },
+    });
   }
 }
 
@@ -329,8 +327,8 @@ async function importFiles(): Promise<void> {
     cssClass: 'file-upload-modal',
     componentProps: {
       currentPath: currentPath.value.toString(),
-      workspaceHandle: workspaceHandle.value,
-      workspaceId: workspaceId.value,
+      workspaceHandle: getWorkspaceHandle(),
+      workspaceId: getWorkspaceId(),
     },
   });
   await modal.present();
@@ -470,7 +468,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   }
   const entry = entries[0];
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.getPathLink(workspaceId.value, filePath);
+  const result = await parsec.getPathLink(getWorkspaceId(), filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
       notificationManager.showToast(
@@ -507,7 +505,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   const folder = await selectFolder({
     title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
     startingPath: currentPath.value,
-    workspaceId: workspaceId.value,
+    workspaceId: getWorkspaceId(),
   });
   if (!folder) {
     return;
@@ -577,7 +575,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
-    workspaceId: workspaceId.value,
+    workspaceId: getWorkspaceId(),
   });
   if (!folder) {
     return;
@@ -648,7 +646,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const result = await parsec.getAbsolutePath(workspaceHandle.value, entry);
+  const result = await parsec.getAbsolutePath(getWorkspaceHandle(), entry);
 
   if (!result.ok) {
     await notificationManager.showModal(

@@ -27,6 +27,7 @@ describe('Check about modal', () => {
     cy.get('@values').eq(1).contains('Parsec Cloud');
     cy.get('@values').eq(2).contains('BUSL-1.1');
     cy.get('@values').eq(3).contains('GitHub');
+    cy.wait(200);
   });
 
   it('Close with X', () => {

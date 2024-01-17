@@ -38,13 +38,15 @@ describe('Check organization list', () => {
   });
 
   it('Go to login page and enter password', () => {
+    cy.get('.organization-list-row__col').should('have.length', 5);
     cy.contains('Boby McBobFace').click();
     cy.get('.login-button').should('have.class', 'button-disabled');
     cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
     cy.get('#ms-password-input').find('input').type('P@ssw0rd.');
     cy.get('.login-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button').click();
-    cy.contains('My workspaces');
+    cy.get('.topbar-left__breadcrumb').contains('My workspaces');
+    cy.wait(200);
   });
 
   it('Go to login page and sort and filter orgs', () => {
@@ -132,10 +134,10 @@ describe('Check organization list', () => {
   it('Log into organization with command and log out', () => {
     // Uses Cypress command to simplify the log in part
     cy.login('Boby', 'P@ssw0rd.');
-    cy.contains('My workspaces');
+    cy.get('.topbar-left__breadcrumb').contains('My workspaces');
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Log out').click();
     cy.get('.ion-page').find('.ms-modal').find('ion-buttons').contains('Log out').click();
-    cy.contains('Your organizations');
+    cy.get('.organization-title').contains('Your organizations');
   });
 });

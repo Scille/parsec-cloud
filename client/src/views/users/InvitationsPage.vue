@@ -78,29 +78,27 @@ import {
   InvitationEmailSentStatus,
   InvitationErrorTag,
   UserInvitation,
-  isRoute,
   cancelInvitation as parsecCancelInvitation,
   inviteUser as parsecInviteUser,
   isAdmin as parsecIsAdmin,
   listUserInvitations as parsecListUserInvitations,
 } from '@/parsec';
-import { routerNavigateTo } from '@/router';
+import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonContent, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { Ref, inject, onMounted, onUnmounted, onUpdated, ref } from 'vue';
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const currentRoute = useRoute();
 
-const routeUnwatch = watch(currentRoute, async (newRoute) => {
-  if (newRoute.query.openInvite) {
+const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  if ('openInvite' in query) {
     await inviteUser();
   }
 });
@@ -108,19 +106,20 @@ const routeUnwatch = watch(currentRoute, async (newRoute) => {
 onMounted(async () => {
   isAdmin.value = await parsecIsAdmin();
   await refreshInvitationsList();
-  if (currentRoute.query.openInvite) {
+  const query = getCurrentRouteQuery();
+  if ((query as any).openInvite) {
     await inviteUser();
   }
 });
 
 onUpdated(async () => {
-  if (isRoute('invitations')) {
+  if (currentRouteIs(Routes.Invitations)) {
     await refreshInvitationsList();
   }
 });
 
 onUnmounted(() => {
-  routeUnwatch();
+  routeWatchCancel();
 });
 
 async function refreshInvitationsList(): Promise<void> {
@@ -221,7 +220,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   await modal.dismiss();
   await refreshInvitationsList();
   if (modalResult.role === MsModalResult.Confirm) {
-    routerNavigateTo('activeUsers', {}, { refresh: true });
+    await navigateTo(Routes.ActiveUsers, { query: { refresh: true } });
   }
 }
 

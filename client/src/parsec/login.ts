@@ -19,8 +19,8 @@ import {
   ClientInfoError,
   ClientStartError,
   ClientStopError,
+  ConnectionHandle,
   DeviceAccessStrategyPassword,
-  Handle,
   Result,
   UserProfile,
 } from '@/parsec/types';
@@ -29,7 +29,7 @@ export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());
 }
 
-export async function login(device: AvailableDevice, password: string): Promise<Result<Handle, ClientStartError>> {
+export async function login(device: AvailableDevice, password: string): Promise<Result<ConnectionHandle, ClientStartError>> {
   function parsecEventCallback(event: ClientEvent): void {
     console.log('Event received', event);
   }

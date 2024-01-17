@@ -5,6 +5,7 @@ import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientStartInvitationGreetError,
+  ConnectionHandle,
   DeviceGreetInProgress1Info,
   DeviceGreetInProgress2Info,
   DeviceGreetInProgress3Info,
@@ -12,7 +13,6 @@ import {
   DeviceGreetInitialInfo,
   DeviceLabel,
   GreetInProgressError,
-  Handle,
   InvitationEmailSentStatus,
   NewDeviceInvitationError,
   NewInvitationInfo,
@@ -21,8 +21,8 @@ import {
 import { BackendInvitationAddr, InvitationToken, SASCode, libparsec } from '@/plugins/libparsec';
 
 export class DeviceGreet {
-  handle: Handle | null;
-  canceller: Handle | null;
+  handle: ConnectionHandle | null;
+  canceller: ConnectionHandle | null;
   hostSASCode: SASCode;
   correctSASCode: SASCode;
   SASCodeChoices: SASCode[];

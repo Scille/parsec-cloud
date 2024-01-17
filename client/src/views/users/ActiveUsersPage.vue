@@ -148,7 +148,7 @@ import {
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { routerNavigateTo } from '@/router';
+import { Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
@@ -165,8 +165,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
@@ -176,7 +175,6 @@ const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
-const currentRoute = useRoute();
 
 const allUsersSelected = computed({
   // -1 to exclude the current user
@@ -218,7 +216,7 @@ function getSelectedUsers(): UserInfo[] {
 }
 
 async function inviteUser(): Promise<void> {
-  routerNavigateTo('invitations', {}, { openInvite: true });
+  await navigateTo(Routes.Invitations, { query: { openInvite: true } });
 }
 
 function onUserSelect(_user: UserInfo, _selected: boolean): void {
@@ -423,8 +421,9 @@ async function refreshUserList(): Promise<void> {
   selectAllUsers(false);
 }
 
-const routeUnwatch = watch(currentRoute, async (newRoute) => {
-  if (newRoute.query.refresh) {
+const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  if ('refresh' in query) {
     await refreshUserList();
   }
 });
@@ -440,7 +439,7 @@ onMounted(async (): Promise<void> => {
 });
 
 onUnmounted(async () => {
-  routeUnwatch();
+  routeWatchCancel();
 });
 </script>
 

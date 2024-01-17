@@ -5,9 +5,9 @@ import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientStartInvitationGreetError,
+  ConnectionHandle,
   DeviceLabel,
   GreetInProgressError,
-  Handle,
   HumanHandle,
   InvitationToken,
   Result,
@@ -21,8 +21,8 @@ import {
 import { SASCode, libparsec } from '@/plugins/libparsec';
 
 export class UserGreet {
-  handle: Handle | null;
-  canceller: Handle | null;
+  handle: ConnectionHandle | null;
+  canceller: ConnectionHandle | null;
   hostSASCode: SASCode;
   correctSASCode: SASCode;
   SASCodeChoices: SASCode[];

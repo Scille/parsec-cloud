@@ -60,7 +60,7 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
     })
     .as('window')
     // Wait App to be in the first stage of the init
-    .get('#app[app-state="waiting-for-config-path"]')
+    .get('#app[app-state="initializing"]', { timeout: 10000 })
     .get('@window')
     .then(async (windowElem) => {
       // Type cast because Cypress expects `get` to only return JQuery
@@ -78,25 +78,24 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
 });
 
 Cypress.Commands.add('login', (userName, password) => {
-  cy.contains(userName).click();
+  cy.get('.organization-list').contains(userName).click();
   cy.get('#ms-password-input').find('input').type(password);
   cy.get('.login-button').click();
+  cy.wait(200);
   cy.url().should('include', '/workspaces');
-  cy.contains('My workspaces');
+  cy.get('.topbar-left').contains('My workspaces');
 });
 
 Cypress.Commands.add('dropTestbed', () => {
-  cy.window().then((window) => {
-    cy.get('@configPath').then(async (configPath) => {
-      // Type cast because Cypress expects `get` to only return JQuery
-      await window.libparsec.testDropTestbed(configPath as unknown as string);
-    });
+  cy.window().then(async (window) => {
+    const configPath = window.getConfigDir();
+    await window.libparsec.testDropTestbed(configPath as unknown as string);
   });
 });
 
 Cypress.Commands.add('checkToastMessage', (level, title, message) => {
-  cy.get('.notification-toast').shadow().find('.toast-header').first().contains(title);
+  cy.get('.notification-toast').shadow().find('.toast-header').contains(title);
   cy.get('.notification-toast').should('have.class', `ms-${level}`);
-  cy.get('.notification-toast').shadow().find('.toast-message').first().debug().contains(message);
+  cy.get('.notification-toast').shadow().find('.toast-message').contains(message);
   cy.get('.notification-toast').shadow().find('.toast-button-confirm').first().click();
 });

@@ -135,7 +135,7 @@ import { NotificationKey } from '@/common/injectionKeys';
 import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
-import { routerNavigateTo } from '@/router';
+import { Routes, navigateTo } from '@/router';
 import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
@@ -152,7 +152,7 @@ onMounted(async () => {
 });
 
 async function goToExportRecoveryDevice(): Promise<void> {
-  routerNavigateTo('recoveryExport');
+  await navigateTo(Routes.RecoveryExport);
 }
 
 async function refreshDevicesList(): Promise<void> {
