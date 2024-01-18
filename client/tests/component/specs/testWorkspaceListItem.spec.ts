@@ -77,8 +77,8 @@ describe('Workspace List Item', () => {
 
   it('Display the workspace card', () => {
     expect(wrapper.get('.workspace-name__label').text()).to.equal('My Workspace');
-    expect(wrapper.get('.label-size').text()).to.equal('1MB');
-    expect(wrapper.get('.label-last-update').text()).to.equal('One minute ago');
+    expect(wrapper.get('.label-size').text()).to.equal('58.0 MB');
+    expect(wrapper.get('.label-last-update').text()).to.equal('May 8, 2023');
     const avatars = wrapper.get('.shared-group').findAllComponents(IonAvatar);
     expect(avatars.length).to.equal(3);
     expect(avatars.at(0).text()).to.equal('AU');

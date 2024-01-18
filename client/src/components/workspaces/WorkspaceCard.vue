@@ -30,12 +30,12 @@
 
       <ion-text class="card-content-last-update caption-caption">
         <span>{{ $t('WorkspacesPage.Workspace.lastUpdate') }}</span>
-        <span>{{ timeSince(workspace.lastUpdated, '--', 'short') }}</span>
+        <span>{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
       </ion-text>
 
       <div class="workspace-info">
         <ion-text class="label-file-size body-sm">
-          {{ fileSize(workspace.size) }}
+          {{ formatFileSize(workspace.size) }}
         </ion-text>
         <avatar-group
           v-show="workspace.sharing.length > 0"
@@ -56,12 +56,12 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
+import { formatFileSize } from '@/common/filesize';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { inject } from 'vue';
 
 defineProps<{
   workspace: WorkspaceInfo;
@@ -72,9 +72,6 @@ defineEmits<{
   (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
   (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
 }>();
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style lang="scss" scoped>

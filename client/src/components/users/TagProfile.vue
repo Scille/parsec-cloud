@@ -15,7 +15,6 @@
 import { UserProfile } from '@/parsec';
 import { translate } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 defineProps<{
   profile: UserProfile;

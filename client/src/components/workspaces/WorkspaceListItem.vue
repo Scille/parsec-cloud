@@ -52,14 +52,14 @@
     <!-- last update -->
     <div class="workspace-lastUpdate">
       <ion-label class="label-last-update cell">
-        {{ timeSince(workspace.lastUpdated, '--', 'short') }}
+        {{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}
       </ion-label>
     </div>
 
     <!-- workspace size -->
     <div class="workspace-size">
       <ion-label class="label-size cell">
-        {{ fileSize(workspace.size) }}
+        {{ formatFileSize(workspace.size) }}
       </ion-label>
     </div>
 
@@ -82,13 +82,14 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
+import { formatFileSize } from '@/common/filesize';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 
 const isSelected = ref(false);
 
@@ -101,9 +102,6 @@ defineEmits<{
   (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
   (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
 }>();
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style lang="scss" scoped>

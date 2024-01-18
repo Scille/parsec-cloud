@@ -6,8 +6,7 @@ import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
 
-// Re-export so everything can be imported from this file
-export { NotificationKey } from '@/common/injectionKeys';
+export const NotificationKey = 'notification';
 
 export enum NotificationLevel {
   Info = 'INFO',

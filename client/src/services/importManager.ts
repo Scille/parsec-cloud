@@ -5,6 +5,8 @@ import { wait } from '@/parsec/internals';
 import { Mutex } from 'async-mutex';
 import { v4 as uuid4 } from 'uuid';
 
+export const ImportManagerKey = 'importManager';
+
 enum ImportState {
   FileProgress,
   FileImported,
@@ -223,7 +225,6 @@ class ImportManager {
   }
 }
 
-export { ImportManagerKey } from '@/common/injectionKeys';
 export { ImportData, ImportManager, ImportState };
 
 /*

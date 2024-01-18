@@ -24,7 +24,6 @@
 import MsWizardStepperStep from '@/components/core/ms-stepper/MsWizardStepperStep.vue';
 import { MsStepStatus } from '@/components/core/ms-stepper/types';
 import { IonText } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 defineProps<{
   titles: string[];

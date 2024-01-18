@@ -87,7 +87,7 @@
               class="organization-info-value"
               slot="end"
             >
-              {{ fileSize(orgInfo.size.total) }}
+              {{ formatFileSize(orgInfo.size.total) }}
             </ion-label>
           </ion-item>
           <!-- Meta data -->
@@ -99,7 +99,7 @@
               class="organization-info-value"
               slot="end"
             >
-              {{ fileSize(orgInfo.size.metadata) }}
+              {{ formatFileSize(orgInfo.size.metadata) }}
             </ion-label>
           </ion-item>
         </ion-list>
@@ -193,15 +193,13 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatFileSize } from '@/common/filesize';
 import { ClientInfo, OrganizationInfo, getClientInfo, getOrganizationInfo } from '@/parsec';
 import { IonChip, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonTitle } from '@ionic/vue';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { fileSize } = inject(FormattersKey)! as Formatters;
 
 onMounted(async () => {
   const orgResult = await getOrganizationInfo();

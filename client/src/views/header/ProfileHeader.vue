@@ -35,7 +35,7 @@ import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown, personCircle } from 'ionicons/icons';
-import { defineProps, inject, ref } from 'vue';
+import { inject, ref } from 'vue';
 
 const isPopoverOpen = ref(false);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

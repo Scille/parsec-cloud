@@ -44,18 +44,18 @@
 
       <ion-text class="card-content-last-update caption-caption">
         <span>{{ $t('FoldersPage.File.lastUpdate') }}</span>
-        <span>{{ timeSince(file.updated, '--', 'short') }}</span>
+        <span>{{ formatTimeSince(file.updated, '--', 'short') }}</span>
       </ion-text>
     </div>
   </ion-item>
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import { EntryStat } from '@/parsec';
 import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -76,9 +76,6 @@ defineExpose({
   isSelected,
   props,
 });
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = inject(FormattersKey)! as Formatters;
 
 function isFileSynced(): boolean {
   return !props.file.needSync;

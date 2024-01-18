@@ -5,7 +5,7 @@ import { Locale } from '@/services/translation';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
 
-export { StorageManagerKey } from '@/common/injectionKeys';
+export const StorageManagerKey = 'storageManager';
 
 export interface StoredDeviceData {
   lastLogin: DateTime;

@@ -23,7 +23,7 @@ import { MsSorterChangeEvent, MsSorterLabels } from '@/components/core/ms-sorter
 import { MsOption, MsOptions } from '@/components/core/ms-types';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
-import { Ref, defineEmits, defineProps, ref } from 'vue';
+import { Ref, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption: any;

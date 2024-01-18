@@ -155,13 +155,12 @@ import {
 } from '@ionic/vue';
 
 import { asyncComputed } from '@/common/asyncComputed';
-import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, deviceNameValidator } from '@/common/validators';
 import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
-import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';

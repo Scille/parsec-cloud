@@ -15,7 +15,6 @@
 import { WorkspaceRole } from '@/parsec';
 import { translateWorkspaceRole } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 defineProps<{
   role: WorkspaceRole;

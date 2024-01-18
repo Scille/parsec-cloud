@@ -156,7 +156,7 @@ import { Notification, NotificationKey, NotificationLevel, NotificationManager }
 import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
-import { Ref, defineEmits, defineProps, inject, onMounted, ref } from 'vue';
+import { Ref, inject, onMounted, ref } from 'vue';
 
 enum ImportDevicePageState {
   Start = 'start',

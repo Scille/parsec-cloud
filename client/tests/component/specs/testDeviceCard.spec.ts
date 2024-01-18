@@ -4,8 +4,18 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { vi } from 'vitest';
 
 describe('Device Card', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('Display current device', () => {
     const wrapper = mount(DeviceCard, {
       // we are forced to attached the component to a domElement for isVisible to work properly
@@ -22,7 +32,7 @@ describe('Device Card', () => {
     });
 
     expect(wrapper.get('.device-name').text()).to.equal('My Device');
-    expect(wrapper.get('.join-date').text()).to.equal('Joined: One minute ago');
+    expect(wrapper.get('.join-date').text()).to.equal('Joined: Today');
     expect(wrapper.get('.badge').isVisible()).to.be.true;
     expect(wrapper.get('.badge').text()).to.equal('Current');
   });
@@ -43,7 +53,7 @@ describe('Device Card', () => {
     });
 
     expect(wrapper.get('.device-name').text()).to.equal('My Other Device');
-    expect(wrapper.get('.join-date').text()).to.equal('Joined: One minute ago');
+    expect(wrapper.get('.join-date').text()).to.equal('Joined: Today');
     expect((wrapper.vm as any).isCurrent).to.be.false;
     expect(wrapper.get('.badge').isVisible()).to.be.false;
   });

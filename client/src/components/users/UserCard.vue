@@ -49,7 +49,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserInfo } from '@/parsec';
 import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { defineEmits, defineExpose, defineProps, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
