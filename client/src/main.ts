@@ -23,10 +23,7 @@ import '@ionic/vue/css/padding.css';
 import '@ionic/vue/css/text-alignment.css';
 import '@ionic/vue/css/text-transformation.css';
 
-import { formatTimeSince } from '@/common/date';
-import { formatFileSize } from '@/common/filesize';
-import { FormattersKey, NotificationKey, StorageManagerKey } from '@/common/injectionKeys';
-import { Config, StorageManager } from '@/services/storageManager';
+import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
@@ -35,7 +32,7 @@ import { Answer, askQuestion } from '@/components/core';
 import { isElectron } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
-import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
@@ -60,10 +57,6 @@ async function setupApp(): Promise<void> {
     .use(router)
     .use(i18n);
 
-  app.provide(FormattersKey, {
-    timeSince: formatTimeSince,
-    fileSize: formatFileSize,
-  });
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationManager);
   app.provide(ImportManagerKey, importManager);

@@ -34,7 +34,7 @@
             {{ $t('FileDetails.stats.size') }}
           </ion-label>
           <ion-text class="file-info-value">
-            {{ fileSize((entry as EntryStatFile).size) }}
+            {{ formatFileSize((entry as EntryStatFile).size) }}
           </ion-text>
         </ion-item>
         <!-- Created -->
@@ -87,15 +87,10 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatFileSize } from '@/common/filesize';
 import { MsModal } from '@/components/core';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonItem, IonLabel, IonPage, IonText } from '@ionic/vue';
-import {} from 'ionicons/icons';
-import { inject } from 'vue';
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { fileSize } = inject(FormattersKey)! as Formatters;
 
 defineProps<{
   entry: EntryStat;

@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import { IonButton, IonIcon } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 defineProps<{
   buttonLabel?: any;

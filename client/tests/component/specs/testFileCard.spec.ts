@@ -5,8 +5,18 @@ import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { vi } from 'vitest';
 
 describe('File Card Item', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('Display item for file', () => {
     const FILE: EntryStatFile = {
       tag: FileType.File,
@@ -34,7 +44,7 @@ describe('File Card Item', () => {
     });
 
     expect(wrapper.get('.card-content__title').text()).to.equal('A File.txt');
-    expect(wrapper.get('.card-content-last-update').text()).to.equal('Last updated:One minute ago');
+    expect(wrapper.get('.card-content-last-update').text()).to.equal('Last updated:one second ago');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(FILE);
@@ -70,7 +80,7 @@ describe('File Card Item', () => {
     });
 
     expect(wrapper.get('.card-content__title').text()).to.equal('A Folder');
-    expect(wrapper.get('.card-content-last-update').text()).to.equal('Last updated:One minute ago');
+    expect(wrapper.get('.card-content-last-update').text()).to.equal('Last updated:one second ago');
     // expect(wrapper.get('.label-size')).not.to.be.visible;
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);

@@ -16,7 +16,7 @@
     <!-- invitation date -->
     <div class="invitation-date">
       <ion-label class="cell invitation-label">
-        <span>{{ timeSince(invitation.createdOn, '--', 'short') }}</span>
+        <span>{{ formatTimeSince(invitation.createdOn, '--', 'short') }}</span>
       </ion-label>
     </div>
 
@@ -58,12 +58,12 @@
 
 <script setup lang="ts">
 import { writeTextToClipboard } from '@/common/clipboard';
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate, translateInvitationStatus } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
-import { defineProps, inject } from 'vue';
+import { inject } from 'vue';
 
 defineProps<{
   invitation: UserInvitation;
@@ -74,9 +74,6 @@ defineEmits<{
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = inject(FormattersKey)! as Formatters;
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 async function copyLink(invitation: UserInvitation): Promise<void> {

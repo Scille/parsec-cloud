@@ -20,7 +20,6 @@
 
 <script setup lang="ts">
 import { IonAvatar } from '@ionic/vue';
-import { defineProps } from 'vue';
 
 defineProps<{
   people: string[];

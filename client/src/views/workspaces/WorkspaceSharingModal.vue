@@ -45,11 +45,10 @@
 </template>
 
 <script setup lang="ts">
-import { NotificationKey } from '@/common/injectionKeys';
 import { MsInput, MsModal } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
-import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate, translateWorkspaceRole } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';

@@ -117,14 +117,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
-
-import { StorageManagerKey } from '@/common/injectionKeys';
 import { MsDropdown, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
-import { Config, StorageManager } from '@/services/storageManager';
+import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { Locale, changeLocale, translate } from '@/services/translation';
 import { toggleDarkMode } from '@/states/darkMode';
+import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 

@@ -33,7 +33,6 @@
 import { MsStepStatus } from '@/components/core/ms-stepper/types';
 import { IonIcon } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
-import { defineProps } from 'vue';
 
 defineProps<{
   status: MsStepStatus;

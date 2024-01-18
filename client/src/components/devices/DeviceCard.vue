@@ -15,7 +15,7 @@
       </ion-text>
       <ion-text class="join-date body-sm">
         {{ $t('DevicesPage.joinedOn') }}
-        {{ timeSince(date, '--', 'short', true) }}
+        {{ formatTimeSince(date, '--', 'short', true) }}
       </ion-text>
     </div>
 
@@ -30,14 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import { IonIcon, IonText } from '@ionic/vue';
 import { desktopOutline } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { defineProps, inject } from 'vue';
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = inject(FormattersKey)! as Formatters;
 
 defineProps<{
   label: string;

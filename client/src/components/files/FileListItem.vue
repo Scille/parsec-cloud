@@ -55,7 +55,7 @@
     <!-- last update -->
     <div class="file-lastUpdate">
       <ion-label class="label-last-update cell">
-        {{ timeSince(file.updated, '--', 'short') }}
+        {{ formatTimeSince(file.updated, '--', 'short') }}
       </ion-label>
     </div>
 
@@ -65,7 +65,7 @@
         v-show="file.isFile()"
         class="label-size cell"
       >
-        {{ fileSize((file as EntryStatFile).size) }}
+        {{ formatFileSize((file as EntryStatFile).size) }}
       </ion-label>
     </div>
 
@@ -88,12 +88,13 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
+import { formatFileSize } from '@/common/filesize';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -115,9 +116,6 @@ defineExpose({
   isSelected,
   props,
 });
-
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince, fileSize } = inject(FormattersKey)! as Formatters;
 
 function getFileIcon(): string {
   if (!props.file.isFile()) {

@@ -66,7 +66,9 @@
                           {{ $t('HomePage.organizationList.lastLogin') }}
                         </p>
                         <p>
-                          {{ device.slug in storedDeviceDataDict ? timeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--' }}
+                          {{
+                            device.slug in storedDeviceDataDict ? formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
+                          }}
                         </p>
                       </ion-col>
                     </ion-row>
@@ -82,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, listAvailableDevices } from '@/parsec';
@@ -102,7 +104,6 @@ const emits = defineEmits<{
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
-const { timeSince } = inject(FormattersKey)! as Formatters;
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 const searchQuery = ref('');

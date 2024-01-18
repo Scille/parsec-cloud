@@ -33,7 +33,7 @@ import { MsDropdownChangeEvent } from '@/components/core/ms-dropdown/types';
 import { MsAppearance, MsOption, MsOptions } from '@/components/core/ms-types';
 import { IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
 import { caretDown, chevronDown } from 'ionicons/icons';
-import { Ref, defineEmits, defineProps, ref } from 'vue';
+import { Ref, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption?: any;

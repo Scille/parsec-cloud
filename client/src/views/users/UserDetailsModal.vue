@@ -37,7 +37,7 @@
             {{ $t('UsersPage.UserDetailsModal.subtitles.joined') }}
           </ion-text>
           <ion-text class="details-item__text body-lg">
-            {{ timeSince(user.createdOn, '--', 'short') }}
+            {{ formatTimeSince(user.createdOn, '--', 'short') }}
           </ion-text>
         </div>
       </div>
@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
@@ -91,9 +91,8 @@ import { Notification, NotificationKey, NotificationLevel, NotificationManager }
 import { translate } from '@/services/translation';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
-import { Ref, defineProps, inject, onMounted, ref } from 'vue';
+import { Ref, inject, onMounted, ref } from 'vue';
 
-const { timeSince } = inject(FormattersKey)! as Formatters;
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 

@@ -48,7 +48,7 @@
     <!-- user joined on -->
     <div class="user-join">
       <ion-label class="user-join-label cell">
-        {{ timeSince(user.createdOn, '--', 'short') }}
+        {{ formatTimeSince(user.createdOn, '--', 'short') }}
       </ion-label>
     </div>
 
@@ -71,13 +71,13 @@
 </template>
 
 <script setup lang="ts">
-import { Formatters, FormattersKey } from '@/common/injectionKeys';
+import { formatTimeSince } from '@/common/date';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserInfo } from '@/parsec';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 
 const isHovered = ref(false);
 const isSelected = ref(false);
@@ -111,8 +111,6 @@ async function onOptionsClick(event: Event): Promise<void> {
     menuOpened.value = false;
   });
 }
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const { timeSince } = inject(FormattersKey)! as Formatters;
 </script>
 
 <style scoped lang="scss">

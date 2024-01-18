@@ -131,12 +131,11 @@
 </template>
 
 <script setup lang="ts">
-import { NotificationKey } from '@/common/injectionKeys';
 import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';

@@ -35,7 +35,6 @@ import { UserInvitation } from '@/parsec';
 import { translateInvitationStatus } from '@/services/translation';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { time } from 'ionicons/icons';
-import { defineProps } from 'vue';
 
 defineProps<{
   invitation: UserInvitation;

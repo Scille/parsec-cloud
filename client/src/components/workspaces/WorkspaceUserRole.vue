@@ -25,7 +25,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { translateWorkspaceRole } from '@/services/translation';
-import { computed, defineEmits, defineProps } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
   user: UserTuple;

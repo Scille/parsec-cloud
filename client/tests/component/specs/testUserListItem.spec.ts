@@ -5,8 +5,18 @@ import { UserInfo, UserProfile } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { vi } from 'vitest';
 
 describe('User List Item', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('Display item for user', () => {
     const USER: UserInfo = {
       id: '0',
@@ -44,7 +54,7 @@ describe('User List Item', () => {
     expect(wrapper.get('.user-name__label').text()).to.equal('JoJohn Smith');
     expect(wrapper.get('.user-email__label').text()).to.equal('john.smith@gmail.com');
     expect(wrapper.get('.user-profile').text()).to.equal('UserProfileStandard');
-    expect(wrapper.get('.user-join-label').text()).to.equal('One minute ago');
+    expect(wrapper.get('.user-join-label').text()).to.equal('one second ago');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);

@@ -55,12 +55,11 @@
 </template>
 
 <script setup lang="ts">
-import { NotificationKey } from '@/common/injectionKeys';
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, login as parsecLogin } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
-import { Notification, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';

@@ -1,24 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { mockValidators } from '@tests/component/support/mocks';
+
+mockValidators();
+
 import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator, organizationValidator } from '@/common/validators';
-import { vi } from 'vitest';
 
 const VALID_TOKEN = 'a'.repeat(32);
 
 describe('Validators', () => {
-  beforeEach(async () => {
-    vi.mock('@/parsec', () => {
-      return {
-        isValidOrganizationName: async (_value: string): Promise<boolean> => {
-          return false;
-        },
-        parseBackendAddr: async (_value: string): Promise<any> => {
-          return { ok: false, error: 'error' };
-        },
-      };
-    });
-  });
-
   it('Validates organization name', async () => {
     const invalidNameResult = await organizationValidator('Org#');
     expect(invalidNameResult.reason).to.equal('Only letters, digits, underscores and hyphens. No spaces.');

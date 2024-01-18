@@ -7,7 +7,6 @@
 
 <script setup lang="ts">
 import { Position } from '@/transitions/types';
-import { defineProps } from 'vue';
 
 const props = defineProps<{
   appearFrom: Position;
