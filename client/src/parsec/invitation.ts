@@ -68,8 +68,9 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     });
     return result as any;
   } else {
-    return new Promise<Result<Array<UserInvitation>, ListInvitationsError>>((resolve, _reject) => {
-      const ret: Array<UserInvitation> = [
+    return {
+      ok: true,
+      value: [
         {
           tag: InviteListItemTag.User,
           addr: 'parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
@@ -86,9 +87,8 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
           claimerEmail: 'gale@waterdeep.faerun',
           status: InvitationStatus.Ready,
         },
-      ];
-      resolve({ ok: true, value: ret });
-    });
+      ],
+    };
   }
 }
 

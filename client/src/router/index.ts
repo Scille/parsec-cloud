@@ -3,6 +3,7 @@
 export * from '@/router/checks';
 export * from '@/router/navigation';
 export {
+  getConnectionHandle,
   getCurrentRouteName,
   getCurrentRouteParams,
   getCurrentRouteQuery,
@@ -12,3 +13,4 @@ export {
   getWorkspaceId,
 } from '@/router/params';
 export * from '@/router/types';
+export { watchOrganizationSwitch, watchRoute } from '@/router/watchers';

@@ -61,8 +61,11 @@
                       class="card-content__body"
                     />
                     <ion-row class="card-content__footer">
-                      <ion-col size="auto">
-                        <p>
+                      <ion-col
+                        size="auto"
+                        v-show="!isDeviceLoggedIn(device)"
+                      >
+                        <p class="body-sm">
                           {{ $t('HomePage.organizationList.lastLogin') }}
                         </p>
                         <p>
@@ -70,6 +73,16 @@
                             device.slug in storedDeviceDataDict ? formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
                           }}
                         </p>
+                      </ion-col>
+                      <ion-col
+                        v-show="isDeviceLoggedIn(device)"
+                        class="body connected"
+                      >
+                        <ion-icon
+                          :icon="ellipse"
+                          class="success"
+                        />
+                        {{ $t('HomePage.organizationList.loggedIn') }}
                       </ion-col>
                     </ion-row>
                   </ion-grid>
@@ -87,11 +100,12 @@
 import { formatTimeSince } from '@/common/date';
 import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, listAvailableDevices } from '@/parsec';
+import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow, IonText, popoverController } from '@ionic/vue';
+import { ellipse } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 
@@ -325,6 +339,17 @@ const filteredDevices = computed(() => {
         border-top: 1px solid var(--parsec-color-light-secondary-disabled);
         color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
+
+        .connected {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          .success {
+            color: var(--parsec-color-light-success-700);
+            font-size: 0.675rem;
+          }
+        }
       }
 
       &:hover {

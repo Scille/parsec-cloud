@@ -85,7 +85,8 @@
             "sortByUserName": "User Name",
             "sortByLastLogin": "Last login",
             "labelSortBy": "Sort by",
-            "search": "Search"
+            "search": "Search",
+            "loggedIn": "Logged in"
         },
         "noExistingOrganization": {
             "title": "Need to create or join an organization?",
@@ -1187,5 +1188,9 @@
             "missingToken": "Link doesn't include a token.",
             "invalidToken": "Link contains an invalid token."
         }
+    },
+    "OrganizationSwitch": {
+        "loggedInOrgs": "Connected organization",
+        "myOrgs": "My organizations"
     }
 }

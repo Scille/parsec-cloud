@@ -25,6 +25,29 @@ import {
   UserProfile,
 } from '@/parsec/types';
 
+export interface LoggedInDeviceInfo {
+  handle: ConnectionHandle;
+  device: AvailableDevice;
+}
+
+const loggedInDevices: Array<LoggedInDeviceInfo> = [];
+
+export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
+  return loggedInDevices;
+}
+
+export function isDeviceLoggedIn(device: AvailableDevice): boolean {
+  return loggedInDevices.find((info) => info.device.slug === device.slug) !== undefined;
+}
+
+export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | null {
+  const info = loggedInDevices.find((info) => info.device.slug === device.slug);
+  if (info) {
+    return info.handle;
+  }
+  return null;
+}
+
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());
 }
@@ -34,6 +57,11 @@ export async function login(device: AvailableDevice, password: string): Promise<
     console.log('Event received', event);
   }
 
+  const info = loggedInDevices.find((info) => info.device.slug === device.slug);
+  if (info !== undefined) {
+    return { ok: true, value: info.handle };
+  }
+
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
     const strategy: DeviceAccessStrategyPassword = {
@@ -41,9 +69,14 @@ export async function login(device: AvailableDevice, password: string): Promise<
       password: password,
       keyFile: device.keyFilePath,
     };
-    return await libparsec.clientStart(clientConfig, parsecEventCallback, strategy);
+    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, strategy);
+    if (result.ok) {
+      loggedInDevices.push({ handle: result.value, device: device });
+    }
+    return result;
   } else {
     if (password === 'P@ssw0rd.' || password === 'AVeryL0ngP@ssw0rd') {
+      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device });
       return { ok: true, value: DEFAULT_HANDLE };
     }
     return {
@@ -60,8 +93,19 @@ export async function logout(): Promise<Result<null, ClientStopError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
-    return await libparsec.clientStop(handle);
+    const result = await libparsec.clientStop(handle);
+    if (result.ok) {
+      const index = loggedInDevices.findIndex((info) => info.handle === handle);
+      if (index !== -1) {
+        loggedInDevices.splice(index, 1);
+      }
+    }
+    return result;
   } else {
+    const index = loggedInDevices.findIndex((info) => info.handle === handle);
+    if (index !== -1) {
+      loggedInDevices.splice(index, 1);
+    }
     return { ok: true, value: null };
   }
 }

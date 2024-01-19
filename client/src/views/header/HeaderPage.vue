@@ -7,7 +7,7 @@
         <!-- icon visible when menu is hidden -->
         <ion-buttons slot="start">
           <ion-button
-            v-if="!isPlatform('mobile') && !isSidebarMenuVisible()"
+            v-if="!isMobile() && !isSidebarMenuVisible()"
             slot="icon-only"
             id="trigger-toggle-menu-button"
             class="ion-hide-lg-down topbar-button__item"
@@ -62,7 +62,7 @@
           <div class="topbar-button__list">
             <ion-button
               v-show="false"
-              v-if="!isPlatform('mobile')"
+              v-if="!isMobile()"
               slot="icon-only"
               id="trigger-search-button"
               class="topbar-button__item"
@@ -73,7 +73,7 @@
               />
             </ion-button>
             <ion-button
-              v-if="!isPlatform('mobile')"
+              v-if="!isMobile()"
               slot="icon-only"
               id="trigger-notifications-button"
               class="topbar-button__item"
@@ -105,7 +105,7 @@
 <script setup lang="ts">
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { ClientInfo, Path, WorkspaceName, getClientInfo, getWorkspaceName } from '@/parsec';
+import { ClientInfo, Path, WorkspaceName, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
 import {
   Routes,
   currentRouteIs,
@@ -133,7 +133,6 @@ import {
   IonPage,
   IonRouterOutlet,
   IonToolbar,
-  isPlatform,
   popoverController,
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
@@ -145,6 +144,12 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
+  const result = await getClientInfo();
+  if (result.ok) {
+    userInfo.value = result.value;
+  } else {
+    console.log('Could not get user info', result.error);
+  }
   await updateRoute();
 });
 
