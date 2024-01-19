@@ -237,6 +237,9 @@ const fileImports: Ref<Array<FileImport>> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
   const newPath = getDocumentPath();
+  if (newPath === '') {
+    return;
+  }
   if (newPath !== currentPath.value) {
     currentPath.value = newPath;
   }
@@ -260,6 +263,10 @@ const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
 onMounted(async () => {
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
+  const path = getDocumentPath();
+  if (path !== '') {
+    currentPath.value = path;
+  }
   await listFolder();
 });
 

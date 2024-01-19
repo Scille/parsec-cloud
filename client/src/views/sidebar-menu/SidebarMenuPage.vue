@@ -15,8 +15,12 @@
           <div v-show="!currentRouteIsOrganizationManagementRoute()">
             <!-- active organization -->
             <ion-card class="organization-card">
-              <ion-card-header class="organization-card__header">
-                <div class="organization-card__container">
+              <ion-card-header
+                class="organization-card-header"
+                :class="{ 'organization-card-header-hover': isDesktop() }"
+                @click="openOrganizationChoice($event)"
+              >
+                <div class="header-container">
                   <ion-avatar class="orga-avatar">
                     <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
                   </ion-avatar>
@@ -29,17 +33,16 @@
                     </ion-card-title>
                   </div>
                 </div>
-                <!-- Keep it hidden for now since we have no way of switching org -->
                 <div
-                  class="organization-card__icon"
-                  v-show="false"
+                  class="header-icon"
+                  v-show="isDesktop()"
                 >
                   <ms-image :image="CaretExpand" />
                 </div>
               </ion-card-header>
 
               <div
-                class="organization-card__manageBtn"
+                class="organization-card-manageBtn"
                 v-show="userInfo && userInfo.currentProfile != UserProfile.Outsider"
                 @click="navigateTo(Routes.ActiveUsers)"
               >
@@ -209,11 +212,14 @@
 </template>
 
 <script setup lang="ts">
-import { CaretExpand, MsImage } from '@/components/core';
+import { CaretExpand, MsImage, MsOption } from '@/components/core';
+import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import {
   ClientInfo,
   UserProfile,
   WorkspaceInfo,
+  getLoggedInDevices,
+  isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
@@ -225,7 +231,10 @@ import {
   currentRouteIsWorkspaceRoute,
   navigateTo,
   navigateToWorkspace,
+  switchOrganization,
+  watchOrganizationSwitch,
 } from '@/router';
+import { getConnectionHandle } from '@/router/params';
 import useSidebarMenu from '@/services/sidebarMenu';
 import {
   GestureDetail,
@@ -248,6 +257,7 @@ import {
   IonText,
   createGesture,
   menuController,
+  popoverController,
 } from '@ionic/vue';
 import { business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
 import { Ref, WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -259,7 +269,7 @@ const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu()
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
 // watching wasReset value
-const unwatch: WatchStopHandle = watch(wasReset, (value) => {
+const resetWatchCancel: WatchStopHandle = watch(wasReset, (value) => {
   if (value) {
     resizeMenu(defaultWidth);
     wasReset.value = false;
@@ -276,7 +286,9 @@ async function goToWorkspaceList(): Promise<void> {
   await menuController.close();
 }
 
-onMounted(async () => {
+const organizationWatchCancel = watchOrganizationSwitch(loadAll);
+
+async function loadAll(): Promise<void> {
   const infoResult = await parsecGetClientInfo();
 
   if (infoResult.ok) {
@@ -285,6 +297,16 @@ onMounted(async () => {
     console.log('Failed to get user info', infoResult.error);
   }
 
+  const result = await parsecListWorkspaces();
+  if (result.ok) {
+    workspaces.value = result.value;
+  } else {
+    console.log('Failed to list workspaces', result.error);
+  }
+}
+
+onMounted(async () => {
+  await loadAll();
   if (divider.value) {
     const gesture = createGesture({
       gestureName: 'resize-menu',
@@ -294,16 +316,11 @@ onMounted(async () => {
     });
     gesture.enable();
   }
-  const result = await parsecListWorkspaces();
-  if (result.ok) {
-    workspaces.value = result.value;
-  } else {
-    console.log('Failed to list workspaces', result.error);
-  }
 });
 
 onUnmounted(() => {
-  unwatch();
+  resetWatchCancel();
+  organizationWatchCancel();
 });
 
 function onMove(detail: GestureDetail): void {
@@ -325,6 +342,36 @@ function onEnd(): void {
 
 function resizeMenu(newWidth: number): void {
   document.documentElement.style.setProperty('--parsec-sidebar-menu-width', `${newWidth}px`);
+}
+
+async function openOrganizationChoice(event: Event): Promise<void> {
+  if (!isDesktop()) {
+    return;
+  }
+  const result = await getLoggedInDevices();
+  const options: Array<MsOption> = result.map((info) => {
+    return {
+      label: info.device.organizationId,
+      description: info.device.humanHandle.label,
+      disabled: getConnectionHandle() === info.handle,
+      key: info.handle,
+    };
+  });
+  options.push({ label: 'Mes organisations', disabled: false, key: null });
+
+  const popover = await popoverController.create({
+    component: OrganizationSwitchPopover,
+    cssClass: 'dropdown-popover',
+    event: event,
+    alignment: 'end',
+    showBackdrop: false,
+  });
+  await popover.present();
+  const { data } = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (data) {
+    switchOrganization(data.handle);
+  }
 }
 </script>
 
@@ -381,18 +428,23 @@ function resizeMenu(newWidth: number): void {
   }
 }
 
+.organization-card-header-hover:hover {
+  cursor: pointer;
+  background: var(--parsec-color-light-primary-30-opacity15);
+}
+
 .organization-card {
   --background: var(--parsec-color-light-primary-30-opacity15);
   box-shadow: none;
   margin: 0;
 
-  &__header {
+  &-header {
     display: flex;
     justify-content: space-between;
     flex-direction: row;
   }
 
-  &__container {
+  .header-container {
     box-shadow: none;
     display: flex;
     align-items: center;
@@ -440,25 +492,14 @@ function resizeMenu(newWidth: number): void {
     }
   }
 
-  &__icon {
+  .header-icon {
     white-space: nowrap;
     display: flex;
     align-items: center;
-    background-color: var(--parsec-color-light-primary-800);
-    position: relative;
-    z-index: 2;
-
-    &::before {
-      content: '';
-      height: 100%;
-      width: 100%;
-      position: absolute;
-      z-index: -1;
-      background-color: var(--parsec-color-light-primary-30-opacity15);
-    }
+    background-color: transparent;
   }
 
-  &__manageBtn {
+  &-manageBtn {
     padding: 0.625em 1em;
     cursor: pointer;
     align-items: center;

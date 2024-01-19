@@ -85,7 +85,8 @@
             "sortByUserName": "Nom d'utilisateur",
             "sortByLastLogin": "Dernière connexion",
             "labelSortBy": "Trier par",
-            "search": "Rechercher"
+            "search": "Rechercher",
+            "loggedIn": "Connecté"
         },
         "noExistingOrganization": {
             "title": "Besoin de créer ou rejoindre une organisation ?",
@@ -1187,5 +1188,9 @@
             "missingToken": "Le lien n'inclut pas de jeton.",
             "invalidToken": "Le lien contient un jeton invalide."
         }
+    },
+    "OrganizationSwitch": {
+        "loggedInOrgs": "Organisations connectées",
+        "myOrgs": "Mes organisations"
     }
 }

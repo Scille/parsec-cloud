@@ -260,6 +260,7 @@ async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promis
   });
   await modal.present();
   await modal.onWillDismiss();
+  await refreshWorkspacesList();
 }
 
 async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import { Ref, WatchStopHandle, watch } from 'vue';
+import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
 
 export enum Routes {
@@ -133,9 +133,4 @@ export function getRouter(): Router {
 
 export function getCurrentRoute(): Ref<RouteLocationNormalizedLoaded> {
   return (router as Router).currentRoute;
-}
-
-export function watchRoute(callback: () => Promise<void>): WatchStopHandle {
-  const currentRoute = getCurrentRoute();
-  return watch(currentRoute, callback);
 }

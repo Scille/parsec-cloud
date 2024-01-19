@@ -57,8 +57,8 @@
 <script setup lang="ts">
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
-import { AvailableDevice, login as parsecLogin } from '@/parsec';
-import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
+import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin } from '@/parsec';
+import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -155,8 +155,13 @@ async function backToOrganizations(): Promise<void> {
 }
 
 function onOrganizationSelected(device: AvailableDevice): void {
-  selectedDevice.value = device;
-  state.value = HomePageState.Login;
+  if (isDeviceLoggedIn(device)) {
+    const handle = getDeviceHandle(device);
+    switchOrganization(handle, false);
+  } else {
+    selectedDevice.value = device;
+    state.value = HomePageState.Login;
+  }
 }
 
 async function login(device: AvailableDevice, password: string): Promise<void> {
