@@ -29,6 +29,7 @@ def db_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
             "--db",
             required=True,
             envvar="PARSEC_DB",
+            show_envvar=True,
             metavar="URL",
             help="""Database configuration.
 Allowed values:
@@ -43,6 +44,7 @@ Allowed values:
             default=5,
             show_default=True,
             envvar="PARSEC_DB_MIN_CONNECTIONS",
+            show_envvar=True,
             help="Minimal number of connections to the database if using PostgreSQL",
         ),
         click.option(
@@ -50,6 +52,7 @@ Allowed values:
             default=7,
             show_default=True,
             envvar="PARSEC_DB_MAX_CONNECTIONS",
+            show_envvar=True,
             help="Maximum number of connections to the database if using PostgreSQL",
         ),
     ]
@@ -207,6 +210,7 @@ def blockstore_backend_options(fn: Callable[P, T]) -> Callable[P, T]:
             multiple=True,
             callback=lambda ctx, param, value: _parse_blockstore_params(value),
             envvar="PARSEC_BLOCKSTORE",
+            show_envvar=True,
             metavar="CONFIG",
             help="""Blockstore configuration.
 Allowed values:

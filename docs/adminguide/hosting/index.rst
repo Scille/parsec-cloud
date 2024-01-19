@@ -158,6 +158,21 @@ Create the file ``parsec.env`` with the following content to configure the ``par
   :language: ini
   :linenos:
 
+.. note::
+
+  To see the full list of environment variables that you can use to configure Parsec, you can run:
+
+  .. code-block:: bash
+
+    python -m parsec.cli backend run --help
+
+  Look for the sections ``[env var: VARIABLE]`` next to each configuration option. For example:
+
+  .. code-block:: bash
+
+    --administration-token TOKEN    Secret token to access the Administration API
+                                    [env var: PARSEC_ADMINISTRATION_TOKEN; required]
+
 The docker-compose file
 -----------------------
 
