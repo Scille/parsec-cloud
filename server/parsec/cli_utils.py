@@ -194,6 +194,7 @@ def logging_config_options(
             default=default_log_level,
             show_default=True,
             envvar="PARSEC_LOG_LEVEL",
+            show_envvar=True,
         )
         @click.option(
             "--log-format",
@@ -202,9 +203,15 @@ def logging_config_options(
             default="CONSOLE",
             show_default=True,
             envvar="PARSEC_LOG_FORMAT",
+            show_envvar=True,
         )
         @click.option(
-            "--log-file", "-o", default=None, envvar="PARSEC_LOG_FILE", help="[default: stderr]"
+            "--log-file",
+            "-o",
+            default=None,
+            envvar="PARSEC_LOG_FILE",
+            show_envvar=True,
+            help="[default: stderr]",
         )
         @wraps(fn)
         def wrapper(
@@ -255,12 +262,14 @@ def sentry_config_options(
             "--sentry-dsn",
             metavar="URL",
             envvar="PARSEC_SENTRY_DSN",
+            show_envvar=True,
             help="Sentry Data Source Name for telemetry report",
         )
         @click.option(
             "--sentry-environment",
             metavar="NAME",
             envvar="PARSEC_SENTRY_ENVIRONMENT",
+            show_envvar=True,
             default="production",
             show_default=True,
             help="Sentry environment for telemetry report",

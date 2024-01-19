@@ -29,6 +29,7 @@ def _validate_postgres_db_url(ctx: Any, param: Any, value: str) -> str:
     required=True,
     callback=_validate_postgres_db_url,
     envvar="PARSEC_DB",
+    show_envvar=True,
     help="PostgreSQL database url",
 )
 @click.option("--dry-run", is_flag=True)

@@ -94,6 +94,7 @@ For instance:
     default="127.0.0.1",
     show_default=True,
     envvar="PARSEC_HOST",
+    show_envvar=True,
     help="Host to listen on",
 )
 @click.option(
@@ -103,6 +104,7 @@ For instance:
     type=int,
     show_default=True,
     envvar="PARSEC_PORT",
+    show_envvar=True,
     help="Port to listen on",
 )
 @db_backend_options
@@ -111,6 +113,7 @@ For instance:
     default=10,
     show_default=True,
     envvar="PARSEC_MAXIMUM_DATABASE_CONNECTION_ATTEMPTS",
+    show_envvar=True,
     help="Maximum number of attempts at connecting to the database (0 means never retry)",
 )
 @click.option(
@@ -119,6 +122,7 @@ For instance:
     default=1.0,
     show_default=True,
     envvar="PARSEC_PAUSE_BEFORE_RETRY_DATABASE_CONNECTION",
+    show_envvar=True,
     help="Number of seconds before a new attempt at connecting to the database",
 )
 @blockstore_backend_options
@@ -126,12 +130,14 @@ For instance:
     "--administration-token",
     required=True,
     envvar="PARSEC_ADMINISTRATION_TOKEN",
+    show_envvar=True,
     metavar="TOKEN",
-    help="Secret token to access the administration api",
+    help="Secret token to access the Administration API",
 )
 @click.option(
     "--spontaneous-organization-bootstrap",
     envvar="PARSEC_SPONTANEOUS_ORGANIZATION_BOOTSTRAP",
+    show_envvar=True,
     is_flag=True,
     help="""Allow organization bootstrap without prior creation.
 
@@ -147,6 +153,7 @@ reservation and change the bootstrap token)
 @click.option(
     "--organization-bootstrap-webhook",
     envvar="PARSEC_ORGANIZATION_BOOTSTRAP_WEBHOOK",
+    show_envvar=True,
     metavar="URL",
     help="""URL to notify 3rd party service that a new organization has been bootstrapped.
 
@@ -158,12 +165,14 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--organization-initial-active-users-limit",
     envvar="PARSEC_ORGANIZATION_INITIAL_ACTIVE_USERS_LIMIT",
+    show_envvar=True,
     help="Non-revoked users limit used to configure newly created organizations (default: no limit)",
     type=int,
 )
 @click.option(
     "--organization-initial-user-profile-outsider-allowed",
     envvar="PARSEC_ORGANIZATION_INITIAL_USER_PROFILE_OUTSIDER_ALLOWED",
+    show_envvar=True,
     help="Allow the outsider profiles for the newly created organizations (default: True)",
     default=True,
     type=bool,
@@ -171,6 +180,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--backend-addr",
     envvar="PARSEC_BACKEND_ADDR",
+    show_envvar=True,
     required=True,
     metavar="URL",
     type=BackendAddr.from_url,
@@ -179,12 +189,14 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--email-host",
     envvar="PARSEC_EMAIL_HOST",
+    show_envvar=True,
     required=True,
     help="The host to use for sending email, set to `MOCKED` to output emails to temporary file",
 )
 @click.option(
     "--email-port",
     envvar="PARSEC_EMAIL_PORT",
+    show_envvar=True,
     type=int,
     default=25,
     show_default=True,
@@ -198,6 +210,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--email-host-password",
     envvar="PARSEC_EMAIL_HOST_PASSWORD",
+    show_envvar=True,
     help=(
         "Password to use for the SMTP server defined in EMAIL_HOST."
         " This setting is used in conjunction with EMAIL_HOST_USER when authenticating to the SMTP server."
@@ -206,6 +219,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--email-use-ssl",
     envvar="PARSEC_EMAIL_USE_SSL",
+    show_envvar=True,
     is_flag=True,
     help=(
         "Whether to use a TLS (secure) connection when talking to the SMTP server."
@@ -215,6 +229,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--email-use-tls",
     envvar="PARSEC_EMAIL_USE_TLS",
+    show_envvar=True,
     is_flag=True,
     help=(
         "Whether to use an implicit TLS (secure) connection when talking to the SMTP server."
@@ -227,6 +242,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 @click.option(
     "--email-sender",
     envvar="PARSEC_EMAIL_SENDER",
+    show_envvar=True,
     metavar="EMAIL",
     help="Sender address used in sent emails",
 )
@@ -237,6 +253,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     default=None,
     callback=lambda ctx, param, value: _parse_forward_proto_enforce_https_check_param(value),
     envvar="PARSEC_FORWARD_PROTO_ENFORCE_HTTPS",
+    show_envvar=True,
     help=(
         "Enforce HTTPS by redirecting incoming request that do not comply with the provided header."
         " This is useful when running Parsec behind a forward proxy handing the SSL layer."
@@ -249,12 +266,14 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     "--ssl-keyfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_KEYFILE",
+    show_envvar=True,
     help="SSL key file. This setting enables serving Parsec over SSL.",
 )
 @click.option(
     "--ssl-certfile",
     type=click.Path(exists=True, dir_okay=False),
     envvar="PARSEC_SSL_CERTFILE",
+    show_envvar=True,
     help="SSL certificate file. This setting enables serving Parsec over SSL.",
 )
 # Add --log-level/--log-format/--log-file
@@ -280,6 +299,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=float,
     callback=lambda ctx, param, value: math.inf if value is None or value <= 0 else value,
     envvar="PARSEC_SSE_KEEPALIVE",
+    show_envvar=True,
     help="Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable)",
 )
 # Add --debug
