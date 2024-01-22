@@ -74,14 +74,14 @@ import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, MsModal
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import {
-  DeleteInvitationErrorTag,
   InvitationEmailSentStatus,
-  InvitationErrorTag,
   UserInvitation,
   cancelInvitation as parsecCancelInvitation,
   inviteUser as parsecInviteUser,
   isAdmin as parsecIsAdmin,
   listUserInvitations as parsecListUserInvitations,
+  ClientCancelInvitationErrorTag,
+  ClientNewUserInvitationErrorTag,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
@@ -179,13 +179,13 @@ async function inviteUser(): Promise<void> {
   } else {
     let message = '';
     switch (result.error.tag) {
-      case InvitationErrorTag.AlreadyMember:
+      case ClientNewUserInvitationErrorTag.AlreadyMember:
         message = translate('UsersPage.invitation.inviteFailedAlreadyMember');
         break;
-      case InvitationErrorTag.Offline:
+      case ClientNewUserInvitationErrorTag.Offline:
         message = translate('UsersPage.invitation.inviteFailedOffline');
         break;
-      case InvitationErrorTag.NotAllowed:
+      case ClientNewUserInvitationErrorTag.NotAllowed:
         message = translate('UsersPage.invitation.inviteFailedNotAllowed');
         break;
       default:
@@ -239,7 +239,8 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   } else {
     // In both those cases we can just refresh the list and the invitation should disappear, no need
     // to warn the user.
-    if (result.error.tag === DeleteInvitationErrorTag.NotFound || result.error.tag === DeleteInvitationErrorTag.AlreadyDeleted) {
+    if (result.error.tag === ClientCancelInvitationErrorTag.NotFound
+    || result.error.tag === ClientCancelInvitationErrorTag.AlreadyDeleted) {
       await refreshInvitationsList();
     } else {
       notificationManager.showToast(

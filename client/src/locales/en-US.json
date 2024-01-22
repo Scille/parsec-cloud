@@ -1007,7 +1007,8 @@
             "status": {
                 "ready": "Ready",
                 "idle": "Idle",
-                "deleted": "Deleted"
+                "finished": "Finished",
+                "cancelled": "Cancelled"
             }
         },
         "CreateUserInvitationModal": {

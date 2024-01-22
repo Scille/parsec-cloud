@@ -3,21 +3,21 @@
 import { needsMocks } from '@/parsec/environment';
 import { getParsecHandle } from '@/parsec/routing';
 import {
-  DeleteInvitationError,
   InvitationEmailSentStatus,
   InvitationStatus,
   InvitationToken,
   ListInvitationsError,
-  NewDeviceInvitationError,
   NewInvitationInfo,
-  NewUserInvitationError,
   Result,
   UserInvitation,
+  ClientNewUserInvitationError,
+  ClientNewDeviceInvitationError,
+  ClientCancelInvitationError,
 } from '@/parsec/types';
 import { InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
-export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, NewUserInvitationError>> {
+export async function inviteUser(email: string): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -36,7 +36,7 @@ export async function inviteUser(email: string): Promise<Result<NewInvitationInf
 
 export async function inviteDevice(
   sendEmail: boolean,
-): Promise<Result<[InvitationToken, InvitationEmailSentStatus], NewDeviceInvitationError>> {
+): Promise<Result<[InvitationToken, InvitationEmailSentStatus], ClientNewDeviceInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -92,11 +92,11 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
   }
 }
 
-export async function cancelInvitation(token: InvitationToken): Promise<Result<null, DeleteInvitationError>> {
+export async function cancelInvitation(token: InvitationToken): Promise<Result<null, ClientCancelInvitationError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
-    return await libparsec.clientDeleteInvitation(handle, token);
+    return await libparsec.clientCancelInvitation(handle, token);
   } else {
     return { ok: true, value: null };
   }

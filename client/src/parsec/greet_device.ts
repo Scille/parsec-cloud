@@ -4,6 +4,7 @@ import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
+  ClientNewDeviceInvitationError,
   ClientStartInvitationGreetError,
   ConnectionHandle,
   DeviceGreetInProgress1Info,
@@ -14,7 +15,6 @@ import {
   DeviceLabel,
   GreetInProgressError,
   InvitationEmailSentStatus,
-  NewDeviceInvitationError,
   NewInvitationInfo,
   Result,
 } from '@/parsec/types';
@@ -73,7 +73,7 @@ export class DeviceGreet {
     }
   }
 
-  async createInvitation(sendEmail = true): Promise<Result<NewInvitationInfo, NewDeviceInvitationError>> {
+  async createInvitation(sendEmail = true): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
     const clientHandle = getParsecHandle();
 
     if (clientHandle !== null && !needsMocks()) {

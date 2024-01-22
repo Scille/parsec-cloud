@@ -127,8 +127,10 @@ export function translateInvitationStatus(status: InvitationStatus): string {
       return t('UsersPage.invitation.status.ready');
     case InvitationStatus.Idle:
       return t('UsersPage.invitation.status.idle');
-    case InvitationStatus.Deleted:
-      return t('UsersPage.invitation.status.deleted');
+    case InvitationStatus.Finished:
+      return t('UsersPage.invitation.status.finished');
+    case InvitationStatus.Cancelled:
+      return t('UsersPage.invitation.status.cancelled');
   }
 }
 
