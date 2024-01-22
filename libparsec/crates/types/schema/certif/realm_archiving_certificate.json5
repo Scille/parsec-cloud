@@ -1,0 +1,47 @@
+{
+    "label": "RealmArchivingCertificate",
+    "type": "realm_archiving_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },        {
+            "name": "realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "configuration",
+            "type": "RealmArchivingConfiguration"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "RealmArchivingConfiguration",
+            "discriminant_field": "type",
+            "variants": [
+                {
+                    "name": "Available",
+                    "discriminant_value": "AVAILABLE"
+                },
+                {
+                    "name": "Archived",
+                    "discriminant_value": "ARCHIVED"
+                },
+                {
+                    "name": "DeletionPlanned",
+                    "discriminant_value": "DELETION_PLANNED",
+                    "fields": [
+                        {
+                            "name": "deletion_date",
+                            "type": "DateTime"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
