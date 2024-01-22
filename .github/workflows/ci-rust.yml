@@ -70,14 +70,14 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
-      - uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
+      - uses: actions-rust-lang/setup-rust-toolchain@b113a30d27a8e59c969077c0a0168cc13dab5ffc # pin v1.8.0
         with:
           # We setup the cache by hand, see below
           cache: false
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # pin v2.7.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -96,7 +96,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@da1493208a5b2c79ad2d7dff9fd50693851da51a # pin v2.24.1
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.25.9
         with:
           tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
 
@@ -188,14 +188,14 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
-      - uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
+      - uses: actions-rust-lang/setup-rust-toolchain@b113a30d27a8e59c969077c0a0168cc13dab5ffc # pin v1.8.0
         with:
           # We setup the cache by hand, see below
           cache: false
         timeout-minutes: 10
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # pin v2.7.3
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
@@ -224,7 +224,7 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@da1493208a5b2c79ad2d7dff9fd50693851da51a # pin v2.24.1
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.25.9
         with:
           tool: nextest@0.9.54
 
