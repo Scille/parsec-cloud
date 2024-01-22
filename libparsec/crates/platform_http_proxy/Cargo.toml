@@ -14,4 +14,4 @@ workspace = true
 [dependencies]
 libparsec_types = { workspace = true }
 
-reqwest = { workspace = true, features = ["default-tls"] }
+reqwest = { workspace = true }

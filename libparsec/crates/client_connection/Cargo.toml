@@ -44,6 +44,8 @@ log = { workspace = true }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 # TODO: support SSE for Web
 reqwest-eventsource = { workspace = true }
+# On web TLS is not available it is the responsability of the browser
+reqwest = { workspace = true, features = ["native-tls"] }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
