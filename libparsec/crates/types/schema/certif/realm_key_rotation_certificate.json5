@@ -1,0 +1,63 @@
+{
+    // Introduced in Parsec v3.0 with APIv4
+    "introduced_in_revision": 300,
+    "label": "RealmKeyRotationCertificate",
+    "type": "realm_key_rotation_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "key_index",
+            "type": "Index"
+        },
+        {
+            "name": "encryption_algorithm",
+            "type": "SecretKeyAlgorithm"
+        },
+        {
+            "name": "hash_algorithm",
+            "type": "HashAlgorithm"
+        },
+        {
+            // Empty message encrypted with the key, this is used to ensure the
+            // key retrieved in the keys-bundle hasn't been tempered (given
+            // each key rotation author generates a new keys-bundle from the
+            // previous bundle and his one additional key).
+            //
+            // Note since the message is empty, we are doing here AEAD-without-data
+            // given we only care of the MAC part.
+            "name": "key_canary",
+            "type": "Bytes"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "SecretKeyAlgorithm",
+            "variants": [
+                {
+                    "name": "Xsalsa20Poly1305",
+                    "discriminant_value": "XSALSA20_POLY1305"
+                }
+            ]
+        },
+        {
+            "name": "HashAlgorithm",
+            "variants": [
+                {
+                    "name": "Sha256",
+                    "discriminant_value": "SHA256"
+                }
+            ]
+        }
+    ]
+}
