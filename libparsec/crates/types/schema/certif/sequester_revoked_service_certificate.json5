@@ -1,0 +1,15 @@
+{
+    "label": "SequesterRevokedServiceCertificate",
+    "type": "sequester_revoked_service_certificate",
+    "other_fields": [
+        // No author field here given we are signed by the sequester authority
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "service_id",
+            "type": "SequesterServiceID"
+        }
+    ]
+}
