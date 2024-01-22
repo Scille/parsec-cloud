@@ -43,16 +43,13 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // 3) Create workspace's realm shared between Alice&Bob, and it initial workspace manifest
 
     let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-    let wksp1_key = builder
-        .rotate_key_realm(wksp1_id)
-        .map(|e| e.keys.last().expect("Non empty").clone());
+    builder.rotate_key_realm(wksp1_id);
     let wksp1_name = builder
         .rename_realm(wksp1_id, "wksp1")
         .map(|e| e.name.clone());
     builder.share_realm(wksp1_id, "bob", Some(RealmRole::Reader));
 
     builder.store_stuff("wksp1_id", &wksp1_id);
-    builder.store_stuff("wksp1_key", &wksp1_key);
     builder.store_stuff("wksp1_name", &wksp1_name);
 
     builder.create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id);

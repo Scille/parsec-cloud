@@ -20,15 +20,12 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // 2) Create workspace's realm
 
     let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-    let wksp1_key = builder
-        .rotate_key_realm(wksp1_id)
-        .map(|e| e.keys.last().expect("Non empty").clone());
+    builder.rotate_key_realm(wksp1_id);
     let wksp1_name = builder
         .rename_realm(wksp1_id, "wksp1")
         .map(|e| e.name.clone());
 
     builder.store_stuff("wksp1_id", &wksp1_id);
-    builder.store_stuff("wksp1_key", &wksp1_key);
     builder.store_stuff("wksp1_name", &wksp1_name);
 
     // 3) Create `/bar.txt`'s vlob & block
