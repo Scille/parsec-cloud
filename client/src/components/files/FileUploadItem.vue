@@ -10,7 +10,10 @@
       failed: state === ImportState.CreateFailed,
     }"
   >
-    <ion-item class="element ion-no-padding">
+    <ion-item
+      class="element ion-no-padding"
+      @click="onImportClick"
+    >
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image
@@ -95,6 +98,7 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage } from '@/components/core/ms-image';
 import MsInformationTooltip from '@/components/core/ms-tooltip/MsInformationTooltip.vue';
+import { navigateToWorkspace } from '@/router';
 import { ImportData, ImportState } from '@/services/importManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
@@ -116,6 +120,13 @@ defineExpose({
 const emits = defineEmits<{
   (event: 'importCancel', id: string): void;
 }>();
+
+async function onImportClick(): Promise<void> {
+  if (props.state !== ImportState.FileImported) {
+    return;
+  }
+  await navigateToWorkspace(props.importData.workspaceId, props.importData.path);
+}
 
 function onCancelClick(): void {
   emits('importCancel', props.importData.id);

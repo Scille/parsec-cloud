@@ -48,7 +48,7 @@ async function uploadFileEntry(currentPath: string, fsEntry: FileSystemEntry): P
     });
   } else {
     (fsEntry as FileSystemFileEntry).file(async (file) => {
-      importManager.importFile(props.workspaceHandle, props.workspaceId, file, parsecPath);
+      importManager.importFile(props.workspaceHandle, props.workspaceId, file, currentPath);
     });
   }
 }
@@ -61,7 +61,7 @@ async function onFilesDrop(entries: FileSystemEntry[]): Promise<void> {
 
 async function onFilesImport(files: File[]): Promise<void> {
   for (const file of files) {
-    importManager.importFile(props.workspaceHandle, props.workspaceId, file, await Path.join(props.currentPath, file.name));
+    importManager.importFile(props.workspaceHandle, props.workspaceId, file, props.currentPath);
   }
 }
 </script>

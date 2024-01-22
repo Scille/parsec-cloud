@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { createFile, FsPath, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { FsPath, Path, WorkspaceHandle, WorkspaceID, createFile } from '@/parsec';
 import { wait } from '@/parsec/internals';
 import { Mutex } from 'async-mutex';
 import { v4 as uuid4 } from 'uuid';
@@ -149,14 +149,15 @@ class ImportManager {
   private async doImport(data: ImportData): Promise<void> {
     this.sendState(ImportState.ImportStarted, data);
     const reader = data.file.stream().getReader();
+    const filePath = await Path.join(data.path, data.file.name);
 
-    const result = await createFile(data.path);
+    const result = await createFile(filePath);
     if (!result.ok) {
-      console.log(`Failed to create file ${data.path} (reason: ${result.error.tag}), cancelling...`);
+      console.log(`Failed to create file ${filePath} (reason: ${result.error.tag}), cancelling...`);
       this.sendState(ImportState.CreateFailed, data, { error: result.error.tag });
       return;
     }
-    const fd = await this.mockOpen(data.path, 'w+');
+    const fd = await this.mockOpen(filePath, 'w+');
     // Would prefer to use
     // for await (const chunk of data.file.stream()) {}
     // instead but it's not available on streams.
@@ -179,7 +180,7 @@ class ImportManager {
 
       if (shouldCancel) {
         // Delete the file
-        await this.mockRemove(data.path);
+        await this.mockRemove(filePath);
         // Inform about the cancellation
         this.sendState(ImportState.Cancelled, data);
         return;
