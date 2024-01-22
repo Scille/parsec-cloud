@@ -12,8 +12,17 @@
         "type": {
             "type": "string"
         },
+        "introduced_in_revision": {
+            "$ref": "./data/major-minor-parsec-number.schema.json"
+        },
+        "deprecated_in_revision": {
+            "$ref": "./data/major-minor-parsec-number.schema.json"
+        },
         "other_fields": {
             "$ref": "./data/fields.schema.json"
+        },
+        "nested_types": {
+            "$ref": "./data/nested-types.schema.json"
         }
     }
 }
