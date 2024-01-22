@@ -16,13 +16,14 @@ export enum DeviceFileType {
 }
 
 export enum InvitationEmailSentStatus {
-    BadRecipient = 'InvitationEmailSentStatusBadRecipient',
-    NotAvailable = 'InvitationEmailSentStatusNotAvailable',
+    RecipientRefused = 'InvitationEmailSentStatusRecipientRefused',
+    ServerUnavailable = 'InvitationEmailSentStatusServerUnavailable',
     Success = 'InvitationEmailSentStatusSuccess',
 }
 
 export enum InvitationStatus {
-    Deleted = 'InvitationStatusDeleted',
+    Cancelled = 'InvitationStatusCancelled',
+    Finished = 'InvitationStatusFinished',
     Idle = 'InvitationStatusIdle',
     Ready = 'InvitationStatusReady',
 }
@@ -221,6 +222,7 @@ export interface WorkspaceInfo {
     name: string
     selfCurrentRole: RealmRole
     isStarted: boolean
+    isBootstrapped: boolean
 }
 
 
@@ -257,6 +259,10 @@ export interface BootstrapOrganizationErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface BootstrapOrganizationErrorOrganizationExpired {
+    tag: "OrganizationExpired"
+    error: string
+}
 export interface BootstrapOrganizationErrorSaveDeviceError {
     tag: "SaveDeviceError"
     error: string
@@ -267,6 +273,7 @@ export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorInternal
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
+  | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceError
 
 
@@ -313,6 +320,10 @@ export interface ClaimInProgressErrorOffline {
     tag: "Offline"
     error: string
 }
+export interface ClaimInProgressErrorOrganizationExpired {
+    tag: "OrganizationExpired"
+    error: string
+}
 export interface ClaimInProgressErrorPeerReset {
     tag: "PeerReset"
     error: string
@@ -325,6 +336,7 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorInternal
   | ClaimInProgressErrorNotFound
   | ClaimInProgressErrorOffline
+  | ClaimInProgressErrorOrganizationExpired
   | ClaimInProgressErrorPeerReset
 
 
@@ -361,13 +373,42 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorOffline
 
 
+// ClientCancelInvitationError
+export interface ClientCancelInvitationErrorAlreadyDeleted {
+    tag: "AlreadyDeleted"
+    error: string
+}
+export interface ClientCancelInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientCancelInvitationErrorNotFound {
+    tag: "NotFound"
+    error: string
+}
+export interface ClientCancelInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientCancelInvitationError =
+  | ClientCancelInvitationErrorAlreadyDeleted
+  | ClientCancelInvitationErrorInternal
+  | ClientCancelInvitationErrorNotFound
+  | ClientCancelInvitationErrorOffline
+
+
 // ClientCreateWorkspaceError
 export interface ClientCreateWorkspaceErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ClientCreateWorkspaceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientCreateWorkspaceError =
   | ClientCreateWorkspaceErrorInternal
+  | ClientCreateWorkspaceErrorStopped
 
 
 // ClientEvent
@@ -388,9 +429,14 @@ export interface ClientGetUserDeviceErrorNonExisting {
     tag: "NonExisting"
     error: string
 }
+export interface ClientGetUserDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientGetUserDeviceError =
   | ClientGetUserDeviceErrorInternal
   | ClientGetUserDeviceErrorNonExisting
+  | ClientGetUserDeviceErrorStopped
 
 
 // ClientInfoError
@@ -398,8 +444,13 @@ export interface ClientInfoErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ClientInfoErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientInfoError =
   | ClientInfoErrorInternal
+  | ClientInfoErrorStopped
 
 
 // ClientListUserDevicesError
@@ -407,8 +458,13 @@ export interface ClientListUserDevicesErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ClientListUserDevicesErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientListUserDevicesError =
   | ClientListUserDevicesErrorInternal
+  | ClientListUserDevicesErrorStopped
 
 
 // ClientListUsersError
@@ -416,8 +472,13 @@ export interface ClientListUsersErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ClientListUsersErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientListUsersError =
   | ClientListUsersErrorInternal
+  | ClientListUsersErrorStopped
 
 
 // ClientListWorkspaceUsersError
@@ -425,8 +486,13 @@ export interface ClientListWorkspaceUsersErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface ClientListWorkspaceUsersErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type ClientListWorkspaceUsersError =
   | ClientListWorkspaceUsersErrorInternal
+  | ClientListWorkspaceUsersErrorStopped
 
 
 // ClientListWorkspacesError
@@ -438,81 +504,168 @@ export type ClientListWorkspacesError =
   | ClientListWorkspacesErrorInternal
 
 
+// ClientNewDeviceInvitationError
+export interface ClientNewDeviceInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientNewDeviceInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientNewDeviceInvitationError =
+  | ClientNewDeviceInvitationErrorInternal
+  | ClientNewDeviceInvitationErrorOffline
+
+
+// ClientNewUserInvitationError
+export interface ClientNewUserInvitationErrorAlreadyMember {
+    tag: "AlreadyMember"
+    error: string
+}
+export interface ClientNewUserInvitationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientNewUserInvitationErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface ClientNewUserInvitationErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientNewUserInvitationError =
+  | ClientNewUserInvitationErrorAlreadyMember
+  | ClientNewUserInvitationErrorInternal
+  | ClientNewUserInvitationErrorNotAllowed
+  | ClientNewUserInvitationErrorOffline
+
+
 // ClientRenameWorkspaceError
+export interface ClientRenameWorkspaceErrorAuthorNotAllowed {
+    tag: "AuthorNotAllowed"
+    error: string
+}
 export interface ClientRenameWorkspaceErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface ClientRenameWorkspaceErrorUnknownWorkspace {
-    tag: "UnknownWorkspace"
+export interface ClientRenameWorkspaceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
     error: string
 }
-export type ClientRenameWorkspaceError =
-  | ClientRenameWorkspaceErrorInternal
-  | ClientRenameWorkspaceErrorUnknownWorkspace
-
-
-// ClientShareWorkspaceError
-export interface ClientShareWorkspaceErrorBadTimestamp {
-    tag: "BadTimestamp"
+export interface ClientRenameWorkspaceErrorInvalidEncryptedRealmName {
+    tag: "InvalidEncryptedRealmName"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorNoKey {
+    tag: "NoKey"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientRenameWorkspaceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
     error: string
     server_timestamp: number
     client_timestamp: number
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
+export interface ClientRenameWorkspaceErrorWorkspaceNotFound {
+    tag: "WorkspaceNotFound"
+    error: string
+}
+export type ClientRenameWorkspaceError =
+  | ClientRenameWorkspaceErrorAuthorNotAllowed
+  | ClientRenameWorkspaceErrorInternal
+  | ClientRenameWorkspaceErrorInvalidCertificate
+  | ClientRenameWorkspaceErrorInvalidEncryptedRealmName
+  | ClientRenameWorkspaceErrorInvalidKeysBundle
+  | ClientRenameWorkspaceErrorNoKey
+  | ClientRenameWorkspaceErrorOffline
+  | ClientRenameWorkspaceErrorStopped
+  | ClientRenameWorkspaceErrorTimestampOutOfBallpark
+  | ClientRenameWorkspaceErrorWorkspaceNotFound
+
+
+// ClientShareWorkspaceError
+export interface ClientShareWorkspaceErrorAuthorNotAllowed {
+    tag: "AuthorNotAllowed"
+    error: string
+}
 export interface ClientShareWorkspaceErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface ClientShareWorkspaceErrorNotAllowed {
-    tag: "NotAllowed"
+export interface ClientShareWorkspaceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientShareWorkspaceErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
     error: string
 }
 export interface ClientShareWorkspaceErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner {
-    tag: "OutsiderCannotBeManagerOrOwner"
+export interface ClientShareWorkspaceErrorRecipientIsSelf {
+    tag: "RecipientIsSelf"
     error: string
 }
-export interface ClientShareWorkspaceErrorRevokedRecipient {
-    tag: "RevokedRecipient"
+export interface ClientShareWorkspaceErrorRecipientNotFound {
+    tag: "RecipientNotFound"
     error: string
 }
-export interface ClientShareWorkspaceErrorShareToSelf {
-    tag: "ShareToSelf"
+export interface ClientShareWorkspaceErrorRecipientRevoked {
+    tag: "RecipientRevoked"
     error: string
 }
-export interface ClientShareWorkspaceErrorUnknownRecipient {
-    tag: "UnknownRecipient"
+export interface ClientShareWorkspaceErrorRoleIncompatibleWithOutsider {
+    tag: "RoleIncompatibleWithOutsider"
     error: string
 }
-export interface ClientShareWorkspaceErrorUnknownRecipientOrWorkspace {
-    tag: "UnknownRecipientOrWorkspace"
+export interface ClientShareWorkspaceErrorStopped {
+    tag: "Stopped"
     error: string
 }
-export interface ClientShareWorkspaceErrorUnknownWorkspace {
-    tag: "UnknownWorkspace"
+export interface ClientShareWorkspaceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
     error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
 }
-export interface ClientShareWorkspaceErrorWorkspaceInMaintenance {
-    tag: "WorkspaceInMaintenance"
+export interface ClientShareWorkspaceErrorWorkspaceNotFound {
+    tag: "WorkspaceNotFound"
     error: string
 }
 export type ClientShareWorkspaceError =
-  | ClientShareWorkspaceErrorBadTimestamp
+  | ClientShareWorkspaceErrorAuthorNotAllowed
   | ClientShareWorkspaceErrorInternal
-  | ClientShareWorkspaceErrorNotAllowed
+  | ClientShareWorkspaceErrorInvalidCertificate
+  | ClientShareWorkspaceErrorInvalidKeysBundle
   | ClientShareWorkspaceErrorOffline
-  | ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner
-  | ClientShareWorkspaceErrorRevokedRecipient
-  | ClientShareWorkspaceErrorShareToSelf
-  | ClientShareWorkspaceErrorUnknownRecipient
-  | ClientShareWorkspaceErrorUnknownRecipientOrWorkspace
-  | ClientShareWorkspaceErrorUnknownWorkspace
-  | ClientShareWorkspaceErrorWorkspaceInMaintenance
+  | ClientShareWorkspaceErrorRecipientIsSelf
+  | ClientShareWorkspaceErrorRecipientNotFound
+  | ClientShareWorkspaceErrorRecipientRevoked
+  | ClientShareWorkspaceErrorRoleIncompatibleWithOutsider
+  | ClientShareWorkspaceErrorStopped
+  | ClientShareWorkspaceErrorTimestampOutOfBallpark
+  | ClientShareWorkspaceErrorWorkspaceNotFound
 
 
 // ClientStartError
@@ -553,13 +706,13 @@ export interface ClientStartWorkspaceErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface ClientStartWorkspaceErrorNoAccess {
-    tag: "NoAccess"
+export interface ClientStartWorkspaceErrorWorkspaceNotFound {
+    tag: "WorkspaceNotFound"
     error: string
 }
 export type ClientStartWorkspaceError =
   | ClientStartWorkspaceErrorInternal
-  | ClientStartWorkspaceErrorNoAccess
+  | ClientStartWorkspaceErrorWorkspaceNotFound
 
 
 // ClientStopError
@@ -569,30 +722,6 @@ export interface ClientStopErrorInternal {
 }
 export type ClientStopError =
   | ClientStopErrorInternal
-
-
-// DeleteInvitationError
-export interface DeleteInvitationErrorAlreadyDeleted {
-    tag: "AlreadyDeleted"
-    error: string
-}
-export interface DeleteInvitationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface DeleteInvitationErrorNotFound {
-    tag: "NotFound"
-    error: string
-}
-export interface DeleteInvitationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type DeleteInvitationError =
-  | DeleteInvitationErrorAlreadyDeleted
-  | DeleteInvitationErrorInternal
-  | DeleteInvitationErrorNotFound
-  | DeleteInvitationErrorOffline
 
 
 // DeviceAccessStrategy
@@ -656,8 +785,8 @@ export interface GreetInProgressErrorActiveUsersLimitReached {
     tag: "ActiveUsersLimitReached"
     error: string
 }
-export interface GreetInProgressErrorAlreadyUsed {
-    tag: "AlreadyUsed"
+export interface GreetInProgressErrorAlreadyDeleted {
+    tag: "AlreadyDeleted"
     error: string
 }
 export interface GreetInProgressErrorBadTimestamp {
@@ -678,6 +807,10 @@ export interface GreetInProgressErrorCorruptedInviteUserData {
 }
 export interface GreetInProgressErrorDeviceAlreadyExists {
     tag: "DeviceAlreadyExists"
+    error: string
+}
+export interface GreetInProgressErrorHumanHandleAlreadyTaken {
+    tag: "HumanHandleAlreadyTaken"
     error: string
 }
 export interface GreetInProgressErrorInternal {
@@ -710,11 +843,12 @@ export interface GreetInProgressErrorUserCreateNotAllowed {
 }
 export type GreetInProgressError =
   | GreetInProgressErrorActiveUsersLimitReached
-  | GreetInProgressErrorAlreadyUsed
+  | GreetInProgressErrorAlreadyDeleted
   | GreetInProgressErrorBadTimestamp
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
   | GreetInProgressErrorDeviceAlreadyExists
+  | GreetInProgressErrorHumanHandleAlreadyTaken
   | GreetInProgressErrorInternal
   | GreetInProgressErrorNonceMismatch
   | GreetInProgressErrorNotFound
@@ -757,49 +891,6 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
-
-
-// NewDeviceInvitationError
-export interface NewDeviceInvitationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface NewDeviceInvitationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface NewDeviceInvitationErrorSendEmailToUserWithoutEmail {
-    tag: "SendEmailToUserWithoutEmail"
-    error: string
-}
-export type NewDeviceInvitationError =
-  | NewDeviceInvitationErrorInternal
-  | NewDeviceInvitationErrorOffline
-  | NewDeviceInvitationErrorSendEmailToUserWithoutEmail
-
-
-// NewUserInvitationError
-export interface NewUserInvitationErrorAlreadyMember {
-    tag: "AlreadyMember"
-    error: string
-}
-export interface NewUserInvitationErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface NewUserInvitationErrorNotAllowed {
-    tag: "NotAllowed"
-    error: string
-}
-export interface NewUserInvitationErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export type NewUserInvitationError =
-  | NewUserInvitationErrorAlreadyMember
-  | NewUserInvitationErrorInternal
-  | NewUserInvitationErrorNotAllowed
-  | NewUserInvitationErrorOffline
 
 
 // ParseBackendAddrError
@@ -928,6 +1019,10 @@ export interface WorkspaceFsOperationErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
+export interface WorkspaceFsOperationErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
 export interface WorkspaceFsOperationErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
@@ -952,6 +1047,10 @@ export interface WorkspaceFsOperationErrorReadOnlyRealm {
     tag: "ReadOnlyRealm"
     error: string
 }
+export interface WorkspaceFsOperationErrorStopped {
+    tag: "Stopped"
+    error: string
+}
 export type WorkspaceFsOperationError =
   | WorkspaceFsOperationErrorBadTimestamp
   | WorkspaceFsOperationErrorCannotRenameRoot
@@ -960,12 +1059,14 @@ export type WorkspaceFsOperationError =
   | WorkspaceFsOperationErrorFolderNotEmpty
   | WorkspaceFsOperationErrorInternal
   | WorkspaceFsOperationErrorInvalidCertificate
+  | WorkspaceFsOperationErrorInvalidKeysBundle
   | WorkspaceFsOperationErrorInvalidManifest
   | WorkspaceFsOperationErrorIsAFolder
   | WorkspaceFsOperationErrorNoRealmAccess
   | WorkspaceFsOperationErrorNotAFolder
   | WorkspaceFsOperationErrorOffline
   | WorkspaceFsOperationErrorReadOnlyRealm
+  | WorkspaceFsOperationErrorStopped
 
 
 // WorkspaceStopError
@@ -1057,14 +1158,14 @@ export function claimerUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function clientCancelInvitation(
+    client: number,
+    token: string
+): Promise<Result<null, ClientCancelInvitationError>>
 export function clientCreateWorkspace(
     client: number,
     name: string
 ): Promise<Result<string, ClientCreateWorkspaceError>>
-export function clientDeleteInvitation(
-    client: number,
-    token: string
-): Promise<Result<null, DeleteInvitationError>>
 export function clientGetUserDevice(
     client: number,
     device: string
@@ -1093,12 +1194,12 @@ export function clientListWorkspaces(
 export function clientNewDeviceInvitation(
     client: number,
     send_email: boolean
-): Promise<Result<NewInvitationInfo, NewDeviceInvitationError>>
+): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>>
 export function clientNewUserInvitation(
     client: number,
     claimer_email: string,
     send_email: boolean
-): Promise<Result<NewInvitationInfo, NewUserInvitationError>>
+): Promise<Result<NewInvitationInfo, ClientNewUserInvitationError>>
 export function clientRenameWorkspace(
     client: number,
     realm_id: string,

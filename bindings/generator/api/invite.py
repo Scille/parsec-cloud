@@ -80,6 +80,9 @@ class BootstrapOrganizationError(ErrorVariant):
     class Offline:
         pass
 
+    class OrganizationExpired:
+        pass
+
     class InvalidToken:
         pass
 
@@ -132,6 +135,9 @@ class ClaimerRetrieveInfoError(ErrorVariant):
 
 class ClaimInProgressError(ErrorVariant):
     class Offline:
+        pass
+
+    class OrganizationExpired:
         pass
 
     class NotFound:
@@ -296,16 +302,17 @@ async def claimer_device_finalize_save_local_device(
 class InvitationStatus(Enum):
     Idle = EnumItemUnit
     Ready = EnumItemUnit
-    Deleted = EnumItemUnit
+    Finished = EnumItemUnit
+    Cancelled = EnumItemUnit
 
 
 class InvitationEmailSentStatus(Enum):
     Success = EnumItemUnit
-    NotAvailable = EnumItemUnit
-    BadRecipient = EnumItemUnit
+    ServerUnavailable = EnumItemUnit
+    RecipientRefused = EnumItemUnit
 
 
-class NewUserInvitationError(ErrorVariant):
+class ClientNewUserInvitationError(ErrorVariant):
     class Offline:
         pass
 
@@ -331,16 +338,13 @@ async def client_new_user_invitation(
     send_email: bool,
 ) -> Result[
     NewInvitationInfo,
-    NewUserInvitationError,
+    ClientNewUserInvitationError,
 ]:
     raise NotImplementedError
 
 
-class NewDeviceInvitationError(ErrorVariant):
+class ClientNewDeviceInvitationError(ErrorVariant):
     class Offline:
-        pass
-
-    class SendEmailToUserWithoutEmail:
         pass
 
     class Internal:
@@ -352,12 +356,12 @@ async def client_new_device_invitation(
     send_email: bool,
 ) -> Result[
     NewInvitationInfo,
-    NewDeviceInvitationError,
+    ClientNewDeviceInvitationError,
 ]:
     raise NotImplementedError
 
 
-class DeleteInvitationError(ErrorVariant):
+class ClientCancelInvitationError(ErrorVariant):
     class Offline:
         pass
 
@@ -371,10 +375,10 @@ class DeleteInvitationError(ErrorVariant):
         pass
 
 
-async def client_delete_invitation(
+async def client_cancel_invitation(
     client: Handle,
     token: InvitationToken,
-) -> Result[None, DeleteInvitationError]:
+) -> Result[None, ClientCancelInvitationError]:
     raise NotImplementedError
 
 
@@ -439,7 +443,7 @@ class GreetInProgressError(ErrorVariant):
     class NotFound:
         pass
 
-    class AlreadyUsed:
+    class AlreadyDeleted:
         pass
 
     class PeerReset:
@@ -449,6 +453,9 @@ class GreetInProgressError(ErrorVariant):
         pass
 
     class NonceMismatch:
+        pass
+
+    class HumanHandleAlreadyTaken:
         pass
 
     class UserAlreadyExists:

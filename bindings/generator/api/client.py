@@ -73,6 +73,9 @@ async def client_stop(client: Handle) -> Result[None, ClientStopError]:
 
 
 class ClientInfoError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -111,6 +114,9 @@ class DeviceInfo(Structure):
 
 
 class ClientListUsersError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -125,6 +131,9 @@ async def client_list_users(
 
 
 class ClientListUserDevicesError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -137,6 +146,9 @@ async def client_list_user_devices(
 
 
 class ClientGetUserDeviceError(ErrorVariant):
+    class Stopped:
+        pass
+
     class NonExisting:
         pass
 
@@ -159,6 +171,9 @@ class WorkspaceUserAccessInfo(Structure):
 
 
 class ClientListWorkspaceUsersError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -180,6 +195,7 @@ class WorkspaceInfo(Structure):
     name: EntryName
     self_current_role: RealmRole
     is_started: bool
+    is_bootstrapped: bool
 
 
 async def client_list_workspaces(
@@ -189,6 +205,9 @@ async def client_list_workspaces(
 
 
 class ClientCreateWorkspaceError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Internal:
         pass
 
@@ -201,7 +220,34 @@ async def client_create_workspace(
 
 
 class ClientRenameWorkspaceError(ErrorVariant):
-    class UnknownWorkspace:
+    class WorkspaceNotFound:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidEncryptedRealmName:
         pass
 
     class Internal:
@@ -217,38 +263,41 @@ async def client_rename_workspace(
 
 
 class ClientShareWorkspaceError(ErrorVariant):
-    class ShareToSelf:
+    class Stopped:
         pass
 
-    class UnknownWorkspace:
+    class RecipientIsSelf:
         pass
 
-    class UnknownRecipient:
+    class RecipientNotFound:
         pass
 
-    class UnknownRecipientOrWorkspace:
+    class WorkspaceNotFound:
         pass
 
-    class RevokedRecipient:
+    class RecipientRevoked:
         pass
 
-    class WorkspaceInMaintenance:
+    class AuthorNotAllowed:
         pass
 
-    class NotAllowed:
-        pass
-
-    class OutsiderCannotBeManagerOrOwner:
+    class RoleIncompatibleWithOutsider:
         pass
 
     class Offline:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
 
     class Internal:
         pass
