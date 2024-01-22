@@ -32,7 +32,9 @@ impl From<ConnectionError> for ClaimerRetrieveInfoError {
 pub enum ClaimInProgressError {
     #[error("Cannot reach the server")]
     Offline,
-    #[error("Invitation not found")]
+    #[error("Organization has expired")]
+    OrganizationExpired,
+    #[error("Organization or invitation not found")]
     NotFound,
     #[error("Invitation already used")]
     AlreadyUsed,
@@ -50,6 +52,9 @@ impl From<ConnectionError> for ClaimInProgressError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
+            ConnectionError::InvitationAlreadyDeleted => Self::AlreadyUsed,
+            ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
+            ConnectionError::InvitationNotFound => Self::NotFound,
             err => Self::Internal(err.into()),
         }
     }
@@ -124,9 +129,7 @@ impl BaseClaimInitialCtx {
 
             match rep {
                 Rep::Ok { greeter_public_key } => Ok(greeter_public_key),
-                Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-                Rep::NotFound => Err(ClaimInProgressError::NotFound),
+                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -147,9 +150,7 @@ impl BaseClaimInitialCtx {
 
             match rep {
                 Rep::Ok { greeter_nonce } => Ok(greeter_nonce),
-                Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-                Rep::NotFound => Err(ClaimInProgressError::NotFound),
+                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -171,9 +172,7 @@ impl BaseClaimInitialCtx {
 
             match rep {
                 Rep::Ok => Ok(()),
-                Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-                Rep::NotFound => Err(ClaimInProgressError::NotFound),
+                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -285,9 +284,7 @@ impl BaseClaimInProgress1Ctx {
                 claimer_sas: self.claimer_sas,
                 shared_secret_key: self.shared_secret_key,
             }),
-            Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-            Rep::NotFound => Err(ClaimInProgressError::NotFound),
+            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -352,9 +349,7 @@ impl BaseClaimInProgress2Ctx {
                 cmds: self.cmds,
                 shared_secret_key: self.shared_secret_key,
             }),
-            Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-            Rep::NotFound => Err(ClaimInProgressError::NotFound),
+            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -411,9 +406,7 @@ impl BaseClaimInProgress3Ctx {
 
         match rep {
             Rep::Ok { .. } => Ok(()),
-            Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-            Rep::NotFound => Err(ClaimInProgressError::NotFound),
+            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -429,10 +422,8 @@ impl BaseClaimInProgress3Ctx {
             .await?;
 
         match rep {
-            Rep::Ok { payload } => Ok(payload),
-            Rep::AlreadyDeleted => Err(ClaimInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(ClaimInProgressError::PeerReset),
-            Rep::NotFound => Err(ClaimInProgressError::NotFound),
+            Rep::Ok { payload, .. } => Ok(payload),
+            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }

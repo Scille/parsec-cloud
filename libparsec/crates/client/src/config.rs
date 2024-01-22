@@ -33,4 +33,7 @@ pub struct ClientConfig {
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
     // pub prevent_sync_pattern: Option<PathBuf>,
     pub proxy: ProxyConfig,
+    /// If `false`, nothing runs & react in the background, useful for tests
+    /// or CLI where the client is started to only perform a single operation.
+    pub with_monitors: bool,
 }

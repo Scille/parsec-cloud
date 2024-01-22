@@ -39,136 +39,136 @@ fn task_future_factory(
     },);
 
     let task_future = async move {
-        let _events_connection_lifetime = events_connection_lifetime;
+        // let _events_connection_lifetime = events_connection_lifetime;
 
-        // Start a sub-task that will do the actual synchronization work
-        let (syncer_tx, syncer_rx) = channel::unbounded::<VlobID>();
-        let syncer = spawn({
-            let workspace_ops = workspace_ops.clone();
-            async move {
-                loop {
-                    let entry_id = match syncer_rx.recv_async().await {
-                        Ok(entry_id) => entry_id,
-                        Err(_) => return,
-                    };
-                    let _ = workspace_ops.outbound_sync(entry_id).await;
-                }
-            }
-        });
+        // // Start a sub-task that will do the actual synchronization work
+        // let (syncer_tx, syncer_rx) = channel::unbounded::<VlobID>();
+        // let syncer = spawn({
+        //     let workspace_ops = workspace_ops.clone();
+        //     async move {
+        //         loop {
+        //             let entry_id = match syncer_rx.recv_async().await {
+        //                 Ok(entry_id) => entry_id,
+        //                 Err(_) => return,
+        //             };
+        //             let _ = workspace_ops.outbound_sync(entry_id).await;
+        //         }
+        //     }
+        // });
 
-        struct DueTime {
-            since: DateTime,
-            due_time: DateTime,
-        }
-        let (mut to_sync, mut due_time) = {
-            let since = device.now();
-            let due_time = since + MIN_SYNC_WAIT;
-            // TODO: error handling
-            let to_sync = workspace_ops
-                .get_need_outbound_sync()
-                .await
-                .expect("TODO: not expected at all !")
-                .into_iter()
-                .map(|entry_id| (entry_id, DueTime { since, due_time }))
-                .collect::<HashMap<VlobID, DueTime>>();
-            let due_time = if to_sync.is_empty() {
-                None
-            } else {
-                Some(due_time)
-            };
-            (to_sync, due_time)
-        };
+        // struct DueTime {
+        //     since: DateTime,
+        //     due_time: DateTime,
+        // }
+        // let (mut to_sync, mut due_time) = {
+        //     let since = device.now();
+        //     let due_time = since + MIN_SYNC_WAIT;
+        //     // TODO: error handling
+        //     let to_sync = workspace_ops
+        //         .get_need_outbound_sync()
+        //         .await
+        //         .expect("TODO: not expected at all !")
+        //         .into_iter()
+        //         .map(|entry_id| (entry_id, DueTime { since, due_time }))
+        //         .collect::<HashMap<VlobID, DueTime>>();
+        //     let due_time = if to_sync.is_empty() {
+        //         None
+        //     } else {
+        //         Some(due_time)
+        //     };
+        //     (to_sync, due_time)
+        // };
 
-        enum Action {
-            Stop,
-            NewLocalChange { entry_id: VlobID },
-            DueTimeReached,
-        }
+        // enum Action {
+        //     Stop,
+        //     NewLocalChange { entry_id: VlobID },
+        //     DueTimeReached,
+        // }
 
-        let mut stop_requested = pin!(stop_requested);
-        loop {
-            let to_sleep = match due_time {
-                None => Duration::max_value(),
-                Some(due_time) => due_time - device.now(),
-            };
+        // let mut stop_requested = pin!(stop_requested);
+        // loop {
+        //     let to_sleep = match due_time {
+        //         None => Duration::max_value(),
+        //         Some(due_time) => due_time - device.now(),
+        //     };
 
-            let action = select3!(
-                outcome = rx.recv_async() => {
-                    match outcome {
-                        Ok(entry_id) => Action::NewLocalChange { entry_id },
-                        Err(_) => Action::Stop,
-                    }
-                },
-                _ = device.time_provider.sleep(to_sleep) => Action::DueTimeReached,
-                // `stop_requested` doesn't need to be fused (i.e. shouldn't be polled
-                // once completed) given it signals it's time for shutdown
-                _ = &mut stop_requested => Action::Stop,
-            );
+        //     let action = select3!(
+        //         outcome = rx.recv_async() => {
+        //             match outcome {
+        //                 Ok(entry_id) => Action::NewLocalChange { entry_id },
+        //                 Err(_) => Action::Stop,
+        //             }
+        //         },
+        //         _ = device.time_provider.sleep(to_sleep) => Action::DueTimeReached,
+        //         // `stop_requested` doesn't need to be fused (i.e. shouldn't be polled
+        //         // once completed) given it signals it's time for shutdown
+        //         _ = &mut stop_requested => Action::Stop,
+        //     );
 
-            match action {
-                Action::Stop => {
-                    // Shutdown the sub-task before leaving
-                    drop(syncer_tx);
-                    let _ = syncer.await;
-                    return;
-                }
+        //     match action {
+        //         Action::Stop => {
+        //             // Shutdown the sub-task before leaving
+        //             drop(syncer_tx);
+        //             let _ = syncer.await;
+        //             return;
+        //         }
 
-                Action::DueTimeReached => {
-                    let now = device.now();
-                    let mut next_due_time = None;
-                    to_sync.retain(|entry_id, time| {
-                        if time.due_time < now {
-                            // TODO: error handling ? what if syncer needs to stop by itself
-                            // due to internal error ?
-                            syncer_tx.send(*entry_id).expect("Syncer sub-task is alive");
-                            false
-                        } else {
-                            match next_due_time {
-                                None => {
-                                    next_due_time = Some(time.due_time);
-                                }
-                                Some(due_time) if due_time > time.due_time => {
-                                    next_due_time = Some(time.due_time);
-                                }
-                                _ => (),
-                            }
-                            true
-                        }
-                    });
-                    // Due time has been reached, don't forget to update it !
-                    due_time = next_due_time;
-                }
+        //         Action::DueTimeReached => {
+        //             let now = device.now();
+        //             let mut next_due_time = None;
+        //             to_sync.retain(|entry_id, time| {
+        //                 if time.due_time < now {
+        //                     // TODO: error handling ? what if syncer needs to stop by itself
+        //                     // due to internal error ?
+        //                     syncer_tx.send(*entry_id).expect("Syncer sub-task is alive");
+        //                     false
+        //                 } else {
+        //                     match next_due_time {
+        //                         None => {
+        //                             next_due_time = Some(time.due_time);
+        //                         }
+        //                         Some(due_time) if due_time > time.due_time => {
+        //                             next_due_time = Some(time.due_time);
+        //                         }
+        //                         _ => (),
+        //                     }
+        //                     true
+        //                 }
+        //             });
+        //             // Due time has been reached, don't forget to update it !
+        //             due_time = next_due_time;
+        //         }
 
-                Action::NewLocalChange { entry_id } => {
-                    let now = device.now();
-                    let potential_due_time = match to_sync.entry(entry_id) {
-                        std::collections::hash_map::Entry::Vacant(entry) => {
-                            let due_time = now + MIN_SYNC_WAIT;
-                            entry.insert(DueTime {
-                                since: now,
-                                due_time,
-                            });
-                            due_time
-                        }
-                        std::collections::hash_map::Entry::Occupied(mut entry) => {
-                            let e = entry.get_mut();
-                            let new_due_time = now + MIN_SYNC_WAIT;
-                            if new_due_time - e.since < MAX_SYNC_WAIT {
-                                e.due_time = new_due_time;
-                            }
-                            e.due_time
-                        }
-                    };
-                    match due_time {
-                        None => due_time = Some(potential_due_time),
-                        Some(current_due_time) if current_due_time > potential_due_time => {
-                            due_time = Some(potential_due_time)
-                        }
-                        _ => (),
-                    }
-                }
-            }
-        }
+        //         Action::NewLocalChange { entry_id } => {
+        //             let now = device.now();
+        //             let potential_due_time = match to_sync.entry(entry_id) {
+        //                 std::collections::hash_map::Entry::Vacant(entry) => {
+        //                     let due_time = now + MIN_SYNC_WAIT;
+        //                     entry.insert(DueTime {
+        //                         since: now,
+        //                         due_time,
+        //                     });
+        //                     due_time
+        //                 }
+        //                 std::collections::hash_map::Entry::Occupied(mut entry) => {
+        //                     let e = entry.get_mut();
+        //                     let new_due_time = now + MIN_SYNC_WAIT;
+        //                     if new_due_time - e.since < MAX_SYNC_WAIT {
+        //                         e.due_time = new_due_time;
+        //                     }
+        //                     e.due_time
+        //                 }
+        //             };
+        //             match due_time {
+        //                 None => due_time = Some(potential_due_time),
+        //                 Some(current_due_time) if current_due_time > potential_due_time => {
+        //                     due_time = Some(potential_due_time)
+        //                 }
+        //                 _ => (),
+        //             }
+        //         }
+        //     }
+        // }
     };
 
     (task_future, stop_cb)
