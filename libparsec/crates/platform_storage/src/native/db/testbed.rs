@@ -14,9 +14,9 @@ use super::local_database::DBPathInfo;
 
 const STORE_ENTRY_KEY: &str = "platform_local_db";
 
-/// A database associated to a path can be ether closed or opened.
+/// A database associated to a path can be either closed or opened.
 enum ClosableInMemoryDB {
-    /// The database is open an currently in used.
+    /// The database is open and currently in used.
     Opened,
     /// The database is closed and we store the executor to provide it on later call of [maybe_open_sqlite_in_memory].
     Closed(SqliteConnection),
@@ -63,7 +63,7 @@ pub(super) fn maybe_open_sqlite_in_memory(path_info: &DBPathInfo) -> Option<Sqli
             // This database has already been used in the past...
             if &db.path_info == path_info {
                 // For rusty move reasons we have to first mark the database as
-                // opened, then check if it previous state was valid.
+                // opened, then check if its previous state was valid.
                 match std::mem::replace(&mut db.state, ClosableInMemoryDB::Opened) {
                     ClosableInMemoryDB::Opened => {
                         // The database is *currently* used, this is something we don't
@@ -89,7 +89,7 @@ pub(super) fn maybe_open_sqlite_in_memory(path_info: &DBPathInfo) -> Option<Sqli
             }
         }
         // This database is brand new
-        // Now create the database and register it path as opened
+        // Now create the database and register its path as opened
         let force_db_on_disk = std::env::var("TESTBED_FORCE_SQLITE_ON_DISK").is_ok();
         let conn = if !force_db_on_disk {
             SqliteConnection::establish(":memory:").expect("Cannot create in-memory database")

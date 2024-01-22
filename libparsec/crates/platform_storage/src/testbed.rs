@@ -4,7 +4,7 @@
 // To simplify the writing of those helpers, we use the same rule for when writing tests.
 #![allow(clippy::unwrap_used)]
 
-use std::{any::Any, path::Path, sync::Arc};
+use std::{any::Any, ops::Deref, path::Path, sync::Arc};
 
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_testbed::{
@@ -13,7 +13,7 @@ use libparsec_testbed::{
 use libparsec_types::prelude::*;
 
 use crate::{
-    certificates::{AddCertificateData, CertificatesStorage},
+    certificates::CertificatesStorage,
     user::UserStorage,
     workspace::{WorkspaceCacheStorage, WorkspaceDataStorage},
 };
@@ -61,27 +61,45 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
             let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
             // 1) Do we need to be initialized ? and by fetching up what certificate index ?
-            let up_to_index = env.template.events.iter().rev().find_map(|e| match e {
+            let up_to = env.template.events.iter().rev().find_map(|e| match e {
                 TestbedEvent::CertificatesStorageFetchCertificates(x)
                     if x.device == device.device_id =>
                 {
-                    Some(x.up_to_index)
+                    Some(x.up_to)
                 }
                 _ => None,
             });
 
             // 2) Actually do the initialization
-            if let Some(up_to_index) = up_to_index {
+            if let Some(up_to) = up_to {
                 let need_redacted = matches!(
-                    env.template.user_profile_at(device.user_id(), up_to_index),
+                    env.template.user_profile_at(device.user_id(), up_to),
                     UserProfile::Outsider
                 );
 
-                let storage = CertificatesStorage::no_populate_start(data_base_dir, device)
+                let mut storage = CertificatesStorage::no_populate_start(data_base_dir, device)
                     .await
                     .unwrap();
+                let mut update = storage.for_update().await.unwrap();
 
-                let certifs = env.template.certificates().take(up_to_index as usize);
+                let certifs = env.template.certificates().take_while(|c| {
+                    let certif_timestamp = match &c.certificate {
+                        AnyArcCertificate::User(c) => c.timestamp,
+                        AnyArcCertificate::Device(c) => c.timestamp,
+                        AnyArcCertificate::UserUpdate(c) => c.timestamp,
+                        AnyArcCertificate::RevokedUser(c) => c.timestamp,
+                        AnyArcCertificate::RealmRole(c) => c.timestamp,
+                        AnyArcCertificate::RealmName(c) => c.timestamp,
+                        AnyArcCertificate::RealmArchiving(c) => c.timestamp,
+                        AnyArcCertificate::RealmKeyRotation(c) => c.timestamp,
+                        AnyArcCertificate::ShamirRecoveryBrief(c) => c.timestamp,
+                        AnyArcCertificate::ShamirRecoveryShare(c) => c.timestamp,
+                        AnyArcCertificate::SequesterAuthority(c) => c.timestamp,
+                        AnyArcCertificate::SequesterService(c) => c.timestamp,
+                        AnyArcCertificate::SequesterRevokedService(c) => c.timestamp,
+                    };
+                    certif_timestamp <= up_to
+                });
                 for (offset, certif) in certifs.enumerate() {
                     let signed = if need_redacted {
                         &certif.signed_redacted
@@ -89,12 +107,62 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                         &certif.signed
                     };
                     let encrypted = device.local_symkey.encrypt(signed);
-                    let data = AddCertificateData::from_certif(&certif.certificate, encrypted);
-                    storage
-                        .add_next_certificate(1 + offset as IndexInt, data)
-                        .await
-                        .unwrap();
+                    match &certif.certificate {
+                        AnyArcCertificate::User(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::Device(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::UserUpdate(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::RevokedUser(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::RealmRole(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::RealmName(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::RealmKeyRotation(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::RealmArchiving(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::ShamirRecoveryBrief(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::ShamirRecoveryShare(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::SequesterAuthority(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::SequesterService(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::SequesterRevokedService(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                    }
                 }
+                update.commit().await.unwrap();
 
                 storage.stop().await;
             }
@@ -106,7 +174,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
 }
 
 #[allow(unused)]
-pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Arc<LocalDevice>) {
+pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &LocalDevice) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
         data_base_dir,
         STORE_ENTRY_KEY,
@@ -120,6 +188,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
         if !already_populated {
             let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
+            // Only start the storage if we need to do some initialization work
             let mut lazy_storage: Option<UserStorage> = None;
 
             for event in &env.template.events {
@@ -140,7 +209,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
 
                 if lazy_storage.is_none() {
                     lazy_storage = Some(
-                        UserStorage::no_populate_start(data_base_dir, device.clone())
+                        UserStorage::no_populate_start(data_base_dir, device)
                             .await
                             .unwrap(),
                     );
@@ -148,7 +217,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
 
                 if let Some((checkpoint, remote_user_manifest_version)) = maybe_checkpoint {
                     lazy_storage
-                        .as_ref()
+                        .as_mut()
                         .unwrap()
                         .update_realm_checkpoint(checkpoint, remote_user_manifest_version)
                         .await
@@ -156,13 +225,11 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: Ar
                 }
 
                 if let Some(manifest) = maybe_manifest {
+                    let encrypted = manifest.dump_and_encrypt(&device.local_symkey);
                     lazy_storage
-                        .as_ref()
+                        .as_mut()
                         .unwrap()
-                        .for_update()
-                        .await
-                        .0
-                        .set_user_manifest(manifest)
+                        .update_user_manifest(&encrypted, manifest.need_sync, manifest.base.version)
                         .await
                         .unwrap();
                 }
