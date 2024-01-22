@@ -4,10 +4,25 @@ import { File } from '@/components/core/ms-image';
 import { Path } from '@/parsec';
 import { translate } from '@/services/translation';
 
-/* File name */
-export function shortenFileName(filename: string, { maxLength = 15, prefixLength = 6, suffixLength = 6 } = {}): string {
-  if (filename.length > maxLength) {
-    filename = `${filename.substring(0, prefixLength)}...${filename.substring(filename.length - suffixLength)}`;
+// Shorten a file name by adding ellipsis in the middle if it is above a certain length.
+// It may be a bit scuffed in some edge cases but the default config should work fine.
+export function shortenFileName(filename: string, { maxLength = 15, prefixLength = 6, suffixLength = 6, filler = '...' } = {}): string {
+  if (maxLength > 0 && filename.length > maxLength && prefixLength + suffixLength > 0) {
+    // Check that we're keeping under the maxLength
+    if (prefixLength + suffixLength + filler.length > maxLength) {
+      // Recalculate prefixLength and suffixLength as a ratio of the filename length
+      const totalLength = prefixLength + suffixLength + filler.length;
+      if (prefixLength) {
+        const prefixPercent = Math.ceil((prefixLength / totalLength) * 100);
+        prefixLength = Math.ceil(((maxLength - filler.length) / 100) * prefixPercent) || 1;
+      }
+      if (suffixLength) {
+        const suffixPercent = Math.ceil((suffixLength / totalLength) * 100);
+        suffixLength = Math.ceil(((maxLength - filler.length) / 100) * suffixPercent) || 1;
+      }
+      console.log(`${totalLength} ${prefixLength} ${suffixLength}`);
+    }
+    filename = `${filename.substring(0, prefixLength)}${filler}${filename.substring(filename.length - suffixLength)}`;
   }
   return filename;
 }
