@@ -92,14 +92,35 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected)
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_allowed"
-    //
-    let raw = hex!("82a6737461747573ab6e6f745f616c6c6f776564a6726561736f6ec0");
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::NotAllowed { reason: None };
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::AuthorNotAllowed;
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_invalid_certificate() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   status: "invalid_certificate"
+    //
+    let raw = hex!("81a6737461747573b3696e76616c69645f6365727469666963617465");
+
+    let expected =
+        authenticated_cmds::pki_enrollment_accept::Rep::InvalidCertificate;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 
@@ -114,14 +135,59 @@ pub fn rep_not_allowed() {
 }
 
 pub fn rep_invalid_payload_data() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "invalid_payload_data"
     //
-    let raw = hex!("82a6737461747573b4696e76616c69645f7061796c6f61645f64617461a6726561736f6ec0");
+    let raw = hex!("81a6737461747573b4696e76616c69645f7061796c6f61645f64617461");
+
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidPayloadData;
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_enrollment_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   status: "enrollment_not_found"
+    //
+    let raw = hex!("81a6737461747573b4656e726f6c6c6d656e745f6e6f745f666f756e64");
+
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::EnrollmentNotFound;
+
+    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected)
+}
+
+pub fn rep_enrollment_no_longer_available() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   status: "enrollment_no_longer_available"
+    //
+    let raw = hex!(
+        "81a6737461747573be656e726f6c6c6d656e745f6e6f5f6c6f6e6765725f617661696c6162"
+        "6c65"
+    );
 
     let expected =
-        authenticated_cmds::pki_enrollment_accept::Rep::InvalidPayloadData { reason: None };
+        authenticated_cmds::pki_enrollment_accept::Rep::EnrollmentNoLongerAvailable;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 
@@ -135,15 +201,14 @@ pub fn rep_invalid_payload_data() {
     p_assert_eq!(data2, expected)
 }
 
-pub fn rep_invalid_certification() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_human_handle_already_taken() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "invalid_certification"
+    //   status: "human_handle_already_taken"
     //
-    let raw = hex!("82a6737461747573b5696e76616c69645f63657274696669636174696f6ea6726561736f6ec0");
+    let raw = hex!("81a6737461747573ba68756d616e5f68616e646c655f616c72656164795f74616b656e");
 
-    let expected =
-        authenticated_cmds::pki_enrollment_accept::Rep::InvalidCertification { reason: None };
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::HumanHandleAlreadyTaken;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 
@@ -157,78 +222,14 @@ pub fn rep_invalid_certification() {
     p_assert_eq!(data2, expected)
 }
 
-pub fn rep_invalid_data() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_user_already_exists() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "invalid_data"
+    //   status: "user_already_exists"
     //
-    let raw = hex!("82a6737461747573ac696e76616c69645f64617461a6726561736f6ec0");
+    let raw = hex!("81a6737461747573b3757365725f616c72656164795f657869737473");
 
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidData { reason: None };
-
-    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected)
-}
-
-pub fn rep_not_found() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
-    // Content:
-    //   status: "not_found"
-    //
-    let raw = hex!("82a6737461747573a96e6f745f666f756e64a6726561736f6ec0");
-
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::NotFound { reason: None };
-
-    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected)
-}
-
-pub fn rep_no_longer_available() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
-    // Content:
-    //   status: "no_longer_available"
-    //
-    let raw = hex!("82a6737461747573b36e6f5f6c6f6e6765725f617661696c61626c65a6726561736f6ec0");
-
-    let expected =
-        authenticated_cmds::pki_enrollment_accept::Rep::NoLongerAvailable { reason: None };
-
-    let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected)
-}
-
-pub fn rep_already_exists() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
-    // Content:
-    //   status: "already_exists"
-    //
-    let raw = hex!("82a6737461747573ae616c72656164795f657869737473a6726561736f6ec0");
-
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::AlreadyExists { reason: None };
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::UserAlreadyExists;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 
@@ -263,28 +264,27 @@ pub fn rep_active_users_limit_reached() {
     p_assert_eq!(data2, expected)
 }
 
-pub fn rep_bad_timestamp() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_timestamp_out_of_ballpark() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   backend_timestamp: ext(1, 946774800.0)
-    //   ballpark_client_early_offset: 50.0
-    //   ballpark_client_late_offset: 70.0
+    //   ballpark_client_early_offset: 300.0
+    //   ballpark_client_late_offset: 320.0
     //   client_timestamp: ext(1, 946774800.0)
-    //   status: "bad_timestamp"
+    //   server_timestamp: ext(1, 946774800.0)
+    //   status: "timestamp_out_of_ballpark"
     //
     let raw = hex!(
-        "86a6737461747573ad6261645f74696d657374616d70b16261636b656e645f74696d657374"
-        "616d70d70141cc375188000000bc62616c6c7061726b5f636c69656e745f6561726c795f6f"
-        "6666736574cb4049000000000000bb62616c6c7061726b5f636c69656e745f6c6174655f6f"
-        "6666736574cb4051800000000000b0636c69656e745f74696d657374616d70d70141cc3751"
-        "88000000a6726561736f6ec0"
+        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc6261"
+        "6c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c00000000000bb62"
+        "616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb4074000000000000b063"
+        "6c69656e745f74696d657374616d70d70141cc375188000000b07365727665725f74696d65"
+        "7374616d70d70141cc375188000000"
     );
 
-    let expected = authenticated_cmds::pki_enrollment_accept::Rep::BadTimestamp {
-        reason: None,
-        ballpark_client_early_offset: 50.,
-        ballpark_client_late_offset: 70.,
-        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::TimestampOutOfBallpark {
+        ballpark_client_early_offset: 300.,
+        ballpark_client_late_offset: 320.,
+        server_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
 

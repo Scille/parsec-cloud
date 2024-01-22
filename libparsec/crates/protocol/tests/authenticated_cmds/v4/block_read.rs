@@ -53,39 +53,30 @@ pub fn rep_ok() {
     rep_helper(&raw, expected);
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_block_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_found"
-    let raw = hex!("81a6737461747573a96e6f745f666f756e64");
-    let expected = authenticated_cmds::block_read::Rep::NotFound;
+    //   status: "block_not_found"
+    let raw = hex!("81a6737461747573af626c6f636b5f6e6f745f666f756e64");
+    let expected = authenticated_cmds::block_read::Rep::BlockNotFound;
     rep_helper(&raw, expected);
 }
 
-pub fn rep_timeout() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "timeout"
-    let raw = hex!("81a6737461747573a774696d656f7574");
-    let expected = authenticated_cmds::block_read::Rep::Timeout;
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
+    let expected = authenticated_cmds::block_read::Rep::AuthorNotAllowed;
     rep_helper(&raw, expected);
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_store_unavailable() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_allowed"
-    let raw = hex!("81a6737461747573ab6e6f745f616c6c6f776564");
-    let expected = authenticated_cmds::block_read::Rep::NotAllowed;
-    rep_helper(&raw, expected);
-}
-
-pub fn rep_in_maintenance() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "in_maintenance"
-    let raw = hex!("81a6737461747573ae696e5f6d61696e74656e616e6365");
-    let expected = authenticated_cmds::block_read::Rep::InMaintenance;
+    //   status: "store_unavailable"
+    let raw = hex!("81a6737461747573b173746f72655f756e617661696c61626c65");
+    let expected = authenticated_cmds::block_read::Rep::StoreUnavailable;
     rep_helper(&raw, expected);
 }
 

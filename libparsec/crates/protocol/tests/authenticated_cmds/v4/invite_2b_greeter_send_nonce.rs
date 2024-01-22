@@ -60,32 +60,32 @@ pub fn rep_ok() {
     rep_helper(&raw, expected);
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_invitation_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_found"
-    let raw = hex!("81a6737461747573a96e6f745f666f756e64");
-    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::NotFound;
+    //   status: "invitation_not_found"
+    let raw = hex!("81a6737461747573b4696e7669746174696f6e5f6e6f745f666f756e64");
+    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::InvitationNotFound;
 
     rep_helper(&raw, expected);
 }
 
-pub fn rep_already_deleted() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_invitation_deleted() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_deleted"
-    let raw = hex!("81a6737461747573af616c72656164795f64656c65746564");
-    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::AlreadyDeleted;
+    //   status: "invitation_deleted"
+    let raw = hex!("81a6737461747573b2696e7669746174696f6e5f64656c65746564");
+    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::InvitationDeleted;
 
     rep_helper(&raw, expected);
 }
 
-pub fn rep_invalid_state() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_enrollment_wrong_state() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "invalid_state"
-    let raw = hex!("81a6737461747573ad696e76616c69645f7374617465");
-    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::InvalidState;
+    //   status: "enrollment_wrong_state"
+    let raw = hex!("81a6737461747573b6656e726f6c6c6d656e745f77726f6e675f7374617465");
+    let expected = authenticated_cmds::invite_2b_greeter_send_nonce::Rep::EnrollmentWrongState;
 
     rep_helper(&raw, expected);
 }
