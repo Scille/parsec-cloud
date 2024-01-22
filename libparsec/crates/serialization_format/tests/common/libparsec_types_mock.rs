@@ -12,7 +12,7 @@ pub type Integer = i64;
 pub struct DeviceID(pub String);
 
 pub trait ProtocolRequest<const V: u32> {
-    const API_MAJOR_VERSION: u32 = V;
+    // const API_MAJOR_VERSION: u32 = V;
     type Response: for<'de> Deserialize<'de>;
 
     fn api_dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error>;
