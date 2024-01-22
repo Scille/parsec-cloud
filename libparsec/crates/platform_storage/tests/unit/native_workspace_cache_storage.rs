@@ -32,7 +32,7 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     // - invalid schema
     // - invalid encryption
 
-    // TODO: modify the database to make it schema invalid
+    // TODO: modify the database to make its schema invalid
 
     // TODO: drop the database so that it exists but it is empty, this shouldn't cause any issue
 }
