@@ -142,12 +142,12 @@ jobs:
         run: python packaging/wheel/wheel_it.py . --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.11.6
         with:
-          tool: syft@0.84.0
+          tool: syft@0.101.1
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-Wheel-${{ matrix.platform }}.spdx.json .
+        run: syft scan --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-${{ matrix.platform }}-Wheel.spdx.json --output=cyclonedx-json=dist/Parsec-SBOM-${{ matrix.platform }}-Wheel.cyclonedx.json .
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
@@ -209,12 +209,12 @@ jobs:
         run: snapcraft --destructive-mode
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.11.6
         with:
-          tool: syft@0.84.0
+          tool: syft@0.101.1
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-linux-snap.spdx.json .
+        run: syft scan --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-linux-snap.spdx.json --output=cyclonedx-json=${{ runner.temp }}/Parsec-SBOM-linux-snap.cyclonedx.json .
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
@@ -222,6 +222,7 @@ jobs:
           path: |
             ${{ runner.temp }}/parsec*.snap
             ${{ runner.temp }}/Parsec-SBOM-linux-snap.spdx.json
+            ${{ runner.temp }}/Parsec-SBOM-linux-snap.cyclonedx.json
           if-no-files-found: error
 
   package-linux-test-snap:
@@ -322,12 +323,12 @@ jobs:
         working-directory: ${{ runner.temp }}
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.11.6
         with:
-          tool: syft@0.84.0
+          tool: syft@0.101.1
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-windows-app.spdx.json .
+        run: syft scan --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-windows-app.spdx.json --output=cyclonedx-json=${{ runner.temp }}/Parsec-SBOM-windows-app.cyclonedx.json .
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
@@ -335,6 +336,7 @@ jobs:
           path: |
             ${{ runner.temp }}/${{ steps.names.outputs.archive }}
             ${{ runner.temp }}/Parsec-SBOM-windows-app.spdx.json
+            ${{ runner.temp }}/Parsec-SBOM-windows-app.cyclonedx.json
           if-no-files-found: error
 
   package-macos-build-app:
@@ -378,12 +380,12 @@ jobs:
         working-directory: ${{ runner.temp }}
 
       # Install syft
-      - uses: taiki-e/install-action@486baeb8af63bc3d9ec3ec66db5af6ba0ca78774 # pin v2.11.6
+      - uses: taiki-e/install-action@8984d603c208823d3c1a1b796f4081736f3ae3f9 # pin v2.11.6
         with:
-          tool: syft@0.84.0
+          tool: syft@0.101.1
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-macos-app.spdx.json .
+        run: syft scan --config=.syft.yaml --output=spdx-json=${{ runner.temp }}/Parsec-SBOM-macos-app.spdx.json --output=cyclonedx-json=${{ runner.temp }}/Parsec-SBOM-macos-app.cyclonedx.json .
 
       - uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # pin v3.1.2
         with:
@@ -391,6 +393,7 @@ jobs:
           path: |
             ${{ runner.temp }}/parsec-unsigned-v${{ env.WHEEL_VERSION }}-macos-amd64.tar.bz2
             ${{ runner.temp }}/Parsec-SBOM-macos-app.spdx.json
+            ${{ runner.temp }}/Parsec-SBOM-macos-app.cyclonedx.json
           if-no-files-found: error
 
   package-macos-test-app:
