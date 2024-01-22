@@ -1,193 +1,240 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use diesel::{result::Error::NotFound, ExpressionMethods, QueryDsl, RunQueryDsl};
-use std::{
-    path::Path,
-    sync::{Arc, Mutex},
-};
+// Certificate storage relies on the upper layer to do the actual certification
+// validation work and takes care of handling concurrency issues.
+// Hence no unique violation should occur under normal circumstances here.
 
-use libparsec_platform_async::lock::{Mutex as AsyncMutex, MutexGuard as AsyncMutexGuard};
+use sqlx::{Connection, Row, SqliteConnection};
+use std::path::Path;
+
 use libparsec_types::prelude::*;
 
-use super::db::{DatabaseError, DatabaseResult, LocalDatabase, VacuumMode};
 use super::model::get_user_data_storage_db_relative_path;
 
 #[derive(Debug)]
-pub struct UserStorage {
-    pub device: Arc<LocalDevice>,
-    db: LocalDatabase,
-    /// A lock that will be used to prevent concurrent update on the user manifest.
-    /// This is needed to ensure `user_manifest` stays in sync with the content of the database.
-    lock_update_user_manifest: AsyncMutex<()>,
-    /// Keep the user manifest currently in database here for fast access
-    user_manifest: Mutex<Arc<LocalUserManifest>>,
+pub(crate) struct PlatformUserStorage {
+    conn: SqliteConnection,
+    realm_id: VlobID,
+    #[cfg(feature = "test-with-testbed")]
+    path_info: super::testbed::DBPathInfo,
 }
 
-#[derive(Debug)]
-pub struct UserStorageUpdater<'a> {
-    storage: &'a UserStorage,
-    _update_guard: AsyncMutexGuard<'a, ()>,
-}
-
-impl<'a> UserStorageUpdater<'a> {
-    pub async fn set_user_manifest(self, manifest: Arc<LocalUserManifest>) -> anyhow::Result<()> {
-        db_set_user_manifest(&self.storage.db, &self.storage.device, manifest.clone()).await?;
-
-        *self
-            .storage
-            .user_manifest
-            .lock()
-            .expect("Mutex is poisoned") = manifest;
-
-        Ok(())
-    }
-}
-
-impl UserStorage {
-    pub async fn start(data_base_dir: &Path, device: Arc<LocalDevice>) -> anyhow::Result<Self> {
-        // `maybe_populate_user_storage` needs to start a `UserStorage`,
-        // leading to a recursive call which is not support for async functions.
-        // Hence `no_populate_start` which breaks the recursion.
-        //
-        // Also note we don't try to return the `UserStorage` that has been
-        // use during the populate as it would change the internal state of the
-        // storage (typically caches) depending of if populate has been needed or not.
-
-        #[cfg(feature = "test-with-testbed")]
-        crate::testbed::maybe_populate_user_storage(data_base_dir, device.clone()).await;
-
-        Self::no_populate_start(data_base_dir, device).await
-    }
-
-    pub(crate) async fn no_populate_start(
+impl PlatformUserStorage {
+    pub async fn no_populate_start(
         data_base_dir: &Path,
-        device: Arc<LocalDevice>,
+        device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        let db_relative_path = get_user_data_storage_db_relative_path(&device);
-        let db = LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default())
-            .await?;
+        let db_relative_path = get_user_data_storage_db_relative_path(device);
+        let db_path = data_base_dir.join(&db_relative_path);
 
-        // TODO: What should be our strategy when the database contains invalid data ?
-        //
-        // Currently we are conservative: we fail and stop if the data are invalid,
-        // however we could also go the violent way by overwriting the invalid database.
-        //
-        // This has the advantage of automatically "fixing" buggy database (in case of
-        // bug in previous Parsec version or if the user played fool and modified the
-        // database by hand...).
-        //
-        // The drawback is of course the fact we may lose data. However 1) there is not
-        // much to lose (worst case is if the user manifest hasn't been synced since
-        // a workspace has been created) and 2) we can attempt to retrieve the user manifest
-        // blob (if it is readable !) before overwriting the database.
-        //
-        // The worst case is if we are reading a newer version of the database: we will
-        // overwrite a valid database :'(
-        //
-        // The alternative of this "automatic database fix" is to return a dedicated
-        // error used by GUI/CLI to notify the user and provide a command to overwrite
-        // it if the user ask for it.
+        #[cfg(feature = "test-with-testbed")]
+        let path_info = super::testbed::DBPathInfo {
+            data_base_dir: data_base_dir.to_owned(),
+            db_relative_path: db_relative_path.to_owned(),
+        };
+
+        #[cfg(feature = "test-with-testbed")]
+        let conn = super::testbed::maybe_open_sqlite_in_memory(&path_info).await;
+
+        #[cfg(not(feature = "test-with-testbed"))]
+        let conn: Option<SqliteConnection> = None;
+
+        let mut conn = match conn {
+            // In-memory database for testing
+            Some(conn) => conn,
+            // Actual production code: open the connection on disk
+            None => {
+                // TODO: configure the database with pragma stuff
+                let sqlite_url = db_path.to_str().ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Invalid DB path (contains non-utf8 characters): {:?}",
+                        db_path
+                    )
+                })?;
+                SqliteConnection::connect(&sqlite_url).await?
+            }
+        };
 
         // 2) Initialize the database (if needed)
 
-        super::model::initialize_model_if_needed(&db).await?;
+        super::model::sqlx_initialize_model_if_needed(&mut conn).await?;
 
-        // 3) Retrieve the user manifest
+        // 3) All done !
 
-        let user_manifest = UserStorage::load_user_manifest(&db, &device).await?;
-
-        // 4) All done !
-
-        let user_storage = Self {
-            device,
-            db,
-            lock_update_user_manifest: AsyncMutex::new(()),
-            user_manifest: Mutex::new(user_manifest),
+        let storage = Self {
+            conn,
+            realm_id: device.user_realm_id,
+            #[cfg(feature = "test-with-testbed")]
+            path_info,
         };
-        Ok(user_storage)
+        Ok(storage)
     }
 
-    pub async fn stop(&self) {
-        self.db.close().await
+    pub async fn stop(self) -> anyhow::Result<()> {
+        #[cfg(feature = "test-with-testbed")]
+        {
+            if let Err(conn) =
+                super::testbed::maybe_return_sqlite_in_memory_conn(&self.path_info, self.conn).await
+            {
+                // Testbed don't want to keep this connection, so we should close it
+                conn.close().await.map_err(|e| e.into())
+            } else {
+                Ok(())
+            }
+        }
+
+        #[cfg(not(feature = "test-with-testbed"))]
+        self.conn.close().await.map_err(|e| e.into())
     }
 
-    pub async fn get_realm_checkpoint(&self) -> anyhow::Result<IndexInt> {
-        let checkpoint = db_get_realm_checkpoint(&self.db).await?;
-        IndexInt::try_from(checkpoint).map_err(|e| anyhow::anyhow!(e))
+    pub async fn get_realm_checkpoint(&mut self) -> anyhow::Result<IndexInt> {
+        let row = sqlx::query(
+            "SELECT checkpoint \
+            FROM realm_checkpoint \
+            WHERE _id = 0 \
+            ",
+        )
+        .fetch_optional(&mut self.conn)
+        .await?;
+        match row {
+            None => Ok(0),
+            Some(row) => {
+                let checkpoint = row.try_get::<u32, _>(0)?;
+                Ok(checkpoint as IndexInt)
+            }
+        }
     }
 
     pub async fn update_realm_checkpoint(
-        &self,
+        &mut self,
         new_checkpoint: IndexInt,
         remote_user_manifest_version: Option<VersionInt>,
     ) -> anyhow::Result<()> {
-        let new_checkpoint = i64::try_from(new_checkpoint)?;
+        let mut transaction = self.conn.begin().await?;
 
-        db_update_realm_checkpoint(
-            &self.db,
-            &self.device,
-            new_checkpoint,
-            remote_user_manifest_version,
-        )
-        .await
-        .map_err(|e| anyhow::anyhow!(e))
-    }
-
-    pub fn get_user_manifest(&self) -> Arc<LocalUserManifest> {
-        self.user_manifest
-            .lock()
-            .expect("Mutex is poisoned")
-            .clone()
-    }
-
-    /// Updating the manifest is error prone:
-    /// 1) the lock must be held
-    /// 2) the user manifest must be fetched *after* the lock is held
-    /// This method (and the related updater structure) make sure both requirements
-    /// are met before providing the method to actually update the manifest.
-    pub async fn for_update(&self) -> (UserStorageUpdater, Arc<LocalUserManifest>) {
-        let guard = self.lock_update_user_manifest.lock().await;
-
-        let manifest = self.get_user_manifest();
-        let updater = UserStorageUpdater {
-            storage: self,
-            _update_guard: guard,
-        };
-
-        (updater, manifest)
-    }
-
-    async fn load_user_manifest(
-        db: &LocalDatabase,
-        device: &LocalDevice,
-    ) -> DatabaseResult<Arc<LocalUserManifest>> {
-        let ret = db_get_user_manifest(db, device).await;
-
-        // It is possible to lack the user manifest in local if our
-        // device hasn't tried to access it yet (and we are not the
-        // initial device of our user, in which case the user local db is
-        // initialized with a non-speculative local manifest placeholder).
-        // In such case it is easy to fall back on an empty manifest
-        // which is a good enough approximation of the very first version
-        // of the manifest (field `created` is invalid, but it will be
-        // correction by the merge during sync).
-        if let Err(DatabaseError::Diesel(diesel::NotFound)) = ret {
-            let timestamp = device.now();
-            let manifest = Arc::new(LocalUserManifest::new(
-                device.device_id.clone(),
-                timestamp,
-                Some(device.user_realm_id),
-                true,
-            ));
-
-            db_set_user_manifest(db, device, manifest.clone()).await?;
-
-            Ok(manifest)
-        } else {
-            ret
+        if let Some(remote_user_manifest_version) = remote_user_manifest_version {
+            sqlx::query(
+                "UPDATE vlobs \
+                SET remote_version = ?1 \
+                WHERE vlob_id = ?2 \
+                ",
+            )
+            .bind(remote_user_manifest_version)
+            .bind(self.realm_id.as_bytes())
+            .execute(&mut *transaction)
+            .await?;
         }
+
+        sqlx::query(
+            " \
+            INSERT OR REPLACE INTO realm_checkpoint(_id, checkpoint) \
+            VALUES (0, ?1) \
+            ",
+        )
+        .bind(new_checkpoint as u32)
+        .execute(&mut *transaction)
+        .await?;
+
+        transaction.commit().await?;
+
+        Ok(())
+    }
+
+    pub async fn get_user_manifest(&mut self) -> anyhow::Result<Option<Vec<u8>>> {
+        let row = sqlx::query(
+            "SELECT blob \
+            FROM vlobs \
+            WHERE vlob_id = ?1 \
+            ",
+        )
+        .bind(self.realm_id.as_bytes())
+        .fetch_optional(&mut self.conn)
+        .await?;
+        match row {
+            None => Ok(None),
+            Some(row) => {
+                let blob = row.try_get::<Vec<u8>, _>(0)?;
+                Ok(Some(blob))
+            }
+        }
+    }
+
+    pub async fn update_user_manifest(
+        &mut self,
+        encrypted: &[u8],
+        need_sync: bool,
+        base_version: VersionInt,
+    ) -> anyhow::Result<()> {
+        sqlx::query(
+            " \
+            INSERT INTO vlobs(vlob_id, blob, need_sync, base_version, remote_version) \
+            VALUES ( \
+                ?1, \
+                ?2, \
+                ?3, \
+                ?4, \
+                ?5 \
+            ) \
+            ON CONFLICT DO UPDATE SET \
+                blob = excluded.blob, \
+                need_sync = excluded.need_sync, \
+                base_version = excluded.base_version, \
+                remote_version = ( \
+                    CASE WHEN remote_version > excluded.remote_version \
+                    THEN remote_version \
+                    ELSE excluded.remote_version \
+                    END \
+                ) \
+            ",
+        )
+        .bind(self.realm_id.as_bytes())
+        .bind(encrypted)
+        .bind(need_sync)
+        .bind(base_version)
+        .bind(base_version)
+        .execute(&mut self.conn)
+        .await?;
+        Ok(())
+    }
+
+    /// Only used for debugging tests
+    #[allow(unused)]
+    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
+        let checkpoint = self.get_realm_checkpoint().await?;
+
+        let rows = sqlx::query(
+            "SELECT \
+                vlob_id, \
+                need_sync, \
+                base_version, \
+                remote_version, \
+            FROM vlobs \
+            ",
+        )
+        .fetch_all(&mut self.conn)
+        .await?;
+
+        let mut output = format!("checkpoint: {checkpoint}\nvlobs: [\n");
+        for row in rows {
+            let vlob_id =
+                VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e))?;
+            let need_sync = row.try_get::<bool, _>(1)?;
+            let base_version = row.try_get::<u32, _>(2)?;
+            let remote_version = row.try_get::<u32, _>(3)?;
+            output += &format!(
+                "{{\n\
+                \tvlob_id: {vlob_id}\n\
+                \tneed_sync: {need_sync}\n\
+                \tbase_version: {base_version}\n\
+                \tremote_version: {remote_version}\n\
+            }},\n",
+            );
+        }
+        output += "]\n";
+
+        Ok(output)
     }
 }
 
@@ -195,166 +242,28 @@ pub async fn user_storage_non_speculative_init(
     data_base_dir: &Path,
     device: &LocalDevice,
 ) -> anyhow::Result<()> {
-    // 1) Open the database
+    // 1) Open & initialize the database
 
-    let db_relative_path = get_user_data_storage_db_relative_path(device);
-    let db =
-        LocalDatabase::from_path(data_base_dir, &db_relative_path, VacuumMode::default()).await?;
+    let mut storage = PlatformUserStorage::no_populate_start(data_base_dir, device).await?;
 
-    // 2) Initialize the database
-
-    super::model::initialize_model_if_needed(&db).await?;
-
-    // 3) Populate the database with the user manifest
+    // 2) Populate the database with the user manifest
 
     let timestamp = device.now();
-    let manifest = Arc::new(LocalUserManifest::new(
+    let manifest = LocalUserManifest::new(
         device.device_id.clone(),
         timestamp,
         Some(device.user_realm_id),
         false,
-    ));
+    );
+    let encrypted = manifest.dump_and_encrypt(&device.local_symkey);
 
-    db_set_user_manifest(&db, device, manifest).await?;
+    storage
+        .update_user_manifest(&encrypted, manifest.need_sync, manifest.base.version)
+        .await?;
 
     // 4) All done ! Don't forget to close the database before exiting ;-)
 
-    db.close().await;
+    storage.stop().await?;
+
     Ok(())
 }
-
-async fn db_get_user_manifest(
-    db: &LocalDatabase,
-    device: &LocalDevice,
-) -> DatabaseResult<Arc<LocalUserManifest>> {
-    let user_realm_id = *device.user_realm_id;
-
-    let ciphered = db
-        .exec(move |conn| {
-            use super::model::vlobs;
-            vlobs::table
-                .select(vlobs::blob)
-                .filter(vlobs::vlob_id.eq(user_realm_id.as_ref()))
-                .first::<Vec<u8>>(conn)
-        })
-        .await?;
-
-    LocalUserManifest::decrypt_and_load(&ciphered, &device.local_symkey)
-        .map(Arc::new)
-        .map_err(DatabaseError::from)
-}
-
-async fn db_set_user_manifest(
-    db: &LocalDatabase,
-    device: &LocalDevice,
-    manifest: Arc<LocalUserManifest>,
-) -> DatabaseResult<()> {
-    let blob = manifest.dump_and_encrypt(&device.local_symkey);
-
-    db.exec(move |conn| {
-        conn.immediate_transaction(|conn| {
-            let new_vlob = super::model::NewVlob {
-                vlob_id: manifest.base.id.as_bytes(),
-                base_version: manifest.base.version as i64,
-                remote_version: manifest.base.version as i64,
-                need_sync: manifest.need_sync,
-                blob: &blob,
-            };
-
-            {
-                use diesel::dsl::sql;
-                use diesel::upsert::excluded;
-                use super::model::vlobs::dsl::*;
-
-                diesel::insert_into(vlobs)
-                    .values(new_vlob)
-                    .on_conflict(vlob_id)
-                    .do_update()
-                    .set(
-                        (
-                            base_version.eq(excluded(base_version)),
-                            remote_version.eq(
-                                sql("(CASE WHEN `remote_version` > `excluded`.`remote_version` THEN `remote_version` ELSE `excluded`.`remote_version` END)")
-                            ),
-                            need_sync.eq(excluded(need_sync)),
-                            blob.eq(excluded(blob)),
-                        )
-                    )
-                    .execute(conn)?;
-            }
-
-            Ok(())
-        })
-    }).await
-}
-
-async fn db_get_realm_checkpoint(db: &LocalDatabase) -> DatabaseResult<i64> {
-    let ret = db
-        .exec(move |conn| {
-            use super::model::realm_checkpoint;
-
-            realm_checkpoint::table
-                .select(realm_checkpoint::checkpoint)
-                .filter(realm_checkpoint::_id.eq(0))
-                .first(conn)
-        })
-        .await;
-
-    if let Err(DatabaseError::Diesel(NotFound)) = ret {
-        Ok(0)
-    } else {
-        ret
-    }
-}
-
-async fn db_update_realm_checkpoint(
-    db: &LocalDatabase,
-    device: &LocalDevice,
-    new_checkpoint: i64,
-    user_vlob_remote_version: Option<u32>,
-) -> DatabaseResult<()> {
-    use super::model::{realm_checkpoint, vlobs, NewRealmCheckpoint};
-
-    let user_realm_id = *device.user_realm_id;
-    let new_realm_checkpoint = NewRealmCheckpoint {
-        _id: 0,
-        checkpoint: new_checkpoint,
-    };
-
-    db.exec(move |conn| {
-        conn.immediate_transaction(|conn| {
-            if let Some(remote_version) = user_vlob_remote_version {
-                diesel::update(vlobs::table.filter(vlobs::vlob_id.eq(user_realm_id.as_ref())))
-                    .set(vlobs::remote_version.eq(remote_version as i64))
-                    .execute(conn)?;
-            }
-
-            // Update realm checkpoint value.
-            diesel::insert_into(realm_checkpoint::table)
-                .values(&new_realm_checkpoint)
-                .on_conflict(realm_checkpoint::_id)
-                // In case of conflict, we don't try to compare and keep the biggest checkpoint:
-                // - in theory new checkpoint is always bigger than the one in database
-                // - in case it's not the case it's no big deal: next time we ask the server
-                //   about modifications we will be notified about changes that we already
-                //   know about (which is fine given we are idempotent on that)
-                .do_update()
-                .set(&new_realm_checkpoint)
-                .execute(conn)
-                .and(Ok(()))
-        })
-    })
-    .await
-
-    // TODO: move this comment !
-    // The checkpoint index is increased everytime a vlob is created or updated in the realm,
-    // hence it is possible that a vlob different from the one storing the user manifest
-    // is responsible for the checkpoint increase.
-    // However this is purely theoretical and, in the event it occurs, not a big deal:
-    // - the user realm only contains a single user manifest
-    // - the user realm is only accessible by the user, so
-}
-
-#[cfg(test)]
-#[path = "../../tests/unit/native_user_storage.rs"]
-mod tests;

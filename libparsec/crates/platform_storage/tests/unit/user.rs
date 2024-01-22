@@ -4,12 +4,10 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::sync::Arc;
-
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use libparsec_platform_storage::user::{user_storage_non_speculative_init, UserStorage};
+use super::{user_storage_non_speculative_init, UserStorage};
 
 #[allow(clippy::enum_variant_names)]
 enum FetchStrategy {
@@ -55,7 +53,7 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 
     let alice = env.local_device("alice@dev1");
 
-    let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
         .await
         .unwrap();
 
@@ -64,7 +62,9 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         expected_version as IndexInt
     );
 
-    let user_manifest = user_storage.get_user_manifest();
+    let encrypted = user_storage.get_user_manifest().await.unwrap().unwrap();
+    let user_manifest =
+        LocalUserManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
     p_assert_eq!(user_manifest.base.version, expected_version);
     let expected_need_sync = match fetch_strategy {
         FetchStrategy::No => true,
@@ -74,78 +74,65 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn operations(timestamp: DateTime, env: &TestbedEnv) {
+async fn user_manifest(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
 
-    let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
         .await
         .unwrap();
 
-    // See unit tests for bad start
+    // 1) Storage starts empty
+    p_assert_eq!(user_storage.get_user_manifest().await.unwrap(), None);
 
-    // 1) realm checkpoint
+    // 2) Update
 
-    p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 0);
-    user_storage.update_realm_checkpoint(1, None).await.unwrap();
-    p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 1);
-
-    // 2) user manifest
-
-    let initial_user_manifest = user_storage.get_user_manifest();
-    let expected = LocalUserManifest {
-        base: UserManifest {
-            author: alice.device_id.clone(),
-            timestamp: initial_user_manifest.updated,
-            id: alice.user_realm_id,
-            version: 0,
-            created: initial_user_manifest.updated,
-            updated: initial_user_manifest.updated,
-            last_processed_message: 0,
-            workspaces: vec![],
-        },
-        need_sync: true,
-        updated: initial_user_manifest.updated,
-        last_processed_message: 0,
-        workspaces: vec![],
-        speculative: true,
-    };
-    p_assert_eq!(*initial_user_manifest, expected);
-
-    let new_user_manifest = Arc::new(LocalUserManifest {
-        base: UserManifest {
-            author: alice.device_id.clone(),
-            timestamp,
-            id: alice.user_realm_id,
-            version: 1,
-            created: timestamp,
-            updated: timestamp,
-            last_processed_message: 1,
-            workspaces: vec![],
-        },
-        need_sync: false,
-        updated: timestamp,
-        last_processed_message: 0,
-        workspaces: vec![],
-        speculative: false,
-    });
-    let (updater, current_user_manifest) = user_storage.for_update().await;
-    p_assert_eq!(*current_user_manifest, expected);
-    updater
-        .set_user_manifest(new_user_manifest.clone())
+    user_storage
+        .update_user_manifest(b"<user_manifest_v1>", false, 1)
         .await
         .unwrap();
-
-    p_assert_eq!(user_storage.get_user_manifest(), new_user_manifest);
+    p_assert_eq!(
+        user_storage.get_user_manifest().await.unwrap().unwrap(),
+        b"<user_manifest_v1>"
+    );
 
     // 3) Re-starting the database and check data are still there
 
-    user_storage.stop().await;
-    let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
+    user_storage.stop().await.unwrap();
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        user_storage.get_user_manifest().await.unwrap().unwrap(),
+        b"<user_manifest_v1>"
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn checkpoint(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
+        .await
+        .unwrap();
+
+    // 1) Initial value
+
+    p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 0);
+
+    // 2) Update
+
+    user_storage.update_realm_checkpoint(1, None).await.unwrap();
+    p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 1);
+
+    // 3) Re-starting the database and check data are still there
+
+    user_storage.stop().await.unwrap();
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
         .await
         .unwrap();
 
     p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 1);
-    p_assert_eq!(user_storage.get_user_manifest(), new_user_manifest);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -160,13 +147,16 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     // 2) Check the database content
 
-    let user_storage = UserStorage::start(&env.discriminant_dir, alice.clone())
+    let mut user_storage = UserStorage::start(&env.discriminant_dir, &alice)
         .await
         .unwrap();
 
     p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 0);
 
-    let user_manifest = user_storage.get_user_manifest();
+    let encrypted = user_storage.get_user_manifest().await.unwrap().unwrap();
+    let user_manifest =
+        LocalUserManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
+
     let expected = LocalUserManifest {
         base: UserManifest {
             author: alice.device_id.clone(),
@@ -175,14 +165,37 @@ async fn non_speculative_init(env: &TestbedEnv) {
             version: 0,
             created: user_manifest.updated,
             updated: user_manifest.updated,
-            last_processed_message: 0,
-            workspaces: vec![],
+            workspaces_legacy_initial_info: vec![],
         },
         need_sync: true,
         updated: user_manifest.updated,
-        last_processed_message: 0,
-        workspaces: vec![],
+        local_workspaces: vec![],
         speculative: false,
     };
-    p_assert_eq!(*user_manifest, expected);
+    p_assert_eq!(user_manifest, expected);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[parsec_test]
+async fn bad_start(tmp_path: TmpPath, alice: &Device) {
+    // 1) Bad path
+
+    let not_a_dir_path = tmp_path.join("foo.txt");
+    std::fs::File::create(&not_a_dir_path).unwrap();
+
+    p_assert_matches!(
+        UserStorage::start(&not_a_dir_path, &alice.local_device()).await,
+        Err(_)
+    );
+
+    // TODO: create a valid database, then modify the user manifest's vlob to
+    // turn it into something invalid:
+    // - invalid schema
+    // - invalid encryption
+
+    // TODO: modify the database to make its schema invalid
+
+    // TODO: drop the database so that it exists but it is empty, this shouldn't cause any issue
+
+    // TODO: remove user manifest's vlob from the database, this shouldn't cause any issue
 }

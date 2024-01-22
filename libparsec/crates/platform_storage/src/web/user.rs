@@ -4,14 +4,17 @@ use std::{path::Path, sync::Arc};
 
 use libparsec_types::prelude::*;
 
+#[allow(unused)]
 pub struct NeedSyncEntries {
     pub remote: Vec<VlobID>,
     pub local: Vec<VlobID>,
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub struct UserStorageUpdater {}
 
+#[allow(unused)]
 impl UserStorageUpdater {
     pub async fn set_user_manifest(
         &self,
@@ -22,21 +25,22 @@ impl UserStorageUpdater {
 }
 
 #[derive(Debug)]
-pub struct UserStorage {}
+pub struct PlatformUserStorage {}
 
-impl UserStorage {
+impl PlatformUserStorage {
+    #[allow(dead_code)]
     pub async fn start(_data_base_dir: &Path, _device: Arc<LocalDevice>) -> anyhow::Result<Self> {
         todo!();
     }
 
     pub(crate) async fn no_populate_start(
         _data_base_dir: &Path,
-        _device: Arc<LocalDevice>,
+        _device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         todo!();
     }
 
-    pub async fn stop(&self) {
+    pub async fn stop(&self) -> anyhow::Result<()> {
         todo!();
     }
 
@@ -52,11 +56,25 @@ impl UserStorage {
         todo!();
     }
 
-    pub fn get_user_manifest(&self) -> Arc<LocalUserManifest> {
+    pub async fn get_user_manifest(&self) -> anyhow::Result<Option<Vec<u8>>> {
         todo!();
     }
 
+    #[allow(dead_code)]
     pub async fn for_update(&self) -> (UserStorageUpdater, Arc<LocalUserManifest>) {
+        todo!();
+    }
+
+    pub async fn update_user_manifest(
+        &mut self,
+        _encrypted: &[u8],
+        _need_sync: bool,
+        _base_version: VersionInt,
+    ) -> anyhow::Result<()> {
+        todo!();
+    }
+
+    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!();
     }
 }
