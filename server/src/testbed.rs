@@ -12,7 +12,8 @@ use crate::{
     data::{
         DeviceCertificate, RealmArchivingCertificate, RealmKeyRotationCertificate,
         RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
-        SequesterAuthorityCertificate, SequesterServiceCertificate, SequesterRevokedServiceCertificate, ShamirRecoveryBriefCertificate,
+        SequesterAuthorityCertificate, SequesterRevokedServiceCertificate,
+        SequesterServiceCertificate, ShamirRecoveryBriefCertificate,
         ShamirRecoveryShareCertificate, UserCertificate, UserUpdateCertificate,
     },
     BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,

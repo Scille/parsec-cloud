@@ -1183,14 +1183,13 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl SequesterRevokedServiceCertificate {
     #[new]
-    fn new(
-        timestamp: DateTime,
-        service_id: SequesterServiceID,
-    ) -> Self {
-        Self(Arc::new(libparsec_types::SequesterRevokedServiceCertificate {
-            timestamp: timestamp.0,
-            service_id: service_id.0,
-        }))
+    fn new(timestamp: DateTime, service_id: SequesterServiceID) -> Self {
+        Self(Arc::new(
+            libparsec_types::SequesterRevokedServiceCertificate {
+                timestamp: timestamp.0,
+                service_id: service_id.0,
+            },
+        ))
     }
 
     #[classmethod]

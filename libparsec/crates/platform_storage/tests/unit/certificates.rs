@@ -2,7 +2,7 @@
 
 // TODO: fix those tests !
 
-use std::collections::HashMap;
+use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::certificates::CertificatesStorageUpdater;
 
@@ -233,6 +233,121 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
     expected.sequester = Some(t7);
 
     p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t8 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmKeyRotationCertificate {
+                timestamp: t8,
+                realm_id,
+                key_index: 0,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                hash_algorithm: HashAlgorithm::Sha256,
+                key_canary: b"key_canary".to_vec(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.realm.insert(realm_id, t8);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t9 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmNameCertificate {
+                timestamp: t9,
+                realm_id,
+                // Not meaningful for the test
+                key_index: 0,
+                author: device_id.clone(),
+                encrypted_name: b"encrypted_name".to_vec(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.realm.insert(realm_id, t9);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t10 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmArchivingCertificate {
+                timestamp: t10,
+                realm_id,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                configuration: RealmArchivingConfiguration::Archived,
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.realm.insert(realm_id, t10);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t11 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &SequesterRevokedServiceCertificate {
+                timestamp: t11,
+                service_id,
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.sequester = Some(t11);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t12 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryBriefCertificate {
+                timestamp: t12,
+                author: device_id.clone(),
+                // Not meaningful for the test
+                per_recipient_shares: HashMap::new(),
+                threshold: NonZeroU64::new(1).unwrap(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.shamir_recovery = Some(t12);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
+
+    let t13 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryShareCertificate {
+                timestamp: t13,
+                author: device_id.clone(),
+                recipient: user_id.clone(),
+                // Not meaningful for the test
+                ciphered_share: b"ciphered_share".to_vec(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    expected.shamir_recovery = Some(t13);
+
+    p_assert_eq!(storage_mut.get_last_timestamps().await.unwrap(), expected);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -293,6 +408,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     let user_id = alice.device_id.user_id();
     let other_user_id = &"bob".parse::<UserID>().unwrap();
     let device_id = &alice.device_id;
+    let other_device_id = "bob@dev1".parse::<DeviceID>().unwrap();
     let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let other_realm_id = VlobID::from_hex("810d8d137b934985b62627042058aee4").unwrap();
     let service_id1 = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
@@ -535,6 +651,188 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .await
         .unwrap();
 
+    let t14 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmKeyRotationCertificate {
+                timestamp: t14,
+                realm_id,
+                key_index: 0,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                hash_algorithm: HashAlgorithm::Sha256,
+                key_canary: b"key_canary".to_vec(),
+            },
+            b"realm_key_rotation1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t15 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmKeyRotationCertificate {
+                timestamp: t15,
+                realm_id,
+                key_index: 1,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                hash_algorithm: HashAlgorithm::Sha256,
+                key_canary: b"key_canary".to_vec(),
+            },
+            b"realm_key_rotation2".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t16 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmNameCertificate {
+                timestamp: t16,
+                realm_id,
+                // Not meaningful for the test
+                key_index: 0,
+                author: device_id.clone(),
+                encrypted_name: b"encrypted_name".to_vec(),
+            },
+            b"realm_name1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t17 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmNameCertificate {
+                timestamp: t17,
+                realm_id,
+                // Not meaningful for the test
+                key_index: 0,
+                author: device_id.clone(),
+                encrypted_name: b"encrypted_name".to_vec(),
+            },
+            b"realm_name2".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t18 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmArchivingCertificate {
+                timestamp: t18,
+                realm_id,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                configuration: RealmArchivingConfiguration::Archived,
+            },
+            b"realm_archiving1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t19 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmArchivingCertificate {
+                timestamp: t19,
+                realm_id,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                configuration: RealmArchivingConfiguration::Archived,
+            },
+            b"realm_archiving2".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t20 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &SequesterRevokedServiceCertificate {
+                timestamp: t20,
+                service_id: service_id1,
+            },
+            b"sequester_revoked1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t21 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &SequesterRevokedServiceCertificate {
+                timestamp: t21,
+                service_id: service_id2,
+            },
+            b"sequester_revoked2".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t22 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryBriefCertificate {
+                timestamp: t22,
+                author: device_id.clone(),
+                // Not meaningful for the test
+                per_recipient_shares: HashMap::new(),
+                threshold: NonZeroU64::new(1).unwrap(),
+            },
+            b"shamir_recovery_brief1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t23 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryBriefCertificate {
+                timestamp: t23,
+                author: other_device_id.clone(),
+                // Not meaningful for the test
+                per_recipient_shares: HashMap::new(),
+                threshold: NonZeroU64::new(1).unwrap(),
+            },
+            b"shamir_recovery_brief2".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t24 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryShareCertificate {
+                timestamp: t24,
+                author: device_id.clone(),
+                recipient: user_id.clone(),
+                // Not meaningful for the test
+                ciphered_share: b"ciphered_share".to_vec(),
+            },
+            b"shamir_recovery_share1".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t25 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryShareCertificate {
+                timestamp: t25,
+                author: other_device_id.clone(),
+                recipient: other_user_id.clone(),
+                // Not meaningful for the test
+                ciphered_share: b"ciphered_share".to_vec(),
+            },
+            b"shamir_recovery_share2".to_vec(),
+        )
+        .await
+        .unwrap();
+
     // 3) ...and access them !
 
     macro_rules! assert_one_in_db {
@@ -582,7 +880,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_multiple_in_db!(realm_role_certificates, realm_id.to_owned() =>
+    assert_multiple_in_db!(realm_role_certificates, realm_id =>
         vec![
             (t7, b"realm_role1".to_vec()),
             (t8, b"realm_role2".to_vec()),
@@ -590,7 +888,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(realm_role_certificates, other_realm_id.to_owned() => (t9, b"other_realm_role".to_vec())).await;
+    assert_one_in_db!(realm_role_certificates, other_realm_id => (t9, b"other_realm_role".to_vec())).await;
     assert_multiple_in_db!(user_realm_role_certificates, user_id.to_owned() =>
         vec![
             (t7, b"realm_role1".to_vec()),
@@ -613,6 +911,52 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     )
     .await;
     assert_one_in_db!(sequester_service_certificate, service_id1 => (t12, b"sequester_service1".to_vec())).await;
+    assert_one_in_db!(realm_key_rotation_certificate, realm_id, 0 => (t14, b"realm_key_rotation1".to_vec())).await;
+    assert_multiple_in_db!(realm_key_rotation_certificates, realm_id =>
+        vec![
+            (t14, b"realm_key_rotation1".to_vec()),
+            (t15, b"realm_key_rotation2".to_vec()),
+        ]
+    )
+    .await;
+    assert_multiple_in_db!(realm_name_certificates, realm_id =>
+        vec![
+            (t16, b"realm_name1".to_vec()),
+            (t17, b"realm_name2".to_vec()),
+        ]
+    )
+    .await;
+    assert_multiple_in_db!(realm_archiving_certificates, realm_id =>
+        vec![
+            (t18, b"realm_archiving1".to_vec()),
+            (t19, b"realm_archiving2".to_vec()),
+        ]
+    )
+    .await;
+    assert_one_in_db!(sequester_revoked_service_certificate, service_id1 => (t20, b"sequester_revoked1".to_vec())).await;
+    assert_multiple_in_db!(sequester_revoked_service_certificates =>
+        vec![
+            (t20, b"sequester_revoked1".to_vec()),
+            (t21, b"sequester_revoked2".to_vec()),
+        ]
+    )
+    .await;
+    assert_one_in_db!(user_shamir_recovery_brief_certificates, user_id.to_owned() => (t22, b"shamir_recovery_brief1".to_vec())).await;
+    assert_multiple_in_db!(shamir_recovery_brief_certificates =>
+        vec![
+            (t22, b"shamir_recovery_brief1".to_vec()),
+            (t23, b"shamir_recovery_brief2".to_vec()),
+        ]
+    )
+    .await;
+    assert_one_in_db!(user_recipient_shamir_recovery_share_certificates, user_id.to_owned(), user_id.to_owned() => (t24, b"shamir_recovery_share1".to_vec())).await;
+    assert_multiple_in_db!(shamir_recovery_share_certificates =>
+        vec![
+            (t24, b"shamir_recovery_share1".to_vec()),
+            (t25, b"shamir_recovery_share2".to_vec()),
+        ]
+    )
+    .await;
 
     // 4) Ensure `up_to` filter param is working
     // Note we don't test every possible types here: this is because we have already
@@ -807,6 +1151,97 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 )
                 .1,
                 service_label: "service_label".to_string(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t8 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmKeyRotationCertificate {
+                timestamp: t8,
+                realm_id,
+                key_index: 0,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                hash_algorithm: HashAlgorithm::Sha256,
+                key_canary: b"key_canary".to_vec(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t9 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmNameCertificate {
+                timestamp: t9,
+                realm_id,
+                // Not meaningful for the test
+                key_index: 0,
+                author: device_id.clone(),
+                encrypted_name: b"encrypted_name".to_vec(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t10 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &RealmArchivingCertificate {
+                timestamp: t10,
+                realm_id,
+                // Not meaningful for the test
+                author: device_id.clone(),
+                configuration: RealmArchivingConfiguration::Archived,
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t11 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &SequesterRevokedServiceCertificate {
+                timestamp: t11,
+                service_id,
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t12 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryBriefCertificate {
+                timestamp: t12,
+                author: device_id.clone(),
+                // Not meaningful for the test
+                per_recipient_shares: HashMap::new(),
+                threshold: NonZeroU64::new(1).unwrap(),
+            },
+            b"<encrypted>".to_vec(),
+        )
+        .await
+        .unwrap();
+
+    let t13 = timestamps.next();
+    storage_mut
+        .add_certificate(
+            &ShamirRecoveryShareCertificate {
+                timestamp: t13,
+                author: device_id.clone(),
+                recipient: user_id.clone(),
+                // Not meaningful for the test
+                ciphered_share: b"ciphered_share".to_vec(),
             },
             b"<encrypted>".to_vec(),
         )
