@@ -44,7 +44,7 @@ interesting stuff:
 With the current websocket-based api, the very first requests does a handshake which starts by exchanging the api versions supported by the server and the client to determine which should be used.
 
 With a http api, we would have to replace this by headers:
-1 - Client send a request to server, it uses the latest api version it supports and add the version number to the content-type header (e.g. `Content-Type: application/msgpack;v=2.6`)
+1 - Client sends a request to server, it uses the latest api version it supports and add the version number to the content-type header (e.g. `Content-Type: application/msgpack;v=2.6`)
 2 - If server support the api version, it replies with the content-type header indicating it own version of the api (this is needed given api revision might not be the same between client and server)
 3 - If server doesn't support the api version, it replies with a specific "api not supported" message which contains the list of api version it supports (e.g. `{"status": "unsupported_api_version", "supported_api_versions": ["1.10", "2.3"]}`). The client can then retry if it supports an older version.
 
