@@ -33,16 +33,6 @@ More specifically, the following API changes are required:
 
 The archiving status can be configured using one of 3 variants, `Available`, `Archived` and `DeletionPlanned`:
 
-```rust
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-pub enum RealmArchivingConfiguration {
-    Available,
-    Archived,
-    DeletionPlanned(DateTime),
-}
-```
-
 This configuration is included in a certificate signed by the owner:
 
 ```json5
@@ -65,6 +55,31 @@ This configuration is included in a certificate signed by the owner:
         {
             "name": "configuration",
             "type": "RealmArchivingConfiguration",
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "RealmArchivingConfiguration",
+            "variants": [
+                {
+                    "name": "Available",
+                    "discriminant_value": "AVAILABLE"
+                },
+                {
+                    "name": "Archived",
+                    "discriminant_value": "ARCHIVED"
+                },
+                {
+                    "name": "DeletionPlanned",
+                    "discriminant_value": "DELETION_PLANNED",
+                    "fields": [
+                        {
+                            "name": "deletion_date",
+                            "type": "DateTime"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }
