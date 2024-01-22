@@ -192,6 +192,9 @@ test-command = "parsec --version && parsec core list_devices"
 # For this reason we force $PATH to contain Rust bin dir.
 PATH = "$PATH:$HOME/.cargo/bin"
 
+[tool.cibuildwheel.linux]
+before-build = "python -m pip install -U pip && yum install -y perl-IPC-Cmd"
+
 [tool.ruff]
 line-length = 100
 target-version = "py39"
