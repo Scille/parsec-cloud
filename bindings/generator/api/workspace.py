@@ -18,7 +18,7 @@ from .common import (
 
 
 class ClientStartWorkspaceError(ErrorVariant):
-    class NoAccess:
+    class WorkspaceNotFound:
         pass
 
     class Internal:
@@ -41,6 +41,9 @@ async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
 
 
 class WorkspaceFsOperationError(ErrorVariant):
+    class Stopped:
+        pass
+
     class Offline:
         pass
 
@@ -66,6 +69,9 @@ class WorkspaceFsOperationError(ErrorVariant):
         pass
 
     class ReadOnlyRealm:
+        pass
+
+    class InvalidKeysBundle:
         pass
 
     class InvalidCertificate:
