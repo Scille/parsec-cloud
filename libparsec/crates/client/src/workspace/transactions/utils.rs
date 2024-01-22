@@ -30,48 +30,44 @@ pub(super) async fn get_child_manifest(
         Ok(manifest) => Ok(manifest),
         Err(StorageGetChildManifestError::Internal(err)) => Err(err.into()),
         Err(StorageGetChildManifestError::NotFound) => {
-            let remote_manifest = fetch_remote_child_manifest(ops, entry_id, None)
-                .await
-                .map_err(|error| match error {
-                    FetchRemoteManifestError::Stopped => FsOperationError::Stopped,
-                    FetchRemoteManifestError::Offline => FsOperationError::Offline,
-                    FetchRemoteManifestError::VlobNotFound => {
-                        // This is unexpected: we got an entry ID from a parent folder/workspace
-                        // manifest, but this ID points to nothing according to the server :/
-                        //
-                        // That could means two things:
-                        // - the server is lying to us
-                        // - the client that have uploaded the parent folder/workspace manifest
-                        //   was buggy and include the ID of a not-yet-synchronized entry
-                        //
-                        // In theory it would be good to do a self-healing here (e.g. remove
-                        // the entry from the parent), but this is cumbersome and only possible
-                        // if the user has write access.
-                        // So instead we just pretend the entry doesn't exist.
+            let remote_manifest =
+                fetch_remote_child_manifest(ops, entry_id)
+                    .await
+                    .map_err(|error| match error {
+                        FetchRemoteManifestError::Stopped => FsOperationError::Stopped,
+                        FetchRemoteManifestError::Offline => FsOperationError::Offline,
+                        FetchRemoteManifestError::VlobNotFound => {
+                            // This is unexpected: we got an entry ID from a parent folder/workspace
+                            // manifest, but this ID points to nothing according to the server :/
+                            //
+                            // That could means two things:
+                            // - the server is lying to us
+                            // - the client that have uploaded the parent folder/workspace manifest
+                            //   was buggy and include the ID of a not-yet-synchronized entry
+                            //
+                            // In theory it would be good to do a self-healing here (e.g. remove
+                            // the entry from the parent), but this is cumbersome and only possible
+                            // if the user has write access.
+                            // So instead we just pretend the entry doesn't exist.
 
-                        // TODO: add warning log !
-                        FsOperationError::EntryNotFound
-                    }
-                    // The realm doesn't exist on server side, hence we are it creator and
-                    // it data only live on our local storage, which we have aleady checked.
-                    FetchRemoteManifestError::RealmNotFound => FsOperationError::EntryNotFound,
-                    FetchRemoteManifestError::NotAllowed => FsOperationError::NoRealmAccess,
-                    FetchRemoteManifestError::InvalidKeysBundle(err) => {
-                        FsOperationError::InvalidKeysBundle(err)
-                    }
-                    FetchRemoteManifestError::InvalidCertificate(err) => {
-                        FsOperationError::InvalidCertificate(err)
-                    }
-                    FetchRemoteManifestError::InvalidManifest(err) => {
-                        FsOperationError::InvalidManifest(err)
-                    }
-                    FetchRemoteManifestError::Internal(err) => err.into(),
-                    FetchRemoteManifestError::BadVersion => {
-                        // We provided `None` as version (hence `Internal` error is returned
-                        // if the server responds with a `bad_version` status)
-                        unreachable!()
-                    }
-                })?;
+                            // TODO: add warning log !
+                            FsOperationError::EntryNotFound
+                        }
+                        // The realm doesn't exist on server side, hence we are it creator and
+                        // it data only live on our local storage, which we have aleady checked.
+                        FetchRemoteManifestError::RealmNotFound => FsOperationError::EntryNotFound,
+                        FetchRemoteManifestError::NotAllowed => FsOperationError::NoRealmAccess,
+                        FetchRemoteManifestError::InvalidKeysBundle(err) => {
+                            FsOperationError::InvalidKeysBundle(err)
+                        }
+                        FetchRemoteManifestError::InvalidCertificate(err) => {
+                            FsOperationError::InvalidCertificate(err)
+                        }
+                        FetchRemoteManifestError::InvalidManifest(err) => {
+                            FsOperationError::InvalidManifest(err)
+                        }
+                        FetchRemoteManifestError::Internal(err) => err.into(),
+                    })?;
 
             // Must save our manifest in the storage
             let (updater, expect_missing_manifest) =

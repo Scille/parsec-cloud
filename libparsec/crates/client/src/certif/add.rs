@@ -111,8 +111,6 @@ pub enum InvalidCertificateError {
 pub enum CertifAddCertificatesBatchError {
     #[error(transparent)]
     InvalidCertificate(#[from] InvalidCertificateError),
-    #[error("Component has stopped")]
-    Stopped,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

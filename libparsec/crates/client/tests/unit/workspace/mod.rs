@@ -2,9 +2,9 @@
 
 mod base;
 mod folder_transactions;
-// mod inbound_sync_folder;
-// mod inbound_sync_root;
-// mod outbound_sync_folder;
-// mod outbound_sync_root;
+mod inbound_sync_folder;
+mod inbound_sync_root;
+mod outbound_sync_folder;
+mod outbound_sync_root;
 mod stat_entry;
 mod utils;

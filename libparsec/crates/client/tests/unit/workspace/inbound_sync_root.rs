@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{protocol::authenticated_cmds, test_register_send_hook};
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -49,7 +51,6 @@ async fn non_placeholder(
 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
     // 1) Customize testbed
 
@@ -180,36 +181,56 @@ async fn non_placeholder(
     // 2) Start workspace ops
 
     let alice = env.local_device("alice@dev1");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // 3) Actual sync operation
 
-    // Mock server command `vlob_read` fetch the last version (i.e. v1 for
-    // `RemoteModification::Nothing`, v2 else)of the workspace manifest
+    // Mock server command `vlob_read_batch` fetch the last version (i.e. v1 for
+    // `RemoteModification::Nothing`, v2 else) of the workspace manifest
 
-    test_register_send_hook(&env.discriminant_dir, {
-        let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
-        let env = env.clone();
-        move |req: authenticated_cmds::latest::vlob_read::Req| {
-            p_assert_eq!(req.encryption_revision, 1);
-            p_assert_eq!(req.vlob_id, wksp1_id);
-            p_assert_eq!(req.version, None);
-            p_assert_eq!(req.timestamp, None);
-            authenticated_cmds::latest::vlob_read::Rep::Ok {
-                author: "alice@dev2".parse().unwrap(),
-                certificate_index: env.get_last_certificate_index(),
-                timestamp: wksp1_last_remote_manifest.timestamp,
-                version: wksp1_last_remote_manifest.version,
-                blob: wksp1_last_encrypted,
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        // 1) Read the workspace manifest's vlob
+        {
+            let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
+            let last_realm_certificate_timestamp =
+                env.get_last_realm_certificate_timestamp(wksp1_id);
+            let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
+            move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+                p_assert_eq!(req.at, None);
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.vlobs, [wksp1_id]);
+                authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                    items: vec![(
+                        wksp1_id,
+                        1,
+                        wksp1_last_remote_manifest.author.clone(),
+                        wksp1_last_remote_manifest.version,
+                        wksp1_last_remote_manifest.timestamp,
+                        wksp1_last_encrypted,
+                    )],
+                    needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                    needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                }
             }
-        }
-    });
+        },
+        // 2) Fetch workspace keys bundle to decrypt the vlob
+        {
+            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+            let keys_bundle_access =
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, Some(1));
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    key_index,
+                    keys_bundle,
+                    keys_bundle_access,
+                }
+            }
+        },
+    );
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
     let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
@@ -295,23 +316,24 @@ async fn placeholder(
     #[values(false, true)] local_change: bool,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    let (env, (wksp1_id, wksp1_foo_id)) = env.customize_with_map(|builder| {
         builder.new_device("alice"); // alice@dev2
-        builder.new_user_realm("alice");
 
-        // Alice has access to a realm, alice@dev2 has synchronized the initial manifest
-        // while alice@dev1 is still using a placeholder.
+        // Alice has access to a realm, alice@dev2 has synchronized the initial workspace
+        // manifest while alice@dev1 is still using a placeholder.
 
-        let new_realm_event = builder.new_realm("alice");
-        let (wksp1_id, wksp1_key) = new_realm_event.map(|e| (e.realm_id, e.realm_key.clone()));
-        new_realm_event.then_add_workspace_entry_to_user_manifest_vlob();
-        builder.store_stuff("wksp1_id", &wksp1_id);
-        builder.store_stuff("wksp1_key", &wksp1_key);
-
+        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+        builder.rotate_key_realm(wksp1_id);
+        // We skip the initial rename part of the workspace bootstrap as it is not needed here
         builder.create_or_update_workspace_manifest_vlob("alice@dev2", wksp1_id);
 
         builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder.user_storage_fetch_user_vlob("alice@dev1");
+        builder
+            .user_storage_local_update("alice@dev1")
+            .update_local_workspaces_with_fetched_certificates();
+        builder.user_storage_fetch_realm_checkpoint("alice@dev1");
+        // Note alice@dev1 doesn't fetch anything related to wksp1 here !
+
         let foo_id = builder
             .workspace_data_storage_local_file_manifest_create_or_update(
                 "alice@dev1",
@@ -319,7 +341,6 @@ async fn placeholder(
                 None,
             )
             .map(|e| e.local_manifest.base.id);
-        builder.store_stuff("wksp1_foo_id", &foo_id);
         builder
             .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
             .customize(|e| {
@@ -330,19 +351,12 @@ async fn placeholder(
                     manifest.children.insert("foo".parse().unwrap(), foo_id);
                 }
             });
+
+        (wksp1_id, foo_id)
     });
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
-    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
     let alice = env.local_device("alice@dev1");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // Get back last workspace manifest version synced in server
     let (wksp1_last_remote_manifest, wksp1_last_encrypted) = env
@@ -359,23 +373,49 @@ async fn placeholder(
         .unwrap();
 
     // Mock server command `vlob_read` fetch the last version
-    test_register_send_hook(&env.discriminant_dir, {
-        let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
-        let env = env.clone();
-        move |req: authenticated_cmds::latest::vlob_read::Req| {
-            p_assert_eq!(req.encryption_revision, 1);
-            p_assert_eq!(req.vlob_id, wksp1_id);
-            p_assert_eq!(req.version, None);
-            p_assert_eq!(req.timestamp, None);
-            authenticated_cmds::latest::vlob_read::Rep::Ok {
-                author: "alice@dev2".parse().unwrap(),
-                certificate_index: env.get_last_certificate_index(),
-                timestamp: wksp1_last_remote_manifest.timestamp,
-                version: wksp1_last_remote_manifest.version,
-                blob: wksp1_last_encrypted,
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        // 1) Read the workspace manifest's vlob
+        {
+            let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
+            let last_realm_certificate_timestamp =
+                env.get_last_realm_certificate_timestamp(wksp1_id);
+            let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
+            move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+                p_assert_eq!(req.at, None);
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.vlobs, [wksp1_id]);
+                authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                    items: vec![(
+                        wksp1_id,
+                        1,
+                        wksp1_last_remote_manifest.author.clone(),
+                        wksp1_last_remote_manifest.version,
+                        wksp1_last_remote_manifest.timestamp,
+                        wksp1_last_encrypted,
+                    )],
+                    needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                    needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                }
             }
-        }
-    });
+        },
+        // 2) Fetch workspace keys bundle to decrypt the vlob
+        {
+            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+            let keys_bundle_access =
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, Some(1));
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    key_index,
+                    keys_bundle,
+                    keys_bundle_access,
+                }
+            }
+        },
+    );
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
 

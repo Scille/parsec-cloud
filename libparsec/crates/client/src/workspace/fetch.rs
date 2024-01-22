@@ -19,8 +19,6 @@ pub enum FetchRemoteManifestError {
     RealmNotFound,
     #[error("This manifest doesn't exist on the server")]
     VlobNotFound,
-    #[error("Server has no such version for this manifest")]
-    BadVersion,
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error(transparent)]
@@ -45,9 +43,8 @@ impl From<ConnectionError> for FetchRemoteManifestError {
 pub(super) async fn fetch_remote_child_manifest(
     ops: &WorkspaceOps,
     vlob_id: VlobID,
-    version: Option<VersionInt>,
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
-    let data = fetch_vlob(ops, vlob_id, version).await?;
+    let data = fetch_vlob(ops, vlob_id).await?;
 
     ops.certificates_ops
         .validate_child_manifest(
@@ -84,10 +81,9 @@ pub(super) async fn fetch_remote_child_manifest(
 #[allow(unused)]
 pub(super) async fn fetch_remote_workspace_manifest(
     ops: &WorkspaceOps,
-    version: Option<VersionInt>,
 ) -> Result<WorkspaceManifest, FetchRemoteManifestError> {
     let vlob_id = ops.realm_id;
-    let data = fetch_vlob(ops, vlob_id, version).await?;
+    let data = fetch_vlob(ops, vlob_id).await?;
 
     ops.certificates_ops
         .validate_workspace_manifest(
@@ -133,12 +129,7 @@ struct VlobData {
 async fn fetch_vlob(
     ops: &WorkspaceOps,
     vlob_id: VlobID,
-    version: Option<VersionInt>,
 ) -> Result<VlobData, FetchRemoteManifestError> {
-    if version.is_some() {
-        todo!()
-    }
-
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {

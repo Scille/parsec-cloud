@@ -29,7 +29,8 @@ use crate::{
     config::ClientConfig,
     event_bus::EventBus,
     monitors::{
-        start_certif_poll_monitor, start_connection_monitor, start_user_sync_monitor, Monitor,
+        start_certif_poll_monitor, start_connection_monitor, start_user_sync_monitor,
+        start_workspaces_boostrap_monitor, Monitor,
     },
     user::UserOps,
 };
@@ -87,7 +88,7 @@ impl Client {
         config: Arc<ClientConfig>,
         event_bus: EventBus,
         device: Arc<LocalDevice>,
-    ) -> Result<Self, anyhow::Error> {
+    ) -> Result<Arc<Self>, anyhow::Error> {
         let with_monitors = config.with_monitors;
 
         // TODO: error handling
@@ -118,7 +119,7 @@ impl Client {
             .await?,
         );
 
-        let client = Self {
+        let client = Arc::new(Self {
             config,
             device,
             event_bus,
@@ -127,11 +128,14 @@ impl Client {
             user_ops,
             workspaces: AsyncMutex::default(),
             monitors: Mutex::default(),
-        };
+        });
 
         // Start the common monitors
 
         if with_monitors {
+            let workspaces_boostrap_monitor =
+                start_workspaces_boostrap_monitor(client.event_bus.clone(), client.clone()).await;
+
             let user_sync_monitor =
                 start_user_sync_monitor(client.user_ops.clone(), client.event_bus.clone()).await;
 
@@ -147,6 +151,7 @@ impl Client {
                 start_connection_monitor(client.cmds.clone(), client.event_bus.clone()).await;
 
             let mut monitors = client.monitors.lock().expect("Mutex is poisoned");
+            monitors.push(workspaces_boostrap_monitor);
             monitors.push(user_sync_monitor);
             monitors.push(certif_poll_monitor);
             monitors.push(connection_monitor);

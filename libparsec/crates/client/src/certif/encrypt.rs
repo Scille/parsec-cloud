@@ -9,10 +9,6 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifEncryptForUserError {
-    /// Stopped is not used by `encrypt_for_user`, but is convenient anyways given
-    /// it is needed by the wrapper `CertificateOps::encrypt_for_user`.
-    #[error("Component has stopped")]
-    Stopped,
     #[error("User not found")]
     UserNotFound,
     #[error(transparent)]

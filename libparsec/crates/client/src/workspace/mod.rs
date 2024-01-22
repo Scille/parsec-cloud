@@ -17,7 +17,7 @@ use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
 use transactions::RemoveEntryExpect;
 pub use transactions::{
     EntryStat, FsOperationError as WorkspaceFsOperationError, InboundSyncOutcome, OpenedFile,
-    SyncError as WorkspaceSyncError,
+    WorkspaceSyncError,
 };
 
 pub struct WorkspaceOps {
@@ -63,6 +63,7 @@ impl WorkspaceOps {
     /*
      * Crate-only interface (used by client, opses and monitors)
      */
+
     pub(crate) async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
@@ -127,25 +128,19 @@ impl WorkspaceOps {
     /// have the client fully synchronized with the server.
     pub async fn inbound_sync(
         &self,
-        _entry_id: VlobID,
+        entry_id: VlobID,
     ) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
-        todo!()
-        // TODO: fixme
-        // transactions::inbound_sync(self, entry_id).await
+        transactions::inbound_sync(self, entry_id).await
     }
 
     /// Query the server for changes in the workspace since the last checkpoint
     /// we know about.
     pub async fn refresh_realm_checkpoint(&self) -> Result<(), WorkspaceSyncError> {
-        todo!()
-        // TODO: fixme
-        // transactions::refresh_realm_checkpoint(self).await
+        transactions::refresh_realm_checkpoint(self).await
     }
 
     pub async fn get_need_inbound_sync(&self) -> anyhow::Result<Vec<VlobID>> {
-        todo!()
-        // TODO: fixme
-        // transactions::get_need_inbound_sync(self).await
+        transactions::get_need_inbound_sync(self).await
     }
 
     /// Upload local changes to the server.
@@ -153,21 +148,18 @@ impl WorkspaceOps {
     /// This also requires to download and merge any remote changes. Hence the
     /// client is fully synchronized with the server once this function returns
     /// (unless a concurrent local change occured during the sync).
-    pub async fn outbound_sync(&self, _entry_id: VlobID) -> Result<(), WorkspaceSyncError> {
-        todo!()
-        // TODO: fixme
-        // transactions::outbound_sync(self, entry_id).await
+    pub async fn outbound_sync(&self, entry_id: VlobID) -> Result<(), WorkspaceSyncError> {
+        transactions::outbound_sync(self, entry_id).await
     }
 
     pub async fn get_need_outbound_sync(&self) -> anyhow::Result<Vec<VlobID>> {
-        todo!()
-        // TODO: fixme
-        // transactions::get_need_outbound_sync(self).await
+        transactions::get_need_outbound_sync(self).await
     }
 
-    // /*
-    //  * Public interface
-    //  */
+    /*
+     * Public interface
+     */
+
     pub fn realm_id(&self) -> VlobID {
         self.realm_id
     }

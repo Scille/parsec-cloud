@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{protocol::authenticated_cmds, test_register_send_hook};
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -20,15 +22,8 @@ async fn base(
 ) {
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let get_folder_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
@@ -95,10 +90,27 @@ async fn base(
     p_assert_eq!(foo_manifest.children, expected_children);
 
     // Mock server command `vlob_update`
-    test_register_send_hook(
+    test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
+        // 1) Fetch last workspace keys bundle to encrypt the new manifest
+        {
+            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+            let keys_bundle_access =
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, Some(1));
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    key_index,
+                    keys_bundle,
+                    keys_bundle_access,
+                }
+            }
+        },
+        // 2) `vlob_update` succeed on first try !
         move |req: authenticated_cmds::latest::vlob_update::Req| {
-            p_assert_eq!(req.encryption_revision, 1);
+            p_assert_eq!(req.key_index, 1);
             p_assert_eq!(req.vlob_id, wksp1_foo_id);
             p_assert_eq!(req.version, 2);
             assert!(req.sequester_blob.is_none());

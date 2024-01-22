@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{protocol::authenticated_cmds, test_register_send_hook};
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -50,7 +52,6 @@ async fn non_placeholder(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
     // 1) Customize testbed
 
@@ -209,36 +210,56 @@ async fn non_placeholder(
     // 2) Start workspace ops
 
     let alice = env.local_device("alice@dev1");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // 3) Actual sync operation
 
     // Mock server command `vlob_read` fetch the last version (i.e. v1 for
     // `RemoteModification::Nothing`, v2 else)of the workspace manifest
 
-    test_register_send_hook(&env.discriminant_dir, {
-        let wksp1_foo_last_remote_manifest = wksp1_foo_last_remote_manifest.clone();
-        let env = env.clone();
-        move |req: authenticated_cmds::latest::vlob_read::Req| {
-            p_assert_eq!(req.encryption_revision, 1);
-            p_assert_eq!(req.vlob_id, wksp1_foo_id);
-            p_assert_eq!(req.version, None);
-            p_assert_eq!(req.timestamp, None);
-            authenticated_cmds::latest::vlob_read::Rep::Ok {
-                author: "alice@dev2".parse().unwrap(),
-                certificate_index: env.get_last_certificate_index(),
-                timestamp: wksp1_foo_last_remote_manifest.timestamp,
-                version: wksp1_foo_last_remote_manifest.version,
-                blob: wksp1_foo_last_encrypted,
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        // 1) Read the folder manifest's vlob
+        {
+            let wksp1_foo_last_remote_manifest = wksp1_foo_last_remote_manifest.clone();
+            let last_realm_certificate_timestamp =
+                env.get_last_realm_certificate_timestamp(wksp1_id);
+            let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
+            move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+                p_assert_eq!(req.at, None);
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.vlobs, [wksp1_foo_id]);
+                authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                    items: vec![(
+                        wksp1_foo_id,
+                        1,
+                        wksp1_foo_last_remote_manifest.author.clone(),
+                        wksp1_foo_last_remote_manifest.version,
+                        wksp1_foo_last_remote_manifest.timestamp,
+                        wksp1_foo_last_encrypted,
+                    )],
+                    needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                    needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                }
             }
-        }
-    });
+        },
+        // 2) Fetch workspace keys bundle to decrypt the vlob
+        {
+            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+            let keys_bundle_access =
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, Some(1));
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    key_index,
+                    keys_bundle,
+                    keys_bundle_access,
+                }
+            }
+        },
+    );
 
     wksp1_ops.inbound_sync(wksp1_foo_id).await.unwrap();
     let foo_manifest = match wksp1_ops

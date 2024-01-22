@@ -6,10 +6,10 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    Client, ClientEnsureWorkspacesBootstrappedError,
     event_bus::{
         EventBus, EventMissedServerEvents, EventMonitorCrashed, EventWorkspaceLocallyCreated,
     },
+    Client, ClientEnsureWorkspacesBootstrappedError,
 };
 
 const WORKSPACES_BOOTSTRAP_MONITOR_NAME: &str = "workspaces_bootstrap";
@@ -22,7 +22,14 @@ pub(crate) async fn start_workspaces_boostrap_monitor(
         let task_future = task_future_factory(event_bus.clone(), client);
         pretend_future_is_send_on_web(task_future)
     };
-    Monitor::start(event_bus, WORKSPACES_BOOTSTRAP_MONITOR_NAME, None, future, None).await
+    Monitor::start(
+        event_bus,
+        WORKSPACES_BOOTSTRAP_MONITOR_NAME,
+        None,
+        future,
+        None,
+    )
+    .await
 }
 
 fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<Output = ()> {
@@ -76,7 +83,11 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                         // Client has been stopped, time to shutdown !
                         return;
                     }
-                    Err(error @ ClientEnsureWorkspacesBootstrappedError::TimestampOutOfBallpark { .. }) => {
+                    Err(
+                        error @ ClientEnsureWorkspacesBootstrappedError::TimestampOutOfBallpark {
+                            ..
+                        },
+                    ) => {
                         // Note ops components are responsible for sending the
                         // bad timestamp event on the event bus
                         log::warn!("Client/server clock drift detected: {:?}", error);

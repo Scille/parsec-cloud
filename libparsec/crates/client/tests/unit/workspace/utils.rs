@@ -15,7 +15,6 @@ pub(crate) async fn workspace_ops_factory(
     discriminant_dir: &Path,
     device: &Arc<LocalDevice>,
     realm_id: VlobID,
-    realm_key: SecretKey,
 ) -> WorkspaceOps {
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),

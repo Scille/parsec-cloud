@@ -36,7 +36,6 @@ impl From<CertifAddCertificatesBatchError> for CertifPollServerError {
     fn from(value: CertifAddCertificatesBatchError) -> Self {
         match value {
             CertifAddCertificatesBatchError::InvalidCertificate(err) => err.into(),
-            CertifAddCertificatesBatchError::Stopped => CertifPollServerError::Stopped,
             CertifAddCertificatesBatchError::Internal(err) => err.into(),
         }
     }
@@ -150,7 +149,6 @@ async fn poll_server_and_add_certificates(
         CertifAddCertificatesBatchError::InvalidCertificate(err) => {
             CertifPollServerError::InvalidCertificate(err)
         }
-        CertifAddCertificatesBatchError::Stopped => CertifPollServerError::Stopped,
         CertifAddCertificatesBatchError::Internal(err) => CertifPollServerError::Internal(err),
     })?;
 

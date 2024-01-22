@@ -6,7 +6,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
 use libparsec_types::prelude::*;
 
-use super::{store::CertificatesStoreReadGuard, CertifEncryptForUserError, CertifOps};
+use super::{encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertifOps};
 
 #[derive(Debug)]
 enum ValidatedKey {
@@ -459,10 +459,6 @@ async fn recover_realm_keys_from_previous_bundles<'a>(
 
 #[derive(Debug, thiserror::Error)]
 pub enum EncryptRealmKeysBundleAccessForUserError {
-    /// Stopped is not used by `encrypt_realm_keys_bundle_access_for_user`, but is convenient anyways given
-    /// it is needed by the wrapper `CertificateOps::encrypt_realm_keys_bundle_access_for_user`.
-    #[error("Component has stopped")]
-    Stopped,
     #[error("Cannot reach the server")]
     Offline,
     #[error("Not allowed to access this realm")]
@@ -512,33 +508,9 @@ pub(super) async fn encrypt_realm_keys_bundle_access_for_user<'a>(
                     EncryptRealmKeysBundleAccessForUserError::UserNotFound
                 }
                 CertifEncryptForUserError::Internal(err) => err.into(),
-                // Shouldn't happen given `encrypt_for_user` is called with a `store`
-                CertifEncryptForUserError::Stopped => {
-                    EncryptRealmKeysBundleAccessForUserError::Stopped
-                }
             })?;
 
     Ok((recipient_keys_bundle_access, realm_keys.key_index()))
-}
-
-#[derive(Debug, thiserror::Error)]
-enum AttemptKeysBundleHealingError {
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error("Not allowed to access this realm")]
-    NotAllowed,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for AttemptKeysBundleHealingError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -866,60 +838,4 @@ pub(super) async fn encrypt_for_realm<'a>(
     let encrypted = key.encrypt(data);
 
     Ok((encrypted, key_index))
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum DecryptForRealmError {
-    /// Stopped is not used by `decrypt_for_realm`, but is convenient anyways given
-    /// it is needed by the wrapper `CertificateOps::decrypt_for_realm`.
-    #[error("Component has stopped")]
-    Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error("Not allowed to access this realm")]
-    NotAllowed,
-    #[error("Key exists but is corrupted")]
-    CorruptedKey,
-    #[error("Cannot retrieve the key")]
-    KeyNotFound,
-    #[error("Cannot decrypt the data: {0}")]
-    CorruptedData(#[from] CryptoError),
-    #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-// TODO: should be used by `validate_child_manifest` & `validate_workspace_manifest`
-pub(super) async fn decrypt_for_realm<'a>(
-    ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
-    realm_id: VlobID,
-    key_index: IndexInt,
-    timestamp: DateTime,
-    data: &[u8],
-) -> Result<Vec<u8>, DecryptForRealmError> {
-    let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
-        .await
-        .map_err(|e| match e {
-            LoadLastKeysBundleError::Offline => DecryptForRealmError::Offline,
-            LoadLastKeysBundleError::NotAllowed => DecryptForRealmError::NotAllowed,
-            LoadLastKeysBundleError::NoKey => DecryptForRealmError::KeyNotFound,
-            LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                DecryptForRealmError::InvalidKeysBundle(err)
-            }
-            LoadLastKeysBundleError::Internal(err) => {
-                err.context("Cannot retrieve realm encryption info").into()
-            }
-        })?;
-
-    let key = realm_keys
-        .key_from_index(key_index, timestamp)
-        .map_err(|e| match e {
-            KeyFromIndexError::CorruptedKey => DecryptForRealmError::CorruptedKey,
-            KeyFromIndexError::KeyNotFound => DecryptForRealmError::KeyNotFound,
-        })?;
-
-    let decrypted = key.decrypt(data)?;
-    Ok(decrypted)
 }

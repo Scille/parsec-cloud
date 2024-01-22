@@ -233,7 +233,6 @@ async fn share_do_server_command(
         })
         .await?
         .map_err(|e| match e {
-            EncryptRealmKeysBundleAccessForUserError::Stopped => CertifShareRealmError::Stopped,
             EncryptRealmKeysBundleAccessForUserError::Offline => CertifShareRealmError::Offline,
             EncryptRealmKeysBundleAccessForUserError::NotAllowed => {
                 CertifShareRealmError::AuthorNotAllowed

@@ -11,7 +11,6 @@ use crate::workspace::EntryStat;
 #[case::without_local_cache(false)]
 async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
     let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
     let wksp1_foo_id: &VlobID = env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: &VlobID = env.template.get_stuff("wksp1_bar_txt_id");
 
@@ -30,13 +29,7 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
     }
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id.to_owned(),
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     // Workspace
 
@@ -118,7 +111,6 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
     env.customize(|builder| {
         builder.filter_client_storage_events(|event| match event {
@@ -134,13 +126,7 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let now: DateTime = "2000-12-31T00:00:00Z".parse().unwrap();
     alice.time_provider.mock_time_frozen(now);
 
-    let ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id.to_owned(),
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let info = ops.stat_entry(&"/".parse().unwrap()).await.unwrap();
     p_assert_matches!(

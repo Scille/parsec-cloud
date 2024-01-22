@@ -8,7 +8,7 @@ mod create_file;
 mod create_folder;
 mod inbound_sync;
 mod open_file;
-// mod outbound_sync;
+mod outbound_sync;
 mod remove_entry;
 mod rename_entry;
 mod resize_file;
@@ -19,14 +19,14 @@ pub(crate) use create_file::*;
 pub(crate) use create_folder::*;
 pub use inbound_sync::*;
 pub use open_file::*;
-// pub(crate) use outbound_sync::*;
+pub(crate) use outbound_sync::*;
 pub(crate) use remove_entry::*;
 pub(crate) use rename_entry::*;
 pub(crate) use resize_file::*;
 pub use stat_entry::*;
 use utils::*;
 
-// pub use stat_entry::EntryStat;
+pub use stat_entry::EntryStat;
 
 #[derive(Debug, thiserror::Error)]
 pub enum FsOperationError {
@@ -57,7 +57,7 @@ pub enum FsOperationError {
     #[error(transparent)]
     InvalidManifest(#[from] InvalidManifestError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,

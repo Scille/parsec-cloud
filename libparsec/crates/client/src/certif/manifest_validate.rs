@@ -182,22 +182,22 @@ pub(super) async fn validate_workspace_manifest(
                     }
                     LoadLastKeysBundleError::Internal(err) => err.into(),
                 })?;
-            let key = match realm_keys.key_from_index(key_index, timestamp) {
-                Ok(key) => key,
-                Err(KeyFromIndexError::CorruptedKey) => {
-                    return Err(CertifValidateManifestError::InvalidManifest(
-                        InvalidManifestError::CorruptedKey {
-                            realm: realm_id,
-                            vlob: vlob_id,
-                            version,
-                            author: author.to_owned(),
-                            timestamp,
-                            key_index,
-                        },
-                    ))
-                }
-                Err(KeyFromIndexError::KeyNotFound) => {
-                    return Err(CertifValidateManifestError::InvalidManifest(
+            let key = realm_keys
+                .key_from_index(key_index, timestamp)
+                .map_err(|e| match e {
+                    KeyFromIndexError::CorruptedKey => {
+                        CertifValidateManifestError::InvalidManifest(
+                            InvalidManifestError::CorruptedKey {
+                                realm: realm_id,
+                                vlob: vlob_id,
+                                version,
+                                author: author.to_owned(),
+                                timestamp,
+                                key_index,
+                            },
+                        )
+                    }
+                    KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
                         InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
@@ -206,9 +206,8 @@ pub(super) async fn validate_workspace_manifest(
                             timestamp,
                             key_index,
                         },
-                    ))
-                }
-            };
+                    ),
+                })?;
 
             // 2) Do the actual validation
 
@@ -282,22 +281,22 @@ pub(super) async fn validate_child_manifest(
                     }
                     LoadLastKeysBundleError::Internal(err) => err.into(),
                 })?;
-            let key = match realm_keys.key_from_index(key_index, timestamp) {
-                Ok(key) => key,
-                Err(KeyFromIndexError::CorruptedKey) => {
-                    return Err(CertifValidateManifestError::InvalidManifest(
-                        InvalidManifestError::CorruptedKey {
-                            realm: realm_id,
-                            vlob: vlob_id,
-                            version,
-                            author: author.to_owned(),
-                            timestamp,
-                            key_index,
-                        },
-                    ))
-                }
-                Err(KeyFromIndexError::KeyNotFound) => {
-                    return Err(CertifValidateManifestError::InvalidManifest(
+            let key = realm_keys
+                .key_from_index(key_index, timestamp)
+                .map_err(|e| match e {
+                    KeyFromIndexError::CorruptedKey => {
+                        CertifValidateManifestError::InvalidManifest(
+                            InvalidManifestError::CorruptedKey {
+                                realm: realm_id,
+                                vlob: vlob_id,
+                                version,
+                                author: author.to_owned(),
+                                timestamp,
+                                key_index,
+                            },
+                        )
+                    }
+                    KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
                         InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
@@ -306,16 +305,15 @@ pub(super) async fn validate_child_manifest(
                             timestamp,
                             key_index,
                         },
-                    ))
-                }
-            };
+                    ),
+                })?;
 
             // 2) Do the actual validation
 
             let res = validate_manifest(
                 store,
                 realm_id,
-                key,
+                &key,
                 vlob_id,
                 author,
                 version,

@@ -1,10 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::{
-    protocol::authenticated_cmds, test_register_send_hook, test_register_sequence_of_send_hooks,
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use super::utils::workspace_ops_factory;
 
@@ -39,7 +43,6 @@ async fn non_placeholder(
 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
     // 1) Customize testbed
 
@@ -117,13 +120,7 @@ async fn non_placeholder(
     // 2) Start workspace ops
 
     let alice = env.local_device("alice@dev1");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // 3) Actual sync operation
 
@@ -133,11 +130,27 @@ async fn non_placeholder(
 
         // Simple case: modification only on client side
         (_, false) => {
-            // `vlob_update` succeed on first try !
-            test_register_send_hook(
+            test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
+                // 1) Fetch last workspace keys bundle to encrypt the new manifest
+                {
+                    let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+                    let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+                    let keys_bundle_access =
+                        env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                    move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                        p_assert_eq!(req.realm_id, wksp1_id);
+                        p_assert_eq!(req.key_index, Some(1));
+                        authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                            key_index,
+                            keys_bundle,
+                            keys_bundle_access,
+                        }
+                    }
+                },
+                // 2) `vlob_update` succeed on first try !
                 move |req: authenticated_cmds::latest::vlob_update::Req| {
-                    p_assert_eq!(req.encryption_revision, 1);
+                    p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
                     p_assert_eq!(req.version, 2);
                     assert!(req.sequester_blob.is_none());
@@ -150,34 +163,57 @@ async fn non_placeholder(
         (_, true) => {
             test_register_sequence_of_send_hooks!(
                 &env.discriminant_dir,
-                // 1) Fail to `vlob_create` due to new remote version
-                move |req: authenticated_cmds::latest::vlob_update::Req| {
-                    p_assert_eq!(req.encryption_revision, 1);
-                    p_assert_eq!(req.vlob_id, wksp1_id);
-                    assert!(req.sequester_blob.is_none());
-                    authenticated_cmds::latest::vlob_update::Rep::BadVersion {}
-                },
-                // 2) `vlob_get` to fetch the remote change
+                // 1) Fetch last workspace keys bundle to encrypt the new manifest
                 {
-                    let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
-                    let env = env.clone();
-                    move |req: authenticated_cmds::latest::vlob_read::Req| {
-                        p_assert_eq!(req.encryption_revision, 1);
-                        p_assert_eq!(req.vlob_id, wksp1_id);
-                        p_assert_eq!(req.version, None);
-                        p_assert_eq!(req.timestamp, None);
-                        authenticated_cmds::latest::vlob_read::Rep::Ok {
-                            author: "alice@dev2".parse().unwrap(),
-                            certificate_index: env.get_last_certificate_index(),
-                            timestamp: wksp1_last_remote_manifest.timestamp,
-                            version: wksp1_last_remote_manifest.version,
-                            blob: wksp1_last_encrypted,
+                    let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
+                    let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+                    let keys_bundle_access =
+                        env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                    move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                        p_assert_eq!(req.realm_id, wksp1_id);
+                        p_assert_eq!(req.key_index, Some(1));
+                        authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                            key_index,
+                            keys_bundle,
+                            keys_bundle_access,
                         }
                     }
                 },
-                // 3) `vlob_update` again to upload the merged version
+                // 2) Fail to `vlob_create` due to new remote version
                 move |req: authenticated_cmds::latest::vlob_update::Req| {
-                    p_assert_eq!(req.encryption_revision, 1);
+                    p_assert_eq!(req.key_index, 1);
+                    p_assert_eq!(req.vlob_id, wksp1_id);
+                    assert!(req.sequester_blob.is_none());
+                    authenticated_cmds::latest::vlob_update::Rep::VlobVersionAlreadyExists {}
+                },
+                // 3) `vlob_get` to fetch the remote change
+                {
+                    let wksp1_last_remote_manifest = wksp1_last_remote_manifest.clone();
+                    let last_realm_certificate_timestamp =
+                        env.get_last_realm_certificate_timestamp(wksp1_id);
+                    let last_common_certificate_timestamp =
+                        env.get_last_common_certificate_timestamp();
+                    move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+                        p_assert_eq!(req.at, None);
+                        p_assert_eq!(req.realm_id, wksp1_id);
+                        p_assert_eq!(req.vlobs, [wksp1_id]);
+                        authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                            items: vec![(
+                                wksp1_id,
+                                1,
+                                wksp1_last_remote_manifest.author.clone(),
+                                wksp1_last_remote_manifest.version,
+                                wksp1_last_remote_manifest.timestamp,
+                                wksp1_last_encrypted,
+                            )],
+                            needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                            needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                        }
+                    }
+                },
+                // 4) `vlob_update` again to upload the merged version
+                move |req: authenticated_cmds::latest::vlob_update::Req| {
+                    p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
                     assert!(req.sequester_blob.is_none());
                     authenticated_cmds::latest::vlob_update::Rep::Ok {}
@@ -248,34 +284,33 @@ async fn non_placeholder(
 
 #[parsec_test(testbed = "minimal")]
 async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
-        builder.new_user_realm("alice");
+    let (env, wksp1_id) = env.customize_with_map(|builder| {
+        // Alice has access to a workspace partially bootstrapped: only the realm creation has been done
+        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
 
-        let new_realm_event = builder.new_realm("alice");
-        let (wksp1_id, wksp1_key) = new_realm_event.map(|e| (e.realm_id, e.realm_key.clone()));
-        new_realm_event.then_add_workspace_entry_to_user_manifest_vlob();
-        builder.store_stuff("wksp1_id", &wksp1_id);
-        builder.store_stuff("wksp1_key", &wksp1_key);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .user_storage_local_update("alice@dev1")
+            .update_local_workspaces_with_fetched_certificates();
+        builder.user_storage_fetch_realm_checkpoint("alice@dev1");
 
-        builder.user_storage_fetch_user_vlob("alice@dev1");
+        // new_realm_event.then_add_workspace_entry_to_user_manifest_vlob();
+        // builder.store_stuff("wksp1_id", &wksp1_id);
+        // builder.store_stuff("wksp1_key", &wksp1_key);
+
+        // builder.user_storage_fetch_user_vlob("alice@dev1");
         builder
             .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
             .customize(|e| {
                 let manifest = std::sync::Arc::make_mut(&mut e.local_manifest);
                 manifest.speculative = is_speculative;
             });
+
+        wksp1_id
     });
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let wksp1_key: &SecretKey = env.template.get_stuff("wksp1_key");
 
     let alice = env.local_device("alice@dev1");
-    let wksp1_ops = workspace_ops_factory(
-        &env.discriminant_dir,
-        &alice,
-        wksp1_id,
-        wksp1_key.to_owned(),
-    )
-    .await;
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // Check the workspace manifest is need sync
     let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
@@ -285,24 +320,98 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
     assert!(workspace_manifest.children.is_empty());
     assert!(workspace_manifest.base.children.is_empty());
 
+    let new_realm_certificates: Arc<Mutex<Vec<Bytes>>> = Arc::default();
+    let new_realm_initial_keys_bundle: Arc<Mutex<Option<Bytes>>> = Arc::default();
+    let new_realm_initial_keys_bundle_access: Arc<Mutex<Option<Bytes>>> = Arc::default();
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // 1) `realm_create`
+        // 0) Workspace bootstrap: realm creation has already been done
+
+        // 1) Workspace bootstrap: Initial key rotation
         {
             let alice = alice.clone();
-            move |req: authenticated_cmds::latest::realm_create::Req| {
-                RealmRoleCertificate::verify_and_load(
-                    &req.role_certificate,
+            let new_realm_certificates = new_realm_certificates.clone();
+            let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
+            let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
+            move |req: authenticated_cmds::latest::realm_rotate_key::Req| {
+                RealmKeyRotationCertificate::verify_and_load(
+                    &req.realm_key_rotation_certificate,
                     &alice.verify_key(),
-                    CertificateSignerRef::User(&alice.device_id),
+                    &alice.device_id,
                     Some(wksp1_id),
-                    Some(alice.user_id()),
                 )
                 .unwrap();
-                authenticated_cmds::latest::realm_create::Rep::Ok {}
+                new_realm_certificates
+                    .lock()
+                    .unwrap()
+                    .push(req.realm_key_rotation_certificate);
+                *new_realm_initial_keys_bundle.lock().unwrap() = Some(req.keys_bundle);
+                let access = req
+                    .per_participant_keys_bundle_access
+                    .get(&"alice".parse().unwrap())
+                    .unwrap()
+                    .to_owned();
+                *new_realm_initial_keys_bundle_access.lock().unwrap() = Some(access);
+                authenticated_cmds::latest::realm_rotate_key::Rep::Ok
             }
         },
-        // 2) `vlob_create`
+        // 2) Workspace bootstrap: Fetch new realm certificates (required for initial rename)
+        {
+            let new_realm_certificates = new_realm_certificates.clone();
+            move |_req: authenticated_cmds::latest::certificate_get::Req| {
+                authenticated_cmds::latest::certificate_get::Rep::Ok {
+                    common_certificates: vec![],
+                    realm_certificates: HashMap::from_iter([(
+                        wksp1_id,
+                        new_realm_certificates.lock().unwrap().clone(),
+                    )]),
+                    sequester_certificates: vec![],
+                    shamir_recovery_certificates: vec![],
+                }
+            }
+        },
+        // 3) Workspace bootstrap: Fetch keys bundle (required for initial rename)
+        {
+            let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
+            let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
+            move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    key_index: 1,
+                    keys_bundle: new_realm_initial_keys_bundle
+                        .lock()
+                        .unwrap()
+                        .as_ref()
+                        .unwrap()
+                        .clone(),
+                    keys_bundle_access: new_realm_initial_keys_bundle_access
+                        .lock()
+                        .unwrap()
+                        .as_ref()
+                        .unwrap()
+                        .clone(),
+                }
+            }
+        },
+        // 4) Workspace bootstrap: Actual rename
+        {
+            let alice = alice.clone();
+            let new_realm_certificates = new_realm_certificates.clone();
+            move |req: authenticated_cmds::latest::realm_rename::Req| {
+                RealmNameCertificate::verify_and_load(
+                    &req.realm_name_certificate,
+                    &alice.verify_key(),
+                    &alice.device_id,
+                    Some(wksp1_id),
+                )
+                .unwrap();
+                new_realm_certificates
+                    .lock()
+                    .unwrap()
+                    .push(req.realm_name_certificate);
+                authenticated_cmds::latest::realm_rename::Rep::Ok
+            }
+        },
+        // 5) `vlob_create`
         move |req: authenticated_cmds::latest::vlob_create::Req| {
             p_assert_eq!(req.realm_id, wksp1_id);
             p_assert_eq!(req.vlob_id, wksp1_id);

@@ -234,7 +234,7 @@ pub enum GreetInProgressError {
     #[error(transparent)]
     CorruptedInviteUserData(DataError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
@@ -842,7 +842,7 @@ impl UserGreetInProgress4Ctx {
                         };
                         self.event_bus.send(&event);
 
-                        Err(GreetInProgressError::BadTimestamp {
+                        Err(GreetInProgressError::TimestampOutOfBallpark {
                             server_timestamp,
                             client_timestamp,
                             ballpark_client_early_offset,
@@ -951,7 +951,7 @@ impl DeviceGreetInProgress4Ctx {
                         client_timestamp,
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
-                    } => Err(GreetInProgressError::BadTimestamp {
+                    } => Err(GreetInProgressError::TimestampOutOfBallpark {
                         server_timestamp,
                         client_timestamp,
                         ballpark_client_early_offset,

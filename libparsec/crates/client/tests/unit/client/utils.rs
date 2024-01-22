@@ -10,7 +10,10 @@ use crate::{Client, ClientConfig, EventBus, WorkspaceStorageCacheSize};
 /// Create a client for the given device WITHOUT monitors (i.e. the client has
 /// no background task reacting to events, which is pretty useful for testing
 /// given we don't want concurrency operations)
-pub(crate) async fn client_factory(discriminant_dir: &Path, device: Arc<LocalDevice>) -> Client {
+pub(crate) async fn client_factory(
+    discriminant_dir: &Path,
+    device: Arc<LocalDevice>,
+) -> Arc<Client> {
     let event_bus = EventBus::default();
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),

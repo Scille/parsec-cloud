@@ -18,7 +18,7 @@ pub enum BootstrapOrganizationError {
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
@@ -157,7 +157,7 @@ pub async fn bootstrap_organization(
             };
             event_bus.send(&event);
 
-            Err(BootstrapOrganizationError::BadTimestamp {
+            Err(BootstrapOrganizationError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,

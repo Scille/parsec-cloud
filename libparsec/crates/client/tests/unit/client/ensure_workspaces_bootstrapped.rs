@@ -24,7 +24,7 @@ async fn ok(env: &TestbedEnv) {
     });
 
     let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
     // Mock requests to server
 
@@ -35,8 +35,17 @@ async fn ok(env: &TestbedEnv) {
         &env.discriminant_dir,
         // 1) Realm creation
         {
+            let alice = alice.clone();
             let new_realm_certificates = new_realm_certificates.clone();
             move |req: authenticated_cmds::latest::realm_create::Req| {
+                RealmRoleCertificate::verify_and_load(
+                    &req.realm_role_certificate,
+                    &alice.verify_key(),
+                    CertificateSignerRef::User(&alice.device_id),
+                    Some(wksp1_id),
+                    Some(alice.user_id()),
+                )
+                .unwrap();
                 new_realm_certificates
                     .lock()
                     .unwrap()
@@ -46,10 +55,18 @@ async fn ok(env: &TestbedEnv) {
         },
         // 2) Initial key rotation
         {
+            let alice = alice.clone();
             let new_realm_certificates = new_realm_certificates.clone();
             let new_realm_initial_keys_bundle = new_realm_initial_keys_bundle.clone();
             let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
             move |req: authenticated_cmds::latest::realm_rotate_key::Req| {
+                RealmKeyRotationCertificate::verify_and_load(
+                    &req.realm_key_rotation_certificate,
+                    &alice.verify_key(),
+                    &alice.device_id,
+                    Some(wksp1_id),
+                )
+                .unwrap();
                 new_realm_certificates
                     .lock()
                     .unwrap()
@@ -103,8 +120,16 @@ async fn ok(env: &TestbedEnv) {
         },
         // 5) Actual rename
         {
+            let alice = alice.clone();
             let new_realm_certificates = new_realm_certificates.clone();
             move |req: authenticated_cmds::latest::realm_rename::Req| {
+                RealmNameCertificate::verify_and_load(
+                    &req.realm_name_certificate,
+                    &alice.verify_key(),
+                    &alice.device_id,
+                    Some(wksp1_id),
+                )
+                .unwrap();
                 new_realm_certificates
                     .lock()
                     .unwrap()

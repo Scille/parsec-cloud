@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -32,7 +34,7 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
 
     // 2) Ensure the workspace is present and not yet synchronized
 
-    let maybe_restart_client = |client: crate::Client| async move {
+    let maybe_restart_client = |client: Arc<crate::Client>| async move {
         if restart_client {
             client.stop().await;
             let alice = env.local_device("alice@dev1");

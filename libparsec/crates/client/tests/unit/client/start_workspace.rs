@@ -3,7 +3,7 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{workspace::WorkspaceFsOperationError, ClientStartWorkspaceError};
+use crate::ClientStartWorkspaceError;
 
 use super::utils::client_factory;
 

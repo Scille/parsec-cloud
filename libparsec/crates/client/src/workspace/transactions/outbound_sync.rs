@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use libparsec_client_connection::protocol::authenticated_cmds;
@@ -8,16 +9,20 @@ use libparsec_types::prelude::*;
 
 use super::super::WorkspaceOps;
 use super::{
-    inbound_sync, update_storage_with_remote_child, update_storage_with_remote_root, SyncError,
+    inbound_sync, update_storage_with_remote_child, update_storage_with_remote_root,
+    WorkspaceSyncError,
 };
-use crate::certificates_ops::PollServerError;
+use crate::certif::{
+    CertifBootstrapWorkspaceError, CertifEncryptForRealmError,
+    CertifEncryptForSequesterServicesError, CertifPollServerError,
+};
 
 pub async fn get_need_outbound_sync(ops: &WorkspaceOps) -> anyhow::Result<Vec<VlobID>> {
     let need_sync = ops.data_storage.get_need_sync_entries().await?;
     Ok(need_sync.local)
 }
 
-pub async fn outbound_sync(ops: &WorkspaceOps, entry_id: VlobID) -> Result<(), SyncError> {
+pub async fn outbound_sync(ops: &WorkspaceOps, entry_id: VlobID) -> Result<(), WorkspaceSyncError> {
     loop {
         let outcome = if entry_id == ops.realm_id {
             outbound_sync_root(ops).await?
@@ -42,7 +47,7 @@ enum OutboundSyncOutcome {
     InboundSyncNeeded,
 }
 
-async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, SyncError> {
+async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, WorkspaceSyncError> {
     let local = ops.data_storage.get_workspace_manifest();
     if !local.need_sync {
         return Ok(OutboundSyncOutcome::Done);
@@ -51,26 +56,38 @@ async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, S
     // If the manifest's vlob has already been synced we know the realm exists,
     // otherwise we have to make sure it is the case !
     if local.base.version == 0 {
+        let name = {
+            let guard = ops.workspace_entry.lock().expect("Mutex is poisoned");
+            guard.name.clone()
+        };
+        // Note `bootstrap_workspace` is idempotent
         ops.certificates_ops
-            .ensure_realms_created(&[ops.realm_id])
+            .bootstrap_workspace(ops.realm_id, &name)
             .await
-            .map_err(|err| match err {
-                crate::certificates_ops::EnsureRealmsCreatedError::Stopped => SyncError::Stopped,
-                crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
-                crate::certificates_ops::EnsureRealmsCreatedError::TimestampOutOfBallpark {
+            .map_err(|e| match e {
+                CertifBootstrapWorkspaceError::Offline => WorkspaceSyncError::Offline,
+                CertifBootstrapWorkspaceError::Stopped => WorkspaceSyncError::Stopped,
+                CertifBootstrapWorkspaceError::AuthorNotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
-                } => SyncError::BadTimestamp {
+                } => WorkspaceSyncError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
                 },
-                crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
-                    .context("Cannot create the workspace on the server")
-                    .into(),
+                CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
+                    WorkspaceSyncError::InvalidKeysBundle(err)
+                }
+                CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
+                    WorkspaceSyncError::InvalidCertificate(err)
+                }
+                CertifBootstrapWorkspaceError::Internal(err) => {
+                    err.context("Cannot bootstrap workspace").into()
+                }
             })?;
     }
 
@@ -91,7 +108,7 @@ async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, S
 async fn outbound_sync_child(
     ops: &WorkspaceOps,
     entry_id: VlobID,
-) -> Result<OutboundSyncOutcome, SyncError> {
+) -> Result<OutboundSyncOutcome, WorkspaceSyncError> {
     let local = match ops.data_storage.get_child_manifest(entry_id).await {
         Ok(local) => local,
         // If the entry cannot be found locally, then there is nothing to sync !
@@ -106,28 +123,52 @@ async fn outbound_sync_child(
         return Ok(OutboundSyncOutcome::Done);
     }
 
-    // If the manifest's vlob has already been synced we know the realm exists,
-    // otherwise we have to make sure it is the case !
-    if base_version == 0 {
+    // The only way to be sure the bootstrap occured is to ask the certificate ops, however
+    // before that there is two simple tests we can do to filter out most false positive:
+    // - If the manifest's vlob has already been synced we know we can do it again !
+    // - If name origin is not a placeholder, then the workspace has been bootstrapped
+    //   (given initial rename is the last step).
+    if base_version == 0
+        && matches!(
+            ops.workspace_entry
+                .lock()
+                .expect("Mutex is poisoned")
+                .name_origin,
+            CertificateBasedInfoOrigin::Placeholder
+        )
+    {
+        let name = {
+            let guard = ops.workspace_entry.lock().expect("Mutex is poisoned");
+            guard.name.clone()
+        };
+        // Note `bootstrap_workspace` is idempotent
         ops.certificates_ops
-            .ensure_realms_created(&[ops.realm_id])
+            .bootstrap_workspace(ops.realm_id, &name)
             .await
-            .map_err(|err| match err {
-                crate::certificates_ops::EnsureRealmsCreatedError::Offline => SyncError::Offline,
-                crate::certificates_ops::EnsureRealmsCreatedError::BadTimestamp {
+            .map_err(|e| match e {
+                CertifBootstrapWorkspaceError::Offline => WorkspaceSyncError::Offline,
+                CertifBootstrapWorkspaceError::Stopped => WorkspaceSyncError::Stopped,
+                CertifBootstrapWorkspaceError::AuthorNotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
-                } => SyncError::BadTimestamp {
+                } => WorkspaceSyncError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
                     ballpark_client_early_offset,
                     ballpark_client_late_offset,
                 },
-                crate::certificates_ops::EnsureRealmsCreatedError::Internal(err) => err
-                    .context("Cannot create the workspace on the server")
-                    .into(),
+                CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
+                    WorkspaceSyncError::InvalidKeysBundle(err)
+                }
+                CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
+                    WorkspaceSyncError::InvalidCertificate(err)
+                }
+                CertifBootstrapWorkspaceError::Internal(err) => {
+                    err.context("Cannot bootstrap workspace").into()
+                }
             })?;
     }
 
@@ -221,7 +262,7 @@ enum UploadManifestOutcome<M> {
 async fn upload_manifest<M: RemoteManifest>(
     ops: &WorkspaceOps,
     local_manifest: &M::LocalManifest,
-) -> Result<UploadManifestOutcome<M>, SyncError> {
+) -> Result<UploadManifestOutcome<M>, WorkspaceSyncError> {
     let mut timestamp = ops.device.now();
 
     loop {
@@ -229,11 +270,35 @@ async fn upload_manifest<M: RemoteManifest>(
         let to_sync = M::from_local(local_manifest, ops.device.device_id.to_owned(), timestamp);
 
         let signed = to_sync.dump_and_sign(&ops.device.signing_key);
-        let ciphered = ops.device.user_realm_key.encrypt(&signed).into();
+        let (encrypted, key_index) = ops
+            .certificates_ops
+            .encrypt_for_realm(ops.realm_id(), &signed)
+            .await
+            .map_err(|e| match e {
+                CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
+                CertifEncryptForRealmError::Offline => WorkspaceSyncError::Offline,
+                CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
+                CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
+                CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                    WorkspaceSyncError::InvalidKeysBundle(err)
+                }
+                CertifEncryptForRealmError::Internal(err) => {
+                    err.context("Cannot encrypt manifest for realm").into()
+                }
+            })?;
+        let encrypted = encrypted.into();
         let sequester_blob = ops
             .certificates_ops
             .encrypt_for_sequester_services(&signed)
-            .await?;
+            .await
+            .map_err(|e| match e {
+                CertifEncryptForSequesterServicesError::Stopped => WorkspaceSyncError::Stopped,
+                CertifEncryptForSequesterServicesError::Internal(err) => err
+                    .context("Cannot encrypt manifest for sequester services")
+                    .into(),
+            })?;
+        let sequester_blob =
+            sequester_blob.map(|sequester_blob| HashMap::from_iter(sequester_blob.into_iter()));
 
         // Sync the vlob with server
 
@@ -241,110 +306,122 @@ async fn upload_manifest<M: RemoteManifest>(
             use authenticated_cmds::latest::vlob_create::{Rep, Req};
             let req = Req {
                 realm_id: ops.realm_id,
-                // TODO: Damn you encryption_revision ! Your days are numbered !!!!
-                encryption_revision: 1,
+                key_index,
                 vlob_id: to_sync.id(),
                 timestamp,
-                blob: ciphered,
+                blob: encrypted,
                 sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync)),
-                Rep::AlreadyExists { .. } => Ok(UploadManifestOutcome::VersionConflict),
-                Rep::InMaintenance => Err(SyncError::InMaintenance),
-                Rep::RequireGreaterTimestamp {
-                    strictly_greater_than,
-                } => {
+                Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
+                Rep::RequireGreaterTimestamp { strictly_greater_than } => {
                     timestamp =
                         std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
                     continue;
                 }
-                // Timeout is about sequester service webhook not being available, no need
-                // for a custom handling of such an exotic error
-                Rep::Timeout => Err(SyncError::Offline),
-                Rep::SequesterInconsistency { .. } => {
-                    // Sequester services must have been concurrently modified in our back,
-                    // update and retry
+                Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
+                Rep::TimestampOutOfBallpark { ballpark_client_early_offset, ballpark_client_late_offset, client_timestamp, server_timestamp } => {
+                    return Err(WorkspaceSyncError::TimestampOutOfBallpark {
+                        server_timestamp,
+                        client_timestamp,
+                        ballpark_client_early_offset,
+                        ballpark_client_late_offset,
+                    })
+                },
+
+                // TODO: provide a dedicated error for this exotic behavior ?
+                Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
+                // TODO: we should send a dedicated event for this, and return an according error
+                Rep::RejectedBySequesterService { .. } => todo!(),
+                // Sequester services has changed concurrently, should poll for new certificates and retry
+                Rep::SequesterInconsistency => {
                     ops.certificates_ops
                         .poll_server_for_new_certificates(None)
                         .await
                         .map_err(|err| match err {
-                            PollServerError::Offline => SyncError::Offline,
-                            PollServerError::InvalidCertificate(what) => {
-                                SyncError::InvalidCertificate(what)
-                            }
-                            err @ PollServerError::Internal(_) => SyncError::Internal(err.into()),
+                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
+                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
+                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                         })?;
                     continue;
                 }
-                Rep::RejectedBySequesterService {
-                    service_id: _service_id,
-                    service_label: _service_label,
-                    ..
-                } => todo!(),
-                Rep::NotAllowed => todo!(),
-                Rep::BadEncryptionRevision => todo!(),
-                Rep::BadTimestamp { .. } => todo!(),
-                Rep::NotASequesteredOrganization => todo!(),
-                bad_rep @ Rep::UnknownStatus { .. } => {
+
+                // Unexpected errors :(
+                bad_rep @ (
+                    // Got sequester info from certificates
+                    Rep::OrganizationNotSequestered
+                    // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
+                    | Rep::RealmNotFound
+                    // Already checked the realm had a valid encryption key when we called `CertifOps::encrypt_for_realm`
+                    | Rep::BadKeyIndex
+                    // Don't know what to do with this status :/
+                    | Rep::UnknownStatus { .. }
+                ) => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }
         } else {
             use authenticated_cmds::latest::vlob_update::{Rep, Req};
             let req = Req {
-                // Always 1 given user manifest realm is never reencrypted
-                encryption_revision: 1,
+                key_index,
                 vlob_id: to_sync.id(),
                 version: to_sync.version(),
                 timestamp,
-                blob: ciphered,
+                blob: encrypted,
                 sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync)),
-                Rep::BadVersion => Ok(UploadManifestOutcome::VersionConflict),
-                Rep::InMaintenance => Err(SyncError::InMaintenance),
-                Rep::RequireGreaterTimestamp {
-                    strictly_greater_than,
-                } => {
+                Rep::VlobVersionAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
+                // Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
+                Rep::RequireGreaterTimestamp { strictly_greater_than } => {
                     timestamp =
                         std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
                     continue;
                 }
-                // Timeout is about sequester service webhook not being available, no need
-                // for a custom handling of such an exotic error
-                Rep::Timeout => Err(SyncError::Offline),
-                Rep::SequesterInconsistency { .. } => {
-                    // Sequester services must have been concurrently modified in our back,
-                    // update and retry
+                Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
+                Rep::TimestampOutOfBallpark { ballpark_client_early_offset, ballpark_client_late_offset, client_timestamp, server_timestamp } => {
+                    return Err(WorkspaceSyncError::TimestampOutOfBallpark {
+                        server_timestamp,
+                        client_timestamp,
+                        ballpark_client_early_offset,
+                        ballpark_client_late_offset,
+                    })
+                },
+
+                // TODO: provide a dedicated error for this exotic behavior ?
+                Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
+                // TODO: we should send a dedicated event for this, and return an according error
+                Rep::RejectedBySequesterService { .. } => todo!(),
+                // Sequester services has changed concurrently, should poll for new certificates and retry
+                Rep::SequesterInconsistency => {
                     ops.certificates_ops
                         .poll_server_for_new_certificates(None)
                         .await
                         .map_err(|err| match err {
-                            PollServerError::Offline => SyncError::Offline,
-                            PollServerError::InvalidCertificate(what) => {
-                                SyncError::InvalidCertificate(what)
-                            }
-                            err @ PollServerError::Internal(_) => SyncError::Internal(err.into()),
+                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
+                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
+                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
                         })?;
                     continue;
                 }
-                // TODO: what do to here ?
-                Rep::RejectedBySequesterService {
-                    service_id: _service_id,
-                    service_label: _service_label,
-                    ..
-                } => todo!(),
-                // TODO: error handling !
-                Rep::NotFound { .. } => todo!(),
-                Rep::NotAllowed => todo!(),
-                Rep::BadEncryptionRevision => todo!(),
-                Rep::BadTimestamp { .. } => todo!(),
-                Rep::NotASequesteredOrganization => todo!(),
-                bad_rep @ Rep::UnknownStatus { .. } => {
+
+                // Unexpected errors :(
+                bad_rep @ (
+                    // Got sequester info from certificates
+                    Rep::OrganizationNotSequestered
+                    // Already checked the realm had a valid encryption key when we called `CertifOps::encrypt_for_realm`
+                    | Rep::BadKeyIndex
+                    // Already checked the vlob exists since the manifet has version > 0
+                    | Rep::VlobNotFound
+                    // Don't know what to do with this status :/
+                    | Rep::UnknownStatus { .. }
+                ) => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }

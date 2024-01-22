@@ -15,7 +15,7 @@ mod store;
 mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
-pub use encrypt::{CertifEncryptForSequesterServicesError, CertifEncryptForUserError};
+pub use encrypt::CertifEncryptForSequesterServicesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
     CertifGetCurrentSelfProfileError, CertifGetCurrentSelfRealmRoleError,
@@ -119,7 +119,11 @@ impl CertifOps {
             })
             .await
             .map_err(|err| match err {
-                CertifStoreError::Stopped => CertifAddCertificatesBatchError::Stopped,
+                // We don't bother to have a dedicated error for stopped here given
+                // this is only a test helper.
+                CertifStoreError::Stopped => {
+                    CertifAddCertificatesBatchError::Internal(anyhow::anyhow!("Storage stopped"))
+                }
                 CertifStoreError::Internal(err) => err.into(),
             })?
     }
@@ -263,20 +267,6 @@ impl CertifOps {
             })?
     }
 
-    pub async fn encrypt_for_user(
-        &self,
-        user_id: UserID,
-        data: &[u8],
-    ) -> Result<Vec<u8>, CertifEncryptForUserError> {
-        self.store
-            .for_read(|store| async move { encrypt::encrypt_for_user(store, user_id, data).await })
-            .await
-            .map_err(|e| match e {
-                CertifStoreError::Stopped => CertifEncryptForUserError::Stopped,
-                CertifStoreError::Internal(err) => err.context("Cannot access storage").into(),
-            })?
-    }
-
     pub async fn encrypt_for_sequester_services(
         &self,
         data: &[u8],
@@ -348,20 +338,6 @@ impl CertifOps {
         &self,
     ) -> Result<UserProfile, CertifGetCurrentSelfProfileError> {
         list::get_current_self_profile(self).await
-    }
-
-    pub async fn list_self_user_devices(
-        &self,
-        user_id: UserID,
-    ) -> Result<Vec<DeviceInfo>, CertifListUserDevicesError> {
-        list::list_user_devices(self, user_id).await
-    }
-
-    pub async fn get_self_user_device(
-        &self,
-        device_id: DeviceID,
-    ) -> Result<(UserInfo, DeviceInfo), CertifGetUserDeviceError> {
-        list::get_user_device(self, device_id).await
     }
 
     /// List all realms we are and used to be part of, along with the role currently
