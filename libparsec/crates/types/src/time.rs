@@ -37,6 +37,10 @@ pub use chrono::Duration; // Reexported
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
 
 impl DateTime {
+    pub fn epoch() -> Self {
+        Self(chrono::Utc.timestamp_nanos(0))
+    }
+
     pub fn from_ymd_hms_us(
         year: i32,
         month: u32,

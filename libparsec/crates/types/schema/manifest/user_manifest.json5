@@ -27,13 +27,68 @@
             "name": "updated",
             "type": "DateTime"
         },
+
+        // Following fields are deprecated and kept only for documentation purpose.
+
         {
             "name": "last_processed_message",
-            "type": "Index"
+            "type": "Index",
+            // Deprecated in Parsec v3.0: message commands have been removed in APIv4
+            "deprecated_in_revision": 300
         },
         {
+            // Deprecated in Parsec v3.0: in APIv4 client instead greedily fetch certificates
+            // to get the list of realms (and their names) the user has access to.
+            // We don't mark this field with `"deprecated_in_revision": 300` (we marked it
+            // `NonRequiredOption` instead which is backward compatible) because we still
+            // need to access it to create the initial `RealmKeyRotationCertificate`
+            // and `RealmNameCertificate` (which didn't exist in Parsec < v3.0).
             "name": "workspaces",
-            "type": "List<WorkspaceEntry>"
+            "type": "NonRequiredOption<List<LegacyUserManifestWorkspaceEntry>>"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "LegacyUserManifestWorkspaceEntry",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "name",
+                    "type": "EntryName"
+                },
+                {
+                    "name": "key",
+                    "type": "SecretKey"
+                },
+                {
+                    "name": "encryption_revision",
+                    "type": "Index"
+                },
+
+                // Following fields are deprecated and kept only for documentation purpose.
+
+                {
+                    "name": "encrypted_on",
+                    "type": "DateTime",
+                    // Deprecated in Parsec v3.0: APIv4 has replaced reencryption by key rotation
+                    "deprecated_in_revision": 300
+                },
+                {
+                    "name": "role_cache_timestamp",
+                    "type": "DateTime",
+                    // Deprecated in Parsec v3.0: in APIv4 client greedily fetch certificates
+                    "deprecated_in_revision": 300
+                },
+                {
+                    "name": "role_cache_value",
+                    "type": "RequiredOption<RealmRole>",
+                    // Deprecated in Parsec v3.0: in APIv4 client greedily fetch certificates
+                    "deprecated_in_revision": 300
+                }
+            ]
         }
     ]
 }

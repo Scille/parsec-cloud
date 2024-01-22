@@ -49,6 +49,7 @@ mod manifest;
 mod organization;
 mod pki;
 mod protocol;
+mod realm;
 mod regex;
 mod time;
 mod user;
@@ -68,6 +69,7 @@ pub use manifest::*;
 pub use organization::*;
 pub use pki::*;
 pub use protocol::*;
+pub use realm::*;
 pub use time::*;
 pub use user::*;
 
