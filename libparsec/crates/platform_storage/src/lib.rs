@@ -11,7 +11,7 @@ pub(crate) use native as platform;
 pub(crate) use web as platform;
 
 pub mod certificates;
-pub use platform::user;
+pub mod user;
 pub use platform::workspace;
 
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
