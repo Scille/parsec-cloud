@@ -24,7 +24,7 @@ impl WorkspaceCacheStorage {
         realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // `maybe_populate_workspace_cache_storage` needs to start a `WorkspaceCacheStorage`,
-        // leading to a recursive call which is not support for async functions.
+        // leading to a recursive call which is not supported for async functions.
         // Hence `no_populate_start` which breaks the recursion.
         //
         // Also note we don't try to return the `WorkspaceCacheStorage` that has been

@@ -48,6 +48,8 @@ async fn get_need_sync_entries_at_startup(#[case] with_local_changes: bool, env:
         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
         init_realm_id = Some(realm_id);
 
+        builder.rotate_key_realm(realm_id);
+
         // Storage has fetched workspace&children manifests v1...
 
         builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);
@@ -179,6 +181,8 @@ async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &T
     let env = env.customize(|builder| {
         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
         init_realm_id = Some(realm_id);
+
+        builder.rotate_key_realm(realm_id);
 
         // We don't care about workspace manifest here, so make it synchronized
         builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);

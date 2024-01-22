@@ -367,11 +367,11 @@ impl WorkspaceDataStorage {
         realm_id: VlobID,
     ) -> anyhow::Result<Self> {
         // `maybe_populate_workspace_data_storage` needs to start a `WorkspaceDataStorage`,
-        // leading to a recursive call which is not support for async functions.
+        // leading to a recursive call which is not supported for async functions.
         // Hence `no_populate_start` which breaks the recursion.
         //
         // Also note we don't try to return the `WorkspaceDataStorage` that has been
-        // use during the populate as it would change the internal state of the
+        // used during the populate as it would change the internal state of the
         // storage (typically caches) depending of if populate has been needed or not.
 
         #[cfg(feature = "test-with-testbed")]
@@ -445,7 +445,7 @@ impl WorkspaceDataStorage {
         // with a non-speculative local manifest placeholder).
         // In such case it is easy to fall back on an empty manifest which is
         // a good enough approximation of the very first version of the
-        // manifest (field `created` is invalid, but it will be correction by
+        // manifest (field `created` is invalid, but it will be corrected by
         // the merge during sync).
         if let Err(DatabaseError::Diesel(diesel::NotFound)) = ret {
             let timestamp = device.now();
