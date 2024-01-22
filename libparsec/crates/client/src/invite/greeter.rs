@@ -13,7 +13,11 @@ use crate::{EventBus, EventTooMuchDriftWithServerClock};
  * new_user_invitation
  */
 
-pub use authenticated_cmds::latest::invite_new::InvitationEmailSentStatus;
+pub enum InvitationEmailSentStatus {
+    Success,
+    ServerUnavailable,
+    RecipientRefused,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum NewUserInvitationError {
@@ -41,23 +45,31 @@ pub async fn new_user_invitation(
     claimer_email: String,
     send_email: bool,
 ) -> Result<(InvitationToken, InvitationEmailSentStatus), NewUserInvitationError> {
-    use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
+    use authenticated_cmds::latest::invite_new_user::{
+        InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
+    };
 
-    let req = Req(UserOrDevice::User {
+    let req = Req {
         claimer_email,
         send_email,
-    });
+    };
     let rep = cmds.send(req).await?;
 
     match rep {
-        Rep::Ok { token, email_sent } => Ok((token, email_sent)),
-        Rep::NotAllowed => Err(NewUserInvitationError::NotAllowed),
-        Rep::AlreadyMember => Err(NewUserInvitationError::AlreadyMember),
-        rep @ Rep::NotAvailable => Err(anyhow::anyhow!(
-            "Unexpected server response: {:?} (only expected when inviting a device)",
-            rep
-        )
-        .into()),
+        Rep::Ok { token, email_sent } => {
+            let email_sent = match email_sent {
+                ApiInvitationEmailSentStatus::Success => InvitationEmailSentStatus::Success,
+                ApiInvitationEmailSentStatus::ServerUnavailable => {
+                    InvitationEmailSentStatus::ServerUnavailable
+                }
+                ApiInvitationEmailSentStatus::RecipientRefused => {
+                    InvitationEmailSentStatus::RecipientRefused
+                }
+            };
+            Ok((token, email_sent))
+        }
+        Rep::AuthorNotAllowed => Err(NewUserInvitationError::NotAllowed),
+        Rep::ClaimerEmailAlreadyEnrolled => Err(NewUserInvitationError::AlreadyMember),
         rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
@@ -72,8 +84,6 @@ pub async fn new_user_invitation(
 pub enum NewDeviceInvitationError {
     #[error("Cannot reach the server")]
     Offline,
-    #[error("Cannot send invitation email given user has no email address")]
-    SendEmailToUserWithoutEmail,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -91,19 +101,26 @@ pub async fn new_device_invitation(
     cmds: &AuthenticatedCmds,
     send_email: bool,
 ) -> Result<(InvitationToken, InvitationEmailSentStatus), NewDeviceInvitationError> {
-    use authenticated_cmds::latest::invite_new::{Rep, Req, UserOrDevice};
+    use authenticated_cmds::latest::invite_new_device::{
+        InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
+    };
 
-    let req = Req(UserOrDevice::Device { send_email });
+    let req = Req { send_email };
     let rep = cmds.send(req).await?;
 
     match rep {
-        Rep::Ok { token, email_sent } => Ok((token, email_sent)),
-        Rep::NotAvailable => Err(NewDeviceInvitationError::SendEmailToUserWithoutEmail),
-        rep @ Rep::NotAllowed | rep @ Rep::AlreadyMember => Err(anyhow::anyhow!(
-            "Unexpected server response: {:?} (only expected when inviting a user)",
-            rep
-        )
-        .into()),
+        Rep::Ok { token, email_sent } => {
+            let email_sent = match email_sent {
+                ApiInvitationEmailSentStatus::Success => InvitationEmailSentStatus::Success,
+                ApiInvitationEmailSentStatus::ServerUnavailable => {
+                    InvitationEmailSentStatus::ServerUnavailable
+                }
+                ApiInvitationEmailSentStatus::RecipientRefused => {
+                    InvitationEmailSentStatus::RecipientRefused
+                }
+            };
+            Ok((token, email_sent))
+        }
         rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
@@ -115,7 +132,7 @@ pub async fn new_device_invitation(
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum DeleteInvitationError {
+pub enum CancelInvitationError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Invitation not found")]
@@ -126,7 +143,7 @@ pub enum DeleteInvitationError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for DeleteInvitationError {
+impl From<ConnectionError> for CancelInvitationError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -135,22 +152,19 @@ impl From<ConnectionError> for DeleteInvitationError {
     }
 }
 
-pub async fn delete_invitation(
+pub async fn cancel_invitation(
     cmds: &AuthenticatedCmds,
     token: InvitationToken,
-) -> Result<(), DeleteInvitationError> {
-    use authenticated_cmds::latest::invite_delete::{InvitationDeletedReason, Rep, Req};
+) -> Result<(), CancelInvitationError> {
+    use authenticated_cmds::latest::invite_cancel::{Rep, Req};
 
-    let req = Req {
-        token,
-        reason: InvitationDeletedReason::Cancelled,
-    };
+    let req = Req { token };
     let rep = cmds.send(req).await?;
 
     match rep {
         Rep::Ok => Ok(()),
-        Rep::AlreadyDeleted => Err(DeleteInvitationError::AlreadyDeleted),
-        Rep::NotFound => Err(DeleteInvitationError::NotFound),
+        Rep::InvitationAlreadyDeleted => Err(CancelInvitationError::AlreadyDeleted),
+        Rep::InvitationNotFound => Err(CancelInvitationError::NotFound),
         rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
@@ -201,14 +215,16 @@ pub enum GreetInProgressError {
     Offline,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or cancelled")]
+    AlreadyDeleted,
     #[error("Greet operation reset by peer")]
     PeerReset,
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
     #[error("Claimer's nonce and hashed nonce don't match")]
     NonceMismatch,
+    #[error("Human handle (i.e. email address) already taken")]
+    HumanHandleAlreadyTaken,
     #[error("User already exists")]
     UserAlreadyExists,
     #[error("Device already exists")]
@@ -264,9 +280,9 @@ impl BaseGreetInitialCtx {
 
             match rep {
                 Rep::Ok { claimer_public_key } => Ok(claimer_public_key),
-                Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-                Rep::NotFound => Err(GreetInProgressError::NotFound),
+                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -285,9 +301,9 @@ impl BaseGreetInitialCtx {
                 Rep::Ok {
                     claimer_hashed_nonce,
                 } => Ok(claimer_hashed_nonce),
-                Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-                Rep::NotFound => Err(GreetInProgressError::NotFound),
+                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -307,9 +323,9 @@ impl BaseGreetInitialCtx {
 
             match rep {
                 Rep::Ok { claimer_nonce } => Ok(claimer_nonce),
-                Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-                Rep::NotFound => Err(GreetInProgressError::NotFound),
+                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -409,9 +425,9 @@ impl BaseGreetInProgress1Ctx {
                 cmds: self.cmds,
                 event_bus: self.event_bus,
             }),
-            Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-            Rep::NotFound => Err(GreetInProgressError::NotFound),
+            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -483,9 +499,9 @@ impl BaseGreetInProgress2Ctx {
                 cmds: self.cmds,
                 event_bus: self.event_bus,
             }),
-            Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-            Rep::NotFound => Err(GreetInProgressError::NotFound),
+            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -562,14 +578,15 @@ impl BaseGreetInProgress3Ctx {
             .send(Req {
                 token: self.token,
                 payload: Bytes::new(),
+                last: false,
             })
             .await?;
 
         let payload = match rep {
             Rep::Ok { payload } => Ok(payload),
-            Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-            Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-            Rep::NotFound => Err(GreetInProgressError::NotFound),
+            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
             bad_rep @ Rep::UnknownStatus { .. } => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
@@ -806,16 +823,19 @@ impl UserGreetInProgress4Ctx {
                     Rep::ActiveUsersLimitReached { .. } => {
                         Err(GreetInProgressError::ActiveUsersLimitReached)
                     }
-                    Rep::AlreadyExists { .. } => Err(GreetInProgressError::UserAlreadyExists),
-                    Rep::NotAllowed { .. } => Err(GreetInProgressError::UserCreateNotAllowed),
-                    Rep::BadTimestamp {
-                        backend_timestamp,
+                    Rep::HumanHandleAlreadyTaken => {
+                        Err(GreetInProgressError::HumanHandleAlreadyTaken)
+                    }
+                    Rep::UserAlreadyExists { .. } => Err(GreetInProgressError::UserAlreadyExists),
+                    Rep::AuthorNotAllowed { .. } => Err(GreetInProgressError::UserCreateNotAllowed),
+                    Rep::TimestampOutOfBallpark {
+                        server_timestamp,
                         client_timestamp,
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
                     } => {
                         let event = EventTooMuchDriftWithServerClock {
-                            backend_timestamp,
+                            server_timestamp,
                             ballpark_client_early_offset,
                             ballpark_client_late_offset,
                             client_timestamp,
@@ -823,15 +843,13 @@ impl UserGreetInProgress4Ctx {
                         self.event_bus.send(&event);
 
                         Err(GreetInProgressError::BadTimestamp {
-                            server_timestamp: backend_timestamp,
+                            server_timestamp,
                             client_timestamp,
                             ballpark_client_early_offset,
                             ballpark_client_late_offset,
                         })
                     }
-                    bad_rep @ (Rep::UnknownStatus { .. }
-                    | Rep::InvalidCertification { .. }
-                    | Rep::InvalidData { .. }) => {
+                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate { .. }) => {
                         Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                     }
                 }?;
@@ -859,34 +877,19 @@ impl UserGreetInProgress4Ctx {
                 .send(Req {
                     token: self.token,
                     payload,
+                    last: true,
                 })
                 .await?;
 
             match rep {
                 Rep::Ok { .. } => Ok(()),
-                Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-                Rep::NotFound => Err(GreetInProgressError::NotFound),
+                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?;
-        }
-
-        // Invitation deletion is not strictly necessary (enrollment has succeeded
-        // anyway) so it's no big deal if something goes wrong before it can be
-        // done (and it can be manually deleted from invitation list).
-
-        {
-            use authenticated_cmds::latest::invite_delete::{InvitationDeletedReason, Req};
-
-            let _ = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    reason: InvitationDeletedReason::Finished,
-                })
-                .await;
         }
 
         Ok(())
@@ -940,25 +943,22 @@ impl DeviceGreetInProgress4Ctx {
                             std::cmp::max(strictly_greater_than, self.device.time_provider.now());
                         continue;
                     }
-                    Rep::AlreadyExists { .. } => Err(GreetInProgressError::DeviceAlreadyExists),
-                    Rep::BadTimestamp {
-                        backend_timestamp,
+                    Rep::DeviceAlreadyExists { .. } => {
+                        Err(GreetInProgressError::DeviceAlreadyExists)
+                    }
+                    Rep::TimestampOutOfBallpark {
+                        server_timestamp,
                         client_timestamp,
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
                     } => Err(GreetInProgressError::BadTimestamp {
-                        server_timestamp: backend_timestamp,
+                        server_timestamp,
                         client_timestamp,
                         ballpark_client_early_offset,
                         ballpark_client_late_offset,
                     }),
-                    bad_rep @ (Rep::UnknownStatus { .. }
-                    | Rep::BadUserId { .. } // Should never happen given we have used our own UserID which is valid !
-                    | Rep::InvalidCertification { .. }
-                    | Rep::InvalidData { .. }) => {
-                        Err(
-                            anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()
-                        )
+                    bad_rep @ (Rep::UnknownStatus { .. } | Rep::InvalidCertificate { .. }) => {
+                        Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                     }
                 }?;
 
@@ -994,34 +994,19 @@ impl DeviceGreetInProgress4Ctx {
                 .send(Req {
                     token: self.token,
                     payload,
+                    last: true,
                 })
                 .await?;
 
             match rep {
                 Rep::Ok { .. } => Ok(()),
-                Rep::AlreadyDeleted => Err(GreetInProgressError::AlreadyUsed),
-                Rep::InvalidState => Err(GreetInProgressError::PeerReset),
-                Rep::NotFound => Err(GreetInProgressError::NotFound),
+                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?;
-        }
-
-        // Invitation deletion is not strictly necessary (enrollment has succeeded
-        // anyway) so it's no big deal if something goes wrong before it can be
-        // done (and it can be manually deleted from invitation list).
-
-        {
-            use authenticated_cmds::latest::invite_delete::{InvitationDeletedReason, Req};
-
-            let _ = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    reason: InvitationDeletedReason::Finished,
-                })
-                .await;
         }
 
         Ok(())
