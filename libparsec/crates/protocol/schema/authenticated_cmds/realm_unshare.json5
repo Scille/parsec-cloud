@@ -24,10 +24,10 @@
                 "status": "realm_not_found"
             },
             {
-                "status": "user_not_found"
+                "status": "recipient_not_found"
             },
             {
-                "status": "user_already_unshared"
+                "status": "recipient_already_unshared"
             },
             {
                 "status": "invalid_certificate"

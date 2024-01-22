@@ -18,14 +18,14 @@
                 },
                 {
                     // Skip the certificates before (or at) this timestamp
-                    "name": "shamir_after",
+                    "name": "shamir_recovery_after",
                     "type": "RequiredOption<DateTime>"
                 },
                 {
                     // Skip the certificates before (or at) this timestamp
                     "name": "realm_after",
                     // Key is the realm ID
-                    "type": "Map<VlobID, RequiredOption<DateTime>>"
+                    "type": "Map<VlobID, DateTime>"
                 }
             ]
         },
@@ -43,7 +43,7 @@
                         "type": "List<Bytes>"
                     },
                     {
-                        "name": "shamir_certificates",
+                        "name": "shamir_recovery_certificates",
                         "type": "List<Bytes>"
                     },
                     {

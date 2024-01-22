@@ -1,0 +1,55 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "vlob_read_batch",
+            "fields": [
+                {
+                    "name": "realm_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "vlobs",
+                    "type": "List<VlobID>"
+                },
+                {
+                    "name": "at",
+                    "type": "RequiredOption<DateTime>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "items",
+                        // Fields are: vlob ID, key index, author, version, created on, blob
+                        "type": "List<(VlobID, Index, DeviceID, Version, DateTime, Bytes)>"
+                    },
+                    // The vlob requires common&realm certificates for validation,
+                    // those fields help the client ensure it isn't missing some.
+                    {
+                        "name": "needed_common_certificate_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "needed_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "too_many_elements"
+            }
+        ]
+    }
+]
