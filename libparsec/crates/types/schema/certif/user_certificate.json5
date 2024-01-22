@@ -15,7 +15,6 @@
             "type": "UserID"
         },
         {
-            // Added in Parsec v1.13
             "name": "human_handle",
             "type": "NonRequiredOption<HumanHandle>",
             // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
@@ -32,7 +31,6 @@
             "type": "Boolean"
         },
         {
-            // Added in Parsec v1.14
             "name": "profile",
             "type": "UserProfile",
             // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
