@@ -143,16 +143,13 @@ pub fn rep_ok() {
     }
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_enrollment_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "foobar"
-    //   status: "not_found"
-    let raw = hex!("82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64");
+    //   status: "enrollment_not_found"
+    let raw = hex!("81a6737461747573b4656e726f6c6c6d656e745f6e6f745f666f756e64");
 
-    let expected = anonymous_cmds::pki_enrollment_info::Rep::NotFound {
-        reason: Some("foobar".to_owned()),
-    };
+    let expected = anonymous_cmds::pki_enrollment_info::Rep::EnrollmentNotFound;
 
     let data = anonymous_cmds::pki_enrollment_info::Rep::load(&raw).unwrap();
 

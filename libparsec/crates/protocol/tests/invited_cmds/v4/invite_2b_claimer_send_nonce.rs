@@ -65,53 +65,13 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_already_deleted() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_enrollment_wrong_state() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_deleted"
-    let raw = hex!("81a6737461747573af616c72656164795f64656c65746564");
+    //   status: "enrollment_wrong_state"
+    let raw = hex!("81a6737461747573b6656e726f6c6c6d656e745f77726f6e675f7374617465");
 
-    let expected = invited_cmds::invite_2b_claimer_send_nonce::Rep::AlreadyDeleted;
-
-    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "not_found"
-    let raw = hex!("81a6737461747573a96e6f745f666f756e64");
-
-    let expected = invited_cmds::invite_2b_claimer_send_nonce::Rep::NotFound;
-
-    let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_invalid_state() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "invalid_state"
-    let raw = hex!("81a6737461747573ad696e76616c69645f7374617465");
-
-    let expected = invited_cmds::invite_2b_claimer_send_nonce::Rep::InvalidState;
+    let expected = invited_cmds::invite_2b_claimer_send_nonce::Rep::EnrollmentWrongState;
 
     let data = invited_cmds::invite_2b_claimer_send_nonce::Rep::load(&raw).unwrap();
 

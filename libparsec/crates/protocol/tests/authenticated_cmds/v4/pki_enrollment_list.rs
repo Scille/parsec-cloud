@@ -102,15 +102,12 @@ pub fn rep_ok() {
     }
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Python implementation (Parsec v2.14.0)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "oof"
-    //   status: "not_allowed"
-    let raw = hex!("82a6726561736f6ea36f6f66a6737461747573ab6e6f745f616c6c6f776564");
-    let expected = authenticated_cmds::pki_enrollment_list::Rep::NotAllowed {
-        reason: Some("oof".to_string()),
-    };
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
+    let expected = authenticated_cmds::pki_enrollment_list::Rep::AuthorNotAllowed;
 
     let data = authenticated_cmds::pki_enrollment_list::Rep::load(&raw).unwrap();
 

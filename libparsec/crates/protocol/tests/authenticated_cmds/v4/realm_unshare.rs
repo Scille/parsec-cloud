@@ -12,27 +12,27 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   cmd: "user_revoke"
-    //   revoked_user_certificate: hex!("666f6f626172")
+    //   cmd: "realm_unshare"
+    //   realm_role_certificate: hex!("666f6f626172")
     let raw = hex!(
-        "82a3636d64ab757365725f7265766f6b65b87265766f6b65645f757365725f636572746966"
+        "82a3636d64ad7265616c6d5f756e7368617265b67265616c6d5f726f6c655f636572746966"
         "6963617465c406666f6f626172"
     );
 
-    let req = authenticated_cmds::user_revoke::Req {
-        revoked_user_certificate: Bytes::from_static(b"foobar"),
+    let req = authenticated_cmds::realm_unshare::Req {
+        realm_role_certificate: Bytes::from_static(b"foobar"),
     };
 
-    let expected = authenticated_cmds::AnyCmdReq::UserRevoke(req);
+    let expected = authenticated_cmds::AnyCmdReq::RealmUnshare(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let authenticated_cmds::AnyCmdReq::UserRevoke(req2) = data else {
+    let authenticated_cmds::AnyCmdReq::RealmUnshare(req2) = data else {
         unreachable!()
     };
 
@@ -46,21 +46,21 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "ok"
     let raw = hex!("81a6737461747573a26f6b");
 
-    let expected = authenticated_cmds::user_revoke::Rep::Ok;
+    let expected = authenticated_cmds::realm_unshare::Rep::Ok;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -71,16 +71,16 @@ pub fn rep_author_not_allowed() {
     //   status: "author_not_allowed"
     let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
-    let expected = authenticated_cmds::user_revoke::Rep::AuthorNotAllowed;
+    let expected = authenticated_cmds::realm_unshare::Rep::AuthorNotAllowed;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -92,58 +92,56 @@ pub fn rep_invalid_certificate() {
     //
     let raw = hex!("81a6737461747573b3696e76616c69645f6365727469666963617465");
 
-    let expected = authenticated_cmds::user_revoke::Rep::InvalidCertificate;
+    let expected = authenticated_cmds::realm_unshare::Rep::InvalidCertificate;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_user_not_found() {
+pub fn rep_recipient_not_found() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "user_not_found"
-    let raw = hex!("81a6737461747573ae757365725f6e6f745f666f756e64");
+    //   status: "recipient_not_found"
+    let raw = hex!("81a6737461747573b3726563697069656e745f6e6f745f666f756e64");
 
-    let expected = authenticated_cmds::user_revoke::Rep::UserNotFound;
+    let expected = authenticated_cmds::realm_unshare::Rep::RecipientNotFound;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_user_already_revoked() {
+pub fn rep_realm_not_found() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "user_already_revoked"
-    let raw = hex!(
-        "81a6737461747573b4757365725f616c72656164795f7265766f6b6564"
-    );
+    //   status: "realm_not_found"
+    let raw = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64");
 
-    let expected = authenticated_cmds::user_revoke::Rep::UserAlreadyRevoked;
+    let expected = authenticated_cmds::realm_unshare::Rep::RealmNotFound;
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
@@ -165,27 +163,27 @@ pub fn rep_timestamp_out_of_ballpark() {
         "7374616d70d70141cc375188000000"
     );
 
-    let expected = authenticated_cmds::user_revoke::Rep::TimestampOutOfBallpark {
+    let expected = authenticated_cmds::realm_unshare::Rep::TimestampOutOfBallpark {
         ballpark_client_early_offset: 300.,
         ballpark_client_late_offset: 320.,
         server_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }
 
 pub fn rep_require_greater_timestamp() {
-    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "require_greater_timestamp"
     //   strictly_greater_than: ext(1, 946774800.0)
@@ -195,18 +193,38 @@ pub fn rep_require_greater_timestamp() {
         "726963746c795f677265617465725f7468616ed70141cc375188000000"
     );
 
-    let expected = authenticated_cmds::user_revoke::Rep::RequireGreaterTimestamp {
+    let expected = authenticated_cmds::realm_unshare::Rep::RequireGreaterTimestamp {
         strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
 
-    let data = authenticated_cmds::user_revoke::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = authenticated_cmds::user_revoke::Rep::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_recipient_already_unshared() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   status: "recipient_already_unshared"
+    let raw = hex!("81a6737461747573ba726563697069656e745f616c72656164795f756e736861726564");
+
+    let expected = authenticated_cmds::realm_unshare::Rep::RecipientAlreadyUnshared;
+
+    let data = authenticated_cmds::realm_unshare::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::realm_unshare::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }

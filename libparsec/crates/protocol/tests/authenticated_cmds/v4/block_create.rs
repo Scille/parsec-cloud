@@ -58,52 +58,42 @@ pub fn rep_ok() {
     rep_helper(&raw, expected);
 }
 
-pub fn rep_already_exists() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_block_already_exists() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_exists"
-    let raw = hex!("81a6737461747573ae616c72656164795f657869737473");
-    let expected = authenticated_cmds::block_create::Rep::AlreadyExists;
+    //   status: "block_already_exists"
+    let raw = hex!("81a6737461747573b4626c6f636b5f616c72656164795f657869737473");
+    let expected = authenticated_cmds::block_create::Rep::BlockAlreadyExists;
 
     rep_helper(&raw, expected);
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_realm_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_found"
-    let raw = hex!("81a6737461747573a96e6f745f666f756e64");
-    let expected = authenticated_cmds::block_create::Rep::NotFound;
+    //   status: "realm_not_found"
+    let raw = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64");
+    let expected = authenticated_cmds::block_create::Rep::RealmNotFound;
 
     rep_helper(&raw, expected);
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_allowed"
-    let raw = hex!("81a6737461747573ab6e6f745f616c6c6f776564");
-    let expected = authenticated_cmds::block_create::Rep::NotAllowed;
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
+    let expected = authenticated_cmds::block_create::Rep::AuthorNotAllowed;
 
     rep_helper(&raw, expected);
 }
 
-pub fn rep_in_maintenance() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_store_unavailable() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "in_maintenance"
-    let raw = hex!("81a6737461747573ae696e5f6d61696e74656e616e6365");
-    let expected = authenticated_cmds::block_create::Rep::InMaintenance;
-
-    rep_helper(&raw, expected);
-}
-
-pub fn rep_timeout() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "timeout"
-    let raw = hex!("81a6737461747573a774696d656f7574");
-    let expected = authenticated_cmds::block_create::Rep::Timeout;
+    //   status: "store_unavailable"
+    let raw = hex!("81a6737461747573b173746f72655f756e617661696c61626c65");
+    let expected = authenticated_cmds::block_create::Rep::StoreUnavailable;
 
     rep_helper(&raw, expected);
 }

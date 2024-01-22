@@ -67,17 +67,13 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Python implementation (Parsec v2.14.0)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "oof"
-    //   status: "not_allowed"
-    //
-    let raw = hex!("82a6726561736f6ea36f6f66a6737461747573ab6e6f745f616c6c6f776564");
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
-    let expected = authenticated_cmds::pki_enrollment_reject::Rep::NotAllowed {
-        reason: Some("oof".to_string()),
-    };
+    let expected = authenticated_cmds::pki_enrollment_reject::Rep::AuthorNotAllowed;
 
     let data = authenticated_cmds::pki_enrollment_reject::Rep::load(&raw).unwrap();
 
@@ -91,17 +87,14 @@ pub fn rep_not_allowed() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.14.0)
+pub fn rep_enrollment_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "oof"
-    //   status: "not_found"
+    //   status: "enrollment_not_found"
     //
-    let raw = hex!("82a6726561736f6ea36f6f66a6737461747573a96e6f745f666f756e64");
+    let raw = hex!("81a6737461747573b4656e726f6c6c6d656e745f6e6f745f666f756e64");
 
-    let expected = authenticated_cmds::pki_enrollment_reject::Rep::NotFound {
-        reason: Some("oof".to_string()),
-    };
+    let expected = authenticated_cmds::pki_enrollment_reject::Rep::EnrollmentNotFound;
 
     let data = authenticated_cmds::pki_enrollment_reject::Rep::load(&raw).unwrap();
 
@@ -115,20 +108,17 @@ pub fn rep_not_found() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_no_longer_available() {
-    // Generated from Python implementation (Parsec v2.14.0)
+pub fn rep_enrollment_no_longer_available() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "oof"
-    //   status: "no_longer_available"
+    //   status: "enrollment_no_longer_available"
     //
     let raw = hex!(
-        "82a6726561736f6ea36f6f66a6737461747573b36e6f5f6c6f6e6765725f617661696c6162"
+        "81a6737461747573be656e726f6c6c6d656e745f6e6f5f6c6f6e6765725f617661696c6162"
         "6c65"
     );
 
-    let expected = authenticated_cmds::pki_enrollment_reject::Rep::NoLongerAvailable {
-        reason: Some("oof".to_string()),
-    };
+    let expected = authenticated_cmds::pki_enrollment_reject::Rep::EnrollmentNoLongerAvailable;
 
     let data = authenticated_cmds::pki_enrollment_reject::Rep::load(&raw).unwrap();
 

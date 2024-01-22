@@ -38,7 +38,7 @@ pub fn req() {
             submit_payload: hex!("64756d6d79").as_ref().into(),
             submit_payload_signature: hex!("64756d6d79").as_ref().into(),
             submitter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
-            submitter_der_x509_certificate_email: Some("mail@mail.com".to_string()),
+            submitter_der_x509_certificate_email: "mail@mail.com".to_string(),
         },
     );
 
@@ -83,15 +83,18 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_already_submitted() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_x509_certificate_already_submitted() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_submitted"
+    //   status: "x509_certificate_already_submitted"
     //   submitted_on: ext(1, 1668767275.338466)
     //
-    let raw = hex!("82a6737461747573b1616c72656164795f7375626d6974746564ac7375626d69747465645f6f6ed70141d8ddd78ad5a96d");
+    let raw = hex!(
+        "82a6737461747573d922783530395f63657274696669636174655f616c72656164795f7375"
+        "626d6974746564ac7375626d69747465645f6f6ed70141d8ddd78ad5a96d"
+    );
 
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::AlreadySubmitted {
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::X509CertificateAlreadySubmitted {
         submitted_on: DateTime::from_f64_with_us_precision(1668767275.338466),
     };
 
@@ -107,14 +110,14 @@ pub fn rep_already_submitted() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_id_already_used() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_enrollment_id_already_used() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "id_already_used"
+    //   status: "enrollment_id_already_used"
     //
-    let raw = hex!("81a6737461747573af69645f616c72656164795f75736564");
+    let raw = hex!("81a6737461747573ba656e726f6c6c6d656e745f69645f616c72656164795f75736564");
 
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::IdAlreadyUsed;
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::EnrollmentIdAlreadyUsed;
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();
 
@@ -171,13 +174,13 @@ pub fn rep_already_enrolled() {
 }
 
 pub fn rep_invalid_payload_data() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "invalid_payload_data"
     //
-    let raw = hex!("82a6737461747573b4696e76616c69645f7061796c6f61645f64617461a6726561736f6ec0");
+    let raw = hex!("81a6737461747573b4696e76616c69645f7061796c6f61645f64617461");
 
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::InvalidPayloadData { reason: None };
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::InvalidPayloadData;
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();
 

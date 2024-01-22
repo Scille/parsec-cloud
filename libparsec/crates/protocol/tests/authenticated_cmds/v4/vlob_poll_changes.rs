@@ -50,21 +50,21 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   changes: {ExtType(code=2, raw=b'+_1G(\x13J\x12\x86=\xa1\xceI\xc1\x12\xf6'):8}
+    //   changes: [(ExtType(code=2, raw=b'+_1G(\x13J\x12\x86=\xa1\xceI\xc1\x12\xf6'), 8)]
     //   current_checkpoint: 8
     //   status: "ok"
     let raw = hex!(
-        "83a76368616e67657381d8022b5f314728134a12863da1ce49c112f608b263757272656e74"
-        "5f636865636b706f696e7408a6737461747573a26f6b"
+        "83a6737461747573a26f6ba76368616e6765739192d8022b5f314728134a12863da1ce49c1"
+        "12f608b263757272656e745f636865636b706f696e7408"
     );
 
     let expected = authenticated_cmds::vlob_poll_changes::Rep::Ok {
-        changes: HashMap::from([(
+        changes: vec![(
             VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
             8,
-        )]),
+        )],
         current_checkpoint: 8,
     };
 
@@ -80,13 +80,13 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_allowed"
-    let raw = hex!("81a6737461747573ab6e6f745f616c6c6f776564");
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
-    let expected = authenticated_cmds::vlob_poll_changes::Rep::NotAllowed;
+    let expected = authenticated_cmds::vlob_poll_changes::Rep::AuthorNotAllowed;
 
     let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw).unwrap();
 
@@ -100,36 +100,13 @@ pub fn rep_not_allowed() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_not_found() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+pub fn rep_realm_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   reason: "foobar"
-    //   status: "not_found"
-    let raw = hex!("82a6726561736f6ea6666f6f626172a6737461747573a96e6f745f666f756e64");
+    //   status: "realm_not_found"
+    let raw = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64");
 
-    let expected = authenticated_cmds::vlob_poll_changes::Rep::NotFound {
-        reason: Some("foobar".to_owned()),
-    };
-
-    let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::vlob_poll_changes::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_in_maintenance() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   status: "in_maintenance"
-    let raw = hex!("81a6737461747573ae696e5f6d61696e74656e616e6365");
-
-    let expected = authenticated_cmds::vlob_poll_changes::Rep::InMaintenance;
+    let expected = authenticated_cmds::vlob_poll_changes::Rep::RealmNotFound;
 
     let data = authenticated_cmds::vlob_poll_changes::Rep::load(&raw).unwrap();
 

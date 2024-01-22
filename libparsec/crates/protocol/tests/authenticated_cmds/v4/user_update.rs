@@ -12,7 +12,7 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   cmd: "user_update"
     //   user_update_certificate: hex!("666f6f626172")
@@ -46,7 +46,7 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "ok"
     let raw = hex!("81a6737461747573a26f6b");
@@ -65,13 +65,13 @@ pub fn rep_ok() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_not_allowed() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+pub fn rep_author_not_allowed() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "not_allowed"
-    let raw = hex!("81a6737461747573ab6e6f745f616c6c6f776564");
+    //   status: "author_not_allowed"
+    let raw = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564");
 
-    let expected = authenticated_cmds::user_update::Rep::NotAllowed;
+    let expected = authenticated_cmds::user_update::Rep::AuthorNotAllowed;
 
     let data = authenticated_cmds::user_update::Rep::load(&raw).unwrap();
 
@@ -85,13 +85,14 @@ pub fn rep_not_allowed() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_invalid_certification() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+pub fn rep_invalid_certificate() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "invalid_certification"
-    let raw = hex!("81a6737461747573b5696e76616c69645f63657274696669636174696f6e");
+    //   status: "invalid_certificate"
+    //
+    let raw = hex!("81a6737461747573b3696e76616c69645f6365727469666963617465");
 
-    let expected = authenticated_cmds::user_update::Rep::InvalidCertification;
+    let expected = authenticated_cmds::user_update::Rep::InvalidCertificate;
 
     let data = authenticated_cmds::user_update::Rep::load(&raw).unwrap();
 
@@ -105,13 +106,13 @@ pub fn rep_invalid_certification() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_invalid_data() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+pub fn rep_user_not_found() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "invalid_data"
-    let raw = hex!("81a6737461747573ac696e76616c69645f64617461");
+    //   status: "user_not_found"
+    let raw = hex!("81a6737461747573ae757365725f6e6f745f666f756e64");
 
-    let expected = authenticated_cmds::user_update::Rep::InvalidData;
+    let expected = authenticated_cmds::user_update::Rep::UserNotFound;
 
     let data = authenticated_cmds::user_update::Rep::load(&raw).unwrap();
 
@@ -125,13 +126,13 @@ pub fn rep_invalid_data() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_already_exists() {
-    // Generated from Rust implementation (Parsec v2.16.0-a.0+dev)
+pub fn rep_user_no_changes() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_exists"
-    let raw = hex!("81a6737461747573ae616c72656164795f657869737473");
+    //   status: "user_no_changes"
+    let raw = hex!("81a6737461747573af757365725f6e6f5f6368616e676573");
 
-    let expected = authenticated_cmds::user_update::Rep::AlreadyExists;
+    let expected = authenticated_cmds::user_update::Rep::UserNoChanges;
 
     let data = authenticated_cmds::user_update::Rep::load(&raw).unwrap();
 
@@ -145,27 +146,47 @@ pub fn rep_already_exists() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_bad_timestamp() {
-    // Generated from Python implementation (Parsec v2.11.1+dev)
+pub fn rep_user_revoked() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   backend_timestamp: ext(1, 946774800.0)
-    //   ballpark_client_early_offset: 50.0
-    //   ballpark_client_late_offset: 70.0
+    //   status: "user_revoked"
+    let raw = hex!("81a6737461747573ac757365725f7265766f6b6564");
+
+    let expected = authenticated_cmds::user_update::Rep::UserRevoked;
+
+    let data = authenticated_cmds::user_update::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::user_update::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_timestamp_out_of_ballpark() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   ballpark_client_early_offset: 300.0
+    //   ballpark_client_late_offset: 320.0
     //   client_timestamp: ext(1, 946774800.0)
-    //   status: "bad_timestamp"
+    //   server_timestamp: ext(1, 946774800.0)
+    //   status: "timestamp_out_of_ballpark"
     //
     let raw = hex!(
-        "85b16261636b656e645f74696d657374616d70d70141cc375188000000bc62616c6c706172"
-        "6b5f636c69656e745f6561726c795f6f6666736574cb4049000000000000bb62616c6c7061"
-        "726b5f636c69656e745f6c6174655f6f6666736574cb4051800000000000b0636c69656e74"
-        "5f74696d657374616d70d70141cc375188000000a6737461747573ad6261645f74696d6573"
-        "74616d70"
+        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc6261"
+        "6c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c00000000000bb62"
+        "616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb4074000000000000b063"
+        "6c69656e745f74696d657374616d70d70141cc375188000000b07365727665725f74696d65"
+        "7374616d70d70141cc375188000000"
     );
 
-    let expected = authenticated_cmds::user_update::Rep::BadTimestamp {
-        ballpark_client_early_offset: 50.,
-        ballpark_client_late_offset: 70.,
-        backend_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    let expected = authenticated_cmds::user_update::Rep::TimestampOutOfBallpark {
+        ballpark_client_early_offset: 300.,
+        ballpark_client_late_offset: 320.,
+        server_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
         client_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
 
