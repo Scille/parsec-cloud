@@ -43,6 +43,7 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             mountpoint_base_dir: config.mountpoint_base_dir,
             workspace_storage_cache_size: config.workspace_storage_cache_size,
             proxy: ProxyConfig::default(),
+            with_monitors: true,
         }
     }
 }

@@ -2,6 +2,10 @@
 
 use std::{path::PathBuf, sync::Arc};
 
+pub use libparsec_client::{
+    ClientCancelInvitationError, ClientNewDeviceInvitationError, ClientNewUserInvitationError,
+    InvitationEmailSentStatus, ListInvitationsError,
+};
 pub use libparsec_types::prelude::*;
 
 use crate::{
@@ -34,6 +38,8 @@ impl DeviceSaveStrategy {
 pub enum BootstrapOrganizationError {
     #[error("Cannot reach the server")]
     Offline,
+    #[error("Organization has expired")]
+    OrganizationExpired,
     #[error("Invalid bootstrap token")]
     InvalidToken,
     #[error("Bootstrap token already used")]
@@ -56,6 +62,9 @@ impl From<libparsec_client::BootstrapOrganizationError> for BootstrapOrganizatio
         match value {
             libparsec_client::BootstrapOrganizationError::Offline => {
                 BootstrapOrganizationError::Offline
+            }
+            libparsec_client::BootstrapOrganizationError::OrganizationExpired => {
+                BootstrapOrganizationError::OrganizationExpired
             }
             libparsec_client::BootstrapOrganizationError::InvalidToken => {
                 BootstrapOrganizationError::InvalidToken
@@ -137,6 +146,8 @@ pub async fn bootstrap_organization(
 pub enum ClaimInProgressError {
     #[error("Cannot reach the server")]
     Offline,
+    #[error("Organization has expired")]
+    OrganizationExpired,
     #[error("Invitation not found")]
     NotFound,
     #[error("Invitation already used")]
@@ -158,6 +169,9 @@ impl From<libparsec_client::ClaimInProgressError> for ClaimInProgressError {
     fn from(value: libparsec_client::ClaimInProgressError) -> Self {
         match value {
             libparsec_client::ClaimInProgressError::Offline => ClaimInProgressError::Offline,
+            libparsec_client::ClaimInProgressError::OrganizationExpired => {
+                ClaimInProgressError::OrganizationExpired
+            }
             libparsec_client::ClaimInProgressError::NotFound => ClaimInProgressError::NotFound,
             libparsec_client::ClaimInProgressError::AlreadyUsed => {
                 ClaimInProgressError::AlreadyUsed
@@ -566,11 +580,6 @@ pub async fn claimer_device_finalize_save_local_device(
  * Invitation greeter
  */
 
-pub use libparsec_client::{
-    DeleteInvitationError, InvitationEmailSentStatus, ListInvitationsError,
-    NewDeviceInvitationError, NewUserInvitationError,
-};
-
 pub struct NewInvitationInfo {
     pub addr: BackendInvitationAddr,
     pub token: InvitationToken,
@@ -581,7 +590,7 @@ pub async fn client_new_user_invitation(
     client: Handle,
     claimer_email: String,
     send_email: bool,
-) -> Result<NewInvitationInfo, NewUserInvitationError> {
+) -> Result<NewInvitationInfo, ClientNewUserInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
@@ -606,7 +615,7 @@ pub async fn client_new_user_invitation(
 pub async fn client_new_device_invitation(
     client: Handle,
     send_email: bool,
-) -> Result<NewInvitationInfo, NewDeviceInvitationError> {
+) -> Result<NewInvitationInfo, ClientNewDeviceInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
@@ -626,16 +635,16 @@ pub async fn client_new_device_invitation(
     })
 }
 
-pub async fn client_delete_invitation(
+pub async fn client_cancel_invitation(
     client: Handle,
     token: InvitationToken,
-) -> Result<(), DeleteInvitationError> {
+) -> Result<(), ClientCancelInvitationError> {
     let client = borrow_from_handle(client, |x| match x {
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })?;
 
-    client.delete_invitation(token).await
+    client.cancel_invitation(token).await
 }
 
 // pub use libparsec_client::InviteListItem;
@@ -757,14 +766,16 @@ pub enum GreetInProgressError {
     Offline,
     #[error("Invitation not found")]
     NotFound,
-    #[error("Invitation already used")]
-    AlreadyUsed,
+    #[error("Invitation already used or cancelled")]
+    AlreadyDeleted,
     #[error("Greet operation reset by peer")]
     PeerReset,
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
     #[error("Claimer's nonce and hashed nonce don't match")]
     NonceMismatch,
+    #[error("Human handle (i.e. email address) already taken")]
+    HumanHandleAlreadyTaken,
     #[error("User already exists")]
     UserAlreadyExists,
     #[error("Device already exists")]
@@ -792,8 +803,8 @@ impl From<libparsec_client::GreetInProgressError> for GreetInProgressError {
         match value {
             libparsec_client::GreetInProgressError::Offline => GreetInProgressError::Offline,
             libparsec_client::GreetInProgressError::NotFound => GreetInProgressError::NotFound,
-            libparsec_client::GreetInProgressError::AlreadyUsed => {
-                GreetInProgressError::AlreadyUsed
+            libparsec_client::GreetInProgressError::AlreadyDeleted => {
+                GreetInProgressError::AlreadyDeleted
             }
             libparsec_client::GreetInProgressError::PeerReset => GreetInProgressError::PeerReset,
             libparsec_client::GreetInProgressError::ActiveUsersLimitReached => {
@@ -801,6 +812,9 @@ impl From<libparsec_client::GreetInProgressError> for GreetInProgressError {
             }
             libparsec_client::GreetInProgressError::NonceMismatch => {
                 GreetInProgressError::NonceMismatch
+            }
+            libparsec_client::GreetInProgressError::HumanHandleAlreadyTaken => {
+                GreetInProgressError::HumanHandleAlreadyTaken
             }
             libparsec_client::GreetInProgressError::UserAlreadyExists => {
                 GreetInProgressError::UserAlreadyExists

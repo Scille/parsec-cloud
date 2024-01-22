@@ -2,13 +2,7 @@
 
 use std::sync::Arc;
 
-pub use libparsec_client::{
-    user_ops::{
-        RenameWorkspaceError as ClientWorkspaceRenameError,
-        ShareWorkspaceError as ClientWorkspaceShareError,
-    },
-    workspace_ops::{EntryStat, FsOperationError as WorkspaceFsOperationError},
-};
+pub use libparsec_client::workspace::{EntryStat, WorkspaceFsOperationError};
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
@@ -17,9 +11,7 @@ use crate::handle::{
     borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
 };
 
-fn borrow_workspace(
-    workspace: Handle,
-) -> anyhow::Result<Arc<libparsec_client::workspace_ops::WorkspaceOps>> {
+fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
     borrow_from_handle(workspace, |x| match x {
         HandleItem::Workspace { workspace_ops, .. } => Some(workspace_ops.clone()),
         _ => None,
@@ -32,8 +24,8 @@ fn borrow_workspace(
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStartWorkspaceError {
-    #[error("Cannot start workspace: no access")]
-    NoAccess,
+    #[error("Workspace not found")]
+    WorkspaceNotFound,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -41,8 +33,8 @@ pub enum ClientStartWorkspaceError {
 impl From<libparsec_client::ClientStartWorkspaceError> for ClientStartWorkspaceError {
     fn from(value: libparsec_client::ClientStartWorkspaceError) -> Self {
         match value {
-            libparsec_client::ClientStartWorkspaceError::NoAccess => {
-                ClientStartWorkspaceError::NoAccess
+            libparsec_client::ClientStartWorkspaceError::WorkspaceNotFound => {
+                ClientStartWorkspaceError::WorkspaceNotFound
             }
             libparsec_client::ClientStartWorkspaceError::Internal(e) => {
                 ClientStartWorkspaceError::Internal(e)
@@ -149,10 +141,9 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
         _ => None,
     })?;
 
-    client
-        .stop_workspace(realm_id)
-        .await
-        .map_err(WorkspaceStopError::Internal)
+    client.stop_workspace(realm_id).await;
+
+    Ok(())
 }
 
 /*
