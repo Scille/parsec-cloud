@@ -20,6 +20,9 @@
             },
             "introduced_in_revision": {
                 "$ref": "./major-minor-parsec-number.schema.json"
+            },
+            "deprecated_in_revision": {
+                "$ref": "./major-minor-parsec-number.schema.json"
             }
         }
     }

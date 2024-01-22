@@ -241,7 +241,6 @@ generate_field_type_enum!(
     CertificateSignerOwned => libparsec_types::CertificateSignerOwned,
     BlockAccess => libparsec_types::BlockAccess,
     EntryName => libparsec_types::EntryName,
-    WorkspaceEntry => libparsec_types::WorkspaceEntry,
     FileManifest => libparsec_types::FileManifest,
     FolderManifest => libparsec_types::FolderManifest,
     WorkspaceManifest => libparsec_types::WorkspaceManifest,
