@@ -276,6 +276,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             users_per_profile_detail=users_per_profile_detail,
         )
 
+    @override
     async def organization_stats(
         self,
         organization_id: OrganizationID,
