@@ -45,7 +45,7 @@ pub enum BootstrapOrganizationError {
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
@@ -72,12 +72,12 @@ impl From<libparsec_client::BootstrapOrganizationError> for BootstrapOrganizatio
             libparsec_client::BootstrapOrganizationError::AlreadyUsedToken => {
                 BootstrapOrganizationError::AlreadyUsedToken
             }
-            libparsec_client::BootstrapOrganizationError::BadTimestamp {
+            libparsec_client::BootstrapOrganizationError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
-            } => BootstrapOrganizationError::BadTimestamp {
+            } => BootstrapOrganizationError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
@@ -785,7 +785,7 @@ pub enum GreetInProgressError {
     #[error(transparent)]
     CorruptedInviteUserData(DataError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
@@ -828,12 +828,12 @@ impl From<libparsec_client::GreetInProgressError> for GreetInProgressError {
             libparsec_client::GreetInProgressError::CorruptedInviteUserData(err) => {
                 GreetInProgressError::CorruptedInviteUserData(err)
             }
-            libparsec_client::GreetInProgressError::BadTimestamp {
+            libparsec_client::GreetInProgressError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
-            } => GreetInProgressError::BadTimestamp {
+            } => GreetInProgressError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,

@@ -236,25 +236,17 @@ export interface WorkspaceUserAccessInfo {
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
     AlreadyUsedToken = 'BootstrapOrganizationErrorAlreadyUsedToken',
-    BadTimestamp = 'BootstrapOrganizationErrorBadTimestamp',
     Internal = 'BootstrapOrganizationErrorInternal',
     InvalidToken = 'BootstrapOrganizationErrorInvalidToken',
     Offline = 'BootstrapOrganizationErrorOffline',
     OrganizationExpired = 'BootstrapOrganizationErrorOrganizationExpired',
     SaveDeviceError = 'BootstrapOrganizationErrorSaveDeviceError',
+    TimestampOutOfBallpark = 'BootstrapOrganizationErrorTimestampOutOfBallpark',
 }
 
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: BootstrapOrganizationErrorTag.AlreadyUsedToken
     error: string
-}
-export interface BootstrapOrganizationErrorBadTimestamp {
-    tag: BootstrapOrganizationErrorTag.BadTimestamp
-    error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
-    ballparkClientEarlyOffset: number
-    ballparkClientLateOffset: number
 }
 export interface BootstrapOrganizationErrorInternal {
     tag: BootstrapOrganizationErrorTag.Internal
@@ -276,14 +268,22 @@ export interface BootstrapOrganizationErrorSaveDeviceError {
     tag: BootstrapOrganizationErrorTag.SaveDeviceError
     error: string
 }
+export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
+    tag: BootstrapOrganizationErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
 export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorAlreadyUsedToken
-  | BootstrapOrganizationErrorBadTimestamp
   | BootstrapOrganizationErrorInternal
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceError
+  | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 // CancelError
 export enum CancelErrorTag {
@@ -917,7 +917,6 @@ export type EntryStat =
 export enum GreetInProgressErrorTag {
     ActiveUsersLimitReached = 'GreetInProgressErrorActiveUsersLimitReached',
     AlreadyDeleted = 'GreetInProgressErrorAlreadyDeleted',
-    BadTimestamp = 'GreetInProgressErrorBadTimestamp',
     Cancelled = 'GreetInProgressErrorCancelled',
     CorruptedInviteUserData = 'GreetInProgressErrorCorruptedInviteUserData',
     DeviceAlreadyExists = 'GreetInProgressErrorDeviceAlreadyExists',
@@ -927,6 +926,7 @@ export enum GreetInProgressErrorTag {
     NotFound = 'GreetInProgressErrorNotFound',
     Offline = 'GreetInProgressErrorOffline',
     PeerReset = 'GreetInProgressErrorPeerReset',
+    TimestampOutOfBallpark = 'GreetInProgressErrorTimestampOutOfBallpark',
     UserAlreadyExists = 'GreetInProgressErrorUserAlreadyExists',
     UserCreateNotAllowed = 'GreetInProgressErrorUserCreateNotAllowed',
 }
@@ -938,14 +938,6 @@ export interface GreetInProgressErrorActiveUsersLimitReached {
 export interface GreetInProgressErrorAlreadyDeleted {
     tag: GreetInProgressErrorTag.AlreadyDeleted
     error: string
-}
-export interface GreetInProgressErrorBadTimestamp {
-    tag: GreetInProgressErrorTag.BadTimestamp
-    error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
-    ballparkClientEarlyOffset: number
-    ballparkClientLateOffset: number
 }
 export interface GreetInProgressErrorCancelled {
     tag: GreetInProgressErrorTag.Cancelled
@@ -983,6 +975,14 @@ export interface GreetInProgressErrorPeerReset {
     tag: GreetInProgressErrorTag.PeerReset
     error: string
 }
+export interface GreetInProgressErrorTimestampOutOfBallpark {
+    tag: GreetInProgressErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
 export interface GreetInProgressErrorUserAlreadyExists {
     tag: GreetInProgressErrorTag.UserAlreadyExists
     error: string
@@ -994,7 +994,6 @@ export interface GreetInProgressErrorUserCreateNotAllowed {
 export type GreetInProgressError =
   | GreetInProgressErrorActiveUsersLimitReached
   | GreetInProgressErrorAlreadyDeleted
-  | GreetInProgressErrorBadTimestamp
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
   | GreetInProgressErrorDeviceAlreadyExists
@@ -1004,6 +1003,7 @@ export type GreetInProgressError =
   | GreetInProgressErrorNotFound
   | GreetInProgressErrorOffline
   | GreetInProgressErrorPeerReset
+  | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
 
@@ -1161,7 +1161,6 @@ export type UserOrDeviceClaimInitialInfo =
 
 // WorkspaceFsOperationError
 export enum WorkspaceFsOperationErrorTag {
-    BadTimestamp = 'WorkspaceFsOperationErrorBadTimestamp',
     CannotRenameRoot = 'WorkspaceFsOperationErrorCannotRenameRoot',
     EntryExists = 'WorkspaceFsOperationErrorEntryExists',
     EntryNotFound = 'WorkspaceFsOperationErrorEntryNotFound',
@@ -1176,16 +1175,9 @@ export enum WorkspaceFsOperationErrorTag {
     Offline = 'WorkspaceFsOperationErrorOffline',
     ReadOnlyRealm = 'WorkspaceFsOperationErrorReadOnlyRealm',
     Stopped = 'WorkspaceFsOperationErrorStopped',
+    TimestampOutOfBallpark = 'WorkspaceFsOperationErrorTimestampOutOfBallpark',
 }
 
-export interface WorkspaceFsOperationErrorBadTimestamp {
-    tag: WorkspaceFsOperationErrorTag.BadTimestamp
-    error: string
-    serverTimestamp: DateTime
-    clientTimestamp: DateTime
-    ballparkClientEarlyOffset: number
-    ballparkClientLateOffset: number
-}
 export interface WorkspaceFsOperationErrorCannotRenameRoot {
     tag: WorkspaceFsOperationErrorTag.CannotRenameRoot
     error: string
@@ -1242,8 +1234,15 @@ export interface WorkspaceFsOperationErrorStopped {
     tag: WorkspaceFsOperationErrorTag.Stopped
     error: string
 }
+export interface WorkspaceFsOperationErrorTimestampOutOfBallpark {
+    tag: WorkspaceFsOperationErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
 export type WorkspaceFsOperationError =
-  | WorkspaceFsOperationErrorBadTimestamp
   | WorkspaceFsOperationErrorCannotRenameRoot
   | WorkspaceFsOperationErrorEntryExists
   | WorkspaceFsOperationErrorEntryNotFound
@@ -1258,6 +1257,7 @@ export type WorkspaceFsOperationError =
   | WorkspaceFsOperationErrorOffline
   | WorkspaceFsOperationErrorReadOnlyRealm
   | WorkspaceFsOperationErrorStopped
+  | WorkspaceFsOperationErrorTimestampOutOfBallpark
 
 // WorkspaceStopError
 export enum WorkspaceStopErrorTag {

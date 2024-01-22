@@ -124,10 +124,7 @@ pub async fn client_start(
         .await
         .map_err(ClientStartError::Internal)?;
 
-    let handle = initializing.initialized(HandleItem::Client {
-        client: Arc::new(client),
-        on_event,
-    });
+    let handle = initializing.initialized(HandleItem::Client { client, on_event });
 
     Ok(handle)
 }

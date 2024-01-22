@@ -2045,7 +2045,42 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorAlreadyUsedToken".into(),
             )?;
         }
-        libparsec::BootstrapOrganizationError::BadTimestamp {
+        libparsec::BootstrapOrganizationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInternal".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInvalidToken".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorOffline".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::OrganizationExpired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorOrganizationExpired".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceError".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -2055,7 +2090,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"BootstrapOrganizationErrorBadTimestamp".into(),
+                &"BootstrapOrganizationErrorTimestampOutOfBallpark".into(),
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -2090,41 +2125,6 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &js_obj,
                 &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorInternal".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorInvalidToken".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorOffline".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::OrganizationExpired { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorOrganizationExpired".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorSaveDeviceError".into(),
             )?;
         }
     }
@@ -3591,53 +3591,6 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorAlreadyDeleted".into(),
             )?;
         }
-        libparsec::GreetInProgressError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"GreetInProgressErrorBadTimestamp".into(),
-            )?;
-            let js_server_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
         libparsec::GreetInProgressError::Cancelled { .. } => {
             Reflect::set(
                 &js_obj,
@@ -3699,6 +3652,53 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"GreetInProgressErrorPeerReset".into(),
+            )?;
+        }
+        libparsec::GreetInProgressError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
             )?;
         }
         libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
@@ -4799,53 +4799,6 @@ fn variant_workspace_fs_operation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceFsOperationError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"WorkspaceFsOperationErrorBadTimestamp".into(),
-            )?;
-            let js_server_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
         libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
             Reflect::set(
                 &js_obj,
@@ -4942,6 +4895,53 @@ fn variant_workspace_fs_operation_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceFsOperationErrorStopped".into(),
+            )?;
+        }
+        libparsec::WorkspaceFsOperationError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
             )?;
         }
     }

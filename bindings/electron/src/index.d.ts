@@ -239,14 +239,6 @@ export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: "AlreadyUsedToken"
     error: string
 }
-export interface BootstrapOrganizationErrorBadTimestamp {
-    tag: "BadTimestamp"
-    error: string
-    server_timestamp: number
-    client_timestamp: number
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
-}
 export interface BootstrapOrganizationErrorInternal {
     tag: "Internal"
     error: string
@@ -267,14 +259,22 @@ export interface BootstrapOrganizationErrorSaveDeviceError {
     tag: "SaveDeviceError"
     error: string
 }
+export interface BootstrapOrganizationErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
 export type BootstrapOrganizationError =
   | BootstrapOrganizationErrorAlreadyUsedToken
-  | BootstrapOrganizationErrorBadTimestamp
   | BootstrapOrganizationErrorInternal
   | BootstrapOrganizationErrorInvalidToken
   | BootstrapOrganizationErrorOffline
   | BootstrapOrganizationErrorOrganizationExpired
   | BootstrapOrganizationErrorSaveDeviceError
+  | BootstrapOrganizationErrorTimestampOutOfBallpark
 
 
 // CancelError
@@ -789,14 +789,6 @@ export interface GreetInProgressErrorAlreadyDeleted {
     tag: "AlreadyDeleted"
     error: string
 }
-export interface GreetInProgressErrorBadTimestamp {
-    tag: "BadTimestamp"
-    error: string
-    server_timestamp: number
-    client_timestamp: number
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
-}
 export interface GreetInProgressErrorCancelled {
     tag: "Cancelled"
     error: string
@@ -833,6 +825,14 @@ export interface GreetInProgressErrorPeerReset {
     tag: "PeerReset"
     error: string
 }
+export interface GreetInProgressErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
 export interface GreetInProgressErrorUserAlreadyExists {
     tag: "UserAlreadyExists"
     error: string
@@ -844,7 +844,6 @@ export interface GreetInProgressErrorUserCreateNotAllowed {
 export type GreetInProgressError =
   | GreetInProgressErrorActiveUsersLimitReached
   | GreetInProgressErrorAlreadyDeleted
-  | GreetInProgressErrorBadTimestamp
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
   | GreetInProgressErrorDeviceAlreadyExists
@@ -854,6 +853,7 @@ export type GreetInProgressError =
   | GreetInProgressErrorNotFound
   | GreetInProgressErrorOffline
   | GreetInProgressErrorPeerReset
+  | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
 
@@ -987,14 +987,6 @@ export type UserOrDeviceClaimInitialInfo =
 
 
 // WorkspaceFsOperationError
-export interface WorkspaceFsOperationErrorBadTimestamp {
-    tag: "BadTimestamp"
-    error: string
-    server_timestamp: number
-    client_timestamp: number
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
-}
 export interface WorkspaceFsOperationErrorCannotRenameRoot {
     tag: "CannotRenameRoot"
     error: string
@@ -1051,8 +1043,15 @@ export interface WorkspaceFsOperationErrorStopped {
     tag: "Stopped"
     error: string
 }
+export interface WorkspaceFsOperationErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
 export type WorkspaceFsOperationError =
-  | WorkspaceFsOperationErrorBadTimestamp
   | WorkspaceFsOperationErrorCannotRenameRoot
   | WorkspaceFsOperationErrorEntryExists
   | WorkspaceFsOperationErrorEntryNotFound
@@ -1067,6 +1066,7 @@ export type WorkspaceFsOperationError =
   | WorkspaceFsOperationErrorOffline
   | WorkspaceFsOperationErrorReadOnlyRealm
   | WorkspaceFsOperationErrorStopped
+  | WorkspaceFsOperationErrorTimestampOutOfBallpark
 
 
 // WorkspaceStopError

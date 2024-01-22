@@ -80,7 +80,7 @@ class WorkspaceFsOperationError(ErrorVariant):
     class InvalidManifest:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float

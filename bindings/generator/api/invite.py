@@ -89,7 +89,7 @@ class BootstrapOrganizationError(ErrorVariant):
     class AlreadyUsedToken:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float
@@ -470,7 +470,7 @@ class GreetInProgressError(ErrorVariant):
     class CorruptedInviteUserData:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float
