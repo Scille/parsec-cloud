@@ -77,7 +77,7 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
 }
 
 export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceFsOperationError>> {
-  function generateEntryName(prefix: string = ''): string {
+  function generateEntryName(prefix = ''): string {
     return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}`;
   }
   const FOLDER_PREFIX = 'Dir_';

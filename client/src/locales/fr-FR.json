@@ -991,7 +991,8 @@
             "status": {
                 "ready": "Prête",
                 "idle": "Inactive",
-                "deleted": "Supprimée"
+                "finished": "Terminée",
+                "cancelled": "Annulée"
             }
         },
         "CreateUserInvitationModal": {
