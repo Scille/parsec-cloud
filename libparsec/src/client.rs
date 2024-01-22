@@ -3,15 +3,10 @@
 use std::sync::Arc;
 
 pub use libparsec_client::{
-    certificates_ops::{
-        DeviceInfo, GetUserDeviceError as ClientGetUserDeviceError, UserInfo,
-        WorkspaceUserAccessInfo,
-    },
-    user_ops::{
-        RenameWorkspaceError as ClientRenameWorkspaceError,
-        ShareWorkspaceError as ClientShareWorkspaceError,
-    },
-    WorkspaceInfo,
+    ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError, ClientGetUserDeviceError,
+    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
+    ClientRenameWorkspaceError, ClientShareWorkspaceError, DeviceInfo, UserInfo, WorkspaceInfo,
+    WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -218,6 +213,8 @@ pub struct ClientInfo {
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientInfoError {
+    #[error("Component has stopped")]
+    Stopped,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -233,21 +230,20 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
         device_label: client.device_label().to_owned(),
         human_handle: client.human_handle().to_owned(),
         current_profile: client
-            .profile()
+            .get_current_self_profile()
             .await
-            .map_err(|e| e.context("Cannot retrieve profile"))?,
+            .map_err(|e| match e {
+                ClientGetCurrentSelfProfileError::Stopped => ClientInfoError::Stopped,
+                ClientGetCurrentSelfProfileError::Internal(e) => {
+                    e.context("Cannot retrieve profile").into()
+                }
+            })?,
     })
 }
 
 /*
  * List users
  */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientListUsersError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
 
 // TODO: order by user name (asc/desc), offset/limit
 pub async fn client_list_users(
@@ -258,22 +254,12 @@ pub async fn client_list_users(
 ) -> Result<Vec<UserInfo>, ClientListUsersError> {
     let client = borrow_client(client)?;
 
-    client
-        .certificates_ops
-        .list_users(skip_revoked, None, None)
-        .await
-        .map_err(ClientListUsersError::Internal)
+    client.list_users(skip_revoked, None, None).await
 }
 
 /*
  * List user devices
  */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientListUserDevicesError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
 
 pub async fn client_list_user_devices(
     client: Handle,
@@ -281,15 +267,11 @@ pub async fn client_list_user_devices(
 ) -> Result<Vec<DeviceInfo>, ClientListUserDevicesError> {
     let client = borrow_client(client)?;
 
-    client
-        .certificates_ops
-        .list_user_devices(user)
-        .await
-        .map_err(|err| err.into())
+    client.list_user_devices(user).await
 }
 
 /*
- * get user device
+ * Get user device
  */
 
 pub async fn client_get_user_device(
@@ -298,18 +280,12 @@ pub async fn client_get_user_device(
 ) -> Result<(UserInfo, DeviceInfo), ClientGetUserDeviceError> {
     let client = borrow_client(client)?;
 
-    client.certificates_ops.get_user_device(device).await
+    client.get_user_device(device).await
 }
 
 /*
  * List workspace's users
  */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientListWorkspaceUsersError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
 
 pub async fn client_list_workspace_users(
     client: Handle,
@@ -317,11 +293,7 @@ pub async fn client_list_workspace_users(
 ) -> Result<Vec<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError> {
     let client = borrow_client(client)?;
 
-    client
-        .certificates_ops
-        .list_workspace_users(realm_id)
-        .await
-        .map_err(|err| err.into())
+    client.list_workspace_users(realm_id).await
 }
 
 /*
@@ -339,18 +311,14 @@ pub async fn client_list_workspaces(
 ) -> Result<Vec<WorkspaceInfo>, ClientListWorkspacesError> {
     let client = borrow_client(client)?;
 
-    client.list_workspaces().await.map_err(|err| err.into())
+    let workspaces = client.list_workspaces().await;
+
+    Ok(workspaces)
 }
 
 /*
  * Create workspace
  */
-
-#[derive(Debug, thiserror::Error)]
-pub enum ClientCreateWorkspaceError {
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
 
 pub async fn client_create_workspace(
     client: Handle,
@@ -359,7 +327,6 @@ pub async fn client_create_workspace(
     let client = borrow_client(client)?;
 
     client
-        .user_ops
         .create_workspace(name)
         .await
         .map_err(|err| err.into())
@@ -376,7 +343,7 @@ pub async fn client_rename_workspace(
 ) -> Result<(), ClientRenameWorkspaceError> {
     let client = borrow_client(client)?;
 
-    client.user_ops.rename_workspace(realm_id, new_name).await
+    client.rename_workspace(realm_id, new_name).await
 }
 
 /*
@@ -391,8 +358,5 @@ pub async fn client_share_workspace(
 ) -> Result<(), ClientShareWorkspaceError> {
     let client = borrow_client(client)?;
 
-    client
-        .user_ops
-        .share_workspace(realm_id, recipient, role)
-        .await
+    client.share_workspace(realm_id, recipient, role).await
 }

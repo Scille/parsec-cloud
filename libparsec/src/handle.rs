@@ -32,7 +32,7 @@ pub(crate) enum HandleItem {
     },
     Workspace {
         client: Handle,
-        workspace_ops: Arc<libparsec_client::workspace_ops::WorkspaceOps>,
+        workspace_ops: Arc<libparsec_client::WorkspaceOps>,
     },
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
