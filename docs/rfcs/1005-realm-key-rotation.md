@@ -82,7 +82,7 @@ The idea is as follow:
 - User manifest no longer has to store any information about the realms. The realm keys
   are only fetched when needed (i.e. in case of out/in sync) by using the new
   `workspace_get_keys_bundle` API command.
-- In case no `WorkspaceName` is available, then the realm ID is used instead.
+- In case no `RealmNameCertificate` is available, then the realm ID is used instead.
 - It is no longer possible to customize the name of a workspace only for oneself (it is
   possible to re-add this feature later if needed though).
 - `workspace_get_keys_bundle` allows to get previous keys-bundles if any, this is needed
@@ -219,6 +219,29 @@ It is similar to the `realm_update_roles` with the following changes:
                     // keys ever in use for this realm
                     "name": "keys_bundle",
                     "type": "Bytes"
+                },
+                {
+                    // If set to `true`, a `legacy_reencrypted_realm` error will be
+                    // returned if the realm has been created in Parsec < v3.0.
+                    //
+                    // This is required for the initial key rotation: realms created
+                    // in Parsec < v3.0 have they data encrypted with a single key
+                    // that may be replaced by a reencryption mechanism.
+                    // Hence the initial key rotation must use the key actually used
+                    // to encrypt the data.
+                    //
+                    // So with this flag the client can always start with a regular
+                    // key rotation (i.e. with a randomly generated key), then fallback
+                    // to searching the key in the user manifest history if the
+                    // realm is actually a legacy one.
+                    //
+                    // Note the fact the server can lie to the client about which key
+                    // should be use is not a security issue: the server never controls
+                    // the key and at most the realm data will end-up unreadable (which
+                    // the server can already achieved by providing dummy data when the
+                    // client fech a vlob/blob).
+                    "name": "never_legacy_reencrypted_or_fail",
+                    "type": "Boolean"
                 }
             ]
         },
@@ -228,30 +251,36 @@ It is similar to the `realm_update_roles` with the following changes:
             },
             {
                 // If the user doesn't have OWNER role in the realm
-                "status": "not_allowed"
+                "status": "author_not_allowed"
             },
             {
-                "status": "invalid_certification",
-            }
+                "status": "realm_not_found"
+            },
             {
-                "status": "not_found",
+                "status": "legacy_reencrypted_realm",
+                "fields": [
+                    {
+                        "name": "encryption_revision",
+                        "type": "Index"
+                    }
+                ]
+
             },
             {
                 // If the `key_index` in the certificate is not currently the realm's last one
                 "status": "bad_key_index"
             },
             {
-                "status": "participant_mismatch",
+                "status": "participant_mismatch"
+            },
+            {
+                "status": "invalid_certificate"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -261,11 +290,22 @@ It is similar to the `realm_update_roles` with the following changes:
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
                         "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
                         "type": "DateTime"
                     }
                 ]
@@ -301,7 +341,7 @@ It is similar to the `realm_update_roles` with the following changes:
                     "name": "key_index",
                     // `None` to get the last bundle, client only needs to use this
                     // field for self-heal when the last bundle is corrupted
-                    "type": "RequiredOption<IndexInt>"
+                    "type": "RequiredOption<Index>"
                 }
             ]
         },
@@ -312,8 +352,8 @@ It is similar to the `realm_update_roles` with the following changes:
                     {
                         // Key index
                         "name": "key_index",
-                        "type": "IndexInt"
-                    }
+                        "type": "Index"
+                    },
                     {
                         // `RealmKeysBundleAccess` document encrypted for ourself
                         "name": "keys_bundle_access",
@@ -327,8 +367,8 @@ It is similar to the `realm_update_roles` with the following changes:
                 ]
             },
             {
-                // Realm doesn't exists, or user has no access on it
-                "status": "not_allowed"
+                // Realm doesn't exist, or user has no access on it
+                "status": "author_not_allowed"
             },
             {
                 // `key_index` argument doesn't correspond to a `RealmRotateKeyCertificate`
@@ -365,29 +405,37 @@ This brings three benefits:
                     // contains realm_id, key_index & encrypted realm name
                     "name": "realm_name_certificate",
                     "type": "Bytes"
+                },
+                {
+                    // If set to `true`, an `initial_name_already_exists` error will
+                    // be returned if a name certificate already exist for this realm.
+                    "name": "initial_name_or_fail",
+                    "type": "Bool"
                 }
             ]
         },
         "reps": [
             {
-                "status": "ok",
+                "status": "ok"
             },
             {
-                "status": "invalid_certification",
+                "status": "initial_name_already_exists"
             },
             {
-                // Realm doesn't exists, or user has no access on it
-                "status": "not_allowed"
+                // Realm doesn't exist, or user has no access on it
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                "status": "realm_not_found"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -397,7 +445,7 @@ This brings three benefits:
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -407,7 +455,7 @@ This brings three benefits:
                 ]
             },
             {
-                // Returned if another certificate in the server has a creation date
+                // Returned if another certificate or vlob in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [
@@ -421,6 +469,16 @@ This brings three benefits:
     }
 ]
 ```
+
+> **Notes**
+>
+> - `initial_name_or_fail` flag makes the initial rename idempotent, which is especially
+>   useful to deal with legacy workspaces (given they may have multiple OWNER that
+>   will concurrently do the initial rename).
+> - Subsequent rename are not idempotent nor concurrency safe (i.e. last one blindly
+>   overwrites the previous one). This is considered okay given 1) concurrency is not
+>   high here, and 2) the name history is still available nevertheless by consulting
+>   the older certificates.
 
 ## 4 - Changes: Data
 
@@ -448,22 +506,52 @@ types.
 ### 4.2 - Existing data: `UserManifest`
 
 - Remove `last_processed_message` field.
-- Remove `workspaces` field.
+- Deprecate `workspaces` field. The field is only kept for backward compatibility
+  as its `name` and `key` fields are needed to generate the initial realm name
+  certificate and realm key rotation certificate.
 
-In practice, this means the user manifest contains no informations whatsoever.
-Hence it is useless for now, but might be needed in the future (typically for
-storing user-specific configuration should be shared between his devices).
+`workspace` field uses an updated `WorkspaceEntry` type:
 
-> **Note:**
+```json5
+{
+  "label": "WorkspaceEntry",
+  "fields": [
+    {
+      "name": "id",
+      "type": "VlobID"
+    },
+    {
+      "name": "name",
+      "type": "EntryName"
+    },
+    {
+        "name": "key",
+        "type": "SecretKey"
+    },
+    {
+        "name": "encryption_revision",
+        "type": "Index"
+    }
+
+    // Ignored fields (useless for our backward compatibility needs)
+    // - `encrypted_on`
+    // - `role_cache_timestamp`
+    // - `role`
+  ]
+}
+```
+
+> **Notes:**
 >
-> Removing the `workspace` field is possible because all the fields of `WorkspaceEntry`
-> disappeared:
->
-> - `encryption_revision`/`encrypted_on` meaningless not that re-encryption is no
->   longer a thing.
-> - `key` is now in the key bundle.
-> - `role_cached_on` and `role_cache_value` are not directly related to this RFC,
->   but given they are no longer in use in Parsec v3, we can also remove them.
+> - In practice, this means the user manifest should never get updated as it only
+>   contains data used for backward compatibility.
+>   However this might change in the future (typically for storing user-specific
+>   configuration should be shared between his devices).
+> - The initial key rotation on a workspace created with Parsec < v3 requires to
+>   retrieve the key currently in use. While the key is most likely in the last
+>   version of the user manifest, this may require searching in previous versions
+>   (typically if a reencryption was started but never finished before the migration
+>   to Parsec v3).
 
 ### 4.3 - New certificate: `realm_key_rotation_certificate`
 
@@ -500,7 +588,7 @@ This certificate can only be issued by a user with OWNER role on the given realm
         },
         {
             // Empty message encrypted with the key, this is used to ensure the
-            // the key retrieved in the keys-bundle hasn't been tempered (given
+            // key retrieved in the keys-bundle hasn't been tempered (given
             // each key rotation author generates a new keys-bundle from the
             // previous bundle and his one additional key).
             //
@@ -537,11 +625,11 @@ This certificate can only be issued by a user with OWNER role on the given realm
 ```json5
 {
     "label": "RealmNameCertificate",
-    "type": "workspace_name_certificate",
+    "type": "realm_name_certificate",
     "other_fields": [
         {
             "name": "author",
-            "type": "DeviceID",
+            "type": "DeviceID"
         },
         {
             "name": "timestamp",
@@ -553,11 +641,11 @@ This certificate can only be issued by a user with OWNER role on the given realm
         },
         {
             "name": "key_index",
-            "type": "Index",
+            "type": "Index"
         },
         {
             // `EntryName` encrypted with the key
-            "name": "name",
+            "name": "encrypted_name",
             "type": "Bytes"
         }
     ]
@@ -594,7 +682,7 @@ In this case, the naming fallback to the realm ID.
         {
             // Author must be equal to the one in the `RealmRoleCertificate`
             "name": "author",
-            "type": "DeviceID",
+            "type": "DeviceID"
         },
         {
             // Timestamp must be equal to the one in the `RealmRoleCertificate`
@@ -820,24 +908,86 @@ The wait at step 3.1 is here for two reasons:
       "type": "VlobID"
     },
     {
-      // `name` used to be a non-optional `EntryName` synchronized field.
-      // Now it has become option (msgpack encoding makes this change backward compatible)
-      // and is a local only field (i.e. never synchronized) that is used to store the
-      // name of the workspace on creation.
-      // This only needed in the brief moment before the `RealmNameCertificate` is uploaded
-      // (which can take some time if e.g. the workspace is created while the client is offline)
       "name": "name",
-      "type": "RequiredOption<EntryName>"
-    }
+      "type": "EntryName"
+    },
+    {
+        "name": "name_origin",
+        "type": "WorkspaceNameOrigin",
+        "introduced_in_revision": 300
+    },
+    {
+        "name": "role",
+        // This field should be mandatory, however it must be optional for backward compatibility.
+        // In Parsec < v3.0, a `None` value means the workspace was no longer shared with us.
+        // Hence the entry should be ignored during deserialization if this field is `None`.
+        "type": "RequiredOption<RealmRole>",
+    },
+    {
+        "name": "role_origin",
+        "type": "CertificateBasedInfoOrigin",
+        "introduced_in_revision": 300
+    },
+
     // Legacy ignored fields
     // - `key`
     // - `encryption_revision`
     // - `encrypted_on`
     // - `role_cache_timestamp`
-    // - `role`
   ]
 }
 ```
+
+With `CertificateBasedInfoOrigin`:
+
+```json5
+{
+    "name": "CertificateBasedInfoOrigin",
+    "discriminant_field": "type",
+    "variants": [
+        // Info comes from a certificate, this is the eventually consistent outcome.
+        {
+            "name": "Certificate",
+            "discriminant_value": "CERTIFICATE",
+            "fields": [
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                }
+            ]
+        },
+        // Workspace has no certificate for this info that we are aware yet.
+        //
+        // The most likely reason for this is that the workspace has just been created locally.
+        //
+        // If the info is the realm's name, another reason is that the workspace has been
+        // shared with us before it has a realm name certificate.
+        // This is theorically possible, though unlikely: it should only be encountered
+        // when dealing with a workspace shared with Parsec < v3 (as, at that time, realm
+        // name certificate didn't exist, and in Parsec >= v3 we ensure the workspace is
+        // bootstrapped before sharing it).
+        //
+        // In any case, this is a temporary state and the eventual outcomes are:
+        // - A realm certificate is fetched and it info overwrite the placeholder.
+        // - We are the ones uploading the initial info certificate, in which case
+        //   the placeholder will become the offical info.
+        {
+            "name": "Placeholder",
+            "discriminant_value": "PLACEHOLDER"
+        }
+    ],
+    "introduced_in_revision": 300
+}
+```
+
+> **Note**
+>
+> Regarding backward compatibility, legacy key is only important if it has been used to
+> upload data, which is supposed to occured only after a minimal sync on the realm.
+> And at this point the user manifest has been synced with the new workspace entry
+> containing this key.
+> Hence we only need to fetch the legacy key from the user manifest (ergo the `key` field
+> in local user manifest's workspaces gets deprecated).
 
 ### 6.7 - Add HTTP `User-Agent` header
 
