@@ -100,35 +100,6 @@ table! {
     }
 }
 
-table! {
-    certificates (certificate_index) {
-        certificate_index -> BigInt,
-        certificate_timestamp -> Double, // Timestamp
-        certificate -> Binary,
-        // We want to have a way to retrieve a singe certificate without having to iterate,
-        // decrypt and deserialize all of them.
-        // However this is tricky given we don't want to make this table dependent on the
-        // types of certificates, otherwise a migration would be required everytime we
-        // introduce a new type of certificate :(
-        //
-        // Hence:
-        // - `certificate_type` is not a field with an enum type
-        // - we expose two arbitrary filter fields that value depend on the actual certificate stored.
-        //
-        // The format is:
-        // - User certificates: filter1=<user_id>, filter2=NULL
-        // - Revoked user certificates: filter1=<user_id>, filter2=NULL
-        // - User update certificates: filter1=<user_id>, filter2=NULL
-        // - Realm role certificate: filter1=<realm id as hex>, filter2=<user_id>
-        // - Device certificate: filter1=<device_name>, filter2=<user_id>
-        // - sequester service certificate: filter1=<service_id>, filter2=NULL
-        // - Sequester authority: filter1=NULL, filter2=NULL (nothing to filter)
-        certificate_type -> Text,
-        filter1 -> Nullable<Text>,
-        filter2 -> Nullable<Text>,
-    }
-}
-
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = chunks)]
 pub(super) struct NewChunk<'a> {
@@ -162,17 +133,6 @@ pub(super) struct NewPreventSyncPattern<'a> {
     pub _id: i64,
     pub pattern: &'a str,
     pub fully_applied: bool,
-}
-
-#[derive(Insertable)]
-#[diesel(table_name = certificates)]
-pub(super) struct NewCertificate<'a> {
-    pub certificate_index: i64,
-    pub certificate_timestamp: super::db::DateTime,
-    pub certificate: &'a [u8],
-    pub certificate_type: &'a str,
-    pub filter1: Option<&'a str>,
-    pub filter2: Option<&'a str>,
 }
 
 /// Do not match anything (https://stackoverflow.com/a/2302992/2846140)
@@ -211,4 +171,55 @@ pub(super) async fn initialize_model_if_needed(db: &LocalDatabase) -> DatabaseRe
         })
     })
     .await
+}
+
+pub(super) async fn sqlx_initialize_model_if_needed(
+    conn: &mut sqlx::SqliteConnection,
+) -> anyhow::Result<()> {
+    use sqlx::Connection;
+    let mut transaction = conn.begin().await?;
+
+    // 1) create the tables
+
+    sqlx::query(std::include_str!("sql/create-vlobs-table.sql"))
+        .execute(&mut *transaction)
+        .await?;
+    sqlx::query(std::include_str!("sql/create-realm-checkpoint-table.sql"))
+        .execute(&mut *transaction)
+        .await?;
+    sqlx::query(std::include_str!(
+        "sql/create-prevent-sync-pattern-table.sql"
+    ))
+    .execute(&mut *transaction)
+    .await?;
+    sqlx::query(std::include_str!("sql/create-chunks-table.sql"))
+        .execute(&mut *transaction)
+        .await?;
+    sqlx::query(std::include_str!("sql/create-remanence-table.sql"))
+        .execute(&mut *transaction)
+        .await?;
+    sqlx::query(std::include_str!("sql/create-certificates-table.sql"))
+        .execute(&mut *transaction)
+        .await?;
+
+    // 2) Populate the tables
+
+    // Set the default "prevent sync" pattern if it doesn't exist
+    sqlx::query(
+        "INSERT INTO prevent_sync_pattern(_id, pattern, fully_applied) \
+        VALUES( \
+            0, \
+            ?1, \
+            FALSE \
+        ) \
+        ON CONFLICT DO NOTHING \
+        ",
+    )
+    .bind(PREVENT_SYNC_PATTERN_EMPTY_PATTERN)
+    .execute(&mut *transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
 }
