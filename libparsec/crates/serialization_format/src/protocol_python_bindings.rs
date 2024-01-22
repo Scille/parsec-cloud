@@ -828,7 +828,6 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry },
         FieldType::FileManifest => quote! { crate::data::FileManifest },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest },
         FieldType::WorkspaceManifest => quote! { crate::data::WorkspaceManifest },
@@ -960,7 +959,6 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::BlockAccess => quote! { crate::data::BlockAccess(#field_path.to_owned()) },
         FieldType::EntryName => quote! { crate::data::EntryName(#field_path.to_owned()) },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry(#field_path.to_owned()) },
         FieldType::FileManifest => quote! { crate::data::FileManifest(#field_path.to_owned()) },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest(#field_path.to_owned()) },
         FieldType::WorkspaceManifest => {
@@ -1056,7 +1054,6 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry },
         FieldType::FileManifest => quote! { crate::data::FileManifest },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest },
         FieldType::WorkspaceManifest => quote! { crate::data::WorkspaceManifest },
@@ -1181,7 +1178,6 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::CertificateSignerOwned
         | FieldType::BlockAccess
         | FieldType::EntryName
-        | FieldType::WorkspaceEntry
         | FieldType::FileManifest
         | FieldType::FolderManifest
         | FieldType::WorkspaceManifest
