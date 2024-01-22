@@ -108,7 +108,10 @@ async fn authenticated_sse(env: &TestbedEnv) {
     p_assert_eq!(
         sse.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
-            authenticated_cmds::events_listen::APIEvent::ServerConfig { active_users_limit: ActiveUsersLimit::NoLimit, user_profile_outsider_allowed: true }
+            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                active_users_limit: ActiveUsersLimit::NoLimit,
+                user_profile_outsider_allowed: true
+            }
         ))
     );
 
@@ -184,7 +187,7 @@ async fn invited(env: &TestbedEnv) {
     let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
         .unwrap();
     let rep = cmds
-        .send(authenticated_cmds::invite_new_device::Req{send_email: false})
+        .send(authenticated_cmds::invite_new_device::Req { send_email: false })
         .await;
     let invitation_token = match rep.unwrap() {
         authenticated_cmds::invite_new_device::Rep::Ok { token, .. } => token,
