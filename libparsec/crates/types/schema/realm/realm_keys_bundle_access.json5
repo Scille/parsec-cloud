@@ -1,0 +1,10 @@
+{
+    "label": "RealmKeysBundleAccess",
+    "type": "realm_keys_bundle_access",
+    "other_fields": [
+        {
+            "name": "keys_bundle_key",
+            "type": "SecretKey"
+        }
+    ]
+}

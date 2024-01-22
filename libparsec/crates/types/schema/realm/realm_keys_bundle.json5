@@ -1,0 +1,25 @@
+{
+    "label": "RealmKeysBundle",
+    "type": "realm_keys_bundle",
+    "other_fields": [
+        {
+            // Author must be equal to the one in the `RealmRoleCertificate`
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            // Timestamp must be equal to the one in the `RealmRoleCertificate`
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "keys",
+            // Keys ordered by index
+            "type": "List<SecretKey>"
+        }
+    ]
+}
