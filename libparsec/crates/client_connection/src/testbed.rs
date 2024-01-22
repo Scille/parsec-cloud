@@ -313,7 +313,7 @@ macro_rules! test_register_sequence_of_send_hooks {
     ($config_dir_ref: expr, $hook1: expr $(,)?) => {
         let config_dir_ref = $config_dir_ref.to_owned();
         let hook1 = $hook1;
-        libparsec_client_connection::test_register_send_hook(config_dir_ref, move |req| {
+        libparsec_client_connection::test_register_send_hook(&config_dir_ref, move |req| {
             let rep = hook1(req);
             rep
         });
