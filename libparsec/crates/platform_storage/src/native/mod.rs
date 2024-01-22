@@ -5,3 +5,6 @@ mod db;
 mod model;
 pub mod user;
 pub mod workspace;
+
+#[cfg(feature = "test-with-testbed")]
+mod testbed;
