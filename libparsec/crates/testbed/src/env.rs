@@ -2,6 +2,7 @@
 
 use std::{
     any::Any,
+    collections::HashMap,
     path::{Path, PathBuf},
     str::FromStr,
     sync::{
@@ -290,6 +291,196 @@ impl TestbedEnv {
         self.seal_and(|cache| cache.local_device(self, device_id))
     }
 
+    pub fn get_last_realm_keys_bundle(&self, realm_id: VlobID) -> Bytes {
+        let event = self
+            .template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(x),
+                _ => None,
+            })
+            .expect("Realm has had no key rotation");
+        event.keys_bundle(&self.template)
+    }
+
+    pub fn get_last_realm_keys_bundle_index(&self, realm_id: VlobID) -> IndexInt {
+        self.template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(x.key_index),
+                _ => None,
+            })
+            .expect("Realm has had no key rotation")
+    }
+
+    pub fn get_last_realm_keys_bundle_access_for(&self, realm_id: VlobID, user: &UserID) -> Bytes {
+        self.template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(
+                    x.per_participant_keys_bundle_access()
+                        .remove(user)
+                        .expect("No keys bundle access for user"),
+                ),
+                TestbedEvent::ShareRealm(x) if x.realm == realm_id && x.user == *user => Some(
+                    x.recipient_keys_bundle_access(&self.template)
+                        .expect("No keys bundle access for user"),
+                ),
+                _ => None,
+            })
+            .expect("Realm has had no key rotation")
+    }
+
+    pub fn get_last_realm_key(&self, realm_id: VlobID) -> (&SecretKey, IndexInt) {
+        self.template
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some((
+                    x.keys.last().expect("Never empty"),
+                    x.keys.len() as IndexInt,
+                )),
+                _ => None,
+            })
+            .expect("Realm has had no key rotation")
+    }
+
+    pub fn get_last_realm_keys_bundle_access_key(&self, realm_id: VlobID) -> &SecretKey {
+        let event = self
+            .template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(x),
+                _ => None,
+            })
+            .expect("Realm has had no key rotation");
+        &event.keys_bundle_access_key
+    }
+
+    pub fn get_common_certificates_signed(&self) -> Vec<Bytes> {
+        self.template
+            .certificates()
+            .filter_map(|event| match event.certificate {
+                AnyArcCertificate::User(_)
+                | AnyArcCertificate::Device(_)
+                | AnyArcCertificate::UserUpdate(_)
+                | AnyArcCertificate::RevokedUser(_) => Some(event.signed.clone()),
+                AnyArcCertificate::RealmRole(_)
+                | AnyArcCertificate::RealmName(_)
+                | AnyArcCertificate::RealmKeyRotation(_)
+                | AnyArcCertificate::RealmArchiving(_)
+                | AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::SequesterAuthority(_)
+                | AnyArcCertificate::SequesterService(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => None,
+            })
+            .collect()
+    }
+
+    pub fn get_realms_certificates_signed(&self) -> HashMap<VlobID, Vec<Bytes>> {
+        let mut output: HashMap<VlobID, Vec<Bytes>> = HashMap::new();
+        for event in self.template.certificates() {
+            match event.certificate {
+                AnyArcCertificate::RealmRole(certif) => match output.entry(certif.realm_id) {
+                    std::collections::hash_map::Entry::Occupied(entry) => {
+                        entry.into_mut().push(event.signed.clone());
+                    }
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        entry.insert(vec![event.signed.clone()]);
+                    }
+                },
+                AnyArcCertificate::RealmName(certif) => match output.entry(certif.realm_id) {
+                    std::collections::hash_map::Entry::Occupied(entry) => {
+                        entry.into_mut().push(event.signed.clone());
+                    }
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        entry.insert(vec![event.signed.clone()]);
+                    }
+                },
+                AnyArcCertificate::RealmKeyRotation(certif) => {
+                    match output.entry(certif.realm_id) {
+                        std::collections::hash_map::Entry::Occupied(entry) => {
+                            entry.into_mut().push(event.signed.clone());
+                        }
+                        std::collections::hash_map::Entry::Vacant(entry) => {
+                            entry.insert(vec![event.signed.clone()]);
+                        }
+                    }
+                }
+                AnyArcCertificate::RealmArchiving(certif) => match output.entry(certif.realm_id) {
+                    std::collections::hash_map::Entry::Occupied(entry) => {
+                        entry.into_mut().push(event.signed.clone());
+                    }
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        entry.insert(vec![event.signed.clone()]);
+                    }
+                },
+                AnyArcCertificate::User(_)
+                | AnyArcCertificate::Device(_)
+                | AnyArcCertificate::UserUpdate(_)
+                | AnyArcCertificate::RevokedUser(_)
+                | AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::SequesterAuthority(_)
+                | AnyArcCertificate::SequesterService(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => (),
+            }
+        }
+        output
+    }
+
+    pub fn get_sequester_certificates_signed(&self) -> Vec<Bytes> {
+        self.template
+            .certificates()
+            .filter_map(|event| match event.certificate {
+                AnyArcCertificate::SequesterAuthority(_)
+                | AnyArcCertificate::SequesterService(_) => Some(event.signed.clone()),
+                AnyArcCertificate::User(_)
+                | AnyArcCertificate::Device(_)
+                | AnyArcCertificate::UserUpdate(_)
+                | AnyArcCertificate::RevokedUser(_)
+                | AnyArcCertificate::RealmRole(_)
+                | AnyArcCertificate::RealmName(_)
+                | AnyArcCertificate::RealmArchiving(_)
+                | AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::RealmKeyRotation(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => None,
+            })
+            .collect()
+    }
+
+    pub fn get_shamir_recovery_certificates_signed(&self) -> Vec<Bytes> {
+        self.template
+            .certificates()
+            .filter_map(|event| match event.certificate {
+                AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_) => Some(event.signed.clone()),
+                AnyArcCertificate::User(_)
+                | AnyArcCertificate::Device(_)
+                | AnyArcCertificate::UserUpdate(_)
+                | AnyArcCertificate::RevokedUser(_)
+                | AnyArcCertificate::RealmRole(_)
+                | AnyArcCertificate::RealmName(_)
+                | AnyArcCertificate::RealmKeyRotation(_)
+                | AnyArcCertificate::RealmArchiving(_)
+                | AnyArcCertificate::SequesterAuthority(_)
+                | AnyArcCertificate::SequesterService(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => None,
+            })
+            .collect()
+    }
+
     pub fn get_user_certificate(
         &self,
         user_id: impl TryInto<UserID>,
@@ -347,12 +538,116 @@ impl TestbedEnv {
             .unwrap()
     }
 
-    pub fn get_last_certificate_index(&self) -> IndexInt {
+    pub fn get_last_realm_certificate_timestamp(&self, realm_id: VlobID) -> DateTime {
         self.template
-            .certificates()
-            .last()
-            .map(|x| x.certificate_index)
-            .unwrap_or(0)
+            .certificates_rev()
+            .find_map(|event| {
+                let (candidate_realm_id, timestamp) = match event.certificate {
+                    AnyArcCertificate::RealmRole(certif) => (certif.realm_id, certif.timestamp),
+                    AnyArcCertificate::RealmName(certif) => (certif.realm_id, certif.timestamp),
+                    AnyArcCertificate::RealmKeyRotation(certif) => {
+                        (certif.realm_id, certif.timestamp)
+                    }
+                    AnyArcCertificate::RealmArchiving(certif) => {
+                        (certif.realm_id, certif.timestamp)
+                    }
+
+                    // Exhaustive match so that we detect when new certificates are added
+                    AnyArcCertificate::User(_)
+                    | AnyArcCertificate::Device(_)
+                    | AnyArcCertificate::UserUpdate(_)
+                    | AnyArcCertificate::RevokedUser(_)
+                    | AnyArcCertificate::ShamirRecoveryBrief(_)
+                    | AnyArcCertificate::ShamirRecoveryShare(_)
+                    | AnyArcCertificate::SequesterAuthority(_)
+                    | AnyArcCertificate::SequesterService(_)
+                    | AnyArcCertificate::SequesterRevokedService(_) => return None,
+                };
+                if candidate_realm_id == realm_id {
+                    Some(timestamp)
+                } else {
+                    None
+                }
+            })
+            .unwrap()
+    }
+
+    pub fn get_last_common_certificate_timestamp(&self) -> DateTime {
+        self.template
+            .certificates_rev()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::User(certif) => Some(certif.timestamp),
+                AnyArcCertificate::Device(certif) => Some(certif.timestamp),
+                AnyArcCertificate::UserUpdate(certif) => Some(certif.timestamp),
+                AnyArcCertificate::RevokedUser(certif) => Some(certif.timestamp),
+                // Exhaustive match so that we detect when new certificates are added
+                AnyArcCertificate::RealmRole(_)
+                | AnyArcCertificate::RealmName(_)
+                | AnyArcCertificate::RealmKeyRotation(_)
+                | AnyArcCertificate::RealmArchiving(_)
+                | AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::SequesterAuthority(_)
+                | AnyArcCertificate::SequesterService(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => return None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_last_sequester_certificate_timestamp(&self) -> DateTime {
+        self.template
+            .certificates_rev()
+            .find_map(|event| match event.certificate {
+                AnyArcCertificate::SequesterAuthority(certif) => Some(certif.timestamp),
+                AnyArcCertificate::SequesterService(certif) => Some(certif.timestamp),
+                AnyArcCertificate::SequesterRevokedService(certif) => Some(certif.timestamp),
+                // Exhaustive match so that we detect when new certificates are added
+                AnyArcCertificate::User(_)
+                | AnyArcCertificate::Device(_)
+                | AnyArcCertificate::UserUpdate(_)
+                | AnyArcCertificate::RevokedUser(_)
+                | AnyArcCertificate::RealmRole(_)
+                | AnyArcCertificate::RealmName(_)
+                | AnyArcCertificate::RealmKeyRotation(_)
+                | AnyArcCertificate::RealmArchiving(_)
+                | AnyArcCertificate::ShamirRecoveryBrief(_)
+                | AnyArcCertificate::ShamirRecoveryShare(_) => None,
+            })
+            .unwrap()
+    }
+
+    pub fn get_last_shamir_recovery_certificate_timestamp(&self, author: &UserID) -> DateTime {
+        self.template
+            .certificates_rev()
+            .find_map(|event| {
+                let (candidate_author, timestamp) = match &event.certificate {
+                    AnyArcCertificate::ShamirRecoveryBrief(certif) => {
+                        (&certif.author, certif.timestamp)
+                    }
+                    AnyArcCertificate::ShamirRecoveryShare(certif) => {
+                        (&certif.author, certif.timestamp)
+                    }
+
+                    // Exhaustive match so that we detect when new certificates are added
+                    AnyArcCertificate::User(_)
+                    | AnyArcCertificate::Device(_)
+                    | AnyArcCertificate::UserUpdate(_)
+                    | AnyArcCertificate::RevokedUser(_)
+                    | AnyArcCertificate::RealmRole(_)
+                    | AnyArcCertificate::RealmName(_)
+                    | AnyArcCertificate::RealmKeyRotation(_)
+                    | AnyArcCertificate::RealmArchiving(_)
+                    | AnyArcCertificate::SequesterAuthority(_)
+                    | AnyArcCertificate::SequesterService(_)
+                    | AnyArcCertificate::SequesterRevokedService(_) => return None,
+                };
+                if candidate_author.user_id() == author {
+                    Some(timestamp)
+                } else {
+                    None
+                }
+            })
+            .unwrap()
     }
 
     pub fn get_last_realm_role_certificate(

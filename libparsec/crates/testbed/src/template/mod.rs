@@ -162,39 +162,33 @@ impl TestbedTemplate {
             .expect("User doesn't exist")
     }
 
-    pub fn user_profile_at(
-        &self,
-        user_id: &UserID,
-        up_to_certificate_index: IndexInt,
-    ) -> UserProfile {
+    pub fn user_profile_at(&self, user_id: &UserID, up_to: DateTime) -> UserProfile {
         let mut current_profile = None;
         self.events.iter().find_map(|e| {
             let maybe_profile_update = match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
                     first_user_device_id,
-                    first_user_certificate_index,
+                    timestamp,
                     ..
                 }) if first_user_device_id.user_id() == user_id => {
-                    Some((UserProfile::Admin, *first_user_certificate_index))
+                    Some((UserProfile::Admin, *timestamp))
                 }
                 TestbedEvent::NewUser(TestbedEventNewUser {
                     device_id,
                     initial_profile,
-                    user_certificate_index,
+                    timestamp,
                     ..
-                }) if device_id.user_id() == user_id => {
-                    Some((*initial_profile, *user_certificate_index))
-                }
+                }) if device_id.user_id() == user_id => Some((*initial_profile, *timestamp)),
                 TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
                     user,
                     profile,
-                    certificate_index,
+                    timestamp,
                     ..
-                }) if user == user_id => Some((*profile, *certificate_index)),
+                }) if user == user_id => Some((*profile, *timestamp)),
                 _ => None,
             };
-            maybe_profile_update.map(|(profile, certificate_index)| {
-                if certificate_index > up_to_certificate_index {
+            maybe_profile_update.map(|(profile, certificate_timestamp)| {
+                if certificate_timestamp > up_to {
                     // Stop iteration
                     Some(())
                 } else {

@@ -111,6 +111,20 @@ pub(super) fn non_revoked_realm_members(
     })
 }
 
+#[allow(unused)]
+pub(super) fn realm_keys(
+    events: &[TestbedEvent],
+    realm: VlobID,
+) -> impl Iterator<Item = (IndexInt, &SecretKey)> {
+    events.iter().filter_map(move |e| match e {
+        TestbedEvent::RotateKeyRealm(x) if x.realm == realm => Some((
+            x.key_index,
+            x.keys.last().expect("Certificate must contains keys"),
+        )),
+        _ => None,
+    })
+}
+
 pub(super) fn assert_realm_member_has_read_access(
     events: &[TestbedEvent],
     realm: VlobID,
