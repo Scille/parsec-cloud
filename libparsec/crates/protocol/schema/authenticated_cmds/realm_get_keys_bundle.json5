@@ -1,0 +1,55 @@
+[
+    {
+        "major_versions": [4],
+        "req": {
+            "cmd": "realm_get_keys_bundle",
+            "fields": [
+                {
+                    "name": "realm_id",
+                    "type": "VlobID"
+                },
+                {
+                    "name": "key_index",
+                    // `None` to get the last bundle, client only needs to use this
+                    // field for self-heal when the last bundle is corrupted.
+                    "type": "RequiredOption<Index>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // Key index
+                        "name": "key_index",
+                        "type": "Index"
+                    },
+                    {
+                        // `RealmKeysBundleAccess` document encrypted for ourself
+                        "name": "keys_bundle_access",
+                        "type": "Bytes"
+                    },
+                    {
+                        // Signed&encrypted `RealmKeysBundle`
+                        "name": "keys_bundle",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                // The keys bundle exists, but there is no corresponding keys bundle
+                // access for the user.
+                "status": "access_not_available_for_author"
+            },
+            {
+                // Realm doesn't exist, or user has no access on it
+                "status": "author_not_allowed"
+            },
+            {
+                // `key_index` argument doesn't correspond to a `RealmRotateKeyCertificate`
+                "status": "bad_key_index"
+            }
+        ]
+    }
+]

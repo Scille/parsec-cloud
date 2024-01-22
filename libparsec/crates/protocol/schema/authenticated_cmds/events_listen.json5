@@ -58,7 +58,7 @@
                                 "type": "InvitationToken"
                             },
                             {
-                                "name": "status",
+                                "name": "invitation_status",
                                 "type": "InvitationStatus"
                             }
                         ]
@@ -73,13 +73,13 @@
                     // command.
                     //
                     // Consider the following scenario:
-                    // 1) client send a `certificate_get` command to server
-                    // 2) server send a `certificates` event to client for
+                    // 1) client sends a `certificate_get` command to server
+                    // 2) server sends a `certificates` event to client for
                     //    certificate C3
-                    // 3) client add C3 to it certificates store
-                    // 4) server send the response to `certificate_get`: certificates
+                    // 3) client adds C3 to its certificates store
+                    // 4) server sends the response to `certificate_get`: certificates
                     //    C1 and C2 should be added by the client
-                    // 5) client detect a causality issue given C1 & C2 are older than
+                    // 5) client detects a causality issue given C1 & C2 are older than
                     //    C3 which is already stored !
                     //
                     // In a nutshell, the server guarantees causality on the order it
@@ -112,8 +112,8 @@
                         ]
                     },
                     {
-                        "name": "ShamirCertificate",
-                        "discriminant_value": "SHAMIR_CERTIFICATE",
+                        "name": "ShamirRecoveryCertificate",
+                        "discriminant_value": "SHAMIR_RECOVERY_CERTIFICATE",
                         "fields": [
                             {
                                 // Timestamp is useful to detect we have already polled the
@@ -148,7 +148,7 @@
                        // under concurrency (unlike certificates related operations that
                        // work in a strict ordered fashion).
                        // In other words, considering two vlob modifications:
-                       // - two different vlob are modified, it is fine to fetch the
+                       // - two different vlobs are modified, it is fine to fetch the
                        //   changes in any order
                        // - the same vlob has been modified twice, it is fine to fetch
                        //   the change twice (idempotent operation)
@@ -174,9 +174,19 @@
                                 "type": "Version"
                             },
                             {
-                                // Blob is only provide if it is small enough
+                                // Blob is only provided if it is small enough
                                 "name": "blob",
                                 "type": "RequiredOption<Bytes>"
+                            },
+                            // The vlob requires common&realm certificates for validation,
+                            // those fields help the client ensure it isn't missing some.
+                            {
+                                "name": "last_common_certificate_timestamp",
+                                "type": "DateTime"
+                            },
+                            {
+                                "name": "last_realm_certificate_timestamp",
+                                "type": "DateTime"
                             }
                         ]
                     }

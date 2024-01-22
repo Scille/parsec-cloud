@@ -7,7 +7,7 @@
             "cmd": "organization_bootstrap",
             "fields": [
                 {
-                    // Set to `None`  for spontaneous bootstrap (i.e. the organization
+                    // Set to `None` for spontaneous bootstrap (i.e. the organization
                     // hasn't been created prior to the bootstrap)
                     "name": "bootstrap_token",
                     "type": "RequiredOption<BootstrapToken>"

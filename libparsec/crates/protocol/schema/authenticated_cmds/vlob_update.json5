@@ -10,6 +10,20 @@
                     "name": "vlob_id",
                     "type": "VlobID"
                 },
+                // The key index is used to identify which key in the keys bundle has
+                // been used to encrypt the blob.
+                // Note 0 is allowed (used by user realm where there is only a single key).
+                {
+                    "name": "key_index",
+                    "type": "Index"
+                },
+                // Blob is expected to contain encrypted data, so the server cannot enforce
+                // the timestamp in case the content is signed.
+                // Hence the timestamp is provided in clear so the server can reject the
+                // request if it considers it is out of ballpark.
+                // On top of that, each client fetching the blob will also receive this
+                // declared timestamp in order to check it corresponds with the actual
+                // timestamp within the decrypted data.
                 {
                     "name": "timestamp",
                     "type": "DateTime"
@@ -38,7 +52,13 @@
                 "status": "author_not_allowed"
             },
             {
+                "status": "bad_key_index"
+            },
+            {
                 "status": "vlob_not_found"
+            },
+            {
+                "status": "vlob_version_already_exists"
             },
             {
                 "status": "organization_not_sequestered"

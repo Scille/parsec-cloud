@@ -1,24 +1,20 @@
 [
     {
-        "major_versions": [
-            4
-        ],
+        "major_versions": [4],
         "req": {
-            "cmd": "realm_share",
+            "cmd": "realm_rename",
             "fields": [
                 {
-                    // `RealmRoleCertificate` with `role` field set to a non-null value
-                    "name": "realm_role_certificate",
+                    // Signed `RealmNameCertificate` certificate,
+                    // contains realm_id, key_index & encrypted realm name
+                    "name": "realm_name_certificate",
                     "type": "Bytes"
                 },
                 {
-                    // `RealmKeysBundleAccess` encrypted for the recipient
-                    "name": "recipient_keys_bundle_access",
-                    "type": "Bytes"
-                },
-                {
-                    "name": "key_index",
-                    "type": "Index"
+                    // If set to `true`, an `initial_name_already_exists` error will
+                    // be returned if a name certificate already exist for this realm.
+                    "name": "initial_name_or_fail",
+                    "type": "Boolean"
                 }
             ]
         },
@@ -27,28 +23,17 @@
                 "status": "ok"
             },
             {
+                "status": "initial_name_already_exists"
+            },
+            {
+                // Realm doesn't exist, or user has no access on it
                 "status": "author_not_allowed"
             },
             {
-                "status": "realm_not_found"
-            },
-            {
-                "status": "recipient_not_found"
-            },
-            {
-                "status": "recipient_revoked"
-            },
-            {
-                "status": "role_incompatible_with_outsider"
-            },
-            {
-                "status": "role_already_granted"
-            },
-            {
-                "status": "bad_key_index"
-            },
-            {
                 "status": "invalid_certificate"
+            },
+            {
+                "status": "realm_not_found"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
