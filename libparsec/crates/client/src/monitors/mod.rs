@@ -6,7 +6,7 @@ mod connection;
 mod user_sync;
 // mod inbound_sync;
 // mod outbound_sync;
-// mod workspaces_realm_bootstrap;
+mod workspaces_bootstrap;
 // mod workspaces;
 
 pub(crate) use base::*;
@@ -15,7 +15,7 @@ pub(crate) use connection::*;
 pub(crate) use user_sync::*;
 // pub(crate) use inbound_sync::*;
 // pub(crate) use outbound_sync::*;
-// pub(crate) use workspaces_realm_bootstrap::*;
+pub(crate) use workspaces_bootstrap::*;
 // pub(crate) use workspaces::*;
 
 #[cfg(test)]
