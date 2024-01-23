@@ -60,7 +60,8 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
                 let display_status = match status {
                     InvitationStatus::Idle => format!("{YELLOW}idle{RESET}"),
                     InvitationStatus::Ready => format!("{GREEN}ready{RESET}"),
-                    InvitationStatus::Deleted => format!("{RED}deleted{RESET}"),
+                    InvitationStatus::Cancelled => format!("{RED}cancelled{RESET}"),
+                    InvitationStatus::Finished => format!("{GREEN}finished{RESET}"),
                 };
 
                 println!("{token}\t{display_status}\t{display_type}")

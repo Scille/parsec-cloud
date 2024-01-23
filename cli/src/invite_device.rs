@@ -4,7 +4,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use libparsec::{
-    authenticated_cmds::latest::invite_new::{self, InviteNewRep, UserOrDevice},
+    authenticated_cmds::latest::invite_new_device::{self, InviteNewDeviceRep},
     get_default_config_dir, BackendInvitationAddr, InvitationType,
 };
 
@@ -27,11 +27,11 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
         let handle = start_spinner("Creating device invitation");
 
         let rep = cmds
-            .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+            .send(invite_new_device::Req { send_email: false })
             .await?;
 
         let url = match rep {
-            InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+            InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
                 device.organization_addr.clone(),
                 device.organization_id().clone(),
                 InvitationType::Device,
