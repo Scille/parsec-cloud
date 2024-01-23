@@ -245,16 +245,6 @@ async def test_server_stats_format(
         assert r.status_code == 200
         return r
 
-    async def org_stats(format: str):
-        r = await client.get(
-            f"http://parsec.invalid/administration/organizations/{minimalorg.organization_id.str}/stats?format={format}",
-            headers={
-                "Authorization": f"Bearer {backend.config.administration_token}",
-            },
-        )
-        assert r.status_code == 200
-        return r
-
     response = await server_stats("json")
     assert _strip_template_orgs(response.json()) == {
         "stats": [
@@ -283,3 +273,51 @@ async def test_server_stats_format(
         "MinimalOrgTemplate,0,0,0,1,1,0,0,0,0,0\r\n"
         "Org1,0,0,0,1,1,0,0,0,0,0\r\n"
     )
+
+
+async def test_server_stats_at(
+    client: httpx.AsyncClient, backend: Backend, minimalorg: MinimalorgRpcClients
+) -> None:
+    async def server_stats(at: str):
+        r = await client.get(
+            f"http://parsec.invalid/administration/stats?format=json&at={at}",
+            headers={
+                "Authorization": f"Bearer {backend.config.administration_token}",
+            },
+        )
+        assert r.status_code == 200
+        return r.json()
+
+    response = await server_stats("1990-01-01T00:00:00Z")
+    expected = {
+        "stats": [
+            {
+                "organization_id": "MinimalOrgTemplate",
+                "data_size": 0,
+                "metadata_size": 0,
+                "realms": 0,
+                "users": 0,
+                "active_users": 0,
+                "users_per_profile_detail": {
+                    "ADMIN": {"active": 0, "revoked": 0},
+                    "STANDARD": {"active": 0, "revoked": 0},
+                    "OUTSIDER": {"active": 0, "revoked": 0},
+                },
+            },
+            {
+                "organization_id": "Org1",
+                "data_size": 0,
+                "metadata_size": 0,
+                "realms": 0,
+                "users": 0,
+                "active_users": 0,
+                "users_per_profile_detail": {
+                    "ADMIN": {"active": 0, "revoked": 0},
+                    "STANDARD": {"active": 0, "revoked": 0},
+                    "OUTSIDER": {"active": 0, "revoked": 0},
+                },
+            },
+        ]
+    }
+
+    assert response == expected

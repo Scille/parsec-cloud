@@ -307,19 +307,19 @@ async def administration_server_stats(
     response: Response,
     auth: Annotated[None, Depends(check_administration_auth)],
     format: StatsFormat = StatsFormat.JSON,
-    raw_at: str | None = None,
+    at: str | None = None,
 ) -> Response:
     backend: Backend = request.app.state.backend
 
     try:
-        at = DateTime.from_rfc3339(raw_at) if raw_at else None
+        typed_at = DateTime.from_rfc3339(at) if at else None
     except ValueError:
         raise HTTPException(
             status_code=400,
             detail="Invalid `at` query argument (expected RFC3339 datetime)",
         )
 
-    server_stats = await backend.organization.server_stats(at=at)
+    server_stats = await backend.organization.server_stats(at=typed_at)
 
     match format:
         case StatsFormat.CSV:
