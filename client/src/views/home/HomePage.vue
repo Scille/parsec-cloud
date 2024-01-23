@@ -211,6 +211,7 @@ async function openSettingsModal(): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
+  await modal.dismiss();
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {

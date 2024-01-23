@@ -255,7 +255,7 @@ const displayView = ref(DisplayState.List);
 const selectedFilesCount = computed(() => {
   return getSelectedEntries().length;
 });
-const importManager = inject(ImportManagerKey) as ImportManager;
+const importManager: ImportManager = inject(ImportManagerKey)!;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);

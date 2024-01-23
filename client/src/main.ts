@@ -31,6 +31,7 @@ import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/valida
 import { Answer, askQuestion } from '@/components/core';
 import { isElectron } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
+import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { initTranslations } from '@/services/translation';
@@ -50,6 +51,7 @@ async function setupApp(): Promise<void> {
 
   const notificationManager = new NotificationManager();
   const importManager = new ImportManager();
+  const hotkeyManager = new HotkeyManager();
   const router = getRouter();
 
   const app = createApp(App)
@@ -63,6 +65,7 @@ async function setupApp(): Promise<void> {
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationManager);
   app.provide(ImportManagerKey, importManager);
+  app.provide(HotkeyManagerKey, hotkeyManager);
 
   // We get the app element
   const appElem = document.getElementById('app');

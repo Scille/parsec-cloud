@@ -161,11 +161,7 @@ async function openPopover(event: Event): Promise<void> {
   if (result.role !== MsModalResult.Confirm) {
     return;
   }
-  if (result.data.action === HomePageAction.CreateOrganization) {
-    emits('createOrganizationClick');
-  } else if (result.data.action === HomePageAction.JoinOrganization) {
-    emits('joinOrganizationClick');
-  }
+  onAction(result.data.action);
 }
 
 async function dismissPopover(action: HomePageAction): Promise<void> {
