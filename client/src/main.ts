@@ -36,6 +36,8 @@ import { Notification, NotificationKey, NotificationLevel, NotificationManager }
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
+import Vue3Lottie from 'vue3-lottie';
+
 async function setupApp(): Promise<void> {
   const storageManager = new StorageManager();
   await storageManager.create();
@@ -55,7 +57,8 @@ async function setupApp(): Promise<void> {
       rippleEffect: false,
     })
     .use(router)
-    .use(i18n);
+    .use(i18n)
+    .use(Vue3Lottie);
 
   app.provide(StorageManagerKey, storageManager);
   app.provide(NotificationKey, notificationManager);

@@ -391,7 +391,8 @@
             "size": "Size"
         },
         "File": {
-            "lastUpdate": "Last updated:"
+            "lastUpdate": "Last updated:",
+            "importing": "Importing..."
         },
         "fileContextMenu": {
             "titleManage": "Manage file",

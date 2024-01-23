@@ -3,7 +3,6 @@
 <template>
   <ion-item
     button
-    class="file-list-item"
     lines="full"
     :detail="false"
     :class="{ selected: isSelected }"
@@ -11,78 +10,80 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div class="file-selected">
-      <ion-checkbox
-        aria-label=""
-        class="checkbox"
-        v-model="isSelected"
-        v-show="isSelected || isHovered || showCheckbox"
-        @click.stop
-        @ion-change="$emit('select', file, isSelected)"
-      />
-    </div>
-    <!-- file name -->
-    <div class="file-name">
-      <div class="file-name__icons">
-        <ion-icon
-          class="main-icon"
-          :icon="getFileIcon()"
-          size="default"
-        />
-        <ion-icon
-          class="cloud-overlay"
-          :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-          :icon="isFileSynced() ? cloudDone : cloudOffline"
+    <div class="file-list-item">
+      <div class="file-selected">
+        <ion-checkbox
+          aria-label=""
+          class="checkbox"
+          v-model="isSelected"
+          v-show="isSelected || isHovered || showCheckbox"
+          @click.stop
+          @ion-change="$emit('select', file, isSelected)"
         />
       </div>
-      <ion-label class="file-name__label cell">
-        {{ file.name }}
-      </ion-label>
-    </div>
+      <!-- file name -->
+      <div class="file-name">
+        <div class="file-name__icons">
+          <ion-icon
+            class="main-icon"
+            :icon="getFileIcon()"
+            size="default"
+          />
+          <ion-icon
+            class="cloud-overlay"
+            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+            :icon="isFileSynced() ? cloudDone : cloudOffline"
+          />
+        </div>
+        <ion-label class="file-name__label cell">
+          {{ file.name }}
+        </ion-label>
+      </div>
 
-    <!-- updated by -->
-    <!-- Can't get the information right now, maybe later -->
-    <div
-      class="file-updatedBy"
-      v-if="false"
-    >
-      <user-avatar-name
-        :user-avatar="file.id"
-        :user-name="file.id"
-      />
-    </div>
-
-    <!-- last update -->
-    <div class="file-lastUpdate">
-      <ion-label class="label-last-update cell">
-        {{ formatTimeSince(file.updated, '--', 'short') }}
-      </ion-label>
-    </div>
-
-    <!-- file size -->
-    <div class="file-size">
-      <ion-label
-        v-show="file.isFile()"
-        class="label-size cell"
+      <!-- updated by -->
+      <!-- Can't get the information right now, maybe later -->
+      <div
+        class="file-updatedBy"
+        v-if="false"
       >
-        {{ formatFileSize((file as EntryStatFile).size) }}
-      </ion-label>
-    </div>
-
-    <!-- options -->
-    <div class="file-options ion-item-child-clickable">
-      <ion-button
-        fill="clear"
-        v-show="isHovered || menuOpened"
-        class="options-button"
-        @click.stop="onOptionsClick($event)"
-      >
-        <ion-icon
-          :icon="ellipsisHorizontal"
-          slot="icon-only"
-          class="options-button__icon"
+        <user-avatar-name
+          :user-avatar="file.id"
+          :user-name="file.id"
         />
-      </ion-button>
+      </div>
+
+      <!-- last update -->
+      <div class="file-lastUpdate">
+        <ion-label class="label-last-update cell">
+          {{ formatTimeSince(file.updated, '--', 'short') }}
+        </ion-label>
+      </div>
+
+      <!-- file size -->
+      <div class="file-size">
+        <ion-label
+          v-show="file.isFile()"
+          class="label-size cell"
+        >
+          {{ formatFileSize((file as EntryStatFile).size) }}
+        </ion-label>
+      </div>
+
+      <!-- options -->
+      <div class="file-options ion-item-child-clickable">
+        <ion-button
+          fill="clear"
+          v-show="isHovered || menuOpened"
+          class="options-button"
+          @click.stop="onOptionsClick($event)"
+        >
+          <ion-icon
+            :icon="ellipsisHorizontal"
+            slot="icon-only"
+            class="options-button__icon"
+          />
+        </ion-button>
+      </div>
     </div>
   </ion-item>
 </template>
@@ -137,73 +138,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.file-selected {
-  min-width: 4rem;
-  justify-content: end;
-}
-
-.file-name {
-  padding: 0.75rem 1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  flex-grow: 1;
-
-  &__icons {
-    position: relative;
-    padding: 5px;
-
-    .main-icon {
-      color: var(--parsec-color-light-primary-600);
-      font-size: 1.5rem;
-    }
-
-    .cloud-overlay {
-      height: 40%;
-      width: 40%;
-      position: absolute;
-      font-size: 1.5rem;
-      bottom: 1px;
-      left: 53%;
-      padding: 2px;
-      background: var(--parsec-color-light-secondary-inversed-contrast);
-      border-radius: 50%;
-    }
-
-    .cloud-overlay-ok {
-      color: var(--parsec-color-light-primary-500);
-    }
-
-    .cloud-overlay-ko {
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-
-  &__label {
-    color: var(--parsec-color-light-secondary-text);
-    margin-left: 1em;
-  }
-}
-
-.file-updatedBy {
-  min-width: 11.25rem;
-  max-width: 10vw;
-  flex-grow: 2;
-}
-
-.file-lastUpdate {
-  min-width: 11.25rem;
-  flex-grow: 0;
-}
-
-.file-size {
-  min-width: 11.25rem;
-}
-
 .file-options {
-  min-width: 4rem;
-  flex-grow: 0;
-  margin-left: auto;
-
   ion-button::part(native) {
     padding: 0;
   }
@@ -221,10 +156,5 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
     }
   }
-}
-
-.label-size,
-.label-last-update {
-  color: var(--parsec-color-light-secondary-grey);
 }
 </style>

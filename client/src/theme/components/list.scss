@@ -2,22 +2,20 @@
 
 /* **** List of workspaces, files/folder, users **** */
 
-.workspace-list-item,
-.file-list-item,
+ion-item:has(.workspace-list-item),
+ion-item:has(.file-list-item),
 .user-list-item,
 .invitation-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
   width: 100%;
+  display: flex;
+  --padding-start: 0px;
+  --inner-padding-end: 0px;
 
   &::part(native) {
     border: none;
-    --padding-start: 0px;
     width: 100%;
-  }
-
-  .input-wrapper {
-    flex-wrap: nowrap;
   }
 
   &:not(.selected)::after {
@@ -44,8 +42,9 @@
   &:hover,
   &.selected {
     .cell,
-    .options-button__icon {
-      color: var(--parsec-color-light-secondary-text);
+    .options-button__icon,
+    .person-name {
+      color: var(--parsec-color-light-secondary-text) !important;
     }
     &::part(native) {
       --padding-start: 0px;
@@ -69,7 +68,8 @@
     --background-checked-opacity: 1;
 
     .cell,
-    .options-button__icon {
+    .options-button__icon,
+    .person-name {
       color: var(--parsec-color-light-secondary-text);
     }
   }
@@ -83,4 +83,100 @@
   display: flex;
   align-items: center;
   height: 3rem;
+  overflow: hidden;
+}
+
+// List of files/folders
+.folder-container {
+  .file-list-item {
+    display: flex;
+    width: 100%;
+  }
+
+  .label-selected,
+  .file-selected,
+  .file-loading {
+    min-width: 4rem;
+    width: 4rem;
+    justify-content: end;
+  }
+
+  .label-name,
+  .file-name {
+    min-width: 16.25rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+  }
+
+  .file-name {
+    &__icons {
+      position: relative;
+      padding: 5px;
+
+      .main-icon {
+        color: var(--parsec-color-light-primary-600);
+        font-size: 1.5rem;
+      }
+
+      .cloud-overlay {
+        height: 40%;
+        width: 40%;
+        position: absolute;
+        font-size: 1.5rem;
+        bottom: 1px;
+        left: 53%;
+        padding: 2px;
+        background: var(--parsec-color-light-secondary-inversed-contrast);
+        border-radius: 50%;
+      }
+
+      .cloud-overlay-ok {
+        color: var(--parsec-color-light-primary-500);
+      }
+
+      .cloud-overlay-ko {
+        color: var(--parsec-color-light-secondary-text);
+      }
+    }
+
+    &__label {
+      color: var(--parsec-color-light-secondary-text);
+      margin-left: 1em;
+    }
+  }
+
+  .label-updatedBy,
+  .file-updatedBy {
+    min-width: 14rem;
+    max-width: 15%;
+    flex-grow: 2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .label-lastUpdate,
+  .file-lastUpdate {
+    min-width: 11.25rem;
+    flex-shrink: 1;
+  }
+
+  .label-size,
+  .file-size {
+    min-width: 8.25rem;
+    flex-shrink: 1;
+  }
+
+  .label-size,
+  .label-last-update {
+    color: var(--parsec-color-light-secondary-grey);
+  }
+
+  .label-space,
+  .file-options,
+  .file-empty {
+    min-width: 4rem;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
 }
