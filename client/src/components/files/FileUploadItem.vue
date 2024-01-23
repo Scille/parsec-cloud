@@ -4,6 +4,7 @@
   <div
     class="element-container"
     :class="{
+      waiting: state === ImportState.FileAdded,
       progress: state === ImportState.FileProgress,
       done: state === ImportState.FileImported,
       cancelled: state === ImportState.Cancelled,
@@ -37,17 +38,13 @@
         </ion-label>
       </div>
 
-      <!-- done -->
-      <ion-icon
-        class="checkmark-icon default-state"
-        v-show="state === ImportState.FileImported"
-        :icon="checkmark"
-      />
-      <ion-icon
-        class="arrow-icon hover-state"
-        v-show="state === ImportState.FileImported"
-        :icon="arrowForward"
-      />
+      <!-- waiting -->
+      <ion-text
+        class="waiting-text body"
+        v-if="state === ImportState.FileAdded"
+      >
+        {{ $t('FoldersPage.ImportFile.waiting') }}
+      </ion-text>
 
       <!-- in progress -->
       <ion-button
@@ -64,12 +61,24 @@
         />
       </ion-button>
 
+      <!-- done -->
+      <ion-icon
+        class="checkmark-icon default-state"
+        v-show="state === ImportState.FileImported"
+        :icon="checkmark"
+      />
+      <ion-icon
+        class="arrow-icon hover-state"
+        v-show="state === ImportState.FileImported"
+        :icon="arrowForward"
+      />
+
       <!-- cancel -->
       <ion-text
         class="cancel-text body"
         v-if="state === ImportState.Cancelled"
       >
-        {{ $t('FoldersPage.ImportFile.cancel') }}
+        {{ $t('FoldersPage.ImportFile.cancelled') }}
       </ion-text>
 
       <!-- failed -->
@@ -181,6 +190,7 @@ function onCancelClick(): void {
 
   .checkmark-icon,
   .arrow-icon,
+  .waiting-text,
   .cancel-button,
   .failed-text,
   .cancel-text,
@@ -190,6 +200,12 @@ function onCancelClick(): void {
 }
 
 // states of the element-container
+.waiting {
+  .waiting-text {
+    color: var(--parsec-color-light-primary-700);
+  }
+}
+
 .progress {
   .cancel-button {
     color: var(--parsec-color-light-secondary-text);

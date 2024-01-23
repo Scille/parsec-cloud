@@ -41,10 +41,12 @@ describe('Upload files', () => {
     cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
     cy.get('.ion-page').find('.import-button').find('ion-button').click();
     cy.get('.ion-page').find('.import-button input').attachFile('splash.png');
-    cy.get('.element-container').find('.element-details__name').should('contain', 'splash.png');
-    cy.get('.element-container').should('have.class', 'progress');
+    cy.get('.upload-menu-list').find('.element-container .element-details__name').should('contain', 'splash.png');
+    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
     cy.wait(3000);
-    cy.get('.element-container').should('have.class', 'done');
+    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item ion-label').eq(1).contains('Done');
+    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
+    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'done');
   });
 
   it('Import multiple files with button', () => {
@@ -53,18 +55,20 @@ describe('Upload files', () => {
     cy.get('.ion-page').find('.import-button').find('ion-button').click();
     cy.get('.ion-page').find('.import-button input').attachFile(['splash.png', 'splash.png']);
     cy.get('.upload-menu-list').should('have.length', 1);
-    cy.get('.element-container').eq(1).find('.element-details__name').should('contain', 'splash.png');
+    cy.get('.upload-menu-list').find('.element-container .element-details__name').should('contain', 'splash.png');
     cy.wait(3000);
-    cy.get('.element-container').should('have.class', 'done');
+    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
+    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'done');
   });
 
   it('Import file with button and cancel', () => {
     cy.get('#button-import').click();
     cy.get('.ion-page').find('.import-button').find('ion-button').click();
     cy.get('.ion-page').find('.import-button input').attachFile('splash.png');
-    cy.get('.element-container').find('.element-details__name').should('contain', 'splash.png');
-    cy.get('.element-container').should('have.class', 'progress');
-    cy.get('.element-container').find('.cancel-button').click();
-    cy.get('.element-container').should('have.class', 'cancelled');
+    cy.get('.upload-menu-list').find('.element-container').find('.element-details__name').should('contain', 'splash.png');
+    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
+    cy.get('.upload-menu-list').find('.element-container').find('.cancel-button').click();
+    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
+    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'cancelled');
   });
 });
