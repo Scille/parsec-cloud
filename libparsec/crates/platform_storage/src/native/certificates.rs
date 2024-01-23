@@ -598,3 +598,7 @@ impl PlatformCertificatesStorage {
         update.debug_dump().await
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/native_sqlite_db_creation.rs"]
+mod test;
