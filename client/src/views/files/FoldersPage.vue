@@ -108,26 +108,26 @@
               class="folder-list-header"
               lines="full"
             >
-              <ion-label class="folder-list-header__label label-selected">
+              <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
                 <ion-checkbox
                   class="checkbox"
                   @ion-change="selectAllFiles($event.detail.checked)"
                   v-model="allFilesSelected"
                 />
               </ion-label>
-              <ion-label class="folder-list-header__label cell-title label-name">
+              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
                 {{ $t('FoldersPage.listDisplayTitles.name') }}
               </ion-label>
-              <ion-label class="folder-list-header__label cell-title label-updatedBy">
+              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
                 {{ $t('FoldersPage.listDisplayTitles.updatedBy') }}
               </ion-label>
-              <ion-label class="folder-list-header__label cell-title label-lastUpdate">
+              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
                 {{ $t('FoldersPage.listDisplayTitles.lastUpdate') }}
               </ion-label>
-              <ion-label class="folder-list-header__label cell-title label-size">
+              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
                 {{ $t('FoldersPage.listDisplayTitles.size') }}
               </ion-label>
-              <ion-label class="folder-list-header__label cell-title label-space" />
+              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
             </ion-list-header>
             <file-list-item
               v-for="child in children"
@@ -138,6 +138,12 @@
               @menu-click="openFileContextMenu"
               @select="onFileSelect"
               ref="fileListItemRefs"
+            />
+            <file-list-item-importing
+              v-for="fileImport in fileImportsCurrentDir"
+              :key="fileImport.data.id"
+              :data="fileImport.data"
+              :progress="fileImport.progress"
             />
           </ion-list>
         </div>
@@ -154,6 +160,12 @@
             @click="onFileClick"
             @menu-click="openFileContextMenu"
             ref="fileGridItemRefs"
+          />
+          <file-card-importing
+            v-for="fileImport in fileImportsCurrentDir"
+            :key="fileImport.data.id"
+            :data="fileImport.data"
+            :progress="fileImport.progress"
           />
         </div>
       </div>
@@ -178,8 +190,10 @@ import FileCard from '@/components/files/FileCard.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import * as parsec from '@/parsec';
 
+import FileCardImporting from '@/components/files/FileCardImporting.vue';
+import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
-import { ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
+import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
@@ -204,6 +218,13 @@ const notificationManager: NotificationManager = inject(NotificationKey)!;
 const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
 const allFilesSelected = ref(false);
+
+interface FileImport {
+  data: ImportData;
+  progress: number;
+}
+
+const fileImports: Ref<Array<FileImport>> = ref([]);
 
 const routeWatchCancel = watchRoute(async () => {
   const newPath = getDocumentPath();
@@ -237,11 +258,36 @@ onUnmounted(async () => {
   routeWatchCancel();
 });
 
-async function onFileImportState(state: ImportState, _importData?: ImportData, _stateData?: StateData): Promise<void> {
+async function onFileImportState(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
   if (fileUploadModal && state === ImportState.FileAdded) {
     await fileUploadModal?.dismiss();
   }
+  if (!importData) {
+    return;
+  }
+  if (state === ImportState.FileAdded) {
+    fileImports.value.push({ data: importData, progress: 0 });
+  } else if (state === ImportState.FileProgress) {
+    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
+    if (index !== -1) {
+      fileImports.value[index].progress = (stateData as FileProgressStateData).progress;
+    }
+  } else if (
+    [ImportState.FileImported, ImportState.Cancelled, ImportState.CreateFailed, ImportState.WriteError, ImportState].includes(state)
+  ) {
+    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
+    if (index !== -1) {
+      fileImports.value.splice(index, 1);
+    }
+    if (parsec.Path.areSame(importData.path, currentPath.value)) {
+      await listFolder();
+    }
+  }
 }
+
+const fileImportsCurrentDir = computed(() => {
+  return fileImports.value.filter((item) => parsec.Path.areSame(item.data.path, currentPath.value));
+});
 
 async function listFolder(): Promise<void> {
   const result = await parsec.entryStat(currentPath.value);
@@ -722,40 +768,14 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
     padding: 0.75rem 1rem;
   }
   .label-selected {
-    min-width: 4rem;
-    flex-grow: 0;
     display: flex;
     align-items: center;
-    justify-content: end;
-  }
-
-  .label-name {
-    width: 100%;
-    min-width: 11.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .label-updatedBy {
-    min-width: 11.25rem;
-    max-width: 10vw;
-    flex-grow: 2;
-  }
-
-  .label-lastUpdate {
-    min-width: 11.25rem;
-    flex-grow: 0;
-  }
-
-  .label-size {
-    min-width: 11.25rem;
   }
 
   .label-space {
     min-width: 4rem;
     flex-grow: 0;
     margin-left: auto;
-    margin-right: 1rem;
   }
 }
 

@@ -6,7 +6,7 @@
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
     <ion-text
-      class="person-name"
+      class="person-name body"
       v-if="userName"
     >
       {{ userName }}
@@ -29,6 +29,7 @@ defineProps<{
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
+  width: 100%;
 
   .avatar {
     display: flex;
@@ -36,7 +37,8 @@ defineProps<{
     justify-content: center;
     text-transform: uppercase;
     height: 2rem;
-    width: 2rem;
+    min-width: 2rem;
+    max-width: 2rem;
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
     &:first-of-type {
@@ -56,11 +58,17 @@ defineProps<{
     .person-name {
       padding-top: 0;
       padding-left: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 
   &:not(.main-cell) .person-name {
     color: var(--parsec-color-light-secondary-grey);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 }
 

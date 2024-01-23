@@ -169,7 +169,7 @@ defineEmits<{
 }
 
 .workspace-size {
-  min-width: 7.5rem;
+  max-width: 7.5rem;
 }
 
 .workspace-options {

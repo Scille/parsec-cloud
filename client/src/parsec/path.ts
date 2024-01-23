@@ -34,6 +34,10 @@ function getFileExtension(path: FsPath): string {
   return pathComponents[pathComponents.length - 1].toLowerCase();
 }
 
+function areSame(pathA: FsPath, pathB: FsPath): boolean {
+  return pathA === pathB;
+}
+
 export const Path = {
   parse,
   join,
@@ -41,4 +45,5 @@ export const Path = {
   parent,
   filename,
   getFileExtension,
+  areSame,
 };
