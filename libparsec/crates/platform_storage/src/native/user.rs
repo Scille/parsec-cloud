@@ -4,7 +4,7 @@
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
-use sqlx::{Connection, Row, SqliteConnection};
+use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, Connection, Row, SqliteConnection};
 use std::path::Path;
 
 use libparsec_types::prelude::*;
@@ -53,7 +53,17 @@ impl PlatformUserStorage {
                         db_path
                     )
                 })?;
-                SqliteConnection::connect(&sqlite_url).await?
+
+                let path = Path::new(sqlite_url);
+                if let Some(parent) = path.parent() {
+                    let _ = std::fs::create_dir_all(parent);
+                }
+
+                SqliteConnectOptions::new()
+                    .filename(sqlite_url)
+                    .create_if_missing(true)
+                    .connect()
+                    .await?
             }
         };
 
