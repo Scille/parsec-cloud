@@ -510,10 +510,19 @@
         },
         "ImportFile": {
             "title": "Importation",
-            "cancel": "annulé",
+            "waiting": "en attente",
+            "cancelled": "annulé",
             "failed": "échoué",
-            "failedDetails": "Please check you internet connection.",
-            "browse": "Aller à l'emplacement"
+            "failedDetails": "Vérifier votre connexion internet",
+            "browse": "Aller à l'emplacement",
+            "tabs": {
+                "inProgress": "En cours",
+                "done": "Terminé",
+                "failed": "Échoué"
+            },
+            "noImportInProgress": "Pas d'import en cours",
+            "noImportDone": "Pas d'import terminé",
+            "noImportFailed": "Pas d'import échoué"
         }
     },
     "FileDetails": {

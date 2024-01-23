@@ -22,28 +22,101 @@
         />
       </div>
     </div>
-    <ion-list
-      class="upload-menu-list"
-      ref="uploadMenuList"
-    >
-      <file-upload-item
-        v-for="importItem in imports"
-        :key="importItem.data.id"
-        :progress="importItem.progress"
-        :state="importItem.state"
-        :import-data="importItem.data"
-        @import-cancel="cancelImport($event)"
-      />
+    <ion-list class="upload-menu-tabs">
+      <ion-item
+        class="upload-menu-tabs__item body"
+        :class="{ active: currentTab === Tabs.InProgress }"
+        @click="currentTab = Tabs.InProgress"
+      >
+        <ion-label>{{ $t('FoldersPage.ImportFile.tabs.inProgress') }}</ion-label>
+      </ion-item>
+
+      <ion-item
+        class="upload-menu-tabs__item body"
+        :class="{ active: currentTab === Tabs.Done }"
+        @click="currentTab = Tabs.Done"
+      >
+        <ion-label>{{ $t('FoldersPage.ImportFile.tabs.done') }}</ion-label>
+      </ion-item>
+
+      <ion-item
+        class="upload-menu-tabs__item body"
+        :class="{ active: currentTab === Tabs.Error }"
+        @click="currentTab = Tabs.Error"
+      >
+        <ion-label>{{ $t('FoldersPage.ImportFile.tabs.failed') }}</ion-label>
+      </ion-item>
+    </ion-list>
+
+    <ion-list class="upload-menu-list">
+      <template v-if="currentTab === Tabs.InProgress">
+        <file-upload-item
+          v-for="item in importingItems"
+          :key="item.data.id"
+          :progress="item.progress"
+          :state="item.state"
+          :import-data="item.data"
+          @import-cancel="cancelImport($event)"
+        />
+        <div
+          class="upload-menu-list__empty"
+          v-if="importingItems.length === 0"
+        >
+          <ms-image :image="NoImportInProgress" />
+          <ion-text class="body-lg">
+            {{ $t('FoldersPage.ImportFile.noImportInProgress') }}
+          </ion-text>
+        </div>
+      </template>
+      <template v-if="currentTab === Tabs.Done">
+        <file-upload-item
+          v-for="item in doneItems"
+          :key="item.data.id"
+          :progress="item.progress"
+          :state="item.state"
+          :import-data="item.data"
+          @import-cancel="cancelImport($event)"
+        />
+        <div
+          class="upload-menu-list__empty"
+          v-if="doneItems.length === 0"
+        >
+          <ms-image :image="NoImportDone" />
+          <ion-text class="body-lg">
+            {{ $t('FoldersPage.ImportFile.noImportDone') }}
+          </ion-text>
+        </div>
+      </template>
+      <template v-if="currentTab === Tabs.Error">
+        <file-upload-item
+          v-for="item in errorItems"
+          :key="item.data.id"
+          :progress="item.progress"
+          :state="item.state"
+          :import-data="item.data"
+          @import-cancel="cancelImport($event)"
+        />
+        <div
+          class="upload-menu-list__empty"
+          v-if="errorItems.length === 0"
+        >
+          <ms-image :image="NoImportError" />
+          <ion-text class="body-lg">
+            {{ $t('FoldersPage.ImportFile.noImportFailed') }}
+          </ion-text>
+        </div>
+      </template>
     </ion-list>
   </div>
 </template>
 
 <script setup lang="ts">
+import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from '@/components/core/ms-image';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
-import { IonIcon, IonList, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 interface ImportItem {
   data: ImportData;
@@ -58,6 +131,26 @@ const menuMinimized = ref(false);
 const isImportManagerActive = ref(false);
 const shouldBeVisible = ref(false);
 const uploadMenuList = ref();
+
+enum Tabs {
+  InProgress,
+  Done,
+  Error,
+}
+
+const currentTab = ref(Tabs.InProgress);
+
+const importingItems = computed(() => {
+  return imports.value.filter((importItem) => [ImportState.FileProgress, ImportState.FileAdded].includes(importItem.state));
+});
+
+const doneItems = computed(() => {
+  return imports.value.filter((importItem) => [ImportState.FileImported, ImportState.Cancelled].includes(importItem.state));
+});
+
+const errorItems = computed(() => {
+  return imports.value.filter((importItem) => importItem.state === ImportState.CreateFailed);
+});
 
 function toggleMenu(): void {
   menuMinimized.value = !menuMinimized.value;
@@ -143,6 +236,41 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
     color: var(--parsec-color-light-secondary-inversed-contrast);
   }
 
+  &-tabs {
+    display: flex;
+    padding: 0.375rem 0.5rem 0rem 0.5rem;
+    background-color: var(--parsec-color-light-secondary-premiere);
+    overflow: hidden;
+
+    &__item {
+      --background: none;
+      color: var(--parsec-color-light-secondary-grey);
+      cursor: pointer;
+      width: 100%;
+      border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
+
+      &::part(native) {
+        padding: 0.5rem 0rem;
+        --inner-padding-end: 0px;
+      }
+
+      ion-label {
+        margin: 0 auto;
+        text-align: center;
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-primary-500);
+      }
+
+      &.active {
+        box-shadow: var(--parsec-shadow-light);
+        --background: var(--parsec-color-light-secondary-white);
+        color: var(--parsec-color-light-primary-500);
+      }
+    }
+  }
+
   &-list {
     background-color: none;
     display: flex;
@@ -153,6 +281,16 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
     height: 40vh;
     max-height: 25rem;
     transition: all 250ms ease-in-out;
+
+    &__empty {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin: auto;
+      color: var(--parsec-color-light-secondary-grey);
+    }
   }
 }
 
@@ -178,7 +316,8 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
 }
 
 .minimize {
-  .upload-menu-list {
+  .upload-menu-list,
+  .upload-menu-tabs {
     height: 0;
     padding: 0;
     margin: 0;

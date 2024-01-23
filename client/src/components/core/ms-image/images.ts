@@ -17,6 +17,9 @@ import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg?raw';
 import LogoRowWhite from '@/assets/images/logo-row-white.svg?raw';
 import Mail from '@/assets/images/mail.svg?raw';
 import Music from '@/assets/images/music.svg?raw';
+import NoImportDone from '@/assets/images/no-file-done.svg?raw';
+import NoImportError from '@/assets/images/no-file-error.svg?raw';
+import NoImportInProgress from '@/assets/images/no-file-in-progress.svg?raw';
 import PasswordLock from '@/assets/images/password-lock.svg?raw';
 import Pdf from '@/assets/images/pdf.svg?raw';
 import Photoshop from '@/assets/images/photoshop.svg?raw';
@@ -57,4 +60,17 @@ const File = {
   Zip,
 };
 
-export { CaretExpand, Device, File, FileImport, LogoIconGradient, LogoRowWhite, PasswordLock, SwapArrows, WavyCaretUp };
+export {
+  CaretExpand,
+  Device,
+  File,
+  FileImport,
+  LogoIconGradient,
+  LogoRowWhite,
+  NoImportDone,
+  NoImportError,
+  NoImportInProgress,
+  PasswordLock,
+  SwapArrows,
+  WavyCaretUp,
+};
