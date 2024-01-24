@@ -28,7 +28,8 @@ pub async fn list_users(list_users: ListUsers) -> anyhow::Result<()> {
     } = list_users;
 
     load_client_and_run(config_dir, device, |client| async move {
-        let users = client.certificates_ops.list_users(skip_revoked, None, None).await?;
+        client.poll_server_for_new_certificates().await?;
+        let users = client.list_users(skip_revoked, None, None).await?;
 
         if users.is_empty() {
             println!("No users found");

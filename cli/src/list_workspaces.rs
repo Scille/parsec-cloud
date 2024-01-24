@@ -21,7 +21,7 @@ pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<
     let ListWorkspaces { config_dir, device } = list_workspaces;
 
     load_client_and_run(config_dir, device, |client| async move {
-        let workspaces = client.list_workspaces().await?;
+        let workspaces = client.list_workspaces().await;
 
         if workspaces.is_empty() {
             println!("No workspaces found");

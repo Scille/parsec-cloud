@@ -39,7 +39,6 @@ pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<
         let handle = start_spinner("Sharing workspace");
 
         client
-            .user_ops
             .share_workspace(workspace_id, user_id, Some(role))
             .await?;
 

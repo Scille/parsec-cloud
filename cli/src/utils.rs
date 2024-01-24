@@ -140,7 +140,7 @@ pub async fn load_client_and_run<F, Fut>(
     function: F,
 ) -> anyhow::Result<()>
 where
-    F: FnOnce(Client) -> Fut,
+    F: FnOnce(Arc<Client>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
     load_device_and_run(config_dir, device_slughash, |device| async move {
@@ -150,8 +150,6 @@ where
             device,
         )
         .await?;
-
-        client.user_ops.sync().await?;
 
         function(client).await
     })
