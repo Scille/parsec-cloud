@@ -1,1 +1,0 @@
-Make write access to the Windows registry more robust.
