@@ -157,7 +157,6 @@
           />
         </div>
       </div>
-      <file-upload-menu />
     </ion-content>
   </ion-page>
 </template>
@@ -185,7 +184,6 @@ import { Notification, NotificationKey, NotificationLevel, NotificationManager }
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
-import FileUploadMenu from '@/views/files/FileUploadMenu.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import {
   IonCheckbox,
