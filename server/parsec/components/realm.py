@@ -101,6 +101,7 @@ RealmShareValidateBadOutcome = Enum(
     (
         "INVALID_CERTIFICATE",
         "TIMESTAMP_MISMATCH",
+        "INVALID_ROLE",
         "CANNOT_SELF_SHARE",
     ),
 )
@@ -128,6 +129,9 @@ def realm_share_validate(
 
     if data.author == data.user_id:
         return RealmShareValidateBadOutcome.CANNOT_SELF_SHARE
+
+    if data.role is None:
+        return RealmShareValidateBadOutcome.INVALID_ROLE
 
     return data
 
