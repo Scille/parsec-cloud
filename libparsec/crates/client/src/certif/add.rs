@@ -55,7 +55,7 @@ pub enum InvalidCertificateError {
     NotASequesteredOrganization { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as sequester authority it must be provided first, but others certificates already exist")]
     SequesterAuthorityMustBeFirst { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: it refers to a user than doesn't exist")]
+    #[error("Certificate `{hint}` breaks consistency: it refers to a user that doesn't exist")]
     NonExistingRelatedUser { hint: String },
     #[error("Certificate `{hint}` breaks consistency: it declares to be older than the user it refers to (created on {user_created_on})")]
     OlderThanRelatedUser {
