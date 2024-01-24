@@ -189,7 +189,7 @@ impl DeviceCertificate {
     ) -> PyResult<Self> {
         let device_label = match device_label {
             Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
-            None => libparsec_types::MaybeRedacted::Real(
+            None => libparsec_types::MaybeRedacted::Redacted(
                 libparsec_types::DeviceLabel::new_redacted(device_id.0.device_name()),
             ),
         };

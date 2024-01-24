@@ -432,40 +432,50 @@ class MemoryUserComponent(BaseUserComponent):
 
         # 1) Common certificates (i.e. user/device/revoked/update)
 
-        common_certificates_unordered: list[tuple[DateTime, bytes]] = []
+        # Certificates must be returned ordered by timestamp, however there is a trick
+        # for the common certificates: when a new user is created, the corresponding
+        # user and device certificates have the same timestamp, but we must return
+        # the user certificate first (given device references the user).
+        # So to achieve this we use a tuple (timestamp, priority, certificate) where
+        # only the first two field should be used for sorting (the priority field
+        # handling the case where user and device have the same timestamp).
+
+        common_certificates_unordered: list[tuple[DateTime, int, bytes]] = []
         for user in org.users.values():
             if redacted:
                 common_certificates_unordered.append(
-                    (user.cooked.timestamp, user.redacted_user_certificate)
+                    (user.cooked.timestamp, 0, user.redacted_user_certificate)
                 )
             else:
-                common_certificates_unordered.append((user.cooked.timestamp, user.user_certificate))
+                common_certificates_unordered.append(
+                    (user.cooked.timestamp, 0, user.user_certificate)
+                )
 
             if user.is_revoked:
                 assert user.cooked_revoked is not None
                 assert user.revoked_user_certificate is not None
                 common_certificates_unordered.append(
-                    (user.cooked_revoked.timestamp, user.revoked_user_certificate)
+                    (user.cooked_revoked.timestamp, 1, user.revoked_user_certificate)
                 )
 
             for update in user.profile_updates:
                 common_certificates_unordered.append(
-                    (update.cooked.timestamp, update.user_update_certificate)
+                    (update.cooked.timestamp, 1, update.user_update_certificate)
                 )
 
         for device in org.devices.values():
             if redacted:
                 common_certificates_unordered.append(
-                    (device.cooked.timestamp, device.redacted_device_certificate)
+                    (device.cooked.timestamp, 1, device.redacted_device_certificate)
                 )
             else:
                 common_certificates_unordered.append(
-                    (device.cooked.timestamp, device.device_certificate)
+                    (device.cooked.timestamp, 1, device.device_certificate)
                 )
 
         common_certificates = [
             c
-            for ts, c in sorted(common_certificates_unordered)
+            for ts, _, c in sorted(common_certificates_unordered)
             if not common_after or common_after < ts
         ]
 
