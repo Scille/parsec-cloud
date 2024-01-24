@@ -39,18 +39,24 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/header/HeaderPage.vue'),
         children: [
           {
+            path: '/import',
+            component: () => import('@/views/layouts/ImportLayout.vue'),
+            children: [
+              {
+                path: `/:handle(\\d+)/${Routes.Workspaces}`,
+                name: Routes.Workspaces,
+                component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.Documents}/:workspaceHandle(\\d+)`,
+                name: Routes.Documents,
+                component: () => import('@/views/files/FoldersPage.vue'),
+              },
+            ],
+          },
+          {
             path: '/:handle(\\d+)',
             redirect: { name: Routes.Workspaces },
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Workspaces}`,
-            name: Routes.Workspaces,
-            component: () => import('@/views/workspaces/WorkspacesPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Documents}/:workspaceHandle(\\d+)`,
-            name: Routes.Documents,
-            component: () => import('@/views/files/FoldersPage.vue'),
           },
           {
             path: `/:handle(\\d+)/${Routes.Settings}`,
