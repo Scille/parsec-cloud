@@ -29,6 +29,9 @@
         @click="currentTab = Tabs.InProgress"
       >
         <ion-label>{{ $t('FoldersPage.ImportFile.tabs.inProgress') }}</ion-label>
+        <div class="text-counter">
+          <span class="counter">{{ importingItems.length }}</span>
+        </div>
       </ion-item>
 
       <ion-item
@@ -37,6 +40,9 @@
         @click="currentTab = Tabs.Done"
       >
         <ion-label>{{ $t('FoldersPage.ImportFile.tabs.done') }}</ion-label>
+        <div class="text-counter">
+          <span class="counter">{{ doneItems.length }}</span>
+        </div>
       </ion-item>
 
       <ion-item
@@ -45,6 +51,9 @@
         @click="currentTab = Tabs.Error"
       >
         <ion-label>{{ $t('FoldersPage.ImportFile.tabs.failed') }}</ion-label>
+        <div class="text-counter">
+          <span class="counter">{{ errorItems.length }}</span>
+        </div>
       </ion-item>
     </ion-list>
 
@@ -56,7 +65,7 @@
           :progress="item.progress"
           :state="item.state"
           :import-data="item.data"
-          @import-cancel="cancelImport($event)"
+          @import-cancel="cancelImport"
         />
         <div
           class="upload-menu-list__empty"
@@ -75,7 +84,8 @@
           :progress="item.progress"
           :state="item.state"
           :import-data="item.data"
-          @import-cancel="cancelImport($event)"
+          @import-cancel="cancelImport"
+          @file-click="onImportFinishedClick"
         />
         <div
           class="upload-menu-list__empty"
@@ -94,7 +104,7 @@
           :progress="item.progress"
           :state="item.state"
           :import-data="item.data"
-          @import-cancel="cancelImport($event)"
+          @import-cancel="cancelImport"
         />
         <div
           class="upload-menu-list__empty"
@@ -113,6 +123,7 @@
 <script setup lang="ts">
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from '@/components/core/ms-image';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
+import { navigateToWorkspace } from '@/router';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
@@ -172,6 +183,14 @@ function updateImportState(id: string, state: ImportState, progress?: number): v
       importItem.progress = progress;
     }
   }
+}
+
+async function onImportFinishedClick(importData: ImportData, state: ImportState): Promise<void> {
+  if (state !== ImportState.FileImported) {
+    return;
+  }
+  await navigateToWorkspace(importData.workspaceId, importData.path);
+  menuMinimized.value = true;
 }
 
 async function cancelImport(importId: string): Promise<void> {
@@ -291,6 +310,25 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
       margin: auto;
       color: var(--parsec-color-light-secondary-grey);
     }
+  }
+}
+
+.text-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.counter {
+  padding: 0 0.375rem;
+  background: var(--parsec-light-color-secondary-grey);
+  color: var(--parsec-light-color-secondary-disabled);
+  border-radius: var(--parsec-radius-8);
+
+  &:hover,
+  &:active {
+    background: var(--parsec-light-color-primary-50);
+    color: var(--parsec-light-color-primary-500);
   }
 }
 
