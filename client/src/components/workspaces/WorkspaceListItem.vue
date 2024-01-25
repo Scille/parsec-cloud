@@ -33,7 +33,10 @@
     </div>
 
     <!-- user avatars -->
-    <div class="workspace-users">
+    <div
+      class="workspace-users"
+      v-show="clientProfile !== UserProfile.Outsider"
+    >
       <avatar-group
         v-show="workspace.sharing.length > 0"
         class="shared-group"
@@ -86,7 +89,7 @@ import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
-import { WorkspaceInfo } from '@/parsec';
+import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
@@ -95,6 +98,7 @@ const isSelected = ref(false);
 
 defineProps<{
   workspace: WorkspaceInfo;
+  clientProfile: UserProfile;
 }>();
 
 defineEmits<{

@@ -66,6 +66,7 @@ describe('Workspace Card', () => {
     wrapper = mount(WorkspaceCard, {
       props: {
         workspace: WORKSPACE,
+        clientProfile: UserProfile.Admin,
       },
       global: {
         provide: getDefaultProvideConfig(),

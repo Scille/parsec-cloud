@@ -66,6 +66,7 @@ describe('Workspace List Item', () => {
     wrapper = mount(WorkspaceListItem, {
       props: {
         workspace: WORKSPACE,
+        clientProfile: UserProfile.Admin,
       },
       global: {
         provide: getDefaultProvideConfig(),

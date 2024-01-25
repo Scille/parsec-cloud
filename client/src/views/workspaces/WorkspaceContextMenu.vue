@@ -63,6 +63,7 @@
 
         <ion-item
           button
+          v-show="clientProfile !== UserProfile.Outsider"
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="group-item"
         >
@@ -90,6 +91,7 @@
         </ion-item>
 
         <ion-item
+          v-show="clientProfile !== UserProfile.Outsider"
           button
           @click="onClick(WorkspaceAction.Share)"
           class="group-item"
@@ -118,12 +120,17 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
+import { UserProfile } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });
 }
+
+defineProps<{
+  clientProfile: UserProfile;
+}>();
 </script>
 
 <style lang="scss" scoped>

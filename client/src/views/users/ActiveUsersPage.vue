@@ -373,6 +373,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     alignment: 'end',
     componentProps: {
       isRevoked: user.isRevoked(),
+      clientIsAdmin: isAdmin.value,
     },
   });
   await popover.present();

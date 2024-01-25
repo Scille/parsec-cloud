@@ -33,7 +33,10 @@
         <span>{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
       </ion-text>
 
-      <div class="workspace-info">
+      <div
+        class="workspace-info"
+        v-show="clientProfile !== UserProfile.Outsider"
+      >
         <ion-text class="label-file-size body-sm">
           {{ formatFileSize(workspace.size) }}
         </ion-text>
@@ -59,12 +62,13 @@
 import { formatTimeSince } from '@/common/date';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
-import { WorkspaceInfo } from '@/parsec';
+import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;
+  clientProfile: UserProfile;
 }>();
 
 defineEmits<{
