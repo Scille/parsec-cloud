@@ -6,6 +6,7 @@
   --popover-default-width: 20rem;
   --popover-option-width: 18.75rem;
   --popover-dropdown-width: var(--popover-default-width);
+  --popover-notification-center-width: 28rem;
   --popover-dropdown-settings-width: 12.5rem;
 }
 
@@ -45,6 +46,13 @@ ion-popover {
   --background: none;
   --box-shadow: none;
   --width: fit-content;
+}
+
+/* --- notification center popover --- */
+.notification-center-popover {
+  --background: none;
+  --box-shadow: none;
+  --width: var(--popover-notification-center-width);
 }
 
 /* --- sorter, dropdown popover --- */

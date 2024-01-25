@@ -53,6 +53,12 @@
             "message": "The link you provided is invalid."
         }
     },
+    "notificationCenter": {
+        "title": "Notifications",
+        "unread": "unread ({count})",
+        "empty": "No notifications",
+        "browse": "Go to location"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Settings",
