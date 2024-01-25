@@ -92,7 +92,7 @@ async def test_authenticated_realm_rotate_key_ok(
 
 
 @pytest.mark.parametrize("kind", ("author_not_realm_owner", "author_no_realm_access"))
-async def test_authenticated_realm_author_not_allowed(
+async def test_authenticated_realm_rotate_key_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     match kind:
@@ -130,7 +130,7 @@ async def test_authenticated_realm_author_not_allowed(
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
 
 
-async def test_authenticated_realm_realm_not_found(
+async def test_authenticated_realm_rotate_key_realm_not_found(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     t1 = DateTime.now()
@@ -161,7 +161,7 @@ async def test_authenticated_realm_realm_not_found(
 @pytest.mark.parametrize(
     "kind", ("key_index_already_exists", "key_index_too_far_forward", "key_index_is_zero")
 )
-async def test_authenticated_realm_bad_key_index(
+async def test_authenticated_realm_rotate_key_bad_key_index(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     t1 = DateTime.now()
@@ -199,7 +199,7 @@ async def test_authenticated_realm_bad_key_index(
 
 
 @pytest.mark.parametrize("kind", ("additional_participant", "missing_participant"))
-async def test_authenticated_realm_participant_mismatch(
+async def test_authenticated_realm_rotate_key_participant_mismatch(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     t1 = DateTime.now()
@@ -238,7 +238,7 @@ async def test_authenticated_realm_participant_mismatch(
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
-async def test_authenticated_realm_invalid_certificate(
+async def test_authenticated_realm_rotate_key_invalid_certificate(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     t1 = DateTime.now()
