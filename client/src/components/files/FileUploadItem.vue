@@ -13,7 +13,7 @@
   >
     <ion-item
       class="element ion-no-padding"
-      @click="onImportClick"
+      @click="$emit('fileClick', importData, state)"
     >
       <div class="element-type">
         <div class="element-type__icon">
@@ -58,7 +58,7 @@
         size="small"
         class="cancel-button"
         v-if="state === ImportState.FileProgress"
-        @click="onCancelClick()"
+        @click="$emit('importCancel', importData.id)"
       >
         <ion-icon
           class="cancel-button__icon"
@@ -114,7 +114,6 @@ import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage } from '@/components/core/ms-image';
 import MsInformationTooltip from '@/components/core/ms-tooltip/MsInformationTooltip.vue';
 import { getWorkspaceName } from '@/parsec';
-import { navigateToWorkspace } from '@/router';
 import { ImportData, ImportState } from '@/services/importManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
@@ -143,20 +142,10 @@ onMounted(async () => {
   }
 });
 
-const emits = defineEmits<{
+defineEmits<{
   (event: 'importCancel', id: string): void;
+  (event: 'fileClick', importData: ImportData, state: ImportState): void;
 }>();
-
-async function onImportClick(): Promise<void> {
-  if (props.state !== ImportState.FileImported) {
-    return;
-  }
-  await navigateToWorkspace(props.importData.workspaceId, props.importData.path);
-}
-
-function onCancelClick(): void {
-  emits('importCancel', props.importData.id);
-}
 </script>
 
 <style scoped lang="scss">
