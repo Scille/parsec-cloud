@@ -93,8 +93,7 @@ pub fn req() {
             )[..],
             anonymous_cmds::AnyCmdReq::OrganizationBootstrap(
                 anonymous_cmds::organization_bootstrap::Req {
-                    bootstrap_token:
-                        Some(bootstrap_token),
+                    bootstrap_token: Some(bootstrap_token),
                     root_verify_key: VerifyKey::try_from(hex!(
                         "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
                     ))
@@ -185,8 +184,7 @@ pub fn req() {
             )[..],
             anonymous_cmds::AnyCmdReq::OrganizationBootstrap(
                 anonymous_cmds::organization_bootstrap::Req {
-                    bootstrap_token:
-                        Some(bootstrap_token),
+                    bootstrap_token: Some(bootstrap_token),
                     root_verify_key: VerifyKey::try_from(hex!(
                         "be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd"
                     ))

@@ -130,9 +130,7 @@ pub fn rep_user_already_revoked() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "user_already_revoked"
-    let raw = hex!(
-        "81a6737461747573b4757365725f616c72656164795f7265766f6b6564"
-    );
+    let raw = hex!("81a6737461747573b4757365725f616c72656164795f7265766f6b6564");
 
     let expected = authenticated_cmds::user_revoke::Rep::UserAlreadyRevoked;
 

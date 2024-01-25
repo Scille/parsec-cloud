@@ -41,7 +41,7 @@ pub fn req() {
                 key_index: Some(8),
                 realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
             },
-        )
+        ),
     ];
 
     for (raw, req) in raw_expected {

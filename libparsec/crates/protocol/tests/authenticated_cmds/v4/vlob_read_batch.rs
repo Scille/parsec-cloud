@@ -27,7 +27,7 @@ pub fn req() {
                 at: None,
                 realm_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 vlobs: vec![],
-            }
+            },
         ),
         (
             // Generated from Rust implementation (Parsec v3.0.0+dev)
@@ -45,7 +45,7 @@ pub fn req() {
                 at: Some("2000-1-2T01:00:00Z".parse().unwrap()),
                 realm_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
                 vlobs: vec![VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap()],
-            }
+            },
         ),
     ];
 

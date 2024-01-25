@@ -27,7 +27,10 @@ pub fn req() {
 
     let req = authenticated_cmds::vlob_read_versions::Req {
         realm_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
-        items: vec![(VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(), 8)],
+        items: vec![(
+            VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
+            8,
+        )],
     };
 
     let expected = authenticated_cmds::AnyCmdReq::VlobReadVersions(req);

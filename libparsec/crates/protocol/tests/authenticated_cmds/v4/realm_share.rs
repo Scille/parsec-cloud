@@ -237,7 +237,8 @@ pub fn rep_role_incompatible_with_outsider() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "role_incompatible_with_outsider"
-    let raw = hex!("81a6737461747573bf726f6c655f696e636f6d70617469626c655f776974685f6f75747369646572");
+    let raw =
+        hex!("81a6737461747573bf726f6c655f696e636f6d70617469626c655f776974685f6f75747369646572");
 
     let expected = authenticated_cmds::realm_share::Rep::RoleIncompatibleWithOutsider;
 

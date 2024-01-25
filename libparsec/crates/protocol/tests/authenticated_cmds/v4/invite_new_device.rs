@@ -16,13 +16,11 @@ pub fn req() {
     // Content:
     //   cmd: "invite_new_device"
     //   send_email: true
-    let raw = hex!(
-        "82a3636d64b1696e766974655f6e65775f646576696365aa73656e645f656d61696cc3"
-    );
+    let raw = hex!("82a3636d64b1696e766974655f6e65775f646576696365aa73656e645f656d61696cc3");
 
-    let expected = authenticated_cmds::AnyCmdReq::InviteNewDevice(authenticated_cmds::invite_new_device::Req {
-        send_email: true,
-    });
+    let expected = authenticated_cmds::AnyCmdReq::InviteNewDevice(
+        authenticated_cmds::invite_new_device::Req { send_email: true },
+    );
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 

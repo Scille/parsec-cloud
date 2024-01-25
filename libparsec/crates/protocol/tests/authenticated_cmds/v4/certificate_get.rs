@@ -32,8 +32,8 @@ pub fn req() {
                 common_after: None,
                 realm_after: HashMap::new(),
                 sequester_after: None,
-                shamir_recovery_after: None
-            }
+                shamir_recovery_after: None,
+            },
         ),
         (
             // Generated from Rust implementation (Parsec v3.0.0+dev)
@@ -51,16 +51,14 @@ pub fn req() {
             )[..],
             authenticated_cmds::certificate_get::Req {
                 common_after: Some("2000-1-2T01:00:00Z".parse().unwrap()),
-                realm_after: HashMap::from([
-                    (
-                        VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                        "2000-1-2T01:00:00Z".parse().unwrap()
-                    )
-                ]),
+                realm_after: HashMap::from([(
+                    VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+                    "2000-1-2T01:00:00Z".parse().unwrap(),
+                )]),
                 sequester_after: Some("2000-1-2T01:00:00Z".parse().unwrap()),
                 shamir_recovery_after: Some("2000-1-2T01:00:00Z".parse().unwrap()),
-            }
-        )
+            },
+        ),
     ];
 
     for (raw, expected) in raw_expected {
@@ -104,12 +102,10 @@ pub fn rep_ok() {
             )[..],
             authenticated_cmds::certificate_get::Rep::Ok {
                 common_certificates: vec![Bytes::from_static(b"foobar")],
-                realm_certificates: HashMap::from([
-                    (
-                        VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
-                        vec![Bytes::from_static(b"foobar")]
-                    )
-                ]),
+                realm_certificates: HashMap::from([(
+                    VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
+                    vec![Bytes::from_static(b"foobar")],
+                )]),
                 sequester_certificates: vec![Bytes::from_static(b"foobar")],
                 shamir_recovery_certificates: vec![Bytes::from_static(b"foobar")],
             },

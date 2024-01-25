@@ -87,7 +87,8 @@ pub fn rep_enrollment_wrong_state() {
     // Content:
     //   status: "enrollment_wrong_state"
     let raw = hex!("81a6737461747573b6656e726f6c6c6d656e745f77726f6e675f7374617465");
-    let expected = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::EnrollmentWrongState;
+    let expected =
+        authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::EnrollmentWrongState;
 
     rep_helper(&raw, expected);
 }

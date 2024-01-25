@@ -115,9 +115,7 @@ pub fn rep_ok() {
             // Content:
             //   event: "PKI_ENROLLMENT"
             //   status: "ok"
-            &hex!(
-                "82a6737461747573a26f6ba56576656e74ae504b495f454e524f4c4c4d454e54"
-            )[..],
+            &hex!("82a6737461747573a26f6ba56576656e74ae504b495f454e524f4c4c4d454e54")[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::PkiEnrollment,
             ),
@@ -166,7 +164,7 @@ pub fn rep_ok() {
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::ShamirRecoveryCertificate {
-                    timestamp: "2000-01-02T01:00:00Z".parse().unwrap()
+                    timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
                 },
             ),
         ),

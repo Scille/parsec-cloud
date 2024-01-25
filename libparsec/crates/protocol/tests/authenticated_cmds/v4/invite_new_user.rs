@@ -22,11 +22,11 @@ pub fn req() {
         "6c6963654064657631aa73656e645f656d61696cc3"
     );
 
-    let expected = authenticated_cmds::AnyCmdReq::InviteNewUser(authenticated_cmds::invite_new_user::Req {
-        claimer_email: "alice@dev1".to_owned(),
-        send_email: true,
-    });
-
+    let expected =
+        authenticated_cmds::AnyCmdReq::InviteNewUser(authenticated_cmds::invite_new_user::Req {
+            claimer_email: "alice@dev1".to_owned(),
+            send_email: true,
+        });
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 

@@ -119,8 +119,7 @@ pub fn rep_invalid_certificate() {
     //
     let raw = hex!("81a6737461747573b3696e76616c69645f6365727469666963617465");
 
-    let expected =
-        authenticated_cmds::pki_enrollment_accept::Rep::InvalidCertificate;
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::InvalidCertificate;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 
@@ -186,8 +185,7 @@ pub fn rep_enrollment_no_longer_available() {
         "6c65"
     );
 
-    let expected =
-        authenticated_cmds::pki_enrollment_accept::Rep::EnrollmentNoLongerAvailable;
+    let expected = authenticated_cmds::pki_enrollment_accept::Rep::EnrollmentNoLongerAvailable;
 
     let data = authenticated_cmds::pki_enrollment_accept::Rep::load(&raw).unwrap();
 

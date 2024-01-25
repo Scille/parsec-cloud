@@ -33,12 +33,10 @@ pub fn req() {
     let req = authenticated_cmds::realm_rotate_key::Req {
         keys_bundle: Bytes::from_static(b"foobar"),
         never_legacy_reencrypted_or_fail: false,
-        per_participant_keys_bundle_access: HashMap::from([
-            (
-                "alice".parse().unwrap(),
-                Bytes::from_static(b"foobar")
-            )
-        ]),
+        per_participant_keys_bundle_access: HashMap::from([(
+            "alice".parse().unwrap(),
+            Bytes::from_static(b"foobar"),
+        )]),
         realm_key_rotation_certificate: Bytes::from_static(b"foobar"),
     };
 
@@ -257,7 +255,7 @@ pub fn rep_legacy_reencrypted_realm() {
     );
 
     let expected = authenticated_cmds::realm_rotate_key::Rep::LegacyReencryptedRealm {
-        encryption_revision: 8
+        encryption_revision: 8,
     };
 
     let data = authenticated_cmds::realm_rotate_key::Rep::load(&raw).unwrap();
