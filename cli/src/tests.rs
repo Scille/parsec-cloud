@@ -597,7 +597,9 @@ async fn share_workspace(tmp_path: TmpPath) {
             let wid = client
                 .create_workspace("new-workspace".parse().unwrap())
                 .await?;
+            client.ensure_workspaces_bootstrapped().await.unwrap();
 
+            client.poll_server_for_new_certificates().await.unwrap();
             let users = client.list_users(false, None, None).await.unwrap();
             let bob_id = &users
                 .iter()

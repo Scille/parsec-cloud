@@ -390,7 +390,7 @@ impl Client {
     /// do so potentially involves server accesses (to fetch the keys bundle).
     ///
     /// This method is typically used by a monitor.
-    pub(crate) async fn refresh_workspaces_list(&self) -> Result<(), RefreshWorkspacesListError> {
+    pub async fn refresh_workspaces_list(&self) -> Result<(), RefreshWorkspacesListError> {
         workspace_refresh_list::refresh_workspaces_list(self).await
     }
 
