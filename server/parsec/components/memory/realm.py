@@ -398,7 +398,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_verify_key=author_device.cooked.verify_key,
             realm_name_certificate=realm_name_certificate,
         ):
-            case RealmKeyRotationCertificate() as certif:
+            case RealmNameCertificate() as certif:
                 pass
             case error:
                 return error
@@ -408,7 +408,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
-        if realm.get_current_role_for(author.user_id) != RealmRole.MANAGER:
+        if realm.get_current_role_for(author.user_id) != RealmRole.OWNER:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         realm.renames.append(

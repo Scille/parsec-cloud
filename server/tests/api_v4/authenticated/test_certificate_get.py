@@ -8,18 +8,25 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    HashAlgorithm,
     HumanHandle,
     OrganizationID,
     PrivateKey,
+    RealmKeyRotationCertificate,
+    RealmNameCertificate,
+    RealmRole,
+    RealmRoleCertificate,
     RevokedUserCertificate,
+    SecretKeyAlgorithm,
     SigningKey,
     UserCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
+    VlobID,
     authenticated_cmds,
 )
-from tests.common import AsyncClient, AuthenticatedRpcClient, Backend
+from tests.common import AsyncClient, AuthenticatedRpcClient, Backend, CoolorgRpcClients
 
 
 @pytest.mark.parametrize("redacted", (False, True))
@@ -309,3 +316,387 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
 
     assert rep.common_certificates == []
+
+
+async def test_authenticated_certificate_get_ok_realm_certificates(
+    backend: Backend, coolorg: CoolorgRpcClients
+) -> None:
+    t0 = DateTime(2000, 12, 31)  # Oldest time: nothing occured at this point
+    t1 = DateTime(2001, 1, 1)
+    t2 = DateTime(2001, 1, 2)
+    t3 = DateTime(2001, 1, 3)
+    t4 = DateTime(2001, 1, 4)
+    t5 = DateTime(2001, 1, 5)
+    t6 = DateTime(2001, 1, 6)
+
+    # Create two realms with certificates
+    wksp2_id = VlobID.new()
+    wksp3_id = VlobID.new()
+    wksp2_certificates = []
+    wksp3_certificates = []
+
+    # First retreive the realms created from the template, we will just ignore them
+    rep = await coolorg.alice.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert wksp2_id not in rep.realm_certificates
+    assert wksp3_id not in rep.realm_certificates
+    initial_realm_certificates = rep.realm_certificates
+
+    # /!\ All realm related certificates type should be present here, don't forget to update
+    # it if new certificates types are added
+
+    # 1) Create realm wksp2
+
+    certif_timestamp = t1
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp2_id,
+        role=RealmRole.OWNER,
+        user_id=coolorg.alice.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.create(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp2_certificates.append((certif_timestamp, certif))
+
+    # 2) Create another realm wskp3 (to ensure the filter doesn't leak on other realms)
+
+    certif_timestamp = t2
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp3_id,
+        role=RealmRole.OWNER,
+        user_id=coolorg.alice.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.create(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp3_certificates.append((certif_timestamp, certif))
+
+    # 3) Initial key rotation
+
+    certif_timestamp = t3
+    certif = RealmKeyRotationCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp2_id,
+        encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=b"<dummy key canary>",
+        key_index=1,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.rotate_key(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        keys_bundle=b"<dummy key bundle>",
+        per_participant_keys_bundle_access={coolorg.alice.user_id: b"<dummy key bundle access>"},
+        realm_key_rotation_certificate=certif,
+    )
+    assert isinstance(outcome, RealmKeyRotationCertificate)
+
+    wksp2_certificates.append((certif_timestamp, certif))
+
+    # 4) Initial rename
+
+    certif_timestamp = t4
+    certif = RealmNameCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp2_id,
+        key_index=1,
+        encrypted_name=b"<dummy encrypted name>",
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.rename(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_name_certificate=certif,
+    )
+    assert isinstance(outcome, RealmNameCertificate)
+
+    wksp2_certificates.append((certif_timestamp, certif))
+
+    # 5) Share realm with Bob
+
+    certif_timestamp = t5
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=wksp2_id,
+        role=RealmRole.MANAGER,
+        user_id=coolorg.alice.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.share(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+        key_index=1,
+        recipient_keys_bundle_access=b"<dummy key bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp2_certificates.append((certif_timestamp, certif))
+
+    # TODO: add RealmArchiving certificate once implemented !
+
+    # 1) Get all certificates
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    assert rep.realm_certificates == {
+        **initial_realm_certificates,
+        wksp2_id: [c for _, c in wksp2_certificates],
+        wksp3_id: [c for _, c in wksp3_certificates],
+    }
+
+    # 2) Get all certificates (with a timestamp too far in the past)
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={wksp2_id: t0},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    assert rep.realm_certificates == {
+        **initial_realm_certificates,
+        wksp2_id: [c for _, c in wksp2_certificates],
+        wksp3_id: [c for _, c in wksp3_certificates],
+    }
+
+    # 3) Get a subset of the certificates
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={wksp2_id: t3},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    assert rep.realm_certificates == {
+        **initial_realm_certificates,
+        wksp2_id: [c for _, c in wksp2_certificates][2:],  # Skip two certificate
+        wksp3_id: [c for _, c in wksp3_certificates],
+    }
+
+    # 4) Get a subset of the certificates (no new certificates at all)
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={wksp2_id: t6},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    assert rep.realm_certificates == {
+        **initial_realm_certificates,
+        # Wksp2 is omitted as there is no certificates to return
+        wksp3_id: [c for _, c in wksp3_certificates],
+    }
+
+
+# TODO: test when user is no longer part of the realm
+
+
+async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_shared_with(
+    backend: Backend, coolorg: CoolorgRpcClients
+) -> None:
+    t1 = DateTime(2001, 1, 1)
+    t2 = DateTime(2001, 1, 2)
+    t3 = DateTime(2001, 1, 3)
+    t4 = DateTime(2001, 1, 4)
+    t5 = DateTime(2001, 1, 5)
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    wksp1_certificates = rep.realm_certificates[coolorg.wksp1_id]
+
+    # At first Mallory is not part of wksp1
+    # Then we share with here...
+
+    certif_timestamp = t1
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.CONTRIBUTOR,
+        user_id=coolorg.mallory.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.share(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+        key_index=1,
+        recipient_keys_bundle_access=b"<dummy key bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp1_certificates.append(certif)
+
+    # ...do some stuff...
+
+    certif_timestamp = t2
+    certif = RealmKeyRotationCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=coolorg.wksp1_id,
+        encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=b"<dummy key canary>",
+        key_index=2,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.rotate_key(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        keys_bundle=b"<dummy key bundle>",
+        per_participant_keys_bundle_access={
+            coolorg.alice.user_id: b"<dummy key bundle access>",
+            coolorg.bob.user_id: b"<dummy key bundle access>",
+            coolorg.mallory.user_id: b"<dummy key bundle access>",
+        },
+        realm_key_rotation_certificate=certif,
+    )
+    assert isinstance(outcome, RealmKeyRotationCertificate)
+
+    wksp1_certificates.append(certif)
+
+    # ...unshare with here...
+
+    certif_timestamp = t3
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=None,
+        user_id=coolorg.mallory.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.unshare(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp1_certificates.append(certif)
+
+    # ...and even more stuff
+
+    certif_timestamp = t4
+    certif = RealmKeyRotationCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=coolorg.wksp1_id,
+        encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+        hash_algorithm=HashAlgorithm.SHA256,
+        key_canary=b"<dummy key canary>",
+        key_index=3,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.rotate_key(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        keys_bundle=b"<dummy key bundle>",
+        per_participant_keys_bundle_access={
+            coolorg.alice.user_id: b"<dummy key bundle access>",
+            coolorg.bob.user_id: b"<dummy key bundle access>",
+        },
+        realm_key_rotation_certificate=certif,
+    )
+    assert isinstance(outcome, RealmKeyRotationCertificate)
+
+    wksp1_certificates.append(certif)
+
+    # Mallory should be able to see all certificates until she was unshared from the realm
+
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates[:-1]
+
+    # Same thing when passing an after parameter
+
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={coolorg.wksp1_id: t2},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates[-2:-1]
+
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={coolorg.wksp1_id: t3},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert coolorg.wksp1_id not in rep.realm_certificates
+
+    # Now re-share with Mallory...
+
+    certif_timestamp = t5
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=certif_timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.share(
+        now=certif_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_role_certificate=certif,
+        key_index=2,
+        recipient_keys_bundle_access=b"<dummy key bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    wksp1_certificates.append(certif)
+
+    # ...she should see all certificates again
+
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates

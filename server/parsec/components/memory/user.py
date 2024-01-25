@@ -496,7 +496,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         # 3) Realm certificates
 
-        realm_certificates: dict[VlobID, list[bytes]] = {}
+        per_realm_certificates: dict[VlobID, list[bytes]] = {}
         for realm in org.realms.values():
             last_role = None
             for role in reversed(realm.roles):
@@ -506,25 +506,37 @@ class MemoryUserComponent(BaseUserComponent):
             if not last_role:
                 # User never had access to this realm, just ignore it
                 continue
-            elif last_role.role is not None:
-                # User currently have access to the realm, include all certificates
-                current_realm_after = realm_after.get(realm.realm_id)
-                realm_certificates[realm.realm_id] = [
-                    r.realm_role_certificate
-                    for r in realm.roles
-                    if not current_realm_after or current_realm_after < r.cooked.timestamp
-                ]
-            else:
+
+            # Collect all the certificates related to the realm
+            realm_certificates_unordered: list[tuple[DateTime, bytes]] = []
+            realm_certificates_unordered += [
+                (role.cooked.timestamp, role.realm_role_certificate) for role in realm.roles
+            ]
+            realm_certificates_unordered += [
+                (role.cooked.timestamp, role.realm_key_rotation_certificate)
+                for role in realm.key_rotations
+            ]
+            realm_certificates_unordered += [
+                (role.cooked.timestamp, role.realm_name_certificate) for role in realm.renames
+            ]
+            # TODO: support archiving here !
+
+            if last_role.role is None:
                 # User used to have access to the realm, only provide the certificate that
                 # was available back when he had access
-                current_realm_before_included = last_role.timestamp
-                current_realm_after = realm_after.get(realm.realm_id)
-                realm_certificates[realm.realm_id] = [
-                    r.realm_role_certificate
-                    for r in realm.roles
-                    if (not current_realm_after or current_realm_after < r.cooked.timestamp)
-                    and r.cooked.timestamp <= current_realm_before_included
+                realm_certificates_unordered = [
+                    (ts, c) for ts, c in realm_certificates_unordered if ts <= last_role.timestamp
                 ]
+
+            current_realm_after = realm_after.get(realm.realm_id)
+            realm_certificates = [
+                c
+                for ts, c in sorted(realm_certificates_unordered)
+                if not current_realm_after or current_realm_after < ts
+            ]
+            # Omit realm with no new certificates
+            if realm_certificates:
+                per_realm_certificates[realm.realm_id] = realm_certificates
 
         # 4) Shamir certificates
 
@@ -535,7 +547,7 @@ class MemoryUserComponent(BaseUserComponent):
             common=common_certificates,
             sequester=sequester_certificates,
             shamir_recovery=shamir_recovery_certificates,
-            realm=realm_certificates,
+            realm=per_realm_certificates,
         )
 
     @override
