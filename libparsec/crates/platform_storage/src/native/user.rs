@@ -4,7 +4,10 @@
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
-use sqlx::{sqlite::SqliteConnectOptions, ConnectOptions, Connection, Row, SqliteConnection};
+use sqlx::{
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
+    ConnectOptions, Connection, Row, SqliteConnection,
+};
 use std::path::Path;
 
 use libparsec_types::prelude::*;
@@ -62,6 +65,8 @@ impl PlatformUserStorage {
                 SqliteConnectOptions::new()
                     .filename(sqlite_url)
                     .create_if_missing(true)
+                    .journal_mode(SqliteJournalMode::Wal)
+                    .synchronous(SqliteSynchronous::Normal)
                     .connect()
                     .await?
             }

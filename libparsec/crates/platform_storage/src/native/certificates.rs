@@ -5,8 +5,8 @@
 // Hence no unique violation should occur under normal circumstances here.
 
 use sqlx::{
-    sqlite::SqliteConnectOptions, ConnectOptions, Connection, Row, Sqlite, SqliteConnection,
-    Transaction,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
+    ConnectOptions, Connection, Row, Sqlite, SqliteConnection, Transaction,
 };
 use std::{collections::HashMap, path::Path};
 
@@ -519,6 +519,8 @@ impl PlatformCertificatesStorage {
                 SqliteConnectOptions::new()
                     .filename(sqlite_url)
                     .create_if_missing(true)
+                    .journal_mode(SqliteJournalMode::Wal)
+                    .synchronous(SqliteSynchronous::Normal)
                     .connect()
                     .await?
             }
