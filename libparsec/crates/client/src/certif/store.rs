@@ -155,7 +155,7 @@ impl CertificatesStore {
 
     /// Lock the store for writing purpose, this is an exclusive lock so no
     /// other read/write operation can occur.
-    pub async fn for_write<'a: 'b, 'b: 'c, 'c, T, E, Fut>(
+    pub async fn for_write<'a, T, E, Fut>(
         &'a self,
         cb: impl FnOnce(&'static mut CertificatesStoreWriteGuard) -> Fut,
     ) -> Result<Result<T, E>, CertifStoreError>
@@ -233,7 +233,7 @@ impl CertificatesStore {
     /// dropped when the user switch from/to OUTSIDER).
     ///
     /// Also note the lock is shared with other read operations.
-    pub async fn for_read<'a: 'b, 'b: 'c, 'c, T, E, Fut>(
+    pub async fn for_read<'a, T, E, Fut>(
         &self,
         cb: impl FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
     ) -> Result<Result<T, E>, CertifStoreError>
