@@ -9,6 +9,7 @@
       <ms-action-bar id="workspaces-ms-action-bar">
         <!-- contextual menu -->
         <ms-action-bar-button
+          v-show="clientProfile != UserProfile.Outsider"
           id="button-new-workspace"
           :button-label="$t('WorkspacesPage.createWorkspace')"
           :icon="addCircle"
@@ -48,7 +49,10 @@
               <ion-label class="workspace-list-header__label cell-title label-role">
                 {{ $t('WorkspacesPage.listDisplayTitles.role') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label cell-title label-users">
+              <ion-label
+                class="workspace-list-header__label cell-title label-users"
+                v-show="clientProfile !== UserProfile.Outsider"
+              >
                 {{ $t('WorkspacesPage.listDisplayTitles.sharedWith') }}
               </ion-label>
               <ion-label class="workspace-list-header__label cell-title label-update">
@@ -63,6 +67,7 @@
               v-for="workspace in filteredWorkspaces"
               :key="workspace.id"
               :workspace="workspace"
+              :client-profile="clientProfile"
               @click="onWorkspaceClick"
               @menu-click="openWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
@@ -80,6 +85,7 @@
           >
             <workspace-card
               :workspace="workspace"
+              :client-profile="clientProfile"
               @click="onWorkspaceClick"
               @menu-click="openWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
@@ -133,7 +139,9 @@ import {
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
+  UserProfile,
   WorkspaceInfo,
+  getClientProfile,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
   listWorkspaces as parsecListWorkspaces,
@@ -156,8 +164,10 @@ const msSorterLabels = {
   asc: translate('HomePage.organizationList.sortOrderAsc'),
   desc: translate('HomePage.organizationList.sortOrderDesc'),
 };
+const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 
 onMounted(async (): Promise<void> => {
+  clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
 });
 
@@ -261,6 +271,9 @@ async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo):
     showBackdrop: false,
     dismissOnSelect: true,
     alignment: 'end',
+    componentProps: {
+      clientProfile: clientProfile.value,
+    },
   });
   await popover.present();
 

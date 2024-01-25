@@ -5,7 +5,7 @@
     <ion-list class="menu-list">
       <ion-item-group
         class="group"
-        v-if="!isRevoked"
+        v-if="!isRevoked && clientIsAdmin"
       >
         <ion-item class="group-title caption-caption">
           <ion-label class="group-title__label">
@@ -59,6 +59,7 @@ import { informationCircle, personRemove } from 'ionicons/icons';
 
 defineProps<{
   isRevoked: boolean;
+  clientIsAdmin?: boolean;
 }>();
 
 function onClick(action: UserAction): Promise<boolean> {

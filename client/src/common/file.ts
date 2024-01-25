@@ -20,7 +20,6 @@ export function shortenFileName(filename: string, { maxLength = 15, prefixLength
         const suffixPercent = Math.ceil((suffixLength / totalLength) * 100);
         suffixLength = Math.ceil(((maxLength - filler.length) / 100) * suffixPercent) || 1;
       }
-      console.log(`${totalLength} ${prefixLength} ${suffixLength}`);
     }
     filename = `${filename.substring(0, prefixLength)}${filler}${filename.substring(filename.length - suffixLength)}`;
   }
