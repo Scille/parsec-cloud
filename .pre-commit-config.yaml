@@ -179,38 +179,38 @@ repos:
       #     ]
       #   files: ^(server|misc|bindings/generator)/
 
-  # ######
-  # # Rust
+  ######
+  # Rust
 
-  # - repo: local
-  #   hooks:
-  #     - id: fmt
-  #       name: fmt
-  #       entry: cargo fmt
-  #       language: system
-  #       types: [ rust ]
-  #       args: [ -- ]
+  - repo: local
+    hooks:
+      - id: fmt
+        name: fmt
+        entry: cargo fmt
+        language: system
+        types: [ rust ]
+        args: [ -- ]
 
-  #     - id: clippy
-  #       name: clippy
-  #       entry: cargo clippy
-  #       language: system
-  #       types: [ rust ]
-  #       pass_filenames: false
-  #       args:
-  #         [
-  #           --workspace,
-  #           --tests,
-  #           --bins,
-  #           --lib,
-  #           --exclude=libparsec_bindings_android,
-  #           --exclude=libparsec_bindings_web,
-  #           --exclude=libparsec_bindings_electron,
-  #           --,
-  #           --deny=warnings,
-  #           --deny=clippy::undocumented_unsafe_blocks,
-  #           --deny=clippy::unwrap_used
-  #         ]
+      # - id: clippy
+      #   name: clippy
+      #   entry: cargo clippy
+      #   language: system
+      #   types: [ rust ]
+      #   pass_filenames: false
+      #   args:
+      #     [
+      #       --workspace,
+      #       --tests,
+      #       --bins,
+      #       --lib,
+      #       --exclude=libparsec_bindings_android,
+      #       --exclude=libparsec_bindings_web,
+      #       --exclude=libparsec_bindings_electron,
+      #       --,
+      #       --deny=warnings,
+      #       --deny=clippy::undocumented_unsafe_blocks,
+      #       --deny=clippy::unwrap_used
+      #     ]
 
   ####
   # Js
