@@ -14,15 +14,22 @@ pub(crate) async fn create_folder(
     check_write_access(ops)?;
 
     let parent_path = path.parent();
-    // Root already exists, cannot re-create it !
     let child_name = match path.name() {
-        None => return Err(FsOperationError::EntryExists),
         Some(name) => name,
+        // Root already exists, cannot re-create it !
+        None => {
+            return Err(FsOperationError::EntryExists {
+                entry_id: ops.realm_id,
+            })
+        }
     };
 
     // Special case for /
     let (parent_id, child_id) = if parent_path.is_root() {
         let (updater, mut parent) = ops.data_storage.for_update_workspace_manifest().await;
+        if let Some(entry) = parent.children.get(child_name) {
+            return Err(FsOperationError::EntryExists { entry_id: *entry });
+        }
         let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();
@@ -51,10 +58,12 @@ pub(crate) async fn create_folder(
             .await?;
         let mut parent = match parent {
             Some(ArcLocalChildManifest::Folder(parent)) => parent,
-            None | Some(ArcLocalChildManifest::File(_)) => {
-                return Err(FsOperationError::EntryNotFound)
-            }
+            None => return Err(FsOperationError::EntryNotFound),
+            Some(ArcLocalChildManifest::File(_)) => return Err(FsOperationError::NotAFolder),
         };
+        if let Some(entry) = parent.children.get(child_name) {
+            return Err(FsOperationError::EntryExists { entry_id: *entry });
+        }
         let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();

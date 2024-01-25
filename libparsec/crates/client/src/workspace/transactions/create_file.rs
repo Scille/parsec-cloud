@@ -16,7 +16,11 @@ pub(crate) async fn create_file(
     let parent_path = path.parent();
     // Root already exists, cannot turn it into a file !
     let child_name = match path.name() {
-        None => return Err(FsOperationError::EntryExists),
+        None => {
+            return Err(FsOperationError::EntryExists {
+                entry_id: ops.realm_id,
+            })
+        }
         Some(name) => name,
     };
 

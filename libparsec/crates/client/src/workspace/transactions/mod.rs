@@ -35,7 +35,7 @@ pub enum FsOperationError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Path already exists")]
-    EntryExists,
+    EntryExists { entry_id: VlobID },
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to a folder")]

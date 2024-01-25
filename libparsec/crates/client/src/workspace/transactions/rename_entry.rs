@@ -43,7 +43,9 @@ pub(crate) async fn rename_entry(
         match mut_parent.children.entry(new_name) {
             std::collections::hash_map::Entry::Occupied(mut entry) => {
                 if !overwrite {
-                    return Err(FsOperationError::EntryExists);
+                    return Err(FsOperationError::EntryExists {
+                        entry_id: *entry.get(),
+                    });
                 }
                 entry.insert(child_id);
             }
@@ -82,7 +84,9 @@ pub(crate) async fn rename_entry(
         match mut_parent.children.entry(new_name) {
             std::collections::hash_map::Entry::Occupied(mut entry) => {
                 if !overwrite {
-                    return Err(FsOperationError::EntryExists);
+                    return Err(FsOperationError::EntryExists {
+                        entry_id: *entry.get(),
+                    });
                 }
                 entry.insert(child_id);
             }

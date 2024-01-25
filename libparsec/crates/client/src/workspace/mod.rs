@@ -181,12 +181,43 @@ impl WorkspaceOps {
         transactions::create_folder(self, path).await
     }
 
+    /// Create the folder and any missing parent (equivalent to `mkdir -p` in Unix).
+    ///
+    /// This is a high level helper, and hence is non-atomic. This typically means
+    /// the operation can fail with a `WorkspaceFsOperationError::EntryNotFound` error
+    /// if a concurrent operation removes a parent folder at the wrong time.
     pub async fn create_folder_all(
         &self,
-        _path: &FsPath,
+        path: &FsPath,
     ) -> Result<VlobID, WorkspaceFsOperationError> {
-        // TODO: this is high level (non-atomic) stuff: should implement it here
-        todo!()
+        // Start by trying the most common case: the parent folder already exists
+        let outcome = transactions::create_folder(self, path).await;
+        if !matches!(outcome, Err(WorkspaceFsOperationError::EntryNotFound)) {
+            return outcome;
+        }
+
+        // Some parents are missing, recursively try to create them all.
+        // Note it would probably be more efficient to do that in reverse order
+        // (given most of the time only the last part of the path is missing)
+        // but it is just simpler to do it this way.
+
+        let mut path_parts = path.parts().iter();
+        // If `path` is root, it has already been handled in `transactions::create_folder`
+        let in_root_entry_name = path_parts.next().expect("path cannot be root");
+        let mut ancestor_path = FsPath::from_parts(vec![in_root_entry_name.to_owned()]);
+        loop {
+            let outcome = transactions::create_folder(self, &ancestor_path).await;
+            let entry_id = match outcome {
+                Ok(entry_id) => Result::<_, WorkspaceFsOperationError>::Ok(entry_id),
+                Err(WorkspaceFsOperationError::EntryExists { entry_id }) => Ok(entry_id),
+                Err(err) => return Err(err),
+            }?;
+            ancestor_path = match path_parts.next() {
+                Some(part) => ancestor_path.join(part.to_owned()),
+                // All done !
+                None => return Ok(entry_id),
+            };
+        }
     }
 
     pub async fn create_file(&self, path: &FsPath) -> Result<VlobID, WorkspaceFsOperationError> {
