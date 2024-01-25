@@ -5,6 +5,7 @@ import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
+import { Ref, computed, ref } from 'vue';
 
 export const NotificationKey = 'notification';
 
@@ -46,11 +47,12 @@ export interface NotificationToastOptions extends NotificationOptions {
 const DEFAULT_NOTIFICATION_DURATION = 5000;
 
 export class NotificationManager {
-  notifications: Notification[];
+  notifications: Ref<Notification[]>;
+  unreadCount: Ref<number> = computed(() => this.notifications.value.filter((n) => n.read === false).length);
   toastManager: ToastManager;
 
   constructor() {
-    this.notifications = [];
+    this.notifications = ref([]);
     this.toastManager = new ToastManager();
   }
 
@@ -131,12 +133,12 @@ export class NotificationManager {
     }
   }
 
-  async addToList(notification: Notification): Promise<void> {
-    this.notifications.push(notification);
+  addToList(notification: Notification): void {
+    this.notifications.value.unshift(notification);
   }
 
   markAsRead(id: string, read = true): void {
-    const notification = this.notifications.find((n) => n.id === id);
+    const notification = this.notifications.value.find((n) => n.id === id);
 
     if (notification) {
       notification.read = read;
@@ -144,15 +146,19 @@ export class NotificationManager {
   }
 
   getNotifications(): Notification[] {
-    return this.notifications;
+    return this.notifications.value;
   }
 
   hasUnreadNotifications(): boolean {
-    return this.notifications.some((n) => n.read === false);
+    return this.unreadCount.value > 0;
+  }
+
+  getUnreadCount(): Ref<number> {
+    return this.unreadCount;
   }
 
   clear(): void {
-    this.notifications = [];
+    this.notifications.value = [];
   }
 
   private _trace(notification: Notification): void {

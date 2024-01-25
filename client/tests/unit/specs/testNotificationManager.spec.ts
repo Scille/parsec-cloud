@@ -68,21 +68,21 @@ describe('Notification Manager', () => {
   it('Check initial state', async () => {
     const notificationManager = new NotificationManager();
 
-    expect(notificationManager.notifications).to.deep.equal([]);
+    expect(notificationManager.notifications.value).to.deep.equal([]);
     expect(notificationManager.getNotifications()).to.deep.equal([]);
     expect(notificationManager.hasUnreadNotifications()).to.be.false;
   });
 
   it('Adds notification to list', async () => {
-    expect(notificationManager.notifications).to.deep.equal([]);
-    notificationManager.showModal(NOTIFS[0], { addToList: true });
-    expect(notificationManager.getNotifications()).to.deep.equal(NOTIFS.slice(0, 1));
+    expect(notificationManager.notifications.value).to.deep.equal([]);
+    notificationManager.showModal(NOTIFS[2], { addToList: true });
+    expect(notificationManager.getNotifications()).to.deep.equal(NOTIFS.slice(2));
     expect(notificationManager.hasUnreadNotifications()).to.be.true;
 
     notificationManager.showToast(NOTIFS[1], { addToList: true });
-    expect(notificationManager.getNotifications()).to.deep.equal(NOTIFS.slice(0, 2));
+    expect(notificationManager.getNotifications()).to.deep.equal(NOTIFS.slice(1));
 
-    notificationManager.addToList(NOTIFS[2]);
+    notificationManager.addToList(NOTIFS[0]);
     expect(notificationManager.getNotifications()).to.deep.equal(NOTIFS);
 
     notificationManager.clear();
@@ -91,7 +91,7 @@ describe('Notification Manager', () => {
   });
 
   it('Do not add notification to list', async () => {
-    expect(notificationManager.notifications).to.deep.equal([]);
+    expect(notificationManager.notifications.value).to.deep.equal([]);
     notificationManager.showModal(NOTIFS[0]);
     expect(notificationManager.getNotifications()).to.deep.equal([]);
     expect(notificationManager.hasUnreadNotifications()).to.be.false;

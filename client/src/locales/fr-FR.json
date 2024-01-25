@@ -53,6 +53,12 @@
             "message": "Le lien fourni n'est pas invalide."
         }
     },
+    "notificationCenter": {
+        "title": "Notifications",
+        "unread": "non lues ({count})",
+        "empty": "Aucune notification",
+        "browse": "Aller à l'emplacement"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Paramètres",

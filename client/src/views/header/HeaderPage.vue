@@ -59,11 +59,9 @@
           slot="primary"
           class="topbar-right"
         >
-          <div
-            v-show="false"
-            class="topbar-button__list"
-          >
+          <div class="topbar-button__list">
             <ion-button
+              v-show="false"
               v-if="!isPlatform('mobile')"
               slot="icon-only"
               id="trigger-search-button"
@@ -79,6 +77,7 @@
               slot="icon-only"
               id="trigger-notifications-button"
               class="topbar-button__item"
+              @click="openNotificationCenter($event)"
             >
               <ion-icon
                 slot="icon-only"
@@ -121,6 +120,7 @@ import {
 } from '@/router';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
+import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import {
   IonButton,
@@ -134,6 +134,7 @@ import {
   IonRouterOutlet,
   IonToolbar,
   isPlatform,
+  popoverController,
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
 import { Ref, onMounted, onUnmounted, ref } from 'vue';
@@ -251,6 +252,20 @@ function getTitleForRoute(): string {
       return '';
   }
   return '';
+}
+
+async function openNotificationCenter(event: Event): Promise<void> {
+  event.stopPropagation();
+  const popover = await popoverController.create({
+    component: NotificationCenterPopover,
+    alignment: 'center',
+    event: event,
+    cssClass: 'notification-center-popover',
+    showBackdrop: false,
+  });
+  await popover.present();
+  await popover.onWillDismiss();
+  await popover.dismiss();
 }
 </script>
 
