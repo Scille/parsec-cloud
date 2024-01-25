@@ -15,6 +15,7 @@ pub struct ClientConfig {
     pub data_base_dir: PathBuf,
     pub mountpoint_base_dir: PathBuf, // Ignored on web
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
+    pub with_monitors: bool,
 }
 
 impl Default for ClientConfig {
@@ -24,6 +25,7 @@ impl Default for ClientConfig {
             data_base_dir: get_default_data_base_dir(),
             mountpoint_base_dir: get_default_mountpoint_base_dir(),
             workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+            with_monitors: true,
         }
     }
 }
@@ -43,7 +45,7 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             mountpoint_base_dir: config.mountpoint_base_dir,
             workspace_storage_cache_size: config.workspace_storage_cache_size,
             proxy: ProxyConfig::default(),
-            with_monitors: true,
+            with_monitors: config.with_monitors,
         }
     }
 }

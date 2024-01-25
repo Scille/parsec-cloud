@@ -145,7 +145,13 @@ where
 {
     load_device_and_run(config_dir, device_slughash, |device| async move {
         let client = Client::start(
-            Arc::new(ClientConfig::default().into()),
+            Arc::new(
+                ClientConfig {
+                    with_monitors: false,
+                    ..Default::default()
+                }
+                .into(),
+            ),
             EventBus::default(),
             device,
         )

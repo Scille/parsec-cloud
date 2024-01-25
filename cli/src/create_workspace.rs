@@ -31,6 +31,7 @@ pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Resu
         let handle = start_spinner("Creating workspace");
 
         let id = client.create_workspace(name).await?.simple();
+        client.ensure_workspaces_bootstrapped().await?;
 
         handle.done();
 

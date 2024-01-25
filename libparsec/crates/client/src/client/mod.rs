@@ -368,7 +368,7 @@ impl Client {
     ///   be shared !) until an OWNER using a Parsec v3 client calls this function.
     ///
     /// This method is typically used by a monitor.
-    pub(crate) async fn ensure_workspaces_bootstrapped(
+    pub async fn ensure_workspaces_bootstrapped(
         &self,
     ) -> Result<(), ClientEnsureWorkspacesBootstrappedError> {
         workspace_bootstrap::ensure_workspaces_bootstrapped(self).await
