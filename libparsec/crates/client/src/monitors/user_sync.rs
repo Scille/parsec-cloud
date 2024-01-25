@@ -31,7 +31,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
         MissedServerEvents,
     }
     // Channel starts empty, hence the monitor will stay idle until the connection
-    // monitor triggers it initial `EventMissedServerEvents` event
+    // monitor triggers its initial `EventMissedServerEvents` event
     let (tx, rx) = channel::unbounded::<Action>();
 
     let events_connection_lifetime = (
