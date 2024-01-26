@@ -10,12 +10,14 @@
         <div v-if="selectedFilesCount === 0">
           <ms-action-bar-button
             id="button-new-folder"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.createFolder')"
             :icon="folderOpen"
             @click="createFolder()"
           />
           <ms-action-bar-button
             id="button-import"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.import')"
             :icon="document"
             @click="importFiles()"
@@ -24,6 +26,7 @@
         <div v-else-if="selectedFilesCount === 1">
           <ms-action-bar-button
             id="button-rename"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionRename')"
             :icon="pencil"
             @click="renameEntries(getSelectedEntries())"
@@ -36,24 +39,27 @@
           />
           <ms-action-bar-button
             id="button-moveto"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
-            id="button-delete"
+            id="button-details"
             :button-label="$t('FoldersPage.fileContextMenu.actionDetails')"
             :icon="informationCircle"
             @click="showDetails(getSelectedEntries())"
@@ -62,18 +68,21 @@
         <div v-else>
           <ms-action-bar-button
             id="button-moveto"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
@@ -234,6 +243,7 @@ const routeWatchCancel = watchRoute(async () => {
   if (currentPath.value) {
     await listFolder();
   }
+  ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
 });
 const currentPath = ref('/');
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
@@ -245,8 +255,10 @@ const selectedFilesCount = computed(() => {
 const importManager = inject(ImportManagerKey) as ImportManager;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
+const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
 
 onMounted(async () => {
+  ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
   await listFolder();
 });
@@ -724,6 +736,9 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
     showBackdrop: false,
     dismissOnSelect: true,
     alignment: 'end',
+    componentProps: {
+      role: ownRole.value,
+    },
   });
   await popover.present();
 

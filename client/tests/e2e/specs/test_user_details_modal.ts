@@ -26,7 +26,7 @@ describe('Check user details modal', () => {
       .contains(/^\w+ (seconds?|minute?s) ago$/);
     cy.get('@modal-content').find('ion-text').eq(4).contains('Shared workspaces');
     cy.get('@modal-content').find('.workspace-empty').should('not.be.visible');
-    cy.get('@modal-content').find('ion-list').find('ion-card').as('workspace-cards').should('have.length', 2);
+    cy.get('@modal-content').find('ion-list').find('ion-card').as('workspace-cards').should('have.length', 3);
     cy.get('@workspace-cards').eq(0).find('ion-text').contains('Trademeet');
     cy.get('@workspace-cards').eq(0).find('ion-icon').should('exist');
     cy.get('@workspace-cards').eq(0).find('ion-label').contains('Contributor');

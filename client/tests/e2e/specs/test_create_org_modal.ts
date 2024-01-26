@@ -149,7 +149,7 @@ describe('Create a new organization', () => {
 
     // Should be logged in on workspace page
     cy.get('#button-new-workspace').contains('New workspace');
-    cy.get('.card').should('have.length', 2);
+    cy.get('.card').should('have.length', 3);
   });
 
   it('Close with X button', () => {
