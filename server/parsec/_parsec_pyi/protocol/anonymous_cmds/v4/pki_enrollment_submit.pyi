@@ -57,7 +57,7 @@ class RepEnrollmentIdAlreadyUsed(Rep):
         self,
     ) -> None: ...
 
-class RepEmailAlreadyUsed(Rep):
+class RepEmailAlreadyEnrolled(Rep):
     def __init__(
         self,
     ) -> None: ...
