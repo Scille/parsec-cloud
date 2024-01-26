@@ -21,6 +21,7 @@ from parsec._parsec import (
 from parsec.api import api
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.realm import BadKeyIndex
 
 logger = get_logger()
 
@@ -54,7 +55,6 @@ VlobCreateBadOutcome = Enum(
         "AUTHOR_NOT_ALLOWED",
         "REALM_NOT_FOUND",
         "VLOB_ALREADY_EXISTS",
-        "BAD_KEY_INDEX",
         "ORGANIZATION_NOT_SEQUESTERED",
         "SEQUESTER_INCONSISTENCY",
     ),
@@ -69,7 +69,6 @@ VlobUpdateBadOutcome = Enum(
         "AUTHOR_NOT_ALLOWED",
         "VLOB_NOT_FOUND",
         "VLOB_VERSION_ALREADY_EXISTS",
-        "BAD_KEY_INDEX",
         "ORGANIZATION_NOT_SEQUESTERED",
         "SEQUESTER_INCONSISTENCY",
         "SEQUESTER_SERVICE_UNAVAILABLE",
@@ -122,6 +121,7 @@ class BaseVlobComponent:
         sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
+        | BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
@@ -144,6 +144,7 @@ class BaseVlobComponent:
         sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
+        | BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
@@ -282,8 +283,10 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_create.RepOk()
             case VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.vlob_create.RepAuthorNotAllowed()
-            case VlobCreateBadOutcome.BAD_KEY_INDEX:
-                return authenticated_cmds.latest.vlob_create.RepBadKeyIndex()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.vlob_create.RepBadKeyIndex(
+                    last_key_rotation_certificate_timestamp=error.last_key_rotation_certificate_timestamp,
+                )
             case VlobCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_create.RepRealmNotFound()
             case VlobCreateBadOutcome.VLOB_ALREADY_EXISTS:
@@ -349,8 +352,10 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepOk()
             case VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.vlob_update.RepAuthorNotAllowed()
-            case VlobUpdateBadOutcome.BAD_KEY_INDEX:
-                return authenticated_cmds.latest.vlob_update.RepBadKeyIndex()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.vlob_update.RepBadKeyIndex(
+                    last_key_rotation_certificate_timestamp=error.last_key_rotation_certificate_timestamp,
+                )
             case VlobUpdateBadOutcome.VLOB_VERSION_ALREADY_EXISTS:
                 return authenticated_cmds.latest.vlob_update.RepVlobVersionAlreadyExists()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:

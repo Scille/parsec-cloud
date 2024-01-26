@@ -16,6 +16,7 @@ from parsec._parsec import (
 from parsec.components.realm import KeysBundle
 from parsec.events import EventRealmCertificate
 from tests.common import Backend, CoolorgRpcClients
+from tests.common.client import get_last_realm_certificate_timestamp
 
 
 @pytest.mark.parametrize("initial_key_rotation", (False, True))
@@ -93,7 +94,7 @@ async def test_authenticated_realm_rotate_key_ok(
 
 @pytest.mark.parametrize("kind", ("author_not_realm_owner", "author_no_realm_access"))
 async def test_authenticated_realm_rotate_key_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     match kind:
         case "author_not_realm_owner":
@@ -130,9 +131,7 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
 
 
-async def test_authenticated_realm_rotate_key_realm_not_found(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
+async def test_authenticated_realm_rotate_key_realm_not_found(coolorg: CoolorgRpcClients) -> None:
     t1 = DateTime.now()
     key = SecretKey.generate()
     key_canary = key.encrypt(b"")
@@ -158,20 +157,50 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
 
 
+@pytest.mark.parametrize("initial_key_rotation", (False, True))
 @pytest.mark.parametrize(
     "kind", ("key_index_already_exists", "key_index_too_far_forward", "key_index_is_zero")
 )
 async def test_authenticated_realm_rotate_key_bad_key_index(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients, backend: Backend, initial_key_rotation: bool, kind: str
 ) -> None:
+    if initial_key_rotation:
+        t0 = DateTime.now()
+        wksp_id = VlobID.new()
+        certif = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=t0,
+            realm_id=wksp_id,
+            role=RealmRole.OWNER,
+            user_id=coolorg.alice.device_id.user_id,
+        )
+        await backend.realm.create(
+            now=t0,
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        )
+        initial_key_index = 0
+        participants = {coolorg.alice.device_id.user_id}
+        wksp_last_certificate_timestamp = t0
+
+    else:
+        # Coolorg's wksp1 is bootstrapped, hence it has already its initial key rotation
+        wksp_id = coolorg.wksp1_id
+        initial_key_index = 1
+        participants = {coolorg.alice.device_id.user_id, coolorg.bob.device_id.user_id}
+        wksp_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+            coolorg.testbed_template, wksp_id
+        )
+
     t1 = DateTime.now()
     key = SecretKey.generate()
     key_canary = key.encrypt(b"")
     match kind:
         case "key_index_already_exists":
-            bad_key_index = 1
+            bad_key_index = initial_key_index
         case "key_index_too_far_forward":
-            bad_key_index = 3
+            bad_key_index = initial_key_index + 2
         case "key_index_is_zero":
             bad_key_index = 0
         case _:
@@ -179,7 +208,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
     certif = RealmKeyRotationCertificate(
         author=coolorg.alice.device_id,
         timestamp=t1,
-        realm_id=coolorg.wksp1_id,
+        realm_id=wksp_id,
         key_index=bad_key_index,
         encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
         hash_algorithm=HashAlgorithm.SHA256,
@@ -189,18 +218,19 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         per_participant_keys_bundle_access={
-            coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-            coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+            user_id: b"<keys bundle access>" for user_id in participants
         },
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex()
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
+        last_realm_certificate_timestamp=wksp_last_certificate_timestamp
+    )
 
 
 @pytest.mark.parametrize("kind", ("additional_participant", "missing_participant"))
 async def test_authenticated_realm_rotate_key_participant_mismatch(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     t1 = DateTime.now()
     key = SecretKey.generate()
@@ -239,7 +269,7 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
 async def test_authenticated_realm_rotate_key_invalid_certificate(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     t1 = DateTime.now()
     key = SecretKey.generate()

@@ -28,6 +28,16 @@ from parsec.client_context import AuthenticatedClientContext
 
 
 @dataclass(slots=True)
+class BadKeyIndex:
+    last_realm_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class CertificateBasedActionIdempontentOutcome:
+    certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
 class RealmStats:
     blocks_size: int
     vlobs_size: int
@@ -247,7 +257,6 @@ RealmCreateStoreBadOutcome = Enum(
         "ORGANIZATION_EXPIRED",
         "AUTHOR_NOT_FOUND",
         "AUTHOR_REVOKED",
-        "REALM_ALREADY_EXISTS",
     ),
 )
 RealmShareStoreBadOutcome = Enum(
@@ -262,8 +271,6 @@ RealmShareStoreBadOutcome = Enum(
         "RECIPIENT_NOT_FOUND",
         "RECIPIENT_REVOKED",
         "ROLE_INCOMPATIBLE_WITH_OUTSIDER",
-        "ROLE_ALREADY_GRANTED",
-        "BAD_KEY_INDEX",
     ),
 )
 RealmUnshareStoreBadOutcome = Enum(
@@ -276,7 +283,6 @@ RealmUnshareStoreBadOutcome = Enum(
         "AUTHOR_REVOKED",
         "AUTHOR_NOT_ALLOWED",
         "RECIPIENT_NOT_FOUND",
-        "RECIPIENT_ALREADY_UNSHARED",
     ),
 )
 RealmRenameStoreBadOutcome = Enum(
@@ -288,8 +294,6 @@ RealmRenameStoreBadOutcome = Enum(
         "AUTHOR_NOT_FOUND",
         "AUTHOR_REVOKED",
         "AUTHOR_NOT_ALLOWED",
-        "BAD_KEY_INDEX",
-        "INITIAL_NAME_ALREADY_EXISTS",
     ),
 )
 RealmRotateKeyStoreBadOutcome = Enum(
@@ -301,7 +305,6 @@ RealmRotateKeyStoreBadOutcome = Enum(
         "AUTHOR_NOT_FOUND",
         "AUTHOR_REVOKED",
         "AUTHOR_NOT_ALLOWED",
-        "BAD_KEY_INDEX",
         "PARTICIPANT_MISMATCH",
     ),
 )
@@ -353,6 +356,7 @@ class BaseRealmComponent:
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
+        | CertificateBasedActionIdempontentOutcome
         | RealmCreateValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmCreateStoreBadOutcome
@@ -370,6 +374,8 @@ class BaseRealmComponent:
         key_index: int,
     ) -> (
         RealmRoleCertificate
+        | BadKeyIndex
+        | CertificateBasedActionIdempontentOutcome
         | RealmShareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmShareStoreBadOutcome
@@ -385,6 +391,7 @@ class BaseRealmComponent:
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
+        | CertificateBasedActionIdempontentOutcome
         | RealmUnshareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmUnshareStoreBadOutcome
@@ -401,6 +408,8 @@ class BaseRealmComponent:
         initial_name_or_fail: bool,
     ) -> (
         RealmNameCertificate
+        | BadKeyIndex
+        | CertificateBasedActionIdempontentOutcome
         | RealmRenameValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRenameStoreBadOutcome
@@ -418,6 +427,7 @@ class BaseRealmComponent:
         keys_bundle: bytes,
     ) -> (
         RealmKeyRotationCertificate
+        | BadKeyIndex
         | RealmRotateKeyValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
@@ -486,8 +496,10 @@ class BaseRealmComponent:
                 )
             case RealmCreateValidateBadOutcome():
                 return authenticated_cmds.latest.realm_create.RepInvalidCertificate()
-            case RealmCreateStoreBadOutcome.REALM_ALREADY_EXISTS:
-                return authenticated_cmds.latest.realm_create.RepRealmAlreadyExists()
+            case CertificateBasedActionIdempontentOutcome() as error:
+                return authenticated_cmds.latest.realm_create.RepRealmAlreadyExists(
+                    last_realm_certificate_timestamp=error.certificate_timestamp
+                )
             case RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED:
@@ -529,8 +541,14 @@ class BaseRealmComponent:
                 )
             case RealmShareValidateBadOutcome():
                 return authenticated_cmds.latest.realm_share.RepInvalidCertificate()
-            case RealmShareStoreBadOutcome.BAD_KEY_INDEX:
-                return authenticated_cmds.latest.realm_share.RepBadKeyIndex()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.realm_share.RepBadKeyIndex(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
+                )
+            case CertificateBasedActionIdempontentOutcome() as error:
+                return authenticated_cmds.latest.realm_share.RepRoleAlreadyGranted(
+                    last_realm_certificate_timestamp=error.certificate_timestamp,
+                )
             case RealmShareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_share.RepRealmNotFound()
             case RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
@@ -541,8 +559,6 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_share.RepRecipientRevoked()
             case RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER:
                 return authenticated_cmds.latest.realm_share.RepRoleIncompatibleWithOutsider()
-            case RealmShareStoreBadOutcome.ROLE_ALREADY_GRANTED:
-                return authenticated_cmds.latest.realm_share.RepRoleAlreadyGranted()
             case RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED:
@@ -582,14 +598,16 @@ class BaseRealmComponent:
                 )
             case RealmUnshareValidateBadOutcome():
                 return authenticated_cmds.latest.realm_unshare.RepInvalidCertificate()
+            case CertificateBasedActionIdempontentOutcome() as error:
+                return authenticated_cmds.latest.realm_unshare.RepRecipientAlreadyUnshared(
+                    last_realm_certificate_timestamp=error.certificate_timestamp,
+                )
             case RealmUnshareStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_unshare.RepRealmNotFound()
             case RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_unshare.RepAuthorNotAllowed()
             case RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND:
                 return authenticated_cmds.latest.realm_unshare.RepRecipientNotFound()
-            case RealmUnshareStoreBadOutcome.RECIPIENT_ALREADY_UNSHARED:
-                return authenticated_cmds.latest.realm_unshare.RepRecipientAlreadyUnshared()
             case RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED:
@@ -630,14 +648,18 @@ class BaseRealmComponent:
                 )
             case RealmRenameValidateBadOutcome():
                 return authenticated_cmds.latest.realm_rename.RepInvalidCertificate()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.realm_rename.RepBadKeyIndex(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
+                )
+            case CertificateBasedActionIdempontentOutcome() as error:
+                return authenticated_cmds.latest.realm_rename.RepInitialNameAlreadyExists(
+                    last_realm_certificate_timestamp=error.certificate_timestamp
+                )
             case RealmRenameStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rename.RepRealmNotFound()
             case RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rename.RepAuthorNotAllowed()
-            case RealmRenameStoreBadOutcome.BAD_KEY_INDEX:
-                return authenticated_cmds.latest.realm_rename.RepBadKeyIndex()
-            case RealmRenameStoreBadOutcome.INITIAL_NAME_ALREADY_EXISTS:
-                return authenticated_cmds.latest.realm_rename.RepInitialNameAlreadyExists()
             case RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED:
@@ -679,10 +701,12 @@ class BaseRealmComponent:
                 )
             case RealmRotateKeyValidateBadOutcome():
                 return authenticated_cmds.latest.realm_rotate_key.RepInvalidCertificate()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
+                )
             case RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH:
                 return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch()
-            case RealmRotateKeyStoreBadOutcome.BAD_KEY_INDEX:
-                return authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex()
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:

@@ -23,6 +23,7 @@ from parsec.components.memory.datamodel import (
     MemoryRealmVlobUpdate,
     MemoryVlobAtom,
 )
+from parsec.components.realm import BadKeyIndex
 from parsec.components.sequester import SequesterServiceType
 from parsec.components.vlob import (
     BaseVlobComponent,
@@ -67,6 +68,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
+        | BadKeyIndex
         | VlobCreateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
@@ -105,7 +107,11 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # We only accept the last key
         if len(realm.key_rotations) != key_index:
-            return VlobCreateBadOutcome.BAD_KEY_INDEX
+            return BadKeyIndex(
+                last_key_rotation_certificate_timestamp=realm.key_rotations[-1].cooked.timestamp
+                if realm.key_rotations
+                else None
+            )
 
         if vlob_id in org.vlobs:
             return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
@@ -196,6 +202,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
+        | BadKeyIndex
         | VlobUpdateBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
@@ -235,7 +242,11 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         # We only accept the last key
         if len(realm.key_rotations) != key_index:
-            return VlobUpdateBadOutcome.BAD_KEY_INDEX
+            return BadKeyIndex(
+                last_key_rotation_certificate_timestamp=realm.key_rotations[-1].cooked.timestamp
+                if realm.key_rotations
+                else None
+            )
 
         maybe_error = timestamps_in_the_ballpark(timestamp, now)
         if maybe_error is not None:

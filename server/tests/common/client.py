@@ -10,6 +10,7 @@ from httpx import AsyncClient, Response
 from httpx_sse import EventSource, ServerSentEvent, aconnect_sse
 
 from parsec._parsec import (
+    DateTime,
     DeviceID,
     HumanHandle,
     InvitationToken,
@@ -388,3 +389,42 @@ async def minimalorg(
         )
 
         testbed.drop_organization(organization_id)
+
+
+def get_last_realm_certificate_timestamp(
+    testbed_template: tb.TestbedTemplateContent, realm_id: VlobID
+) -> DateTime:
+    for event in reversed(testbed_template.events):
+        # Be exhaustive in the cases to detect whenever a new type of certificate is introduced
+        match event:
+            case tb.TestbedEventNewRealm() as event:
+                if event.realm_id == realm_id:
+                    return event.timestamp
+            case tb.TestbedEventShareRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
+            case tb.TestbedEventRenameRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
+            case tb.TestbedEventRotateKeyRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
+            case tb.TestbedEventArchiveRealm() as event:
+                if event.realm == realm_id:
+                    return event.timestamp
+            case (
+                tb.TestbedEventBootstrapOrganization()
+                | tb.TestbedEventNewSequesterService()
+                | tb.TestbedEventRevokeSequesterService()
+                | tb.TestbedEventNewUser()
+                | tb.TestbedEventNewDevice()
+                | tb.TestbedEventUpdateUserProfile()
+                | tb.TestbedEventRevokeUser()
+                | tb.TestbedEventNewShamirRecovery()
+                | tb.TestbedEventCreateOrUpdateOpaqueVlob()
+                | tb.TestbedEventCreateOpaqueBlock()
+            ):
+                pass
+            case unknown:
+                assert_never(unknown)
+    raise RuntimeError(f"Realm `{realm_id}` not found !")

@@ -15,7 +15,7 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventRealmCertificate
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
 
 
 async def test_authenticated_realm_rename_rotate_key_ok_subsequent_rename(
@@ -139,7 +139,11 @@ async def test_authenticated_realm_rename_initial_name_already_exists(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=True,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepInitialNameAlreadyExists()
+    assert rep == authenticated_cmds.v4.realm_rename.RepInitialNameAlreadyExists(
+        last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
+            coolorg.testbed_template, coolorg.wksp1_id
+        )
+    )
 
 
 @pytest.mark.parametrize("kind", ("author_not_realm_owner", "author_no_realm_access"))
@@ -192,7 +196,13 @@ async def test_authenticated_realm_rename_realm_not_found(
 
 
 @pytest.mark.parametrize(
-    "kind", ("key_index_too_old", "key_index_too_far_forward", "key_index_is_zero")
+    "kind",
+    (
+        "key_index_too_old",
+        "key_index_too_far_forward",
+        "key_index_is_zero",
+        "realm_had_no_key_rotation_yet",
+    ),
 )
 async def test_authenticated_realm_rename_bad_key_index(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
@@ -226,10 +236,39 @@ async def test_authenticated_realm_rename_bad_key_index(
             )
             assert isinstance(outcome, RealmKeyRotationCertificate)
             bad_key_index = 1
+            wksp_id = coolorg.wksp1_id
+            wksp_last_certificate_timestamp = t0
         case "key_index_too_far_forward":
             bad_key_index = 2
+            wksp_id = coolorg.wksp1_id
+            wksp_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+                coolorg.testbed_template, wksp_id
+            )
         case "key_index_is_zero":
             bad_key_index = 0
+            wksp_id = coolorg.wksp1_id
+            wksp_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+                coolorg.testbed_template, wksp_id
+            )
+        case "realm_had_no_key_rotation_yet":
+            t0 = DateTime.now()
+            wksp_id = VlobID.new()
+            certif = RealmRoleCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=t0,
+                realm_id=wksp_id,
+                role=RealmRole.OWNER,
+                user_id=coolorg.alice.device_id.user_id,
+            )
+            outcome = await backend.realm.create(
+                now=t0,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+            )
+            assert isinstance(outcome, RealmRoleCertificate)
+            bad_key_index = 1
+            wksp_last_certificate_timestamp = t0
         case _:
             assert False
 
@@ -237,7 +276,7 @@ async def test_authenticated_realm_rename_bad_key_index(
     certif = RealmNameCertificate(
         author=coolorg.alice.device_id,
         timestamp=t1,
-        realm_id=coolorg.wksp1_id,
+        realm_id=wksp_id,
         key_index=bad_key_index,
         encrypted_name=b"<encrypted name>",
     )
@@ -246,7 +285,9 @@ async def test_authenticated_realm_rename_bad_key_index(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
     )
-    assert rep == authenticated_cmds.v4.realm_rename.RepBadKeyIndex()
+    assert rep == authenticated_cmds.v4.realm_rename.RepBadKeyIndex(
+        last_realm_certificate_timestamp=wksp_last_certificate_timestamp
+    )
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))

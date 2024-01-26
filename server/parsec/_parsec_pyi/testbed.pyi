@@ -251,6 +251,10 @@ TestbedEvent = (
     | TestbedEventRevokeUser
     | TestbedEventNewRealm
     | TestbedEventShareRealm
+    | TestbedEventRenameRealm
+    | TestbedEventRotateKeyRealm
+    | TestbedEventArchiveRealm
+    | TestbedEventNewShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob
     | TestbedEventCreateOpaqueBlock
 )

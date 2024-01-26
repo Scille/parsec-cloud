@@ -24,7 +24,9 @@ from parsec.components.memory.datamodel import (
     MemoryRealmUserRole,
 )
 from parsec.components.realm import (
+    BadKeyIndex,
     BaseRealmComponent,
+    CertificateBasedActionIdempontentOutcome,
     KeysBundle,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
@@ -67,6 +69,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
+        | CertificateBasedActionIdempontentOutcome
         | RealmCreateValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmCreateStoreBadOutcome
@@ -99,7 +102,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                 return error
 
         if certif.realm_id in org.realms:
-            return RealmCreateStoreBadOutcome.REALM_ALREADY_EXISTS
+            return CertificateBasedActionIdempontentOutcome(
+                certificate_timestamp=org.realms[certif.realm_id].last_realm_certificate_timestamp
+            )
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -150,6 +155,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         key_index: int,
     ) -> (
         RealmRoleCertificate
+        | BadKeyIndex
+        | CertificateBasedActionIdempontentOutcome
         | RealmShareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmShareStoreBadOutcome
@@ -215,7 +222,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if existing_user_role == new_user_role:
-            return RealmShareStoreBadOutcome.ROLE_ALREADY_GRANTED
+            return CertificateBasedActionIdempontentOutcome(
+                certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -235,18 +244,23 @@ class MemoryRealmComponent(BaseRealmComponent):
                 strictly_greater_than=org.last_certificate_or_vlob_timestamp
             )
 
+        try:
+            last_key_rotation = realm.key_rotations[-1]
+        except IndexError:
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
+        if key_index != last_key_rotation.cooked.key_index:
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
+
         # All checks are good, now we do the actual insertion
 
         realm.roles.append(
             MemoryRealmUserRole(cooked=certif, realm_role_certificate=realm_role_certificate)
         )
 
-        if key_index <= 0:
-            return RealmShareStoreBadOutcome.BAD_KEY_INDEX
-        try:
-            last_key_rotation = realm.key_rotations[key_index - 1]
-        except IndexError:
-            return RealmShareStoreBadOutcome.BAD_KEY_INDEX
         last_key_rotation.per_participant_keys_bundle_access[
             certif.user_id
         ] = recipient_keys_bundle_access
@@ -272,6 +286,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
+        | CertificateBasedActionIdempontentOutcome
         | RealmUnshareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmUnshareStoreBadOutcome
@@ -326,7 +341,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if existing_user_role == new_user_role:
-            return RealmUnshareStoreBadOutcome.RECIPIENT_ALREADY_UNSHARED
+            return CertificateBasedActionIdempontentOutcome(
+                certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -374,6 +391,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         initial_name_or_fail: bool,
     ) -> (
         RealmNameCertificate
+        | BadKeyIndex
+        | CertificateBasedActionIdempontentOutcome
         | RealmRenameValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRenameStoreBadOutcome
@@ -415,10 +434,14 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         # We only accept the last key
         if len(realm.key_rotations) != certif.key_index:
-            return RealmRenameStoreBadOutcome.BAD_KEY_INDEX
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
 
         if initial_name_or_fail and realm.renames:
-            return RealmRenameStoreBadOutcome.INITIAL_NAME_ALREADY_EXISTS
+            return CertificateBasedActionIdempontentOutcome(
+                certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
 
         realm.renames.append(
             MemoryRealmRename(
@@ -450,6 +473,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         keys_bundle: bytes,
     ) -> (
         RealmKeyRotationCertificate
+        | BadKeyIndex
         | RealmRotateKeyValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
@@ -491,7 +515,9 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         last_index = len(realm.key_rotations)
         if certif.key_index != last_index + 1:
-            return RealmRotateKeyStoreBadOutcome.BAD_KEY_INDEX
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+            )
 
         participants = set()
         for role in realm.roles:
