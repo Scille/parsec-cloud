@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
+use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifOps, CertificateBasedActionOutcome, InvalidCertificateError,
-    InvalidKeysBundleError,
+    store::CertifStoreError, CertifOps, CertifPollServerError, CertificateBasedActionOutcome,
+    InvalidCertificateError, InvalidKeysBundleError,
 };
 use crate::{
     certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
@@ -114,6 +115,24 @@ pub(super) async fn share_realm(
                 // returning an error
                 timestamp = std::cmp::max(ops.device.time_provider.now(), strictly_greater_than);
             }
+            DoServerCommandOutcome::MissingKeyRotationCertificate(certificate_timestamp) => {
+                let latest_known_timestamps =
+                    PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
+                ops.poll_server_for_new_certificates(Some(&latest_known_timestamps))
+                    .await
+                    .map_err(|e| match e {
+                        CertifPollServerError::Stopped => CertifShareRealmError::Stopped,
+                        CertifPollServerError::Offline => CertifShareRealmError::Offline,
+                        CertifPollServerError::InvalidCertificate(err) => {
+                            CertifShareRealmError::InvalidCertificate(err)
+                        }
+                        CertifPollServerError::Internal(err) => err
+                            .context("Cannot poll server for new certificates")
+                            .into(),
+                    })?;
+
+                timestamp = ops.device.time_provider.now();
+            }
         }
     }
 }
@@ -121,6 +140,7 @@ pub(super) async fn share_realm(
 enum DoServerCommandOutcome {
     Done(CertificateBasedActionOutcome),
     RequireGreaterTimestamp(DateTime),
+    MissingKeyRotationCertificate(DateTime),
 }
 
 async fn unshare_do_server_command(
@@ -160,8 +180,12 @@ async fn unshare_do_server_command(
                 certificate_timestamp: timestamp,
             },
         )),
-        Rep::RecipientAlreadyUnshared => Ok(DoServerCommandOutcome::Done(
-            CertificateBasedActionOutcome::RemoteIdempotent,
+        Rep::RecipientAlreadyUnshared {
+            last_realm_certificate_timestamp,
+        } => Ok(DoServerCommandOutcome::Done(
+            CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp: last_realm_certificate_timestamp,
+            },
         )),
         Rep::RequireGreaterTimestamp {
             strictly_greater_than,
@@ -271,17 +295,34 @@ async fn share_do_server_command(
     };
     let rep = ops.cmds.send(req).await?;
     match rep {
-        Rep::Ok => Ok(DoServerCommandOutcome::Done(CertificateBasedActionOutcome::Uploaded { certificate_timestamp: timestamp })),
-        Rep::RoleAlreadyGranted => Ok(DoServerCommandOutcome::Done(CertificateBasedActionOutcome::RemoteIdempotent)),
+        Rep::Ok => Ok(DoServerCommandOutcome::Done(
+            CertificateBasedActionOutcome::Uploaded {
+                certificate_timestamp: timestamp,
+            },
+        )),
+        Rep::RoleAlreadyGranted {
+            last_realm_certificate_timestamp,
+        } => Ok(DoServerCommandOutcome::Done(
+            CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp: last_realm_certificate_timestamp,
+            },
+        )),
         Rep::RequireGreaterTimestamp {
             strictly_greater_than,
         } => {
             // The retry is handled by the caller
-            Ok(
-                DoServerCommandOutcome::RequireGreaterTimestamp(
-                    strictly_greater_than,
-                ),
-            )
+            Ok(DoServerCommandOutcome::RequireGreaterTimestamp(
+                strictly_greater_than,
+            ))
+        }
+        // There is a new key rotation we don't know about, let's fetch it and retry
+        Rep::BadKeyIndex {
+            last_realm_certificate_timestamp,
+        } => {
+            // The retry is handled by the caller
+            Ok(DoServerCommandOutcome::MissingKeyRotationCertificate(
+                last_realm_certificate_timestamp,
+            ))
         }
         Rep::AuthorNotAllowed { .. } => Err(CertifShareRealmError::AuthorNotAllowed),
         Rep::RoleIncompatibleWithOutsider { .. } => {
@@ -316,11 +357,7 @@ async fn share_do_server_command(
         // Note this error should never occur in practice given we have already
         // retrieve the user on our side.
         Rep::RecipientNotFound { .. } => Err(CertifShareRealmError::RecipientNotFound),
-        bad_rep @ (
-            Rep::BadKeyIndex  // We got the key index from a certificate, so it must be valid
-            | Rep::InvalidCertificate { .. }
-            | Rep::UnknownStatus { .. }
-        ) => {
+        bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }

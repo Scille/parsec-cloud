@@ -181,7 +181,7 @@ async fn upload_manifest(
                     // We only encrypt for sequester services when the realm is sequestered
                     | Rep::OrganizationNotSequestered
                     // The user realm is never supposed to do key rotation
-                    | Rep::BadKeyIndex
+                    | Rep::BadKeyIndex { .. }
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }
@@ -249,7 +249,7 @@ async fn upload_manifest(
                     // We only encrypt for sequester services when the realm is sequestered
                     | Rep::OrganizationNotSequestered
                     // The user realm is never supposed to do key rotation
-                    | Rep::BadKeyIndex
+                    | Rep::BadKeyIndex { .. }
                     | Rep::UnknownStatus { .. }
                 ) => Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into()),
             }

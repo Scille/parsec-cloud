@@ -47,7 +47,7 @@ pub enum CertificateBasedActionOutcome {
     LocalIdempotent,
     /// Our local certificates were lagging behind, but the server told us the
     /// action was already done on it side. Hence a certificate poll is needed.
-    RemoteIdempotent,
+    RemoteIdempotent { certificate_timestamp: DateTime },
     /// The action was done by uploading a certificate on the server.
     /// We should now trigger a certificate poll to add our new certificate
     /// to the our local storage.

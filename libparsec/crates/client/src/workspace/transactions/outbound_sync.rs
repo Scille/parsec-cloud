@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use libparsec_client_connection::protocol::authenticated_cmds;
+use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_platform_storage::workspace::GetChildManifestError;
 use libparsec_types::prelude::*;
 
@@ -335,10 +336,25 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
-                // Sequester services has changed concurrently, should poll for new certificates and retry
-                Rep::SequesterInconsistency => {
+                // A key rotation occored concurrently, should poll for new certificates and retry
+                Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
+                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops
-                        .poll_server_for_new_certificates(None)
+                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+                        .await
+                        .map_err(|err| match err {
+                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
+                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
+                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
+                        })?;
+                    continue;
+                }
+                // Sequester services has changed concurrently, should poll for new certificates and retry
+                Rep::SequesterInconsistency { last_common_certificate_timestamp } => {
+                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp);
+                    ops.certificates_ops
+                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
                         .await
                         .map_err(|err| match err {
                             CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
@@ -355,8 +371,6 @@ async fn upload_manifest<M: RemoteManifest>(
                     Rep::OrganizationNotSequestered
                     // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
                     | Rep::RealmNotFound
-                    // Already checked the realm had a valid encryption key when we called `CertifOps::encrypt_for_realm`
-                    | Rep::BadKeyIndex
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }
                 ) => {
@@ -397,10 +411,25 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
-                // Sequester services has changed concurrently, should poll for new certificates and retry
-                Rep::SequesterInconsistency => {
+                // A key rotation occored concurrently, should poll for new certificates and retry
+                Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
+                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops
-                        .poll_server_for_new_certificates(None)
+                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+                        .await
+                        .map_err(|err| match err {
+                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
+                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
+                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
+                        })?;
+                    continue;
+                }
+                // Sequester services has changed concurrently, should poll for new certificates and retry
+                Rep::SequesterInconsistency { last_common_certificate_timestamp }=> {
+                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp);
+                    ops.certificates_ops
+                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
                         .await
                         .map_err(|err| match err {
                             CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
@@ -415,8 +444,6 @@ async fn upload_manifest<M: RemoteManifest>(
                 bad_rep @ (
                     // Got sequester info from certificates
                     Rep::OrganizationNotSequestered
-                    // Already checked the realm had a valid encryption key when we called `CertifOps::encrypt_for_realm`
-                    | Rep::BadKeyIndex
                     // Already checked the vlob exists since the manifet has version > 0
                     | Rep::VlobNotFound
                     // Don't know what to do with this status :/

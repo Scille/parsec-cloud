@@ -108,12 +108,11 @@ pub async fn share_workspace(
             // It seems the workspace wasn't bootstrapped and we've just done it.
             // Hence there is no need for a rename given our name has been used as
             // the workspace's initial name.
+            let latest_known_timestamps =
+                PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
             client
                 .certificates_ops
-                .poll_server_for_new_certificates(Some(&PerTopicLastTimestamps::new_for_realm(
-                    realm_id,
-                    certificate_timestamp,
-                )))
+                .poll_server_for_new_certificates(Some(&latest_known_timestamps))
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,
@@ -127,10 +126,14 @@ pub async fn share_workspace(
                 })?;
             return Ok(());
         }
-        CertificateBasedActionOutcome::RemoteIdempotent => {
+        CertificateBasedActionOutcome::RemoteIdempotent {
+            certificate_timestamp,
+        } => {
+            let latest_known_timestamps =
+                PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
             client
                 .certificates_ops
-                .poll_server_for_new_certificates(None)
+                .poll_server_for_new_certificates(Some(&latest_known_timestamps))
                 .await
                 .map_err(|e| match e {
                     CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,
@@ -183,15 +186,14 @@ pub async fn share_workspace(
         CertificateBasedActionOutcome::LocalIdempotent => return Ok(()),
         CertificateBasedActionOutcome::Uploaded {
             certificate_timestamp,
-        } => Some(PerTopicLastTimestamps::new_for_realm(
-            realm_id,
+        }
+        | CertificateBasedActionOutcome::RemoteIdempotent {
             certificate_timestamp,
-        )),
-        CertificateBasedActionOutcome::RemoteIdempotent => None,
+        } => PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp),
     };
     client
         .certificates_ops
-        .poll_server_for_new_certificates(latest_known_timestamps.as_ref())
+        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
         .await
         .map_err(|e| match e {
             CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,

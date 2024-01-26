@@ -266,8 +266,12 @@ async fn realm_initial_key_rotation_idempotent(
                 },
             )),
             // Bad key index means another key rotation occured, hence our job is done here !
-            Rep::BadKeyIndex => Ok(RealmInitialKeyRotationOutcome::Done(
-                CertificateBasedActionOutcome::RemoteIdempotent,
+            Rep::BadKeyIndex {
+                last_realm_certificate_timestamp,
+            } => Ok(RealmInitialKeyRotationOutcome::Done(
+                CertificateBasedActionOutcome::RemoteIdempotent {
+                    certificate_timestamp: last_realm_certificate_timestamp,
+                },
             )),
             Rep::LegacyReencryptedRealm {
                 encryption_revision,
@@ -288,9 +292,9 @@ async fn realm_initial_key_rotation_idempotent(
                         CertifPollServerError::InvalidCertificate(err) => {
                             CertifRotateRealmKeyError::InvalidCertificate(err)
                         }
-                        CertifPollServerError::Internal(e) => {
-                            CertifRotateRealmKeyError::Internal(e)
-                        }
+                        CertifPollServerError::Internal(err) => err
+                            .context("Cannot poll server for new certificates")
+                            .into(),
                     })?;
                 continue;
             }

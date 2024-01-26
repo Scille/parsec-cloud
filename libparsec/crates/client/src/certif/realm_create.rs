@@ -98,7 +98,11 @@ async fn create_realm_idempotent(
             // It's possible a previous attempt to create this realm
             // succeeded but we didn't receive the confirmation, hence
             // we play idempotent here.
-            Rep::RealmAlreadyExists => Ok(CertificateBasedActionOutcome::RemoteIdempotent),
+            Rep::RealmAlreadyExists {
+                last_realm_certificate_timestamp,
+            } => Ok(CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp: last_realm_certificate_timestamp,
+            }),
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {

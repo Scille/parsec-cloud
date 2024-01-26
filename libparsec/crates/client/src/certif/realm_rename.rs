@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec_client_connection::ConnectionError;
+use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
@@ -118,10 +119,20 @@ async fn rename_realm_internal(
             Rep::Ok => Ok(CertificateBasedActionOutcome::Uploaded {
                 certificate_timestamp: timestamp,
             }),
-            Rep::InitialNameAlreadyExists => Ok(CertificateBasedActionOutcome::RemoteIdempotent),
+            Rep::InitialNameAlreadyExists {
+                last_realm_certificate_timestamp,
+            } => Ok(CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp: last_realm_certificate_timestamp,
+            }),
             // There is a new key rotation we don't know about, let's fetch it and retry
-            Rep::BadKeyIndex => {
-                ops.poll_server_for_new_certificates(None)
+            Rep::BadKeyIndex {
+                last_realm_certificate_timestamp,
+            } => {
+                let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(
+                    realm_id,
+                    last_realm_certificate_timestamp,
+                );
+                ops.poll_server_for_new_certificates(Some(&latest_known_timestamps))
                     .await
                     .map_err(|e| match e {
                         CertifPollServerError::Stopped => CertifRenameRealmError::Stopped,

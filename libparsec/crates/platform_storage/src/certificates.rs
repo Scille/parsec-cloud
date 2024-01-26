@@ -35,6 +35,14 @@ pub struct PerTopicLastTimestamps {
 }
 
 impl PerTopicLastTimestamps {
+    pub fn new_for_common(common_timestamp: DateTime) -> Self {
+        Self {
+            common: Some(common_timestamp),
+            sequester: None,
+            realm: HashMap::default(),
+            shamir_recovery: None,
+        }
+    }
     pub fn new_for_realm(realm_id: VlobID, realm_timestamp: DateTime) -> Self {
         Self {
             common: None,
