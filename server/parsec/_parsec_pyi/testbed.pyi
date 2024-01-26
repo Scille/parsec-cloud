@@ -47,9 +47,12 @@ class TestbedTemplateContent:
         | RevokedUserCertificate
         | UserUpdateCertificate
         | RealmRoleCertificate
+        | RealmArchivingCertificate
         | SequesterAuthorityCertificate
         | SequesterServiceCertificate
         | SequesterRevokedServiceCertificate
+        | ShamirRecoveryBriefCertificate
+        | ShamirRecoveryShareCertificate
     ]
 
     def compute_crc(self) -> int: ...
