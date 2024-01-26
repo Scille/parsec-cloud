@@ -426,6 +426,9 @@ This brings three benefits:
                 "status": "author_not_allowed"
             },
             {
+                "status": "bad_key_index"
+            },
+            {
                 "status": "invalid_certificate"
             },
             {

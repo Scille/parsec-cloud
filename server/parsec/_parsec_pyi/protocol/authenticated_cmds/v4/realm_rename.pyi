@@ -41,6 +41,11 @@ class RepAuthorNotAllowed(Rep):
         self,
     ) -> None: ...
 
+class RepBadKeyIndex(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepInvalidCertificate(Rep):
     def __init__(
         self,
