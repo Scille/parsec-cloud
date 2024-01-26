@@ -42,7 +42,7 @@
                     // should be use is not a security issue: the server never controls
                     // the key and at most the realm data will end-up unreadable (which
                     // the server can already achieved by providing dummy data when the
-                    // client fech a vlob/blob).
+                    // client fetch a vlob/blob).
                     "name": "never_legacy_reencrypted_or_fail",
                     "type": "Boolean"
                 }

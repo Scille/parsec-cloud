@@ -77,7 +77,7 @@
                 //
                 // If the info is the realm's name, another reason is that the workspace has been
                 // shared with us before it has a realm name certificate.
-                // This is theorically possible, though unlikely: it should only be encountered
+                // This is theoretically possible, though unlikely: it should only be encountered
                 // when dealing with a workspace shared with Parsec < v3 (as, at that time, realm
                 // name certificate didn't exist, and in Parsec >= v3 we ensure the workspace is
                 // bootstrapped before sharing it).
@@ -85,7 +85,7 @@
                 // In any case, this is a temporary state and the eventual outcomes are:
                 // - A realm certificate is fetched and it info the placeholder.
                 // - We are the ones uploading the initial info certificate, in which case
-                //   the placeholder will become the offical info.
+                //   the placeholder will become the official info.
                 {
                     "name": "Placeholder",
                     "discriminant_value": "PLACEHOLDER"

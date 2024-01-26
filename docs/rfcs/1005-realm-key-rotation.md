@@ -239,7 +239,7 @@ It is similar to the `realm_update_roles` with the following changes:
                     // should be use is not a security issue: the server never controls
                     // the key and at most the realm data will end-up unreadable (which
                     // the server can already achieved by providing dummy data when the
-                    // client fech a vlob/blob).
+                    // client fetch a vlob/blob).
                     "name": "never_legacy_reencrypted_or_fail",
                     "type": "Boolean"
                 }
@@ -965,7 +965,7 @@ With `CertificateBasedInfoOrigin`:
         //
         // If the info is the realm's name, another reason is that the workspace has been
         // shared with us before it has a realm name certificate.
-        // This is theorically possible, though unlikely: it should only be encountered
+        // This is theoretically possible, though unlikely: it should only be encountered
         // when dealing with a workspace shared with Parsec < v3 (as, at that time, realm
         // name certificate didn't exist, and in Parsec >= v3 we ensure the workspace is
         // bootstrapped before sharing it).
@@ -973,7 +973,7 @@ With `CertificateBasedInfoOrigin`:
         // In any case, this is a temporary state and the eventual outcomes are:
         // - A realm certificate is fetched and it info overwrite the placeholder.
         // - We are the ones uploading the initial info certificate, in which case
-        //   the placeholder will become the offical info.
+        //   the placeholder will become the official info.
         {
             "name": "Placeholder",
             "discriminant_value": "PLACEHOLDER"

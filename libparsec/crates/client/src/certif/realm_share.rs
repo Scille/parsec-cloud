@@ -196,7 +196,7 @@ async fn unshare_do_server_command(
         }
         Rep::RealmNotFound { .. } => Err(CertifShareRealmError::RealmNotFound),
         // Unlike for the sharing, we didn't have retrieved the user on our side,
-        // so this error can actually occur (this is only theorical though, as the
+        // so this error can actually occur (this is only theoretical though, as the
         // user ID is supposed to have been obtained from certificates).
         Rep::RecipientNotFound { .. } => Err(CertifShareRealmError::RecipientNotFound),
         bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {

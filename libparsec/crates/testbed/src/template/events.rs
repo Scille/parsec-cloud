@@ -1621,7 +1621,7 @@ impl TestbedEventRotateKeyRealm {
     ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
         let populate = || {
             // Note `key_canary` being the result of an encryption it is not stable
-            // accross runs (as encryption involves the use of random nonce). This
+            // across runs (as encryption involves the use of random nonce). This
             // is not much of an issue, but it means the certificate generate on
             // the test is different from the ones on the testbed server (given
             // they are two separate processes).

@@ -188,7 +188,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     };
     assert!(
         format!("{:?}", shamir_recovery_brief_certificate).starts_with(
-            // Ignore `per_recipient_shares` as, as a HashMap, it output is not stable accross runs
+            // Ignore `per_recipient_shares` as, as a HashMap, it output is not stable across runs
             concat!(
                 "ShamirRecoveryBriefCertificate {",
                 " author: DeviceID(\"alice@dev1\"),",
