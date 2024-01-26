@@ -400,4 +400,34 @@ describe('Check folders page', () => {
     cy.get('@backButton').should('not.have.class', 'button-disabled');
     cy.get('@forwardButton').should('have.class', 'button-disabled');
   });
+
+  it('Check reader role', () => {
+    cy.get('.list-workspaces').find('.list-workspaces__header').contains('All Workspaces').click();
+    cy.get('.workspaces-grid-item').eq(2).contains("Watcher's Keep").click();
+
+    cy.get('#folders-ms-action-bar').find('#button-new-folder').should('not.be.visible');
+    cy.get('#folders-ms-action-bar').find('#button-import').should('not.be.visible');
+
+    cy.get('.file-list-item').eq(0).trigger('mouseenter');
+    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
+
+    cy.get('#folders-ms-action-bar').find('#button-rename').should('not.be.visible');
+    cy.get('#folders-ms-action-bar').find('#button-moveto').should('not.be.visible');
+    cy.get('#folders-ms-action-bar').find('#button-makeacopy').should('not.be.visible');
+    cy.get('#folders-ms-action-bar').find('#button-delete').should('not.be.visible');
+
+    cy.get('#folders-ms-action-bar').find('#button-copy-link').should('not.have.css', 'display', 'none');
+    cy.get('#folders-ms-action-bar').find('#button-details').should('not.have.css', 'display', 'none');
+
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
+    cy.get('#file-context-menu').should('be.visible');
+    cy.get('#file-context-menu').find('ion-item').as('menuItems').should('have.length', 7);
+    cy.get('@menuItems').eq(0).contains('Manage file');
+    cy.get('@menuItems').eq(1).contains('Open');
+    cy.get('@menuItems').eq(2).contains('History');
+    cy.get('@menuItems').eq(3).contains('Download');
+    cy.get('@menuItems').eq(4).contains('Details');
+    cy.get('@menuItems').eq(5).contains('Collaboration');
+    cy.get('@menuItems').eq(6).contains('Copy link');
+  });
 });

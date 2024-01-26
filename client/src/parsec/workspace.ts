@@ -80,6 +80,16 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         isBootstrapped: true,
         sharing: [],
       },
+      {
+        id: '3',
+        name: "Watcher's Keep",
+        selfCurrentRole: WorkspaceRole.Reader,
+        size: 56_153_023,
+        lastUpdated: DateTime.now(),
+        availableOffline: true,
+        isStarted: false,
+        sharing: [],
+      },
     ];
 
     for (let i = 0; i < value.length; i++) {
@@ -91,6 +101,20 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
 
     return { ok: true, value: value };
   }
+}
+
+export async function getWorkspaceRole(workspaceId: WorkspaceID): Promise<WorkspaceRole> {
+  const result = await listWorkspaces();
+
+  if (result.ok) {
+    const workspaceInfo = result.value.find((wi) => wi.id === workspaceId);
+    if (workspaceInfo) {
+      return workspaceInfo.selfCurrentRole;
+    }
+  }
+
+  // Role with lowest permissions by default
+  return WorkspaceRole.Reader;
 }
 
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {
@@ -125,6 +149,8 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
       return { ok: true, value: 'Trademeet' };
     } else if (workspaceId === '2') {
       return { ok: true, value: 'The Copper Coronet' };
+    } else if (workspaceId === '3') {
+      return { ok: true, value: "Watcher's Keep" };
     } else {
       return { ok: true, value: 'My Workspace' };
     }

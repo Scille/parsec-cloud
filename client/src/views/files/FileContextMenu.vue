@@ -11,6 +11,7 @@
         </ion-item>
         <ion-item
           button
+          v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.Rename)"
           class="group-item"
         >
@@ -21,6 +22,7 @@
         </ion-item>
         <ion-item
           button
+          v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.MoveTo)"
           class="group-item"
         >
@@ -32,6 +34,7 @@
 
         <ion-item
           button
+          v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.MakeACopy)"
           class="group-item"
         >
@@ -43,6 +46,7 @@
 
         <ion-item
           button
+          v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.Delete)"
           class="group-item"
         >
@@ -76,7 +80,7 @@
 
         <ion-item
           button
-          v-show="!isDesktop()"
+          v-if="!isDesktop()"
           @click="onClick(FileAction.Download)"
           class="group-item"
         >
@@ -133,9 +137,13 @@ export enum FileAction {
 </script>
 
 <script setup lang="ts">
-import { isDesktop } from '@/parsec';
+import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
+
+defineProps<{
+  role: WorkspaceRole;
+}>();
 
 async function onClick(action: FileAction): Promise<boolean> {
   return await popoverController.dismiss({ action: action });
