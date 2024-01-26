@@ -160,10 +160,16 @@ pub fn rep_author_not_allowed() {
 pub fn rep_bad_key_index() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "bad_key_index"
-    let raw = hex!("81a6737461747573ad6261645f6b65795f696e646578");
+    let raw = hex!(
+        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f6365"
+        "7274696669636174655f74696d657374616d70d70141cc375188000000"
+    );
 
-    let expected = authenticated_cmds::vlob_create::Rep::BadKeyIndex;
+    let expected = authenticated_cmds::vlob_create::Rep::BadKeyIndex {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
 
@@ -284,11 +290,18 @@ pub fn rep_organization_not_sequestered() {
 pub fn rep_sequester_inconsistency() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_common_certificate_timestamp: ext(1, 946774800.0)
     //   status: "sequester_inconsistency"
     //
-    let raw = hex!("81a6737461747573b77365717565737465725f696e636f6e73697374656e6379");
+    let raw = hex!(
+        "82a6737461747573b77365717565737465725f696e636f6e73697374656e6379d9216c6173"
+        "745f636f6d6d6f6e5f63657274696669636174655f74696d657374616d70d70141cc375188"
+        "000000"
+    );
 
-    let expected = authenticated_cmds::vlob_create::Rep::SequesterInconsistency;
+    let expected = authenticated_cmds::vlob_create::Rep::SequesterInconsistency {
+        last_common_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
 

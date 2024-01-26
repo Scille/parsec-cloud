@@ -70,10 +70,17 @@ pub fn rep_ok() {
 pub fn rep_initial_name_already_exists() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "initial_name_already_exists"
-    let raw = hex!("81a6737461747573bb696e697469616c5f6e616d655f616c72656164795f657869737473");
+    let raw = hex!(
+        "82a6737461747573bb696e697469616c5f6e616d655f616c72656164795f657869737473d9"
+        "206c6173745f7265616c6d5f63657274696669636174655f74696d657374616d70d70141cc"
+        "375188000000"
+    );
 
-    let expected = authenticated_cmds::realm_rename::Rep::InitialNameAlreadyExists;
+    let expected = authenticated_cmds::realm_rename::Rep::InitialNameAlreadyExists {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::realm_rename::Rep::load(&raw).unwrap();
 
@@ -135,6 +142,32 @@ pub fn rep_realm_not_found() {
     let raw = hex!("81a6737461747573af7265616c6d5f6e6f745f666f756e64");
 
     let expected = authenticated_cmds::realm_rename::Rep::RealmNotFound;
+
+    let data = authenticated_cmds::realm_rename::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::realm_rename::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
+pub fn rep_bad_key_index() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
+    //   status: "bad_key_index"
+    let raw = hex!(
+        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f6365"
+        "7274696669636174655f74696d657374616d70d70141cc375188000000"
+    );
+
+    let expected = authenticated_cmds::realm_rename::Rep::BadKeyIndex {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::realm_rename::Rep::load(&raw).unwrap();
 

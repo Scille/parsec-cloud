@@ -131,14 +131,14 @@ pub fn rep_enrollment_id_already_used() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_email_already_used() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_already_enrolled() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "email_already_used"
+    //   status: "already_enrolled"
     //
-    let raw = hex!("81a6737461747573b2656d61696c5f616c72656164795f75736564");
+    let raw = hex!("81a6737461747573b0616c72656164795f656e726f6c6c6564");
 
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::EmailAlreadyUsed;
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::AlreadyEnrolled;
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();
 
@@ -152,14 +152,14 @@ pub fn rep_email_already_used() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_already_enrolled() {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+pub fn rep_email_already_enrolled() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "already_enrolled"
+    //   status: "email_already_enrolled"
     //
-    let raw = hex!("81a6737461747573b0616c72656164795f656e726f6c6c6564");
+    let raw = hex!("81a6737461747573b6656d61696c5f616c72656164795f656e726f6c6c6564");
 
-    let expected = anonymous_cmds::pki_enrollment_submit::Rep::AlreadyEnrolled;
+    let expected = anonymous_cmds::pki_enrollment_submit::Rep::EmailAlreadyEnrolled;
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();
 

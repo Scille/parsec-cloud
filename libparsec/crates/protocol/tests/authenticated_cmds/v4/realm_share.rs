@@ -197,10 +197,16 @@ pub fn rep_require_greater_timestamp() {
 pub fn rep_bad_key_index() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "bad_key_index"
-    let raw = hex!("81a6737461747573ad6261645f6b65795f696e646578");
+    let raw = hex!(
+        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f6365"
+        "7274696669636174655f74696d657374616d70d70141cc375188000000"
+    );
 
-    let expected = authenticated_cmds::realm_share::Rep::BadKeyIndex;
+    let expected = authenticated_cmds::realm_share::Rep::BadKeyIndex {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::realm_share::Rep::load(&raw).unwrap();
 
@@ -217,9 +223,16 @@ pub fn rep_bad_key_index() {
 pub fn rep_role_already_granted() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "role_already_granted"
-    let raw = hex!("81a6737461747573b4726f6c655f616c72656164795f6772616e746564");
-    let expected = authenticated_cmds::realm_share::Rep::RoleAlreadyGranted;
+    let raw = hex!(
+        "82a6737461747573b4726f6c655f616c72656164795f6772616e746564d9206c6173745f72"
+        "65616c6d5f63657274696669636174655f74696d657374616d70d70141cc375188000000"
+    );
+
+    let expected = authenticated_cmds::realm_share::Rep::RoleAlreadyGranted {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::realm_share::Rep::load(&raw).unwrap();
 

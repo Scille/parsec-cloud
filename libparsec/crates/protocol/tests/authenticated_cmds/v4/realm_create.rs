@@ -88,10 +88,16 @@ pub fn rep_invalid_certificate() {
 pub fn rep_realm_already_exists() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
+    //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "realm_already_exists"
-    let raw = hex!("81a6737461747573b47265616c6d5f616c72656164795f657869737473");
+    let raw = hex!(
+        "82a6737461747573b47265616c6d5f616c72656164795f657869737473d9206c6173745f72"
+        "65616c6d5f63657274696669636174655f74696d657374616d70d70141cc375188000000"
+    );
 
-    let expected = authenticated_cmds::realm_create::Rep::RealmAlreadyExists;
+    let expected = authenticated_cmds::realm_create::Rep::RealmAlreadyExists {
+        last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    };
 
     let data = authenticated_cmds::realm_create::Rep::load(&raw).unwrap();
 
