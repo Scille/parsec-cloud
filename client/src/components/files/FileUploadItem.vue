@@ -45,12 +45,27 @@
       </div>
 
       <!-- waiting -->
-      <ion-text
-        class="waiting-text body"
-        v-if="state === ImportState.FileAdded"
-      >
-        {{ $t('FoldersPage.ImportFile.waiting') }}
-      </ion-text>
+      <div class="waiting-info">
+        <ion-text
+          class="waiting-text body"
+          v-if="state === ImportState.FileAdded"
+        >
+          {{ $t('FoldersPage.ImportFile.waiting') }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          size="small"
+          class="cancel-button"
+          v-if="state === ImportState.FileAdded"
+          @click="$emit('importCancel', importData.id)"
+        >
+          <ion-icon
+            class="cancel-button__icon"
+            slot="icon-only"
+            :icon="close"
+          />
+        </ion-button>
+      </div>
 
       <!-- in progress -->
       <ion-button
@@ -196,7 +211,7 @@ defineEmits<{
 
   .checkmark-icon,
   .arrow-icon,
-  .waiting-text,
+  .waiting-info,
   .cancel-button,
   .failed-text,
   .cancel-text,
@@ -206,12 +221,7 @@ defineEmits<{
 }
 
 // states of the element-container
-.waiting {
-  .waiting-text {
-    color: var(--parsec-color-light-primary-700);
-  }
-}
-
+.waiting,
 .progress {
   .cancel-button {
     color: var(--parsec-color-light-secondary-text);
@@ -221,6 +231,29 @@ defineEmits<{
       padding: 0.25rem;
     }
   }
+}
+
+.waiting {
+  .waiting-text {
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  .cancel-button {
+    display: none;
+  }
+
+  &:hover {
+    .waiting-text {
+      display: none;
+    }
+
+    .cancel-button {
+      display: block;
+    }
+  }
+}
+
+.progress {
   .element-progress-bar {
     --progress-background: var(--parsec-color-light-primary-300);
   }
@@ -228,13 +261,13 @@ defineEmits<{
 
 .done {
   cursor: pointer;
+  background: var(--parsec-color-light-primary-50);
 
   .hover-state {
     display: none;
   }
 
   &:hover {
-    background: var(--parsec-color-light-primary-50);
     .default-state {
       display: none;
     }
