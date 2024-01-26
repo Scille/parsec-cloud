@@ -364,12 +364,14 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         return certif
 
+    @override
     async def rename(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_name_certificate: bytes,
+        initial_name_or_fail: bool,
     ) -> (
         RealmNameCertificate
         | RealmRenameValidateBadOutcome
@@ -411,6 +413,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         if realm.get_current_role_for(author.user_id) != RealmRole.OWNER:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
+        # We only accept the last key
+        if len(realm.key_rotations) != certif.key_index:
+            return RealmRenameStoreBadOutcome.BAD_KEY_INDEX
+
+        if initial_name_or_fail and realm.renames:
+            return RealmRenameStoreBadOutcome.INITIAL_NAME_ALREADY_EXISTS
+
         realm.renames.append(
             MemoryRealmRename(
                 cooked=certif,
@@ -430,6 +439,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         return certif
 
+    @override
     async def rotate_key(
         self,
         now: DateTime,
@@ -514,6 +524,7 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         return certif
 
+    @override
     async def get_keys_bundle_as_user(
         self,
         organization_id: OrganizationID,

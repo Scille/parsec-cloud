@@ -430,6 +430,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         realm_name_certificate=certif,
+        initial_name_or_fail=False,
     )
     assert isinstance(outcome, RealmNameCertificate)
 

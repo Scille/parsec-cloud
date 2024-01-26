@@ -262,6 +262,7 @@ class Backend:
                     organization_id=org_id,
                     author=event.author,
                     realm_name_certificate=event.raw_certificate,
+                    initial_name_or_fail=False,
                 )
                 assert isinstance(outcome, RealmNameCertificate)
             elif isinstance(event, testbed.TestbedEventRotateKeyRealm):

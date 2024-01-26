@@ -288,6 +288,8 @@ RealmRenameStoreBadOutcome = Enum(
         "AUTHOR_NOT_FOUND",
         "AUTHOR_REVOKED",
         "AUTHOR_NOT_ALLOWED",
+        "BAD_KEY_INDEX",
+        "INITIAL_NAME_ALREADY_EXISTS",
     ),
 )
 RealmRotateKeyStoreBadOutcome = Enum(
@@ -396,6 +398,7 @@ class BaseRealmComponent:
         organization_id: OrganizationID,
         author: DeviceID,
         realm_name_certificate: bytes,
+        initial_name_or_fail: bool,
     ) -> (
         RealmNameCertificate
         | RealmRenameValidateBadOutcome
@@ -609,6 +612,7 @@ class BaseRealmComponent:
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_name_certificate=req.realm_name_certificate,
+            initial_name_or_fail=req.initial_name_or_fail,
         )
         match outcome:
             case RealmNameCertificate():
@@ -630,6 +634,10 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_rename.RepRealmNotFound()
             case RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rename.RepAuthorNotAllowed()
+            case RealmRenameStoreBadOutcome.BAD_KEY_INDEX:
+                return authenticated_cmds.latest.realm_rename.RepBadKeyIndex()
+            case RealmRenameStoreBadOutcome.INITIAL_NAME_ALREADY_EXISTS:
+                return authenticated_cmds.latest.realm_rename.RepInitialNameAlreadyExists()
             case RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED:
