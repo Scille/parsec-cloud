@@ -30,7 +30,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $t('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
-          <span class="text-counter">{{ importingItems.length }}</span>
+          <span class="text-counter">{{ importingItems.length > 99 ? '+99' : importingItems.length }}</span>
         </div>
       </ion-item>
 
@@ -41,7 +41,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $t('FoldersPage.ImportFile.tabs.done') }}</ion-text>
-          <span class="text-counter">{{ doneItems.length }}</span>
+          <span class="text-counter">{{ doneItems.length > 99 ? '+99' : doneItems.length }}</span>
         </div>
       </ion-item>
 
@@ -52,7 +52,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $t('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
-          <span class="text-counter">{{ errorItems.length }}</span>
+          <span class="text-counter">{{ errorItems.length > 99 ? '+99' : errorItems.length }}</span>
         </div>
       </ion-item>
     </ion-list>
@@ -291,7 +291,7 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
           line-height: normal;
           padding-inline: 0.25rem;
           background: var(--parsec-color-light-secondary-disabled);
-          border-radius: var(--parsec-radius-8);
+          border-radius: var(--parsec-radius-12);
         }
       }
 
