@@ -267,7 +267,7 @@ If you don't want to install Parsec server via Docker, you can install it on bar
 Requirements
 ------------
 
-- Python v3.9 with ``pip`` and ``venv`` modules
+- Python v3.12 with ``pip`` and ``venv`` modules
 - A S3 like object storage endpoint.
 - A postgres-14 database endpoint.
 - A TLS certificate & key for the server.
