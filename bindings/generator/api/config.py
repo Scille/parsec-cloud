@@ -20,6 +20,7 @@ class ClientConfig(Structure):
     data_base_dir: Path
     mountpoint_base_dir: Path
     workspace_storage_cache_size: WorkspaceStorageCacheSize
+    with_monitors: bool
 
 
 def get_default_data_base_dir() -> Path:

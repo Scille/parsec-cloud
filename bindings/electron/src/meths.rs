@@ -336,11 +336,16 @@ fn struct_client_config_js_to_rs<'a>(
         let js_val: Handle<JsObject> = obj.get(cx, "workspaceStorageCacheSize")?;
         variant_workspace_storage_cache_size_js_to_rs(cx, js_val)?
     };
+    let with_monitors = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "withMonitors")?;
+        js_val.value(cx)
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
         mountpoint_base_dir,
         workspace_storage_cache_size,
+        with_monitors,
     })
 }
 
@@ -396,6 +401,8 @@ fn struct_client_config_rs_to_js<'a>(
         "workspaceStorageCacheSize",
         js_workspace_storage_cache_size,
     )?;
+    let js_with_monitors = JsBoolean::new(cx, rs_obj.with_monitors);
+    js_obj.set(cx, "withMonitors", js_with_monitors)?;
     Ok(js_obj)
 }
 

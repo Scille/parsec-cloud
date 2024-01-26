@@ -66,6 +66,7 @@ export interface ClientConfig {
     dataBaseDir: string
     mountpointBaseDir: string
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
+    withMonitors: boolean
 }
 
 

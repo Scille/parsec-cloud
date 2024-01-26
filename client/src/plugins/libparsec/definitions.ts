@@ -91,6 +91,7 @@ export interface ClientConfig {
     dataBaseDir: Path
     mountpointBaseDir: Path
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
+    withMonitors: boolean
 }
 
 export interface ClientInfo {

@@ -363,11 +363,19 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
         let js_val = Reflect::get(&obj, &"workspaceStorageCacheSize".into())?;
         variant_workspace_storage_cache_size_js_to_rs(js_val)?
     };
+    let with_monitors = {
+        let js_val = Reflect::get(&obj, &"withMonitors".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
         mountpoint_base_dir,
         workspace_storage_cache_size,
+        with_monitors,
     })
 }
 
@@ -424,6 +432,8 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         &"workspaceStorageCacheSize".into(),
         &js_workspace_storage_cache_size,
     )?;
+    let js_with_monitors = rs_obj.with_monitors.into();
+    Reflect::set(&js_obj, &"withMonitors".into(), &js_with_monitors)?;
     Ok(js_obj)
 }
 
