@@ -158,8 +158,10 @@ PkiEnrollmentSubmitBadOutcome = Enum(
         "ORGANIZATION_NOT_FOUND",
         "ORGANIZATION_EXPIRED",
         "ENROLLMENT_ALREADY_EXISTS",
+        "ENROLLMENT_ID_ALREADY_USED",
         "X509_CERTIFICATE_ALREADY_ENROLLED",
         "USER_EMAIL_ALREADY_ENROLLED",
+        "INVALID_SUBMIT_PAYLOAD",
     ),
 )
 PkiEnrollmentInfoBadOutcome = Enum(
@@ -205,6 +207,7 @@ PkiEnrollmentAcceptStoreBadOutcome = Enum(
         "USER_ALREADY_EXISTS",
         "HUMAN_HANDLE_ALREADY_TAKEN",
         "ACTIVE_USERS_LIMIT_REACHED",
+        "INVALID_ACCEPT_PAYLOAD",
     ),
 )
 
@@ -251,6 +254,7 @@ class BasePkiEnrollmentComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         enrollment_id: EnrollmentID,
         accept_payload: bytes,
         accept_payload_signature: bytes,
@@ -343,7 +347,11 @@ class BasePkiEnrollmentComponent:
             case PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED:
                 return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
             case PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED:
-                return anonymous_cmds.latest.pki_enrollment_submit.RepAlreadyEnrolled()
+                return anonymous_cmds.latest.pki_enrollment_submit.RepEmailAlreadyEnrolled()
+            case PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepEnrollmentIdAlreadyUsed()
+            case PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD:
+                return anonymous_cmds.latest.pki_enrollment_submit.RepInvalidPayloadData()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED:
@@ -432,6 +440,7 @@ class BasePkiEnrollmentComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             enrollment_id=req.enrollment_id,
             accept_payload=req.accept_payload,
             accept_payload_signature=req.accept_payload_signature,
@@ -458,6 +467,8 @@ class BasePkiEnrollmentComponent:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepEnrollmentNotFound()
             case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.pki_enrollment_accept.RepAuthorNotAllowed()
+            case PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD:
+                return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidPayloadData()
             case PkiEnrollmentAcceptValidateBadOutcome():
                 return authenticated_cmds.latest.pki_enrollment_accept.RepInvalidCertificate()
             case TimestampOutOfBallpark() as error:

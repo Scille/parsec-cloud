@@ -10,6 +10,8 @@ from parsec._parsec import (
     DeviceID,
     EnrollmentID,
     OrganizationID,
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
     UserCertificate,
     UserID,
     UserProfile,
@@ -19,11 +21,13 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
+    MemoryDevice,
     MemoryPkiEnrollment,
     MemoryPkiEnrollmentInfoAccepted,
     MemoryPkiEnrollmentInfoCancelled,
     MemoryPkiEnrollmentInfoRejected,
     MemoryPkiEnrollmentState,
+    MemoryUser,
 )
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
@@ -42,7 +46,7 @@ from parsec.components.pki import (
     PkiEnrollmentSubmitX509CertificateAlreadySubmitted,
     pki_enrollment_accept_validate,
 )
-from parsec.events import EventPkiEnrollment
+from parsec.events import EventCommonCertificate, EventPkiEnrollment
 
 
 class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
@@ -70,7 +74,12 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             return PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED
 
         if enrollment_id in org.pki_enrollments:
-            return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ALREADY_EXISTS
+            return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
+
+        try:
+            PkiEnrollmentSubmitPayload.load(submit_payload)
+        except ValueError:
+            return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
 
         # Try to retrieve the last attempt with this x509 certificate
         for enrollment in org.pki_enrollments.values():
@@ -311,6 +320,11 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if author_user.current_profile != UserProfile.ADMIN:
             return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
+        try:
+            PkiEnrollmentAnswerPayload.load(accept_payload)
+        except ValueError:
+            return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
+
         match pki_enrollment_accept_validate(
             now=now,
             expected_author=author,
@@ -345,12 +359,32 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
         # All checks are good, now we do the actual insertion
 
+        org.users[u_certif.user_id] = MemoryUser(
+            cooked=u_certif,
+            user_certificate=user_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+        )
+
+        # Sanity check, should never occurs given user doesn't exist yet !
+        assert d_certif.device_id not in org.devices
+        org.devices[d_certif.device_id] = MemoryDevice(
+            cooked=d_certif,
+            device_certificate=device_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+
         enrollment.enrollment_state = MemoryPkiEnrollmentState.ACCEPTED
+        enrollment.accepter = author
+        enrollment.submitter_accepted_device = d_certif.device_id
         enrollment.info_accepted = MemoryPkiEnrollmentInfoAccepted(
             accepted_on=now,
             accept_payload=accept_payload,
             accept_payload_signature=accept_payload_signature,
             accepter_der_x509_certificate=accepter_der_x509_certificate,
+        )
+
+        await self._event_bus.send(
+            EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
         )
 
         await self._event_bus.send(

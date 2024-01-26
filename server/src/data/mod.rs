@@ -2,9 +2,11 @@
 
 mod certif;
 mod manifest;
+mod pki;
 
 pub(crate) use certif::*;
 pub(crate) use manifest::*;
+pub(crate) use pki::*;
 
 use pyo3::{types::PyModule, wrap_pyfunction, PyResult};
 
@@ -35,6 +37,12 @@ pub(crate) fn add_mod(m: &PyModule) -> PyResult<()> {
     m.add_class::<UserManifest>()?;
     m.add_function(wrap_pyfunction!(child_manifest_decrypt_verify_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(child_manifest_verify_and_load, m)?)?;
+
+    // Pki
+    m.add_class::<PkiEnrollmentAnswerPayload>()?;
+    m.add_class::<PkiEnrollmentSubmitPayload>()?;
+    m.add_class::<X509Certificate>()?;
+    m.add_class::<LocalPendingEnrollment>()?;
 
     Ok(())
 }

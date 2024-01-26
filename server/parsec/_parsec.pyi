@@ -80,6 +80,12 @@ from parsec._parsec_pyi.manifest import (
     child_manifest_verify_and_load,
 )
 from parsec._parsec_pyi.misc import ApiVersion
+from parsec._parsec_pyi.pki import (
+    LocalPendingEnrollment,
+    PkiEnrollmentAnswerPayload,
+    PkiEnrollmentSubmitPayload,
+    X509Certificate,
+)
 from parsec._parsec_pyi.protocol import (
     ActiveUsersLimit,
     anonymous_cmds,
@@ -164,6 +170,11 @@ __all__ = [
     "child_manifest_verify_and_load",
     # Time
     "DateTime",
+    # Pki
+    "PkiEnrollmentAnswerPayload",
+    "PkiEnrollmentSubmitPayload",
+    "X509Certificate",
+    "LocalPendingEnrollment",
     # Protocol Cmd
     "authenticated_cmds",
     "anonymous_cmds",

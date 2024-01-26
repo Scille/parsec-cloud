@@ -16,6 +16,7 @@ from parsec._parsec import (
     OrganizationID,
     SigningKey,
     UserID,
+    VerifyKey,
     VlobID,
     authenticated_cmds,
 )
@@ -231,6 +232,17 @@ class CoolorgRpcClients:
             return self._mallory
         self._mallory = self._init_for("mallory")
         return self._mallory
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
 
     def _init_for(self, user: str) -> AuthenticatedRpcClient:
         for event in self.testbed_template.events:
