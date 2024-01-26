@@ -17,7 +17,13 @@
                 "status": "ok"
             },
             {
-                "status": "realm_already_exists"
+                "status": "realm_already_exists",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"

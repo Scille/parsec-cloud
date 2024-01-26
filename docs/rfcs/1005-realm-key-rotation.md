@@ -267,8 +267,14 @@ It is similar to the `realm_update_roles` with the following changes:
 
             },
             {
-                // If the `key_index` in the certificate is not currently the realm's last one
-                "status": "bad_key_index"
+                // If the `key_index` in the certificate is not currently the realm's last plus one
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "RequiredOption<DateTime>"
+                    }
+                ]
             },
             {
                 "status": "participant_mismatch"
@@ -419,14 +425,27 @@ This brings three benefits:
                 "status": "ok"
             },
             {
-                "status": "initial_name_already_exists"
+                "status": "initial_name_already_exists",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 // Realm doesn't exist, or user has no access on it
                 "status": "author_not_allowed"
             },
             {
-                "status": "bad_key_index"
+                // If the `key_index` in the certificate is not currently the realm's last
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "RequiredOption<DateTime>"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"

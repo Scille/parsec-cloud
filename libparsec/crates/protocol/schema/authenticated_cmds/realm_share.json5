@@ -42,10 +42,23 @@
                 "status": "role_incompatible_with_outsider"
             },
             {
-                "status": "role_already_granted"
+                "status": "role_already_granted",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
-                "status": "bad_key_index"
+                // If the `key_index` in the certificate is not currently the realm's last
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"

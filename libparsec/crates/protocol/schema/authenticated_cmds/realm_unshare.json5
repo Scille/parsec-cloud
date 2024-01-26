@@ -27,7 +27,13 @@
                 "status": "recipient_not_found"
             },
             {
-                "status": "recipient_already_unshared"
+                "status": "recipient_already_unshared",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"
