@@ -225,8 +225,8 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
             ReplaceRegex(
-                r"python_version = \d.\d+",
-                hide_patch_version("python_version = {version}"),
+                r"python_version = \"\d.\d+\"",
+                hide_patch_version('python_version = "{version}"'),
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
