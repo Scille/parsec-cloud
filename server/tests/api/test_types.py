@@ -65,7 +65,8 @@ def test_normalization(cls):
 
 @pytest.mark.parametrize("cls", (UserID, DeviceName, OrganizationID))
 @pytest.mark.parametrize(
-    "data", ("x", "x" * 32, "飞" * 10 + "xx", "X1-_é飞")  # 32 bytes long utf8 string  # Mix-and-match
+    "data",
+    ("x", "x" * 32, "飞" * 10 + "xx", "X1-_é飞"),  # 32 bytes long utf8 string  # Mix-and-match
 )
 def test_good_pattern(cls, data):
     cls(data)
@@ -213,7 +214,8 @@ def test_invalid_entry_name(data):
 
 def test_entry_name_normalization():
     nfc_str = normalize(
-        "NFC", "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż"  # cspell: disable-line
+        "NFC",
+        "àáâäæãåāçćčèéêëēėęîïíīįìłñńôöòóœøōõßśšûüùúūÿžźż",  # cspell: disable-line
     )
     nfd_str = normalize("NFD", nfc_str)
 

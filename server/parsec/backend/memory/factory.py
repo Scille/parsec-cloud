@@ -73,7 +73,7 @@ async def components_factory(  # type: ignore[misc]
             method(**components)
 
     async def _dispatch_event() -> None:
-        async for (event_id, event) in receive_events_channel:
+        async for event_id, event in receive_events_channel:
             await trio.sleep(0)
             events.add_event_to_cache(event_id, event)
             event_bus.send(type(event), event_id=event_id, payload=event)

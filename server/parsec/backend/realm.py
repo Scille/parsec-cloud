@@ -362,9 +362,7 @@ class BaseRealmComponent:
             return authenticated_cmds.latest.realm_start_reencryption_maintenance.RepNotFound(None)
 
         except RealmEncryptionRevisionError:
-            return (
-                authenticated_cmds.latest.realm_start_reencryption_maintenance.RepBadEncryptionRevision()
-            )
+            return authenticated_cmds.latest.realm_start_reencryption_maintenance.RepBadEncryptionRevision()
 
         except RealmParticipantsMismatchError:
             return authenticated_cmds.latest.realm_start_reencryption_maintenance.RepParticipantMismatch(
@@ -404,9 +402,7 @@ class BaseRealmComponent:
             return authenticated_cmds.latest.realm_finish_reencryption_maintenance.RepNotFound(None)
 
         except RealmEncryptionRevisionError:
-            return (
-                authenticated_cmds.latest.realm_finish_reencryption_maintenance.RepBadEncryptionRevision()
-            )
+            return authenticated_cmds.latest.realm_finish_reencryption_maintenance.RepBadEncryptionRevision()
 
         except RealmNotInMaintenanceError:
             return (

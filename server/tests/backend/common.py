@@ -247,7 +247,12 @@ realm_finish_reencryption_maintenance = CmdSock(
 
 vlob_create = CmdSock(
     authenticated_cmds.latest.vlob_create,
-    parse_args=lambda realm_id, vlob_id, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
+    parse_args=lambda realm_id,
+    vlob_id,
+    blob,
+    timestamp=None,
+    encryption_revision=1,
+    sequester_blob=None: {
         "realm_id": realm_id,
         "vlob_id": vlob_id,
         "blob": blob,
@@ -277,7 +282,12 @@ apiv2v3_vlob_read = CmdSock(
 )
 vlob_update = CmdSock(
     authenticated_cmds.latest.vlob_update,
-    parse_args=lambda vlob_id, version, blob, timestamp=None, encryption_revision=1, sequester_blob=None: {
+    parse_args=lambda vlob_id,
+    version,
+    blob,
+    timestamp=None,
+    encryption_revision=1,
+    sequester_blob=None: {
         "vlob_id": vlob_id,
         "version": version,
         "blob": blob,
@@ -370,7 +380,10 @@ apiv2v3_human_find = CmdSock(
 )
 user_create = CmdSock(
     authenticated_cmds.latest.user_create,
-    parse_args=lambda user_certificate, device_certificate, redacted_user_certificate, redacted_device_certificate: {
+    parse_args=lambda user_certificate,
+    device_certificate,
+    redacted_user_certificate,
+    redacted_device_certificate: {
         k: v
         for k, v in {
             "user_certificate": user_certificate,

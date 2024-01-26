@@ -322,9 +322,9 @@ class EventsComponent:
         if missed_events is None:
             missed_events = deque((None,))
 
-        async def _next_event_cb() -> tuple[
-            str, authenticated_cmds.latest.events_listen.Rep
-        ] | None:
+        async def _next_event_cb() -> (
+            tuple[str, authenticated_cmds.latest.events_listen.Rep] | None
+        ):
             while True:
                 # First return the events the client has missed since it last deconnection
 

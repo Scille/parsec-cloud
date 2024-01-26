@@ -123,8 +123,8 @@ repos:
   #   handling .pyi), it's more readable then to have all the config here then.
   - repo: local
     hooks:
-      - id: ruff
-        name: ruff (using `poetry run ruff`)
+      - id: ruff-check
+        name: ruff-check (using `poetry run ruff check`)
         entry: poetry --directory ./server run ruff check
         require_serial: true
         language: system
@@ -136,15 +136,16 @@ repos:
             --fix,
           ]
 
-      - id: black
-        name: black (using `poetry run black`)
-        entry: poetry --directory ./server run black
+      - id: ruff-fmt
+        name: ruff-fmt (using `poetry run ruff format`)
+        entry: poetry --directory ./server run ruff format
         require_serial: true
         language: system
         types_or: [ python, pyi ]
         args:
           [
-            --line-length=100,
+            --config=server/pyproject.toml,
+            --exclude=client/*,
           ]
 
       - id: mypy

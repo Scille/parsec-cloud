@@ -238,7 +238,7 @@ def query(
     if in_transaction:
 
         def decorator(
-            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]],
         ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             @wraps(fn)
             async def wrapper(
@@ -252,7 +252,7 @@ def query(
     else:
 
         def decorator(
-            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]
+            fn: Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]],
         ) -> Callable[Concatenate[triopg._triopg.TrioConnectionProxy, P], Awaitable[T]]:
             return fn
 

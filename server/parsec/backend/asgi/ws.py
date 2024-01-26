@@ -190,9 +190,7 @@ async def _handle_client_websocket_loop(
             cmd_func = cast(Callable[[Any, Any], Awaitable[Any]], backend.apis[type(req)])
 
             try:
-                if cmd_func._api_info[  # type: ignore[attr-defined]
-                    "cancel_on_client_sending_new_cmd"
-                ]:
+                if cmd_func._api_info["cancel_on_client_sending_new_cmd"]:  # type: ignore[attr-defined]
                     rep = await run_with_cancel_on_client_sending_new_cmd(
                         websocket, cmd_func, client_ctx, req
                     )

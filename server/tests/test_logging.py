@@ -186,11 +186,11 @@ def test_structlog_log_format(log_format):
     if log_format == "CONSOLE":
         expected_log = (
             # fmt: off
-            '2010-11-18T05:52:00.000Z [warning  ] It is over 9000 !              power=9000 target=Goku\n'
-            'Traceback (most recent call last):\n'
+            "2010-11-18T05:52:00.000Z [warning  ] It is over 9000 !              power=9000 target=Goku\n"
+            "Traceback (most recent call last):\n"
             '  File "<workdir>/tests/test_logging.py", line 42, in generate_raised_exception\n'
-            '    raise exc_factory()\n'
-            'RuntimeError: D\'oh !\n'
+            "    raise exc_factory()\n"
+            "RuntimeError: D'oh !\n"
             # fmt: on
         )
         assert log == expected_log
@@ -205,8 +205,8 @@ def test_structlog_log_format(log_format):
             '"timestamp": "2010-11-18T05:52:00.000Z", '
             '"exception": "Traceback (most recent call last):\\n'
             '  File \\"<workdir>/tests/test_logging.py\\", line 42, in generate_raised_exception\\n'
-            '    raise exc_factory()\\n'
-            'RuntimeError: D\'oh !"}\n'
+            "    raise exc_factory()\\n"
+            "RuntimeError: D'oh !\"}\n"
             # fmt: on
         )
         assert log == expected_log
@@ -238,11 +238,11 @@ def test_stdlib_log_format(log_format):
     if log_format == "CONSOLE":
         expected_log = (
             # fmt: off
-            '2010-11-18T05:52:00.000Z [warning  ] It is over 9000 !              \n'
-            'Traceback (most recent call last):\n'
+            "2010-11-18T05:52:00.000Z [warning  ] It is over 9000 !              \n"
+            "Traceback (most recent call last):\n"
             '  File "<workdir>/tests/test_logging.py", line 42, in generate_raised_exception\n'
-            '    raise exc_factory()\n'
-            'RuntimeError: D\'oh !\n'
+            "    raise exc_factory()\n"
+            "RuntimeError: D'oh !\n"
             # fmt: on
         )
         assert log == expected_log
@@ -255,8 +255,8 @@ def test_stdlib_log_format(log_format):
             '"timestamp": "2010-11-18T05:52:00.000Z", '
             '"exception": "Traceback (most recent call last):\\n'
             '  File \\"<workdir>/tests/test_logging.py\\", line 42, in generate_raised_exception\\n'
-            '    raise exc_factory()\\n'
-            'RuntimeError: D\'oh !"}\n'
+            "    raise exc_factory()\\n"
+            "RuntimeError: D'oh !\"}\n"
             # fmt: on
         )
         assert log == expected_log
@@ -289,8 +289,8 @@ def test_exception_handling(family):
         '"timestamp": "2010-11-18T05:52:00.000Z", '
         '"exception": "Traceback (most recent call last):\\n'
         '  File \\"<workdir>/tests/test_logging.py\\", line 42, in generate_raised_exception\\n'
-        '    raise exc_factory()\\n'
-        'RuntimeError: D\'oh !"}\n'
+        "    raise exc_factory()\\n"
+        "RuntimeError: D'oh !\"}\n"
         # fmt: on
     )
     assert log == expected_log
@@ -320,7 +320,7 @@ def test_exception_handling(family):
         '"exception": "Traceback (most recent call last):\\n'
         '  File \\"<workdir>/tests/test_logging.py\\", line 42, in test_exception_handling'
         '\\n    raise RuntimeError(\\"Don\'t forget me !\\")\\n'
-        'RuntimeError: Don\'t forget me !"}\n'
+        "RuntimeError: Don't forget me !\"}\n"
         # fmt: on
     )
     assert log == expected_log

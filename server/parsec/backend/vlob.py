@@ -516,9 +516,7 @@ class BaseVlobComponent:
             )
 
         except VlobEncryptionRevisionError:
-            return (
-                authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepBadEncryptionRevision()
-            )
+            return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepBadEncryptionRevision()
 
         except VlobMaintenanceError:
             return authenticated_cmds.latest.vlob_maintenance_get_reencryption_batch.RepMaintenanceError(
@@ -561,9 +559,7 @@ class BaseVlobComponent:
             )
 
         except VlobEncryptionRevisionError:
-            return (
-                authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepBadEncryptionRevision()
-            )
+            return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepBadEncryptionRevision()
 
         except VlobMaintenanceError:
             return authenticated_cmds.latest.vlob_maintenance_save_reencryption_batch.RepMaintenanceError(

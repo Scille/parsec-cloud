@@ -272,9 +272,7 @@ io_statistics:
     tasks_waiting_read: {s.io_statistics.tasks_waiting_read}
     tasks_waiting_write: {s.io_statistics.tasks_waiting_write}
     backend: {s.io_statistics.backend}
-""".format(
-                s=stats
-            )
+""".format(s=stats)
         )
 
     def command_ps(self, sout):
