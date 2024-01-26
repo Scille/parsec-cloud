@@ -168,6 +168,9 @@ pub async fn rename_workspace(
                 CertifRenameRealmError::InvalidKeysBundle(err) => {
                     ClientRenameWorkspaceError::InvalidKeysBundle(err)
                 }
+                CertifRenameRealmError::InvalidCertificate(err) => {
+                    ClientRenameWorkspaceError::InvalidCertificate(err)
+                }
                 CertifRenameRealmError::Internal(err) => err.context("Cannot rename realm").into(),
             })?;
 

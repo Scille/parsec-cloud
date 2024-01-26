@@ -174,6 +174,7 @@ pub(super) async fn bootstrap_workspace(
                 // the error: a dedicated monitor should detect the issue, heal the keys
                 // bundle and finally send an event that will re-trigger the bootstrap.
                 CertifRenameRealmError::InvalidKeysBundle(err) => Err(CertifBootstrapWorkspaceError::InvalidKeysBundle(err)),
+                CertifRenameRealmError::InvalidCertificate(err) => Err(CertifBootstrapWorkspaceError::InvalidCertificate(err)),
                 // Unexpected given we have just made sure the realm was created
                 CertifRenameRealmError::UnknownRealm => Err(anyhow::anyhow!(
                     "Cannot upload initial realm name certificate: server doesn't know the realm while we have just made sure it exists !"

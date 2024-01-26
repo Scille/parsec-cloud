@@ -6,9 +6,9 @@ use libparsec_types::prelude::*;
 
 use super::{
     realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError, CertifOps,
-    CertificateBasedActionOutcome, InvalidKeysBundleError, UpTo,
+    CertificateBasedActionOutcome, InvalidCertificateError, InvalidKeysBundleError, UpTo,
 };
-use crate::EventTooMuchDriftWithServerClock;
+use crate::{certif::CertifPollServerError, EventTooMuchDriftWithServerClock};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifRenameRealmError {
@@ -31,6 +31,8 @@ pub enum CertifRenameRealmError {
     NoKey,
     #[error(transparent)]
     InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    #[error(transparent)]
+    InvalidCertificate(#[from] InvalidCertificateError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -117,6 +119,23 @@ async fn rename_realm_internal(
                 certificate_timestamp: timestamp,
             }),
             Rep::InitialNameAlreadyExists => Ok(CertificateBasedActionOutcome::RemoteIdempotent),
+            // There is a new key rotation we don't know about, let's fetch it and retry
+            Rep::BadKeyIndex => {
+                ops.poll_server_for_new_certificates(None)
+                    .await
+                    .map_err(|e| match e {
+                        CertifPollServerError::Stopped => CertifRenameRealmError::Stopped,
+                        CertifPollServerError::Offline => CertifRenameRealmError::Offline,
+                        CertifPollServerError::InvalidCertificate(err) => {
+                            CertifRenameRealmError::InvalidCertificate(err)
+                        }
+                        CertifPollServerError::Internal(err) => err
+                            .context("Cannot poll server for new certificates")
+                            .into(),
+                    })?;
+                timestamp = ops.device.time_provider.now();
+                continue;
+            }
             Rep::RealmNotFound => Err(CertifRenameRealmError::UnknownRealm),
             Rep::AuthorNotAllowed => Err(CertifRenameRealmError::AuthorNotAllowed),
             Rep::RequireGreaterTimestamp {
