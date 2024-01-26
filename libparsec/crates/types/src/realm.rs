@@ -88,7 +88,7 @@ impl TryFrom<RealmKeysBundleData> for RealmKeysBundle {
     type Error = &'static str;
 
     fn try_from(data: RealmKeysBundleData) -> Result<Self, Self::Error> {
-        if data.keys.len() == 0 {
+        if data.keys.is_empty() {
             return Err("RealmKeysBundle must have at least one key");
         }
         Ok(Self {
@@ -104,10 +104,10 @@ impl From<RealmKeysBundle> for RealmKeysBundleData {
     fn from(obj: RealmKeysBundle) -> Self {
         Self {
             ty: Default::default(),
-            author: obj.author.into(),
-            timestamp: obj.timestamp.into(),
-            realm_id: obj.realm_id.into(),
-            keys: obj.keys.into(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            realm_id: obj.realm_id,
+            keys: obj.keys,
         }
     }
 }

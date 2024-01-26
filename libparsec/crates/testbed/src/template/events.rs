@@ -757,13 +757,9 @@ impl TestbedEventRevokeSequesterService {
             assert!(is_sequestered, "Not a sequestered organization");
 
             assert!(
-                builder
-                    .events
-                    .iter()
-                    .find(
-                        |e| matches!(e, TestbedEvent::NewSequesterService(x) if x.id == service_id)
-                    )
-                    .is_some(),
+                builder.events.iter().any(
+                    |e| matches!(e, TestbedEvent::NewSequesterService(x) if x.id == service_id)
+                ),
                 "Sequester service does not exist"
             );
         }
@@ -1350,9 +1346,7 @@ impl TestbedEventShareRealm {
 
     pub fn recipient_keys_bundle_access(&self, template: &TestbedTemplate) -> Option<Bytes> {
         let populate = || {
-            if self.role.is_none() {
-                return None;
-            }
+            self.role?;
 
             if self.custom_keys_bundle_access.is_some() {
                 return self.custom_keys_bundle_access.clone();
@@ -1365,7 +1359,7 @@ impl TestbedEventShareRealm {
                     .rev()
                     .find_map(|e| match e {
                         TestbedEvent::RotateKeyRealm(x) if x.realm == self.realm => {
-                            Some(x.keys_bundle(&template))
+                            Some(x.keys_bundle(template))
                         }
                         _ => None,
                     })
@@ -1664,7 +1658,7 @@ impl TestbedEventRotateKeyRealm {
             let author_signkey = template.device_signing_key(&self.author);
             let encrypted = self
                 .keys_bundle_access_key
-                .encrypt(&bundle.dump_and_sign(&author_signkey));
+                .encrypt(&bundle.dump_and_sign(author_signkey));
             encrypted.into()
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
@@ -1879,7 +1873,7 @@ impl TestbedEventNewShamirRecovery {
 
                 // Share certificates
 
-                for (recipient, _) in &self.per_recipient_shares {
+                for recipient in self.per_recipient_shares.keys() {
                     // TODO: Put a real share here once shamir recovery is implemented
                     let ciphered_share = b"".to_vec();
 
@@ -2054,7 +2048,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 }
                 _ => None,
             })
-            .unwrap_or_else(|| 1);
+            .unwrap_or(1);
 
         let timestamp = builder.counters.next_timestamp();
         Self {

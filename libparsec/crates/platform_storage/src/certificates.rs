@@ -242,7 +242,7 @@ impl StorableCertificate for SequesterAuthorityCertificate {
 impl StorableCertificate for SequesterServiceCertificate {
     const TYPE: &'static str = "sequester_service_certificate";
     fn filters(&self) -> (Option<String>, Option<String>) {
-        sequester_service_certificate_filters(self.service_id.clone())
+        sequester_service_certificate_filters(self.service_id)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -252,7 +252,7 @@ impl StorableCertificate for SequesterServiceCertificate {
 impl StorableCertificate for SequesterRevokedServiceCertificate {
     const TYPE: &'static str = "sequester_revoked_service_certificate";
     fn filters(&self) -> (Option<String>, Option<String>) {
-        sequester_revoked_service_certificate_filters(self.service_id.clone())
+        sequester_revoked_service_certificate_filters(self.service_id)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -699,7 +699,7 @@ impl CertificatesStorage {
         self.platform.stop().await
     }
 
-    pub async fn for_update<'a>(&'a mut self) -> anyhow::Result<CertificatesStorageUpdater<'a>> {
+    pub async fn for_update(&mut self) -> anyhow::Result<CertificatesStorageUpdater<'_>> {
         self.platform
             .for_update()
             .await

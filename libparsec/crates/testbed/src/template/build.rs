@@ -940,10 +940,7 @@ impl<'a> TestbedEventUserStorageLocalUpdateBuilder<'a> {
                         continue;
                     }
                     // Sanity check: new realm event must be the first about any given realm !
-                    assert!(local_workspaces
-                        .iter()
-                        .find(|w| w.id == event.realm_id)
-                        .is_none());
+                    assert!(!local_workspaces.iter().any(|w| w.id == event.realm_id));
                     local_workspaces.push(LocalUserManifestWorkspaceEntry {
                         id: event.realm_id,
                         name: placeholder_name.clone(),

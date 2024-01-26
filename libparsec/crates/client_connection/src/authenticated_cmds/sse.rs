@@ -28,7 +28,7 @@ pub(crate) fn check_response(response: &reqwest::Response) -> Result<(), SSEConn
     let mime_type = content_type
         .to_str()
         .map_err(|_| SSEConnectionError::InvalidContentType(content_type.clone()))
-        .map(|e| e.split(";").next().expect("first item always exists"))?;
+        .map(|e| e.split(';').next().expect("first item always exists"))?;
 
     if mime_type != EVENT_STREAM_CONTENT_TYPE {
         return Err(SSEConnectionError::InvalidContentType(content_type.clone()));

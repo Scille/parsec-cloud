@@ -743,12 +743,12 @@ impl RealmKeyRotationCertificate {
 
     #[getter]
     fn encryption_algorithm(&self) -> &'static PyObject {
-        SecretKeyAlgorithm::convert(self.0.encryption_algorithm.clone())
+        SecretKeyAlgorithm::convert(self.0.encryption_algorithm)
     }
 
     #[getter]
     fn hash_algorithm(&self) -> &'static PyObject {
-        HashAlgorithm::convert(self.0.hash_algorithm.clone())
+        HashAlgorithm::convert(self.0.hash_algorithm)
     }
 
     #[getter]
@@ -968,7 +968,7 @@ impl ShamirRecoveryBriefCertificate {
 
     #[getter]
     fn threshold(&self) -> NonZeroU64 {
-        self.0.threshold.into()
+        self.0.threshold
     }
 
     #[getter]

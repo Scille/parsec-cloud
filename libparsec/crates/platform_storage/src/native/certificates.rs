@@ -46,7 +46,7 @@ macro_rules! ident_concat {
             output
         }
         const RAW: &[u8] = &combine(&[$first $(, $remain )*]);
-        const COOKED: &str = unsafe { std::mem::transmute(RAW) };
+        const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
         COOKED
     }}
 }
@@ -101,7 +101,7 @@ macro_rules! build_sql_in_fragment_types {
             output
         }
         const RAW: &[u8] = &combine();
-        const COOKED: &str = unsafe { std::mem::transmute(RAW) };
+        const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
         COOKED
     }};
 }
@@ -116,10 +116,10 @@ const SQL_IN_FRAGMENT_REALM_TYPES: &str = build_sql_in_fragment_types!(RealmTopi
 const SQL_IN_FRAGMENT_SHAMIR_RECOVERY_TYPES: &str =
     build_sql_in_fragment_types!(ShamirRecoveryTopicArcCertificate);
 
-fn build_get_certificate_query<'a>(
-    query: &'a GetCertificateQuery,
+fn build_get_certificate_query(
+    query: &GetCertificateQuery,
     up_to: UpTo,
-) -> sqlx::QueryBuilder<'a, sqlx::Sqlite> {
+) -> sqlx::QueryBuilder<'_, sqlx::Sqlite> {
     let mut builder = sqlx::QueryBuilder::new(
         "\
         SELECT \
@@ -334,7 +334,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
-        const SQL_COMMON_LAST_TIMESTAMP: &'static str = ident_concat!(
+        const SQL_COMMON_LAST_TIMESTAMP: &str = ident_concat!(
             "SELECT certificate_timestamp \
             FROM certificates \
             WHERE certificate_type IN ( \
@@ -355,7 +355,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             None
         };
 
-        const SQL_SEQUESTER_LAST_TIMESTAMP: &'static str = ident_concat!(
+        const SQL_SEQUESTER_LAST_TIMESTAMP: &str = ident_concat!(
             "SELECT certificate_timestamp \
             FROM certificates \
             WHERE certificate_type IN ( \
@@ -376,7 +376,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             None
         };
 
-        const SQL_PER_REALM_LAST_TIMESTAMPS: &'static str = ident_concat!(
+        const SQL_PER_REALM_LAST_TIMESTAMPS: &str = ident_concat!(
             // Filter 1 is the realm ID for `RealmRoleCertificate`
             "SELECT certificate_timestamp, filter1 \
             FROM ( \
@@ -402,7 +402,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             per_realm_last_timestamps.insert(realm_id, timestamp);
         }
 
-        const SQL_SHAMIR_RECOVERY_LAST_TIMESTAMP: &'static str = ident_concat!(
+        const SQL_SHAMIR_RECOVERY_LAST_TIMESTAMP: &str = ident_concat!(
             "SELECT certificate_timestamp \
             FROM certificates \
             WHERE certificate_type IN ( \
@@ -557,9 +557,9 @@ impl PlatformCertificatesStorage {
         self.conn.close().await.map_err(|e| e.into())
     }
 
-    pub async fn for_update<'a>(
-        &'a mut self,
-    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard<'a>> {
+    pub async fn for_update(
+        &mut self,
+    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard<'_>> {
         let transaction = self.conn.begin().await?;
         Ok(PlatformCertificatesStorageForUpdateGuard { transaction })
     }

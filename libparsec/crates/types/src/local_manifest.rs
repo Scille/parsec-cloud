@@ -1000,19 +1000,16 @@ parsec_data!("schema/local_manifest/local_user_manifest.json5");
 impl From<LocalUserManifestData> for LocalUserManifest {
     fn from(data: LocalUserManifestData) -> Self {
         Self {
-            base: data.base.into(),
-            need_sync: data.need_sync.into(),
-            updated: data.updated.into(),
+            base: data.base,
+            need_sync: data.need_sync,
+            updated: data.updated,
             local_workspaces: data
                 .workspaces
                 .into_iter()
                 .filter_map(
                     // Parsec < v3.0 backward compatibility: workspaces with `None` role
                     // are not longer shared with us and hence must be ignored
-                    |e| match e.role {
-                        None => None,
-                        Some(_) => Some(e.into()),
-                    },
+                    |e| e.role.map(|_| e.into()),
                 )
                 .collect(),
             speculative: data.speculative.into(),
@@ -1023,9 +1020,9 @@ impl From<LocalUserManifest> for LocalUserManifestData {
     fn from(obj: LocalUserManifest) -> Self {
         Self {
             ty: Default::default(),
-            base: obj.base.into(),
-            need_sync: obj.need_sync.into(),
-            updated: obj.updated.into(),
+            base: obj.base,
+            need_sync: obj.need_sync,
+            updated: obj.updated,
             workspaces: obj.local_workspaces.into_iter().map(|e| e.into()).collect(),
             speculative: obj.speculative.into(),
         }

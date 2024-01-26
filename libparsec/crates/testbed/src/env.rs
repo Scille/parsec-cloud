@@ -589,7 +589,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::ShamirRecoveryShare(_)
                 | AnyArcCertificate::SequesterAuthority(_)
                 | AnyArcCertificate::SequesterService(_)
-                | AnyArcCertificate::SequesterRevokedService(_) => return None,
+                | AnyArcCertificate::SequesterRevokedService(_) => None,
             })
             .unwrap()
     }

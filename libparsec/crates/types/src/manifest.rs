@@ -442,12 +442,12 @@ impl_manifest_dump_load!(UserManifest);
 impl From<UserManifestData> for UserManifest {
     fn from(data: UserManifestData) -> Self {
         Self {
-            author: data.author.into(),
-            timestamp: data.timestamp.into(),
-            id: data.id.into(),
-            version: data.version.into(),
-            created: data.created.into(),
-            updated: data.updated.into(),
+            author: data.author,
+            timestamp: data.timestamp,
+            id: data.id,
+            version: data.version,
+            created: data.created,
+            updated: data.updated,
             workspaces_legacy_initial_info: data.workspaces.unwrap_or_default(),
         }
     }
@@ -461,12 +461,12 @@ impl From<UserManifest> for UserManifestData {
         };
         Self {
             ty: Default::default(),
-            author: obj.author.into(),
-            timestamp: obj.timestamp.into(),
-            id: obj.id.into(),
-            version: obj.version.into(),
-            created: obj.created.into(),
-            updated: obj.updated.into(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            id: obj.id,
+            version: obj.version,
+            created: obj.created,
+            updated: obj.updated,
             workspaces,
         }
     }
