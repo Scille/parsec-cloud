@@ -91,6 +91,7 @@ async function testBootstrapOrganization(): Promise<void> {
     workspaceStorageCacheSize: {
       tag: WorkspaceStorageCacheSizeTag.Default,
     },
+    withMonitors: true,
   };
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

@@ -41,6 +41,7 @@ export async function createOrganization(
       dataBaseDir: window.getDataBaseDir(),
       mountpointBaseDir: window.getMountpointBaseDir(),
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+      withMonitors: true,
     };
     const result = await libparsec.bootstrapOrganization(
       config,

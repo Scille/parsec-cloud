@@ -16,5 +16,6 @@ export function getClientConfig(): ClientConfig {
     dataBaseDir: window.getDataBaseDir(),
     mountpointBaseDir: window.getMountpointBaseDir(),
     workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+    withMonitors: true,
   };
 }
