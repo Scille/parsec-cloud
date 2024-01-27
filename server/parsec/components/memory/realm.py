@@ -26,7 +26,7 @@ from parsec.components.memory.datamodel import (
 from parsec.components.realm import (
     BadKeyIndex,
     BaseRealmComponent,
-    CertificateBasedActionIdempontentOutcome,
+    CertificateBasedActionIdempotentOutcome,
     KeysBundle,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
@@ -69,7 +69,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmCreateValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmCreateStoreBadOutcome
@@ -102,7 +102,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 return error
 
         if certif.realm_id in org.realms:
-            return CertificateBasedActionIdempontentOutcome(
+            return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=org.realms[certif.realm_id].last_realm_certificate_timestamp
             )
 
@@ -156,7 +156,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     ) -> (
         RealmRoleCertificate
         | BadKeyIndex
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmShareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmShareStoreBadOutcome
@@ -222,7 +222,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if existing_user_role == new_user_role:
-            return CertificateBasedActionIdempontentOutcome(
+            return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=realm.last_realm_certificate_timestamp
             )
 
@@ -286,7 +286,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmUnshareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmUnshareStoreBadOutcome
@@ -341,7 +341,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if existing_user_role == new_user_role:
-            return CertificateBasedActionIdempontentOutcome(
+            return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=realm.last_realm_certificate_timestamp
             )
 
@@ -392,7 +392,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     ) -> (
         RealmNameCertificate
         | BadKeyIndex
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmRenameValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRenameStoreBadOutcome
@@ -439,7 +439,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             )
 
         if initial_name_or_fail and realm.renames:
-            return CertificateBasedActionIdempontentOutcome(
+            return CertificateBasedActionIdempotentOutcome(
                 certificate_timestamp=realm.last_realm_certificate_timestamp
             )
 

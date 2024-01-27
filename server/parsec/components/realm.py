@@ -33,7 +33,7 @@ class BadKeyIndex:
 
 
 @dataclass(slots=True)
-class CertificateBasedActionIdempontentOutcome:
+class CertificateBasedActionIdempotentOutcome:
     certificate_timestamp: DateTime
 
 
@@ -356,7 +356,7 @@ class BaseRealmComponent:
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmCreateValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmCreateStoreBadOutcome
@@ -375,7 +375,7 @@ class BaseRealmComponent:
     ) -> (
         RealmRoleCertificate
         | BadKeyIndex
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmShareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmShareStoreBadOutcome
@@ -391,7 +391,7 @@ class BaseRealmComponent:
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmUnshareValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmUnshareStoreBadOutcome
@@ -409,7 +409,7 @@ class BaseRealmComponent:
     ) -> (
         RealmNameCertificate
         | BadKeyIndex
-        | CertificateBasedActionIdempontentOutcome
+        | CertificateBasedActionIdempotentOutcome
         | RealmRenameValidateBadOutcome
         | TimestampOutOfBallpark
         | RealmRenameStoreBadOutcome
@@ -496,7 +496,7 @@ class BaseRealmComponent:
                 )
             case RealmCreateValidateBadOutcome():
                 return authenticated_cmds.latest.realm_create.RepInvalidCertificate()
-            case CertificateBasedActionIdempontentOutcome() as error:
+            case CertificateBasedActionIdempotentOutcome() as error:
                 return authenticated_cmds.latest.realm_create.RepRealmAlreadyExists(
                     last_realm_certificate_timestamp=error.certificate_timestamp
                 )
@@ -545,7 +545,7 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_share.RepBadKeyIndex(
                     last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case CertificateBasedActionIdempontentOutcome() as error:
+            case CertificateBasedActionIdempotentOutcome() as error:
                 return authenticated_cmds.latest.realm_share.RepRoleAlreadyGranted(
                     last_realm_certificate_timestamp=error.certificate_timestamp,
                 )
@@ -598,7 +598,7 @@ class BaseRealmComponent:
                 )
             case RealmUnshareValidateBadOutcome():
                 return authenticated_cmds.latest.realm_unshare.RepInvalidCertificate()
-            case CertificateBasedActionIdempontentOutcome() as error:
+            case CertificateBasedActionIdempotentOutcome() as error:
                 return authenticated_cmds.latest.realm_unshare.RepRecipientAlreadyUnshared(
                     last_realm_certificate_timestamp=error.certificate_timestamp,
                 )
@@ -652,7 +652,7 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_rename.RepBadKeyIndex(
                     last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case CertificateBasedActionIdempontentOutcome() as error:
+            case CertificateBasedActionIdempotentOutcome() as error:
                 return authenticated_cmds.latest.realm_rename.RepInitialNameAlreadyExists(
                     last_realm_certificate_timestamp=error.certificate_timestamp
                 )
