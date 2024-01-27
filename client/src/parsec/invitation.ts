@@ -3,6 +3,9 @@
 import { needsMocks } from '@/parsec/environment';
 import { getParsecHandle } from '@/parsec/routing';
 import {
+  ClientCancelInvitationError,
+  ClientNewDeviceInvitationError,
+  ClientNewUserInvitationError,
   InvitationEmailSentStatus,
   InvitationStatus,
   InvitationToken,
@@ -10,9 +13,6 @@ import {
   NewInvitationInfo,
   Result,
   UserInvitation,
-  ClientNewUserInvitationError,
-  ClientNewDeviceInvitationError,
-  ClientCancelInvitationError,
 } from '@/parsec/types';
 import { InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
