@@ -176,11 +176,11 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             extra_env={"POETRY_LIBPARSEC_BUILD_PROFILE": "ci"},
         ),
     ),
-    # Flags used in poetry's `build.py` when command is `python-ci-build`
+    # Flags used in poetry's `server/build.py` when command is `python-ci-build`
     ("python-ci-libparsec-cargo-flags",): Echo(PYTHON_CI_CARGO_FLAGS),
-    # Flags used in poetry's `build.py` when generating the release wheel
+    # Flags used in poetry's `server/build.py` when generating the release wheel
     ("python-release-libparsec-cargo-flags",): Echo(PYTHON_RELEASE_CARGO_FLAGS),
-    # Flags used in poetry's `build.py` when generating the dev wheel
+    # Flags used in poetry's `server/build.py` when generating the dev wheel
     ("python-dev-libparsec-cargo-flags",): Echo(PYTHON_DEV_CARGO_FLAGS),
     #
     # Electron bindings
