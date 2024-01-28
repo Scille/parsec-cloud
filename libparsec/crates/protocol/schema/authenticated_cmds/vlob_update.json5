@@ -65,7 +65,7 @@
                 "status": "vlob_not_found"
             },
             {
-                "status": "vlob_version_already_exists"
+                "status": "bad_vlob_version"
             },
             {
                 "status": "organization_not_sequestered"
