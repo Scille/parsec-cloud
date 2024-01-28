@@ -28,6 +28,7 @@ from parsec.components.sequester import SequesterServiceType
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
+    SequesterInconsistency,
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
     VlobPollChangesAsUserBadOutcome,
@@ -74,6 +75,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
+        | SequesterInconsistency
     ):
         author_user_id = author.user_id
         try:
@@ -108,9 +110,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         # We only accept the last key
         if len(realm.key_rotations) != key_index:
             return BadKeyIndex(
-                last_key_rotation_certificate_timestamp=realm.key_rotations[-1].cooked.timestamp
-                if realm.key_rotations
-                else None
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
             )
 
         if vlob_id in org.vlobs:
@@ -126,7 +126,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_sequestered:
             assert org.sequester_services is not None
             if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-                return VlobCreateBadOutcome.SEQUESTER_INCONSISTENCY
+                return SequesterInconsistency(
+                    last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                )
 
             blob_for_storage_sequester_services = {}
             for service_id, service in org.sequester_services.items():
@@ -208,6 +210,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
+        | SequesterInconsistency
     ):
         author_user_id = author.user_id
         try:
@@ -243,9 +246,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         # We only accept the last key
         if len(realm.key_rotations) != key_index:
             return BadKeyIndex(
-                last_key_rotation_certificate_timestamp=realm.key_rotations[-1].cooked.timestamp
-                if realm.key_rotations
-                else None
+                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
             )
 
         maybe_error = timestamps_in_the_ballpark(timestamp, now)
@@ -259,7 +260,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_sequestered:
             assert org.sequester_services is not None
             if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-                return VlobUpdateBadOutcome.SEQUESTER_INCONSISTENCY
+                return SequesterInconsistency(
+                    last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                )
 
             blob_for_storage_sequester_services = {}
             for service_id, service in org.sequester_services.items():
@@ -287,7 +290,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             blob_for_storage_sequester_services = None
 
         if version != len(vlobs) + 1:
-            return VlobUpdateBadOutcome.VLOB_VERSION_ALREADY_EXISTS
+            return VlobUpdateBadOutcome.BAD_VLOB_VERSION
 
         # All checks are good, now we do the actual insertion
 

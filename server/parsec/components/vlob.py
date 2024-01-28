@@ -27,6 +27,11 @@ logger = get_logger()
 
 
 @dataclass(slots=True)
+class SequesterInconsistency:
+    last_common_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
 class SequesterServiceNotAvailable:
     service_id: SequesterServiceID
 
@@ -56,7 +61,6 @@ VlobCreateBadOutcome = Enum(
         "REALM_NOT_FOUND",
         "VLOB_ALREADY_EXISTS",
         "ORGANIZATION_NOT_SEQUESTERED",
-        "SEQUESTER_INCONSISTENCY",
     ),
 )
 VlobUpdateBadOutcome = Enum(
@@ -68,10 +72,8 @@ VlobUpdateBadOutcome = Enum(
         "AUTHOR_REVOKED",
         "AUTHOR_NOT_ALLOWED",
         "VLOB_NOT_FOUND",
-        "VLOB_VERSION_ALREADY_EXISTS",
+        "BAD_VLOB_VERSION",
         "ORGANIZATION_NOT_SEQUESTERED",
-        "SEQUESTER_INCONSISTENCY",
-        "SEQUESTER_SERVICE_UNAVAILABLE",
     ),
 )
 VlobReadAsUserBadOutcome = Enum(
@@ -127,6 +129,7 @@ class BaseVlobComponent:
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
+        | SequesterInconsistency
     ):
         raise NotImplementedError
 
@@ -150,6 +153,7 @@ class BaseVlobComponent:
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
+        | SequesterInconsistency
     ):
         raise NotImplementedError
 
@@ -285,7 +289,7 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_create.RepAuthorNotAllowed()
             case BadKeyIndex() as error:
                 return authenticated_cmds.latest.vlob_create.RepBadKeyIndex(
-                    last_key_rotation_certificate_timestamp=error.last_key_rotation_certificate_timestamp,
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
             case VlobCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_create.RepRealmNotFound()
@@ -293,8 +297,6 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_create.RepVlobAlreadyExists()
             case VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
                 return authenticated_cmds.latest.vlob_create.RepOrganizationNotSequestered()
-            case VlobCreateBadOutcome.SEQUESTER_INCONSISTENCY:
-                return authenticated_cmds.latest.vlob_create.RepSequesterInconsistency()
             case TimestampOutOfBallpark() as error:
                 return authenticated_cmds.latest.vlob_create.RepTimestampOutOfBallpark(
                     server_timestamp=error.server_timestamp,
@@ -305,6 +307,10 @@ class BaseVlobComponent:
             case RequireGreaterTimestamp() as error:
                 return authenticated_cmds.latest.vlob_create.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
+                )
+            case SequesterInconsistency() as error:
+                return authenticated_cmds.latest.vlob_create.RepSequesterInconsistency(
+                    last_common_certificate_timestamp=error.last_common_certificate_timestamp
                 )
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_create.RepRejectedBySequesterService(
@@ -354,18 +360,14 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepAuthorNotAllowed()
             case BadKeyIndex() as error:
                 return authenticated_cmds.latest.vlob_update.RepBadKeyIndex(
-                    last_key_rotation_certificate_timestamp=error.last_key_rotation_certificate_timestamp,
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case VlobUpdateBadOutcome.VLOB_VERSION_ALREADY_EXISTS:
-                return authenticated_cmds.latest.vlob_update.RepVlobVersionAlreadyExists()
+            case VlobUpdateBadOutcome.BAD_VLOB_VERSION:
+                return authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepVlobNotFound()
             case VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
                 return authenticated_cmds.latest.vlob_update.RepOrganizationNotSequestered()
-            case VlobUpdateBadOutcome.SEQUESTER_INCONSISTENCY:
-                return authenticated_cmds.latest.vlob_update.RepSequesterInconsistency()
-            case VlobUpdateBadOutcome.SEQUESTER_SERVICE_UNAVAILABLE:
-                return authenticated_cmds.latest.vlob_update.RepSequesterServiceUnavailable()
             case TimestampOutOfBallpark() as error:
                 return authenticated_cmds.latest.vlob_update.RepTimestampOutOfBallpark(
                     server_timestamp=error.server_timestamp,
@@ -376,6 +378,10 @@ class BaseVlobComponent:
             case RequireGreaterTimestamp() as error:
                 return authenticated_cmds.latest.vlob_update.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
+                )
+            case SequesterInconsistency() as error:
+                return authenticated_cmds.latest.vlob_update.RepSequesterInconsistency(
+                    last_common_certificate_timestamp=error.last_common_certificate_timestamp
                 )
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_update.RepRejectedBySequesterService(

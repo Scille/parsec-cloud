@@ -62,7 +62,7 @@ class RepVlobNotFound(Rep):
         self,
     ) -> None: ...
 
-class RepVlobVersionAlreadyExists(Rep):
+class RepBadVlobVersion(Rep):
     def __init__(
         self,
     ) -> None: ...
