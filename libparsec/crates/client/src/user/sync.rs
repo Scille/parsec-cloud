@@ -198,7 +198,7 @@ async fn upload_manifest(
             let rep = ops.cmds.send(req).await?;
             match rep {
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_sync_um)),
-                Rep::VlobVersionAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
+                Rep::BadVlobVersion => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {

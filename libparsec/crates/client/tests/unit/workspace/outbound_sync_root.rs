@@ -184,7 +184,7 @@ async fn non_placeholder(
                     p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
                     assert!(req.sequester_blob.is_none());
-                    authenticated_cmds::latest::vlob_update::Rep::VlobVersionAlreadyExists {}
+                    authenticated_cmds::latest::vlob_update::Rep::BadVlobVersion {}
                 },
                 // 3) `vlob_get` to fetch the remote change
                 {

@@ -349,14 +349,14 @@ pub fn rep_sequester_service_unavailable() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_vlob_version_already_exists() {
+pub fn rep_bad_vlob_version() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
-    //   status: "vlob_version_already_exists"
+    //   status: "bad_vlob_version"
     //
-    let raw = hex!("81a6737461747573bb766c6f625f76657273696f6e5f616c72656164795f657869737473");
+    let raw = hex!("81a6737461747573b06261645f766c6f625f76657273696f6e");
 
-    let expected = authenticated_cmds::vlob_update::Rep::VlobVersionAlreadyExists;
+    let expected = authenticated_cmds::vlob_update::Rep::BadVlobVersion;
 
     let data = authenticated_cmds::vlob_update::Rep::load(&raw).unwrap();
 
