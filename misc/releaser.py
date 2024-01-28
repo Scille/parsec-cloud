@@ -889,7 +889,7 @@ def cli(description: str) -> argparse.Namespace:
 
     acknowledge = subparsers.add_parser(
         "acknowledge",
-        help="Acknowledge a release",
+        help="Acknowledge a release (i.e. merge it back to the main branch)",
         description=acknowledge_main.__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
