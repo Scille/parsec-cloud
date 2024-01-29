@@ -50,18 +50,55 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         user_info: UserInfo,
-        roles: dict[WorkspaceFS, tuple[WorkspaceRole, WorkspaceRole]],
     ) -> None:
         super().__init__()
         self.setupUi(self)
         self.core = core
         self.jobs_ctx = jobs_ctx
-        self.roles = roles
+        self.roles: dict[WorkspaceFS, tuple[WorkspaceRole, WorkspaceRole]] = {}
         self.user_info = user_info
         self.dialog: GreyedDialog[ReassignWorkspaceRolesWidget] | None = None
         self.last_assign_roles_job: QtToTrioJob[None] | None = None
         self.last_filter_roles_job: QtToTrioJob[None] | None = None
-        self._switch_to_search()
+        spinner = SpinnerWidget()
+        self.main_layout.insertWidget(0, spinner)
+        self.get_common_workspaces_job: QtToTrioJob[None] = self.jobs_ctx.submit_job(
+            None, None, self._get_common_reassignable_workspaces
+        )
+
+    async def _get_common_reassignable_workspaces(self) -> None:
+        def _can_reassign_workspace(client_role: WorkspaceRole) -> bool:
+            return client_role in [WorkspaceRole.MANAGER, WorkspaceRole.OWNER]
+
+        try:
+            workspaces = self.core.user_fs.get_available_workspaces()
+            common_workspaces = {}
+            for workspace in workspaces:
+                roles = await workspace.get_user_roles()
+                if self.user_info.user_id in roles and _can_reassign_workspace(
+                    roles[self.core.user_fs.device.user_id]
+                ):
+                    common_workspaces[workspace] = (
+                        roles[self.core.user_fs.device.user_id],
+                        roles[self.user_info.user_id],
+                    )
+            self.roles = common_workspaces
+        except Exception:
+            show_error(self, T("TEXT_GET_WORKSPACES_TO_REASSIGN_ERROR"))
+            if self.dialog:
+                self.dialog.accept()
+        else:
+            if not self.roles:
+                show_info(
+                    self,
+                    T("TEXT_NO_WORKSPACES_TO_REASSIGN_user").format(
+                        user=self.user_info.short_user_display
+                    ),
+                )
+                if self.dialog:
+                    self.dialog.accept()
+            else:
+                self._switch_to_search()
 
     def _clear_layout(self) -> None:
         if self.main_layout.count() > 0:
@@ -191,10 +228,9 @@ class ReassignWorkspaceRolesWidget(QWidget, Ui_ReassignWorkspaceRolesWidget):
         core: LoggedCore,
         jobs_ctx: QtToTrioJobScheduler,
         user_info: UserInfo,
-        workspaces: dict[WorkspaceFS, tuple[WorkspaceRole, WorkspaceRole]],
         parent: QWidget,
     ) -> ReassignWorkspaceRolesWidget:
-        w = cls(core=core, jobs_ctx=jobs_ctx, user_info=user_info, roles=workspaces)
+        w = cls(core=core, jobs_ctx=jobs_ctx, user_info=user_info)
         d = GreyedDialog(
             w,
             title=T("TEXT_REASSIGN_WORKSPACE_ROLES_user").format(user=user_info.short_user_display),
