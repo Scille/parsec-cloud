@@ -31,9 +31,9 @@ pub enum CertifRenameRealmError {
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

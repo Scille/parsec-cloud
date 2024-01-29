@@ -50,7 +50,7 @@ async fn content_already_exists(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
             InvalidCertificateError::ContentAlreadyExists { .. }
         )
     )
@@ -78,11 +78,12 @@ async fn older_than_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::OlderThanAuthor {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::OlderThanAuthor {
             author_created_on,
             ..
-        })
+        }
         if author_created_on == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
+        )
     );
 }
 
@@ -110,11 +111,12 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::InvalidTimestamp {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::InvalidTimestamp {
             last_certificate_timestamp,
             ..
-        })
+        }
         if last_certificate_timestamp == timestamp
+        )
     );
 }
 
@@ -135,7 +137,7 @@ async fn non_existing_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
             InvalidCertificateError::NonExistingAuthor { .. }
         )
     )
@@ -188,8 +190,9 @@ async fn revoked(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::RevokedAuthor { author_revoked_on, .. })
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::RevokedAuthor { author_revoked_on, .. }
         if author_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
+        )
     );
 }
 
@@ -218,7 +221,8 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::AuthorNotAdmin { author_profile, .. })
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::AuthorNotAdmin { author_profile, .. }
         if author_profile == profile
+        )
     );
 }

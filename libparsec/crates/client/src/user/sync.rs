@@ -27,7 +27,7 @@ pub enum UserSyncError {
         reason: String,
     },
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -59,9 +59,9 @@ pub enum FetchRemoteUserManifestError {
     #[error("Server has no such version for this user manifest")]
     BadVersion,
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
-    InvalidManifest(#[from] InvalidManifestError),
+    InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -408,7 +408,7 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), UserSyncError> {
             // Try to find the last valid version of the manifest and continue
             // from there
 
-            let last_version = match err {
+            let last_version = match *err {
                 InvalidManifestError::Corrupted { version, .. } => version,
                 InvalidManifestError::NonExistentKeyIndex { version, .. } => version,
                 InvalidManifestError::CorruptedKey { version, .. } => version,

@@ -110,7 +110,7 @@ pub enum InvalidCertificateError {
 #[derive(Debug, thiserror::Error)]
 pub enum CertifAddCertificatesBatchError {
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -316,7 +316,7 @@ macro_rules! verify_certificate_signature {
                 .verify_signature(&author_verify_key)
                 .map_err(|(unsecure, error)| {
                     let hint = unsecure.hint();
-                    InvalidCertificateError::Corrupted { hint, error }
+                    Box::new(InvalidCertificateError::Corrupted { hint, error })
                 }),
             Err(GetCertificateError::ExistButTooRecent {
                 certificate_timestamp,
@@ -324,10 +324,10 @@ macro_rules! verify_certificate_signature {
             }) => {
                 // The author didn't exist at the time the certificate was made...
                 let hint = $unsecure.hint();
-                let what = InvalidCertificateError::OlderThanAuthor {
+                let what = Box::new(InvalidCertificateError::OlderThanAuthor {
                     hint,
                     author_created_on: certificate_timestamp,
-                };
+                });
                 Err(what)
             }
             Err(GetCertificateError::NonExisting) => {
@@ -337,9 +337,9 @@ macro_rules! verify_certificate_signature {
                 // we are supposed to have already added all the certificates
                 // needed to validate this one. And if that's not the case
                 // it's suspicious and error should be raised !
-                let what = InvalidCertificateError::NonExistingAuthor {
+                let what = Box::new(InvalidCertificateError::NonExistingAuthor {
                     hint: $unsecure.hint(),
-                };
+                });
                 Err(what)
             }
             Err(err @ GetCertificateError::Internal(_)) => {
@@ -354,7 +354,7 @@ macro_rules! verify_certificate_signature {
                 .verify_signature($ops.device.root_verify_key())
                 .map_err(|(unsecure, error)| {
                     let hint = unsecure.hint();
-                    InvalidCertificateError::Corrupted { hint, error }
+                    Box::new(InvalidCertificateError::Corrupted { hint, error })
                 }),
 
             CertificateSignerOwned::User(author) => {
@@ -386,7 +386,7 @@ async fn validate_common_certificate(
         Err(error) => {
             // No information can be extracted from the binary data...
             let hint = "<unknown>".into();
-            let what = InvalidCertificateError::Corrupted { hint, error };
+            let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -446,7 +446,7 @@ async fn validate_realm_certificate(
         Err(error) => {
             // No information can be extracted from the binary data...
             let hint = "<unknown>".into();
-            let what = InvalidCertificateError::Corrupted { hint, error };
+            let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -466,7 +466,7 @@ async fn validate_realm_certificate(
                     expected: realm_id,
                     got: cooked.realm_id,
                 };
-                let what = InvalidCertificateError::Corrupted { hint, error };
+                let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
 
@@ -485,7 +485,7 @@ async fn validate_realm_certificate(
                     expected: realm_id,
                     got: cooked.realm_id,
                 };
-                let what = InvalidCertificateError::Corrupted { hint, error };
+                let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
 
@@ -504,7 +504,7 @@ async fn validate_realm_certificate(
                     expected: realm_id,
                     got: cooked.realm_id,
                 };
-                let what = InvalidCertificateError::Corrupted { hint, error };
+                let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
 
@@ -523,7 +523,7 @@ async fn validate_realm_certificate(
                     expected: realm_id,
                     got: cooked.realm_id,
                 };
-                let what = InvalidCertificateError::Corrupted { hint, error };
+                let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
 
@@ -549,7 +549,7 @@ async fn validate_shamir_recovery_certificate(
         Err(error) => {
             // No information can be extracted from the binary data...
             let hint = "<unknown>".into();
-            let what = InvalidCertificateError::Corrupted { hint, error };
+            let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -617,7 +617,7 @@ async fn validate_sequester_authority_certificate(
         Err(error) => {
             // No information can be extracted from the binary data...
             let hint = "<unknown>".into();
-            let what = InvalidCertificateError::Corrupted { hint, error };
+            let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -629,7 +629,7 @@ async fn validate_sequester_authority_certificate(
         .map(|(certif, _)| Arc::new(certif))
         .map_err(|(unsecure, error)| {
             let hint = unsecure.hint();
-            InvalidCertificateError::Corrupted { hint, error }
+            Box::new(InvalidCertificateError::Corrupted { hint, error })
         })?;
 
     // 4) The certificate is valid, last check is the consistency with other certificates
@@ -651,7 +651,7 @@ async fn validate_sequester_non_authority_certificate(
         None => {
             // No information can be extracted from the binary data...
             let hint = "<unknown>".into();
-            let what = InvalidCertificateError::NotASequesteredOrganization { hint };
+            let what = Box::new(InvalidCertificateError::NotASequesteredOrganization { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -664,7 +664,7 @@ async fn validate_sequester_non_authority_certificate(
             Err(error) => {
                 // No information can be extracted from the binary data...
                 let hint = "<unknown>".into();
-                let what = InvalidCertificateError::Corrupted { hint, error };
+                let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
         };
@@ -696,7 +696,7 @@ async fn check_user_exists(
         // User doesn't exist :(
         Err(GetCertificateError::NonExisting) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::NonExistingRelatedUser { hint };
+            let what = Box::new(InvalidCertificateError::NonExistingRelatedUser { hint });
             Err(CertifAddCertificatesBatchError::InvalidCertificate(what))
         }
 
@@ -706,10 +706,10 @@ async fn check_user_exists(
             ..
         }) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::OlderThanRelatedUser {
+            let what = Box::new(InvalidCertificateError::OlderThanRelatedUser {
                 hint,
                 user_created_on: certificate_timestamp,
-            };
+            });
             Err(CertifAddCertificatesBatchError::InvalidCertificate(what))
         }
 
@@ -736,10 +736,10 @@ async fn check_user_not_revoked(
         // User can only be revoked once :(
         Some(revoked_certificate) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RelatedUserAlreadyRevoked {
+            let what = Box::new(InvalidCertificateError::RelatedUserAlreadyRevoked {
                 hint,
                 user_revoked_on: revoked_certificate.timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -767,10 +767,10 @@ async fn check_author_not_revoked_and_profile(
         // A revoked user cannot author anything !
         Some(revoked_certificate) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RevokedAuthor {
+            let what = Box::new(InvalidCertificateError::RevokedAuthor {
                 hint,
                 author_revoked_on: revoked_certificate.timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -780,10 +780,10 @@ async fn check_author_not_revoked_and_profile(
             Ok(profile) => {
                 if profile != UserProfile::Admin {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::AuthorNotAdmin {
+                    let what = Box::new(InvalidCertificateError::AuthorNotAdmin {
                         hint,
                         author_profile: profile,
-                    };
+                    });
                     return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                 }
             }
@@ -861,10 +861,10 @@ async fn check_user_certificate_consistency(
     if let Some(last_stored_timestamp) = &last_stored_common_timestamp {
         if &cooked.timestamp <= last_stored_timestamp {
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: *last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -892,7 +892,7 @@ async fn check_user_certificate_consistency(
             // by a device), so need to ensure they are empty.
             if last_stored_common_timestamp.is_some() {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::RootSignatureOutOfBootstrap { hint };
+                let what = Box::new(InvalidCertificateError::RootSignatureOutOfBootstrap { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
             if let Some(sequester_authority_certif) =
@@ -900,10 +900,10 @@ async fn check_user_certificate_consistency(
             {
                 if sequester_authority_certif.timestamp != cooked.timestamp {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::RootSignatureTimestampMismatch {
+                    let what = Box::new(InvalidCertificateError::RootSignatureTimestampMismatch {
                         hint,
                         last_root_signature_timestamp: sequester_authority_certif.timestamp,
-                    };
+                    });
                     return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                 }
             }
@@ -922,7 +922,7 @@ async fn check_user_certificate_consistency(
         // This user already exists :(
         Ok(_) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::ContentAlreadyExists { hint };
+            let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
 
@@ -993,10 +993,10 @@ async fn check_device_certificate_consistency(
         ) {
             (std::cmp::Ordering::Less, _) | (std::cmp::Ordering::Equal, false) => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::InvalidTimestamp {
+                let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                     hint,
                     last_certificate_timestamp: *last_stored_timestamp,
-                };
+                });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
             _ => (),
@@ -1047,18 +1047,18 @@ async fn check_device_certificate_consistency(
         // and author than our current one.
         if user_certif.author != cooked.author {
             let hint = mk_hint();
-            let what = InvalidCertificateError::UserFirstDeviceAuthorMismatch {
+            let what = Box::new(InvalidCertificateError::UserFirstDeviceAuthorMismatch {
                 hint,
                 user_author: user_certif.author.clone(),
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
         if user_certif.timestamp != cooked.timestamp {
             let hint = mk_hint();
-            let what = InvalidCertificateError::UserFirstDeviceTimestampMismatch {
+            let what = Box::new(InvalidCertificateError::UserFirstDeviceTimestampMismatch {
                 hint,
                 user_timestamp: user_certif.timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1082,7 +1082,7 @@ async fn check_device_certificate_consistency(
         // This device already exists :(
         Ok(_) => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::ContentAlreadyExists { hint };
+            let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
 
@@ -1128,10 +1128,10 @@ async fn check_user_update_certificate_consistency(
     if let Some(last_stored_timestamp) = store.get_last_timestamps().await?.common {
         if cooked.timestamp <= last_stored_timestamp {
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1140,7 +1140,7 @@ async fn check_user_update_certificate_consistency(
 
     if cooked.author.user_id() == &cooked.user_id {
         let hint = mk_hint();
-        let what = InvalidCertificateError::SelfSigned { hint };
+        let what = Box::new(InvalidCertificateError::SelfSigned { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1178,7 +1178,7 @@ async fn check_user_update_certificate_consistency(
 
     if user_current_profile == cooked.new_profile {
         let hint = mk_hint();
-        let what = InvalidCertificateError::ContentAlreadyExists { hint };
+        let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1198,14 +1198,18 @@ async fn check_user_update_certificate_consistency(
                     // (given one cannot change it own role !)
                     if roles.len() != 1 {
                         let hint = mk_hint();
-                        let what = InvalidCertificateError::CannotDowngradeUserToOutsider { hint };
+                        let what =
+                            Box::new(InvalidCertificateError::CannotDowngradeUserToOutsider {
+                                hint,
+                            });
                         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                     }
                 }
                 // Outsider can never be manager
                 Some(RealmRole::Manager) => {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::CannotDowngradeUserToOutsider { hint };
+                    let what =
+                        Box::new(InvalidCertificateError::CannotDowngradeUserToOutsider { hint });
                     return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                 }
                 None | Some(RealmRole::Contributor) | Some(RealmRole::Reader) => (),
@@ -1234,10 +1238,10 @@ async fn check_revoked_user_certificate_consistency(
     if let Some(last_stored_timestamp) = store.get_last_timestamps().await?.common {
         if cooked.timestamp <= last_stored_timestamp {
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1246,7 +1250,7 @@ async fn check_revoked_user_certificate_consistency(
 
     if cooked.author.user_id() == &cooked.user_id {
         let hint = mk_hint();
-        let what = InvalidCertificateError::SelfSigned { hint };
+        let what = Box::new(InvalidCertificateError::SelfSigned { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1287,10 +1291,10 @@ async fn check_realm_role_certificate_consistency(
         // the serialization format doesn't allow root as author.
         CertificateSignerOwned::Root => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::Corrupted {
+            let what = Box::new(InvalidCertificateError::Corrupted {
                 hint,
                 error: DataError::Serialization,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     };
@@ -1310,10 +1314,10 @@ async fn check_realm_role_certificate_consistency(
             // We already know more recent certificates, hence this certificate
             // cannot be added without breaking causality !
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1329,13 +1333,13 @@ async fn check_realm_role_certificate_consistency(
 
         if author.user_id() != &cooked.user_id {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { hint };
+            let what = Box::new(InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
 
         if cooked.role != Some(RealmRole::Owner) {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmFirstRoleMustBeOwner { hint };
+            let what = Box::new(InvalidCertificateError::RealmFirstRoleMustBeOwner { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     } else {
@@ -1352,7 +1356,7 @@ async fn check_realm_role_certificate_consistency(
             // Author never had role, or it role got revoked :(
             None => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
+                let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
         };
@@ -1367,13 +1371,13 @@ async fn check_realm_role_certificate_consistency(
             // Cannot remove the role if the user already doesn't have one !
             (None, None) => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
             // The certificate must provide a new role !
             (Some(current_role), Some(new_role)) if current_role == new_role => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::ContentAlreadyExists { hint };
+                let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
             // Only an Owner can give/remove Owner/Manager roles
@@ -1383,10 +1387,10 @@ async fn check_realm_role_certificate_consistency(
             | (_, Some(RealmRole::Manager)) => {
                 if author_current_role != RealmRole::Owner {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::RealmAuthorNotOwner {
+                    let what = Box::new(InvalidCertificateError::RealmAuthorNotOwner {
                         hint,
                         author_role: author_current_role,
-                    };
+                    });
                     return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                 }
             }
@@ -1399,10 +1403,10 @@ async fn check_realm_role_certificate_consistency(
                     && author_current_role != RealmRole::Manager
                 {
                     let hint = mk_hint();
-                    let what = InvalidCertificateError::RealmAuthorNotOwnerOrManager {
+                    let what = Box::new(InvalidCertificateError::RealmAuthorNotOwnerOrManager {
                         hint,
                         author_role: author_current_role,
-                    };
+                    });
                     return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
                 }
             }
@@ -1443,7 +1447,8 @@ async fn check_realm_role_certificate_consistency(
             // realm role certificate. Hence the only valid situation is if we are
             // currently adding this initial realm role certificate.
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { hint };
+            let what =
+                Box::new(InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
         _ => (),
@@ -1473,10 +1478,10 @@ async fn check_realm_name_certificate_consistency(
             // We already know more recent certificates, hence this certificate
             // cannot be added without breaking causality !
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1490,7 +1495,7 @@ async fn check_realm_name_certificate_consistency(
     if realm_current_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
-        let what = InvalidCertificateError::RealmFirstCertificateMustBeRole { hint };
+        let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     } else {
         // 2.b) The realm already exists, as expected.
@@ -1505,7 +1510,7 @@ async fn check_realm_name_certificate_consistency(
             // Author never had role, or it role got revoked :(
             None => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
+                let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
         };
@@ -1513,10 +1518,10 @@ async fn check_realm_name_certificate_consistency(
         // Only an Owner can change the realm's name
         if author_current_role != RealmRole::Owner {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmAuthorNotOwner {
+            let what = Box::new(InvalidCertificateError::RealmAuthorNotOwner {
                 hint,
                 author_role: author_current_role,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1545,10 +1550,10 @@ async fn check_realm_key_rotation_certificate_consistency(
             // We already know more recent certificates, hence this certificate
             // cannot be added without breaking causality !
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1562,7 +1567,7 @@ async fn check_realm_key_rotation_certificate_consistency(
     if realm_current_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
-        let what = InvalidCertificateError::RealmFirstCertificateMustBeRole { hint };
+        let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     } else {
         // 2.b) The realm already exists, as expected.
@@ -1577,7 +1582,7 @@ async fn check_realm_key_rotation_certificate_consistency(
             // Author never had role, or it role got revoked :(
             None => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
+                let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
         };
@@ -1585,10 +1590,10 @@ async fn check_realm_key_rotation_certificate_consistency(
         // Only an Owner can rotate the realm's key
         if author_current_role != RealmRole::Owner {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmAuthorNotOwner {
+            let what = Box::new(InvalidCertificateError::RealmAuthorNotOwner {
                 hint,
                 author_role: author_current_role,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1617,10 +1622,10 @@ async fn check_realm_archiving_certificate_consistency(
             // We already know more recent certificates, hence this certificate
             // cannot be added without breaking causality !
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1634,7 +1639,7 @@ async fn check_realm_archiving_certificate_consistency(
     if realm_current_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
-        let what = InvalidCertificateError::RealmFirstCertificateMustBeRole { hint };
+        let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     } else {
         // 2.b) The realm already exists, as expected.
@@ -1649,7 +1654,7 @@ async fn check_realm_archiving_certificate_consistency(
             // Author never had role, or it role got revoked :(
             None => {
                 let hint = mk_hint();
-                let what = InvalidCertificateError::RealmAuthorHasNoRole { hint };
+                let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
                 return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
             }
         };
@@ -1657,10 +1662,10 @@ async fn check_realm_archiving_certificate_consistency(
         // Only an Owner can archive realm
         if author_current_role != RealmRole::Owner {
             let hint = mk_hint();
-            let what = InvalidCertificateError::RealmAuthorNotOwner {
+            let what = Box::new(InvalidCertificateError::RealmAuthorNotOwner {
                 hint,
                 author_role: author_current_role,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1686,10 +1691,10 @@ async fn check_shamir_recovery_brief_certificate_consistency(
     };
     if u64::from(cooked.threshold) > total_shares {
         let hint = mk_hint();
-        let what = InvalidCertificateError::Corrupted {
+        let what = Box::new(InvalidCertificateError::Corrupted {
             hint,
             error: DataError::Serialization,
-        };
+        });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1704,10 +1709,10 @@ async fn check_shamir_recovery_brief_certificate_consistency(
             // We already know more recent certificates, hence this certificate
             // cannot be added without breaking causality !
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1750,10 +1755,10 @@ async fn check_shamir_recovery_share_certificate_consistency(
     if let Some(last_stored_timestamp) = last_stored_timestamp {
         if cooked.timestamp != last_stored_timestamp {
             let hint = mk_hint();
-            let what = InvalidCertificateError::InvalidTimestamp {
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
                 last_certificate_timestamp: last_stored_timestamp,
-            };
+            });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1767,13 +1772,11 @@ async fn check_shamir_recovery_share_certificate_consistency(
         Some(brief)
             if (brief.timestamp == cooked.timestamp
                 && brief.author == cooked.author
-                && brief.per_recipient_shares.contains_key(&cooked.recipient)) =>
-        {
-            ()
-        }
+                && brief.per_recipient_shares.contains_key(&cooked.recipient)) => {}
         _ => {
             let hint = mk_hint();
-            let what = InvalidCertificateError::ShamirRecoveryMissingBriefCertificate { hint };
+            let what =
+                Box::new(InvalidCertificateError::ShamirRecoveryMissingBriefCertificate { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
@@ -1789,7 +1792,7 @@ async fn check_shamir_recovery_share_certificate_consistency(
         .await?;
     if maybe_exist.is_some() {
         let hint = mk_hint();
-        let what = InvalidCertificateError::ContentAlreadyExists { hint };
+        let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1826,7 +1829,7 @@ async fn check_sequester_authority_certificate_consistency(
 
     if common.is_some() || sequester.is_some() || !realm.is_empty() || shamir_recovery.is_some() {
         let hint = format!("{:?}", cooked);
-        let what = InvalidCertificateError::SequesterAuthorityMustBeFirst { hint };
+        let what = Box::new(InvalidCertificateError::SequesterAuthorityMustBeFirst { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1848,10 +1851,10 @@ async fn check_sequester_service_certificate_consistency(
         // We already know more recent certificates, hence this certificate
         // cannot be added without breaking causality !
         let hint = mk_hint();
-        let what = InvalidCertificateError::InvalidTimestamp {
+        let what = Box::new(InvalidCertificateError::InvalidTimestamp {
             hint,
             last_certificate_timestamp: last_stored_sequester_timestamp,
-        };
+        });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -1863,7 +1866,7 @@ async fn check_sequester_service_certificate_consistency(
     for existing_service in existing_services {
         if existing_service.service_id == cooked.service_id {
             let hint = format!("{:?}", cooked);
-            let what = InvalidCertificateError::ContentAlreadyExists { hint };
+            let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }

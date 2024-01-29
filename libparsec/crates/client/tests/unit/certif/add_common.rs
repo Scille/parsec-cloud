@@ -23,7 +23,8 @@ async fn corrupted_signature(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::Corrupted {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::Corrupted {
             error: DataError::Signature,
             ..
         })
@@ -44,7 +45,7 @@ async fn corrupted_compression(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::Corrupted {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::Corrupted {
             error: DataError::Compression,
             ..
         })
@@ -76,7 +77,7 @@ async fn corrupted_serialization(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::Corrupted {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::Corrupted {
             error: DataError::Serialization,
             ..
         })

@@ -122,7 +122,7 @@ pub(super) enum LoadLastKeysBundleError {
     #[error("The realm doesn't have any key yet")]
     NoKey,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -477,7 +477,7 @@ pub enum EncryptRealmKeysBundleAccessForUserError {
     #[error("The realm doesn't have any key yet")]
     NoKey,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -604,7 +604,7 @@ pub enum InvalidKeysBundleError {
 #[derive(Debug, thiserror::Error)]
 pub enum ValidateKeysBundleError {
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -628,7 +628,7 @@ async fn validate_keys_bundle<'a>(
             .private_key
             .decrypt_from_self(keys_bundle_access)
             .map_err(|_| {
-                ValidateKeysBundleError::InvalidKeysBundle(
+                ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::CorruptedAccess {
                         realm: realm_id,
                         key_index,
@@ -637,12 +637,12 @@ async fn validate_keys_bundle<'a>(
                         recipient: ops.device.user_id().to_owned(),
                         error: DataError::Decryption,
                     },
-                )
+                ))
             })?;
 
         let keys_bundle_access = RealmKeysBundleAccess::load(&cleartext_keys_bundle_access)
             .map_err(|_| {
-                ValidateKeysBundleError::InvalidKeysBundle(
+                ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::CorruptedAccess {
                         realm: realm_id,
                         key_index,
@@ -651,7 +651,7 @@ async fn validate_keys_bundle<'a>(
                         recipient: ops.device.user_id().to_owned(),
                         error: DataError::Serialization,
                     },
-                )
+                ))
             })?;
 
         keys_bundle_access.keys_bundle_key
@@ -661,24 +661,28 @@ async fn validate_keys_bundle<'a>(
 
     let keys_bundle = {
         let cleartext_keys_bundle = keys_bundle_access_key.decrypt(keys_bundle).map_err(|_| {
-            ValidateKeysBundleError::InvalidKeysBundle(InvalidKeysBundleError::Decryption {
-                realm: realm_id,
-                key_index,
-                key_rotation_author: certif.author.to_owned(),
-                key_rotation_timestamp: certif.timestamp,
-                recipient: ops.device.user_id().to_owned(),
-            })
+            ValidateKeysBundleError::InvalidKeysBundle(Box::new(
+                InvalidKeysBundleError::Decryption {
+                    realm: realm_id,
+                    key_index,
+                    key_rotation_author: certif.author.to_owned(),
+                    key_rotation_timestamp: certif.timestamp,
+                    recipient: ops.device.user_id().to_owned(),
+                },
+            ))
         })?;
 
         let unsecure =
             RealmKeysBundle::unsecure_load(cleartext_keys_bundle.into()).map_err(|error| {
-                ValidateKeysBundleError::InvalidKeysBundle(InvalidKeysBundleError::Corrupted {
-                    realm: realm_id,
-                    key_index,
-                    author: certif.author.to_owned(),
-                    timestamp: certif.timestamp,
-                    error,
-                })
+                ValidateKeysBundleError::InvalidKeysBundle(Box::new(
+                    InvalidKeysBundleError::Corrupted {
+                        realm: realm_id,
+                        key_index,
+                        author: certif.author.to_owned(),
+                        timestamp: certif.timestamp,
+                        error,
+                    },
+                ))
             })?;
         let author_verify_key = store
             .get_device_verify_key(
@@ -689,26 +693,28 @@ async fn validate_keys_bundle<'a>(
             .map_err(|e| match e {
                 GetCertificateError::NonExisting
                 | GetCertificateError::ExistButTooRecent { .. } => {
-                    ValidateKeysBundleError::InvalidKeysBundle(
+                    ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                         InvalidKeysBundleError::NonExistentAuthor {
                             realm: realm_id,
                             key_index,
                             author: certif.author.to_owned(),
                             timestamp: certif.timestamp,
                         },
-                    )
+                    ))
                 }
                 GetCertificateError::Internal(err) => err.into(),
             })?;
         let (keys_bundle, _) =
             unsecure
                 .verify_signature(&author_verify_key)
-                .map_err(|(_, error)| InvalidKeysBundleError::Corrupted {
-                    realm: realm_id,
-                    key_index,
-                    author: certif.author.to_owned(),
-                    timestamp: certif.timestamp,
-                    error,
+                .map_err(|(_, error)| {
+                    Box::new(InvalidKeysBundleError::Corrupted {
+                        realm: realm_id,
+                        key_index,
+                        author: certif.author.to_owned(),
+                        timestamp: certif.timestamp,
+                        error,
+                    })
                 })?;
 
         keys_bundle
@@ -719,7 +725,7 @@ async fn validate_keys_bundle<'a>(
     // has already be done during corresponding key rotation certificate validation.
 
     if keys_bundle.realm_id != certif.realm_id {
-        return Err(ValidateKeysBundleError::InvalidKeysBundle(
+        return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::RealmIDMismatch {
                 expected_realm_id: certif.realm_id,
                 bad_realm_id: keys_bundle.realm_id,
@@ -727,13 +733,13 @@ async fn validate_keys_bundle<'a>(
                 author: certif.author.to_owned(),
                 timestamp: certif.timestamp,
             },
-        ));
+        )));
     }
 
     // Note that by checking keys bundle's key_index, we also ensure the keys bundle
     // has the correct number of keys.
     if keys_bundle.key_index() != certif.key_index {
-        return Err(ValidateKeysBundleError::InvalidKeysBundle(
+        return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::KeyIndexMismatch {
                 realm: realm_id,
                 expected_key_index: certif.key_index,
@@ -741,11 +747,11 @@ async fn validate_keys_bundle<'a>(
                 author: certif.author.to_owned(),
                 timestamp: certif.timestamp,
             },
-        ));
+        )));
     }
 
     if keys_bundle.author != certif.author {
-        return Err(ValidateKeysBundleError::InvalidKeysBundle(
+        return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::AuthorMismatch {
                 realm: realm_id,
                 key_index,
@@ -753,11 +759,11 @@ async fn validate_keys_bundle<'a>(
                 bad_author: keys_bundle.author.to_owned(),
                 timestamp: certif.timestamp,
             },
-        ));
+        )));
     }
 
     if keys_bundle.author != certif.author {
-        return Err(ValidateKeysBundleError::InvalidKeysBundle(
+        return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::TimestampMismatch {
                 realm: realm_id,
                 key_index,
@@ -765,7 +771,7 @@ async fn validate_keys_bundle<'a>(
                 expected_timestamp: certif.timestamp,
                 bad_timestamp: keys_bundle.timestamp,
             },
-        ));
+        )));
     }
 
     // 4) Finally check each key in the bundle against it corresponding canary.
@@ -816,7 +822,7 @@ pub enum CertifEncryptForRealmError {
     #[error("There is no key available in this realm for encryption")]
     NoKey,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

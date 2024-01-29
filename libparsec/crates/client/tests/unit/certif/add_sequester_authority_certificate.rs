@@ -58,7 +58,7 @@ async fn duplicate_authority_certificate(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
             // Corrupted because only the first certificate is allowed to be authority
             InvalidCertificateError::Corrupted { .. }
         )
@@ -91,7 +91,7 @@ async fn content_already_exists(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
             InvalidCertificateError::ContentAlreadyExists { .. }
         )
     )
@@ -124,7 +124,7 @@ async fn missing_authority_certificate(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
             // Corrupted because only the first certificate can only be an authority
             InvalidCertificateError::Corrupted { .. }
         )
@@ -156,11 +156,12 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::InvalidTimestamp {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::InvalidTimestamp {
             last_certificate_timestamp,
             ..
-        })
+        }
         if last_certificate_timestamp == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
+        )
     );
 }
 
@@ -192,10 +193,11 @@ async fn root_signature_timestamp_mismatch(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(InvalidCertificateError::RootSignatureTimestampMismatch {
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::RootSignatureTimestampMismatch {
             last_root_signature_timestamp,
             ..
-        })
+        }
         if last_root_signature_timestamp == DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
+        )
     );
 }

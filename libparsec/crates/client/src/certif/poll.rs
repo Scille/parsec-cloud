@@ -17,7 +17,7 @@ pub enum CertifPollServerError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("A certificate provided by the server is invalid: {0}")]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

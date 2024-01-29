@@ -22,11 +22,11 @@ pub enum FetchRemoteManifestError {
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
-    InvalidManifest(#[from] InvalidManifestError),
+    InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

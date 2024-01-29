@@ -26,9 +26,9 @@ pub enum WorkspaceSyncError {
     #[error("The workspace's realm hasn't been created yet on server")]
     NoRealm,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -409,7 +409,7 @@ async fn fetch_remote_manifest_with_self_heal<M: RemoteManifest>(
         FetchRemoteManifestOutcome::Invalid(err) => {
             // Try to find the last valid version of the manifest and continue
             // from there
-            let last_version = match err {
+            let last_version = match *err {
                 InvalidManifestError::Corrupted { version, .. } => version,
                 InvalidManifestError::NonExistentKeyIndex { version, .. } => version,
                 InvalidManifestError::CorruptedKey { version, .. } => version,
@@ -455,7 +455,7 @@ async fn find_last_valid_manifest<M: RemoteManifest>(
 
 enum FetchRemoteManifestOutcome<M> {
     Valid(M),
-    Invalid(InvalidManifestError),
+    Invalid(Box<InvalidManifestError>),
 }
 
 async fn fetch_remote_manifest_last_version<M: RemoteManifest>(

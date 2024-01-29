@@ -30,7 +30,7 @@ pub enum CertifRotateRealmKeyError {
         ballpark_client_late_offset: f64,
     },
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

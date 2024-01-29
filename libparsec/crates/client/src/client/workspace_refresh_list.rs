@@ -18,9 +18,9 @@ pub enum RefreshWorkspacesListError {
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
-    InvalidEncryptedRealmName(#[from] InvalidEncryptedRealmNameError),
+    InvalidEncryptedRealmName(#[from] Box<InvalidEncryptedRealmNameError>),
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

@@ -45,9 +45,9 @@ pub enum CertifDecryptCurrentRealmNameError {
     #[error("Realm has no name certificate yet")]
     NoNameCertificate,
     #[error(transparent)]
-    InvalidEncryptedRealmName(#[from] InvalidEncryptedRealmNameError),
+    InvalidEncryptedRealmName(#[from] Box<InvalidEncryptedRealmNameError>),
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -81,14 +81,14 @@ pub(super) async fn decrypt_current_realm_name(
                             CertifDecryptCurrentRealmNameError::NotAllowed
                         }
                         LoadLastKeysBundleError::NoKey => {
-                            CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(
+                            CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                                 InvalidEncryptedRealmNameError::NonExistentKeyIndex {
                                     realm: realm_id,
                                     author: certif.author.to_owned(),
                                     timestamp: certif.timestamp,
                                     key_index: certif.key_index,
                                 },
-                            )
+                            ))
                         }
                         LoadLastKeysBundleError::InvalidKeysBundle(err) => {
                             CertifDecryptCurrentRealmNameError::InvalidKeysBundle(err)
@@ -99,26 +99,26 @@ pub(super) async fn decrypt_current_realm_name(
                 Ok(key) => key,
                 Err(KeyFromIndexError::CorruptedKey) => {
                     return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(
+                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                             InvalidEncryptedRealmNameError::CorruptedKey {
                                 realm: realm_id,
                                 author: certif.author.to_owned(),
                                 timestamp: certif.timestamp,
                                 key_index: certif.key_index,
                             },
-                        ),
+                        )),
                     )
                 }
                 Err(KeyFromIndexError::KeyNotFound) => {
                     return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(
+                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                             InvalidEncryptedRealmNameError::NonExistentKeyIndex {
                                 realm: realm_id,
                                 author: certif.author.to_owned(),
                                 timestamp: certif.timestamp,
                                 key_index: certif.key_index,
                             },
-                        ),
+                        )),
                     )
                 }
             };
@@ -129,7 +129,7 @@ pub(super) async fn decrypt_current_realm_name(
                 Ok(decrypted) => decrypted,
                 Err(_) => {
                     return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(
+                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                             InvalidEncryptedRealmNameError::Corrupted {
                                 realm: realm_id,
                                 author: certif.author.to_owned(),
@@ -137,7 +137,7 @@ pub(super) async fn decrypt_current_realm_name(
                                 key_index: certif.key_index,
                                 error: Box::new(DataError::Decryption),
                             },
-                        ),
+                        )),
                     )
                 }
             };
@@ -148,7 +148,7 @@ pub(super) async fn decrypt_current_realm_name(
                 Some(name) => name,
                 None => {
                     return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(
+                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
                             InvalidEncryptedRealmNameError::Corrupted {
                                 realm: realm_id,
                                 author: certif.author.to_owned(),
@@ -156,7 +156,7 @@ pub(super) async fn decrypt_current_realm_name(
                                 key_index: certif.key_index,
                                 error: Box::new(DataError::Serialization),
                             },
-                        ),
+                        )),
                     )
                 }
             };

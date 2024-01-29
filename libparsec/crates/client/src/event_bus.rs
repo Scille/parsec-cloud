@@ -248,7 +248,7 @@ impl_events!(
         error: Arc<anyhow::Error>,
     },
     // CertificatesMonitorCrashed(Arc<anyhow::Error>),
-    InvalidCertificate(crate::certif::InvalidCertificateError),
+    InvalidCertificate(Box<crate::certif::InvalidCertificateError>),
     // UserSyncMonitorCrashed(Arc<anyhow::Error>),
     // WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),

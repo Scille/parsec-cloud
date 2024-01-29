@@ -64,7 +64,7 @@ pub enum CertifForReadWithRequirementsError {
     #[error("Component has stopped")]
     Stopped,
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }

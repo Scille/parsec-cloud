@@ -83,11 +83,11 @@ pub enum CertifValidateManifestError {
     #[error("Not allowed to access this realm")]
     NotAllowed,
     #[error(transparent)]
-    InvalidManifest(#[from] InvalidManifestError),
+    InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -167,14 +167,14 @@ pub(super) async fn validate_workspace_manifest(
                     LoadLastKeysBundleError::Offline => CertifValidateManifestError::Offline,
                     LoadLastKeysBundleError::NotAllowed => CertifValidateManifestError::NotAllowed,
                     LoadLastKeysBundleError::NoKey => {
-                        let err = InvalidManifestError::NonExistentKeyIndex {
+                        let err = Box::new(InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        };
+                        });
                         CertifValidateManifestError::InvalidManifest(err)
                     }
                     LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -186,7 +186,7 @@ pub(super) async fn validate_workspace_manifest(
                 .key_from_index(key_index, timestamp)
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
-                        CertifValidateManifestError::InvalidManifest(
+                        CertifValidateManifestError::InvalidManifest(Box::new(
                             InvalidManifestError::CorruptedKey {
                                 realm: realm_id,
                                 vlob: vlob_id,
@@ -195,17 +195,17 @@ pub(super) async fn validate_workspace_manifest(
                                 timestamp,
                                 key_index,
                             },
-                        )
+                        ))
                     }
                     KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
-                        InvalidManifestError::NonExistentKeyIndex {
+                        Box::new(InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        },
+                        }),
                     ),
                 })?;
 
@@ -266,14 +266,14 @@ pub(super) async fn validate_child_manifest(
                     LoadLastKeysBundleError::Offline => CertifValidateManifestError::Offline,
                     LoadLastKeysBundleError::NotAllowed => CertifValidateManifestError::NotAllowed,
                     LoadLastKeysBundleError::NoKey => {
-                        let err = InvalidManifestError::NonExistentKeyIndex {
+                        let err = Box::new(InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        };
+                        });
                         CertifValidateManifestError::InvalidManifest(err)
                     }
                     LoadLastKeysBundleError::InvalidKeysBundle(err) => {
@@ -285,7 +285,7 @@ pub(super) async fn validate_child_manifest(
                 .key_from_index(key_index, timestamp)
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
-                        CertifValidateManifestError::InvalidManifest(
+                        CertifValidateManifestError::InvalidManifest(Box::new(
                             InvalidManifestError::CorruptedKey {
                                 realm: realm_id,
                                 vlob: vlob_id,
@@ -294,17 +294,17 @@ pub(super) async fn validate_child_manifest(
                                 timestamp,
                                 key_index,
                             },
-                        )
+                        ))
                     }
                     KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
-                        InvalidManifestError::NonExistentKeyIndex {
+                        Box::new(InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        },
+                        }),
                     ),
                 })?;
 
@@ -369,13 +369,13 @@ async fn validate_manifest<M>(
 
         // Doesn't exist at the considered timestamp :(
         Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => {
-            let what = InvalidManifestError::NonExistentAuthor {
+            let what = Box::new(InvalidManifestError::NonExistentAuthor {
                 realm: realm_id,
                 vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
-            };
+            });
             return Err(CertifValidateManifestError::InvalidManifest(what));
         }
 
@@ -396,13 +396,13 @@ async fn validate_manifest<M>(
 
         // Revoked :(
         Ok(Some(_)) => {
-            let what = InvalidManifestError::RevokedAuthor {
+            let what = Box::new(InvalidManifestError::RevokedAuthor {
                 realm: realm_id,
                 vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
-            };
+            });
             return Err(CertifValidateManifestError::InvalidManifest(what));
         }
 
@@ -422,14 +422,14 @@ async fn validate_manifest<M>(
         Some(version),
     )
     .map_err(|error| {
-        let what = InvalidManifestError::Corrupted {
+        let what = Box::new(InvalidManifestError::Corrupted {
             realm: realm_id,
             vlob: vlob_id,
             version,
             author: author.to_owned(),
             timestamp,
             error: Box::new(error),
-        };
+        });
         CertifValidateManifestError::InvalidManifest(what)
     })?;
 
@@ -449,26 +449,26 @@ async fn validate_manifest<M>(
 
         // The author wasn't part of the realm :(
         None => {
-            let what = InvalidManifestError::AuthorNoAccessToRealm {
+            let what = Box::new(InvalidManifestError::AuthorNoAccessToRealm {
                 realm: realm_id,
                 vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
-            };
+            });
             return Err(CertifValidateManifestError::InvalidManifest(what));
         }
 
         // The author doesn't have write access to the realm :(
         Some(role) => {
-            let what = InvalidManifestError::AuthorRealmRoleCannotWrite {
+            let what = Box::new(InvalidManifestError::AuthorRealmRoleCannotWrite {
                 realm: realm_id,
                 vlob: vlob_id,
                 version,
                 author: author.to_owned(),
                 timestamp,
                 author_role: role,
-            };
+            });
             return Err(CertifValidateManifestError::InvalidManifest(what));
         }
     }

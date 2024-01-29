@@ -51,11 +51,11 @@ pub enum FsOperationError {
     #[error("Only have read access on this workspace")]
     ReadOnlyRealm,
     #[error(transparent)]
-    InvalidKeysBundle(#[from] InvalidKeysBundleError),
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
-    InvalidCertificate(#[from] InvalidCertificateError),
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
-    InvalidManifest(#[from] InvalidManifestError),
+    InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,

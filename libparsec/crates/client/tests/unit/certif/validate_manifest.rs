@@ -103,9 +103,8 @@ async fn non_existent_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(
-            InvalidManifestError::NonExistentAuthor { .. }
-        )
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(*boxed, InvalidManifestError::NonExistentAuthor { .. })
     );
 }
 
@@ -136,7 +135,8 @@ async fn corrupted(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(InvalidManifestError::Corrupted { .. })
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(*boxed, InvalidManifestError::Corrupted { .. })
     );
 }
 
@@ -180,7 +180,8 @@ async fn user_manifest_corrupted_by_bad_realm_id(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(InvalidManifestError::Corrupted { .. })
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(*boxed, InvalidManifestError::Corrupted { .. })
     );
 }
 
@@ -240,9 +241,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(
-            InvalidManifestError::AuthorNoAccessToRealm { .. }
-        )
+        CertifValidateManifestError::InvalidManifest(boxed) if matches!(*boxed, InvalidManifestError::AuthorNoAccessToRealm { .. })
     );
 }
 
@@ -283,23 +282,25 @@ async fn revoked(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(
-            InvalidManifestError::RevokedAuthor {
-                author,
-                realm,
-                timestamp,
-                version,
-                vlob,
-            }
+        CertifValidateManifestError::InvalidManifest(boxed)
+            if matches!(
+                &*boxed,
+                InvalidManifestError::RevokedAuthor {
+                    author,
+                    realm,
+                    timestamp,
+                    version,
+                    vlob,
+                }
+                if {
+                    p_assert_eq!(*author, bob.device_id);
+                    p_assert_eq!(*realm, bob.user_realm_id);
+                    p_assert_eq!(*timestamp, vlob_timestamp);
+                    p_assert_eq!(*version, 1);
+                    p_assert_eq!(*vlob, bob.user_realm_id);
+                    true
+                }
         )
-        if {
-            p_assert_eq!(author, bob.device_id);
-            p_assert_eq!(realm, bob.user_realm_id);
-            p_assert_eq!(timestamp, vlob_timestamp);
-            p_assert_eq!(version, 1);
-            p_assert_eq!(vlob, bob.user_realm_id);
-            true
-        }
     );
 }
 
@@ -371,7 +372,7 @@ async fn workspace_manifest_cannot_write(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(
+        CertifValidateManifestError::InvalidManifest(boxed) if matches!(&*boxed,
             InvalidManifestError::AuthorRealmRoleCannotWrite {
                 author,
                 author_role,
@@ -380,16 +381,16 @@ async fn workspace_manifest_cannot_write(env: &TestbedEnv) {
                 version,
                 vlob,
             }
-        )
         if {
-            p_assert_eq!(author, bob.device_id);
-            p_assert_eq!(author_role, RealmRole::Reader);
-            p_assert_eq!(realm, shared_realm_id);
-            p_assert_eq!(timestamp, vlob_timestamp);
-            p_assert_eq!(version, 1);
-            p_assert_eq!(vlob, shared_realm_id);
+            p_assert_eq!(*author, bob.device_id);
+            p_assert_eq!(*author_role, RealmRole::Reader);
+            p_assert_eq!(*realm, shared_realm_id);
+            p_assert_eq!(*timestamp, vlob_timestamp);
+            p_assert_eq!(*version, 1);
+            p_assert_eq!(*vlob, shared_realm_id);
             true
         },
+        )
     );
 }
 
@@ -433,7 +434,7 @@ async fn user_manifest_cannot_write(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifValidateManifestError::InvalidManifest(
+        CertifValidateManifestError::InvalidManifest(boxed) if matches!(&*boxed,
             InvalidManifestError::AuthorRealmRoleCannotWrite {
                 author,
                 author_role,
@@ -442,15 +443,15 @@ async fn user_manifest_cannot_write(env: &TestbedEnv) {
                 version,
                 vlob,
             }
-        )
         if {
-            p_assert_eq!(author, alice.device_id);
-            p_assert_eq!(author_role, RealmRole::Reader);
-            p_assert_eq!(realm, shared_realm_id);
-            p_assert_eq!(timestamp, vlob_timestamp);
-            p_assert_eq!(version, 1);
-            p_assert_eq!(vlob, shared_realm_id);
+            p_assert_eq!(*author, alice.device_id);
+            p_assert_eq!(*author_role, RealmRole::Reader);
+            p_assert_eq!(*realm, shared_realm_id);
+            p_assert_eq!(*timestamp, vlob_timestamp);
+            p_assert_eq!(*version, 1);
+            p_assert_eq!(*vlob, shared_realm_id);
             true
         },
+        )
     );
 }
