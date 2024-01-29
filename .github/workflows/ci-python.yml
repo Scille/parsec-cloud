@@ -116,7 +116,7 @@ jobs:
       - name: Restore libparsec if Rust hasn't been modified
         if: (!inputs.style-only)
         id: cache-libparsec
-        uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
+        uses: actions/cache/restore@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # pin v4.0.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -127,7 +127,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@c7e1de28469b16b21a170a200a7a9e810bb5cdff # pin v1.6.0
+        uses: actions-rust-lang/setup-rust-toolchain@b113a30d27a8e59c969077c0a0168cc13dab5ffc # pin v1.8.0
         if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
@@ -135,7 +135,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@3cf7f8cc28d1b4e7d01e3783be10a97d55d483c8 # pin v2.7.1
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # pin v2.7.3
         if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
@@ -194,7 +194,7 @@ jobs:
           (!inputs.style-only)
           && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@704facf57e6136b1bc63b828d79edcd491f0ee84 # pin v3.3.2
+        uses: actions/cache/save@13aacd865c20de90d75de3b17ebe84f7a17d57d2 # pin v4.0.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
