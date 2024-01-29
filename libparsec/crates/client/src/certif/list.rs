@@ -37,10 +37,21 @@ pub(super) async fn get_current_self_realms_role(
         .await??;
 
     // Replay the history of all changes
-    let roles = certifs
-        .into_iter()
-        .map(|c| (c.realm_id, c.role, c.timestamp))
-        .collect();
+
+    let mut roles = Vec::with_capacity(certifs.len());
+    for certif in certifs {
+        let maybe_exists = roles
+            .iter()
+            .position(|(realm_id, _, _)| *realm_id == certif.realm_id);
+        match maybe_exists {
+            Some(index) => {
+                roles[index] = (certif.realm_id, certif.role, certif.timestamp);
+            }
+            None => {
+                roles.push((certif.realm_id, certif.role, certif.timestamp));
+            }
+        }
+    }
 
     Ok(roles)
 }
