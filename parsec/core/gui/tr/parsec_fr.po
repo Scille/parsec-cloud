@@ -2280,6 +2280,9 @@ msgstr "Les nouveaux rôles n'ont pas pu être assignés."
 msgid "TEXT_REASSIGN_ROLE_SOME_FAILED"
 msgstr "Certains rôles n'ont pas pu être assignés."
 
+msgid "TEXT_BLOCK_REMANENCE"
+msgstr "Disponibilité hors-connexion:"
+
 msgid "TEXT_BLOCK_REMANENCE_ENABLED"
 msgstr ""
 "Les données de cet espace de travail sont actuellement conservées "
