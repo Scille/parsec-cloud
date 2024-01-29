@@ -119,6 +119,7 @@ class UserButton(QWidget, Ui_UserButton):
         self.user_info = user_info
         self.is_current_user = is_current_user
         self.current_user_is_admin = current_user_is_admin
+        self.common_workspaces = {}
 
         if self.is_current_user:
             self.label_is_current.setText("({})".format(T("TEXT_USER_IS_CURRENT")))
