@@ -92,7 +92,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Test docker image
-        run: python .github/scripts/test-testbed-server.py
+        run: python .github/scripts/test-server.py
         timeout-minutes: 1
 
       - name: Stop docker test container
@@ -100,7 +100,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Image to be published
-        run: echo ${{ steps.metadata.outputs.tags }}
+        run: echo "${{ steps.metadata.outputs.tags }}"
 
       - name: Build and publish
         if: github.event_name == 'workflow_dispatch'

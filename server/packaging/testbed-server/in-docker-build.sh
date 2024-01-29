@@ -41,4 +41,4 @@ pip install ./server
 rm -rf ./venv/lib/python3.12/site-packages/{boto3,botocore,pip,setuptools}
 
 # Basic check to see if the wheel looks like it's well built.
-(cd / && /server/venv/bin/parsec --version)
+./venv/bin/parsec --version

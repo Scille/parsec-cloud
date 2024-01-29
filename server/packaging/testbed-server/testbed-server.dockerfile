@@ -6,7 +6,7 @@
 
 FROM python:3.12 AS builder
 
-WORKDIR /work
+WORKDIR /testbed
 
 # Map source, cannot just do `ADD --link . .` otherwise modifying the current
 # file will invalidate the cache.
@@ -36,9 +36,14 @@ LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run a testbed parsec server to simplify mockup of an existing organization."
 
 USER 1234:1234
-WORKDIR /testbed
 
-COPY --chown=1234:1234 --from=builder /work/venv /testbed/venv
+# Copy the venv from the builder
+# Important: Use the same path as the builder so the venv scripts can run
+WORKDIR /testbed
+COPY --chown=1234:1234 --from=builder /testbed/venv /testbed/venv
+
+# Add venv/bin to PATH to make `parsec` available
+ENV PATH "/testbed/venv/bin:$PATH"
 
 EXPOSE 6777
 ENTRYPOINT ["parsec", "testbed", "--host", "0.0.0.0", "--port", "6777"]

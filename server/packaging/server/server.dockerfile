@@ -50,5 +50,5 @@ ENV PATH "/server/venv/bin:$PATH"
 
 # Define entry point
 EXPOSE 6777
-ENTRYPOINT ["parsec", "backend"]
+ENTRYPOINT ["parsec"]
 CMD ["run", "--port=6777"]
