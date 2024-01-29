@@ -52,10 +52,10 @@ pbr = { version = "^5.9" }
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
-pytest-asyncio = "^0.21.1"
+pytest-asyncio = ">=0.21.1,<0.24.0"
 pytest-cov = "^4.0"
 pytest-xdist = "^3.1"
-pytest-rerunfailures = ">=10.2,<13.0"
+pytest-rerunfailures = ">=10.2,<14.0"
 pytest-timeout = "^2.2.0"
 
 trustme = ">=0.9,<1.2"
