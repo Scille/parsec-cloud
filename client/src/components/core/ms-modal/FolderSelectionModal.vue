@@ -57,10 +57,9 @@
         >
           <div class="file-name">
             <div class="file-name__icons">
-              <ion-icon
-                class="main-icon"
-                :icon="entry.isFile() ? document : folder"
-                size="default"
+              <ms-image
+                :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+                class="file-icon"
               />
             </div>
             <ion-label class="file-name__label cell">
@@ -74,12 +73,14 @@
 </template>
 
 <script setup lang="ts">
+import { getFileIcon } from '@/common/file';
+import { Folder, MsImage } from '@/components/core/ms-image';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, EntryStatFolder, FsPath, Path, entryStat, getWorkspaceName } from '@/parsec';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
-import { chevronBack, chevronForward, document, folder } from 'ionicons/icons';
+import { chevronBack, chevronForward } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<FolderSelectionOptions>();
@@ -234,14 +235,9 @@ async function cancel(): Promise<boolean> {
   white-space: nowrap;
   overflow: hidden;
 
-  &__icons {
-    position: relative;
-    padding: 5px;
-
-    .main-icon {
-      color: var(--parsec-color-light-primary-600);
-      font-size: 1.5rem;
-    }
+  .file-icon {
+    width: 2rem;
+    height: 2rem;
   }
 
   &__label {

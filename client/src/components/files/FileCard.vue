@@ -26,17 +26,17 @@
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
     <div class="card-content">
-      <ion-avatar class="card-content__icons">
-        <ion-icon
-          class="icon-item"
-          :icon="file.isFile() ? document : folder"
+      <div class="card-content-icons">
+        <ms-image
+          :image="file.isFile() ? getFileIcon(props.file.name) : Folder"
+          class="file-icon"
         />
         <ion-icon
           class="cloud-overlay"
           :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
           :icon="isFileSynced() ? cloudDone : cloudOffline"
         />
-      </ion-avatar>
+      </div>
 
       <ion-title class="card-content__title body">
         {{ file.name }}
@@ -52,9 +52,11 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
+import { getFileIcon } from '@/common/file';
+import { Folder, MsImage } from '@/components/core/ms-image';
 import { EntryStat } from '@/parsec';
-import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
-import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
+import { IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
+import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
@@ -95,6 +97,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   cursor: pointer;
   text-align: center;
   --background: var(--parsec-color-light-secondary-background);
+  background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-medium);
   user-select: none;
   border-radius: var(--parsec-radius-12);
@@ -152,33 +155,33 @@ async function onOptionsClick(event: Event): Promise<void> {
   width: 100%;
   margin: auto;
 
-  &__icons {
+  &-icons {
     position: relative;
-    color: var(--parsec-color-light-primary-600);
     height: fit-content;
     width: fit-content;
     margin: 0 auto 0.875rem;
 
-    .icon-item {
-      font-size: 3rem;
+    .file-icon {
+      width: 3rem;
+      height: 3rem;
     }
 
     .cloud-overlay {
       position: absolute;
       font-size: 1.25rem;
       left: 58%;
-      bottom: -2px;
+      bottom: -6px;
       padding: 2px;
       background: var(--parsec-color-light-secondary-background);
       border-radius: 50%;
-    }
 
-    .cloud-overlay-ok {
-      color: var(--parsec-color-light-primary-500);
-    }
+      &-ok {
+        color: var(--parsec-color-light-primary-500);
+      }
 
-    .cloud-overlay-ko {
-      color: var(--parsec-color-light-secondary-text);
+      &-ko {
+        color: var(--parsec-color-light-secondary-text);
+      }
     }
   }
 

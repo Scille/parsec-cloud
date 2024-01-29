@@ -23,21 +23,18 @@
       </div>
       <!-- file name -->
       <div class="file-name">
-        <div class="file-name__icons">
-          <ion-icon
-            class="main-icon"
-            :icon="getFileIcon()"
-            size="default"
-          />
-          <ion-icon
-            class="cloud-overlay"
-            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="isFileSynced() ? cloudDone : cloudOffline"
-          />
-        </div>
+        <ms-image
+          :image="file.isFile() ? getFileIcon(props.file.name) : Folder"
+          class="file-icon"
+        />
         <ion-label class="file-name__label cell">
           {{ file.name }}
         </ion-label>
+        <ion-icon
+          class="cloud-overlay"
+          :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+          :icon="isFileSynced() ? cloudDone : cloudOffline"
+        />
       </div>
 
       <!-- updated by -->
@@ -90,11 +87,12 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { formatFileSize } from '@/common/file';
+import { formatFileSize, getFileIcon } from '@/common/file';
+import { Folder, MsImage } from '@/components/core/ms-image';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
-import { cloudDone, cloudOffline, document, ellipsisHorizontal, folder } from 'ionicons/icons';
+import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
@@ -118,13 +116,6 @@ defineExpose({
   props,
 });
 
-function getFileIcon(): string {
-  if (!props.file.isFile()) {
-    return folder;
-  }
-  return document;
-}
-
 function isFileSynced(): boolean {
   return !props.file.needSync;
 }
@@ -138,6 +129,32 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.file-name {
+  .file-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &__label {
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 1em;
+  }
+
+  .cloud-overlay {
+    font-size: 1rem;
+    // simulate the space taken by file-updatedBy + 1rem offset
+    margin-right: calc(14rem + 1rem);
+
+    &-ok {
+      color: var(--parsec-color-light-primary-500);
+    }
+
+    &-ko {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+  }
+}
+
 .file-options {
   ion-button::part(native) {
     padding: 0;

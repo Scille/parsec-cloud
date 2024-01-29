@@ -100,7 +100,7 @@ describe('Check folders page', () => {
     cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
     // Make the checkbox appear
     cy.get('.file-card-item').eq(0).trigger('mouseenter');
-    cy.get('.file-card-item').eq(0).find('ion-checkbox').should('be.visible');
+    cy.get('.file-card-item').eq(0).realHover().find('.checkbox').should('be.visible');
     // Select the first file
     cy.get('.file-card-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-card-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
@@ -114,7 +114,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests select all files in list view', () => {
-    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').should('not.have.class', 'checkbox-checked');
+    cy.get('.folder-list-header').realHover().find('ion-checkbox').invoke('show').should('not.have.class', 'checkbox-checked');
     // Select all
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
@@ -122,14 +122,14 @@ describe('Check folders page', () => {
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     // Unselect all
-    cy.get('.folder-list-header').find('ion-checkbox').click();
+    cy.get('.folder-list-header').realHover().find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
     cy.get('.counter').contains('3 items');
 
     // Select all, unselect first file
-    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-list-header').realHover().find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.counter').contains('3 selected items');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();

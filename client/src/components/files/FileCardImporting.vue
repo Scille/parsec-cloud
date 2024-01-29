@@ -10,7 +10,7 @@
         :width="24"
         :loop="true"
       />
-      <ion-avatar class="card-content__icons">
+      <ion-avatar class="card-content-icons">
         <ion-icon
           class="icon-item"
           :icon="document"
@@ -85,7 +85,7 @@ defineProps<{
     left: 0.75rem;
   }
 
-  &__icons {
+  &-icons {
     position: relative;
     color: var(--parsec-color-light-primary-600);
     height: fit-content;
