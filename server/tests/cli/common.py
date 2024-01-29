@@ -79,7 +79,7 @@ class LivingStream:
 @contextmanager
 def cli_running(cmd: str, wait_for: str | None = None, env: dict[str, str] = {}):
     env = {**os.environ.copy(), "DEBUG": "true", **env}
-    cooked_cmd = ("python -m parsec.cli " + cmd).split()
+    cooked_cmd = ("python -m parsec " + cmd).split()
     p = subprocess.Popen(
         cooked_cmd,
         stdout=subprocess.PIPE,
