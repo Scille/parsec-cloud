@@ -104,31 +104,11 @@ pub async fn share_workspace(
     match outcome {
         CertificateBasedActionOutcome::Uploaded {
             certificate_timestamp,
-        } => {
-            // It seems the workspace wasn't bootstrapped and we've just done it.
-            // Hence there is no need for a rename given our name has been used as
-            // the workspace's initial name.
-            let latest_known_timestamps =
-                PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
-            client
-                .certificates_ops
-                .poll_server_for_new_certificates(Some(&latest_known_timestamps))
-                .await
-                .map_err(|e| match e {
-                    CertifPollServerError::Stopped => ClientShareWorkspaceError::Stopped,
-                    CertifPollServerError::Offline => ClientShareWorkspaceError::Offline,
-                    CertifPollServerError::InvalidCertificate(err) => {
-                        ClientShareWorkspaceError::InvalidCertificate(err)
-                    }
-                    CertifPollServerError::Internal(err) => err
-                        .context("Cannot poll server for new certificates")
-                        .into(),
-                })?;
-            return Ok(());
         }
-        CertificateBasedActionOutcome::RemoteIdempotent {
+        | CertificateBasedActionOutcome::RemoteIdempotent {
             certificate_timestamp,
         } => {
+            // Bootstrap just occured, must fetch the new certificates.
             let latest_known_timestamps =
                 PerTopicLastTimestamps::new_for_realm(realm_id, certificate_timestamp);
             client
@@ -149,7 +129,7 @@ pub async fn share_workspace(
         CertificateBasedActionOutcome::LocalIdempotent => (),
     }
 
-    // 2) Do the actual share (i.e. upload certificate)
+    // 2) Do the actual share (i.e. upload realm role certificate)
 
     let outcome = client.certificates_ops
         .share_realm(realm_id, recipient, role)
@@ -180,7 +160,7 @@ pub async fn share_workspace(
             CertifShareRealmError::Internal(err) => err.into(),
         })?;
 
-    // 3) Poll the server to fetch back the new sharing certificate
+    // 3) Poll the server to fetch back the new realm role certificate
 
     let latest_known_timestamps = match outcome {
         CertificateBasedActionOutcome::LocalIdempotent => return Ok(()),
