@@ -272,18 +272,31 @@ class BaseEventsComponent:
 
         self._last_events_cache.append(event)
         for registered in self._registered_clients.values():
-            if event.is_event_for_client(registered):
-                if isinstance(event, EventRealmCertificate):
-                    # A new realm (un)sharing, update the list of realm we are interested about !
-                    if event.role_removed:
-                        registered.realms.discard(event.realm_id)
-                    else:
-                        registered.realms.add(event.realm_id)
-                try:
-                    registered.channel_sender.send_nowait((event, apiv4_sse_payload))
-                except anyio.WouldBlock:
-                    # Client is lagging too much behind, kill it
-                    registered.cancel_scope.cancel()
+            if not event.is_event_for_client(registered):
+                if isinstance(event, EventRealmCertificate) and event.user_id == registered.user_id:
+                    # This is a special case: the current certificate is new a sharing
+                    # for our user (hence he doesn't know yet he should be interested
+                    # in this realm !).
+                    registered.realms.add(event.realm_id)
+                else:
+                    # The event is not meant for this client, skip it
+                    continue
+
+            # The current certificate is a new unsharing for our user. It is then
+            # last event our user will receive about this realm, hence we update
+            # the list of realm we are interested about accordingly.
+            if (
+                isinstance(event, EventRealmCertificate)
+                and event.role_removed
+                and event.user_id == registered.user_id
+            ):
+                registered.realms.discard(event.realm_id)
+
+            try:
+                registered.channel_sender.send_nowait((event, apiv4_sse_payload))
+            except anyio.WouldBlock:
+                # Client is lagging too much behind, kill it
+                registered.cancel_scope.cancel()
 
     async def _register_client(
         self,
