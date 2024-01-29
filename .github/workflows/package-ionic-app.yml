@@ -41,7 +41,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@da1493208a5b2c79ad2d7dff9fd50693851da51a # pin v2.24.1
+      - uses: taiki-e/install-action@bee85d7ea77c01f7a403c22ac2c802b431b093df # pin v2.26.7
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -56,7 +56,7 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Web.spdx.json .
 
-      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # pin v4.0.0
+      - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # pin v4.3.0
         with:
           name: webapp
           path: |
@@ -118,14 +118,14 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@da1493208a5b2c79ad2d7dff9fd50693851da51a # pin v2.24.1
+      - uses: taiki-e/install-action@bee85d7ea77c01f7a403c22ac2c802b431b093df # pin v2.26.7
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
-      - uses: actions/upload-artifact@c7d193f32edcb7bfad88892161225aeda64e9392 # pin v4.0.0
+      - uses: actions/upload-artifact@26f96dfa697d77e81fd5907df203aa23a56210a8 # pin v4.3.0
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
           path: |
