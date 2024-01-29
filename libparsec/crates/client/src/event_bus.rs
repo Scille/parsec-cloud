@@ -275,7 +275,7 @@ impl_events!(
     PkiEnrollmentUpdated,
 );
 
-pub trait Broadcastable: Send
+pub trait Broadcastable: std::fmt::Debug + Send
 where
     Self: Sized,
 {
