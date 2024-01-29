@@ -473,8 +473,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 DeviceCertificate::unsecure_load,
                 UnsecureDeviceCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             // Update cache before leaving
             {
@@ -505,8 +504,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 UserCertificate::unsecure_load,
                 UnsecureUserCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(certif)
         }
@@ -529,7 +527,6 @@ macro_rules! impl_read_methods {
                 UserCertificate::unsecure_load,
                 UnsecureUserCertificate::skip_validation,
             )
-            .await
         }
 
         #[allow(unused)]
@@ -546,8 +543,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 DeviceCertificate::unsecure_load,
                 UnsecureDeviceCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(certif)
         }
@@ -569,7 +565,6 @@ macro_rules! impl_read_methods {
                 DeviceCertificate::unsecure_load,
                 UnsecureDeviceCertificate::skip_validation,
             )
-            .await
         }
 
         #[allow(unused)]
@@ -596,7 +591,6 @@ macro_rules! impl_read_methods {
                 RevokedUserCertificate::unsecure_load,
                 UnsecureRevokedUserCertificate::skip_validation,
             )
-            .await
             .map(Some)
         }
 
@@ -657,7 +651,6 @@ macro_rules! impl_read_methods {
                 RealmRoleCertificate::unsecure_load,
                 UnsecureRealmRoleCertificate::skip_validation,
             )
-            .await
             .map(Some)
         }
 
@@ -678,7 +671,6 @@ macro_rules! impl_read_methods {
                 RealmRoleCertificate::unsecure_load,
                 UnsecureRealmRoleCertificate::skip_validation,
             )
-            .await
         }
 
         #[allow(unused)]
@@ -714,7 +706,6 @@ macro_rules! impl_read_methods {
                 RealmRoleCertificate::unsecure_load,
                 UnsecureRealmRoleCertificate::skip_validation,
             )
-            .await
         }
 
         #[allow(unused)]
@@ -737,8 +728,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 RealmNameCertificate::unsecure_load,
                 UnsecureRealmNameCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(Some(certif))
         }
@@ -760,7 +750,6 @@ macro_rules! impl_read_methods {
                 RealmNameCertificate::unsecure_load,
                 UnsecureRealmNameCertificate::skip_validation,
             )
-            .await
         }
 
         #[allow(unused)]
@@ -783,8 +772,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 RealmKeyRotationCertificate::unsecure_load,
                 UnsecureRealmKeyRotationCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(Some(certif))
         }
@@ -814,8 +802,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 RealmKeyRotationCertificate::unsecure_load,
                 UnsecureRealmKeyRotationCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(Some(certif))
         }
@@ -836,8 +823,7 @@ macro_rules! impl_read_methods {
                 items,
                 RealmKeyRotationCertificate::unsecure_load,
                 UnsecureRealmKeyRotationCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             // Sanity check to make sure the order of the certificates correspond to their key index
             for (certif, expected_key_index) in certifs.iter().zip(1..) {
@@ -873,8 +859,7 @@ macro_rules! impl_read_methods {
                 &encrypted,
                 SequesterAuthorityCertificate::unsecure_load,
                 UnsecureSequesterAuthorityCertificate::skip_validation,
-            )
-            .await?;
+            )?;
 
             Ok(Some(certif))
         }
@@ -1269,7 +1254,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
     impl_read_methods!();
 }
 
-async fn get_multiple_certificates_from_encrypted<T, U>(
+fn get_multiple_certificates_from_encrypted<T, U>(
     store: &CertificatesStore,
     items: Vec<(DateTime, Vec<u8>)>,
     unsecure_load: fn(Bytes) -> DataResult<U>,
@@ -1279,15 +1264,14 @@ async fn get_multiple_certificates_from_encrypted<T, U>(
 
     for (_, encrypted) in items {
         let certif =
-            get_certificate_from_encrypted(store, &encrypted, unsecure_load, skip_validation)
-                .await?;
+            get_certificate_from_encrypted(store, &encrypted, unsecure_load, skip_validation)?;
         certifs.push(certif);
     }
 
     Ok(certifs)
 }
 
-async fn get_certificate_from_encrypted<T, U>(
+fn get_certificate_from_encrypted<T, U>(
     store: &CertificatesStore,
     encrypted: &[u8],
     unsecure_load: fn(Bytes) -> DataResult<U>,
@@ -1321,15 +1305,14 @@ async fn get_multiple_sequester_authority_signed_certificates_from_encrypted<T>(
             authority_verify_key,
             &encrypted,
             verify_and_load,
-        )
-        .await?;
+        )?;
         certifs.push(certif);
     }
 
     Ok(certifs)
 }
 
-async fn get_sequester_authority_signed_certificate_from_encrypted<T>(
+fn get_sequester_authority_signed_certificate_from_encrypted<T>(
     store: &CertificatesStore,
     authority_verify_key: &SequesterVerifyKeyDer,
     encrypted: &[u8],
