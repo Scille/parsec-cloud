@@ -72,8 +72,10 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
             };
             // Need a loop here to retry the operation in case the server is not available
             loop {
-                if let Err(err) = user_ops.sync().await {
-                    match err {
+                let outcome = user_ops.sync().await;
+                match outcome {
+                    Ok(_) => break,
+                    Err(err) => match err {
                         UserSyncError::Stopped => {
                             // Shouldn't occur in practice given the monitors are expected
                             // to be stopped before the opses. In anycase we have no
@@ -114,9 +116,8 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                             event_bus.send(&event);
                             return;
                         }
-                    }
+                    },
                 }
-                break;
             }
         }
     }

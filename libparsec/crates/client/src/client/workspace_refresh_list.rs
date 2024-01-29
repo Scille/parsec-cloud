@@ -65,9 +65,9 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
 
     // 3) Cook the new list of workspaces from the certificates
 
-    for (workspace_id, self_role, role_certificate_timestamp) in self_realms_role {
+    for (workspace_id, self_role, role_certificate_timestamp) in &self_realms_role {
         // Filter out user realm as it is not a workspace
-        if workspace_id == client.device.user_realm_id {
+        if *workspace_id == client.device.user_realm_id {
             continue;
         }
 
@@ -80,7 +80,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
         // Retrieve the name of the workspace
         let outcome = client
             .certificates_ops
-            .decrypt_current_realm_name(workspace_id)
+            .decrypt_current_realm_name(*workspace_id)
             .await;
 
         let (name, name_origin) = match outcome {
@@ -116,12 +116,12 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
         }?;
 
         local_workspaces.push(LocalUserManifestWorkspaceEntry {
-            id: workspace_id,
+            id: *workspace_id,
             name,
             name_origin,
-            role: self_role,
+            role: *self_role,
             role_origin: CertificateBasedInfoOrigin::Certificate {
-                timestamp: role_certificate_timestamp,
+                timestamp: *role_certificate_timestamp,
             },
         });
     }
@@ -150,6 +150,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 }
             }
             // Workspace is not in the new list, so it is either:
+            // - A workspace we've lost access to.
             // - A workspace we've just created (hence currently local-only).
             // - The certificates database is lagging behind (e.g. it has been cleared
             //   because we switch from/to OUTSIDER role).
@@ -157,6 +158,19 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
             //   thank to the workspace bootstrap being idempotent (and we will
             //   eventually receive the certificates and hence correct the entry).
             None => {
+                let no_longer_access = self_realms_role
+                    .iter()
+                    .find_map(|(wid, role, _)| {
+                        if *wid == old_entry.id {
+                            Some(role.is_none())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or(false);
+                if no_longer_access {
+                    continue;
+                }
                 local_workspaces.push(LocalUserManifestWorkspaceEntry {
                     id: old_entry.id,
                     name: old_entry.name.clone(),

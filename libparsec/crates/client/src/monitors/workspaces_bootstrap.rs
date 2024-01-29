@@ -74,7 +74,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                 };
 
                 match outcome {
-                    Ok(_) => (),
+                    Ok(_) => break,
                     Err(ClientEnsureWorkspacesBootstrappedError::Offline) => {
                         event_bus.wait_server_online().await;
                         continue;
@@ -114,7 +114,6 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                         return;
                     }
                 }
-                break;
             }
         }
     }
