@@ -1484,6 +1484,13 @@ impl TestbedEventRenameRealm {
  * TestbedEventRotateKeyRealm
  */
 
+#[derive(Default)]
+struct TestbedEventRotateKeyRealmCache {
+    certificates: TestbedEventCertificatesCache,
+    keys_bundle: TestbedEventCacheEntry<Bytes>,
+    per_user_keys_bundle_access: TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
+}
+
 #[derive(Clone)]
 pub struct TestbedEventRotateKeyRealm {
     pub timestamp: DateTime,
@@ -1497,13 +1504,7 @@ pub struct TestbedEventRotateKeyRealm {
     // Customize the key canary is only useful to test bad key canary
     pub custom_key_canary: Option<Vec<u8>>,
     pub participants: Vec<(UserID, PublicKey)>,
-    cache: Arc<
-        Mutex<(
-            TestbedEventCertificatesCache,
-            TestbedEventCacheEntry<Bytes>,
-            TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
-        )>,
-    >,
+    cache: Arc<Mutex<TestbedEventRotateKeyRealmCache>>,
 }
 
 impl_event_debug!(
@@ -1643,7 +1644,7 @@ impl TestbedEventRotateKeyRealm {
 
         std::iter::once(()).map(move |_| {
             let mut guard = self.cache.lock().expect("Mutex is poisoned");
-            guard.0.populated(populate).to_owned()
+            guard.certificates.populated(populate).to_owned()
         })
     }
 
@@ -1662,7 +1663,7 @@ impl TestbedEventRotateKeyRealm {
             encrypted.into()
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.1.populated(populate).to_owned()
+        guard.keys_bundle.populated(populate).to_owned()
     }
 
     pub fn per_participant_keys_bundle_access(&self) -> HashMap<UserID, Bytes> {
@@ -1681,7 +1682,10 @@ impl TestbedEventRotateKeyRealm {
                 .collect()
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.2.populated(populate).to_owned()
+        guard
+            .per_user_keys_bundle_access
+            .populated(populate)
+            .to_owned()
     }
 }
 

@@ -106,13 +106,11 @@ impl UserStore {
         let guard = self.lock_update_user_manifest.lock().await;
 
         let manifest = self.get_user_manifest();
-        let updater = UserForUpdateLocalWorkspacesUpdater {
+        UserForUpdateLocalWorkspacesUpdater {
             store: self,
             _update_guard: guard,
             manifest,
-        };
-
-        updater
+        }
     }
 }
 

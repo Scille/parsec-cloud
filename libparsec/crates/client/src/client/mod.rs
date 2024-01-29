@@ -288,10 +288,7 @@ impl Client {
         &self,
         realm_id: VlobID,
     ) -> Result<Vec<WorkspaceUserAccessInfo>, ClientListWorkspaceUsersError> {
-        self.certificates_ops
-            .list_workspace_users(realm_id)
-            .await
-            .map_err(|err| err.into())
+        self.certificates_ops.list_workspace_users(realm_id).await
     }
 
     /// List workspaces available to the current user.

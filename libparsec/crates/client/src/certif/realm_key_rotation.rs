@@ -66,7 +66,7 @@ pub(super) async fn ensure_realm_intial_key_rotation(
             store
                 .get_realm_last_key_rotation_certificate(UpTo::Current, realm_id)
                 .await
-                .map_err(|e| CertifRotateRealmKeyError::Internal(e))
+                .map_err(CertifRotateRealmKeyError::Internal)
                 .map(|certif| certif.is_some())
         })
         .await??;
@@ -109,7 +109,7 @@ pub(super) async fn ensure_realm_intial_key_rotation(
     // initial key rotation needs to be done with the key the existing realm's data
     // are encrypted with !
     match outcome {
-        RealmInitialKeyRotationOutcome::Done(outcome) => return Ok(outcome),
+        RealmInitialKeyRotationOutcome::Done(outcome) => Ok(outcome),
         RealmInitialKeyRotationOutcome::LegacyRealmWithNewlyGeneratedKey {
             encryption_revision: _,
         } => {

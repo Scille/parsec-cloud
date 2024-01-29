@@ -224,7 +224,7 @@ pub(super) async fn validate_workspace_manifest(
             )
             .await?;
 
-            return Ok(res);
+            Ok(res)
         })
         .await
         .map_err(|err| match err {
@@ -313,7 +313,7 @@ pub(super) async fn validate_child_manifest(
             let res = validate_manifest(
                 store,
                 realm_id,
-                &key,
+                key,
                 vlob_id,
                 author,
                 version,

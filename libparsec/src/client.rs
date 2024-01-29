@@ -323,10 +323,7 @@ pub async fn client_create_workspace(
 ) -> Result<VlobID, ClientCreateWorkspaceError> {
     let client = borrow_client(client)?;
 
-    client
-        .create_workspace(name)
-        .await
-        .map_err(|err| err.into())
+    client.create_workspace(name).await
 }
 
 /*

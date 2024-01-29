@@ -46,6 +46,7 @@ macro_rules! ident_concat {
             output
         }
         const RAW: &[u8] = &combine(&[$first $(, $remain )*]);
+        // SAFETY: `RAW` is a concatenation strings, hence it is a valid UTF-8 string
         const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
         COOKED
     }}
@@ -101,6 +102,7 @@ macro_rules! build_sql_in_fragment_types {
             output
         }
         const RAW: &[u8] = &combine();
+        // SAFETY: `RAW` is a concatenation strings, hence it is a valid UTF-8 string
         const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
         COOKED
     }};

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, future::Future, ops::ControlFlow, sync::Arc};
+use std::{collections::HashMap, ops::ControlFlow, sync::Arc};
 
 use libparsec_client_connection::{
     AuthenticatedCmds, ConnectionError, RateLimiter, SSEEventID, SSEResponseOrMissedEvents,
@@ -177,70 +177,65 @@ enum ConnectionState {
     Online,
 }
 
-fn task_future_factory(
-    cmds: Arc<AuthenticatedCmds>,
-    event_bus: EventBus,
-) -> impl Future<Output = ()> {
-    async move {
-        let mut state = ConnectionState::Offline;
-        let mut last_event_id: Option<SSEEventID> = None;
-        let mut backoff = RateLimiter::new();
+async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) {
+    let mut state = ConnectionState::Offline;
+    let mut last_event_id: Option<SSEEventID> = None;
+    let mut backoff = RateLimiter::new();
 
-        // As last monitor to start, we send this event to wake up all the other monitors
-        event_bus.send(&EventMissedServerEvents);
+    // As last monitor to start, we send this event to wake up all the other monitors
+    event_bus.send(&EventMissedServerEvents);
 
-        loop {
-            backoff.wait().await;
+    loop {
+        backoff.wait().await;
 
-            let mut stream = match cmds.start_sse::<Req>(last_event_id.as_ref()).await {
-                Ok(stream) => stream,
-                Err(err) => {
-                    if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {
-                        return;
-                    }
-                    continue;
+        let mut stream = match cmds.start_sse::<Req>(last_event_id.as_ref()).await {
+            Ok(stream) => stream,
+            Err(err) => {
+                if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {
+                    return;
                 }
-            };
+                continue;
+            }
+        };
 
-            backoff.reset();
+        backoff.reset();
 
-            while let Some(res) = stream.next().await {
-                match res {
-                    Ok(event) => {
-                        if let Some(retry) = event.retry {
-                            backoff.set_desired_duration(retry)
+        while let Some(res) = stream.next().await {
+            match res {
+                Ok(event) => {
+                    if let Some(retry) = event.retry {
+                        backoff.set_desired_duration(retry)
+                    }
+                    if Some(&event.id) != last_event_id.as_ref() {
+                        last_event_id.replace(event.id);
+                    }
+                    match event.message {
+                        SSEResponseOrMissedEvents::MissedEvents => {
+                            event_bus.send(&EventMissedServerEvents);
                         }
-                        if Some(&event.id) != last_event_id.as_ref() {
-                            last_event_id.replace(event.id);
-                        }
-                        match event.message {
-                            SSEResponseOrMissedEvents::MissedEvents => {
-                                event_bus.send(&EventMissedServerEvents);
+
+                        SSEResponseOrMissedEvents::Response(rep) => {
+                            if ConnectionState::Offline == state {
+                                event_bus.send(&EventOnline);
+                                state = ConnectionState::Online;
                             }
 
-                            SSEResponseOrMissedEvents::Response(rep) => {
-                                if ConnectionState::Offline == state {
-                                    event_bus.send(&EventOnline);
-                                    state = ConnectionState::Online;
+                            match rep {
+                                Rep::Ok(event) => dispatch_api_event(event, &event_bus),
+                                // Unexpected error status
+                                rep => {
+                                    log::warn!(
+                                        "`events_listen` unexpected error response: {:?}",
+                                        rep
+                                    );
                                 }
-
-                                match rep {
-                                    Rep::Ok(event) => dispatch_api_event(event, &event_bus),
-                                    // Unexpected error status
-                                    rep => {
-                                        log::warn!(
-                                            "`events_listen` unexpected error response: {:?}",
-                                            rep
-                                        );
-                                    }
-                                };
-                            }
+                            };
                         }
                     }
-                    Err(err) => {
-                        if handle_sse_error(&mut state, &event_bus, err).is_break() {
-                            return;
-                        }
+                }
+                Err(err) => {
+                    if handle_sse_error(&mut state, &event_bus, err).is_break() {
+                        return;
                     }
                 }
             }

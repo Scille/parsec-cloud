@@ -197,7 +197,7 @@ pub(super) async fn ensure_realm_initial_rename(
             store
                 .get_realm_last_name_certificate(UpTo::Current, realm_id)
                 .await
-                .map_err(|e| CertifRenameRealmError::Internal(e))
+                .map_err(CertifRenameRealmError::Internal)
                 .map(|certif| certif.is_some())
         })
         .await??;

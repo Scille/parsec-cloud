@@ -500,7 +500,7 @@ async fn fetch_last_remote_user_manifest(
                 author,
                 *version,
                 *timestamp,
-                &blob,
+                blob,
             ).await
         }
         // Unexpected errors :(
@@ -550,7 +550,7 @@ async fn fetch_old_remote_user_manifest(
 
     let req = Req {
         realm_id: ops.realm_id(),
-        items: [(ops.device.user_realm_id.clone(), version)].into(),
+        items: [(ops.device.user_realm_id, version)].into(),
     };
 
     let rep = ops.cmds.send(req).await?;
@@ -566,7 +566,7 @@ async fn fetch_old_remote_user_manifest(
                 author,
                 *version,
                 *timestamp,
-                &blob,
+                blob,
             ).await
         }
         // Unexpected errors :(

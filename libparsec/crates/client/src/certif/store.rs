@@ -155,8 +155,8 @@ impl CertificatesStore {
 
     /// Lock the store for writing purpose, this is an exclusive lock so no
     /// other read/write operation can occur.
-    pub async fn for_write<'a, T, E, Fut>(
-        &'a self,
+    pub async fn for_write<T, E, Fut>(
+        &self,
         cb: impl FnOnce(&'static mut CertificatesStoreWriteGuard) -> Fut,
     ) -> Result<Result<T, E>, CertifStoreError>
     where
@@ -172,7 +172,7 @@ impl CertificatesStore {
         let updater = storage.for_update().await?;
 
         let mut write_guard = CertificatesStoreWriteGuard {
-            store: &self,
+            store: self,
             storage: updater,
         };
 
@@ -249,7 +249,7 @@ impl CertificatesStore {
         };
 
         let mut write_guard = CertificatesStoreReadGuard {
-            store: &self,
+            store: self,
             storage,
         };
 
@@ -300,8 +300,8 @@ impl CertificatesStore {
                     let last_stored_timestamps = store
                         .get_last_timestamps()
                         .await
-                        .map_err(|err| CertifForReadWithRequirementsError::Internal(err))?;
-                    if !last_stored_timestamps.is_up_to_date(&needed_timestamps) {
+                        .map_err(CertifForReadWithRequirementsError::Internal)?;
+                    if !last_stored_timestamps.is_up_to_date(needed_timestamps) {
                         return Result::<
                             ForReadOutcome<T, E>,
                             CertifForReadWithRequirementsError,
@@ -1059,7 +1059,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                update_timestamp_cache(&mut *cache, certif.timestamp);
+                update_timestamp_cache(&mut cache, certif.timestamp);
                 cache
                     .per_user_profile
                     .insert(certif.user_id.clone(), certif.profile);
@@ -1077,7 +1077,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                update_timestamp_cache(&mut *cache, certif.timestamp);
+                update_timestamp_cache(&mut cache, certif.timestamp);
                 cache.per_device_verify_key.insert(
                     certif.device_id.clone(),
                     (certif.verify_key.clone(), certif.timestamp),
@@ -1093,7 +1093,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                update_timestamp_cache(&mut *cache, certif.timestamp);
+                update_timestamp_cache(&mut cache, certif.timestamp);
                 cache
                     .per_user_profile
                     .insert(certif.user_id.clone(), certif.new_profile);
@@ -1111,7 +1111,7 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                update_timestamp_cache(&mut *cache, certif.timestamp);
+                update_timestamp_cache(&mut cache, certif.timestamp);
             }
         }
 

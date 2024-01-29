@@ -74,8 +74,7 @@ impl RealmKeys {
     ) -> Result<&SecretKey, KeyFromIndexError> {
         let key = (key_index as usize)
             .checked_sub(1)
-            .map(|index| self.keys.get(index))
-            .flatten()
+            .and_then(|index| self.keys.get(index))
             .ok_or(KeyFromIndexError::KeyNotFound)?;
 
         match key {
@@ -610,6 +609,7 @@ pub enum ValidateKeysBundleError {
     Internal(#[from] anyhow::Error),
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn validate_keys_bundle<'a>(
     ops: &CertifOps,
     store: &mut CertificatesStoreReadGuard<'a>,
@@ -626,7 +626,7 @@ async fn validate_keys_bundle<'a>(
         let cleartext_keys_bundle_access = ops
             .device
             .private_key
-            .decrypt_from_self(&keys_bundle_access)
+            .decrypt_from_self(keys_bundle_access)
             .map_err(|_| {
                 ValidateKeysBundleError::InvalidKeysBundle(
                     InvalidKeysBundleError::CorruptedAccess {
@@ -660,7 +660,7 @@ async fn validate_keys_bundle<'a>(
     // 2) Decrypt & load keys bundle
 
     let keys_bundle = {
-        let cleartext_keys_bundle = keys_bundle_access_key.decrypt(&keys_bundle).map_err(|_| {
+        let cleartext_keys_bundle = keys_bundle_access_key.decrypt(keys_bundle).map_err(|_| {
             ValidateKeysBundleError::InvalidKeysBundle(InvalidKeysBundleError::Decryption {
                 realm: realm_id,
                 key_index,

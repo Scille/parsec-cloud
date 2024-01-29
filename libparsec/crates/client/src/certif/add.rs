@@ -265,7 +265,7 @@ pub(super) async fn add_certificates_batch(
             .filter_map(|(realm_id, _)| {
                 initial_stored_last_timestamps
                     .realm
-                    .get(&realm_id)
+                    .get(realm_id)
                     .map(|ts| (*realm_id, *ts))
             })
             .collect(),
@@ -634,7 +634,7 @@ async fn validate_sequester_authority_certificate(
 
     // 4) The certificate is valid, last check is the consistency with other certificates
 
-    check_sequester_authority_certificate_consistency(store, &*cooked).await?;
+    check_sequester_authority_certificate_consistency(store, &cooked).await?;
 
     Ok(cooked)
 }
