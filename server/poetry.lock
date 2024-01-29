@@ -687,13 +687,13 @@ unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "cibuildwheel"
-version = "2.12.3"
+version = "2.16.4"
 description = "Build Python wheels on CI with minimal configuration."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "cibuildwheel-2.12.3-py3-none-any.whl", hash = "sha256:7f222f836a51eba1eed50181eb80edab4f0584fba68e212710f63a7330df35b2"},
-    {file = "cibuildwheel-2.12.3.tar.gz", hash = "sha256:908050c595846b9d5fb62209e4ab0c545129ebd09c6abab8fab70ce23b5bcb3a"},
+    {file = "cibuildwheel-2.16.4-py3-none-any.whl", hash = "sha256:7dab00ecb30405fe80c6c3a88416c0595449b6b91466cfe91598a435f9136668"},
+    {file = "cibuildwheel-2.16.4.tar.gz", hash = "sha256:2bd6fa7991192861f52d42928c56cc4432e958d6e72ee1034ab0d1dc2cdb7708"},
 ]
 
 [package.dependencies]
@@ -706,9 +706,9 @@ platformdirs = "*"
 
 [package.extras]
 bin = ["click", "packaging (>=21.0)", "pip-tools", "pygithub", "pyyaml", "requests", "rich (>=9.6)"]
-dev = ["build", "click", "jinja2", "packaging (>=21.0)", "pip-tools", "pygithub", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "pyyaml", "requests", "rich (>=9.6)", "tomli-w"]
+dev = ["build", "click", "jinja2", "packaging (>=21.0)", "pip-tools", "pygithub", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "pyyaml", "requests", "rich (>=9.6)", "tomli-w", "validate-pyproject"]
 docs = ["jinja2 (>=3.1.2)", "mkdocs (==1.3.1)", "mkdocs-include-markdown-plugin (==2.8.0)", "mkdocs-macros-plugin", "pymdown-extensions"]
-test = ["build", "jinja2", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "tomli-w"]
+test = ["build", "jinja2", "pytest (>=6)", "pytest-timeout", "pytest-xdist", "tomli-w", "validate-pyproject"]
 
 [[package]]
 name = "click"
@@ -1884,4 +1884,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12.0"
-content-hash = "4461dfa2c1fca3bbf4388c2d29122b4099f50a89194140f22b0749db235a109d"
+content-hash = "c2e14364eb3999d8b860c4476313e1f846ff063b16d1461401780b437715542c"
