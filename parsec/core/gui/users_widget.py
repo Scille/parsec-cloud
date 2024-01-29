@@ -15,7 +15,6 @@ from parsec.core.backend_connection import (
     BackendInvitationOnExistingMember,
     BackendNotAvailable,
 )
-from parsec.core.fs import WorkspaceFS
 from parsec.core.gui import desktop, validators
 from parsec.core.gui.custom_dialogs import (
     ask_question,
@@ -34,14 +33,10 @@ from parsec.core.gui.ui.user_button import Ui_UserButton
 from parsec.core.gui.ui.user_invitation_button import Ui_UserInvitationButton
 from parsec.core.gui.ui.users_widget import Ui_UsersWidget
 from parsec.core.logged_core import LoggedCore
-from parsec.core.types import BackendInvitationAddr, UserInfo, WorkspaceRole
+from parsec.core.types import BackendInvitationAddr, UserInfo
 from parsec.event_bus import EventBus
 
 USERS_PER_PAGE = 100
-
-
-def can_reassign_workspace(client_role: WorkspaceRole, user_role: WorkspaceRole) -> bool:
-    return client_role in [WorkspaceRole.MANAGER, WorkspaceRole.OWNER]
 
 
 class UserInvitationButton(QWidget, Ui_UserInvitationButton):
@@ -101,7 +96,7 @@ class UserInvitationButton(QWidget, Ui_UserInvitationButton):
 class UserButton(QWidget, Ui_UserButton):
     revoke_clicked = pyqtSignal(UserInfo)
     filter_user_workspaces_clicked = pyqtSignal(UserInfo)
-    assign_workspace_roles_clicked = pyqtSignal(UserInfo, dict)
+    assign_workspace_roles_clicked = pyqtSignal(UserInfo)
 
     def __init__(
         self,
@@ -130,24 +125,6 @@ class UserButton(QWidget, Ui_UserButton):
         effect.setXOffset(2)
         effect.setYOffset(2)
         self.setGraphicsEffect(effect)
-        self.get_common_workspaces_job: QtToTrioJob[None] = self.jobs_ctx.submit_job(
-            None, None, self._get_common_workspaces
-        )
-
-    async def _get_common_workspaces(self) -> None:
-        try:
-            workspaces = self.core.user_fs.get_available_workspaces()
-            common_workspaces = {}
-            for workspace in workspaces:
-                roles = await workspace.get_user_roles()
-                if self.user_info.user_id in roles:
-                    common_workspaces[workspace] = [
-                        roles[self.core.user_fs.device.user_id],
-                        roles[self.user_info.user_id],
-                    ]
-            self.common_workspaces = common_workspaces
-        except Exception:
-            pass
 
     @property
     def user_info(self) -> UserInfo:
@@ -209,12 +186,8 @@ class UserButton(QWidget, Ui_UserButton):
             if not self.user_info.is_revoked and self.current_user_is_admin:
                 action = menu.addAction(T("ACTION_USER_MENU_REVOKE"))
                 action.triggered.connect(self.revoke)
-            if any(
-                can_reassign_workspace(roles[0], roles[1])
-                for roles in self.common_workspaces.values()
-            ):
-                action = menu.addAction(T("ACTION_USER_MENU_ASSIGN_WORKSPACE_ROLES"))
-                action.triggered.connect(self.assign_workspace_roles)
+            action = menu.addAction(T("ACTION_USER_MENU_ASSIGN_WORKSPACE_ROLES"))
+            action.triggered.connect(self.assign_workspace_roles)
 
         if not menu.isEmpty():
             menu.exec_(global_pos)
@@ -230,12 +203,7 @@ class UserButton(QWidget, Ui_UserButton):
         self.filter_user_workspaces_clicked.emit(self.user_info)
 
     def assign_workspace_roles(self) -> None:
-        reassignable_workspaces = {
-            workspace: roles
-            for workspace, roles in self.common_workspaces.items()
-            if can_reassign_workspace(roles[0], roles[1])
-        }
-        self.assign_workspace_roles_clicked.emit(self.user_info, reassignable_workspaces)
+        self.assign_workspace_roles_clicked.emit(self.user_info)
 
 
 async def _do_revoke_user(core: LoggedCore, user_info: UserInfo) -> UserInfo:
@@ -433,11 +401,8 @@ class UsersWidget(QWidget, Ui_UsersWidget):
     def reassign_workspace_roles(
         self,
         user_info: UserInfo,
-        reassignable_workspaces: dict[WorkspaceFS, tuple[WorkspaceRole, WorkspaceRole]],
     ) -> None:
-        ReassignWorkspaceRolesWidget.show_modal(
-            self.core, self.jobs_ctx, user_info, reassignable_workspaces, parent=self
-        )
+        ReassignWorkspaceRolesWidget.show_modal(self.core, self.jobs_ctx, user_info, parent=self)
 
     def add_user_invitation(self, email: str, invite_addr: BackendInvitationAddr) -> None:
         button = UserInvitationButton(email, invite_addr)

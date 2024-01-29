@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-12-14 11:02+0100\n"
+"POT-Creation-Date: 2024-01-29 14:10+0100\n"
 "PO-Revision-Date: 2020-10-15 10:31+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: fr\n"
@@ -2256,8 +2256,17 @@ msgstr "Les rôles suivants seront assignés à <b>{user}</b> :"
 msgid "TEXT_REASSIGN_ROLE_SUMMARY_DETAIL_role_workspace"
 msgstr "<b>{role}</b> sur <b>{workspace}</b>"
 
+msgid "TEXT_GET_WORKSPACES_TO_REASSIGN_ERROR"
+msgstr "Impossible de récupérer la liste des espaces de travail à réassigner."
+
+msgid "TEXT_NO_WORKSPACES_TO_REASSIGN_user"
+msgstr "Vous ne pouvez ré-assigner aucun espace de travail de {user}."
+
 msgid "TEXT_REASSIGN_WORKSPACE_ROLES_userFrom-userTo"
 msgstr "Assigner les rôles des espaces de travail de {userFrom} à {userTo}"
+
+msgid "TEXT_REASSIGN_WORKSPACE_ROLES_user"
+msgstr "Assigner les rôles des espaces de travail de {user} à :"
 
 msgid "TEXT_REASSIGN_ROLES_NO_ROLE_TO_ASSIGN_user"
 msgstr "Aucun nouveau rôle à assigner à l'utilisateur {user}."
@@ -2270,9 +2279,6 @@ msgstr "Les nouveaux rôles n'ont pas pu être assignés."
 
 msgid "TEXT_REASSIGN_ROLE_SOME_FAILED"
 msgstr "Certains rôles n'ont pas pu être assignés."
-
-msgid "TEXT_REASSIGN_WORKSPACE_ROLES_user"
-msgstr "Assigner les rôles des espaces de travail de {user} à :"
 
 msgid "TEXT_BLOCK_REMANENCE_ENABLED"
 msgstr ""
