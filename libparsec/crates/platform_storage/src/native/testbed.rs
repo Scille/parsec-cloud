@@ -101,12 +101,7 @@ pub(super) async fn maybe_open_sqlite_in_memory(
     // Now create the database and register its path as opened
     let force_db_on_disk = std::env::var("TESTBED_FORCE_SQLITE_ON_DISK").is_ok();
     let conn = if !force_db_on_disk {
-        let db_url = format!(
-            "sqlite:file:{}/{}?mode=memory",
-            &path_info.data_base_dir.to_str().expect("utf8 path"),
-            &path_info.db_relative_path.to_str().expect("utf8 path")
-        );
-        SqliteConnection::connect(&db_url)
+        SqliteConnection::connect(&"sqlite::memory:")
             .await
             .expect("Cannot create in-memory database")
     } else {

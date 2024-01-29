@@ -503,21 +503,12 @@ impl PlatformCertificatesStorage {
             Some(conn) => conn,
             // Actual production code: open the connection on disk
             None => {
-                // TODO: configure the database with pragma stuff
-                let sqlite_url = db_path.to_str().ok_or_else(|| {
-                    anyhow::anyhow!(
-                        "Invalid DB path (contains non-utf8 characters): {:?}",
-                        db_path
-                    )
-                })?;
-
-                let path = Path::new(sqlite_url);
-                if let Some(parent) = path.parent() {
+                if let Some(parent) = db_path.parent() {
                     let _ = std::fs::create_dir_all(parent);
                 }
 
                 SqliteConnectOptions::new()
-                    .filename(sqlite_url)
+                    .filename(&db_path)
                     .create_if_missing(true)
                     .journal_mode(SqliteJournalMode::Wal)
                     .synchronous(SqliteSynchronous::Normal)
