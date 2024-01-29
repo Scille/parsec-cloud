@@ -413,6 +413,7 @@ describe('Check folders page', () => {
 
     cy.get('#folders-ms-action-bar').find('#button-rename').should('not.be.visible');
     cy.get('#folders-ms-action-bar').find('#button-moveto').should('not.be.visible');
+    // cspell:disable-next-line
     cy.get('#folders-ms-action-bar').find('#button-makeacopy').should('not.be.visible');
     cy.get('#folders-ms-action-bar').find('#button-delete').should('not.be.visible');
 

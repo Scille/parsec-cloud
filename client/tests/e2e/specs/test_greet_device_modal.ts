@@ -28,14 +28,18 @@ describe('Greet a new device', () => {
 
   it('Copy invitation link', () => {
     cy.get('.devices-container').find('ion-button').contains('Add').click();
-    cy.get('.greet-organization-modal').find('#copy-link-btn').click();
-    cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
-    cy.window().then((win) => {
-      win.navigator.clipboard.readText().then((text) => {
-        // cspell:disable-next-line
-        expect(text).to.eq('parsec://parsec.example.com/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529');
+    cy.get('.greet-organization-modal')
+      .find('#copy-link-btn')
+      .click()
+      .then(() => {
+        cy.window().then((win) => {
+          win.navigator.clipboard.readText().then((text) => {
+            // cspell:disable-next-line
+            expect(text).to.eq('parsec://example.parsec.cloud/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529');
+          });
+        });
       });
-    });
+    cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
   });
 
   it('Go through the greet process', () => {
