@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::collections::HashMap;
+use std::num::NonZeroU64;
 use std::sync::{Arc, Mutex};
 
 use libparsec_types::prelude::*;
@@ -32,7 +33,6 @@ impl<T> TestbedEventCacheEntry<T> {
 
 #[derive(Clone)]
 pub struct TestbedTemplateEventCertificate {
-    pub certificate_index: IndexInt,
     pub certificate: AnyArcCertificate,
     pub signed: Bytes,
     // `signed_redacted` is the same than `signed` if the certificate has no redacted flavour
@@ -134,18 +134,21 @@ pub enum TestbedEvent {
     // 1) Client/server interaction events producing certificates
     BootstrapOrganization(TestbedEventBootstrapOrganization),
     NewSequesterService(TestbedEventNewSequesterService),
+    RevokeSequesterService(TestbedEventRevokeSequesterService),
     NewUser(TestbedEventNewUser),
     NewDevice(TestbedEventNewDevice),
     UpdateUserProfile(TestbedEventUpdateUserProfile),
     RevokeUser(TestbedEventRevokeUser),
     NewRealm(TestbedEventNewRealm),
     ShareRealm(TestbedEventShareRealm),
+    RenameRealm(TestbedEventRenameRealm),
+    RotateKeyRealm(TestbedEventRotateKeyRealm),
+    ArchiveRealm(TestbedEventArchiveRealm),
+    NewShamirRecovery(TestbedEventNewShamirRecovery),
 
     // 2) Client/server interaction events not producing certificates
     NewDeviceInvitation(TestbedEventNewDeviceInvitation),
     NewUserInvitation(TestbedEventNewUserInvitation),
-    StartRealmReencryption(TestbedEventStartRealmReencryption),
-    FinishRealmReencryption(TestbedEventFinishRealmReencryption),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
     CreateOrUpdateWorkspaceManifestVlob(TestbedEventCreateOrUpdateWorkspaceManifestVlob),
     CreateOrUpdateFileManifestVlob(TestbedEventCreateOrUpdateFileManifestVlob),
@@ -180,6 +183,7 @@ impl CrcHash for TestbedEvent {
         match self {
             TestbedEvent::BootstrapOrganization(x) => x.crc_hash(hasher),
             TestbedEvent::NewSequesterService(x) => x.crc_hash(hasher),
+            TestbedEvent::RevokeSequesterService(x) => x.crc_hash(hasher),
             TestbedEvent::NewUser(x) => x.crc_hash(hasher),
             TestbedEvent::NewDevice(x) => x.crc_hash(hasher),
             TestbedEvent::UpdateUserProfile(x) => x.crc_hash(hasher),
@@ -188,8 +192,10 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::NewUserInvitation(x) => x.crc_hash(hasher),
             TestbedEvent::NewRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ShareRealm(x) => x.crc_hash(hasher),
-            TestbedEvent::StartRealmReencryption(x) => x.crc_hash(hasher),
-            TestbedEvent::FinishRealmReencryption(x) => x.crc_hash(hasher),
+            TestbedEvent::RenameRealm(x) => x.crc_hash(hasher),
+            TestbedEvent::RotateKeyRealm(x) => x.crc_hash(hasher),
+            TestbedEvent::ArchiveRealm(x) => x.crc_hash(hasher),
+            TestbedEvent::NewShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFileManifestVlob(x) => x.crc_hash(hasher),
@@ -217,7 +223,7 @@ impl CrcHash for TestbedEvent {
     }
 }
 
-pub enum TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H>
+pub enum TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M>
 where
     A: Iterator<Item = TestbedTemplateEventCertificate>,
     B: Iterator<Item = TestbedTemplateEventCertificate>,
@@ -227,19 +233,30 @@ where
     F: Iterator<Item = TestbedTemplateEventCertificate>,
     G: Iterator<Item = TestbedTemplateEventCertificate>,
     H: Iterator<Item = TestbedTemplateEventCertificate>,
+    I: Iterator<Item = TestbedTemplateEventCertificate>,
+    J: Iterator<Item = TestbedTemplateEventCertificate>,
+    K: Iterator<Item = TestbedTemplateEventCertificate>,
+    L: Iterator<Item = TestbedTemplateEventCertificate>,
+    M: Iterator<Item = TestbedTemplateEventCertificate>,
 {
     BootstrapOrganization(A),
     NewSequesterService(B),
-    NewUser(C),
-    NewDevice(D),
-    UpdateUserProfile(E),
-    RevokeUser(F),
-    NewRealm(G),
-    ShareRealm(H),
+    RevokeSequesterService(C),
+    NewUser(D),
+    NewDevice(E),
+    UpdateUserProfile(F),
+    RevokeUser(G),
+    NewRealm(H),
+    ShareRealm(I),
+    RenameRealm(J),
+    RotateKeyRealm(K),
+    ArchiveRealm(L),
+    NewShamirRecovery(M),
     Other,
 }
 
-impl<A, B, C, D, E, F, G, H> Iterator for TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H>
+impl<A, B, C, D, E, F, G, H, I, J, K, L, M> Iterator
+    for TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M>
 where
     A: Iterator<Item = TestbedTemplateEventCertificate>,
     B: Iterator<Item = TestbedTemplateEventCertificate>,
@@ -249,6 +266,11 @@ where
     F: Iterator<Item = TestbedTemplateEventCertificate>,
     G: Iterator<Item = TestbedTemplateEventCertificate>,
     H: Iterator<Item = TestbedTemplateEventCertificate>,
+    I: Iterator<Item = TestbedTemplateEventCertificate>,
+    J: Iterator<Item = TestbedTemplateEventCertificate>,
+    K: Iterator<Item = TestbedTemplateEventCertificate>,
+    L: Iterator<Item = TestbedTemplateEventCertificate>,
+    M: Iterator<Item = TestbedTemplateEventCertificate>,
 {
     type Item = TestbedTemplateEventCertificate;
 
@@ -256,12 +278,17 @@ where
         match self {
             Self::BootstrapOrganization(iter) => iter.next(),
             Self::NewSequesterService(iter) => iter.next(),
+            Self::RevokeSequesterService(iter) => iter.next(),
             Self::NewUser(iter) => iter.next(),
             Self::NewDevice(iter) => iter.next(),
             Self::UpdateUserProfile(iter) => iter.next(),
             Self::RevokeUser(iter) => iter.next(),
             Self::NewRealm(iter) => iter.next(),
             Self::ShareRealm(iter) => iter.next(),
+            Self::RotateKeyRealm(iter) => iter.next(),
+            Self::RenameRealm(iter) => iter.next(),
+            Self::ArchiveRealm(iter) => iter.next(),
+            Self::NewShamirRecovery(iter) => iter.next(),
             Self::Other => None,
         }
     }
@@ -280,6 +307,10 @@ impl TestbedEvent {
             TestbedEvent::NewSequesterService(x) => {
                 let iter = x.certificates(template);
                 TestbedEventCertificatesIterator::NewSequesterService(iter)
+            }
+            TestbedEvent::RevokeSequesterService(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::RevokeSequesterService(iter)
             }
             TestbedEvent::NewUser(x) => {
                 let iter = x.certificates(template);
@@ -305,7 +336,46 @@ impl TestbedEvent {
                 let iter = x.certificates(template);
                 TestbedEventCertificatesIterator::ShareRealm(iter)
             }
-            _ => TestbedEventCertificatesIterator::Other,
+            TestbedEvent::RenameRealm(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::RenameRealm(iter)
+            }
+            TestbedEvent::RotateKeyRealm(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::RotateKeyRealm(iter)
+            }
+            TestbedEvent::ArchiveRealm(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::ArchiveRealm(iter)
+            }
+            TestbedEvent::NewShamirRecovery(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::NewShamirRecovery(iter)
+            }
+
+            TestbedEvent::NewDeviceInvitation(_)
+            | TestbedEvent::NewUserInvitation(_)
+            | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
+            | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
+            | TestbedEvent::CreateBlock(_)
+            | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::CertificatesStorageFetchCertificates(_)
+            | TestbedEvent::UserStorageFetchUserVlob(_)
+            | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::UserStorageLocalUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+            | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_) => {
+                TestbedEventCertificatesIterator::Other
+            }
         }
     }
 
@@ -313,6 +383,7 @@ impl TestbedEvent {
         match self {
             TestbedEvent::BootstrapOrganization(_)
             | TestbedEvent::NewSequesterService(_)
+            | TestbedEvent::RevokeSequesterService(_)
             | TestbedEvent::NewUser(_)
             | TestbedEvent::NewDevice(_)
             | TestbedEvent::UpdateUserProfile(_)
@@ -321,8 +392,10 @@ impl TestbedEvent {
             | TestbedEvent::NewUserInvitation(_)
             | TestbedEvent::NewRealm(_)
             | TestbedEvent::ShareRealm(_)
-            | TestbedEvent::StartRealmReencryption(_)
-            | TestbedEvent::FinishRealmReencryption(_)
+            | TestbedEvent::RenameRealm(_)
+            | TestbedEvent::RotateKeyRealm(_)
+            | TestbedEvent::ArchiveRealm(_)
+            | TestbedEvent::NewShamirRecovery(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
             | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
@@ -353,7 +426,6 @@ impl TestbedEvent {
 
 #[derive(Clone)]
 pub struct TestbedEventBootstrapOrganizationSequesterAuthority {
-    pub certificate_index: IndexInt,
     pub signing_key: SequesterSigningKeyDer,
     pub verify_key: SequesterVerifyKeyDer,
 }
@@ -363,11 +435,9 @@ pub struct TestbedEventBootstrapOrganization {
     pub timestamp: DateTime,
     pub root_signing_key: SigningKey,
     pub sequester_authority: Option<TestbedEventBootstrapOrganizationSequesterAuthority>,
-    pub first_user_certificate_index: IndexInt,
     pub first_user_device_id: DeviceID,
     pub first_user_human_handle: HumanHandle,
     pub first_user_private_key: PrivateKey,
-    pub first_user_first_device_certificate_index: IndexInt,
     pub first_user_first_device_label: DeviceLabel,
     pub first_user_first_device_signing_key: SigningKey,
     pub first_user_user_realm_id: VlobID,
@@ -399,19 +469,15 @@ impl CrcHash for TestbedEventBootstrapOrganization {
         self.timestamp.crc_hash(state);
         self.root_signing_key.crc_hash(state);
         if let Some(sequester_authority) = self.sequester_authority.as_ref() {
-            sequester_authority.certificate_index.crc_hash(state);
             // In theory signing and verify keys correspond to one another, but
             // we don't want to do such assumption when computing the CRC
             sequester_authority.signing_key.crc_hash(state);
             sequester_authority.verify_key.crc_hash(state);
         }
-        self.first_user_certificate_index.crc_hash(state);
         self.first_user_device_id.crc_hash(state);
         self.first_user_human_handle.crc_hash(state);
         self.first_user_private_key.crc_hash(state);
         self.first_user_first_device_label.crc_hash(state);
-        self.first_user_first_device_certificate_index
-            .crc_hash(state);
         self.first_user_first_device_signing_key.crc_hash(state);
         self.first_user_user_realm_id.crc_hash(state);
         self.first_user_user_realm_key.crc_hash(state);
@@ -436,9 +502,6 @@ impl TestbedEventBootstrapOrganization {
 
         // 2) Actual creation
 
-        let first_user_certificate_index = builder.counters.next_certificate_index();
-        let first_user_first_device_certificate_index = builder.counters.next_certificate_index();
-
         let human_handle = HumanHandle::new(&format!("{}@example.com", first_user_id.as_ref()), &{
             let mut buff = format!(
                 "{}y Mc{}Face",
@@ -460,11 +523,9 @@ impl TestbedEventBootstrapOrganization {
             timestamp: builder.counters.next_timestamp(),
             root_signing_key: builder.counters.next_signing_key(),
             sequester_authority: None,
-            first_user_certificate_index,
             first_user_device_id: DeviceID::new(first_user_id, device_name),
             first_user_human_handle: human_handle,
             first_user_private_key: builder.counters.next_private_key(),
-            first_user_first_device_certificate_index,
             first_user_first_device_label: device_label,
             first_user_first_device_signing_key: builder.counters.next_signing_key(),
             first_user_user_realm_id: builder.counters.next_entry_id(),
@@ -499,7 +560,6 @@ impl TestbedEventBootstrapOrganization {
                         };
                         let signed: Bytes = certif.dump_and_sign(&self.root_signing_key).into();
                         TestbedTemplateEventCertificate {
-                            certificate_index: sequester_authority.certificate_index,
                             certificate: AnyArcCertificate::SequesterAuthority(Arc::new(certif)),
                             signed_redacted: signed.clone(),
                             signed,
@@ -530,7 +590,6 @@ impl TestbedEventBootstrapOrganization {
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::User(Arc::new(certif)),
-                            certificate_index: self.first_user_certificate_index,
                             signed,
                             signed_redacted,
                         }
@@ -559,7 +618,6 @@ impl TestbedEventBootstrapOrganization {
                         };
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::Device(Arc::new(certif)),
-                            certificate_index: self.first_user_first_device_certificate_index,
                             signed,
                             signed_redacted,
                         }
@@ -584,7 +642,6 @@ single_certificate_event!(
         label: String,
         encryption_private_key: SequesterPrivateKeyDer,
         encryption_public_key: SequesterPublicKeyDer,
-        certificate_index: IndexInt,
     ],
     |e: &TestbedEventNewSequesterService, t: &TestbedTemplate| {
         let certif = SequesterServiceCertificate {
@@ -599,7 +656,6 @@ single_certificate_event!(
             .into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::SequesterService(Arc::new(certif)),
-            certificate_index: e.certificate_index,
             signed_redacted: signed.clone(),
             signed,
         }
@@ -636,7 +692,6 @@ impl TestbedEventNewSequesterService {
             label,
             encryption_private_key,
             encryption_public_key,
-            certificate_index: builder.counters.next_certificate_index(),
             cache: Arc::default(),
         }
     }
@@ -650,7 +705,80 @@ impl CrcHash for TestbedEventNewSequesterService {
         self.label.crc_hash(state);
         self.encryption_private_key.crc_hash(state);
         self.encryption_public_key.crc_hash(state);
-        self.certificate_index.crc_hash(state);
+    }
+}
+
+/*
+ * TestbedEventRevokeSequesterService
+ */
+
+single_certificate_event!(
+    TestbedEventRevokeSequesterService,
+    [
+        timestamp: DateTime,
+        id: SequesterServiceID,
+    ],
+    |e: &TestbedEventRevokeSequesterService, t: &TestbedTemplate| {
+        let certif = SequesterRevokedServiceCertificate {
+            timestamp: e.timestamp,
+            service_id: e.id,
+        };
+        let signed: Bytes = t
+            .sequester_authority_signing_key()
+            .sign(&certif.dump())
+            .into();
+        TestbedTemplateEventCertificate {
+            certificate: AnyArcCertificate::SequesterRevokedService(Arc::new(certif)),
+            signed_redacted: signed.clone(),
+            signed,
+        }
+    },
+    no_hash
+);
+
+impl TestbedEventRevokeSequesterService {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        service_id: SequesterServiceID,
+    ) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+
+            let is_sequestered = builder
+                .events
+                .iter()
+                .find_map(|e| match e {
+                    TestbedEvent::BootstrapOrganization(x) => Some(x.sequester_authority.is_some()),
+                    _ => None,
+                })
+                .unwrap_or(false);
+            assert!(is_sequestered, "Not a sequestered organization");
+
+            assert!(
+                builder.events.iter().any(
+                    |e| matches!(e, TestbedEvent::NewSequesterService(x) if x.id == service_id)
+                ),
+                "Sequester service does not exist"
+            );
+        }
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            id: service_id,
+            cache: Arc::default(),
+        }
+    }
+}
+
+impl CrcHash for TestbedEventRevokeSequesterService {
+    fn crc_hash(&self, state: &mut crc32fast::Hasher) {
+        b"TestbedEventRevokeSequesterService".crc_hash(state);
+        self.timestamp.crc_hash(state);
+        self.id.crc_hash(state);
     }
 }
 
@@ -665,8 +793,6 @@ pub struct TestbedEventNewUser {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub private_key: PrivateKey,
-    pub user_certificate_index: IndexInt,
-    pub first_device_certificate_index: IndexInt,
     pub first_device_label: DeviceLabel,
     pub first_device_signing_key: SigningKey,
     pub initial_profile: UserProfile,
@@ -696,8 +822,6 @@ impl CrcHash for TestbedEventNewUser {
         self.device_id.crc_hash(state);
         self.human_handle.crc_hash(state);
         self.private_key.crc_hash(state);
-        self.user_certificate_index.crc_hash(state);
-        self.first_device_certificate_index.crc_hash(state);
         self.first_device_label.crc_hash(state);
         self.first_device_signing_key.crc_hash(state);
         self.initial_profile.crc_hash(state);
@@ -731,9 +855,6 @@ impl TestbedEventNewUser {
 
         // 2) Actual creation
 
-        let user_certificate_index = builder.counters.next_certificate_index();
-        let first_device_certificate_index = builder.counters.next_certificate_index();
-
         let human_handle = HumanHandle::new(&format!("{}@example.com", user_id.as_ref()), &{
             let mut buff = format!("{}y Mc{}Face", user_id.as_ref(), user_id.as_ref());
             let name_len = user_id.as_ref().len();
@@ -751,11 +872,9 @@ impl TestbedEventNewUser {
             timestamp: builder.counters.next_timestamp(),
             author,
             initial_profile: UserProfile::Standard,
-            user_certificate_index,
             device_id: DeviceID::new(user_id, device_name),
             human_handle,
             private_key: builder.counters.next_private_key(),
-            first_device_certificate_index,
             first_device_label: device_label,
             first_device_signing_key: builder.counters.next_signing_key(),
             user_realm_id: builder.counters.next_entry_id(),
@@ -796,7 +915,6 @@ impl TestbedEventNewUser {
 
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::User(Arc::new(certif)),
-                            certificate_index: self.user_certificate_index,
                             signed,
                             signed_redacted,
                         }
@@ -827,7 +945,6 @@ impl TestbedEventNewUser {
 
                         TestbedTemplateEventCertificate {
                             certificate: AnyArcCertificate::Device(Arc::new(certif)),
-                            certificate_index: self.first_device_certificate_index,
                             signed,
                             signed_redacted,
                         }
@@ -854,7 +971,6 @@ single_certificate_event!(
         signing_key: SigningKey,
         local_symkey: SecretKey,
         local_password: &'static str,
-        certificate_index: IndexInt,
     ],
     |e: &TestbedEventNewDevice, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
@@ -872,7 +988,6 @@ single_certificate_event!(
         };
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::Device(Arc::new(certif)),
-            certificate_index: e.certificate_index,
             signed,
             signed_redacted,
         }
@@ -913,7 +1028,6 @@ impl TestbedEventNewDevice {
             signing_key: builder.counters.next_signing_key(),
             local_symkey: builder.counters.next_secret_key(),
             local_password: "P@ssw0rd.",
-            certificate_index: builder.counters.next_certificate_index(),
             cache: Arc::default(),
         }
     }
@@ -929,7 +1043,6 @@ impl CrcHash for TestbedEventNewDevice {
         self.signing_key.crc_hash(state);
         self.local_symkey.crc_hash(state);
         self.local_password.crc_hash(state);
-        self.certificate_index.crc_hash(state);
     }
 }
 
@@ -944,7 +1057,6 @@ single_certificate_event!(
         author: DeviceID,
         user: UserID,
         profile: UserProfile,
-        certificate_index: IndexInt,
     ],
     |e: &TestbedEventUpdateUserProfile, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
@@ -957,7 +1069,6 @@ single_certificate_event!(
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::UserUpdate(Arc::new(certif)),
-            certificate_index: e.certificate_index,
             signed_redacted: signed.clone(),
             signed,
         }
@@ -989,7 +1100,6 @@ impl TestbedEventUpdateUserProfile {
             author,
             user,
             profile,
-            certificate_index: builder.counters.next_certificate_index(),
             cache: Arc::default(),
         }
     }
@@ -1005,7 +1115,6 @@ single_certificate_event!(
         timestamp: DateTime,
         author: DeviceID,
         user: UserID,
-        certificate_index: IndexInt,
     ],
     |e: &TestbedEventRevokeUser, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
@@ -1017,7 +1126,6 @@ single_certificate_event!(
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::RevokedUser(Arc::new(certif)),
-            certificate_index: e.certificate_index,
             signed_redacted: signed.clone(),
             signed,
         }
@@ -1044,7 +1152,6 @@ impl TestbedEventRevokeUser {
             timestamp: builder.counters.next_timestamp(),
             author,
             user,
-            certificate_index: builder.counters.next_certificate_index(),
             cache: Arc::default(),
         }
     }
@@ -1060,8 +1167,6 @@ single_certificate_event!(
         timestamp: DateTime,
         author: DeviceID,
         realm_id: VlobID,
-        realm_key: SecretKey,
-        certificate_index: IndexInt,
     ],
     |e: &TestbedEventNewRealm, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
@@ -1075,7 +1180,6 @@ single_certificate_event!(
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
             certificate: AnyArcCertificate::RealmRole(Arc::new(certif)),
-            certificate_index: e.certificate_index,
             signed_redacted: signed.clone(),
             signed,
         }
@@ -1104,8 +1208,6 @@ impl TestbedEventNewRealm {
             timestamp: builder.counters.next_timestamp(),
             author,
             realm_id: builder.counters.next_entry_id(),
-            realm_key: builder.counters.next_secret_key(),
-            certificate_index: builder.counters.next_certificate_index(),
             cache: Arc::default(),
         }
     }
@@ -1116,27 +1218,23 @@ impl TestbedEventNewRealm {
  */
 
 #[derive(Clone)]
-pub struct TestbedEventShareRealmRecipientMessage {
-    pub message: Arc<MessageContent>,
-    pub signed: Bytes,
-}
-
-#[derive(Clone)]
 pub struct TestbedEventShareRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub realm: VlobID,
     pub user: UserID,
     pub role: Option<RealmRole>,
-    pub certificate_index: IndexInt,
-    pub realm_entry_name: EntryName,
-    pub realm_encryption_revision: IndexInt,
-    pub realm_encrypted_on: DateTime,
-    pub realm_key: SecretKey,
+    /// None if role is None, or if we are simulating a legacy workspace which
+    /// has been shared before the initial key rotation.
+    pub key_index: Option<IndexInt>,
+    /// Customize only needed for testing bad key bundle access.
+    /// Always None if role is None.
+    pub custom_keys_bundle_access: Option<Bytes>,
     cache: Arc<
         Mutex<(
             TestbedEventCertificatesCache,
-            TestbedEventCacheEntry<TestbedEventShareRealmRecipientMessage>,
+            // Encrypted keys bundle access for recipient (or None is role is None)
+            TestbedEventCacheEntry<Option<Bytes>>,
         )>,
     >,
 }
@@ -1149,9 +1247,11 @@ impl_event_debug!(
         realm: VlobID,
         user: UserID,
         role: Option<RealmRole>,
-        certificate_index: IndexInt
+        key_index: Option<IndexInt>,
+        custom_keys_bundle_access: Option<Bytes>,
     ]
 );
+
 impl_event_crc_hash!(
     TestbedEventShareRealm,
     [
@@ -1160,7 +1260,8 @@ impl_event_crc_hash!(
         realm: VlobID,
         user: UserID,
         role: Option<RealmRole>,
-        certificate_index: IndexInt
+        key_index: Option<IndexInt>,
+        custom_keys_bundle_access: Option<Bytes>,
     ]
 );
 
@@ -1178,26 +1279,29 @@ impl TestbedEventShareRealm {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_realm_exists(&builder.events, realm);
         }
 
         let author = utils::non_revoked_realm_owners(&builder.events, realm)
             .find(|author| author.user_id() != &user)
             .expect("No author available (realm with a single owner ?)")
             .to_owned();
-        let (realm_encryption_revision, realm_encrypted_on, realm_key) = builder
-            .events
-            .iter()
-            .rev()
-            .find_map(|e| match e {
-                TestbedEvent::NewRealm(x) if x.realm_id == realm => {
-                    Some((1, x.timestamp, x.realm_key.clone()))
-                }
-                TestbedEvent::StartRealmReencryption(x) if x.realm == realm => {
-                    Some((x.encryption_revision, x.timestamp, x.key.clone()))
-                }
+
+        let key_index = if role.is_none() {
+            None
+        } else {
+            let last_key_index = builder.events.iter().rev().find_map(|e| match e {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm => Some(x.key_index),
                 _ => None,
-            })
-            .expect("Realm doesn't exist");
+            });
+
+            match (last_key_index, builder.check_consistency) {
+                (Some(last_key_index), _) => Some(last_key_index),
+                (None, true) => panic!("Realm need to have a key rotation before any sharing !"),
+                // Sharing before key rotation is useful to simulate the behavior of Parsec < v3.
+                (None, false) => None,
+            }
+        };
 
         // 2) Actual creation
 
@@ -1207,11 +1311,8 @@ impl TestbedEventShareRealm {
             realm,
             user,
             role,
-            certificate_index: builder.counters.next_certificate_index(),
-            realm_entry_name: "Wksp".parse().unwrap(),
-            realm_encrypted_on,
-            realm_encryption_revision,
-            realm_key,
+            key_index,
+            custom_keys_bundle_access: None,
             cache: Arc::default(),
         }
     }
@@ -1232,7 +1333,6 @@ impl TestbedEventShareRealm {
             let signed: Bytes = certif.dump_and_sign(author_signkey).into();
             TestbedTemplateEventCertificate {
                 certificate: AnyArcCertificate::RealmRole(Arc::new(certif)),
-                certificate_index: self.certificate_index,
                 signed_redacted: signed.clone(),
                 signed,
             }
@@ -1244,29 +1344,565 @@ impl TestbedEventShareRealm {
         })
     }
 
-    pub fn recipient_message(
-        &self,
-        template: &TestbedTemplate,
-    ) -> TestbedEventShareRealmRecipientMessage {
+    pub fn recipient_keys_bundle_access(&self, template: &TestbedTemplate) -> Option<Bytes> {
         let populate = || {
-            let message = Arc::new(MessageContent::SharingGranted {
-                author: self.author.clone(),
-                timestamp: self.timestamp,
-                name: self.realm_entry_name.clone(),
-                id: self.realm,
-                encryption_revision: self.realm_encryption_revision,
-                encrypted_on: self.realm_encrypted_on,
-                key: self.realm_key.clone(),
-            });
-            let author_signkey = template.device_signing_key(&self.author);
-            let recipient_pubkey = template.user_private_key(&self.user).public_key();
-            let signed = message
-                .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey)
-                .into();
-            TestbedEventShareRealmRecipientMessage { message, signed }
+            self.role?;
+
+            if self.custom_keys_bundle_access.is_some() {
+                return self.custom_keys_bundle_access.clone();
+            }
+
+            let keys_bundle = {
+                template
+                    .events
+                    .iter()
+                    .rev()
+                    .find_map(|e| match e {
+                        TestbedEvent::RotateKeyRealm(x) if x.realm == self.realm => {
+                            Some(x.keys_bundle(template))
+                        }
+                        _ => None,
+                    })
+                    .expect("Realm needs to have a key rotation before any sharing !")
+            };
+
+            let recipient_public_key = template.user_private_key(&self.user).public_key();
+
+            Some(recipient_public_key.encrypt_for_self(&keys_bundle).into())
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.1.populated(populate).to_owned()
+    }
+}
+
+/*
+ * TestbedEventRenameRealm
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventRenameRealm {
+    pub timestamp: DateTime,
+    pub author: DeviceID,
+    pub realm: VlobID,
+    pub name: EntryName,
+    pub key_index: IndexInt,
+    pub key: SecretKey,
+    cache: Arc<Mutex<TestbedEventCertificatesCache>>,
+}
+
+impl_event_debug!(
+    TestbedEventRenameRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        name: EntryName,
+        key_index: IndexInt,
+        key: SecretKey,
+    ]
+);
+impl_event_crc_hash!(
+    TestbedEventRenameRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        name: EntryName,
+        key_index: IndexInt,
+        key: SecretKey,
+    ]
+);
+
+impl TestbedEventRenameRealm {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        realm: VlobID,
+        name: impl TryInto<EntryName>,
+    ) -> Self {
+        // 1) Consistency checks
+        let name = name
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid EntryID !"));
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_realm_exists(&builder.events, realm);
+        }
+
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+            .next()
+            .expect("At least one owner must be present at anytime")
+            .to_owned();
+
+        let (key_index, key) = utils::realm_keys(&builder.events, realm)
+            .next()
+            .expect("Realm must have had at least one key rotation before rename is possible !");
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            author,
+            realm,
+            name,
+            key: key.to_owned(),
+            key_index,
+            cache: Arc::default(),
+        }
+    }
+
+    pub fn certificates<'a: 'c, 'b: 'c, 'c>(
+        &'a self,
+        template: &'b TestbedTemplate,
+    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
+        let populate = || {
+            let author_signkey = template.device_signing_key(&self.author);
+            let encrypted_name = self.key.encrypt(self.name.as_ref().as_bytes());
+            let certif = RealmNameCertificate {
+                author: self.author.clone(),
+                timestamp: self.timestamp,
+                realm_id: self.realm,
+                key_index: self.key_index,
+                encrypted_name,
+            };
+            let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+            TestbedTemplateEventCertificate {
+                certificate: AnyArcCertificate::RealmName(Arc::new(certif)),
+                signed_redacted: signed.clone(),
+                signed,
+            }
+        };
+
+        std::iter::once(()).map(move |_| {
+            let mut guard = self.cache.lock().expect("Mutex is poisoned");
+            guard.populated(populate).to_owned()
+        })
+    }
+}
+
+/*
+ * TestbedEventRotateKeyRealm
+ */
+
+#[derive(Default)]
+struct TestbedEventRotateKeyRealmCache {
+    certificates: TestbedEventCertificatesCache,
+    keys_bundle: TestbedEventCacheEntry<Bytes>,
+    per_user_keys_bundle_access: TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
+}
+
+#[derive(Clone)]
+pub struct TestbedEventRotateKeyRealm {
+    pub timestamp: DateTime,
+    pub author: DeviceID,
+    pub realm: VlobID,
+    pub key_index: IndexInt,
+    pub keys: Vec<SecretKey>,
+    pub keys_bundle_access_key: SecretKey,
+    pub encryption_algorithm: SecretKeyAlgorithm,
+    pub hash_algorithm: HashAlgorithm,
+    // Customize the key canary is only useful to test bad key canary
+    pub custom_key_canary: Option<Vec<u8>>,
+    pub participants: Vec<(UserID, PublicKey)>,
+    cache: Arc<Mutex<TestbedEventRotateKeyRealmCache>>,
+}
+
+impl_event_debug!(
+    TestbedEventRotateKeyRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        key_index: IndexInt,
+        keys: Vec<SecretKey>,
+        keys_bundle_access_key: SecretKey,
+        encryption_algorithm: SecretKeyAlgorithm,
+        hash_algorithm: HashAlgorithm,
+        custom_key_canary: Option<Vec<u8>>,
+        participants: Vec<(UserID, PublicKey)>,
+    ]
+);
+impl_event_crc_hash!(
+    TestbedEventRotateKeyRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        key_index: IndexInt,
+        keys: Vec<SecretKey>,
+        keys_bundle_access_key: SecretKey,
+        encryption_algorithm: SecretKeyAlgorithm,
+        hash_algorithm: HashAlgorithm,
+        custom_key_canary: Option<Vec<u8>>,
+        participants: Vec<(UserID, PublicKey)>,
+    ]
+);
+
+impl TestbedEventRotateKeyRealm {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
+        // 1) Consistency checks
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+            .next()
+            .expect("At least one owner must be present at anytime")
+            .to_owned();
+
+        // 2) Actual creation
+
+        let participants = utils::non_revoked_realm_members(&builder.events, realm)
+            .map(|(device, _)| {
+                let participant_user_id = device.user_id();
+                let participant_public_key = builder
+                    .events
+                    .iter()
+                    .find_map(|e| match e {
+                        TestbedEvent::BootstrapOrganization(x)
+                            if x.first_user_device_id.user_id() == participant_user_id =>
+                        {
+                            Some(x.first_user_private_key.public_key())
+                        }
+                        TestbedEvent::NewUser(x)
+                            if x.device_id.user_id() == participant_user_id =>
+                        {
+                            Some(x.private_key.public_key())
+                        }
+                        _ => None,
+                    })
+                    .expect("User must exist");
+                (participant_user_id.to_owned(), participant_public_key)
+            })
+            .collect();
+
+        let (key_index, keys) = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm => {
+                    let mut keys = x.keys.clone();
+                    keys.push(builder.counters.next_secret_key());
+                    Some((x.key_index + 1, keys))
+                }
+                _ => None,
+            })
+            .unwrap_or((1, vec![builder.counters.next_secret_key()]));
+
+        let keys_bundle_access_key = builder.counters.next_secret_key();
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            author,
+            realm,
+            key_index,
+            keys,
+            keys_bundle_access_key,
+            custom_key_canary: None,
+            encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+            hash_algorithm: HashAlgorithm::Sha256,
+            participants,
+            cache: Arc::default(),
+        }
+    }
+
+    // We need three lifetimes here to describe the fact the output iterator
+    // (lifetime 'c) wraps data from both the self object (lifetime 'a)
+    // and the template (lifetime 'b). Hence 'c outliving both 'a and 'b.
+    pub fn certificates<'a: 'c, 'b: 'c, 'c>(
+        &'a self,
+        template: &'b TestbedTemplate,
+    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
+        let populate = || {
+            // Note `key_canary` being the result of an encryption it is not stable
+            // across runs (as encryption involves the use of random nonce). This
+            // is not much of an issue, but it means the certificate generate on
+            // the test is different from the ones on the testbed server (given
+            // they are two separate processes).
+            let key_canary = self.custom_key_canary.clone().unwrap_or_else(|| {
+                assert!(self.key_index > 0);
+                self.keys[self.key_index as usize - 1].encrypt(b"")
+            });
+            let author_signkey = template.device_signing_key(&self.author);
+            let certif = RealmKeyRotationCertificate {
+                author: self.author.clone(),
+                timestamp: self.timestamp,
+                realm_id: self.realm,
+                encryption_algorithm: self.encryption_algorithm,
+                hash_algorithm: self.hash_algorithm,
+                key_index: self.key_index,
+                key_canary,
+            };
+            let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+            TestbedTemplateEventCertificate {
+                certificate: AnyArcCertificate::RealmKeyRotation(Arc::new(certif)),
+                signed_redacted: signed.clone(),
+                signed,
+            }
+        };
+
+        std::iter::once(()).map(move |_| {
+            let mut guard = self.cache.lock().expect("Mutex is poisoned");
+            guard.certificates.populated(populate).to_owned()
+        })
+    }
+
+    pub fn keys_bundle(&self, template: &TestbedTemplate) -> Bytes {
+        let populate = || {
+            let bundle = RealmKeysBundle::new(
+                self.author.clone(),
+                self.timestamp,
+                self.realm,
+                self.keys.clone(),
+            );
+            let author_signkey = template.device_signing_key(&self.author);
+            let encrypted = self
+                .keys_bundle_access_key
+                .encrypt(&bundle.dump_and_sign(author_signkey));
+            encrypted.into()
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard.keys_bundle.populated(populate).to_owned()
+    }
+
+    pub fn per_participant_keys_bundle_access(&self) -> HashMap<UserID, Bytes> {
+        let populate = || {
+            let access = RealmKeysBundleAccess {
+                keys_bundle_key: self.keys_bundle_access_key.clone(),
+            }
+            .dump();
+
+            self.participants
+                .iter()
+                .map(|(user_id, public_key)| {
+                    let encrypted = public_key.encrypt_for_self(&access);
+                    (user_id.to_owned(), Bytes::from(encrypted))
+                })
+                .collect()
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard
+            .per_user_keys_bundle_access
+            .populated(populate)
+            .to_owned()
+    }
+}
+
+/*
+ * TestbedEventArchiveRealm
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventArchiveRealm {
+    pub timestamp: DateTime,
+    pub author: DeviceID,
+    pub realm: VlobID,
+    pub configuration: RealmArchivingConfiguration,
+    cache: Arc<Mutex<TestbedEventCertificatesCache>>,
+}
+
+impl_event_debug!(
+    TestbedEventArchiveRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ]
+);
+impl_event_crc_hash!(
+    TestbedEventArchiveRealm,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ]
+);
+
+impl TestbedEventArchiveRealm {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        realm: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ) -> Self {
+        // 1) Consistency checks
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+
+        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+            .next()
+            .expect("At least one owner must be present at anytime")
+            .to_owned();
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            author,
+            realm,
+            configuration,
+            cache: Arc::default(),
+        }
+    }
+
+    // We need three lifetimes here to describe the fact the output iterator
+    // (lifetime 'c) wraps data from both the self object (lifetime 'a)
+    // and the template (lifetime 'b). Hence 'c outliving both 'a and 'b.
+    pub fn certificates<'a: 'c, 'b: 'c, 'c>(
+        &'a self,
+        template: &'b TestbedTemplate,
+    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
+        let populate = || {
+            let author_signkey = template.device_signing_key(&self.author);
+            let certif = RealmArchivingCertificate {
+                author: self.author.clone(),
+                timestamp: self.timestamp,
+                realm_id: self.realm,
+                configuration: self.configuration.clone(),
+            };
+            let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+            TestbedTemplateEventCertificate {
+                certificate: AnyArcCertificate::RealmArchiving(Arc::new(certif)),
+                signed_redacted: signed.clone(),
+                signed,
+            }
+        };
+
+        std::iter::once(()).map(move |_| {
+            let mut guard = self.cache.lock().expect("Mutex is poisoned");
+            guard.populated(populate).to_owned()
+        })
+    }
+}
+
+/*
+ * TestbedEventNewShamirRecovery
+ */
+
+#[derive(Clone)]
+pub struct TestbedEventNewShamirRecovery {
+    pub timestamp: DateTime,
+    pub author: DeviceID,
+    pub threshold: NonZeroU64,
+    pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<Vec<TestbedTemplateEventCertificate>>>>,
+}
+
+impl_event_debug!(
+    TestbedEventNewShamirRecovery,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        threshold: NonZeroU64,
+        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    ]
+);
+impl_event_crc_hash!(
+    TestbedEventNewShamirRecovery,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        threshold: NonZeroU64,
+        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    ]
+);
+
+impl TestbedEventNewShamirRecovery {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        user: UserID,
+        threshold: NonZeroU64,
+        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    ) -> Self {
+        // 1) Consistency checks
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+        }
+        utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+
+        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &user) {
+            TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
+            TestbedEvent::NewUser(x) => &x.device_id,
+            _ => unreachable!(),
+        }
+        .clone();
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            author,
+            threshold,
+            per_recipient_shares,
+            cache: Arc::default(),
+        }
+    }
+
+    // We need three lifetimes here to describe the fact the output iterator
+    // (lifetime 'c) wraps data from both the self object (lifetime 'a)
+    // and the template (lifetime 'b). Hence 'c outliving both 'a and 'b.
+    pub fn certificates<'a: 'c, 'b: 'c, 'c>(
+        &'a self,
+        template: &'b TestbedTemplate,
+    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
+        // One brief certificate + one share certificate per recipient
+        let certifs = self.per_recipient_shares.len() + 1;
+
+        (0..certifs).map(move |i| {
+            let mut guard = self.cache.lock().expect("Mutex is poisoned");
+
+            let populate = || {
+                let author_signkey = template.device_signing_key(&self.author);
+                let mut certifs = Vec::with_capacity(certifs);
+
+                // Brief certificate
+
+                let certif = ShamirRecoveryBriefCertificate {
+                    author: self.author.clone(),
+                    timestamp: self.timestamp,
+                    threshold: self.threshold,
+                    per_recipient_shares: self.per_recipient_shares.clone(),
+                };
+                let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+
+                let brief_certif = TestbedTemplateEventCertificate {
+                    certificate: AnyArcCertificate::ShamirRecoveryBrief(Arc::new(certif)),
+                    signed_redacted: signed.clone(),
+                    signed,
+                };
+                certifs.push(brief_certif);
+
+                // Share certificates
+
+                for recipient in self.per_recipient_shares.keys() {
+                    // TODO: Put a real share here once shamir recovery is implemented
+                    let ciphered_share = b"".to_vec();
+
+                    let certif = ShamirRecoveryShareCertificate {
+                        author: self.author.clone(),
+                        timestamp: self.timestamp,
+                        recipient: recipient.to_owned(),
+                        ciphered_share,
+                    };
+                    let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+
+                    let share_certif = TestbedTemplateEventCertificate {
+                        certificate: AnyArcCertificate::ShamirRecoveryShare(Arc::new(certif)),
+                        signed_redacted: signed.clone(),
+                        signed,
+                    };
+                    certifs.push(share_certif);
+                }
+
+                certifs
+            };
+
+            let certifs = guard.populated(populate);
+            certifs[i].clone()
+        })
     }
 }
 
@@ -1345,131 +1981,6 @@ impl TestbedEventNewUserInvitation {
 }
 
 /*
- * TestbedEventStartRealmReencryption
- */
-
-#[derive(Clone)]
-pub struct TestbedEventStartRealmReencryptionPerParticipantMessage {
-    pub items: Vec<(UserID, Arc<MessageContent>, Bytes)>,
-}
-
-no_certificate_event!(
-    TestbedEventStartRealmReencryption,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: VlobID,
-        entry_name: EntryName,
-        encryption_revision: IndexInt,
-        key: SecretKey,
-    ],
-    cache:
-        Arc<Mutex<TestbedEventCacheEntry<TestbedEventStartRealmReencryptionPerParticipantMessage>>>
-);
-
-impl TestbedEventStartRealmReencryption {
-    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-        }
-
-        let current_encryption_revision =
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
-            .next()
-            .expect("At least one owner must exists")
-            .to_owned();
-
-        // 2) Actual creation
-
-        Self {
-            timestamp: builder.counters.next_timestamp(),
-            author,
-            realm,
-            entry_name: "Wksp".parse().unwrap(),
-            encryption_revision: current_encryption_revision + 1,
-            key: builder.counters.next_secret_key(),
-            cache: Arc::default(),
-        }
-    }
-
-    pub fn per_participant_message(
-        &self,
-        template: &TestbedTemplate,
-    ) -> TestbedEventStartRealmReencryptionPerParticipantMessage {
-        let populate = || {
-            let author_signkey = template.device_signing_key(&self.author);
-            let items = utils::non_revoked_realm_members(&template.events, self.realm)
-                .map(|(recipient, _)| {
-                    let message = Arc::new(MessageContent::SharingReencrypted {
-                        author: self.author.clone(),
-                        timestamp: self.timestamp,
-                        name: self.entry_name.clone(),
-                        id: self.realm,
-                        encryption_revision: self.encryption_revision,
-                        encrypted_on: self.timestamp,
-                        key: self.key.clone(),
-                    });
-
-                    let recipient_pubkey =
-                        template.user_private_key(recipient.user_id()).public_key();
-                    let raw = message
-                        .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey)
-                        .into();
-
-                    (recipient.user_id().to_owned(), message, raw)
-                })
-                .collect();
-            TestbedEventStartRealmReencryptionPerParticipantMessage { items }
-        };
-        let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.populated(populate).to_owned()
-    }
-}
-
-/*
- * TestbedEventFinishRealmReencryption
- */
-
-no_certificate_event!(
-    TestbedEventFinishRealmReencryption,
-    [
-        timestamp: DateTime,
-        author: DeviceID,
-        realm: VlobID,
-        encryption_revision: IndexInt,
-    ]
-);
-
-impl TestbedEventFinishRealmReencryption {
-    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, realm: VlobID) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-        }
-
-        let encryption_revision =
-            utils::assert_realm_exists_and_under_reencryption(&builder.events, &realm);
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
-            .next()
-            .expect("At least one owner must exists")
-            .to_owned();
-
-        // 2) Actual creation
-
-        Self {
-            timestamp: builder.counters.next_timestamp(),
-            author,
-            realm,
-            encryption_revision,
-        }
-    }
-}
-
-/*
  * TestbedEventCreateOrUpdateUserManifestVlob
  */
 
@@ -1520,13 +2031,13 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, id);
+            utils::assert_realm_exists(&builder.events, id);
             utils::assert_realm_member_has_write_access(&builder.events, id, &user);
         }
 
         // 2) Actual creation
 
-        let (version, last_processed_message, workspaces) = builder
+        let version = builder
             .events
             .iter()
             .rev()
@@ -1534,18 +2045,14 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 TestbedEvent::CreateOrUpdateUserManifestVlob(x)
                     if x.manifest.author.user_id() == &user =>
                 {
-                    Some((
-                        x.manifest.version + 1,
-                        x.manifest.last_processed_message,
-                        x.manifest.workspaces.to_owned(),
-                    ))
+                    Some(x.manifest.version + 1)
                 }
                 TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == id && x.vlob_id == id => {
-                    Some((x.version + 1, 0, vec![]))
+                    Some(x.version + 1)
                 }
                 _ => None,
             })
-            .unwrap_or_else(|| (1, 0, vec![]));
+            .unwrap_or(1);
 
         let timestamp = builder.counters.next_timestamp();
         Self {
@@ -1556,8 +2063,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 version,
                 created: timestamp,
                 updated: timestamp,
-                last_processed_message,
-                workspaces,
+                workspaces_legacy_initial_info: vec![],
             }),
             cache: Arc::default(),
         }
@@ -1607,6 +2113,8 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
 #[derive(Clone)]
 pub struct TestbedEventCreateOrUpdateWorkspaceManifestVlob {
+    pub key_index: IndexInt,
+    pub key: SecretKey,
     pub manifest: Arc<WorkspaceManifest>,
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
@@ -1634,9 +2142,13 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
+
+        let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
+            "Realm must have had at least one key rotation before vlob create/update is possible !",
+        );
 
         // 2) Actual creation
 
@@ -1671,6 +2183,8 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
 
         let timestamp = builder.counters.next_timestamp();
         Self {
+            key_index,
+            key: key.to_owned(),
             manifest: Arc::new(WorkspaceManifest {
                 timestamp,
                 author,
@@ -1702,10 +2216,9 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
-            let local_symkey = template.device_local_symkey(&self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
-            let encrypted = local_symkey.encrypt(&signed).into();
+            let encrypted = self.key.encrypt(&signed).into();
             let sequestered = template.sequester_services_public_key().map(|iter| {
                 iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
                     .collect()
@@ -1729,6 +2242,8 @@ impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
 #[derive(Clone)]
 pub struct TestbedEventCreateOrUpdateFolderManifestVlob {
     pub realm: VlobID,
+    pub key_index: IndexInt,
+    pub key: SecretKey,
     pub manifest: Arc<FolderManifest>,
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
@@ -1759,9 +2274,13 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
+
+        let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
+            "Realm must have had at least one key rotation before vlob create/update is possible !",
+        );
 
         // 2) Actual creation
 
@@ -1805,6 +2324,8 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         let timestamp = builder.counters.next_timestamp();
         Self {
             realm,
+            key_index,
+            key: key.to_owned(),
             manifest: Arc::new(FolderManifest {
                 timestamp,
                 author,
@@ -1837,10 +2358,9 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
-            let local_symkey = template.device_local_symkey(&self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
-            let encrypted = local_symkey.encrypt(&signed).into();
+            let encrypted = self.key.encrypt(&signed).into();
             let sequestered = template.sequester_services_public_key().map(|iter| {
                 iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
                     .collect()
@@ -1864,6 +2384,8 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 #[derive(Clone)]
 pub struct TestbedEventCreateOrUpdateFileManifestVlob {
     pub realm: VlobID,
+    pub key_index: IndexInt,
+    pub key: SecretKey,
     pub manifest: Arc<FileManifest>,
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
@@ -1894,9 +2416,13 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
+
+        let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
+            "Realm must have had at least one key rotation before vlob create/update is possible !",
+        );
 
         // 2) Actual creation
 
@@ -1956,6 +2482,8 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         let timestamp = builder.counters.next_timestamp();
         Self {
             realm,
+            key_index,
+            key: key.to_owned(),
             manifest: Arc::new(FileManifest {
                 timestamp,
                 author,
@@ -1990,10 +2518,9 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.manifest.author);
-            let local_symkey = template.device_local_symkey(&self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
-            let encrypted = local_symkey.encrypt(&signed).into();
+            let encrypted = self.key.encrypt(&signed).into();
             let sequestered = template.sequester_services_public_key().map(|iter| {
                 iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
                     .collect()
@@ -2020,8 +2547,8 @@ no_certificate_event!(
         timestamp: DateTime,
         author: DeviceID,
         realm: VlobID,
-        encryption_revision: IndexInt,
         vlob_id: VlobID,
+        key_index: IndexInt,
         version: VersionInt,
         signed: Bytes,
         encrypted: Bytes,
@@ -2063,7 +2590,7 @@ impl TestbedEventCreateBlock {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -2122,7 +2649,7 @@ impl TestbedEventCreateOpaqueBlock {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists_and_not_under_reencryption(&builder.events, realm);
+            utils::assert_realm_exists(&builder.events, realm);
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
@@ -2145,7 +2672,7 @@ impl TestbedEventCreateOpaqueBlock {
 
 no_certificate_event!(
     TestbedEventCertificatesStorageFetchCertificates,
-    [device: DeviceID, up_to_index: IndexInt,]
+    [device: DeviceID, up_to: DateTime]
 );
 
 impl TestbedEventCertificatesStorageFetchCertificates {
@@ -2163,7 +2690,7 @@ impl TestbedEventCertificatesStorageFetchCertificates {
 
         Self {
             device,
-            up_to_index: builder.counters.current_certificate_index(),
+            up_to: builder.counters.current_timestamp(),
         }
     }
 }
@@ -2321,22 +2848,14 @@ impl TestbedEventUserStorageLocalUpdate {
             .events
             .iter()
             .rev()
-            .find_map(|e| {
-                match e {
-                    TestbedEvent::UserStorageFetchUserVlob(x) if x.device == device => {
-                        Some(x.local_manifest.clone())
-                    }
-                    TestbedEvent::UserStorageLocalUpdate(x) if x.device == device => {
-                        Some(x.local_manifest.clone())
-                    }
-                    _ => None,
+            .find_map(|e| match e {
+                TestbedEvent::UserStorageFetchUserVlob(x) if x.device == device => {
+                    Some(x.local_manifest.clone())
                 }
-                .map(|mut manifest| {
-                    let m = Arc::make_mut(&mut manifest);
-                    m.updated = timestamp;
-                    m.need_sync = true;
-                    manifest
-                })
+                TestbedEvent::UserStorageLocalUpdate(x) if x.device == device => {
+                    Some(x.local_manifest.clone())
+                }
+                _ => None,
             })
             .unwrap_or_else(|| {
                 // No previous local user manifest, create one

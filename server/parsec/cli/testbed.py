@@ -1,0 +1,279 @@
+# Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+from __future__ import annotations
+
+import asyncio
+import sys
+import tempfile
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
+
+import anyio
+import click
+from fastapi import BackgroundTasks, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+
+from parsec._parsec import BackendAddr, OrganizationID
+
+try:
+    from parsec._parsec import testbed
+
+    TESTBED_AVAILABLE = True
+except ImportError:
+    TESTBED_AVAILABLE = False
+from parsec.asgi import app_factory, serve_parsec_asgi_app
+from parsec.backend import Backend, backend_factory
+from parsec.cli.options import debug_config_options
+from parsec.cli.utils import cli_exception_handler
+from parsec.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
+from parsec.logging import configure_logging
+
+DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
+DEFAULT_PORT = 6770
+
+
+class UnknownTemplateError(Exception):
+    pass
+
+
+class TestbedBackend:
+    __test__ = False  # Prevents Pytest from thinking this is a test class
+
+    def __init__(self, backend: Backend):
+        self.backend = backend
+        self._org_count = 0
+        self._load_template_lock = anyio.Lock()
+        # keys: template ID, values: (to duplicate organization ID, CRC, template content)
+        self._loaded_templates: dict[
+            str, tuple[OrganizationID, int, testbed.TestbedTemplateContent]
+        ] = {}
+
+    async def get_template(
+        self, template: str
+    ) -> tuple[OrganizationID, int, testbed.TestbedTemplateContent]:
+        try:
+            return self._loaded_templates[template]
+        except KeyError:
+            async with self._load_template_lock:
+                # Ensure the template hasn't been loaded while we were waiting for the lock
+                try:
+                    return self._loaded_templates[template]
+
+                except KeyError:
+                    # If it exists, template has not been loaded yet
+                    maybe_template_content = testbed.test_get_testbed_template(template)
+
+                    if not maybe_template_content:
+                        # No template with the given id
+                        raise UnknownTemplateError(template)
+                    template_content = maybe_template_content
+
+                    template_crc = template_content.compute_crc()
+                    template_org_id = await self.backend.test_load_template(template_content)
+                    ret = (
+                        template_org_id,
+                        template_crc,
+                        template_content,
+                    )
+                    self._loaded_templates[template] = ret
+                    return ret
+
+    async def new_organization(
+        self, template: str
+    ) -> tuple[OrganizationID, int, testbed.TestbedTemplateContent]:
+        template_org_id, template_crc, template_content = await self.get_template(template)
+
+        self._org_count += 1
+        new_org_id = OrganizationID(f"Org{self._org_count}")
+        self.backend.test_duplicate_organization(template_org_id, new_org_id)
+
+        return (new_org_id, template_crc, template_content)
+
+    def drop_organization(self, id: OrganizationID) -> None:
+        self.backend.test_drop_organization(id)
+
+
+app = app_factory()
+
+
+# Testbed server often runs in background, so it output on crash is often
+# not visible (e.g. on the CI). Hence it's convenient to have the client
+# print the stacktrace on our behalf.
+# Note the testbed server is only meant to be run for tests and on a local
+# local machine so this has no security implication.
+app.debug = True
+
+
+# Must be overwritten before the app is started !
+app.state.testbed = None
+app.state.orga_life_limit = DEFAULT_ORGANIZATION_LIFE_LIMIT
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# We don't use json in the /testbed/... routes, this is to simplify
+# as much as possible implementation on the client side
+
+
+@app.post("/testbed/new/{template}")
+async def test_new(template: str, request: Request, background_tasks: BackgroundTasks) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+    orga_life_limit: float = request.app.state.orga_life_limit
+
+    try:
+        (new_org_id, template_crc, _) = await testbed.new_organization(template)
+    except UnknownTemplateError:
+        return Response(
+            status_code=404,
+            content=b"unknown template",
+        )
+
+    async def _organization_garbage_collector():
+        await asyncio.sleep(orga_life_limit)
+        print(f"drop {new_org_id}")
+        # Dropping is idempotent, so no need for error handling
+        testbed.backend.test_drop_organization(new_org_id)
+
+    background_tasks.add_task(_organization_garbage_collector)
+
+    return Response(
+        status_code=200,
+        content=f"{new_org_id.str}\n{template_crc}".encode("utf8"),
+    )
+
+
+@app.post("/testbed/drop/{raw_organization_id}")
+async def test_drop(raw_organization_id: str, request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        return Response(status_code=400, content=b"")
+    print(f"drop {organization_id}")
+    # Dropping is idempotent, so no need for error handling
+    testbed.drop_organization(organization_id)
+
+    return Response(status_code=200, content=b"")
+
+
+@asynccontextmanager
+async def testbed_backend_factory(backend_addr: BackendAddr) -> AsyncIterator[TestbedBackend]:
+    # TODO: avoid tempdir for email ?
+    tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
+    config = BackendConfig(
+        debug=True,
+        db_url="MOCKED",
+        db_min_connections=1,
+        db_max_connections=1,
+        sse_keepalive=30,
+        forward_proto_enforce_https=None,
+        backend_addr=backend_addr,
+        email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
+        blockstore_config=MockedBlockStoreConfig(),
+        administration_token="s3cr3t",
+        organization_spontaneous_bootstrap=True,
+    )
+    async with backend_factory(config=config) as backend:
+        yield TestbedBackend(backend=backend)
+
+
+@click.command(
+    context_settings={"max_content_width": 400},
+    short_help="run the testbed server",
+)
+@click.option(
+    "--host",
+    "-H",
+    default="127.0.0.1",
+    show_default=True,
+    envvar="PARSEC_HOST",
+    help="Host to listen on",
+)
+@click.option(
+    "--port",
+    "-P",
+    default=DEFAULT_PORT,
+    type=int,
+    show_default=True,
+    envvar="PARSEC_PORT",
+    help="Port to listen on",
+)
+@click.option(
+    "--orga-life-limit",
+    default=DEFAULT_ORGANIZATION_LIFE_LIMIT,
+    show_default=True,
+    type=float,
+    envvar="PARSEC_ORGA_LIFE_LIMIT",
+    help="How long before the organization gets automatically removed",
+)
+@click.option(
+    "--backend-addr",
+    envvar="PARSEC_BACKEND_ADDR",
+    default="parsec://saas.parsec.invalid",
+    show_default=True,
+    metavar="URL",
+    type=BackendAddr.from_url,
+    help="URL to reach this server (typically used in invitation emails)",
+)
+@click.option(
+    "--stop-after-process",
+    type=int,
+    default=None,
+    show_default=True,
+    envvar="PARSEC_STOP_AFTER_PROCESS",
+    help="Stop the server once the given process has terminated",
+)
+# Add --debug
+@debug_config_options
+def testbed_cmd(
+    host: str,
+    port: int,
+    orga_life_limit: float,
+    backend_addr: BackendAddr,
+    stop_after_process: int | None,
+    debug: bool,
+) -> None:
+    configure_logging(log_level="INFO", log_format="CONSOLE", log_stream=sys.stderr)
+
+    async def _run_testbed():
+        # Task group must be enclosed by backend (and not the other way around !)
+        # given we will sleep forever in it __aexit__ part
+        async with anyio.create_task_group() as tg:
+            if stop_after_process:
+
+                async def _watch_and_stop_after_process(pid: int, cancel_scope: anyio.CancelScope):
+                    while True:
+                        await anyio.sleep(1)
+                        # psutil is a dev dependency, so we cannot import it globally
+                        import psutil
+
+                        if not psutil.pid_exists(pid):
+                            print(f"PID `{pid}` has left, closing server.")
+                            cancel_scope.cancel()
+                            break
+
+                tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
+
+            async with testbed_backend_factory(backend_addr=backend_addr) as testbed:
+                click.secho("All set !", fg="yellow")
+                click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
+                click.secho(
+                    f"export TESTBED_SERVER_URL='parsec://127.0.0.1:{port}?no_ssl=true'",
+                    fg="magenta",
+                )
+
+                app.state.testbed = testbed
+                app.state.backend = testbed.backend
+                app.state.orga_life_limit = orga_life_limit
+                await serve_parsec_asgi_app(host=host, port=port, app=app)
+
+                click.echo("bye ;-)")
+
+    with cli_exception_handler(debug):
+        asyncio.run(_run_testbed())

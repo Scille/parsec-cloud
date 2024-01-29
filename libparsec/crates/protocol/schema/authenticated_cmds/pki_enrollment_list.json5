@@ -1,10 +1,8 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
-        "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_list"
         },
@@ -19,13 +17,7 @@
                 ]
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             }
         ],
         "nested_types": [

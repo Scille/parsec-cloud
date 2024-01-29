@@ -230,10 +230,24 @@ impl CrcHash for SigningKey {
     }
 }
 
+impl CrcHash for VerifyKey {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"VerifyKey");
+        hasher.update(self.as_ref());
+    }
+}
+
 impl CrcHash for PrivateKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"PrivateKey");
         hasher.update(&self.to_bytes());
+    }
+}
+
+impl CrcHash for PublicKey {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"PublicKey");
+        hasher.update(self.as_ref());
     }
 }
 
@@ -265,27 +279,56 @@ impl CrcHash for SequesterVerifyKeyDer {
     }
 }
 
-impl CrcHash for WorkspaceEntry {
+impl CrcHash for LegacyUserManifestWorkspaceEntry {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"WorkspaceEntry");
+        hasher.update(b"LegacyUserManifestWorkspaceEntry");
 
-        let WorkspaceEntry {
+        let LegacyUserManifestWorkspaceEntry {
             id,
             name,
             key,
             encryption_revision,
-            encrypted_on,
-            legacy_role_cache_timestamp,
-            legacy_role_cache_value,
         } = self;
 
         id.crc_hash(hasher);
         name.crc_hash(hasher);
         key.crc_hash(hasher);
         encryption_revision.crc_hash(hasher);
-        encrypted_on.crc_hash(hasher);
-        legacy_role_cache_timestamp.crc_hash(hasher);
-        legacy_role_cache_value.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for LocalUserManifestWorkspaceEntry {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"LocalUserManifestWorkspaceEntry");
+
+        let LocalUserManifestWorkspaceEntry {
+            id,
+            name,
+            name_origin,
+            role,
+            role_origin,
+        } = self;
+
+        id.crc_hash(hasher);
+        name.crc_hash(hasher);
+        name_origin.crc_hash(hasher);
+        role.crc_hash(hasher);
+        role_origin.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for CertificateBasedInfoOrigin {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"WorkspaceNameOrigin");
+        match self {
+            CertificateBasedInfoOrigin::Certificate { timestamp } => {
+                hasher.update(b"Certificate");
+                timestamp.crc_hash(hasher);
+            }
+            CertificateBasedInfoOrigin::Placeholder => {
+                hasher.update(b"Placeholder");
+            }
+        }
     }
 }
 
@@ -300,8 +343,7 @@ impl CrcHash for UserManifest {
             version,
             created,
             updated,
-            last_processed_message,
-            workspaces,
+            workspaces_legacy_initial_info,
         } = self;
 
         author.crc_hash(hasher);
@@ -310,8 +352,7 @@ impl CrcHash for UserManifest {
         version.crc_hash(hasher);
         created.crc_hash(hasher);
         updated.crc_hash(hasher);
-        last_processed_message.crc_hash(hasher);
-        workspaces.crc_hash(hasher);
+        workspaces_legacy_initial_info.crc_hash(hasher);
     }
 }
 
@@ -323,16 +364,14 @@ impl CrcHash for LocalUserManifest {
             base,
             need_sync,
             updated,
-            last_processed_message,
-            workspaces,
+            local_workspaces,
             speculative,
         } = self;
 
         base.crc_hash(hasher);
         need_sync.crc_hash(hasher);
         updated.crc_hash(hasher);
-        last_processed_message.crc_hash(hasher);
-        workspaces.crc_hash(hasher);
+        local_workspaces.crc_hash(hasher);
         speculative.crc_hash(hasher);
     }
 }
@@ -523,5 +562,37 @@ impl CrcHash for LocalFileManifest {
         size.crc_hash(hasher);
         blocksize.crc_hash(hasher);
         blocks.crc_hash(hasher);
+    }
+}
+
+impl CrcHash for HashAlgorithm {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"HashAlgorithm");
+        match self {
+            HashAlgorithm::Sha256 => hasher.update(b"Sha256"),
+        }
+    }
+}
+
+impl CrcHash for SecretKeyAlgorithm {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"SecretKeyAlgorithm");
+        match self {
+            SecretKeyAlgorithm::Xsalsa20Poly1305 => hasher.update(b"Xsalsa20Poly1305"),
+        }
+    }
+}
+
+impl CrcHash for RealmArchivingConfiguration {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"RealmArchivingConfiguration");
+        match self {
+            RealmArchivingConfiguration::Available => hasher.update(b"Available"),
+            RealmArchivingConfiguration::Archived => hasher.update(b"Archived"),
+            RealmArchivingConfiguration::DeletionPlanned { deletion_date } => {
+                hasher.update(b"DeletionPlanned");
+                deletion_date.crc_hash(hasher);
+            }
+        }
     }
 }

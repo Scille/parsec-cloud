@@ -4,7 +4,7 @@
 # 1) Build stage
 #
 
-FROM python:3.9 AS builder
+FROM python:3.12 AS builder
 
 WORKDIR /server
 
@@ -30,7 +30,7 @@ RUN bash in-docker-build.sh
 # 2) Bundle stage
 #
 
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
 LABEL org.opencontainers.image.description="Run the Parsec backend server."
@@ -48,10 +48,7 @@ COPY --chown=1234:1234 --from=builder /server/venv /server/venv
 # Add venv/bin to PATH to make `parsec` available
 ENV PATH "/server/venv/bin:$PATH"
 
-# Suppress those annoying TrioDeprecationWarnings
-ENV PYTHONWARNINGS "ignore:::quart_trio.app"
-
 # Define entry point
 EXPOSE 6777
-ENTRYPOINT ["parsec", "backend"]
+ENTRYPOINT ["parsec"]
 CMD ["run", "--port=6777"]

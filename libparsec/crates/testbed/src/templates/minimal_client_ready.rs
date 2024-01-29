@@ -2,15 +2,14 @@
 
 use std::sync::Arc;
 
-use libparsec_types::prelude::*;
-
 use crate::TestbedTemplate;
 
 /// Similar to minimal organization (i.e. single Alice user&device), but with some data:
-/// - a workspace `wksp1` containing a folder `/foo` and a file `/bar.txt`
-/// - file `/bar.txt` is composed of a single block with `hello world` as content
-/// - folder `/foo` contains an empty folder `/foo/spam` and an empty file `/foo/egg.txt`
-/// - device alice@dev1's user, workspace and certificate storages are populated with all data
+/// - A workspace `wksp1` that is bootstrapped (i.e. initial realm key rotation and rename have been done)
+/// - The workspace contains a folder `/foo` and a file `/bar.txt`.
+/// - File `/bar.txt` is composed of a single block with `hello world` as content.
+/// - Folder `/foo` contains an empty folder `/foo/spam` and an empty file `/foo/egg.txt`.
+/// - Device alice@dev1's user, workspace and certificate storages are populated with all data.
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
     let mut builder = TestbedTemplate::from_builder("minimal_client_ready");
 
@@ -20,12 +19,14 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     // 2) Create workspace's realm
 
-    let (wksp1_id, wksp1_key, realm_timestamp) = builder
-        .new_realm("alice")
-        .map(|e| (e.realm_id, e.realm_key.clone(), e.timestamp));
+    let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+    builder.rotate_key_realm(wksp1_id);
+    let wksp1_name = builder
+        .rename_realm(wksp1_id, "wksp1")
+        .map(|e| e.name.clone());
 
     builder.store_stuff("wksp1_id", &wksp1_id);
-    builder.store_stuff("wksp1_key", &wksp1_key);
+    builder.store_stuff("wksp1_name", &wksp1_name);
 
     // 3) Create `/bar.txt`'s vlob & block
 
@@ -96,24 +97,15 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     builder
         .new_user_realm("alice")
-        .then_create_initial_user_manifest_vlob()
-        .customize(|e| {
-            Arc::make_mut(&mut e.manifest)
-                .workspaces
-                .push(WorkspaceEntry::new(
-                    wksp1_id,
-                    "wksp1".parse().unwrap(),
-                    wksp1_key,
-                    1,
-                    realm_timestamp,
-                ))
-        });
+        .then_create_initial_user_manifest_vlob();
 
     // 9) Fetch all data in Alice's client storages
 
     builder.certificates_storage_fetch_certificates("alice@dev1");
-
     builder.user_storage_fetch_user_vlob("alice@dev1");
+    builder
+        .user_storage_local_update("alice@dev1")
+        .update_local_workspaces_with_fetched_certificates();
     builder.user_storage_fetch_realm_checkpoint("alice@dev1");
 
     builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", wksp1_id, None);

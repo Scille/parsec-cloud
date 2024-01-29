@@ -84,6 +84,8 @@ struct JsonCmdRep {
     status: String,
     fields: Option<Vec<JsonCmdField>>,
     unit: Option<String>,
+    // In which API version the current response type was introduced.
+    // Must be in `X.Y` format
     #[allow(unused)]
     introduced_in: Option<String>,
 }
@@ -275,7 +277,7 @@ impl GenCmdsFamily {
                             match (nested_type.fields, nested_type.variants, nested_type.discriminant_field) {
                                 (None, Some(variants), None) => {
                                     let variants = variants.into_iter().map(|v| {
-                                        assert!(v.fields.is_none(), "{}: `{}::{}` is supposed to be a literal union, but has fields !", cmd_name, &nested_type.name, v.discriminant_value);
+                                        assert!(v.fields.is_none(), "{}: `{}::{}` is supposed to be a literal union, but has fields ! (missing `discriminant_field` ?)", cmd_name, &nested_type.name, v.discriminant_value);
                                         (v.name, v.discriminant_value)
                                     }).collect();
                                     GenCmdNestedType::LiteralsUnion {
@@ -638,11 +640,18 @@ fn quote_custom_struct_union(
     let variants = variants.iter().map(|variant| {
         let variant_name = format_ident!("{}", variant.name);
         let value_literal = &variant.discriminant_value;
-        let variant_fields = quote_cmd_fields(&variant.fields, false);
-        quote! {
-            #[serde(rename = #value_literal)]
-            #variant_name {
-                #(#variant_fields),*
+        if variant.fields.is_empty() {
+            quote! {
+                #[serde(rename = #value_literal)]
+                #variant_name
+            }
+        } else {
+            let variant_fields = quote_cmd_fields(&variant.fields, false);
+            quote! {
+                #[serde(rename = #value_literal)]
+                #variant_name {
+                    #(#variant_fields),*
+                }
             }
         }
     });
@@ -669,7 +678,7 @@ fn quote_custom_literal_union(name: &str, variants: &[(String, String)]) -> Toke
 
     quote! {
         #[::serde_with::serde_as]
-        #[derive(Debug, Clone, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)]
+        #[derive(Debug, Clone, Copy, ::serde::Deserialize, ::serde::Serialize, PartialEq, Eq, Hash)]
         pub enum #name {
             #(#variants),*
         }

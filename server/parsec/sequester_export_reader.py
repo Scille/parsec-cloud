@@ -6,11 +6,10 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import Callable, Dict, Iterator, List, Mapping, Tuple, TypeVar
+from typing import TYPE_CHECKING, Callable, Iterator, Mapping, TypeVar
 
 from parsec._parsec import (
     CryptoError,
-    DataError,
     DateTime,
     DeviceCertificate,
     DeviceID,
@@ -26,7 +25,10 @@ from parsec._parsec import (
     WorkspaceManifest,
     child_manifest_verify_and_load,
 )
-from parsec.api.data.manifest import ChildManifest
+
+if TYPE_CHECKING:
+    from parsec._parsec import ChildManifest
+
 
 REALM_EXPORT_DB_MAGIC_NUMBER = 87947
 REALM_EXPORT_DB_VERSION = 1  # Only supported version so far
@@ -81,7 +83,7 @@ class RealmExportDb:
         if not row:
             # `info` table exists and is valid, but magic number doesn't match
             raise InvalidRealmExportDatabaseError(
-                f"Invalid realm export database: invalid magic number"
+                "Invalid realm export database: invalid magic number"
             )
         db_version, db_realm_id, db_root_verify_key = row
         if db_version != REALM_EXPORT_DB_VERSION:
@@ -92,13 +94,13 @@ class RealmExportDb:
             realm_id = VlobID.from_bytes(db_realm_id)
         except ValueError as exc:
             raise InvalidRealmExportDatabaseError(
-                f"Invalid realm export database: cannot parse realm ID"
+                "Invalid realm export database: cannot parse realm ID"
             ) from exc
         try:
             root_verify_key = VerifyKey(db_root_verify_key)
         except CryptoError as exc:
             raise InvalidRealmExportDatabaseError(
-                f"Invalid realm export database: cannot parse root verify key"
+                "Invalid realm export database: cannot parse root verify key"
             ) from exc
 
         try:
@@ -109,8 +111,8 @@ class RealmExportDb:
 
     def load_user_certificates(
         self,
-        out_certificates: List[Tuple[UserCertificate, RevokedUserCertificate | None]],
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+        out_certificates: list[tuple[UserCertificate, RevokedUserCertificate | None]],
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute(
             "SELECT _id, user_certificate, revoked_user_certificate FROM user_"
         ).fetchall()
@@ -118,7 +120,7 @@ class RealmExportDb:
             try:
                 # TODO: check devices are valid
                 user_certif = UserCertificate.unsecure_load(row[1])
-            except DataError as exc:
+            except ValueError as exc:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
@@ -133,7 +135,7 @@ class RealmExportDb:
                 else:
                     revoked_user_certif = None
                 out_certificates.append((user_certif, revoked_user_certif))
-            except DataError as exc:
+            except ValueError as exc:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
@@ -141,15 +143,15 @@ class RealmExportDb:
                 )
 
     def load_device_certificates(
-        self, out_certificates: List[Tuple[int, DeviceCertificate]]
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+        self, out_certificates: list[tuple[int, DeviceCertificate]]
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, device_certificate FROM device").fetchall()
         for row in rows:
             try:
                 # TODO: check devices are valid
                 certif = DeviceCertificate.unsecure_load(row[1])
                 out_certificates.append((row[0], certif))
-            except DataError as exc:
+            except ValueError as exc:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
@@ -157,15 +159,15 @@ class RealmExportDb:
                 )
 
     def load_role_certificates(
-        self, out_certificates: List[RealmRoleCertificate]
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+        self, out_certificates: list[RealmRoleCertificate]
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         rows = self.con.execute("SELECT _id, role_certificate FROM realm_role").fetchall()
         for row in rows:
             try:
                 # TODO: check devices are valid
                 certif = RealmRoleCertificate.unsecure_load(row[1])
                 out_certificates.append(certif)
-            except DataError as exc:
+            except ValueError as exc:
                 yield (
                     None,
                     RealmExportProgress.INCONSISTENT_CERTIFICATE,
@@ -177,10 +179,11 @@ class RealmExportDb:
 class WorkspaceExport:
     db: RealmExportDb
     decryption_key: SequesterPrivateKeyDer
-    devices_form_internal_id: Dict[int, Tuple[DeviceID, VerifyKey]]
+    devices_form_internal_id: dict[int, tuple[DeviceID, VerifyKey]]
     filter_on_date: DateTime
 
-    M = TypeVar("M", WorkspaceManifest, ChildManifest)
+    if TYPE_CHECKING:
+        M = TypeVar("M", WorkspaceManifest, ChildManifest)
 
     def load_manifest(self, manifest_id: VlobID, verify_and_load: Callable[..., M]) -> M:
         # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
@@ -236,7 +239,7 @@ class WorkspaceExport:
 
     def extract_children(
         self, output: Path, fs_path: PurePath, children: Mapping[EntryName, VlobID]
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -283,7 +286,7 @@ class WorkspaceExport:
 
     def extract_file(
         self, output: Path, fs_path: PurePath, manifest: FileManifest
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -356,7 +359,7 @@ class WorkspaceExport:
 
     def extract_workspace(
         self, output: Path
-    ) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+    ) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
         """
         Raises nothing (errors are passed through `on_progress` callback)
         """
@@ -382,9 +385,9 @@ class WorkspaceExport:
 
 def extract_workspace(
     output: Path, export_db: Path, decryption_key: SequesterPrivateKeyDer, filter_on_date: DateTime
-) -> Iterator[Tuple[PurePath | None, RealmExportProgress, str]]:
+) -> Iterator[tuple[PurePath | None, RealmExportProgress, str]]:
     with RealmExportDb.open(export_db) as db:
-        out_certificates: list[Tuple[int, DeviceCertificate]] = []
+        out_certificates: list[tuple[int, DeviceCertificate]] = []
         yield from db.load_device_certificates(out_certificates=out_certificates)
         devices_form_internal_id = {
             id: (certif.device_id, certif.verify_key) for id, certif in out_certificates

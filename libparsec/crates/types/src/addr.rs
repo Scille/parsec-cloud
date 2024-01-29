@@ -11,7 +11,7 @@ use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{BootstrapToken, InvitationToken, InvitationType, OrganizationID, VlobID};
 
 const PARSEC_SCHEME: &str = "parsec";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -574,7 +574,7 @@ impl std::str::FromStr for BackendActionAddr {
 pub struct BackendOrganizationBootstrapAddr {
     base: BaseBackendAddr,
     organization_id: OrganizationID,
-    token: Option<String>,
+    token: Option<BootstrapToken>,
 }
 
 impl_common_stuff!(BackendOrganizationBootstrapAddr);
@@ -583,7 +583,7 @@ impl BackendOrganizationBootstrapAddr {
     pub fn new(
         backend_addr: impl Into<BackendAddr>,
         organization_id: OrganizationID,
-        token: Option<String>,
+        token: Option<BootstrapToken>,
     ) -> Self {
         Self {
             base: backend_addr.into().base,
@@ -607,7 +607,16 @@ impl BackendOrganizationBootstrapAddr {
         }
 
         let mut token_queries = pairs.filter(|(k, _)| k == "token");
-        let token = token_queries.next().map(|(_, v)| (*v).to_owned());
+        let token = token_queries
+            .next()
+            .map(|(_, v)| {
+                BootstrapToken::from_hex(&v).map_err(|e| AddrError::InvalidParamValue {
+                    param: "token",
+                    value: v.to_string(),
+                    help: e.to_string(),
+                })
+            })
+            .transpose()?;
 
         // Note invalid percent-encoding is not considered a failure here:
         // the replacement character EF BF BD is used instead. This should be
@@ -615,14 +624,6 @@ impl BackendOrganizationBootstrapAddr {
         if token_queries.next().is_some() {
             return Err(AddrError::DuplicateParam("token".to_string()));
         }
-
-        // Consider empty token as no token
-        // It's important to do this cooking eagerly (instead of e.g. doing it in
-        // the token getter) to avoid broken comparison between empty and None tokens
-        let token = match token {
-            Some(content) if content.is_empty() => None,
-            token => token,
-        };
 
         Ok(Self {
             base,
@@ -640,9 +641,7 @@ impl BackendOrganizationBootstrapAddr {
         url.query_pairs_mut()
             .append_pair("action", "bootstrap_organization");
         if let Some(ref tk) = self.token {
-            if !tk.is_empty() {
-                url.query_pairs_mut().append_pair("token", tk);
-            }
+            url.query_pairs_mut().append_pair("token", &tk.hex());
         }
         url
     }
@@ -651,8 +650,8 @@ impl BackendOrganizationBootstrapAddr {
         &self.organization_id
     }
 
-    pub fn token(&self) -> Option<&str> {
-        self.token.as_deref()
+    pub fn token(&self) -> Option<&BootstrapToken> {
+        self.token.as_ref()
     }
 
     pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {

@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -23,7 +22,7 @@
                 "fields": [
                     {
                         "name": "changes",
-                        "type": "Map<VlobID, Version>"
+                        "type": "List<(VlobID, Version)>"
                     },
                     {
                         "name": "current_checkpoint",
@@ -32,19 +31,10 @@
                 ]
             },
             {
-                "status": "not_allowed"
+                "status": "author_not_allowed"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "in_maintenance"
+                "status": "realm_not_found"
             }
         ]
     }

@@ -1,10 +1,8 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
-        "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_info",
             "fields": [
@@ -20,13 +18,7 @@
                 "unit": "PkiEnrollmentInfoStatus"
             },
             {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_not_found"
             }
         ],
         "nested_types": [

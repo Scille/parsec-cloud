@@ -74,7 +74,7 @@ class Tool(enum.Enum):
 
 TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Rust: "1.74.0",
-    Tool.Python: "3.9.10",
+    Tool.Python: "3.12.0",
     Tool.Poetry: "1.5.1",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
@@ -86,12 +86,10 @@ TOOLS_VERSION: Dict[Tool, str] = {
 
 
 FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
-    ROOT_DIR
-    / ".github/workflows/ci-docs.yml": {
+    ROOT_DIR / ".github/workflows/ci-docs.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
-    ROOT_DIR
-    / ".github/workflows/ci-python.yml": {
+    ROOT_DIR / ".github/workflows/ci-python.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.PostgreSQL: [
             ReplaceRegex(
@@ -99,26 +97,21 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR
-    / ".github/workflows/ci-rust.yml": {
+    ROOT_DIR / ".github/workflows/ci-rust.yml": {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
     },
-    ROOT_DIR
-    / ".github/workflows/ci-web.yml": {
+    ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
     },
-    ROOT_DIR
-    / ".github/workflows/codeql.yml": {
+    ROOT_DIR / ".github/workflows/codeql.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
-    ROOT_DIR
-    / ".github/workflows/package-server.yml": {
+    ROOT_DIR / ".github/workflows/package-server.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
     },
-    ROOT_DIR
-    / ".github/workflows/package-ionic-app.yml": {
+    ROOT_DIR / ".github/workflows/package-ionic-app.yml": {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
@@ -126,8 +119,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR / "client/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
-    ROOT_DIR
-    / "docs/development/quickstart.md": {
+    ROOT_DIR / "docs/development/quickstart.md": {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
             ReplaceRegex(
@@ -153,8 +145,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
-    ROOT_DIR
-    / "docs/adminguide/hosting/index.rst": {
+    ROOT_DIR / "docs/adminguide/hosting/index.rst": {
         Tool.PostgreSQL: [ReplaceRegex(r"postgres-\d+", only_major_version("postgres-{version}"))],
         Tool.Python: [
             ReplaceRegex(r"- Python v[0-9.]+", hide_patch_version("- Python v{version}")),
@@ -166,8 +157,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
         ],
     },
-    ROOT_DIR
-    / "docs/adminguide/hosting/parsec-server.docker.yaml": {
+    ROOT_DIR / "docs/adminguide/hosting/parsec-server.docker.yaml": {
         Tool.PostgreSQL: [
             ReplaceRegex(
                 r"image: postgres:\d+.\d+-alpine",
@@ -175,20 +165,18 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             )
         ]
     },
-    ROOT_DIR
-    / "docs/conf.py": {Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]},
-    ROOT_DIR
-    / "docs/pyproject.toml": {
+    ROOT_DIR / "docs/conf.py": {
+        Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
+    },
+    ROOT_DIR / "docs/pyproject.toml": {
         Tool.Python: [ReplaceRegex(r'^python = "\^[0-9.]+"$', 'python = "^{version}"')]
     },
-    ROOT_DIR
-    / "licenses/BUSL-Scille.txt": {
+    ROOT_DIR / "licenses/BUSL-Scille.txt": {
         Tool.Parsec: [
             ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")
         ]
     },
-    ROOT_DIR
-    / "misc/version_updater.py": {
+    ROOT_DIR / "misc/version_updater.py": {
         Tool.Rust: [ReplaceRegex(r'Tool.Rust: "[0-9.]+"', 'Tool.Rust: "{version}"')],
         Tool.Python: [ReplaceRegex(r'Tool.Python: "[0-9.]+"', 'Tool.Python: "{version}"')],
         Tool.Poetry: [ReplaceRegex(r'Tool.Poetry: "[0-9.]+"', 'Tool.Poetry: "{version}"')],
@@ -200,8 +188,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
         ],
     },
-    ROOT_DIR
-    / "server/packaging/server/in-docker-build.sh": {
+    ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
             ReplaceRegex(
                 r"curl -sSL https://install.python-poetry.org \| python - --version=[0-9.]+",
@@ -210,8 +197,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         ],
     },
     ROOT_DIR / "server/packaging/server/server.dockerfile": {Tool.Python: [PYTHON_DOCKER_VERSION]},
-    ROOT_DIR
-    / "server/packaging/testbed-server/in-docker-build.sh": {
+    ROOT_DIR / "server/packaging/testbed-server/in-docker-build.sh": {
         Tool.Python: [PYTHON_SMALL_VERSION],
         Tool.Poetry: [
             ReplaceRegex(
@@ -220,16 +206,13 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR
-    / "server/packaging/testbed-server/testbed-server.dockerfile": {
+    ROOT_DIR / "server/packaging/testbed-server/testbed-server.dockerfile": {
         Tool.Python: [PYTHON_DOCKER_VERSION]
     },
-    ROOT_DIR
-    / "server/parsec/_version.py": {
+    ROOT_DIR / "server/parsec/_version.py": {
         Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "v{version}"')]
     },
-    ROOT_DIR
-    / "server/pyproject.toml": {
+    ROOT_DIR / "server/pyproject.toml": {
         Tool.Python: [
             ReplaceRegex(
                 r'"Programming Language :: Python :: .*"',
@@ -242,29 +225,25 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
             ReplaceRegex(
-                r"python_version = \d.\d+",
-                hide_patch_version("python_version = {version}"),
+                r"python_version = \"\d.\d+\"",
+                hide_patch_version('python_version = "{version}"'),
             ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
         Tool.License: [TOML_LICENSE_FIELD],
     },
-    ROOT_DIR
-    / ".pre-commit-config.yaml": {
+    ROOT_DIR / ".pre-commit-config.yaml": {
         Tool.Rust: [ReplaceRegex(r"rust: [0-9.]+", "rust: {version}")],
         Tool.Node: [ReplaceRegex(r"node: [0-9.]+", "node: {version}")],
     },
-    ROOT_DIR
-    / "rust-toolchain.toml": {
+    ROOT_DIR / "rust-toolchain.toml": {
         Tool.Rust: [ReplaceRegex(r'channel = ".*"', 'channel = "{version}"')]
     },
     # Cargo workspace members should use the license value defined in the root cargo manifest
-    ROOT_DIR
-    / "*/**/Cargo.toml": {
+    ROOT_DIR / "*/**/Cargo.toml": {
         Tool.License: [ReplaceRegex(r"license.workspace = true", "license.workspace = true")]
     },
-    ROOT_DIR
-    / "Cargo.toml": {
+    ROOT_DIR / "Cargo.toml": {
         Tool.License: [TOML_LICENSE_FIELD],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
     },

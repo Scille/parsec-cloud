@@ -16,7 +16,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryName, IndexInt, SizeInt, VersionInt, VlobID,
+    DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -219,60 +219,6 @@ impl std::fmt::Display for RealmRole {
             Self::Contributor => "contributor",
             Self::Reader => "reader",
         })
-    }
-}
-
-/*
- * WorkspaceEntry
- */
-
-#[serde_as]
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct WorkspaceEntry {
-    pub id: VlobID,
-    pub name: EntryName,
-    pub key: SecretKey,
-    pub encryption_revision: IndexInt,
-    pub encrypted_on: DateTime,
-    // As they name suggest, `role`/`role_cached_on` are only cache information.
-    // However they are no longer needed given certificates are now eagerly
-    // fetched by the client (see `CertificatesOps` internals).
-    // Hence why they are not public: they are only kept for compatibility reason.
-    #[serde(rename = "role_cached_on")]
-    pub legacy_role_cache_timestamp: DateTime,
-    #[serde(rename = "role")]
-    pub legacy_role_cache_value: Option<RealmRole>,
-}
-
-impl WorkspaceEntry {
-    pub fn new(
-        id: VlobID,
-        name: EntryName,
-        key: SecretKey,
-        encryption_revision: IndexInt,
-        encrypted_on: DateTime,
-    ) -> Self {
-        Self {
-            id,
-            name,
-            key,
-            encryption_revision,
-            encrypted_on,
-            legacy_role_cache_timestamp: DateTime::from_f64_with_us_precision(0.0),
-            legacy_role_cache_value: None,
-        }
-    }
-
-    pub fn generate(name: EntryName, timestamp: DateTime) -> Self {
-        Self {
-            id: VlobID::default(),
-            name,
-            key: SecretKey::generate(),
-            encryption_revision: 1,
-            encrypted_on: timestamp,
-            legacy_role_cache_timestamp: timestamp,
-            legacy_role_cache_value: Some(RealmRole::Owner),
-        }
     }
 }
 
@@ -485,32 +431,46 @@ pub struct UserManifest {
     pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
-    pub last_processed_message: IndexInt,
-    pub workspaces: Vec<WorkspaceEntry>,
-}
 
-impl UserManifest {
-    pub fn get_workspace_entry(&self, realm_id: VlobID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|x| x.id == realm_id)
-    }
+    pub workspaces_legacy_initial_info: Vec<LegacyUserManifestWorkspaceEntry>,
 }
 
 parsec_data!("schema/manifest/user_manifest.json5");
 
 impl_manifest_dump_load!(UserManifest);
 
-impl_transparent_data_format_conversion!(
-    UserManifest,
-    UserManifestData,
-    author,
-    timestamp,
-    id,
-    version,
-    created,
-    updated,
-    last_processed_message,
-    workspaces,
-);
+impl From<UserManifestData> for UserManifest {
+    fn from(data: UserManifestData) -> Self {
+        Self {
+            author: data.author,
+            timestamp: data.timestamp,
+            id: data.id,
+            version: data.version,
+            created: data.created,
+            updated: data.updated,
+            workspaces_legacy_initial_info: data.workspaces.unwrap_or_default(),
+        }
+    }
+}
+impl From<UserManifest> for UserManifestData {
+    fn from(obj: UserManifest) -> Self {
+        let workspaces = if obj.workspaces_legacy_initial_info.is_empty() {
+            None
+        } else {
+            Some(obj.workspaces_legacy_initial_info)
+        };
+        Self {
+            ty: Default::default(),
+            author: obj.author,
+            timestamp: obj.timestamp,
+            id: obj.id,
+            version: obj.version,
+            created: obj.created,
+            updated: obj.updated,
+            workspaces,
+        }
+    }
+}
 
 /*
  * ChildManifest

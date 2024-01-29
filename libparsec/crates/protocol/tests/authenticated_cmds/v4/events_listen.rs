@@ -42,12 +42,12 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Python implementation (Parsec v2.6.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   event: "pinged"
+            //   event: "PINGED"
             //   ping: "foobar"
             //   status: "ok"
-            &hex!("83a56576656e74a670696e676564a470696e67a6666f6f626172a6737461747573a26f6b")[..],
+            &hex!("83a6737461747573a26f6ba56576656e74a650494e474544a470696e67a6666f6f626172")[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Pinged {
                     ping: "foobar".to_owned(),
@@ -55,112 +55,117 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   event: "message_received"
-            //   index: 0
+            //   event: "SERVER_CONFIG"
+            //   active_users_limit: 8
+            //   user_profile_outsider_allowed: true
             //   status: "ok"
             &hex!(
-                "83a6737461747573a26f6ba56576656e74b06d6573736167655f7265636569766564a5696e"
-                "64657800"
+                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b26163746976"
+                "655f75736572735f6c696d697408bd757365725f70726f66696c655f6f757473696465725f"
+                "616c6c6f776564c3"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::MessageReceived { index: 0 },
+                authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                    active_users_limit: ActiveUsersLimit::LimitedTo(8),
+                    user_profile_outsider_allowed: true,
+                },
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   event: "invite_status_changed"
+            //   event: "SERVER_CONFIG"
+            //   user_profile_outsider_allowed: false
+            //   status: "ok"
+            &hex!(
+                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b26163746976"
+                "655f75736572735f6c696d6974c0bd757365725f70726f66696c655f6f757473696465725f"
+                "616c6c6f776564c2"
+            )[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                    active_users_limit: ActiveUsersLimit::NoLimit,
+                    user_profile_outsider_allowed: false,
+                },
+            ),
+        ),
+        (
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Content:
+            //   event: "INVITATION"
             //   invitation_status: "IDLE"
             //   status: "ok"
             //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
             &hex!(
-                "84a6737461747573a26f6ba56576656e74b5696e766974655f7374617475735f6368616e67"
-                "6564b1696e7669746174696f6e5f737461747573a449444c45a5746f6b656ed802d864b93d"
-                "ed264aae9ae583fd3d40c45a"
+                "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e766974617469"
+                "6f6e5f737461747573a449444c45a5746f6b656ed802d864b93ded264aae9ae583fd3d40c4"
+                "5a"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::InviteStatusChanged {
+                authenticated_cmds::events_listen::APIEvent::Invitation {
                     invitation_status: InvitationStatus::Idle,
                     token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
                 },
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   encryption_revision: 0
-            //   event: "realm_maintenance_finished"
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+            //   event: "PKI_ENROLLMENT"
             //   status: "ok"
+            &hex!("82a6737461747573a26f6ba56576656e74ae504b495f454e524f4c4c4d454e54")[..],
+            authenticated_cmds::events_listen::Rep::Ok(
+                authenticated_cmds::events_listen::APIEvent::PkiEnrollment,
+            ),
+        ),
+        (
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Content:
+            //   event: "COMMON_CERTIFICATE"
+            //   status: "ok"
+            //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "84a6737461747573a26f6ba56576656e74ba7265616c6d5f6d61696e74656e616e63655f66"
-                "696e6973686564b3656e6372797074696f6e5f7265766973696f6e00a87265616c6d5f6964"
-                "d8021d3353157d7d4e95ad2fdea7b3bd19c5"
+                "83a6737461747573a26f6ba56576656e74b2434f4d4d4f4e5f4345525449464943415445a9"
+                "74696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::RealmMaintenanceFinished {
-                    realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                    encryption_revision: 0,
+                authenticated_cmds::events_listen::APIEvent::CommonCertificate {
+                    timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
                 },
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   encryption_revision: 0
-            //   event: "realm_maintenance_started"
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+            //   event: "SEQUESTER_CERTIFICATE"
             //   status: "ok"
+            //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "84a6737461747573a26f6ba56576656e74b97265616c6d5f6d61696e74656e616e63655f73"
-                "746172746564b3656e6372797074696f6e5f7265766973696f6e00a87265616c6d5f6964d8"
-                "021d3353157d7d4e95ad2fdea7b3bd19c5"
+                "83a6737461747573a26f6ba56576656e74b55345515545535445525f434552544946494341"
+                "5445a974696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::RealmMaintenanceStarted {
-                    realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                    encryption_revision: 0,
+                authenticated_cmds::events_listen::APIEvent::SequesterCertificate {
+                    timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
                 },
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0+dev)
             // Content:
-            //   checkpoint: 0
-            //   event: "realm_vlobs_updated"
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-            //   src_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
-            //   src_version: 0
+            //   event: "SHAMIR_RECOVERY_CERTIFICATE"
             //   status: "ok"
+            //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "86a6737461747573a26f6ba56576656e74b37265616c6d5f766c6f62735f75706461746564"
-                "aa636865636b706f696e7400a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd"
-                "19c5a67372635f6964d8022b5f314728134a12863da1ce49c112f6ab7372635f7665727369"
-                "6f6e00"
+                "83a6737461747573a26f6ba56576656e74bb5348414d49525f5245434f564552595f434552"
+                "5449464943415445a974696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::RealmVlobsUpdated {
-                    realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                    checkpoint: 0,
-                    src_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
-                    src_version: 0,
+                authenticated_cmds::events_listen::APIEvent::ShamirRecoveryCertificate {
+                    timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
                 },
-            ),
-        ),
-        (
-            // Generated from Rust implementation (Parsec v2.15.0+dev)
-            // Content:
-            //   event: "certificates_updated"
-            //   index: 0
-            //   status: "ok"
-            &hex!(
-                "83a6737461747573a26f6ba56576656e74b46365727469666963617465735f757064617465"
-                "64a5696e64657800"
-            )[..],
-            authenticated_cmds::events_listen::Rep::Ok(
-                authenticated_cmds::events_listen::APIEvent::CertificatesUpdated { index: 0 },
             ),
         ),
     ];
@@ -171,7 +176,9 @@ pub fn rep_ok() {
         assert_eq!(data, expected);
 
         // Also test serialization round trip
+        println!("{expected:?}");
         let raw2 = data.dump().unwrap();
+        println!("{raw2:02x?}");
 
         let data2 = authenticated_cmds::events_listen::Rep::load(&raw2).unwrap();
 

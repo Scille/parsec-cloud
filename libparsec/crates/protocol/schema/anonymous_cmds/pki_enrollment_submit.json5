@@ -1,10 +1,8 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
-        "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_submit",
             "fields": [
@@ -22,7 +20,7 @@
                 },
                 {
                     "name": "submitter_der_x509_certificate_email",
-                    "type": "RequiredOption<String>"
+                    "type": "String"
                 },
                 {
                     "name": "submit_payload_signature",
@@ -45,7 +43,7 @@
                 ]
             },
             {
-                "status": "already_submitted",
+                "status": "x509_certificate_already_submitted",
                 "fields": [
                     {
                         "name": "submitted_on",
@@ -54,25 +52,16 @@
                 ]
             },
             {
-                "status": "id_already_used",
-                "fields": []
+                "status": "enrollment_id_already_used"
             },
             {
-                "status": "email_already_used",
-                "fields": []
+                "status": "email_already_enrolled"
             },
             {
-                "status": "already_enrolled",
-                "fields": []
+                "status": "already_enrolled"
             },
             {
-                "status": "invalid_payload_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_payload_data"
             }
         ]
     }

@@ -193,6 +193,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
                 protocol::invited_cmds::latest::invite_4_claimer_communicate::Rep::Ok {
                     payload: Bytes::from_static(b""),
+                    last: false,
                 }
             }
         },
@@ -217,6 +218,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
                 protocol::invited_cmds::latest::invite_4_claimer_communicate::Rep::Ok {
                     payload: out_payload.into(),
+                    last: true,
                 }
             }
         }

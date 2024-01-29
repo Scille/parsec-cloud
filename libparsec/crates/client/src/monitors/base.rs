@@ -3,52 +3,59 @@
 use std::future::Future;
 
 use libparsec_platform_async::{spawn, JoinHandle};
+use libparsec_types::prelude::*;
 
 use crate::event_bus::EventBus;
 
-/// A monitor is a background task reacting to external events
+/// A monitor is a background task reacting to the events.
 ///
 /// Typical monitor runs a single coroutine that listens on the event bus
-/// and calls methods on a ops component
+/// and calls methods on an ops component.
 pub(crate) struct Monitor {
+    // TODO: finish key monitor generic error handling  !
+    #[allow(unused)]
+    pub name: &'static str,
+    /// Not `None` if the monitor is related to a specific workspace
+    pub workspace_id: Option<VlobID>,
     task: JoinHandle<()>,
     // The task can itself start additional sub-tasks (e.g. to sync files in parallel),
     // this callback is used to notify about the stop so that the sub-tasks are closed.
     stop_cb: Option<Box<dyn FnOnce() + Send + 'static>>,
-    #[allow(unused)]
-    event_bus: EventBus,
 }
 
 impl Monitor {
     #[allow(unused)]
     pub async fn start<Fut>(
-        event_bus: EventBus,
-        task: Fut,
+        _event_bus: EventBus,
+        name: &'static str,
+        workspace_id: Option<VlobID>,
+        future: Fut,
         stop_cb: Option<Box<dyn FnOnce() + Send + 'static>>,
     ) -> Self
     where
         Fut: Future<Output = ()> + Send + 'static,
     {
-        let task = spawn(task);
+        // TODO: should wrap the task to send an event if it panics
+        let task = spawn(future);
 
         Self {
+            name,
+            workspace_id,
             task,
-            event_bus,
             stop_cb,
         }
     }
 
     /// Abort the monitor task and wait until the task has actually finished
     #[allow(unused)]
-    pub async fn stop(&mut self) {
+    pub async fn stop(mut self) -> anyhow::Result<()> {
         if let Some(stop_cb) = self.stop_cb.take() {
             stop_cb();
         } else {
             self.task.abort();
         }
         let m = &mut self.task;
-        // TODO: do we care about the error ?
-        let _ = m.await;
+        m.await.map_err(|e| e.into())
     }
 }
 

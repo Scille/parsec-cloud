@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -24,13 +23,7 @@
                 ]
             },
             {
-                "status": "not_found"
-            },
-            {
-                "status": "already_deleted"
-            },
-            {
-                "status": "invalid_state"
+                "status": "enrollment_wrong_state"
             }
         ]
     }

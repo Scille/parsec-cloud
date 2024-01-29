@@ -93,7 +93,7 @@ class VlobUpdateReqSchema(BaseReqSchema):
 
 EDIT: change sequester_blob key type to UUID
 
-In case the client send a `vlob_update/vlob_create` command without the right `sequester_blob` parameter (i.e. missing or unknown sequester encryption key) a specific error is returned:
+In case the client sends a `vlob_update/vlob_create` command without the right `sequester_blob` parameter (i.e. missing or unknown sequester encryption key) a specific error is returned:
 
 ```python
 class VlobCreateSequesterBlobErrorSchema(...):

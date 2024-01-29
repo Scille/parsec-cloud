@@ -1,0 +1,102 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "realm_share",
+            "fields": [
+                {
+                    // `RealmRoleCertificate` with `role` field set to a non-null value
+                    "name": "realm_role_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // `RealmKeysBundleAccess` encrypted for the recipient
+                    "name": "recipient_keys_bundle_access",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "key_index",
+                    "type": "Index"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "recipient_not_found"
+            },
+            {
+                "status": "recipient_revoked"
+            },
+            {
+                "status": "role_incompatible_with_outsider"
+            },
+            {
+                "status": "role_already_granted",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // If the `key_index` in the certificate is not currently the realm's last
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -38,6 +38,7 @@ pip install ./server
 
 # Boto3/Botocore are pretty big dependencies and won't be used (given the testbed
 # server only uses the memory storage)
-rm -rf ./venv/lib/python3.9/site-packages/{boto3,botocore,pip,setuptools}
+rm -rf ./venv/lib/python3.12/site-packages/{boto3,botocore,pip,setuptools}
 
-(cd / && /work/venv/bin/python -m parsec.cli --version)
+# Basic check to see if the wheel looks like it's well built.
+./venv/bin/parsec --version

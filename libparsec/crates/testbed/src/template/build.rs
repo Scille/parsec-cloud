@@ -2,6 +2,8 @@
 
 use hex_literal::hex;
 use paste::paste;
+use std::collections::HashMap;
+use std::num::NonZeroU64;
 use std::sync::Arc;
 
 use libparsec_types::prelude::*;
@@ -104,7 +106,6 @@ const SEQUESTER_SERVICE_IDENTITIES: &[SequesterServiceIdentityType] = &[
 #[derive(Clone)]
 pub(super) struct TestbedTemplateBuilderCounters {
     current_timestamp: DateTime,
-    current_certificate_index: IndexInt,
     current_invitation_token: u128,
     current_entry_id: u128,
     current_256bits_key: [u8; 32],
@@ -115,7 +116,6 @@ impl Default for TestbedTemplateBuilderCounters {
     fn default() -> Self {
         Self {
             current_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
-            current_certificate_index: 0,
             current_invitation_token: 0xE000_0000_0000_0000_0000_0000_0000_0000,
             current_entry_id: 0xF000_0000_0000_0000_0000_0000_0000_0000,
             // All our keys start with 0xAA, then grow up
@@ -132,12 +132,8 @@ impl TestbedTemplateBuilderCounters {
         self.current_timestamp += Duration::days(1);
         self.current_timestamp
     }
-    pub fn current_certificate_index(&self) -> IndexInt {
-        self.current_certificate_index
-    }
-    pub fn next_certificate_index(&mut self) -> IndexInt {
-        self.current_certificate_index += 1;
-        self.current_certificate_index
+    pub fn current_timestamp(&self) -> DateTime {
+        self.current_timestamp
     }
     pub fn next_entry_id(&mut self) -> VlobID {
         self.current_entry_id += 1;
@@ -302,10 +298,6 @@ impl TestbedTemplateBuilder {
     pub fn current_timestamp(&self) -> DateTime {
         self.counters.current_timestamp
     }
-
-    pub fn current_certificate_index(&self) -> IndexInt {
-        self.counters.current_certificate_index
-    }
 }
 
 macro_rules! impl_event_builder {
@@ -375,15 +367,11 @@ impl_event_builder!(BootstrapOrganization, [first_user: UserID]);
 
 impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
     pub fn and_set_sequestered_organization(self) -> Self {
-        let next_index = self.builder.counters.next_certificate_index();
         self.customize(|event| {
             event.sequester_authority = Some(TestbedEventBootstrapOrganizationSequesterAuthority {
-                certificate_index: event.first_user_certificate_index,
                 signing_key: SEQUESTER_AUTHORITY_SIGNING_KEY_DER_512.try_into().unwrap(),
                 verify_key: SEQUESTER_AUTHORITY_VERIFY_KEY_DER_512.try_into().unwrap(),
             });
-            event.first_user_certificate_index = event.first_user_first_device_certificate_index;
-            event.first_user_first_device_certificate_index = next_index;
         })
     }
     impl_customize_field_meth!(first_user_device_id, DeviceID);
@@ -402,6 +390,12 @@ impl<'a> TestbedEventNewSequesterServiceBuilder<'a> {
     impl_customize_field_meth!(id, SequesterServiceID);
     impl_customize_field_meth!(label, String);
 }
+
+/*
+ * TestbedEventRevokeSequesterServiceBuilder
+ */
+
+impl_event_builder!(RevokeSequesterService, [service_id: SequesterServiceID]);
 
 /*
  * TestbedEventNewUserBuilder
@@ -495,19 +489,15 @@ impl TestbedTemplateBuilder {
         let user: UserID = user
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param user"));
-        let (realm_id, realm_key) =
+        let realm_id =
             // TODO: there is still a check consistency there
             match super::utils::assert_user_exists_and_not_revoked(&self.events, &user) {
-                TestbedEvent::BootstrapOrganization(x) => (
-                    x.first_user_user_realm_id,
-                    x.first_user_user_realm_key.clone(),
-                ),
-                TestbedEvent::NewUser(x) => (x.user_realm_id, x.user_realm_key.clone()),
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_user_realm_id,
+                TestbedEvent::NewUser(x) => x.user_realm_id,
                 _ => unreachable!(),
             };
         let mut event = TestbedEventNewRealm::from_builder(self, user);
         event.realm_id = realm_id;
-        event.realm_key = realm_key;
         self.events.push(TestbedEvent::NewRealm(event));
         TestbedEventNewRealmBuilder { builder: self }
     }
@@ -516,55 +506,63 @@ impl TestbedTemplateBuilder {
 impl<'a> TestbedEventNewRealmBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
 
-    pub fn then_share_with(
-        self,
-        user: impl TryInto<UserID>,
-        role: Option<RealmRole>,
-    ) -> TestbedEventShareRealmBuilder<'a> {
+    pub fn then_do_initial_key_rotation(self) -> TestbedEventRotateKeyRealmBuilder<'a> {
         let realm = self.get_event().realm_id;
-        let event = TestbedEventShareRealm::from_builder(self.builder, realm, user, role);
-        self.builder.events.push(TestbedEvent::ShareRealm(event));
-        TestbedEventShareRealmBuilder {
-            builder: self.builder,
-        }
-    }
 
-    pub fn then_add_workspace_entry_to_user_manifest_vlob(
-        self,
-    ) -> TestbedEventCreateOrUpdateUserManifestVlobBuilder<'a> {
-        let (user, wksp_id, wksp_key, wksp_timestamp) = {
-            let realm_event = self.get_event();
-            (
-                realm_event.author.user_id().to_owned(),
-                realm_event.realm_id,
-                realm_event.realm_key.clone(),
-                realm_event.timestamp,
-            )
-        };
-
-        let mut update_user_manifest_event =
-            TestbedEventCreateOrUpdateUserManifestVlob::from_builder(self.builder, user);
-
-        let x = Arc::make_mut(&mut update_user_manifest_event.manifest);
-        x.workspaces.push(WorkspaceEntry::new(
-            wksp_id,
-            "wksp".parse().unwrap(),
-            wksp_key,
-            1,
-            wksp_timestamp,
-        ));
-
+        let event = TestbedEventRotateKeyRealm::from_builder(self.builder, realm);
         self.builder
             .events
-            .push(TestbedEvent::CreateOrUpdateUserManifestVlob(
-                update_user_manifest_event,
-            ));
+            .push(TestbedEvent::RotateKeyRealm(event));
 
-        TestbedEventCreateOrUpdateUserManifestVlobBuilder {
+        TestbedEventRotateKeyRealmBuilder {
             builder: self.builder,
         }
     }
 
+    /// Workspace realm must have done initial key rotation and naming before
+    /// being able to be shared.
+    pub fn then_do_initial_key_rotation_and_naming(
+        self,
+        name: impl TryInto<EntryName>,
+    ) -> TestbedEventRenameRealmBuilder<'a> {
+        let realm = self.get_event().realm_id;
+
+        let event = TestbedEventRotateKeyRealm::from_builder(self.builder, realm);
+        self.builder
+            .events
+            .push(TestbedEvent::RotateKeyRealm(event));
+
+        let event = TestbedEventRenameRealm::from_builder(self.builder, realm, name);
+        self.builder.events.push(TestbedEvent::RenameRealm(event));
+
+        TestbedEventRenameRealmBuilder {
+            builder: self.builder,
+        }
+    }
+
+    // pub fn then_share_with(
+    //     self,
+    //     user: impl TryInto<UserID>,
+    //     role: Option<RealmRole>,
+    // ) -> TestbedEventShareRealmBuilder<'a> {
+    //     let realm = self.get_event().realm_id;
+
+    //     // Must do key rotation before any sharing
+    //     let event = TestbedEventRotateKeyRealm::from_builder(self.builder, realm);
+    //     self.builder
+    //         .events
+    //         .push(TestbedEvent::RotateKeyRealm(event));
+
+    //     // Actual sharing
+    //     let event = TestbedEventShareRealm::from_builder(self.builder, realm, user, role);
+    //     self.builder.events.push(TestbedEvent::ShareRealm(event));
+
+    //     TestbedEventShareRealmBuilder {
+    //         builder: self.builder,
+    //     }
+    // }
+
+    /// Unlike workspace realm, user realm never do key rotation and naming.
     pub fn then_create_initial_user_manifest_vlob(
         self,
     ) -> TestbedEventCreateOrUpdateUserManifestVlobBuilder<'a> {
@@ -581,25 +579,25 @@ impl<'a> TestbedEventNewRealmBuilder<'a> {
         }
     }
 
-    pub fn then_create_initial_workspace_manifest_vlob(
-        self,
-    ) -> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
-        let device = self.get_event().author.clone();
-        let realm = self.get_event().realm_id;
-        let event = TestbedEventCreateOrUpdateWorkspaceManifestVlob::from_builder(
-            self.builder,
-            device,
-            realm,
-        );
-        assert_eq!(event.manifest.id, realm);
+    // pub fn then_create_initial_workspace_manifest_vlob(
+    //     self,
+    // ) -> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
+    //     let device = self.get_event().author.clone();
+    //     let realm = self.get_event().realm_id;
+    //     let event = TestbedEventCreateOrUpdateWorkspaceManifestVlob::from_builder(
+    //         self.builder,
+    //         device,
+    //         realm,
+    //     );
+    //     assert_eq!(event.manifest.id, realm);
 
-        self.builder
-            .events
-            .push(TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(event));
-        TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder {
-            builder: self.builder,
-        }
-    }
+    //     self.builder
+    //         .events
+    //         .push(TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(event));
+    //     TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder {
+    //         builder: self.builder,
+    //     }
+    // }
 }
 
 /*
@@ -613,7 +611,8 @@ impl_event_builder!(
 
 impl<'a> TestbedEventShareRealmBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
-    impl_customize_field_meth!(realm_entry_name, EntryName);
+    impl_customize_field_meth!(key_index, Option<IndexInt>);
+    impl_customize_field_meth!(custom_keys_bundle_access, Option<Bytes>);
 
     pub fn then_also_share_with(
         self,
@@ -630,23 +629,72 @@ impl<'a> TestbedEventShareRealmBuilder<'a> {
 }
 
 /*
- * TestbedEventStartRealmReencryptionBuilder
+ * TestbedEventRenameRealmBuilder
  */
 
-impl_event_builder!(StartRealmReencryption, [realm: VlobID]);
+impl_event_builder!(
+    RenameRealm,
+    [
+        realm: VlobID,
+        name: EntryName,
+    ]
+);
 
-impl<'a> TestbedEventStartRealmReencryptionBuilder<'a> {
+impl<'a> TestbedEventRenameRealmBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
-    impl_customize_field_meth!(entry_name, EntryName);
+    impl_customize_field_meth!(key_index, IndexInt);
+    impl_customize_field_meth!(key, SecretKey);
 }
 
 /*
- * TestbedEventFinishRealmReencryptionBuilder
+ * TestbedEventRotateKeyRealmBuilder
  */
 
-impl_event_builder!(FinishRealmReencryption, [realm: VlobID]);
+impl_event_builder!(
+    RotateKeyRealm,
+    [
+        realm: VlobID,
+    ]
+);
 
-impl<'a> TestbedEventFinishRealmReencryptionBuilder<'a> {
+impl<'a> TestbedEventRotateKeyRealmBuilder<'a> {
+    impl_customize_field_meth!(author, DeviceID);
+    impl_customize_field_meth!(key_index, IndexInt);
+    impl_customize_field_meth!(hash_algorithm, HashAlgorithm);
+    impl_customize_field_meth!(encryption_algorithm, SecretKeyAlgorithm);
+    impl_customize_field_meth!(custom_key_canary, Option<Vec<u8>>);
+}
+
+/*
+ * TestbedEventArchiveRealmBuilder
+ */
+
+impl_event_builder!(
+    ArchiveRealm,
+    [
+        realm: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ]
+);
+
+impl<'a> TestbedEventArchiveRealmBuilder<'a> {
+    impl_customize_field_meth!(author, DeviceID);
+}
+
+/*
+ * TestbedEventNewShamirRecoveryBuilder
+ */
+
+impl_event_builder!(
+    NewShamirRecovery,
+    [
+        user: UserID,
+        threshold: NonZeroU64,
+        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    ]
+);
+
+impl<'a> TestbedEventNewShamirRecoveryBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
 }
 
@@ -664,6 +712,11 @@ impl_event_builder!(
     CreateOrUpdateWorkspaceManifestVlob,
     [device: DeviceID, realm: VlobID]
 );
+
+impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
+    impl_customize_field_meth!(key_index, IndexInt);
+    impl_customize_field_meth!(key, SecretKey);
+}
 
 impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
     pub fn customize_children(
@@ -698,6 +751,11 @@ impl_event_builder!(
     [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
 );
 
+impl<'a> TestbedEventCreateOrUpdateFileManifestVlobBuilder<'a> {
+    impl_customize_field_meth!(key_index, IndexInt);
+    impl_customize_field_meth!(key, SecretKey);
+}
+
 /*
  * TestbedEventCreateOrUpdateFolderManifestVlobBuilder
  */
@@ -729,6 +787,11 @@ impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
             }
         })
     }
+}
+
+impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
+    impl_customize_field_meth!(key_index, IndexInt);
+    impl_customize_field_meth!(key, SecretKey);
 }
 
 /*
@@ -792,6 +855,159 @@ impl_event_builder!(UserStorageFetchRealmCheckpoint, [device: DeviceID]);
  */
 
 impl_event_builder!(UserStorageLocalUpdate, [device: DeviceID]);
+
+impl<'a> TestbedEventUserStorageLocalUpdateBuilder<'a> {
+    /// If the `workspace_id` is already present, replace its name by a placeholder
+    /// (i.e. `role` field is left as-is).
+    ///
+    /// If the `workspace_id` is not present, add it as a newly created workspace
+    /// (i.e. `role` & `name` are both placeholder).
+    pub fn add_or_update_placeholder(self, workspace_id: VlobID, name: EntryName) -> Self {
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            let found = manifest
+                .local_workspaces
+                .iter_mut()
+                .find(|e| e.id == workspace_id);
+            match found {
+                Some(entry) => {
+                    entry.name = name;
+                    entry.name_origin = CertificateBasedInfoOrigin::Placeholder;
+                }
+                None => {
+                    manifest
+                        .local_workspaces
+                        .push(LocalUserManifestWorkspaceEntry {
+                            id: workspace_id,
+                            name,
+                            name_origin: CertificateBasedInfoOrigin::Placeholder,
+                            role: RealmRole::Owner,
+                            role_origin: CertificateBasedInfoOrigin::Placeholder,
+                        });
+                }
+            }
+        })
+    }
+
+    pub fn update_local_workspaces_with_fetched_certificates(self) -> Self {
+        let device = &self.get_event().device;
+
+        let user_realm_id = self
+            .builder
+            .events
+            .iter()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(e)
+                    if e.first_user_device_id.user_id() == device.user_id() =>
+                {
+                    Some(e.first_user_user_realm_id)
+                }
+                TestbedEvent::NewUser(e) if e.device_id.user_id() == device.user_id() => {
+                    Some(e.user_realm_id)
+                }
+                _ => None,
+            })
+            .expect("user must exist");
+
+        // First retrieve the fetched certificates if any
+        let fetched_up_to = self
+            .builder
+            .events
+            .iter()
+            .enumerate()
+            .rev()
+            .find_map(|(index, e)| match e {
+                TestbedEvent::CertificatesStorageFetchCertificates(event)
+                    if event.device == *device =>
+                {
+                    Some(index)
+                }
+                _ => None,
+            });
+        let fetched_certifs = match fetched_up_to {
+            None => return self,
+            Some(index) => self.builder.events.iter().take(index),
+        };
+
+        let mut local_workspaces: Vec<LocalUserManifestWorkspaceEntry> = vec![];
+        let placeholder_name: EntryName = "<placeholder>".parse().unwrap();
+        let mut rename_events = vec![];
+        for event in fetched_certifs {
+            match event {
+                TestbedEvent::NewRealm(event) if event.author.user_id() == device.user_id() => {
+                    // Ignore user realm as it is not a proper workspace
+                    if event.realm_id == user_realm_id {
+                        continue;
+                    }
+                    // Sanity check: new realm event must be the first about any given realm !
+                    assert!(!local_workspaces.iter().any(|w| w.id == event.realm_id));
+                    local_workspaces.push(LocalUserManifestWorkspaceEntry {
+                        id: event.realm_id,
+                        name: placeholder_name.clone(),
+                        name_origin: CertificateBasedInfoOrigin::Placeholder,
+                        role: RealmRole::Owner,
+                        role_origin: CertificateBasedInfoOrigin::Certificate {
+                            timestamp: event.timestamp,
+                        },
+                    });
+                }
+                TestbedEvent::ShareRealm(event) if event.user == *device.user_id() => {
+                    match event.role {
+                        None => {
+                            let found = local_workspaces
+                                .iter()
+                                .position(|entry| entry.id == event.realm);
+                            found.map(|index| local_workspaces.swap_remove(index));
+                        }
+                        Some(role) => {
+                            let found = local_workspaces.iter_mut().find(|w| w.id == event.realm);
+                            match found {
+                                None => {
+                                    local_workspaces.push(LocalUserManifestWorkspaceEntry {
+                                        id: event.realm,
+                                        name: placeholder_name.clone(),
+                                        name_origin: CertificateBasedInfoOrigin::Placeholder,
+                                        role,
+                                        role_origin: CertificateBasedInfoOrigin::Certificate {
+                                            timestamp: event.timestamp,
+                                        },
+                                    });
+                                }
+                                Some(entry) => {
+                                    entry.role = role;
+                                    entry.role_origin = CertificateBasedInfoOrigin::Certificate {
+                                        timestamp: event.timestamp,
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+                TestbedEvent::RenameRealm(event) => {
+                    rename_events.push(event);
+                }
+                _ => (),
+            }
+        }
+        // Cannot set the workspace name in the previous loop as this would hide
+        // the rename events that occured before the workspace was shared with us !
+        for event in rename_events {
+            let found: Option<&mut LocalUserManifestWorkspaceEntry> =
+                local_workspaces.iter_mut().find(|w| w.id == event.realm);
+            if let Some(entry) = found {
+                entry.name = event.name.clone();
+                entry.name_origin = CertificateBasedInfoOrigin::Certificate {
+                    timestamp: event.timestamp,
+                };
+            }
+        }
+
+        self.customize(|e| {
+            let manifest = Arc::make_mut(&mut e.local_manifest);
+            manifest.local_workspaces = local_workspaces;
+        })
+    }
+}
 
 /*
  * TestbedEventWorkspaceCacheStorageFetchBlockBuilder

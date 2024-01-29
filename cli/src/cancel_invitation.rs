@@ -4,7 +4,7 @@ use clap::Args;
 use std::path::PathBuf;
 
 use libparsec::{
-    authenticated_cmds::latest::invite_delete::{self, InvitationDeletedReason, InviteDeleteRep},
+    authenticated_cmds::latest::invite_cancel::{self, InviteCancelRep},
     get_default_config_dir, InvitationToken,
 };
 
@@ -33,15 +33,10 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
     load_cmds_and_run(config_dir, device, |cmds, _| async move {
         let handle = start_spinner("Deleting invitation");
 
-        let rep = cmds
-            .send(invite_delete::Req {
-                token,
-                reason: InvitationDeletedReason::Cancelled,
-            })
-            .await?;
+        let rep = cmds.send(invite_cancel::Req { token }).await?;
 
         match rep {
-            InviteDeleteRep::Ok => (),
+            InviteCancelRep::Ok => (),
             rep => {
                 return Err(anyhow::anyhow!(
                     "Server error while cancelling invitation: {rep:?}"

@@ -1,0 +1,124 @@
+[
+    {
+        "major_versions": [4],
+        "req": {
+            "cmd": "realm_rotate_key",
+            "fields": [
+                {
+                    // Signed `RealmKeyRotationCertificate` certificate,
+                    // contains realm_id & key_index
+                    "name": "realm_key_rotation_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // Per-participant (including self) signed&encrypted
+                    // `RealmKeysBundleAccess` document, contains the key to
+                    // decrypt `keys_bundle` field
+                    "name": "per_participant_keys_bundle_access",
+                    "type": "Map<UserID, Bytes>"
+                },
+                {
+                    // Signed&encrypted `RealmKeysBundle` document, contains all the
+                    // keys ever in use for this realm
+                    "name": "keys_bundle",
+                    "type": "Bytes"
+                },
+                {
+                    // If set to `true`, a `legacy_reencrypted_realm` error will be
+                    // returned if the realm has been created in Parsec < v3.0.
+                    //
+                    // This is required for the initial key rotation: realms created
+                    // in Parsec < v3.0 have they data encrypted with a single key
+                    // that may be replaced by a reencryption mechanism.
+                    // Hence the initial key rotation must use the key actually used
+                    // to encrypt the data.
+                    //
+                    // So with this flag the client can always start with a regular
+                    // key rotation (i.e. with a randomly generated key), then fallback
+                    // to searching the key in the user manifest history if the
+                    // realm is actually a legacy one.
+                    //
+                    // Note the fact the server can lie to the client about which key
+                    // should be use is not a security issue: the server never controls
+                    // the key and at most the realm data will end-up unreadable (which
+                    // the server can already achieved by providing dummy data when the
+                    // client fetch a vlob/blob).
+                    "name": "never_legacy_reencrypted_or_fail",
+                    "type": "Boolean"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // If the user doesn't have OWNER role in the realm
+                "status": "author_not_allowed"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                "status": "legacy_reencrypted_realm",
+                "fields": [
+                    {
+                        "name": "encryption_revision",
+                        "type": "Index"
+                    }
+                ]
+
+            },
+            {
+                // If the `key_index` in the certificate is not currently the realm's last one plus one
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "participant_mismatch"
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]

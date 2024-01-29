@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -18,13 +17,13 @@
                 "status": "ok"
             },
             {
-                "status": "not_found"
+                "status": "invitation_not_found"
             },
             {
-                "status": "already_deleted"
+                "status": "invitation_deleted"
             },
             {
-                "status": "invalid_state"
+                "status": "enrollment_wrong_state"
             }
         ]
     }

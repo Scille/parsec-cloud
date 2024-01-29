@@ -1,10 +1,8 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
-        "introduced_in": "3.2",
         "req": {
             "cmd": "pki_enrollment_accept",
             "fields": [
@@ -50,81 +48,34 @@
                 "status": "ok"
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_payload_data"
             },
             {
-                "status": "invalid_payload_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_not_found"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "enrollment_no_longer_available"
             },
             {
-                "status": "invalid_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "not_found",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "no_longer_available",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "already_exists",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             },
             {
                 "status": "active_users_limit_reached"
             },
             {
+                "status": "user_already_exists"
+            },
+            {
+                "status": "human_handle_already_taken"
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
-                "introduced_in": "4.0",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -134,7 +85,7 @@
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -144,10 +95,9 @@
                 ]
             },
             {
-                // Returned if another certificate in the server has a creation date
+                // Returned if another certificate in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
-                "introduced_in": "4.0",
                 "fields": [
                     {
                         "name": "strictly_greater_than",

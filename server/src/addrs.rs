@@ -8,7 +8,10 @@ use pyo3::{
 };
 use std::str::FromStr;
 
-use crate::{BytesWrapper, InvitationToken, InvitationType, OrganizationID, VerifyKey, VlobID};
+use crate::{
+    BootstrapToken, BytesWrapper, InvitationToken, InvitationType, OrganizationID, VerifyKey,
+    VlobID,
+};
 
 crate::binding_utils::gen_py_wrapper_class!(
     BackendAddr,
@@ -282,7 +285,7 @@ impl BackendOrganizationBootstrapAddr {
     #[pyo3(signature = (organization_id, token, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
-        token: Option<String>,
+        token: Option<BootstrapToken>,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
@@ -308,7 +311,7 @@ impl BackendOrganizationBootstrapAddr {
             libparsec_types::BackendOrganizationBootstrapAddr::new(
                 addr.0,
                 organization_id.0,
-                token,
+                token.map(|t| t.0),
             ),
         ))
     }
@@ -343,11 +346,8 @@ impl BackendOrganizationBootstrapAddr {
     }
 
     #[getter]
-    fn token(&self) -> &str {
-        match self.0.token() {
-            Some(token) => token,
-            None => "",
-        }
+    fn token(&self) -> Option<BootstrapToken> {
+        self.0.token().map(|token| (*token).into())
     }
 
     fn to_url(&self) -> String {
@@ -399,12 +399,12 @@ impl BackendOrganizationBootstrapAddr {
         _cls: &PyType,
         backend_addr: BackendAddr,
         organization_id: OrganizationID,
-        token: Option<String>,
+        token: Option<BootstrapToken>,
     ) -> Self {
         Self(libparsec_types::BackendOrganizationBootstrapAddr::new(
             backend_addr.0,
             organization_id.0,
-            token,
+            token.map(|t| t.0),
         ))
     }
 }

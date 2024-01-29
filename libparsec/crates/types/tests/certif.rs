@@ -4,6 +4,8 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
+use std::collections::HashMap;
+
 use libparsec_tests_lite::prelude::*;
 
 use libparsec_types::fixtures::{alice, bob, timestamp, Device};
@@ -106,6 +108,111 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
             " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
             " user_id: UserID(\"bob\"),",
             " role: Some(Owner)",
+            " }",
+        )
+    );
+
+    let realm_name = RealmNameCertificate {
+        author: alice.device_id.clone(),
+        timestamp,
+        realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
+        key_index: 42,
+        encrypted_name: b"012345".to_vec(),
+    };
+    p_assert_eq!(
+        format!("{:?}", realm_name),
+        concat!(
+            "RealmNameCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
+            " key_index: 42,",
+            " encrypted_name: [48, 49, 50, 51, 52, 53]",
+            " }",
+        )
+    );
+
+    let realm_key_rotation = RealmKeyRotationCertificate {
+        author: alice.device_id.clone(),
+        timestamp,
+        realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
+        encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+        hash_algorithm: HashAlgorithm::Sha256,
+        key_index: 42,
+        key_canary: b"012345".to_vec(),
+    };
+    p_assert_eq!(
+        format!("{:?}", realm_key_rotation),
+        concat!(
+            "RealmKeyRotationCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
+            " key_index: 42,",
+            " encryption_algorithm: Xsalsa20Poly1305,",
+            " hash_algorithm: Sha256,",
+            " key_canary: [48, 49, 50, 51, 52, 53]",
+            " }",
+        )
+    );
+
+    let realm_archiving_certificate = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp,
+        realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
+        configuration: RealmArchivingConfiguration::DeletionPlanned {
+            deletion_date: timestamp,
+        },
+    };
+    p_assert_eq!(
+        format!("{:?}", realm_archiving_certificate),
+        concat!(
+            "RealmArchivingCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
+            " configuration: DeletionPlanned { deletion_date: DateTime(\"2020-01-01T00:00:00Z\") }",
+            " }",
+        )
+    );
+
+    let shamir_recovery_brief_certificate = ShamirRecoveryBriefCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        threshold: 3.try_into().unwrap(),
+        per_recipient_shares: HashMap::from([
+            ((bob.user_id().to_owned()), 2.try_into().unwrap()),
+            ("carl".parse().unwrap(), 1.try_into().unwrap()),
+            ("diana".parse().unwrap(), 1.try_into().unwrap()),
+        ]),
+    };
+    assert!(
+        format!("{:?}", shamir_recovery_brief_certificate).starts_with(
+            // Ignore `per_recipient_shares` as, as a HashMap, it output is not stable across runs
+            concat!(
+                "ShamirRecoveryBriefCertificate {",
+                " author: DeviceID(\"alice@dev1\"),",
+                " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+                " threshold: 3,",
+                " per_recipient_shares: "
+            )
+        )
+    );
+
+    let shamir_recovery_share_certificate = ShamirRecoveryShareCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        recipient: bob.user_id().to_owned(),
+        ciphered_share: b"abcd".to_vec(),
+    };
+    p_assert_eq!(
+        format!("{:?}", shamir_recovery_share_certificate),
+        concat!(
+            "ShamirRecoveryShareCertificate {",
+            " author: DeviceID(\"alice@dev1\"),",
+            " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " recipient: UserID(\"bob\"),",
+            " ciphered_share: [97, 98, 99, 100]",
             " }",
         )
     );
@@ -761,9 +868,9 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     //   type: "realm_role_certificate"
     //   author: "alice@dev1"
     //   timestamp: ext(1, 1638618643.208821)
-    //   realm_id: "4486e7cf02d747bd9126679ba58e0474",
+    //   realm_id: ext(2, b"4486e7cf02d747bd9126679ba58e0474")
     //   user_id: "bob",
-    //   role: OWNER,
+    //   role: "OWNER",
     let data = hex!(
         "842251fd775c0cb6cdf19b7d00195713361856192cdea53efdbc79b63d40b1437fad4e991c0d00"
         "a658fce3d32254ff613c49383fbbc0abd828ab211fc49d090b789c6b5b52525990baad28353127"
@@ -846,7 +953,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     //   type: "realm_role_certificate"
     //   author: "alice@dev1"
     //   timestamp: ext(1, 1638618643.208821)
-    //   realm_id: "4486e7cf02d747bd9126679ba58e0474",
+    //   realm_id: ext(2, b"4486e7cf02d747bd9126679ba58e0474")
     //   user_id: "bob",
     //   role: None,
     let data = hex!(
@@ -887,6 +994,593 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     )
     .unwrap();
     p_assert_eq!(certif2, expected);
+}
+
+#[rstest]
+fn serde_realm_archiving_certificate_available(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: {type:"AVAILABLE"}
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+        "5ed2a9a35096161dd741299427e56d5bf56de9a54cfbb6b0e754de9f2cfc699cf25bb92686"
+        "fe38f1e2ad5a14130852d51a1ee4b74aaaa6c90e914a0011a2e000789c0181007eff85a474"
+        "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+        "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+        "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6e81"
+        "a474797065a9415641494c41424c4539583722"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::Available,
+    };
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = RealmArchivingCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        RealmArchivingCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        RealmArchivingCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_realm_archiving_certificate_archived(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: {type:"ARCHIVED"}
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+        "ca7aaea973705fae5737d382667e6ae535963d470bb6a1e1e073999e5a2ad35d2bb68b1181"
+        "f821e6e0f462062ce9c48bb7e8e3c76ff880ea6cf6afaf0ac13306789c0180007fff85a474"
+        "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+        "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+        "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6e81"
+        "a474797065a84152434849564544024936e6"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::Archived,
+    };
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = RealmArchivingCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        RealmArchivingCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        RealmArchivingCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.0-rc.4+dev)
+    // Content:
+    //   type: "realm_archiving_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   configuration: {type:"DELETION_PLANNED", deletion_date:ext(1, 1580428800.0)}
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //
+    let data = hex!(
+        "ff3f4ed5765c70230f55bfce6c051f00be174cf8bd36b57224ca048c67d063a3f9357315c9"
+        "993d869b79f713325535c8dbe9a341198205af21dad8056489a200789c01a0005fff85a474"
+        "797065bb7265616c6d5f617263686976696e675f6365727469666963617465a6617574686f"
+        "72aa616c6963654064657631a974696d657374616d70d70141d782f840000000a87265616c"
+        "6d5f6964d8024486e7cf02d747bd9126679ba58e0474ad636f6e66696775726174696f6e82"
+        "a474797065b044454c4554494f4e5f504c414e4e4544ad64656c6574696f6e5f64617465d7"
+        "0141d78cdb80000000ab704333"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = RealmArchivingCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        configuration: RealmArchivingConfiguration::DeletionPlanned {
+            deletion_date: "2020-01-31T00:00:00Z".parse().unwrap(),
+        },
+    };
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = RealmArchivingCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmArchivingCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        RealmArchivingCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        RealmArchivingCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_realm_name_certificate(alice: &Device) {
+    // Generated from Rust implementation (Parsec v3.0.x)
+    // Content:
+    //   type: "realm_name_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //   key_index: 42
+    //   encrypted_name: b"12345"
+    let data = hex!(
+        "39ff6b6a3b84921598adc04b9a45cfea198ceb2820740ceab3d6f10172905f530c086b5032"
+        "dfbab0046927917d43a1b5027b9e287ef8e5525fdefcf02851e801789c017f0080ff86a474"
+        "797065b67265616c6d5f6e616d655f6365727469666963617465a6617574686f72aa616c69"
+        "63654064657631a974696d657374616d70d70141d86ad584cd5d53a87265616c6d5f6964d8"
+        "024486e7cf02d747bd9126679ba58e0474a96b65795f696e6465782aae656e637279707465"
+        "645f6e616d65c405313233343524f3372c"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = RealmNameCertificate {
+        author: alice.device_id.to_owned(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        key_index: 42,
+        encrypted_name: b"12345".to_vec(),
+    };
+
+    let unsecure_certif = RealmNameCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmNameCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif =
+        RealmNameCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
+            .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 =
+        RealmNameCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id, None)
+            .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        RealmNameCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        RealmNameCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_realm_key_rotation_certificate(alice: &Device) {
+    // Generated from Rust implementation (Parsec v3.0.x)
+    // Content:
+    //   type: "realm_name_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   realm_id: ext(2, hex!("4486e7cf02d747bd9126679ba58e0474"))
+    //   key_index: 42
+    //   encryption_algorithm: "XSALSA20_POLY1305"
+    //   hash_algorithm: "SHA256"
+    //   encrypted_name: b"12345"
+    let data = hex!(
+        "876755790e8e5b0a21808df04ba92eab8c8a72ad0f37f4c9a670020ca69411f9f1de0bf058"
+        "47a7c40c522ddd1be6652f1caac7ab0fa29498782b69fec7e3c10b789c45cdbf0ec1501480"
+        "f1105ec560d252b326120609491706694e6e0fbdf45f6e0fd15dc424315b69b483446265b2"
+        "8a49da37f01a5206fb97dfb7de53e0e14d2058b63ec540172e0171d7d1190ae223ce803084"
+        "1999ae88c1e20c1b06cea588b88d3e81ed2539359dbc968fa176fc21dc48f3cdd5fb994f5a"
+        "d76d69bc3b6c0a146532770c5c942fe8301178df055863577032ed735f533b9a2a57f45eb7"
+        "3390aa15e564826ffe83506babb2528f3387810322b81725b95a533e97c65008"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = RealmKeyRotationCertificate {
+        author: alice.device_id.to_owned(),
+        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+        realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
+        key_index: 42,
+        encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+        hash_algorithm: HashAlgorithm::Sha256,
+        key_canary: b"12345".to_vec(),
+    };
+
+    let unsecure_certif = RealmKeyRotationCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = RealmKeyRotationCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = RealmKeyRotationCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = RealmKeyRotationCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        RealmKeyRotationCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        RealmKeyRotationCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.1+dev)
+    // Content:
+    //   type: "shamir_recovery_share_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   ciphered_share: hex!("61626364")
+    //   recipient: "bob"
+    //
+    let data = hex!(
+        "59008168d41356fb52c874bc1524c9f06e1bc0f2624ab7f3e61d94a03094bfe63ada1a3cfa"
+        "abbfd861acd84a67a1a3a816567b1aecfdffc9697ad0bb007d9806789c25cc410ac2301046"
+        "e1085ec42378837a923099fc920163c2742c742b781245a80b4fe11d8a37e9b281eededb7c"
+        "8f978d15ff439f288b7a0597013afaf60acf5093b33019de74b354f44317617411c37132c9"
+        "e88d729d77a7f9be74ceb9a9015205577b8612bead131471e37e7b0a1c57ffa9303c"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = ShamirRecoveryShareCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        recipient: bob.user_id().to_owned(),
+        ciphered_share: b"abcd".to_vec(),
+    };
+
+    let unsecure_certif = ShamirRecoveryShareCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = ShamirRecoveryShareCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = ShamirRecoveryShareCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        Some(bob.user_id()),
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Test bad recipient
+
+    let err = ShamirRecoveryShareCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+        Some(alice.user_id()),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedUserID { .. });
+
+    // Test bad author
+
+    let err = ShamirRecoveryShareCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &bob.device_id,
+        Some(bob.user_id()),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedAuthor { .. });
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = ShamirRecoveryShareCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+        Some(bob.user_id()),
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        ShamirRecoveryShareCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        ShamirRecoveryShareCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+            None
+        ),
+        Err(DataError::Signature)
+    );
+}
+
+#[rstest]
+fn serde_shamir_recovery_brief_certificate(alice: &Device) {
+    // Generated from Rust implementation (Parsec v2.16.1+dev)
+    // Content:
+    //   type: "shamir_recovery_brief_certificate"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1577836800.0)
+    //   per_recipient_shares: {"bob": 2, "carl": 1, "diana": 1}
+    //   threshold: 3
+    //
+    let data = hex!(
+        "3ea699e81d7c26fe7ee8b128ab80dfb9c3f11886fa78f0aa24bcb24c4b1efad23a6d4f75fb"
+        "1376dbcc5954bb31af23dd7150e2a7a649410abc482d6e86088607789c1dcd410ac2301046"
+        "e1564fe211bc413d4998247fc940d284c958e856f12456a1aebd4bf1262e2dae1fbcef36eb"
+        "54f039d44089c5085c1e2193b1c2e88d8328f7ec48f1a4b3862c2f8aecd0798cc74539a12a"
+        "a5b2b6a7f5f2ed9aa65934086ac8d1efdf05ff1f17c6a06603b672bddb6c770fcf34503b3b"
+        "92d8fe0028ca35f9"
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    let expected = ShamirRecoveryBriefCertificate {
+        author: alice.device_id.clone(),
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        threshold: 3.try_into().unwrap(),
+        per_recipient_shares: HashMap::from([
+            ("bob".parse().unwrap(), 2.try_into().unwrap()),
+            ("carl".parse().unwrap(), 1.try_into().unwrap()),
+            ("diana".parse().unwrap(), 1.try_into().unwrap()),
+        ]),
+    };
+
+    let unsecure_certif = ShamirRecoveryBriefCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = ShamirRecoveryBriefCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = ShamirRecoveryBriefCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &alice.device_id,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Test bad author
+
+    let err = ShamirRecoveryBriefCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        &"dummy@dummy".parse().unwrap(),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedAuthor { .. });
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = ShamirRecoveryBriefCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        &alice.device_id,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            &alice.device_id,
+        ),
+        Err(DataError::Signature)
+    );
 }
 
 #[rstest]
@@ -1012,7 +1706,9 @@ fn serde_sequester_service_certificate() {
 
     // Test invalid data
     p_assert_matches!(
-        SequesterServiceCertificate::unsecure_load(b"dummy".to_vec().into()),
-        Err(DataError::Signature)
+        SequesterServiceCertificate::load(b"dummy"),
+        Err(DataError::Compression)
     );
 }
+
+// TODO: check sequester service certificate signed with actual DER key

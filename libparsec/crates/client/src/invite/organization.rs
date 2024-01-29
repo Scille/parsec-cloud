@@ -11,12 +11,14 @@ use crate::{ClientConfig, EventBus, EventTooMuchDriftWithServerClock};
 pub enum BootstrapOrganizationError {
     #[error("Cannot reach the server")]
     Offline,
+    #[error("Organization has expired")]
+    OrganizationExpired,
     #[error("Invalid bootstrap token")]
     InvalidToken,
     #[error("Bootstrap token already used")]
     AlreadyUsedToken,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
-    BadTimestamp {
+    TimestampOutOfBallpark {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: f64,
@@ -30,6 +32,7 @@ impl From<ConnectionError> for BootstrapOrganizationError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
+            ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
             err => Self::Internal(err.into()),
         }
     }
@@ -47,7 +50,7 @@ pub async fn bootstrap_organization(
 
     let root_signing_key = SigningKey::generate();
     let root_verify_key = root_signing_key.verify_key();
-    let bootstrap_token = addr.token().unwrap_or("").to_owned();
+    let bootstrap_token = addr.token().cloned();
     let organization_id = addr.organization_id().clone();
 
     let organization_addr =
@@ -138,31 +141,30 @@ pub async fn bootstrap_organization(
             config,
             event_bus,
         }),
-        Rep::AlreadyBootstrapped => Err(BootstrapOrganizationError::AlreadyUsedToken),
-        Rep::NotFound => Err(BootstrapOrganizationError::InvalidToken),
-        Rep::BadTimestamp {
-            backend_timestamp,
-            client_timestamp,
+        Rep::OrganizationAlreadyBootstrapped => Err(BootstrapOrganizationError::AlreadyUsedToken),
+        Rep::InvalidBootstrapToken => Err(BootstrapOrganizationError::InvalidToken),
+        Rep::TimestampOutOfBallpark {
             ballpark_client_early_offset,
             ballpark_client_late_offset,
-            ..
+            client_timestamp,
+            server_timestamp,
         } => {
             let event = EventTooMuchDriftWithServerClock {
-                backend_timestamp,
+                server_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
                 client_timestamp,
             };
             event_bus.send(&event);
 
-            Err(BootstrapOrganizationError::BadTimestamp {
-                server_timestamp: backend_timestamp,
+            Err(BootstrapOrganizationError::TimestampOutOfBallpark {
+                server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
             })
         }
-        rep @ Rep::InvalidCertification { .. } | rep @ Rep::InvalidData { .. } => {
+        rep @ Rep::InvalidCertificate { .. } => {
             // TODO: log error
             Err(anyhow::anyhow!(
                 "Unexpected server response: {:?} (we sent invalid data ?)",

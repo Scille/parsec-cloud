@@ -40,11 +40,12 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
           id: result.value[i].id,
           name: result.value[i].name,
           selfCurrentRole: result.value[i].selfCurrentRole,
+          isStarted: result.value[i].isStarted,
+          isBootstrapped: result.value[i].isBootstrapped,
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
           availableOffline: false,
-          isStarted: false,
         };
         if (sharingResult.ok) {
           info.sharing = sharingResult.value;
@@ -65,6 +66,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         lastUpdated: DateTime.now().minus(2000),
         availableOffline: false,
         isStarted: false,
+        isBootstrapped: false,
         sharing: [],
       },
       {
@@ -75,6 +77,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         lastUpdated: DateTime.now(),
         availableOffline: false,
         isStarted: false,
+        isBootstrapped: true,
         sharing: [],
       },
     ];

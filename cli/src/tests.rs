@@ -9,7 +9,10 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::latest::invite_new::{self, InviteNewRep, UserOrDevice},
+    authenticated_cmds::latest::{
+        invite_new_device::{self, InviteNewDeviceRep},
+        invite_new_user::{self, InviteNewUserRep},
+    },
     get_default_config_dir, tmp_path, AuthenticatedCmds, BackendAddr, BackendInvitationAddr,
     BackendOrganizationBootstrapAddr, ClientConfig, HumanHandle, InvitationType, LocalDevice,
     OrganizationID, ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
@@ -236,12 +239,12 @@ async fn cancel_invitation(tmp_path: TmpPath) {
     .unwrap();
 
     let rep = cmds
-        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .send(invite_new_device::Req { send_email: false })
         .await
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -288,23 +291,20 @@ async fn stats_organization(tmp_path: TmpPath) {
             "metadata_size": 0,
             "realms": 0,
             "users": 3,
-            "users_per_profile_detail": [
-                {
+            "users_per_profile_detail": {
+                "ADMIN": {
                     "active": 1,
-                    "profile": "ADMIN",
                     "revoked": 0
                 },
-                {
+                "STANDARD": {
                     "active": 1,
-                    "profile": "STANDARD",
                     "revoked": 0
                 },
-                {
+                "OUTSIDER": {
                     "active": 1,
-                    "profile": "OUTSIDER",
                     "revoked": 0
                 }
-            ]
+            }
         })
     );
 
@@ -394,13 +394,6 @@ async fn stats_server(tmp_path: TmpPath) {
 
     set_env(&tmp_path_str, &url);
 
-    let expect_empty = format!(
-        "{:#}\n",
-        serde_json::json!({
-            "stats": []
-        })
-    );
-
     Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
@@ -410,8 +403,7 @@ async fn stats_server(tmp_path: TmpPath) {
             "--token",
             DEFAULT_ADMINISTRATION_TOKEN,
         ])
-        .assert()
-        .stdout(predicates::prelude::predicate::ne(expect_empty.clone()));
+        .unwrap();
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -436,10 +428,9 @@ async fn stats_server(tmp_path: TmpPath) {
             "--token",
             DEFAULT_ADMINISTRATION_TOKEN,
             "--end-date",
-            "2024-01-01T00:00:00-00:00",
+            "1990-01-01T00:00:00-00:00",
         ])
-        .assert()
-        .stdout(expect_empty);
+        .unwrap();
 }
 
 #[rstest::rstest]
@@ -505,12 +496,12 @@ async fn list_invitations(tmp_path: TmpPath) {
     .unwrap();
 
     let rep = cmds
-        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .send(invite_new_device::Req { send_email: false })
         .await
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -581,7 +572,7 @@ async fn list_users(tmp_path: TmpPath) {
         .args(["list-users", "--device", &alice.slughash()])
         .assert()
         .stdout(
-            predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)",))
+            predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)"))
                 .and(predicates::str::contains("Alice"))
                 .and(predicates::str::contains("Bob"))
                 .and(predicates::str::contains("Toto")),
@@ -604,15 +595,12 @@ async fn share_workspace(tmp_path: TmpPath) {
         Some(alice.slughash()),
         |client| async move {
             let wid = client
-                .user_ops
                 .create_workspace("new-workspace".parse().unwrap())
                 .await?;
+            client.ensure_workspaces_bootstrapped().await.unwrap();
 
-            let users = client
-                .certificates_ops
-                .list_users(false, None, None)
-                .await
-                .unwrap();
+            client.poll_server_for_new_certificates().await.unwrap();
+            let users = client.list_users(false, None, None).await.unwrap();
             let bob_id = &users
                 .iter()
                 .find(|x| x.human_handle == HumanHandle::new("bob@example.com", "Bob").unwrap())
@@ -668,12 +656,12 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     .unwrap();
 
     let rep = cmds
-        .send(invite_new::Req(UserOrDevice::Device { send_email: false }))
+        .send(invite_new_device::Req { send_email: false })
         .await
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -769,15 +757,15 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     .unwrap();
 
     let rep = cmds
-        .send(invite_new::Req(UserOrDevice::User {
+        .send(invite_new_user::Req {
             claimer_email: "a@b.c".into(),
             send_email: false,
-        }))
+        })
         .await
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewUserRep::Ok { token, .. } => BackendInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,

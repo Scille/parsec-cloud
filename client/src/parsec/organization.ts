@@ -41,6 +41,7 @@ export async function createOrganization(
       dataBaseDir: window.getDataBaseDir(),
       mountpointBaseDir: window.getMountpointBaseDir(),
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+      withMonitors: true,
     };
     const result = await libparsec.bootstrapOrganization(
       config,
@@ -51,7 +52,7 @@ export async function createOrganization(
       deviceLabel,
       null,
     );
-    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.BadTimestamp) {
+    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
       result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
       result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
     }

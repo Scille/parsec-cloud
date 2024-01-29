@@ -27,6 +27,7 @@ fooo
 Goku
 Kryza
 Leblond
+Minimalorg
 mailhog
 Malloryy
 Manraj

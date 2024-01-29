@@ -1,14 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
 from __future__ import annotations
 
 from parsec._version import __version__
+from parsec.asgi import app
+from parsec.backend import Backend, backend_factory
+from parsec.config import (
+    ActiveUsersLimit,
+    BackendConfig,
+    MockedBlockStoreConfig,
+    MockedEmailConfig,
+    RAID0BlockStoreConfig,
+    RAID1BlockStoreConfig,
+    RAID5BlockStoreConfig,
+    S3BlockStoreConfig,
+    SmtpEmailConfig,
+)
 
-# The parsec.utils module includes a bit of patching, let's make sure it is imported
-__import__("parsec.utils")
-
-try:
-    import parsec._parsec  # noqa
-except ImportError:
-    raise RuntimeError("Missing parsec lib, missing `maturin develop` ?")
-
-__all__ = ["__version__"]
+__all__ = (
+    "__version__",
+    "Backend",
+    "backend_factory",
+    "BackendConfig",
+    "S3BlockStoreConfig",
+    "RAID0BlockStoreConfig",
+    "RAID1BlockStoreConfig",
+    "RAID5BlockStoreConfig",
+    "MockedBlockStoreConfig",
+    "SmtpEmailConfig",
+    "MockedEmailConfig",
+    "ActiveUsersLimit",
+    "app",
+)

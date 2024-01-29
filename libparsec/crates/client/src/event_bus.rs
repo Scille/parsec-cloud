@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use paste::paste;
 use std::{
     marker::PhantomData,
@@ -8,8 +9,6 @@ use std::{
 
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
-
-use crate::certificates_ops::InvalidMessageError;
 
 macro_rules! impl_any_spied_event_type {
     ($([$event:ident, $event_struct: ident])*) => {
@@ -202,62 +201,81 @@ impl_events!(
     Online,
     MissedServerEvents,
     TooMuchDriftWithServerClock {
-        backend_timestamp: DateTime,
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
         ballpark_client_early_offset: Float,
         ballpark_client_late_offset: Float,
-        client_timestamp: DateTime,
     },
     ExpiredOrganization,
     RevokedUser,
     IncompatibleServer(IncompatibleServerReason),
-    // Events related to ops
-    InvalidMessage {
-        index: IndexInt,
-        sender: DeviceID,
-        reason: InvalidMessageError,
+    // TODO: two types of new certificates events:
+    //       - poll from scratch
+    //       - per-type event: rename, key rotation, share/unshare with self, shamir for self, etc.
+    // The CertifOps has received integrated new certificates from the server.
+    NewCertificates {
+        // The local certificates storage was empty, hence the server sent all certificates.
+        storage_initially_empty: bool,
+        // If a `*_new_since` field is `None`, that means either:
+        // - The local certificates storage was initially empty.
+        // - No new certificate have been obtained for this topic.
+        // If it is `Some`, the field contains the last timestamp of the topic prior
+        // to the integration of the new certificates.
+        common_new_since: Option<DateTime>,
+        sequester_new_since: Option<DateTime>,
+        shamir_recovery_new_since: Option<DateTime>,
+        realm_new_since: Vec<(VlobID, DateTime)>,
     },
+    // Events related to ops
     UserOpsSynced,
     UserOpsNeedSync,
-    UserOpsWorkspaceCreated {
+    WorkspaceLocallyCreated {
         name: EntryName,
-        id: VlobID,
+        realm_id: VlobID,
+    },
+    WorkspaceRenamed {
+        new_name: EntryName,
+        realm_id: VlobID,
     },
     WorkspaceOpsOutboundSyncNeeded {
         realm_id: VlobID,
         entry_id: VlobID,
     },
     // Events related to monitors
-    CertificatesMonitorCrashed(Arc<anyhow::Error>),
-    MessagesMonitorCrashed(Arc<anyhow::Error>),
-    InvalidCertificate(crate::certificates_ops::InvalidCertificateError),
-    UserSyncMonitorCrashed(Arc<anyhow::Error>),
-    WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
-    WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),
+    MonitorCrashed{
+        monitor: &'static str,
+        workspace_id: Option<VlobID>,
+        error: Arc<anyhow::Error>,
+    },
+    // CertificatesMonitorCrashed(Arc<anyhow::Error>),
+    InvalidCertificate(Box<crate::certif::InvalidCertificateError>),
+    // UserSyncMonitorCrashed(Arc<anyhow::Error>),
+    // WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
+    // WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // Re-publishing of `events_listen`
-    CertificatesUpdated { index: IndexInt },
-    MessageReceived { index: IndexInt },
+    ServerConfigChanged {
+        active_users_limit: ActiveUsersLimit,
+        user_profile_outsider_allowed: bool,
+    },
+    CertificatesUpdated { last_timestamps: PerTopicLastTimestamps },
     InviteStatusChanged {
         invitation_status: InvitationStatus,
-        token: InvitationToken
+        token: InvitationToken,
     },
-    RealmMaintenanceStarted {
-        encryption_revision: IndexInt,
-        realm_id: VlobID
-    },
-    RealmMaintenanceFinished {
-        encryption_revision: IndexInt,
-        realm_id: VlobID
-    },
-    RealmVlobsUpdated {
-        checkpoint: IndexInt,
+    RealmVlobUpdated {
+        author: DeviceID,
+        blob: Option<Bytes>,
+        last_common_certificate_timestamp: DateTime,
+        last_realm_certificate_timestamp: DateTime,
         realm_id: VlobID,
-        src_id: VlobID,
-        src_version: VersionInt
+        timestamp: DateTime,
+        version: VersionInt,
+        vlob_id: VlobID,
     },
     PkiEnrollmentUpdated,
 );
 
-pub trait Broadcastable: Send
+pub trait Broadcastable: std::fmt::Debug + Send
 where
     Self: Sized,
 {
@@ -380,6 +398,12 @@ mod spy {
     }
 
     impl EventBusSpyExpectContext {
+        pub fn list_not_acknowledged(&self) -> Vec<AnySpiedEvent> {
+            let guard = self.internal.lock().expect("Mutex is poisoned");
+            let not_acknowledged = &guard.events[self.acknowledged_offset..];
+            not_acknowledged.to_owned()
+        }
+
         /// Check and mark acknowledged the next event, panic if no
         /// new event are available.
         pub fn assert_next<E: Broadcastable>(&mut self, check: impl FnOnce(&E)) {
@@ -426,6 +450,19 @@ mod spy {
 
             // 2) Assert the new event is what we expect
             self.assert_next(check);
+        }
+
+        pub fn assert_no_events(&self) {
+            // If the events mutex is poisoned, that means a panic is already bubbling up
+            let guard = self.internal.lock().expect("Mutex is poisoned");
+            // Ensure all events have been acknowledged
+            let not_acknowledged = &guard.events[self.acknowledged_offset..];
+            if !not_acknowledged.is_empty() {
+                panic!(
+                    "Event spy expect context hasn't acknowledge all events: {:#?}",
+                    not_acknowledged
+                )
+            }
         }
     }
 

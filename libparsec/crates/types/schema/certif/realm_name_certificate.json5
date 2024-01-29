@@ -1,0 +1,29 @@
+{
+    // Introduced in Parsec v3.0 with APIv4
+    "introduced_in_revision": 300,
+    "label": "RealmNameCertificate",
+    "type": "realm_name_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "key_index",
+            "type": "Index"
+        },
+        {
+            // `EntryName` encrypted with the key
+            "name": "encrypted_name",
+            "type": "Bytes"
+        }
+    ]
+}

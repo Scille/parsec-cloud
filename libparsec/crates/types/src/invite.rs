@@ -34,7 +34,8 @@ pub enum InvitationType {
 pub enum InvitationStatus {
     Idle,
     Ready,
-    Deleted,
+    Finished,
+    Cancelled,
 }
 
 impl FromStr for InvitationType {

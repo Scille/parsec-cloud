@@ -35,5 +35,5 @@ POETRY_LIBPARSEC_BUILD_PROFILE=release \
 POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false \
 pip install ./server
 
-# Basic to see if the wheel look like it's well built.
-(cd / && /server/venv/bin/parsec --version)
+# Basic check to see if the wheel looks like it's well built.
+./venv/bin/parsec --version

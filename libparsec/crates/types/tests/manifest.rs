@@ -328,7 +328,7 @@ fn serde_workspace_manifest(alice: &Device) {
 }
 
 #[rstest]
-fn serde_user_manifest(alice: &Device) {
+fn serde_user_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
     //   type: "user_manifest"
@@ -385,31 +385,89 @@ fn serde_user_manifest(alice: &Device) {
         version: 42,
         created: now,
         updated: now,
-        last_processed_message: 3,
-        workspaces: vec![
-            WorkspaceEntry {
+        workspaces_legacy_initial_info: vec![
+            LegacyUserManifestWorkspaceEntry {
                 name: "wksp1".parse().unwrap(),
                 id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
                 key: SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 )),
                 encryption_revision: 2,
-                encrypted_on: now,
-                legacy_role_cache_timestamp: now,
-                legacy_role_cache_value: Some(RealmRole::Owner),
             },
-            WorkspaceEntry {
+            LegacyUserManifestWorkspaceEntry {
                 name: "wksp2".parse().unwrap(),
                 id: VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
                 key: SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 )),
                 encryption_revision: 1,
-                encrypted_on: now,
-                legacy_role_cache_timestamp: now,
-                legacy_role_cache_value: None,
             },
         ],
+        // User manifest's `last_processed_message` field is deprecated (and hence ignored)
+    };
+
+    let manifest = UserManifest::decrypt_verify_and_load(
+        &data,
+        &key,
+        &alice.verify_key(),
+        &alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap();
+
+    p_assert_eq!(manifest, expected);
+
+    // Also test serialization round trip
+    let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let manifest2 = UserManifest::decrypt_verify_and_load(
+        &data2,
+        &key,
+        &alice.verify_key(),
+        &alice.device_id,
+        now,
+        None,
+        None,
+    )
+    .unwrap();
+    p_assert_eq!(manifest2, expected);
+}
+
+#[rstest]
+fn serde_user_manifest(alice: &Device) {
+    // Generated from Rust implementation (Parsec v3.0.0-alpha)
+    // Content:
+    //   type: "user_manifest"
+    //   author: "alice@dev1"
+    //   timestamp: ext(1, 1638618643.208821)
+    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   version: 42
+    //   created: ext(1, 1638618643.208821)
+    //   updated: ext(1, 1638618643.208821)
+    let data = hex!(
+        "a7f9f9e4d8e30951e7977a4d142f7f6bd623f7590dff7da3059fcf851cb172f23f4eacf275"
+        "d78de986ee2cd64049c54cff626ad777f7928ab5a47f751db9f7896bf64c8b10e245e40e6f"
+        "847f52f503d4d0c9ad812642d5bbf71e2c7d80bc5159c191279b2f9e47a83bba7f85d8431d"
+        "77570a93de678d5a3268c76aaede7790945c653d487c958f689172c25c1f160c872dc30bb1"
+        "c4e63157b981d2698ddb5b8253c140e54e3028017d8bd461fcc6624a26e7daa6be4ef396cc"
+        "587f368a523bc585e3b606ddf72be6c7f8eaf12f6b2410d78359782a9b508148cd30fcada6"
+        "bd0f3f1cec49bd30afc6e1fa2a1fb3a0b8"
+    );
+    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+    let key = SecretKey::from(hex!(
+        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
+    ));
+
+    let expected = UserManifest {
+        author: alice.device_id.to_owned(),
+        timestamp: now,
+        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+        version: 42,
+        created: now,
+        updated: now,
+        workspaces_legacy_initial_info: vec![],
     };
 
     let manifest = UserManifest::decrypt_verify_and_load(

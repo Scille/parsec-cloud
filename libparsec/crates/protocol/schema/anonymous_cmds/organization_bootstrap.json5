@@ -1,15 +1,16 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
             "cmd": "organization_bootstrap",
             "fields": [
                 {
+                    // Set to `None` for spontaneous bootstrap (i.e. the organization
+                    // hasn't been created prior to the bootstrap)
                     "name": "bootstrap_token",
-                    "type": "String"
+                    "type": "RequiredOption<BootstrapToken>"
                 },
                 {
                     "name": "root_verify_key",
@@ -38,8 +39,7 @@
                 // be signed by the root key which has been destroyed after bootstrap
                 {
                     "name": "sequester_authority_certificate",
-                    "type": "RequiredOption<Bytes>",
-                    "introduced_in": "3.2"
+                    "type": "RequiredOption<Bytes>"
                 }
             ]
         },
@@ -48,30 +48,17 @@
                 "status": "ok"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_certificate"
             },
             {
-                "status": "invalid_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "organization_already_bootstrapped"
             },
             {
-                "status": "bad_timestamp",
+                "status": "invalid_bootstrap_token"
+            },
+            {
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
                     {
                         "name": "ballpark_client_early_offset",
                         "type": "Float"
@@ -81,7 +68,7 @@
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -89,12 +76,6 @@
                         "type": "DateTime"
                     }
                 ]
-            },
-            {
-                "status": "already_bootstrapped"
-            },
-            {
-                "status": "not_found"
             }
         ]
     }

@@ -15,8 +15,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, IndexInt, Regex, UserManifest, VlobID, WorkspaceEntry, WorkspaceManifest,
-    DEFAULT_BLOCK_SIZE,
+    FolderManifest, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest, DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -913,10 +912,21 @@ pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    pub last_processed_message: IndexInt,
-    pub workspaces: Vec<WorkspaceEntry>,
+    /// In Parsec < v3, `workspaces` field used to be synchronized and stored multiple
+    /// informations related to each workspace (workspace name, encryption key,
+    /// current self role).
+    /// However now all those informations are retrieved from certificates, so this
+    /// field is no longer synchronized (i.e. it is not present in the remote
+    /// `UserManifest`).
+    /// It is still in used though: it stores the name of each workspace, which is
+    /// needed to 1) keep this information between the local workspace creation and
+    /// the upload of it initial `RealmNameCertificate` and 2) to avoid having to
+    /// fetch from the server the workspace keys to decrypt the name from the
+    /// `RealmNameCertificate` (otherwise the workspace name wouldn't be available
+    /// while offline...)
+    pub local_workspaces: Vec<LocalUserManifestWorkspaceEntry>,
     // Speculative placeholders are created when we want to access the
-    // user manifest but didn't retrieve it from backend yet. This implies:
+    // user manifest but didn't retrieve it from server yet. This implies:
     // - non-placeholders cannot be speculative
     // - the only non-speculative placeholder is the placeholder initialized
     //   during the initial user claim (by opposition of subsequent device
@@ -928,20 +938,96 @@ pub struct LocalUserManifest {
     pub speculative: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "LocalUserManifestWorkspaceEntryData",
+    from = "LocalUserManifestWorkspaceEntryData"
+)]
+pub struct LocalUserManifestWorkspaceEntry {
+    pub id: VlobID,
+    pub name: EntryName,
+    pub name_origin: CertificateBasedInfoOrigin,
+    pub role: RealmRole,
+    pub role_origin: CertificateBasedInfoOrigin,
+}
+
+impl From<LocalUserManifestWorkspaceEntryData> for LocalUserManifestWorkspaceEntry {
+    fn from(data: LocalUserManifestWorkspaceEntryData) -> Self {
+        let name_origin = match data.name_origin {
+            libparsec_types::Maybe::Present(name_origin) => name_origin,
+            // Backward compatibility for Parsec < v3.0
+            // Back in those dark ages there was no realm name certificate, hence the
+            // name can be nothing but a placeholder !
+            libparsec_types::Maybe::Absent => CertificateBasedInfoOrigin::Placeholder,
+        };
+
+        // Handling of legacy `None` in role should have been taken care of in our
+        // caller (i.e. `LocalUserManifestData` -> `LocalUserManifest` converter)
+
+        let role = data.role.expect("Legacy no longer shared workspace entry");
+
+        let role_origin = match data.role_origin {
+            libparsec_types::Maybe::Present(role_origin) => role_origin,
+            // Backward compatibility for Parsec < v3.0
+            libparsec_types::Maybe::Absent => CertificateBasedInfoOrigin::Placeholder,
+        };
+
+        Self {
+            id: data.id,
+            name: data.name,
+            name_origin,
+            role,
+            role_origin,
+        }
+    }
+}
+impl From<LocalUserManifestWorkspaceEntry> for LocalUserManifestWorkspaceEntryData {
+    fn from(obj: LocalUserManifestWorkspaceEntry) -> Self {
+        Self {
+            id: obj.id,
+            name: obj.name,
+            name_origin: libparsec_types::Maybe::Present(obj.name_origin),
+            role: Some(obj.role),
+            role_origin: libparsec_types::Maybe::Present(obj.role_origin),
+        }
+    }
+}
+
 impl_local_manifest_dump_load!(LocalUserManifest);
 
 parsec_data!("schema/local_manifest/local_user_manifest.json5");
 
-impl_transparent_data_format_conversion!(
-    LocalUserManifest,
-    LocalUserManifestData,
-    base,
-    need_sync,
-    updated,
-    last_processed_message,
-    workspaces,
-    speculative
-);
+impl From<LocalUserManifestData> for LocalUserManifest {
+    fn from(data: LocalUserManifestData) -> Self {
+        Self {
+            base: data.base,
+            need_sync: data.need_sync,
+            updated: data.updated,
+            local_workspaces: data
+                .workspaces
+                .into_iter()
+                .filter_map(
+                    // Parsec < v3.0 backward compatibility: workspaces with `None` role
+                    // are not longer shared with us and hence must be ignored
+                    |e| e.role.map(|_| e.into()),
+                )
+                .collect(),
+            speculative: data.speculative.into(),
+        }
+    }
+}
+impl From<LocalUserManifest> for LocalUserManifestData {
+    fn from(obj: LocalUserManifest) -> Self {
+        Self {
+            ty: Default::default(),
+            base: obj.base,
+            need_sync: obj.need_sync,
+            updated: obj.updated,
+            workspaces: obj.local_workspaces.into_iter().map(|e| e.into()).collect(),
+            speculative: obj.speculative.into(),
+        }
+    }
+}
 
 impl LocalUserManifest {
     pub fn new(
@@ -958,50 +1044,20 @@ impl LocalUserManifest {
                 version: 0,
                 created: timestamp,
                 updated: timestamp,
-                last_processed_message: 0,
-                workspaces: vec![],
+                workspaces_legacy_initial_info: Vec::new(),
             },
             need_sync: true,
             updated: timestamp,
-            last_processed_message: 0,
-            workspaces: vec![],
+            local_workspaces: vec![],
             speculative,
         }
     }
 
-    pub fn evolve_workspaces_and_mark_updated(
-        &mut self,
-        workspace: WorkspaceEntry,
-        timestamp: DateTime,
-    ) {
-        self.need_sync = true;
-        self.updated = timestamp;
-        self.evolve_workspaces(workspace)
-    }
-
-    pub fn evolve_last_processed_message_and_mark_updated(
-        &mut self,
-        last_processed_message: IndexInt,
-        timestamp: DateTime,
-    ) {
-        self.need_sync = true;
-        self.updated = timestamp;
-        self.last_processed_message = last_processed_message;
-    }
-
-    pub fn evolve_workspaces(&mut self, workspace: WorkspaceEntry) {
-        for entry in self.workspaces.iter_mut() {
-            if entry.id == workspace.id {
-                *entry = workspace;
-                return;
-            }
-        }
-        // Entry not already present, add it
-        self.workspaces.push(workspace);
-    }
-
-    pub fn get_workspace_entry(&self, realm_id: VlobID) -> Option<&WorkspaceEntry> {
-        self.workspaces.iter().find(|w| w.id == realm_id)
+    pub fn get_local_workspace_entry(
+        &self,
+        realm_id: VlobID,
+    ) -> Option<&LocalUserManifestWorkspaceEntry> {
+        self.local_workspaces.iter().find(|w| w.id == realm_id)
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {
@@ -1011,8 +1067,8 @@ impl LocalUserManifest {
             base,
             need_sync: false,
             updated: remote.updated,
-            last_processed_message: remote.last_processed_message,
-            workspaces: remote.workspaces,
+            // `workspaces` field is deprecated on non-local user manifest
+            local_workspaces: vec![],
             speculative: false,
         }
     }
@@ -1025,8 +1081,7 @@ impl LocalUserManifest {
             version: self.base.version + 1,
             created: self.base.created,
             updated: self.updated,
-            last_processed_message: self.last_processed_message,
-            workspaces: self.workspaces.clone(),
+            workspaces_legacy_initial_info: self.base.workspaces_legacy_initial_info.clone(),
         }
     }
 

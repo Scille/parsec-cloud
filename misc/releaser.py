@@ -41,7 +41,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import misc.version_updater as version_updater
+import misc.version_updater as version_updater  # type: ignore (pyright struggles with this when run from server folder)
 
 PYTHON_EXECUTABLE_PATH = sys.executable
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
@@ -889,7 +889,7 @@ def cli(description: str) -> argparse.Namespace:
 
     acknowledge = subparsers.add_parser(
         "acknowledge",
-        help="Acknowledge a release",
+        help="Acknowledge a release (i.e. merge it back to the main branch)",
         description=acknowledge_main.__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )

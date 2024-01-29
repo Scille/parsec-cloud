@@ -179,7 +179,7 @@
         },
         "errors": {
             "title": "Impossible de créer l'organisation",
-            "badTimestamp": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
+            "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
             "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason})."
@@ -1008,7 +1008,8 @@
             "status": {
                 "ready": "Prête",
                 "idle": "Inactive",
-                "deleted": "Supprimée"
+                "finished": "Terminée",
+                "cancelled": "Annulée"
             }
         },
         "CreateUserInvitationModal": {

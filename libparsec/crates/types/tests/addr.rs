@@ -324,47 +324,18 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
     }
 }
 
-// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
-#[test]
-fn bootstrap_addr_unicode_token() {
+#[rstest]
+fn bootstrap_addr_bad_token(#[values("", "not_an_uuid", "42", "康熙帝")] bad_token: &str) {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
-    let token = "康熙帝";
-    let token_percent_quoted = "%E5%BA%B7%E7%86%99%E5%B8%9D";
-    let url = testbed.url().replace(TOKEN, token_percent_quoted);
-    testbed.assert_addr_ok(&url);
-
-    let addr: BackendOrganizationBootstrapAddr = url.parse().unwrap();
-    p_assert_eq!(addr.token(), Some(token));
-}
-
-// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID
-// Note: unlike with the Python implementation, invalid percent-encoding doesn't
-// cause a failure (the replacement character EF BF BD is used instead)
-#[test]
-fn bootstrap_addr_bad_unicode_token() {
-    let testbed = BackendOrganizationBootstrapAddrTestbed {};
-    // Not a valid percent-encoded utf8 string
-    let token_percent_quoted = "%E5%BA%B7%E7";
-    let url = testbed.url().replace(TOKEN, token_percent_quoted);
-    testbed.assert_addr_ok_with_expected(&url, &url.replace("%E7", "%EF%BF%BD"));
-}
-
-// Unlike for `BackendInvitationAddr`, here token is not required to be an UUID and can be missing
-#[test]
-fn bootstrap_addr_no_token() {
-    let testbed = BackendOrganizationBootstrapAddrTestbed {};
-    let url_with = testbed.url().replace(TOKEN, "");
-    let url_without = testbed.url().replace(&format!("&token={}", TOKEN), "");
-
-    // Token param present in the url but with an empty value
-    testbed.assert_addr_ok_with_expected(&url_with, &url_without);
-    let addr: BackendOrganizationBootstrapAddr = url_with.parse().unwrap();
-    p_assert_eq!(addr.token(), None);
-
-    // Token param not present in the url
-    testbed.assert_addr_ok(&url_without);
-    let addr: BackendOrganizationBootstrapAddr = url_without.parse().unwrap();
-    p_assert_eq!(addr.token(), None);
+    let url = testbed.url().replace(TOKEN, bad_token);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidParamValue {
+            param: "token",
+            value: bad_token.to_string(),
+            help: "Invalid BootstrapToken".to_string(),
+        },
+    );
 }
 
 #[rstest]
@@ -803,14 +774,14 @@ fn backend_organization_bootstrap_addr_good(
     let verify_key = SigningKey::generate().verify_key();
     let org = OrganizationID::from_str("org").unwrap();
     let backend_addr = BackendAddr::from_str(base_url).unwrap();
-    let addr =
-        BackendOrganizationBootstrapAddr::new(backend_addr, org.clone(), Some("token-123".into()));
+    let token = BootstrapToken::from_hex(TOKEN).unwrap();
+    let addr = BackendOrganizationBootstrapAddr::new(backend_addr, org.clone(), Some(token));
 
     p_assert_eq!(addr.hostname(), "foo");
     p_assert_eq!(addr.port(), port);
     p_assert_eq!(addr.use_ssl(), use_ssl);
     p_assert_eq!(addr.organization_id(), &org);
-    p_assert_eq!(addr.token().unwrap(), "token-123");
+    p_assert_eq!(addr.token(), Some(&token));
 
     let addr2 = BackendOrganizationBootstrapAddr::from_str(addr.to_url().as_str()).unwrap();
     p_assert_eq!(addr, addr2);

@@ -7,8 +7,6 @@ use pyo3::{
     PyResult, Python,
 };
 
-use crate::{ProtocolErrorFields, ProtocolResult};
-
 crate::binding_utils::gen_py_wrapper_class!(
     ApiVersion,
     libparsec_types::ApiVersion,
@@ -26,26 +24,23 @@ impl ApiVersion {
         Self(libparsec_types::ApiVersion { version, revision })
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.clone().dump().map_err(|e| {
-                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                    exc: e.to_string(),
-                })
-            })?,
+            &self
+                .0
+                .clone()
+                .dump()
+                .map_err(|e| PyValueError::new_err(e.to_string()))?,
         ))
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> ProtocolResult<Self> {
-        Ok(Self(libparsec_types::ApiVersion::load(bytes).map_err(
-            |err| {
-                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                    exc: err.to_string(),
-                })
-            },
-        )?))
+    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+        Ok(Self(
+            libparsec_types::ApiVersion::load(bytes)
+                .map_err(|err| PyValueError::new_err(err.to_string()))?,
+        ))
     }
 
     #[classmethod]

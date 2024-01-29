@@ -399,8 +399,8 @@ async function nextStep(): Promise<void> {
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
-        case BootstrapOrganizationErrorTag.BadTimestamp:
-          message = translate('CreateOrganization.errors.badTimestamp', {
+        case BootstrapOrganizationErrorTag.TimestampOutOfBallpark:
+          message = translate('CreateOrganization.errors.timestampOutOfBallpark', {
             clientTime: formatDate(result.error.clientTimestamp, 'long'),
             serverTime: formatDate(result.error.serverTimestamp, 'long'),
           });

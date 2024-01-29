@@ -30,7 +30,7 @@ env:
   pytest-base-args: >-
     --log-level=DEBUG
     --durations=10
-    --side-effects-timeout=10
+    --timeout=10
     -vv
     -x
   postgresql-version: 14
@@ -174,7 +174,7 @@ jobs:
       - name: Check python code style
         run: |
           set -eux
-          for step in mypy black ruff; do
+          for step in black ruff pyright; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \

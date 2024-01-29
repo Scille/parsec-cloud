@@ -104,12 +104,8 @@ fn quote_versioned_cmds(
             #[pymethods]
             impl AnyCmdReq {
                 #[staticmethod]
-                fn load(py: Python, raw: &[u8]) -> ProtocolResult<PyObject> {
-                    let cmd = #protocol_versioned_cmds_path::AnyCmdReq::load(raw).map_err(|e| {
-                        ProtocolErrorFields(libparsec_protocol::ProtocolError::DecodingError {
-                            exc: e.to_string(),
-                        })
-                    })?;
+                fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
+                    let cmd = #protocol_versioned_cmds_path::AnyCmdReq::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
                     Ok(match cmd {
                         #(
                             #protocol_versioned_cmds_path::AnyCmdReq::#any_cmd_values(x) => #any_cmd_reqs(x).into_py(py),
@@ -341,11 +337,7 @@ fn quote_reps(
         impl Rep {
             #[staticmethod]
             fn load<'py>(py: Python<'py>, raw: &[u8]) -> PyResult<PyObject> {
-                let rep = #protocol_path::Rep::load(raw).map_err(|e| {
-                    ProtocolErrorFields(libparsec_protocol::ProtocolError::DecodingError {
-                        exc: e.to_string(),
-                    })
-                })?;
+                let rep = #protocol_path::Rep::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
                 Ok(match rep {
                     #(#fn_load_subclasses_matches_codes)*
                     raw_rep @ #protocol_path::Rep::UnknownStatus { .. } => {
@@ -355,14 +347,10 @@ fn quote_reps(
                 })
             }
 
-            fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+            fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
                 Ok(PyBytes::new(
                     py,
-                    &self.0.dump().map_err(|e| {
-                        ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                            exc: e.to_string(),
-                        })
-                    })?,
+                    &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                 ))
             }
         }
@@ -442,14 +430,10 @@ fn quote_req(
                         #nested_type_name::from_raw(py, self.0.0.clone())
                     }
 
-                    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
                         Ok(PyBytes::new(
                             py,
-                            &self.0.dump().map_err(|e| {
-                                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                                    exc: e.to_string(),
-                                })
-                            })?,
+                            &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
                     }
                 }
@@ -523,14 +507,10 @@ fn quote_req(
                 impl Req {
                     #fn_new_and_getters_iml
 
-                    fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
                         Ok(PyBytes::new(
                             py,
-                            &self.0.dump().map_err(|e| {
-                                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                                    exc: e.to_string(),
-                                })
-                            })?,
+                            &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
                     }
                 }
@@ -822,14 +802,14 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::Index => quote! { u64 },
         FieldType::NonZeroInteger => quote! { u64 },
         FieldType::IntegerBetween1And100 => quote! { u64 },
-        FieldType::PublicKey => quote! { crate::api_crypto::PublicKey },
-        FieldType::SigningKey => quote! { crate::api_crypto::SigningKey },
-        FieldType::VerifyKey => quote! { crate::api_crypto::VerifyKey },
-        FieldType::PrivateKey => quote! { crate::api_crypto::PrivateKey },
-        FieldType::SecretKey => quote! { crate::api_crypto::SecretKey },
-        FieldType::HashDigest => quote! { crate::api_crypto::HashDigest },
-        FieldType::SequesterVerifyKeyDer => quote! { crate::api_crypto::SequesterVerifyKeyDer },
-        FieldType::SequesterPublicKeyDer => quote! { crate::api_crypto::SequesterPublicKeyDer },
+        FieldType::PublicKey => quote! { crate::crypto::PublicKey },
+        FieldType::SigningKey => quote! { crate::crypto::SigningKey },
+        FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
+        FieldType::PrivateKey => quote! { crate::crypto::PrivateKey },
+        FieldType::SecretKey => quote! { crate::crypto::SecretKey },
+        FieldType::HashDigest => quote! { crate::crypto::HashDigest },
+        FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
+        FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
         FieldType::DateTime => quote! { crate::time::DateTime },
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },
@@ -842,13 +822,12 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { &'static PyObject },
         FieldType::RealmRole => quote! { &'static PyObject },
+        FieldType::BootstrapToken => quote! { crate::ids::BootstrapToken },
         FieldType::InvitationToken => quote! { crate::ids::InvitationToken },
         FieldType::InvitationStatus => quote! { &'static PyObject },
-        FieldType::ReencryptionBatchEntry => quote! { crate::protocol::ReencryptionBatchEntry },
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry },
         FieldType::FileManifest => quote! { crate::data::FileManifest },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest },
         FieldType::WorkspaceManifest => quote! { crate::data::WorkspaceManifest },
@@ -928,24 +907,25 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::String => quote! { PyString::new(py, #field_path) },
         FieldType::Bytes => quote! { PyBytes::new(py, #field_path) },
-        FieldType::Boolean
-        | FieldType::Integer
-        | FieldType::Float
-        | FieldType::Version
-        | FieldType::Size
-        | FieldType::Index
-        | FieldType::NonZeroInteger => quote! { (*#field_path).into() },
-        FieldType::PublicKey => quote! { crate::api_crypto::PublicKey(#field_path.to_owned()) },
-        FieldType::SigningKey => quote! { crate::api_crypto::SigningKey(#field_path.to_owned()) },
-        FieldType::VerifyKey => quote! { crate::api_crypto::VerifyKey(#field_path.to_owned()) },
-        FieldType::PrivateKey => quote! { crate::api_crypto::PrivateKey(#field_path.to_owned()) },
-        FieldType::SecretKey => quote! { crate::api_crypto::SecretKey(#field_path.to_owned()) },
-        FieldType::HashDigest => quote! { crate::api_crypto::HashDigest(#field_path.to_owned()) },
+        FieldType::Boolean => quote! { bool::from(*#field_path) },
+        FieldType::Integer => quote! { i64::from(*#field_path) },
+        FieldType::Float => quote! { f64::from(*#field_path) },
+        FieldType::Version => quote! { u32::from(*#field_path) },
+        FieldType::Size => quote! { u64::from(*#field_path) },
+        FieldType::Index => quote! { u64::from(*#field_path) },
+        FieldType::NonZeroInteger => quote! { u64::from(*#field_path) },
+        FieldType::IntegerBetween1And100 => quote! { u64::from(*#field_path) },
+        FieldType::PublicKey => quote! { crate::crypto::PublicKey(#field_path.to_owned()) },
+        FieldType::SigningKey => quote! { crate::crypto::SigningKey(#field_path.to_owned()) },
+        FieldType::VerifyKey => quote! { crate::crypto::VerifyKey(#field_path.to_owned()) },
+        FieldType::PrivateKey => quote! { crate::crypto::PrivateKey(#field_path.to_owned()) },
+        FieldType::SecretKey => quote! { crate::crypto::SecretKey(#field_path.to_owned()) },
+        FieldType::HashDigest => quote! { crate::crypto::HashDigest(#field_path.to_owned()) },
         FieldType::SequesterVerifyKeyDer => {
-            quote! { crate::api_crypto::SequesterVerifyKeyDer(#field_path.to_owned()) }
+            quote! { crate::crypto::SequesterVerifyKeyDer(#field_path.to_owned()) }
         }
         FieldType::SequesterPublicKeyDer => {
-            quote! { crate::api_crypto::SequesterPublicKeyDer(#field_path.to_owned()) }
+            quote! { crate::crypto::SequesterPublicKeyDer(#field_path.to_owned()) }
         }
         FieldType::DateTime => quote! { crate::time::DateTime(#field_path.to_owned()) },
         FieldType::BlockID => quote! { crate::ids::BlockID(#field_path.to_owned()) },
@@ -965,21 +945,20 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::RealmRole => {
             quote! { crate::enumerate::RealmRole::convert(#field_path.to_owned()) }
         }
+        FieldType::BootstrapToken => {
+            quote! { crate::ids::BootstrapToken(#field_path.to_owned()) }
+        }
         FieldType::InvitationToken => {
             quote! { crate::ids::InvitationToken(#field_path.to_owned()) }
         }
         FieldType::InvitationStatus => {
             quote! { crate::enumerate::InvitationStatus::convert(#field_path.to_owned()) }
         }
-        FieldType::ReencryptionBatchEntry => {
-            quote! { crate::protocol::ReencryptionBatchEntry(#field_path.to_owned()) }
-        }
         FieldType::CertificateSignerOwned => {
             quote! { crate::certif::CertificateSignerOwned(#field_path.to_owned()) }
         }
         FieldType::BlockAccess => quote! { crate::data::BlockAccess(#field_path.to_owned()) },
         FieldType::EntryName => quote! { crate::data::EntryName(#field_path.to_owned()) },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry(#field_path.to_owned()) },
         FieldType::FileManifest => quote! { crate::data::FileManifest(#field_path.to_owned()) },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest(#field_path.to_owned()) },
         FieldType::WorkspaceManifest => {
@@ -1005,7 +984,6 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::X509Certificate => {
             quote! { crate::data::X509Certificate(#field_path.to_owned()) }
         }
-        FieldType::IntegerBetween1And100 => quote! { (*#field_path).into() },
     }
 }
 
@@ -1050,14 +1028,14 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::Index => quote! { u64 },
         FieldType::NonZeroInteger => quote! { u64 },
         FieldType::IntegerBetween1And100 => quote! { u64 },
-        FieldType::PublicKey => quote! { crate::api_crypto::PublicKey },
-        FieldType::SigningKey => quote! { crate::api_crypto::SigningKey },
-        FieldType::VerifyKey => quote! { crate::api_crypto::VerifyKey },
-        FieldType::PrivateKey => quote! { crate::api_crypto::PrivateKey },
-        FieldType::SecretKey => quote! { crate::api_crypto::SecretKey },
-        FieldType::HashDigest => quote! { crate::api_crypto::HashDigest },
-        FieldType::SequesterVerifyKeyDer => quote! { crate::api_crypto::SequesterVerifyKeyDer },
-        FieldType::SequesterPublicKeyDer => quote! { crate::api_crypto::SequesterPublicKeyDer },
+        FieldType::PublicKey => quote! { crate::crypto::PublicKey },
+        FieldType::SigningKey => quote! { crate::crypto::SigningKey },
+        FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
+        FieldType::PrivateKey => quote! { crate::crypto::PrivateKey },
+        FieldType::SecretKey => quote! { crate::crypto::SecretKey },
+        FieldType::HashDigest => quote! { crate::crypto::HashDigest },
+        FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
+        FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
         FieldType::DateTime => quote! { crate::time::DateTime },
         FieldType::BlockID => quote! { crate::ids::BlockID },
         FieldType::DeviceID => quote! { crate::ids::DeviceID },
@@ -1070,13 +1048,12 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
         FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
+        FieldType::BootstrapToken => quote! { crate::ids::BootstrapToken },
         FieldType::InvitationToken => quote! { crate::ids::InvitationToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
-        FieldType::ReencryptionBatchEntry => quote! { crate::protocol::ReencryptionBatchEntry },
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
         FieldType::EntryName => quote! { crate::data::EntryName },
-        FieldType::WorkspaceEntry => quote! { crate::data::WorkspaceEntry },
         FieldType::FileManifest => quote! { crate::data::FileManifest },
         FieldType::FolderManifest => quote! { crate::data::FolderManifest },
         FieldType::WorkspaceManifest => quote! { crate::data::WorkspaceManifest },
@@ -1195,13 +1172,12 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::HumanHandle
         | FieldType::UserProfile
         | FieldType::RealmRole
+        | FieldType::BootstrapToken
         | FieldType::InvitationToken
         | FieldType::InvitationStatus
-        | FieldType::ReencryptionBatchEntry
         | FieldType::CertificateSignerOwned
         | FieldType::BlockAccess
         | FieldType::EntryName
-        | FieldType::WorkspaceEntry
         | FieldType::FileManifest
         | FieldType::FolderManifest
         | FieldType::WorkspaceManifest

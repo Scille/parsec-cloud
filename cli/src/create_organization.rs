@@ -4,7 +4,7 @@ use clap::Args;
 use reqwest::Client;
 use serde_json::Value;
 
-use libparsec::{BackendAddr, BackendOrganizationBootstrapAddr, OrganizationID};
+use libparsec::{BackendAddr, BackendOrganizationBootstrapAddr, BootstrapToken, OrganizationID};
 
 use crate::utils::*;
 
@@ -25,7 +25,7 @@ pub async fn create_organization_req(
     organization_id: &OrganizationID,
     addr: &BackendAddr,
     administration_token: &str,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<BootstrapToken> {
     let url = addr.to_http_url(Some("/administration/organizations"));
 
     let rep = Client::new()
@@ -43,10 +43,10 @@ pub async fn create_organization_req(
         return Err(anyhow::anyhow!("{e}"));
     }
 
-    Ok(rep["bootstrap_token"]
-        .as_str()
-        .expect("Unreachable")
-        .to_string())
+    Ok(
+        BootstrapToken::from_hex(rep["bootstrap_token"].as_str().expect("Unreachable"))
+            .expect("Unreachable"),
+    )
 }
 
 pub async fn create_organization(create_organization: CreateOrganization) -> anyhow::Result<()> {

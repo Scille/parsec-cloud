@@ -1,0 +1,90 @@
+[
+    {
+        "major_versions": [4],
+        "req": {
+            "cmd": "realm_rename",
+            "fields": [
+                {
+                    // Signed `RealmNameCertificate` certificate,
+                    // contains realm_id, key_index & encrypted realm name
+                    "name": "realm_name_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // If set to `true`, an `initial_name_already_exists` error will
+                    // be returned if a name certificate already exist for this realm.
+                    "name": "initial_name_or_fail",
+                    "type": "Boolean"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "initial_name_already_exists",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Realm doesn't exist, or user has no access on it
+                "status": "author_not_allowed"
+            },
+            {
+                // If the `key_index` in the certificate is not currently the realm's last
+                "status": "bad_key_index",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "invalid_certificate"
+            },
+            {
+                "status": "realm_not_found"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]

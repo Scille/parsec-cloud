@@ -80,13 +80,16 @@ class BootstrapOrganizationError(ErrorVariant):
     class Offline:
         pass
 
+    class OrganizationExpired:
+        pass
+
     class InvalidToken:
         pass
 
     class AlreadyUsedToken:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float
@@ -132,6 +135,9 @@ class ClaimerRetrieveInfoError(ErrorVariant):
 
 class ClaimInProgressError(ErrorVariant):
     class Offline:
+        pass
+
+    class OrganizationExpired:
         pass
 
     class NotFound:
@@ -296,16 +302,17 @@ async def claimer_device_finalize_save_local_device(
 class InvitationStatus(Enum):
     Idle = EnumItemUnit
     Ready = EnumItemUnit
-    Deleted = EnumItemUnit
+    Finished = EnumItemUnit
+    Cancelled = EnumItemUnit
 
 
 class InvitationEmailSentStatus(Enum):
     Success = EnumItemUnit
-    NotAvailable = EnumItemUnit
-    BadRecipient = EnumItemUnit
+    ServerUnavailable = EnumItemUnit
+    RecipientRefused = EnumItemUnit
 
 
-class NewUserInvitationError(ErrorVariant):
+class ClientNewUserInvitationError(ErrorVariant):
     class Offline:
         pass
 
@@ -329,15 +336,15 @@ async def client_new_user_invitation(
     client: Handle,
     claimer_email: str,
     send_email: bool,
-) -> Result[NewInvitationInfo, NewUserInvitationError,]:
+) -> Result[
+    NewInvitationInfo,
+    ClientNewUserInvitationError,
+]:
     raise NotImplementedError
 
 
-class NewDeviceInvitationError(ErrorVariant):
+class ClientNewDeviceInvitationError(ErrorVariant):
     class Offline:
-        pass
-
-    class SendEmailToUserWithoutEmail:
         pass
 
     class Internal:
@@ -347,11 +354,14 @@ class NewDeviceInvitationError(ErrorVariant):
 async def client_new_device_invitation(
     client: Handle,
     send_email: bool,
-) -> Result[NewInvitationInfo, NewDeviceInvitationError,]:
+) -> Result[
+    NewInvitationInfo,
+    ClientNewDeviceInvitationError,
+]:
     raise NotImplementedError
 
 
-class DeleteInvitationError(ErrorVariant):
+class ClientCancelInvitationError(ErrorVariant):
     class Offline:
         pass
 
@@ -365,10 +375,10 @@ class DeleteInvitationError(ErrorVariant):
         pass
 
 
-async def client_delete_invitation(
+async def client_cancel_invitation(
     client: Handle,
     token: InvitationToken,
-) -> Result[None, DeleteInvitationError]:
+) -> Result[None, ClientCancelInvitationError]:
     raise NotImplementedError
 
 
@@ -433,7 +443,7 @@ class GreetInProgressError(ErrorVariant):
     class NotFound:
         pass
 
-    class AlreadyUsed:
+    class AlreadyDeleted:
         pass
 
     class PeerReset:
@@ -443,6 +453,9 @@ class GreetInProgressError(ErrorVariant):
         pass
 
     class NonceMismatch:
+        pass
+
+    class HumanHandleAlreadyTaken:
         pass
 
     class UserAlreadyExists:
@@ -457,7 +470,7 @@ class GreetInProgressError(ErrorVariant):
     class CorruptedInviteUserData:
         pass
 
-    class BadTimestamp:
+    class TimestampOutOfBallpark:
         server_timestamp: DateTime
         client_timestamp: DateTime
         ballpark_client_early_offset: float

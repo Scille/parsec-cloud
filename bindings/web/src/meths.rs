@@ -44,11 +44,11 @@ fn enum_invitation_email_sent_status_js_to_rs(
     raw_value: &str,
 ) -> Result<libparsec::InvitationEmailSentStatus, JsValue> {
     match raw_value {
-        "InvitationEmailSentStatusBadRecipient" => {
-            Ok(libparsec::InvitationEmailSentStatus::BadRecipient)
+        "InvitationEmailSentStatusRecipientRefused" => {
+            Ok(libparsec::InvitationEmailSentStatus::RecipientRefused)
         }
-        "InvitationEmailSentStatusNotAvailable" => {
-            Ok(libparsec::InvitationEmailSentStatus::NotAvailable)
+        "InvitationEmailSentStatusServerUnavailable" => {
+            Ok(libparsec::InvitationEmailSentStatus::ServerUnavailable)
         }
         "InvitationEmailSentStatusSuccess" => Ok(libparsec::InvitationEmailSentStatus::Success),
         _ => {
@@ -64,11 +64,11 @@ fn enum_invitation_email_sent_status_rs_to_js(
     value: libparsec::InvitationEmailSentStatus,
 ) -> &'static str {
     match value {
-        libparsec::InvitationEmailSentStatus::BadRecipient => {
-            "InvitationEmailSentStatusBadRecipient"
+        libparsec::InvitationEmailSentStatus::RecipientRefused => {
+            "InvitationEmailSentStatusRecipientRefused"
         }
-        libparsec::InvitationEmailSentStatus::NotAvailable => {
-            "InvitationEmailSentStatusNotAvailable"
+        libparsec::InvitationEmailSentStatus::ServerUnavailable => {
+            "InvitationEmailSentStatusServerUnavailable"
         }
         libparsec::InvitationEmailSentStatus::Success => "InvitationEmailSentStatusSuccess",
     }
@@ -81,7 +81,8 @@ fn enum_invitation_status_js_to_rs(
     raw_value: &str,
 ) -> Result<libparsec::InvitationStatus, JsValue> {
     match raw_value {
-        "InvitationStatusDeleted" => Ok(libparsec::InvitationStatus::Deleted),
+        "InvitationStatusCancelled" => Ok(libparsec::InvitationStatus::Cancelled),
+        "InvitationStatusFinished" => Ok(libparsec::InvitationStatus::Finished),
         "InvitationStatusIdle" => Ok(libparsec::InvitationStatus::Idle),
         "InvitationStatusReady" => Ok(libparsec::InvitationStatus::Ready),
         _ => {
@@ -95,7 +96,8 @@ fn enum_invitation_status_js_to_rs(
 #[allow(dead_code)]
 fn enum_invitation_status_rs_to_js(value: libparsec::InvitationStatus) -> &'static str {
     match value {
-        libparsec::InvitationStatus::Deleted => "InvitationStatusDeleted",
+        libparsec::InvitationStatus::Cancelled => "InvitationStatusCancelled",
+        libparsec::InvitationStatus::Finished => "InvitationStatusFinished",
         libparsec::InvitationStatus::Idle => "InvitationStatusIdle",
         libparsec::InvitationStatus::Ready => "InvitationStatusReady",
     }
@@ -361,11 +363,19 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
         let js_val = Reflect::get(&obj, &"workspaceStorageCacheSize".into())?;
         variant_workspace_storage_cache_size_js_to_rs(js_val)?
     };
+    let with_monitors = {
+        let js_val = Reflect::get(&obj, &"withMonitors".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
         mountpoint_base_dir,
         workspace_storage_cache_size,
+        with_monitors,
     })
 }
 
@@ -422,6 +432,8 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         &"workspaceStorageCacheSize".into(),
         &js_workspace_storage_cache_size,
     )?;
+    let js_with_monitors = rs_obj.with_monitors.into();
+    Reflect::set(&js_obj, &"withMonitors".into(), &js_with_monitors)?;
     Ok(js_obj)
 }
 
@@ -1919,11 +1931,19 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             .map_err(|_| TypeError::new("Not a boolean"))?
             .value_of()
     };
+    let is_bootstrapped = {
+        let js_val = Reflect::get(&obj, &"isBootstrapped".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
     Ok(libparsec::WorkspaceInfo {
         id,
         name,
         self_current_role,
         is_started,
+        is_bootstrapped,
     })
 }
 
@@ -1947,6 +1967,8 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
     Reflect::set(&js_obj, &"selfCurrentRole".into(), &js_self_current_role)?;
     let js_is_started = rs_obj.is_started.into();
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
+    let js_is_bootstrapped = rs_obj.is_bootstrapped.into();
+    Reflect::set(&js_obj, &"isBootstrapped".into(), &js_is_bootstrapped)?;
     Ok(js_obj)
 }
 
@@ -2033,7 +2055,42 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &"BootstrapOrganizationErrorAlreadyUsedToken".into(),
             )?;
         }
-        libparsec::BootstrapOrganizationError::BadTimestamp {
+        libparsec::BootstrapOrganizationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInternal".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorInvalidToken".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorOffline".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::OrganizationExpired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorOrganizationExpired".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"BootstrapOrganizationErrorSaveDeviceError".into(),
+            )?;
+        }
+        libparsec::BootstrapOrganizationError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -2043,7 +2100,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"BootstrapOrganizationErrorBadTimestamp".into(),
+                &"BootstrapOrganizationErrorTimestampOutOfBallpark".into(),
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -2078,34 +2135,6 @@ fn variant_bootstrap_organization_error_rs_to_js(
                 &js_obj,
                 &"ballparkClientLateOffset".into(),
                 &js_ballpark_client_late_offset,
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorInternal".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::InvalidToken { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorInvalidToken".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorOffline".into(),
-            )?;
-        }
-        libparsec::BootstrapOrganizationError::SaveDeviceError { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"BootstrapOrganizationErrorSaveDeviceError".into(),
             )?;
         }
     }
@@ -2189,6 +2218,13 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorOffline".into(),
             )?;
         }
+        libparsec::ClaimInProgressError::OrganizationExpired { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorOrganizationExpired".into(),
+            )?;
+        }
         libparsec::ClaimInProgressError::PeerReset { .. } => {
             Reflect::set(
                 &js_obj,
@@ -2263,6 +2299,48 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientCancelInvitationError
+
+#[allow(dead_code)]
+fn variant_client_cancel_invitation_error_rs_to_js(
+    rs_obj: libparsec::ClientCancelInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientCancelInvitationError::AlreadyDeleted { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorAlreadyDeleted".into(),
+            )?;
+        }
+        libparsec::ClientCancelInvitationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientCancelInvitationError::NotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorNotFound".into(),
+            )?;
+        }
+        libparsec::ClientCancelInvitationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCancelInvitationErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientCreateWorkspaceError
 
 #[allow(dead_code)]
@@ -2278,6 +2356,13 @@ fn variant_client_create_workspace_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientCreateWorkspaceErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientCreateWorkspaceError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientCreateWorkspaceErrorStopped".into(),
             )?;
         }
     }
@@ -2345,6 +2430,13 @@ fn variant_client_get_user_device_error_rs_to_js(
                 &"ClientGetUserDeviceErrorNonExisting".into(),
             )?;
         }
+        libparsec::ClientGetUserDeviceError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientGetUserDeviceErrorStopped".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -2361,6 +2453,9 @@ fn variant_client_info_error_rs_to_js(
     match rs_obj {
         libparsec::ClientInfoError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientInfoErrorInternal".into())?;
+        }
+        libparsec::ClientInfoError::Stopped { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientInfoErrorStopped".into())?;
         }
     }
     Ok(js_obj)
@@ -2381,6 +2476,13 @@ fn variant_client_list_user_devices_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientListUserDevicesErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientListUserDevicesError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListUserDevicesErrorStopped".into(),
             )?;
         }
     }
@@ -2404,6 +2506,13 @@ fn variant_client_list_users_error_rs_to_js(
                 &"ClientListUsersErrorInternal".into(),
             )?;
         }
+        libparsec::ClientListUsersError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListUsersErrorStopped".into(),
+            )?;
+        }
     }
     Ok(js_obj)
 }
@@ -2423,6 +2532,13 @@ fn variant_client_list_workspace_users_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ClientListWorkspaceUsersErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientListWorkspaceUsersError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientListWorkspaceUsersErrorStopped".into(),
             )?;
         }
     }
@@ -2450,6 +2566,76 @@ fn variant_client_list_workspaces_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientNewDeviceInvitationError
+
+#[allow(dead_code)]
+fn variant_client_new_device_invitation_error_rs_to_js(
+    rs_obj: libparsec::ClientNewDeviceInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientNewDeviceInvitationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewDeviceInvitationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientNewDeviceInvitationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewDeviceInvitationErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientNewUserInvitationError
+
+#[allow(dead_code)]
+fn variant_client_new_user_invitation_error_rs_to_js(
+    rs_obj: libparsec::ClientNewUserInvitationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientNewUserInvitationError::AlreadyMember { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewUserInvitationErrorAlreadyMember".into(),
+            )?;
+        }
+        libparsec::ClientNewUserInvitationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewUserInvitationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientNewUserInvitationError::NotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewUserInvitationErrorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientNewUserInvitationError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientNewUserInvitationErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientRenameWorkspaceError
 
 #[allow(dead_code)]
@@ -2460,6 +2646,13 @@ fn variant_client_rename_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::ClientRenameWorkspaceError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorAuthorNotAllowed".into(),
+            )?;
+        }
         libparsec::ClientRenameWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -2467,28 +2660,49 @@ fn variant_client_rename_workspace_error_rs_to_js(
                 &"ClientRenameWorkspaceErrorInternal".into(),
             )?;
         }
-        libparsec::ClientRenameWorkspaceError::UnknownWorkspace { .. } => {
+        libparsec::ClientRenameWorkspaceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientRenameWorkspaceErrorUnknownWorkspace".into(),
+                &"ClientRenameWorkspaceErrorInvalidCertificate".into(),
             )?;
         }
-    }
-    Ok(js_obj)
-}
-
-// ClientShareWorkspaceError
-
-#[allow(dead_code)]
-fn variant_client_share_workspace_error_rs_to_js(
-    rs_obj: libparsec::ClientShareWorkspaceError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::ClientShareWorkspaceError::BadTimestamp {
+        libparsec::ClientRenameWorkspaceError::InvalidEncryptedRealmName { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorInvalidEncryptedRealmName".into(),
+            )?;
+        }
+        libparsec::ClientRenameWorkspaceError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::ClientRenameWorkspaceError::NoKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorNoKey".into(),
+            )?;
+        }
+        libparsec::ClientRenameWorkspaceError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientRenameWorkspaceError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientRenameWorkspaceError::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -2498,7 +2712,7 @@ fn variant_client_share_workspace_error_rs_to_js(
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorBadTimestamp".into(),
+                &"ClientRenameWorkspaceErrorTimestampOutOfBallpark".into(),
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -2535,6 +2749,34 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &js_ballpark_client_late_offset,
             )?;
         }
+        libparsec::ClientRenameWorkspaceError::WorkspaceNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRenameWorkspaceErrorWorkspaceNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientShareWorkspaceError
+
+#[allow(dead_code)]
+fn variant_client_share_workspace_error_rs_to_js(
+    rs_obj: libparsec::ClientShareWorkspaceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientShareWorkspaceError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorAuthorNotAllowed".into(),
+            )?;
+        }
         libparsec::ClientShareWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -2542,11 +2784,18 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorInternal".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::NotAllowed { .. } => {
+        libparsec::ClientShareWorkspaceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorNotAllowed".into(),
+                &"ClientShareWorkspaceErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientShareWorkspaceError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientShareWorkspaceErrorInvalidKeysBundle".into(),
             )?;
         }
         libparsec::ClientShareWorkspaceError::Offline { .. } => {
@@ -2556,53 +2805,93 @@ fn variant_client_share_workspace_error_rs_to_js(
                 &"ClientShareWorkspaceErrorOffline".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::OutsiderCannotBeManagerOrOwner { .. } => {
+        libparsec::ClientShareWorkspaceError::RecipientIsSelf { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorOutsiderCannotBeManagerOrOwner".into(),
+                &"ClientShareWorkspaceErrorRecipientIsSelf".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::RevokedRecipient { .. } => {
+        libparsec::ClientShareWorkspaceError::RecipientNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorRevokedRecipient".into(),
+                &"ClientShareWorkspaceErrorRecipientNotFound".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::ShareToSelf { .. } => {
+        libparsec::ClientShareWorkspaceError::RecipientRevoked { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorShareToSelf".into(),
+                &"ClientShareWorkspaceErrorRecipientRevoked".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::UnknownRecipient { .. } => {
+        libparsec::ClientShareWorkspaceError::RoleIncompatibleWithOutsider { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorUnknownRecipient".into(),
+                &"ClientShareWorkspaceErrorRoleIncompatibleWithOutsider".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::UnknownRecipientOrWorkspace { .. } => {
+        libparsec::ClientShareWorkspaceError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorUnknownRecipientOrWorkspace".into(),
+                &"ClientShareWorkspaceErrorStopped".into(),
             )?;
         }
-        libparsec::ClientShareWorkspaceError::UnknownWorkspace { .. } => {
+        libparsec::ClientShareWorkspaceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorUnknownWorkspace".into(),
+                &"ClientShareWorkspaceErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
             )?;
         }
-        libparsec::ClientShareWorkspaceError::WorkspaceInMaintenance { .. } => {
+        libparsec::ClientShareWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientShareWorkspaceErrorWorkspaceInMaintenance".into(),
+                &"ClientShareWorkspaceErrorWorkspaceNotFound".into(),
             )?;
         }
     }
@@ -2685,11 +2974,11 @@ fn variant_client_start_workspace_error_rs_to_js(
                 &"ClientStartWorkspaceErrorInternal".into(),
             )?;
         }
-        libparsec::ClientStartWorkspaceError::NoAccess { .. } => {
+        libparsec::ClientStartWorkspaceError::WorkspaceNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientStartWorkspaceErrorNoAccess".into(),
+                &"ClientStartWorkspaceErrorWorkspaceNotFound".into(),
             )?;
         }
     }
@@ -2708,48 +2997,6 @@ fn variant_client_stop_error_rs_to_js(
     match rs_obj {
         libparsec::ClientStopError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStopErrorInternal".into())?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// DeleteInvitationError
-
-#[allow(dead_code)]
-fn variant_delete_invitation_error_rs_to_js(
-    rs_obj: libparsec::DeleteInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::DeleteInvitationError::AlreadyDeleted { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeleteInvitationErrorAlreadyDeleted".into(),
-            )?;
-        }
-        libparsec::DeleteInvitationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeleteInvitationErrorInternal".into(),
-            )?;
-        }
-        libparsec::DeleteInvitationError::NotFound { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeleteInvitationErrorNotFound".into(),
-            )?;
-        }
-        libparsec::DeleteInvitationError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"DeleteInvitationErrorOffline".into(),
-            )?;
         }
     }
     Ok(js_obj)
@@ -3347,58 +3594,11 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorActiveUsersLimitReached".into(),
             )?;
         }
-        libparsec::GreetInProgressError::AlreadyUsed { .. } => {
+        libparsec::GreetInProgressError::AlreadyDeleted { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"GreetInProgressErrorAlreadyUsed".into(),
-            )?;
-        }
-        libparsec::GreetInProgressError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"GreetInProgressErrorBadTimestamp".into(),
-            )?;
-            let js_server_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
+                &"GreetInProgressErrorAlreadyDeleted".into(),
             )?;
         }
         libparsec::GreetInProgressError::Cancelled { .. } => {
@@ -3420,6 +3620,13 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"GreetInProgressErrorDeviceAlreadyExists".into(),
+            )?;
+        }
+        libparsec::GreetInProgressError::HumanHandleAlreadyTaken { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorHumanHandleAlreadyTaken".into(),
             )?;
         }
         libparsec::GreetInProgressError::Internal { .. } => {
@@ -3455,6 +3662,53 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"GreetInProgressErrorPeerReset".into(),
+            )?;
+        }
+        libparsec::GreetInProgressError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
             )?;
         }
         libparsec::GreetInProgressError::UserAlreadyExists { .. } => {
@@ -3748,83 +4002,6 @@ fn variant_list_invitations_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ListInvitationsErrorOffline".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// NewDeviceInvitationError
-
-#[allow(dead_code)]
-fn variant_new_device_invitation_error_rs_to_js(
-    rs_obj: libparsec::NewDeviceInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::NewDeviceInvitationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewDeviceInvitationErrorInternal".into(),
-            )?;
-        }
-        libparsec::NewDeviceInvitationError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewDeviceInvitationErrorOffline".into(),
-            )?;
-        }
-        libparsec::NewDeviceInvitationError::SendEmailToUserWithoutEmail { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewDeviceInvitationErrorSendEmailToUserWithoutEmail".into(),
-            )?;
-        }
-    }
-    Ok(js_obj)
-}
-
-// NewUserInvitationError
-
-#[allow(dead_code)]
-fn variant_new_user_invitation_error_rs_to_js(
-    rs_obj: libparsec::NewUserInvitationError,
-) -> Result<JsValue, JsValue> {
-    let js_obj = Object::new().into();
-    let js_display = &rs_obj.to_string();
-    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {
-        libparsec::NewUserInvitationError::AlreadyMember { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewUserInvitationErrorAlreadyMember".into(),
-            )?;
-        }
-        libparsec::NewUserInvitationError::Internal { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewUserInvitationErrorInternal".into(),
-            )?;
-        }
-        libparsec::NewUserInvitationError::NotAllowed { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewUserInvitationErrorNotAllowed".into(),
-            )?;
-        }
-        libparsec::NewUserInvitationError::Offline { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"NewUserInvitationErrorOffline".into(),
             )?;
         }
     }
@@ -4632,53 +4809,6 @@ fn variant_workspace_fs_operation_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceFsOperationError::BadTimestamp {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"WorkspaceFsOperationErrorBadTimestamp".into(),
-            )?;
-            let js_server_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
-            )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
-            Reflect::set(
-                &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
-            )?;
-        }
         libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
             Reflect::set(
                 &js_obj,
@@ -4721,6 +4851,13 @@ fn variant_workspace_fs_operation_error_rs_to_js(
                 &"WorkspaceFsOperationErrorInvalidCertificate".into(),
             )?;
         }
+        libparsec::WorkspaceFsOperationError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorInvalidKeysBundle".into(),
+            )?;
+        }
         libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
@@ -4761,6 +4898,60 @@ fn variant_workspace_fs_operation_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceFsOperationErrorReadOnlyRealm".into(),
+            )?;
+        }
+        libparsec::WorkspaceFsOperationError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorStopped".into(),
+            )?;
+        }
+        libparsec::WorkspaceFsOperationError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFsOperationErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
             )?;
         }
     }
@@ -5343,6 +5534,40 @@ pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
     })
 }
 
+// client_cancel_invitation
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
+    future_to_promise(async move {
+        let token = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
+                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::client_cancel_invitation(client, token).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_cancel_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_create_workspace
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -5375,40 +5600,6 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_create_workspace_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// client_delete_invitation
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn clientDeleteInvitation(client: u32, token: String) -> Promise {
-    future_to_promise(async move {
-        let token = {
-            let custom_from_rs_string = |s: String| -> Result<libparsec::InvitationToken, _> {
-                libparsec::InvitationToken::from_hex(s.as_str()).map_err(|e| e.to_string())
-            };
-            custom_from_rs_string(token).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::client_delete_invitation(client, token).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_delete_invitation_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -5672,7 +5863,7 @@ pub fn clientNewDeviceInvitation(client: u32, send_email: bool) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_new_device_invitation_error_rs_to_js(err)?;
+                let js_err = variant_client_new_device_invitation_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -5697,7 +5888,7 @@ pub fn clientNewUserInvitation(client: u32, claimer_email: String, send_email: b
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_new_user_invitation_error_rs_to_js(err)?;
+                let js_err = variant_client_new_user_invitation_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

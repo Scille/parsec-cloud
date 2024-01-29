@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -32,55 +31,24 @@
                 "status": "ok"
             },
             {
-                "status": "not_allowed",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "author_not_allowed"
             },
             {
-                "status": "invalid_certification",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "active_users_limit_reached"
             },
             {
-                "status": "invalid_data",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "user_already_exists"
             },
             {
-                "status": "already_exists",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "human_handle_already_taken"
             },
             {
-                "status": "active_users_limit_reached",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
+                "status": "invalid_certificate"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
-                "status": "bad_timestamp",
-                "introduced_in": "4.0",
+                "status": "timestamp_out_of_ballpark",
                 "fields": [
                     {
                         "name": "ballpark_client_early_offset",
@@ -91,7 +59,7 @@
                         "type": "Float"
                     },
                     {
-                        "name": "backend_timestamp",
+                        "name": "server_timestamp",
                         "type": "DateTime"
                     },
                     {
@@ -101,10 +69,9 @@
                 ]
             },
             {
-                // Returned if another certificate in the server has a creation date
+                // Returned if another certificate in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
-                "introduced_in": "4.0",
                 "fields": [
                     {
                         "name": "strictly_greater_than",

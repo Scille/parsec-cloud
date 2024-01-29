@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::num::NonZeroU64;
 use std::sync::Arc;
 
 use bytes::Bytes;
@@ -11,12 +13,13 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 
 use libparsec_crypto::{
-    PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey,
+    CryptoError, PublicKey, SecretKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey,
+    VerifyKey,
 };
 use libparsec_serialization_format::parsec_data;
 
-use crate as libparsec_types;
 use crate::data_macros::impl_transparent_data_format_conversion;
+use crate::{self as libparsec_types, IndexInt};
 use crate::{
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted, RealmRole,
     SequesterServiceID, UserID, UserProfile, VlobID,
@@ -139,6 +142,7 @@ macro_rules! impl_unsecure_load {
         }
     };
 }
+pub(super) use impl_unsecure_load;
 
 macro_rules! impl_unsecure_dump {
     ($name:ident) => {
@@ -149,6 +153,7 @@ macro_rules! impl_unsecure_dump {
         }
     };
 }
+pub(super) use impl_unsecure_dump;
 
 macro_rules! impl_dump_and_sign {
     ($name:ident) => {
@@ -159,6 +164,7 @@ macro_rules! impl_dump_and_sign {
         }
     };
 }
+pub(super) use impl_dump_and_sign;
 
 /*
  * CertificateSigner
@@ -213,6 +219,22 @@ impl From<CertificateSignerOwned> for Option<DeviceID> {
             CertificateSignerOwned::User(device_id) => Some(device_id),
             CertificateSignerOwned::Root => None,
         }
+    }
+}
+
+impl<'a> std::cmp::PartialEq<CertificateSignerOwned> for CertificateSignerRef<'a> {
+    fn eq(&self, other: &CertificateSignerOwned) -> bool {
+        match (self, other) {
+            (CertificateSignerRef::Root, CertificateSignerOwned::Root) => true,
+            (CertificateSignerRef::User(a), CertificateSignerOwned::User(b)) => *a == b,
+            _ => false,
+        }
+    }
+}
+
+impl<'a> std::cmp::PartialEq<CertificateSignerRef<'a>> for CertificateSignerOwned {
+    fn eq(&self, other: &CertificateSignerRef<'a>) -> bool {
+        other == self
     }
 }
 
@@ -626,6 +648,203 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
+ * RealmKeyRotationCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "RealmKeyRotationCertificateData",
+    from = "RealmKeyRotationCertificateData"
+)]
+pub struct RealmKeyRotationCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub realm_id: VlobID,
+    pub key_index: IndexInt,
+    pub encryption_algorithm: SecretKeyAlgorithm,
+    pub hash_algorithm: HashAlgorithm,
+    pub key_canary: Vec<u8>,
+}
+
+impl_unsecure_load!(RealmKeyRotationCertificate -> DeviceID);
+impl_unsecure_dump!(RealmKeyRotationCertificate);
+impl_dump_and_sign!(RealmKeyRotationCertificate);
+
+impl RealmKeyRotationCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_realm_id: Option<VlobID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        if let Some(expected_realm_id) = expected_realm_id {
+            if r.realm_id != expected_realm_id {
+                return Err(DataError::UnexpectedRealmID {
+                    expected: expected_realm_id,
+                    got: r.realm_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+
+    pub fn load_key(&self, raw: &[u8]) -> Result<SecretKey, CryptoError> {
+        let key: SecretKey = raw.try_into()?;
+        // We don't care about the decrypted output (which is supposed to be
+        // an empty string anyway), we just validate that the key is the right
+        // one given it was able to decrypt the canary.
+        let _ = key.decrypt(&self.key_canary)?;
+        Ok(key)
+    }
+}
+
+parsec_data!("schema/certif/realm_key_rotation_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    RealmKeyRotationCertificate,
+    RealmKeyRotationCertificateData,
+    author,
+    timestamp,
+    realm_id,
+    key_index,
+    encryption_algorithm,
+    hash_algorithm,
+    key_canary,
+);
+
+/*
+ * RealmNameCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "RealmNameCertificateData", from = "RealmNameCertificateData")]
+pub struct RealmNameCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub realm_id: VlobID,
+    pub key_index: IndexInt,
+    pub encrypted_name: Vec<u8>,
+}
+
+impl_unsecure_load!(RealmNameCertificate -> DeviceID);
+impl_unsecure_dump!(RealmNameCertificate);
+impl_dump_and_sign!(RealmNameCertificate);
+
+impl RealmNameCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_realm_id: Option<VlobID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        if let Some(expected_realm_id) = expected_realm_id {
+            if r.realm_id != expected_realm_id {
+                return Err(DataError::UnexpectedRealmID {
+                    expected: expected_realm_id,
+                    got: r.realm_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/realm_name_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    RealmNameCertificate,
+    RealmNameCertificateData,
+    author,
+    timestamp,
+    realm_id,
+    key_index,
+    encrypted_name,
+);
+
+/*
+ * RealmArchivingCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "RealmArchivingCertificateData",
+    from = "RealmArchivingCertificateData"
+)]
+pub struct RealmArchivingCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub realm_id: VlobID,
+    pub configuration: RealmArchivingConfiguration,
+}
+
+impl_unsecure_load!(RealmArchivingCertificate -> DeviceID);
+impl_unsecure_dump!(RealmArchivingCertificate);
+impl_dump_and_sign!(RealmArchivingCertificate);
+
+impl RealmArchivingCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_realm_id: Option<VlobID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        if let Some(expected_realm_id) = expected_realm_id {
+            if r.realm_id != expected_realm_id {
+                return Err(DataError::UnexpectedRealmID {
+                    expected: expected_realm_id,
+                    got: r.realm_id,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/realm_archiving_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    RealmArchivingCertificate,
+    RealmArchivingCertificateData,
+    author,
+    timestamp,
+    realm_id,
+    configuration,
+);
+
+/*
  * SequesterAuthorityCertificate
  */
 
@@ -639,7 +858,7 @@ pub struct SequesterAuthorityCertificate {
     pub verify_key_der: SequesterVerifyKeyDer,
 }
 
-// `insecure_load` doesn't need to expose the author field here given
+// `unsecure_load` doesn't need to expose the author field here given
 // `SequesterAuthorityCertificate` is always signed by the root verify key
 impl_unsecure_load!(SequesterAuthorityCertificate);
 impl_unsecure_dump!(SequesterAuthorityCertificate);
@@ -704,52 +923,23 @@ impl SequesterServiceCertificate {
     pub fn load(buf: &[u8]) -> DataResult<Self> {
         load::<Self>(buf)
     }
-}
 
-// Cannot use `impl_insecure_load` macro for `SequesterServiceCertificate` given it is
-// signed by the sequester authority, which is a special signature system (RSA, PKI etc.)
-
-#[derive(Debug)]
-pub struct UnsecureSequesterServiceCertificate {
-    signed: Bytes,
-    unsecure: SequesterServiceCertificate,
-}
-
-impl UnsecureSequesterServiceCertificate {
-    pub fn timestamp(&self) -> &DateTime {
-        &self.unsecure.timestamp
-    }
-    pub fn hint(&self) -> String {
-        format!("{:?}", self.unsecure)
-    }
-    pub fn verify_signature(
-        self,
-        author_verify_key: &SequesterVerifyKeyDer,
-    ) -> Result<(SequesterServiceCertificate, Bytes), (Self, DataError)> {
-        match author_verify_key.verify(self.signed.as_ref()) {
-            // Unsecure is now secure \o/
-            Ok(_) => Ok((self.unsecure, self.signed)),
-            Err(_) => Err((self, DataError::Signature)),
-        }
-    }
-    pub fn skip_validation(
-        self,
-        _reason: UnsecureSkipValidationReason,
-    ) -> SequesterServiceCertificate {
-        self.unsecure
+    pub fn verify_and_load(
+        signed: &[u8],
+        authority_verify_key: &SequesterVerifyKeyDer,
+    ) -> DataResult<Self> {
+        let raw = authority_verify_key
+            .verify(signed)
+            .map_err(|_| DataError::Signature)?;
+        Self::load(&raw)
     }
 }
 
-impl SequesterServiceCertificate {
-    pub fn unsecure_load(signed: Bytes) -> DataResult<UnsecureSequesterServiceCertificate> {
-        let (_, compressed) =
-            // TODO: It should be SequesterVerifyKeyDer instead, but the signature
-            // need the key size
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<SequesterServiceCertificate>(compressed)?;
-        Ok(UnsecureSequesterServiceCertificate { signed, unsecure })
-    }
-}
+// Sequester service certificate is signed by the sequester authority with a special
+// signature system (RSA, PKI etc.). Hence it doesn't support unsecure load (which works
+// only for signature with regular `SigningKey`).
+// That's no big deal however given sequester authority is always provided as the very
+// first certificate anyway.
 
 parsec_data!("schema/certif/sequester_service_certificate.json5");
 
@@ -763,6 +953,169 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
+ * SequesterRevokedServiceCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "SequesterRevokedServiceCertificateData",
+    from = "SequesterRevokedServiceCertificateData"
+)]
+pub struct SequesterRevokedServiceCertificate {
+    pub timestamp: DateTime,
+    pub service_id: SequesterServiceID,
+}
+
+impl_unsecure_dump!(SequesterRevokedServiceCertificate);
+
+impl SequesterRevokedServiceCertificate {
+    pub fn dump(&self) -> Vec<u8> {
+        dump::<Self>(self)
+    }
+
+    pub fn load(buf: &[u8]) -> DataResult<Self> {
+        load::<Self>(buf)
+    }
+
+    pub fn verify_and_load(
+        signed: &[u8],
+        authority_verify_key: &SequesterVerifyKeyDer,
+    ) -> DataResult<Self> {
+        let raw = authority_verify_key
+            .verify(signed)
+            .map_err(|_| DataError::Signature)?;
+        Self::load(&raw)
+    }
+}
+
+// Sequester revoked service certificate is signed by the sequester authority with a special
+// signature system (RSA, PKI etc.). Hence it doesn't support unsecure load (which works
+// only for signature with regular `SigningKey`).
+// That's no big deal however given sequester authority is always provided as the very
+// first certificate anyway.
+
+parsec_data!("schema/certif/sequester_revoked_service_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    SequesterRevokedServiceCertificate,
+    SequesterRevokedServiceCertificateData,
+    timestamp,
+    service_id,
+);
+
+/*
+ * ShamirRecoveryBriefCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "ShamirRecoveryBriefCertificateData",
+    from = "ShamirRecoveryBriefCertificateData"
+)]
+pub struct ShamirRecoveryBriefCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub threshold: NonZeroU64,
+    pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+}
+
+impl_unsecure_load!(ShamirRecoveryBriefCertificate -> DeviceID);
+impl_unsecure_dump!(ShamirRecoveryBriefCertificate);
+impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
+
+impl ShamirRecoveryBriefCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/shamir_recovery_brief_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryBriefCertificateData,
+    author,
+    timestamp,
+    threshold,
+    per_recipient_shares,
+);
+
+/*
+ * ShamirRecoveryShareCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "ShamirRecoveryShareCertificateData",
+    from = "ShamirRecoveryShareCertificateData"
+)]
+pub struct ShamirRecoveryShareCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    pub recipient: UserID,
+    pub ciphered_share: Vec<u8>,
+}
+
+impl_unsecure_load!(ShamirRecoveryShareCertificate -> DeviceID);
+impl_unsecure_dump!(ShamirRecoveryShareCertificate);
+impl_dump_and_sign!(ShamirRecoveryShareCertificate);
+
+impl ShamirRecoveryShareCertificate {
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+        expected_recipient: Option<&UserID>,
+    ) -> DataResult<Self> {
+        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
+
+        if let Some(expected_recipient) = expected_recipient {
+            if &r.recipient != expected_recipient {
+                return Err(DataError::UnexpectedUserID {
+                    expected: expected_recipient.clone(),
+                    got: r.recipient,
+                });
+            }
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/shamir_recovery_share_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    ShamirRecoveryShareCertificate,
+    ShamirRecoveryShareCertificateData,
+    author,
+    timestamp,
+    recipient,
+    ciphered_share,
+);
+
+/*
  * AnyCertificate
  */
 
@@ -773,8 +1126,14 @@ pub enum AnyArcCertificate {
     UserUpdate(Arc<UserUpdateCertificate>),
     RevokedUser(Arc<RevokedUserCertificate>),
     RealmRole(Arc<RealmRoleCertificate>),
+    RealmName(Arc<RealmNameCertificate>),
+    RealmArchiving(Arc<RealmArchivingCertificate>),
+    RealmKeyRotation(Arc<RealmKeyRotationCertificate>),
+    ShamirRecoveryBrief(Arc<ShamirRecoveryBriefCertificate>),
+    ShamirRecoveryShare(Arc<ShamirRecoveryShareCertificate>),
     SequesterAuthority(Arc<SequesterAuthorityCertificate>),
     SequesterService(Arc<SequesterServiceCertificate>),
+    SequesterRevokedService(Arc<SequesterRevokedServiceCertificate>),
 }
 
 #[derive(Debug, Deserialize)]
@@ -785,8 +1144,14 @@ pub enum AnyCertificate {
     UserUpdate(UserUpdateCertificate),
     RevokedUser(RevokedUserCertificate),
     RealmRole(RealmRoleCertificate),
+    RealmName(RealmNameCertificate),
+    RealmArchiving(RealmArchivingCertificate),
+    RealmKeyRotation(RealmKeyRotationCertificate),
+    ShamirRecoveryBrief(ShamirRecoveryBriefCertificate),
+    ShamirRecoveryShare(ShamirRecoveryShareCertificate),
     SequesterAuthority(SequesterAuthorityCertificate),
     SequesterService(SequesterServiceCertificate),
+    SequesterRevokedService(SequesterRevokedServiceCertificate),
 }
 
 #[derive(Debug)]
@@ -796,12 +1161,15 @@ pub enum UnsecureAnyCertificate {
     UserUpdate(UnsecureUserUpdateCertificate),
     RevokedUser(UnsecureRevokedUserCertificate),
     RealmRole(UnsecureRealmRoleCertificate),
+    RealmName(UnsecureRealmNameCertificate),
+    RealmArchiving(UnsecureRealmArchivingCertificate),
+    RealmKeyRotation(UnsecureRealmKeyRotationCertificate),
+    ShamirRecoveryBrief(UnsecureShamirRecoveryBriefCertificate),
+    ShamirRecoveryShare(UnsecureShamirRecoveryShareCertificate),
     SequesterAuthority(UnsecureSequesterAuthorityCertificate),
-    SequesterService(UnsecureSequesterServiceCertificate),
 }
 
 impl AnyCertificate {
-    // TODO: `VerifyKey::unsecure_unwrap` is invalid for `SequesterServiceCertificate`
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
         let (_, compressed) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
@@ -828,17 +1196,39 @@ impl AnyCertificate {
             AnyCertificate::RealmRole(unsecure) => {
                 UnsecureAnyCertificate::RealmRole(UnsecureRealmRoleCertificate { signed, unsecure })
             }
+            AnyCertificate::RealmName(unsecure) => {
+                UnsecureAnyCertificate::RealmName(UnsecureRealmNameCertificate { signed, unsecure })
+            }
+            AnyCertificate::RealmArchiving(unsecure) => {
+                UnsecureAnyCertificate::RealmArchiving(UnsecureRealmArchivingCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            AnyCertificate::RealmKeyRotation(unsecure) => {
+                UnsecureAnyCertificate::RealmKeyRotation(UnsecureRealmKeyRotationCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            AnyCertificate::ShamirRecoveryBrief(unsecure) => {
+                UnsecureAnyCertificate::ShamirRecoveryBrief(
+                    UnsecureShamirRecoveryBriefCertificate { signed, unsecure },
+                )
+            }
+            AnyCertificate::ShamirRecoveryShare(unsecure) => {
+                UnsecureAnyCertificate::ShamirRecoveryShare(
+                    UnsecureShamirRecoveryShareCertificate { signed, unsecure },
+                )
+            }
             AnyCertificate::SequesterAuthority(unsecure) => {
                 UnsecureAnyCertificate::SequesterAuthority(UnsecureSequesterAuthorityCertificate {
                     signed,
                     unsecure,
                 })
             }
-            AnyCertificate::SequesterService(unsecure) => {
-                UnsecureAnyCertificate::SequesterService(UnsecureSequesterServiceCertificate {
-                    signed,
-                    unsecure,
-                })
+            AnyCertificate::SequesterService(_) | AnyCertificate::SequesterRevokedService(_) => {
+                unreachable!()
             }
         })
     }
@@ -852,8 +1242,12 @@ impl UnsecureAnyCertificate {
             UnsecureAnyCertificate::RevokedUser(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::UserUpdate(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::RealmRole(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::RealmName(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::RealmArchiving(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::RealmKeyRotation(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::ShamirRecoveryBrief(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::ShamirRecoveryShare(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.timestamp(),
-            UnsecureAnyCertificate::SequesterService(unsecure) => unsecure.timestamp(),
         }
     }
 
@@ -864,8 +1258,296 @@ impl UnsecureAnyCertificate {
             UnsecureAnyCertificate::RevokedUser(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::UserUpdate(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::RealmRole(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::RealmName(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::RealmArchiving(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::RealmKeyRotation(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::ShamirRecoveryBrief(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::ShamirRecoveryShare(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.hint(),
-            UnsecureAnyCertificate::SequesterService(unsecure) => unsecure.hint(),
+        }
+    }
+}
+
+/*
+ * CommonTopicCertificate
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CommonTopicArcCertificate {
+    User(Arc<UserCertificate>),
+    Device(Arc<DeviceCertificate>),
+    UserUpdate(Arc<UserUpdateCertificate>),
+    RevokedUser(Arc<RevokedUserCertificate>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum CommonTopicCertificate {
+    User(UserCertificate),
+    Device(DeviceCertificate),
+    UserUpdate(UserUpdateCertificate),
+    RevokedUser(RevokedUserCertificate),
+}
+
+#[derive(Debug)]
+pub enum UnsecureCommonTopicCertificate {
+    User(UnsecureUserCertificate),
+    Device(UnsecureDeviceCertificate),
+    UserUpdate(UnsecureUserUpdateCertificate),
+    RevokedUser(UnsecureRevokedUserCertificate),
+}
+
+impl CommonTopicCertificate {
+    pub fn unsecure_load(signed: Bytes) -> Result<UnsecureCommonTopicCertificate, DataError> {
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let unsecure = load::<Self>(compressed)?;
+        Ok(match unsecure {
+            CommonTopicCertificate::User(unsecure) => {
+                UnsecureCommonTopicCertificate::User(UnsecureUserCertificate { signed, unsecure })
+            }
+            CommonTopicCertificate::Device(unsecure) => {
+                UnsecureCommonTopicCertificate::Device(UnsecureDeviceCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            CommonTopicCertificate::RevokedUser(unsecure) => {
+                UnsecureCommonTopicCertificate::RevokedUser(UnsecureRevokedUserCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            CommonTopicCertificate::UserUpdate(unsecure) => {
+                UnsecureCommonTopicCertificate::UserUpdate(UnsecureUserUpdateCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+        })
+    }
+}
+
+impl UnsecureCommonTopicCertificate {
+    pub fn timestamp(&self) -> &DateTime {
+        match self {
+            UnsecureCommonTopicCertificate::User(unsecure) => unsecure.timestamp(),
+            UnsecureCommonTopicCertificate::Device(unsecure) => unsecure.timestamp(),
+            UnsecureCommonTopicCertificate::RevokedUser(unsecure) => unsecure.timestamp(),
+            UnsecureCommonTopicCertificate::UserUpdate(unsecure) => unsecure.timestamp(),
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        match self {
+            UnsecureCommonTopicCertificate::User(unsecure) => unsecure.hint(),
+            UnsecureCommonTopicCertificate::Device(unsecure) => unsecure.hint(),
+            UnsecureCommonTopicCertificate::RevokedUser(unsecure) => unsecure.hint(),
+            UnsecureCommonTopicCertificate::UserUpdate(unsecure) => unsecure.hint(),
+        }
+    }
+
+    pub fn skip_validation(
+        self,
+        reason: UnsecureSkipValidationReason,
+    ) -> CommonTopicArcCertificate {
+        match self {
+            UnsecureCommonTopicCertificate::User(unsecure) => {
+                CommonTopicArcCertificate::User(Arc::new(unsecure.skip_validation(reason)))
+            }
+            UnsecureCommonTopicCertificate::Device(unsecure) => {
+                CommonTopicArcCertificate::Device(Arc::new(unsecure.skip_validation(reason)))
+            }
+            UnsecureCommonTopicCertificate::RevokedUser(unsecure) => {
+                CommonTopicArcCertificate::RevokedUser(Arc::new(unsecure.skip_validation(reason)))
+            }
+            UnsecureCommonTopicCertificate::UserUpdate(unsecure) => {
+                CommonTopicArcCertificate::UserUpdate(Arc::new(unsecure.skip_validation(reason)))
+            }
+        }
+    }
+}
+
+/*
+ * SequesterTopicCertificate
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SequesterTopicArcCertificate {
+    SequesterAuthority(Arc<SequesterAuthorityCertificate>),
+    SequesterService(Arc<SequesterServiceCertificate>),
+    SequesterRevokedService(Arc<SequesterRevokedServiceCertificate>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum SequesterTopicCertificate {
+    SequesterAuthority(SequesterAuthorityCertificate),
+    SequesterService(SequesterServiceCertificate),
+    SequesterRevokedService(SequesterRevokedServiceCertificate),
+}
+
+impl SequesterTopicCertificate {
+    /// Sequester authority is the very first certificate that should be provided. After
+    /// that, all subsequent certificates in this topic must be signed by the authority.
+    /// Hence only the authority requires to support the unsecure load.
+    pub fn unsecure_load_authority(
+        signed: Bytes,
+    ) -> Result<UnsecureSequesterAuthorityCertificate, DataError> {
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let unsecure = load::<SequesterAuthorityCertificate>(compressed)?;
+        Ok(UnsecureSequesterAuthorityCertificate { signed, unsecure })
+    }
+}
+
+/*
+ * RealmTopicCertificate
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RealmTopicArcCertificate {
+    RealmRole(Arc<RealmRoleCertificate>),
+    RealmName(Arc<RealmNameCertificate>),
+    RealmKeyRotation(Arc<RealmKeyRotationCertificate>),
+    RealmArchiving(Arc<RealmArchivingCertificate>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum RealmTopicCertificate {
+    RealmRole(RealmRoleCertificate),
+    RealmName(RealmNameCertificate),
+    RealmKeyRotation(RealmKeyRotationCertificate),
+    RealmArchiving(RealmArchivingCertificate),
+}
+
+#[derive(Debug)]
+pub enum UnsecureRealmTopicCertificate {
+    RealmRole(UnsecureRealmRoleCertificate),
+    RealmName(UnsecureRealmNameCertificate),
+    RealmKeyRotation(UnsecureRealmKeyRotationCertificate),
+    RealmArchiving(UnsecureRealmArchivingCertificate),
+}
+
+impl RealmTopicCertificate {
+    pub fn unsecure_load(signed: Bytes) -> Result<UnsecureRealmTopicCertificate, DataError> {
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let unsecure = load::<Self>(compressed)?;
+        Ok(match unsecure {
+            RealmTopicCertificate::RealmRole(unsecure) => {
+                UnsecureRealmTopicCertificate::RealmRole(UnsecureRealmRoleCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            RealmTopicCertificate::RealmName(unsecure) => {
+                UnsecureRealmTopicCertificate::RealmName(UnsecureRealmNameCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+            RealmTopicCertificate::RealmKeyRotation(unsecure) => {
+                UnsecureRealmTopicCertificate::RealmKeyRotation(
+                    UnsecureRealmKeyRotationCertificate { signed, unsecure },
+                )
+            }
+            RealmTopicCertificate::RealmArchiving(unsecure) => {
+                UnsecureRealmTopicCertificate::RealmArchiving(UnsecureRealmArchivingCertificate {
+                    signed,
+                    unsecure,
+                })
+            }
+        })
+    }
+}
+
+impl UnsecureRealmTopicCertificate {
+    pub fn timestamp(&self) -> &DateTime {
+        match self {
+            UnsecureRealmTopicCertificate::RealmRole(unsecure) => unsecure.timestamp(),
+            UnsecureRealmTopicCertificate::RealmName(unsecure) => unsecure.timestamp(),
+            UnsecureRealmTopicCertificate::RealmKeyRotation(unsecure) => unsecure.timestamp(),
+            UnsecureRealmTopicCertificate::RealmArchiving(unsecure) => unsecure.timestamp(),
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        match self {
+            UnsecureRealmTopicCertificate::RealmRole(unsecure) => unsecure.hint(),
+            UnsecureRealmTopicCertificate::RealmName(unsecure) => unsecure.hint(),
+            UnsecureRealmTopicCertificate::RealmKeyRotation(unsecure) => unsecure.hint(),
+            UnsecureRealmTopicCertificate::RealmArchiving(unsecure) => unsecure.hint(),
+        }
+    }
+}
+
+/*
+ * ShamirRecoveryTopicCertificate
+ */
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ShamirRecoveryTopicArcCertificate {
+    ShamirRecoveryShare(Arc<ShamirRecoveryShareCertificate>),
+    ShamirRecoveryBrief(Arc<ShamirRecoveryBriefCertificate>),
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+pub enum ShamirRecoveryTopicCertificate {
+    ShamirRecoveryShare(ShamirRecoveryShareCertificate),
+    ShamirRecoveryBrief(ShamirRecoveryBriefCertificate),
+}
+
+#[derive(Debug)]
+pub enum UnsecureShamirRecoveryTopicCertificate {
+    ShamirRecoveryShare(UnsecureShamirRecoveryShareCertificate),
+    ShamirRecoveryBrief(UnsecureShamirRecoveryBriefCertificate),
+}
+
+impl ShamirRecoveryTopicCertificate {
+    pub fn unsecure_load(
+        signed: Bytes,
+    ) -> Result<UnsecureShamirRecoveryTopicCertificate, DataError> {
+        let (_, compressed) =
+            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+        let unsecure = load::<Self>(compressed)?;
+        Ok(match unsecure {
+            ShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
+                UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(
+                    UnsecureShamirRecoveryShareCertificate { signed, unsecure },
+                )
+            }
+            ShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
+                UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(
+                    UnsecureShamirRecoveryBriefCertificate { signed, unsecure },
+                )
+            }
+        })
+    }
+}
+
+impl UnsecureShamirRecoveryTopicCertificate {
+    pub fn timestamp(&self) -> &DateTime {
+        match self {
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
+                unsecure.timestamp()
+            }
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
+                unsecure.timestamp()
+            }
+        }
+    }
+
+    pub fn hint(&self) -> String {
+        match self {
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
+                unsecure.hint()
+            }
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
+                unsecure.hint()
+            }
         }
     }
 }

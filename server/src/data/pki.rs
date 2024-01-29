@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    exceptions::PyValueError,
     pyclass, pymethods,
     types::{IntoPyDict, PyBytes, PyDict, PyType},
     PyAny, PyObject, PyResult, Python,
@@ -8,23 +9,26 @@ use pyo3::{
 use std::{collections::HashMap, path::Path};
 
 use crate::{
-    BackendPkiEnrollmentAddr, BytesWrapper, DataResult, DateTime, DeviceID, DeviceLabel,
-    EnrollmentID, HumanHandle, PkiEnrollmentLocalPendingResult, PublicKey, UserProfile, VerifyKey,
+    addrs::BackendPkiEnrollmentAddr,
+    binding_utils::BytesWrapper,
+    crypto::{PublicKey, VerifyKey},
+    enumerate::UserProfile,
+    ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle},
+    time::DateTime,
 };
 
-crate::binding_utils::gen_py_wrapper_class!(
-    PkiEnrollmentAnswerPayload,
-    libparsec_types::PkiEnrollmentAnswerPayload,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __richcmp__ eq,
-);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct PkiEnrollmentAnswerPayload(pub libparsec_types::PkiEnrollmentAnswerPayload);
+
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __repr__);
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __copy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __deepcopy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __richcmp__, eq);
 
 #[pymethods]
 impl PkiEnrollmentAnswerPayload {
     #[new]
-    #[pyo3(signature = (device_id, device_label, human_handle, profile, root_verify_key))]
     fn new(
         device_id: DeviceID,
         device_label: DeviceLabel,
@@ -67,8 +71,10 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec_types::PkiEnrollmentAnswerPayload::load(raw).map(Self)?)
+    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+        libparsec_types::PkiEnrollmentAnswerPayload::load(raw)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -76,14 +82,14 @@ impl PkiEnrollmentAnswerPayload {
     }
 }
 
-crate::binding_utils::gen_py_wrapper_class!(
-    PkiEnrollmentSubmitPayload,
-    libparsec_types::PkiEnrollmentSubmitPayload,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __richcmp__ eq,
-);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct PkiEnrollmentSubmitPayload(pub libparsec_types::PkiEnrollmentSubmitPayload);
+
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __repr__);
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __copy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __deepcopy__);
+crate::binding_utils::gen_proto!(PkiEnrollmentSubmitPayload, __richcmp__, eq);
 
 #[pymethods]
 impl PkiEnrollmentSubmitPayload {
@@ -116,8 +122,10 @@ impl PkiEnrollmentSubmitPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec_types::PkiEnrollmentSubmitPayload::load(raw).map(Self)?)
+    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+        libparsec_types::PkiEnrollmentSubmitPayload::load(raw)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
@@ -125,14 +133,14 @@ impl PkiEnrollmentSubmitPayload {
     }
 }
 
-crate::binding_utils::gen_py_wrapper_class!(
-    X509Certificate,
-    libparsec_types::X509Certificate,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __richcmp__ eq,
-);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct X509Certificate(pub libparsec_types::X509Certificate);
+
+crate::binding_utils::gen_proto!(X509Certificate, __repr__);
+crate::binding_utils::gen_proto!(X509Certificate, __copy__);
+crate::binding_utils::gen_proto!(X509Certificate, __deepcopy__);
+crate::binding_utils::gen_proto!(X509Certificate, __richcmp__, eq);
 
 #[pymethods]
 impl X509Certificate {
@@ -232,14 +240,14 @@ impl X509Certificate {
     }
 }
 
-crate::binding_utils::gen_py_wrapper_class!(
-    LocalPendingEnrollment,
-    libparsec_types::LocalPendingEnrollment,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __richcmp__ eq,
-);
+#[pyclass]
+#[derive(Clone)]
+pub(crate) struct LocalPendingEnrollment(pub libparsec_types::LocalPendingEnrollment);
+
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __repr__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __copy__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __deepcopy__);
+crate::binding_utils::gen_proto!(LocalPendingEnrollment, __richcmp__, eq);
 
 #[pymethods]
 impl LocalPendingEnrollment {
@@ -266,36 +274,44 @@ impl LocalPendingEnrollment {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> DataResult<Self> {
-        Ok(libparsec_types::LocalPendingEnrollment::load(raw).map(Self)?)
+    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+        libparsec_types::LocalPendingEnrollment::load(raw)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
     }
 
     fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
         PyBytes::new(py, &self.0.dump())
     }
 
-    fn save(&self, config_dir: &PyAny) -> PkiEnrollmentLocalPendingResult<String> {
+    fn save(&self, config_dir: &PyAny) -> PyResult<String> {
         let config_dir = config_dir
             .call_method0("__str__")
             .expect("config_dir should be a Path")
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        Ok(self
+        let path = self
             .0
             .save(config_dir)
-            .map(|x| x.to_str().expect("Unreachable").to_string())?)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        let path_str = path
+            .to_str()
+            .ok_or(PyValueError::new_err("Non UTF8 path"))?;
+        Ok(path_str.to_string())
     }
 
     #[classmethod]
-    fn load_from_path(_cls: &PyType, path: &PyAny) -> PkiEnrollmentLocalPendingResult<Self> {
+    fn load_from_path(_cls: &PyType, path: &PyAny) -> PyResult<Self> {
         let path = path
             .call_method0("__str__")
             .expect("path should be a Path")
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        Ok(libparsec_types::LocalPendingEnrollment::load_from_path(path).map(Self)?)
+        libparsec_types::LocalPendingEnrollment::load_from_path(path)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(Self)
     }
 
     #[classmethod]
@@ -303,20 +319,19 @@ impl LocalPendingEnrollment {
         _cls: &PyType,
         config_dir: &PyAny,
         enrollment_id: EnrollmentID,
-    ) -> PkiEnrollmentLocalPendingResult<Self> {
+    ) -> PyResult<Self> {
         let config_dir = config_dir
             .call_method0("__str__")
             .expect("config_dir should be a Path")
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        Ok(
-            libparsec_types::LocalPendingEnrollment::load_from_enrollment_id(
-                config_dir,
-                enrollment_id.0,
-            )
-            .map(Self)?,
+        libparsec_types::LocalPendingEnrollment::load_from_enrollment_id(
+            config_dir,
+            enrollment_id.0,
         )
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(Self)
     }
 
     #[classmethod]
@@ -324,19 +339,18 @@ impl LocalPendingEnrollment {
         _cls: &PyType,
         config_dir: &PyAny,
         enrollment_id: EnrollmentID,
-    ) -> PkiEnrollmentLocalPendingResult<()> {
+    ) -> PyResult<()> {
         let config_dir = config_dir
             .call_method0("__str__")
             .expect("config_dir should be a Path")
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
-        Ok(
-            libparsec_types::LocalPendingEnrollment::remove_from_enrollment_id(
-                config_dir,
-                enrollment_id.0,
-            )?,
+        libparsec_types::LocalPendingEnrollment::remove_from_enrollment_id(
+            config_dir,
+            enrollment_id.0,
         )
+        .map_err(|e| PyValueError::new_err(e.to_string()))
     }
 
     #[classmethod]

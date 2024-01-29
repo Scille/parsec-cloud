@@ -1,93 +1,111 @@
 #![allow(unused_variables)]
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::Path;
+use std::{marker::PhantomData, path::Path};
 
 use libparsec_types::prelude::*;
 
-use crate::certificates::{
-    AddCertificateData, GetAnyCertificateData, GetCertificateError, GetCertificateQuery,
-    GetTimestampBoundsError, UpTo,
-};
+use crate::certificates::{GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps, UpTo};
+
+#[derive(Debug)]
+pub(crate) struct PlatformCertificatesStorageForUpdateGuard<'a> {
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
+    pub async fn commit(self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    pub async fn get_certificate_encrypted(
+        &mut self,
+        query: GetCertificateQuery,
+        up_to: UpTo,
+    ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
+        todo!()
+    }
+
+    /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
+    pub async fn get_multiple_certificates_encrypted(
+        &mut self,
+        query: GetCertificateQuery,
+        up_to: UpTo,
+        offset: Option<u32>,
+        limit: Option<u32>,
+    ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
+        todo!()
+    }
+
+    pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    pub async fn add_certificate(
+        &mut self,
+        certificate_type: &'static str,
+        filter1: Option<String>,
+        filter2: Option<String>,
+        timestamp: DateTime,
+        encrypted: Vec<u8>,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
+        todo!()
+    }
+
+    /// Only used for debugging tests
+    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
+        todo!()
+    }
+}
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorage {}
 
 impl PlatformCertificatesStorage {
-    #[allow(unused)]
     pub async fn no_populate_start(
-        _data_base_dir: &Path,
-        _device: &LocalDevice,
+        data_base_dir: &Path,
+        device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         todo!()
     }
 
-    pub async fn stop(&self) {
+    pub async fn stop(self) -> anyhow::Result<()> {
         todo!()
     }
 
-    #[cfg(test)]
-    pub async fn test_get_raw_certificate(
-        &self,
-        index: IndexInt,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn for_update(
+        &mut self,
+    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard> {
         todo!()
     }
 
-    /// Return the timestamp of creation of the considered certificate index
-    /// and (if any) of the certificate index following it.
-    /// If this certificate index doesn't exist yet, `(None, None)` is returned.
-    pub async fn get_timestamp_bounds(
-        &self,
-        index: IndexInt,
-    ) -> Result<(DateTime, Option<DateTime>), GetTimestampBoundsError> {
+    pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
         todo!()
     }
 
-    pub async fn get_last_index(&self) -> anyhow::Result<Option<(IndexInt, DateTime)>> {
-        todo!()
-    }
-
-    /// Remove all certificates from the database
-    /// There is no data loss from this as certificates can be re-obtained from
-    /// the server, however it is only needed when switching from/to redacted
-    /// certificates
-    pub async fn forget_all_certificates(&self) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    pub async fn add_certificate(
-        &self,
-        index: IndexInt,
-        data: AddCertificateData,
-    ) -> anyhow::Result<()> {
-        todo!()
-    }
-
-    pub async fn get_any_certificate_encrypted(
-        &self,
-        index: IndexInt,
-    ) -> Result<GetAnyCertificateData, GetCertificateError> {
-        todo!()
-    }
-
-    /// Not if multiple results are possible, the highest index is kept (i.e. latest certificate)
     pub async fn get_certificate_encrypted(
-        &self,
+        &mut self,
         query: GetCertificateQuery,
         up_to: UpTo,
-    ) -> Result<(IndexInt, Vec<u8>), GetCertificateError> {
+    ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         todo!()
     }
 
-    /// Certificates are returned ordered by index in increasing order
     pub async fn get_multiple_certificates_encrypted(
-        &self,
+        &mut self,
         query: GetCertificateQuery,
         up_to: UpTo,
-        offset: Option<usize>,
-        limit: Option<usize>,
-    ) -> anyhow::Result<Vec<(IndexInt, Vec<u8>)>> {
+        offset: Option<u32>,
+        limit: Option<u32>,
+    ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
+        todo!()
+    }
+
+    /// Only used for debugging tests
+    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!()
     }
 }

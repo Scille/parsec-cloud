@@ -1,7 +1,6 @@
 [
     {
         "major_versions": [
-            3,
             4
         ],
         "req": {
@@ -12,19 +11,23 @@
                     "type": "VlobID"
                 },
                 {
-                    "name": "encryption_revision",
-                    "type": "Index"
-                },
-                {
                     "name": "vlob_id",
                     "type": "VlobID"
                 },
-                // If blob contains a signed message, it timestamp cannot be directly enforced
-                // by the backend (given the message is probably also encrypted).
-                // Hence the timestamp is passed in clear so backend can reject the message
-                // if it considers the timestamp invalid. On top of that each client asking
-                // for the message will receive the declared timestamp to check against
-                // the actual timestamp within the message.
+                // The key index is used to identify which key in the keys bundle has
+                // been used to encrypt the blob.
+                // Note 0 is allowed (used by user realm where there is only a single key).
+                {
+                    "name": "key_index",
+                    "type": "Index"
+                },
+                // Blob is expected to contain encrypted data, so the server cannot enforce
+                // the timestamp in case the content is signed.
+                // Hence the timestamp is provided in clear so the server can reject the
+                // request if it considers it is out of ballpark.
+                // On top of that, each client fetching the blob will also receive this
+                // declared timestamp in order to check it corresponds with the actual
+                // timestamp within the decrypted data.
                 {
                     "name": "timestamp",
                     "type": "DateTime"
@@ -35,11 +38,9 @@
                 },
                 // Field set to `None` if sequester is disabled for the organization
                 // Key is sequester service ID, value is blob encrypted with the service key
-                // New in API version 2.8/3.2 (Parsec 2.11.0)
                 {
                     "name": "sequester_blob",
-                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>",
-                    "introduced_in": "3.2"
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
                 }
             ]
         },
@@ -48,74 +49,33 @@
                 "status": "ok"
             },
             {
-                "status": "already_exists",
+                "status": "author_not_allowed"
+            },
+            {
+                // If the `key_index` in the certificate is not currently the realm's last
+                "status": "bad_key_index",
                 "fields": [
                     {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    }
-                ]
-            },
-            {
-                "status": "not_allowed"
-            },
-            {
-                "status": "bad_encryption_revision"
-            },
-            {
-                "status": "in_maintenance"
-            },
-            {
-                // Returned if another certificate in the server has a creation date
-                // posterior or equal to our current one.
-                "status": "require_greater_timestamp",
-                "fields": [
-                    {
-                        "name": "strictly_greater_than",
+                        "name": "last_realm_certificate_timestamp",
                         "type": "DateTime"
                     }
                 ]
             },
             {
-                // Returned if the timestamp in the certificate is too far away compared
-                // to server clock.
-                "status": "bad_timestamp",
-                "fields": [
-                    {
-                        "name": "reason",
-                        "type": "NonRequiredOption<String>"
-                    },
-                    {
-                        "name": "ballpark_client_early_offset",
-                        "type": "Float"
-                    },
-                    {
-                        "name": "ballpark_client_late_offset",
-                        "type": "Float"
-                    },
-                    {
-                        "name": "backend_timestamp",
-                        "type": "DateTime"
-                    },
-                    {
-                        "name": "client_timestamp",
-                        "type": "DateTime"
-                    }
-                ]
+                "status": "realm_not_found"
             },
             {
-                "status": "not_a_sequestered_organization"
+                "status": "vlob_already_exists"
+            },
+            {
+                "status": "organization_not_sequestered"
             },
             {
                 "status": "sequester_inconsistency",
                 "fields": [
                     {
-                        "name": "sequester_authority_certificate",
-                        "type": "Bytes"
-                    },
-                    {
-                        "name": "sequester_services_certificates",
-                        "type": "List<Bytes>"
+                        "name": "last_common_certificate_timestamp",
+                        "type": "DateTime"
                     }
                 ]
             },
@@ -127,17 +87,47 @@
                         "type": "SequesterServiceID"
                     },
                     {
-                        "name": "service_label",
-                        "type": "String"
-                    },
-                    {
                         "name": "reason",
                         "type": "String"
                     }
                 ]
             },
             {
-                "status": "timeout"
+                "status": "sequester_service_unavailable"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
             }
         ]
     }

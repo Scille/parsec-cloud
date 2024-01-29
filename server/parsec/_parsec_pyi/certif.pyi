@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 from parsec._parsec_pyi.crypto import (
     PublicKey,
     SequesterPublicKeyDer,
@@ -48,7 +46,6 @@ class UserCertificate:
     def public_key(self) -> PublicKey: ...
     @property
     def profile(self) -> UserProfile: ...
-    def evolve(self, **kwargs: Any) -> UserCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
@@ -57,10 +54,15 @@ class UserCertificate:
         expected_author: DeviceID | None = None,
         expected_user: UserID | None = None,
         expected_human_handle: HumanHandle | None = None,
-    ) -> UserCertificate: ...
+    ) -> UserCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> UserCertificate: ...
+    def unsecure_load(cls, signed: bytes) -> UserCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def redacted_compare(self, redacted: "UserCertificate") -> bool: ...
 
 class DeviceCertificate:
     def __init__(
@@ -83,7 +85,6 @@ class DeviceCertificate:
     def is_redacted(self) -> bool: ...
     @property
     def verify_key(self) -> VerifyKey: ...
-    def evolve(self, **kwargs: Any) -> DeviceCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
@@ -91,10 +92,15 @@ class DeviceCertificate:
         author_verify_key: VerifyKey,
         expected_author: DeviceID | None = None,
         expected_device: DeviceID | None = None,
-    ) -> DeviceCertificate: ...
+    ) -> DeviceCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> DeviceCertificate: ...
+    def unsecure_load(cls, signed: bytes) -> DeviceCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def redacted_compare(self, redacted: "DeviceCertificate") -> bool: ...
 
 class RevokedUserCertificate:
     def __init__(self, author: DeviceID, timestamp: DateTime, user_id: UserID) -> None: ...
@@ -104,7 +110,6 @@ class RevokedUserCertificate:
     def timestamp(self) -> DateTime: ...
     @property
     def user_id(self) -> UserID: ...
-    def evolve(self, **kwargs: Any) -> RevokedUserCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
@@ -112,10 +117,14 @@ class RevokedUserCertificate:
         author_verify_key: VerifyKey,
         expected_author: DeviceID | None = None,
         expected_device: DeviceID | None = None,
-    ) -> RevokedUserCertificate: ...
+    ) -> RevokedUserCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> RevokedUserCertificate: ...
+    def unsecure_load(cls, signed: bytes) -> RevokedUserCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
 
 class UserUpdateCertificate:
     def __init__(
@@ -133,7 +142,6 @@ class UserUpdateCertificate:
     def user_id(self) -> UserID: ...
     @property
     def new_profile(self) -> UserProfile: ...
-    def evolve(self, **kwargs: Any) -> UserUpdateCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
@@ -141,10 +149,14 @@ class UserUpdateCertificate:
         author_verify_key: VerifyKey,
         expected_author: DeviceID | None = None,
         expected_user: UserID | None = None,
-    ) -> UserUpdateCertificate: ...
+    ) -> UserUpdateCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> UserUpdateCertificate: ...
+    def unsecure_load(cls, signed: bytes) -> UserUpdateCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
 
 class RealmRoleCertificate:
     def __init__(
@@ -165,7 +177,6 @@ class RealmRoleCertificate:
     def user_id(self) -> UserID: ...
     @property
     def role(self) -> RealmRole | None: ...
-    def evolve(self, **kwargs: Any) -> RealmRoleCertificate: ...
     @classmethod
     def verify_and_load(
         cls,
@@ -174,21 +185,225 @@ class RealmRoleCertificate:
         expected_author: DeviceID | None = None,
         expected_realm: VlobID | None = None,
         expected_user: UserID | None = None,
-    ) -> RealmRoleCertificate: ...
+    ) -> RealmRoleCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> RealmRoleCertificate: ...
+    def unsecure_load(cls, signed: bytes) -> RealmRoleCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     @classmethod
     def build_realm_root_certif(
         cls, author: DeviceID, timestamp: DateTime, realm_id: VlobID
     ) -> RealmRoleCertificate: ...
+
+class RealmNameCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: int,
+        encrypted_name: bytes,
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def key_index(self) -> int: ...
+    @property
+    def encrypted_name(self) -> bytes: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_realm: VlobID | None = None,
+    ) -> RealmNameCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> RealmNameCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+
+class SecretKeyAlgorithm:
+    XSALSA20_POLY1305: SecretKeyAlgorithm
+    VALUES: tuple[SecretKeyAlgorithm, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> SecretKeyAlgorithm: ...
+    @property
+    def str(self) -> str: ...
+
+class HashAlgorithm:
+    SHA256: HashAlgorithm
+    VALUES: tuple[HashAlgorithm, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> HashAlgorithm: ...
+    @property
+    def str(self) -> str: ...
+
+class RealmKeyRotationCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: int,
+        encryption_algorithm: SecretKeyAlgorithm,
+        hash_algorithm: HashAlgorithm,
+        key_canary: bytes,
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def key_index(self) -> int: ...
+    @property
+    def encryption_algorithm(self) -> SecretKeyAlgorithm: ...
+    @property
+    def hash_algorithm(self) -> HashAlgorithm: ...
+    @property
+    def key_canary(self) -> bytes: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_realm: VlobID | None = None,
+    ) -> RealmKeyRotationCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> RealmKeyRotationCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+
+class RealmArchivingConfiguration:
+    AVAILABLE: RealmArchivingConfiguration
+    ARCHIVED: RealmArchivingConfiguration
+
+    @classmethod
+    def deletion_planned(cls, deletion_date: DateTime) -> RealmArchivingConfiguration: ...
+    @property
+    def deletion_date(self) -> DateTime: ...
+
+class RealmArchivingCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        realm_id: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def configuration(self) -> RealmArchivingConfiguration: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_realm: VlobID | None = None,
+    ) -> RealmArchivingCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> RealmArchivingCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+
+class ShamirRecoveryBriefCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        threshold: int,
+        per_recipient_shares: dict[UserID, int],
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def threshold(self) -> int: ...
+    @property
+    def per_recipient_shares(self) -> dict[UserID, int]: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+    ) -> ShamirRecoveryBriefCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> ShamirRecoveryBriefCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+
+class ShamirRecoveryShareCertificate:
+    def __init__(
+        self,
+        author: DeviceID | None,
+        timestamp: DateTime,
+        realm_id: VlobID,
+        configuration: RealmArchivingConfiguration,
+    ) -> None: ...
+    @property
+    def author(self) -> DeviceID | None: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def realm_id(self) -> VlobID: ...
+    @property
+    def configuration(self) -> RealmArchivingConfiguration: ...
+    @classmethod
+    def verify_and_load(
+        cls,
+        signed: bytes,
+        author_verify_key: VerifyKey,
+        expected_author: DeviceID,
+        expected_recipient: UserID | None,
+    ) -> ShamirRecoveryShareCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
+    @classmethod
+    def unsecure_load(cls, signed: bytes) -> ShamirRecoveryShareCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
 
 class SequesterAuthorityCertificate:
     def __init__(self, timestamp: DateTime, verify_key_der: SequesterVerifyKeyDer) -> None: ...
     @classmethod
     def verify_and_load(
         cls, signed: bytes, author_verify_key: VerifyKey
-    ) -> SequesterAuthorityCertificate: ...
+    ) -> SequesterAuthorityCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @property
     def timestamp(self) -> DateTime: ...
@@ -204,7 +419,9 @@ class SequesterServiceCertificate:
         encryption_key_der: SequesterPublicKeyDer,
     ) -> None: ...
     @classmethod
-    def load(cls, data: bytes) -> SequesterServiceCertificate: ...
+    def load(cls, data: bytes) -> SequesterServiceCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
     def dump(self) -> bytes: ...
     @property
     def timestamp(self) -> DateTime: ...
@@ -214,3 +431,19 @@ class SequesterServiceCertificate:
     def service_label(self) -> str: ...
     @property
     def encryption_key_der(self) -> SequesterPublicKeyDer: ...
+
+class SequesterRevokedServiceCertificate:
+    def __init__(
+        self,
+        timestamp: DateTime,
+        service_id: SequesterServiceID,
+    ) -> None: ...
+    @classmethod
+    def load(cls, data: bytes) -> SequesterRevokedServiceCertificate:
+        """Raise `ValueError` if invalid"""
+        ...
+    def dump(self) -> bytes: ...
+    @property
+    def timestamp(self) -> DateTime: ...
+    @property
+    def service_id(self) -> SequesterServiceID: ...

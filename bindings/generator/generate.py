@@ -492,7 +492,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
     for item_name, item in api_items.items():
         if isclass(item) and issubclass(item, Variant):
             placeholder = TYPES_DB[item]
-            # Variant values types are special kind of structures: the are never referenced directly (the variant type
+            # Variant values types are special kind of structures: they are never referenced directly (the variant type
             # must be referenced instead) so we don't need to add it to TYPES_DB (hence we wait for 2nd pass to treat them)
             variant_values = []
             for variant_val_name in dir(item):
@@ -701,7 +701,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate bindings code")
     parser.add_argument(
         "what",
-        choices=TEMPLATE_CHOICES + ["all"],
+        choices=[*TEMPLATE_CHOICES, "all"],
         nargs="+",
     )
     parser.add_argument("--test", action="store_true")

@@ -7,8 +7,6 @@ use pyo3::{
     IntoPy, PyObject, PyResult, Python,
 };
 
-use crate::{ProtocolErrorFields, ProtocolResult};
-
 // #[non_exhaustive] macro must be set for every enum like type,
 // because we would like to call `is` in `python`, then
 // a static reference should be returned instead of a new object
@@ -19,9 +17,14 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     ["IDLE", idle, libparsec_types::InvitationStatus::Idle],
     ["READY", ready, libparsec_types::InvitationStatus::Ready],
     [
-        "DELETED",
-        deleted,
-        libparsec_types::InvitationStatus::Deleted
+        "CANCELLED",
+        cancelled,
+        libparsec_types::InvitationStatus::Cancelled
+    ],
+    [
+        "FINISHED",
+        finished,
+        libparsec_types::InvitationStatus::Finished
     ]
 );
 
@@ -75,14 +78,13 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
 
 #[pymethods]
 impl DeviceFileType {
-    pub fn dump<'py>(&self, py: Python<'py>) -> ProtocolResult<&'py PyBytes> {
+    pub fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
         Ok(PyBytes::new(
             py,
-            &self.0.dump().map_err(|e| {
-                ProtocolErrorFields(libparsec_protocol::ProtocolError::EncodingError {
-                    exc: e.to_string(),
-                })
-            })?,
+            &self
+                .0
+                .dump()
+                .map_err(|err| PyValueError::new_err(err.to_string()))?,
         ))
     }
 

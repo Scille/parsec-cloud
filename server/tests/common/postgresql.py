@@ -4,14 +4,15 @@ from __future__ import annotations
 import asyncio
 import atexit
 import os
+from typing import Awaitable, Callable
 
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.backend.postgresql.handler import _apply_migrations, retrieve_migrations
+from parsec.components.postgresql.handler import _apply_migrations, retrieve_migrations
 
 
-def _patch_url_if_xdist(url):
+def _patch_url_if_xdist(url: str) -> str:
     xdist_worker = os.environ.get("PYTEST_XDIST_WORKER")
     if xdist_worker:
         return f"{url}_{xdist_worker}"
@@ -22,14 +23,16 @@ def _patch_url_if_xdist(url):
 _pg_db_url = None
 
 
-async def run_migrations(conn) -> None:
+async def run_migrations(conn: asyncpg.Connection) -> None:
     result = await _apply_migrations(conn, retrieve_migrations(), dry_run=False)
     if result.error:
         migration, msg = result.error
         raise RuntimeError(f"Error while applying migration {migration.file_name}: {msg}")
 
 
-async def _execute_pg_query(url, query):
+async def _execute_pg_query(
+    url: str, query: str | Callable[[asyncpg.Connection], Awaitable[None]]
+) -> None:
     conn = await asyncpg.connect(url)
     if callable(query):
         await query(conn)
@@ -38,7 +41,7 @@ async def _execute_pg_query(url, query):
     await conn.close()
 
 
-def bootstrap_postgresql_testbed():
+def bootstrap_postgresql_testbed() -> str:
     global _pg_db_url
 
     provided_db = os.environ.get("PG_URL")
@@ -63,7 +66,8 @@ def bootstrap_postgresql_testbed():
     return _pg_db_url
 
 
-async def asyncio_reset_postgresql_testbed():
+async def asyncio_reset_postgresql_testbed() -> None:
+    assert _pg_db_url is not None
     await _execute_pg_query(
         _pg_db_url,
         """
@@ -90,18 +94,18 @@ RESTART IDENTITY CASCADE
     )
 
 
-def reset_postgresql_testbed():
+def reset_postgresql_testbed() -> None:
     asyncio.run(asyncio_reset_postgresql_testbed())
 
 
-def get_postgresql_url():
+def get_postgresql_url() -> str | None:
     return _pg_db_url
 
 
 _pg_cluster = None
 
 
-def bootstrap_pg_cluster():
+def bootstrap_pg_cluster() -> str:
     global _pg_cluster
 
     if _pg_cluster:
@@ -113,7 +117,8 @@ def bootstrap_pg_cluster():
     _pg_cluster.trust_local_connections()
     _pg_cluster.start(port="dynamic", server_settings={})
 
-    def _shutdown_pg_cluster():
+    def _shutdown_pg_cluster() -> None:
+        assert _pg_cluster is not None
         if _pg_cluster.get_status() == "running":
             _pg_cluster.stop()
         if _pg_cluster.get_status() != "not-initialized":

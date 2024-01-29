@@ -409,7 +409,9 @@ fn start_testbed_server(stop_after_process: u32, port: u16) -> anyhow::Result<st
         .args([
             "run",
             "python",
-            "tests/scripts/run_testbed_server.py",
+            "-m",
+            "parsec",
+            "testbed",
             "--stop-after-process",
             &stop_after_process.to_string(),
             "--port",

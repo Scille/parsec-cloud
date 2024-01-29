@@ -57,6 +57,25 @@ impl<T> crate::future::Future for JoinHandle<T> {
     }
 }
 
+impl std::fmt::Display for JoinError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // TODO: handle error message
+        f.write_str("task has encountered error")
+    }
+}
+
+impl std::error::Error for JoinError {}
+
+impl From<JoinError> for std::io::Error {
+    fn from(_: JoinError) -> std::io::Error {
+        std::io::Error::new(
+            std::io::ErrorKind::Other,
+            // TODO: handle error message
+            "task has encountered error",
+        )
+    }
+}
+
 #[inline(always)]
 pub fn spawn<T>(_future: T) -> JoinHandle<T::Output>
 where
