@@ -8,6 +8,7 @@ import Device from '@/assets/images/device.svg?raw';
 import Doc from '@/assets/images/doc.svg?raw';
 import Excel from '@/assets/images/excel.svg?raw';
 import FileImport from '@/assets/images/file-import.svg?raw';
+import Folder from '@/assets/images/folder.svg?raw';
 import Font from '@/assets/images/font.svg?raw';
 import Illustrator from '@/assets/images/illustrator.svg?raw';
 import Image from '@/assets/images/image.svg?raw';
@@ -65,6 +66,7 @@ export {
   Device,
   File,
   FileImport,
+  Folder,
   LogoIconGradient,
   LogoRowWhite,
   NoImportDone,
