@@ -128,6 +128,8 @@ pub(super) async fn ensure_realm_intial_key_rotation(
 
 enum WorkspaceKeyOrigin {
     NewlyGenerated(SecretKey),
+    // TODO: finish self-heal !
+    #[allow(dead_code)]
     LegacyFromUserManifest(SecretKey),
 }
 
@@ -136,6 +138,8 @@ enum RealmInitialKeyRotationOutcome {
     Done(CertificateBasedActionOutcome),
     /// We try to do the initial key rotation on a legacy realm with a newly
     /// generated key :-(
+    // TODO: finish self-heal !
+    #[allow(dead_code)]
     LegacyRealmWithNewlyGeneratedKey { encryption_revision: IndexInt },
 }
 

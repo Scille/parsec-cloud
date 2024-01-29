@@ -12,6 +12,8 @@ use crate::event_bus::EventBus;
 /// Typical monitor runs a single coroutine that listens on the event bus
 /// and calls methods on an ops component.
 pub(crate) struct Monitor {
+    // TODO: finish key monitor generic error handling  !
+    #[allow(unused)]
     pub name: &'static str,
     /// Not `None` if the monitor is related to a specific workspace
     pub workspace_id: Option<VlobID>,

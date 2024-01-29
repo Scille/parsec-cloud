@@ -45,6 +45,8 @@ pub(super) enum KeyFromIndexError {
 }
 
 impl RealmKeys {
+    // TODO: finish non-initial key rotation !
+    #[allow(dead_code)]
     fn keys_with_indexes(&self) -> impl Iterator<Item = (&ValidatedKey, IndexInt)> {
         self.keys.iter().zip(1..)
     }
@@ -83,6 +85,8 @@ impl RealmKeys {
         }
     }
 
+    // TODO: finish non-initial key rotation !
+    #[allow(dead_code)]
     pub fn generate_next_key_bundle(
         &self,
         author: DeviceID,
@@ -228,6 +232,8 @@ pub(super) async fn load_last_realm_keys_bundle<'a>(
     Ok(realm_keys)
 }
 
+// TODO: finish key bundle healing !
+#[allow(dead_code)]
 pub enum KeysBundleHealingOutcome {
     /// Current last keys bundle is valid and contains only valid keys.
     NotNeeded,
@@ -247,6 +253,8 @@ pub(super) enum AttemptRealmKeysBundleHealingError {
     Offline,
     #[error("Not allowed to access this realm")]
     NotAllowed,
+    // TODO: finish key bundle healing !
+    #[allow(dead_code)]
     #[error("The realm doesn't have any key yet")]
     NoKey,
     #[error(transparent)]
@@ -292,6 +300,8 @@ impl From<ConnectionError> for AttemptRealmKeysBundleHealingError {
 //     }
 // }
 
+// TODO: finish key bundle healing !
+#[allow(dead_code)]
 async fn recover_realm_keys_from_previous_bundles<'a>(
     ops: &CertifOps,
     store: &mut CertificatesStoreReadGuard<'a>,
