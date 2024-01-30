@@ -26,6 +26,7 @@ mod list_users;
 mod list_workspace_users;
 mod poll_server_for_new_certificates;
 mod rename_realm;
+mod share_realm;
 mod store;
 mod utils;
 mod validate_child_manifest;
