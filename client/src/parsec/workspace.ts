@@ -88,6 +88,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         lastUpdated: DateTime.now(),
         availableOffline: true,
         isStarted: false,
+        isBootstrapped: true,
         sharing: [],
       },
     ];
