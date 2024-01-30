@@ -286,7 +286,6 @@ def _parse_auth_headers_or_abort(
     # From now on the version is settled, our reply must have the `Api-Version` header
 
     # 2) Check organization ID
-    # Check whether the organization exists
     try:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
@@ -330,7 +329,7 @@ def _parse_auth_headers_or_abort(
 
         try:
             authenticated_signature = b64decode(raw_signature_b64)
-            authenticated_device_id = DeviceID(b64decode(raw_device_id).decode())
+            authenticated_device_id = DeviceID(b64decode(raw_device_id).decode("utf8"))
         except ValueError:
             _handshake_abort(
                 CustomHttpStatus.BadAuthenticationInfo.value, api_version=settled_api_version
