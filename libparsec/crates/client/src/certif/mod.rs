@@ -41,6 +41,7 @@ use libparsec_types::prelude::*;
 
 use crate::{event_bus::EventBus, ClientConfig};
 
+#[derive(Debug)]
 pub enum CertificateBasedActionOutcome {
     /// The action was already done according to the certificates we have locally,
     /// hence no need certificate was uploaded.
