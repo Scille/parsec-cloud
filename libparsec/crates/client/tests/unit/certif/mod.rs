@@ -9,6 +9,7 @@ mod add_user_revoked_certificate;
 mod add_user_update_certificate;
 mod encrypt_for_sequester_services;
 mod get_current_self_profile;
+mod get_current_self_realm_role;
 mod get_current_self_realms_role;
 mod get_user_device;
 mod list_user_devices;
