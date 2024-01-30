@@ -1,10 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::Cell,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_tests_fixtures::*;
 
-use crate::{EventBus, EventPing};
+use crate::{EventBus, EventOffline, EventOnline, EventPing};
 
 #[test]
 fn debug_format() {
@@ -103,4 +106,35 @@ fn closure() {
         *closure_calls.lock().unwrap(),
         ["1", "2", "3", "5", "6", "closure2:6"]
     );
+}
+
+#[parsec_test]
+async fn wait_server_online() {
+    let eb = EventBus::default();
+
+    for _ in 0..2 {
+        let switched_to_online = Cell::new(false);
+        libparsec_platform_async::future::zip(
+            // Event bus starts by considering we are offline...
+            eb.wait_server_online(),
+            async {
+                // Yield multiple times so the other future can settle
+                for _ in 0..10 {
+                    libparsec_platform_async::sleep(std::time::Duration::from_millis(0)).await;
+                }
+                // ...until the first online event is received
+                eb.send(&EventOnline);
+                switched_to_online.set(true);
+            },
+        )
+        .await;
+        // Make sure `wait_server_online` resolved thanks to our event
+        assert!(switched_to_online.get());
+
+        // Now we are online
+        eb.wait_server_online().await;
+
+        // ...and switch back to offline and retry from the beginning !
+        eb.send(&EventOffline);
+    }
 }
