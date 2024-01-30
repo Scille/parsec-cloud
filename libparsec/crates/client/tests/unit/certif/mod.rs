@@ -7,6 +7,7 @@ mod add_sequester_authority_certificate;
 mod add_user_certificate;
 mod add_user_revoked_certificate;
 mod add_user_update_certificate;
+mod get_current_self_profile;
 mod get_current_self_realms_role;
 mod list_user_devices;
 mod list_users;
