@@ -12,6 +12,7 @@ mod add_sequester_service_certificate;
 mod add_user_certificate;
 mod add_user_revoked_certificate;
 mod add_user_update_certificate;
+mod bootstrap_workspace;
 mod decrypt_current_realm_name;
 mod encrypt_for_sequester_services;
 mod ensure_realm_created;
