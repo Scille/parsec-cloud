@@ -1191,6 +1191,7 @@
     },
     "OrganizationSwitch": {
         "loggedInOrgs": "Organisations connectées",
-        "myOrgs": "Mes organisations"
+        "myOrgs": "Mes organisations",
+        "active": "Active"
     }
 }
