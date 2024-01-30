@@ -2,7 +2,7 @@
 
 <template>
   <div class="popover-switch">
-    <ion-title class="popover-switch-title body">{{ 'Connected organizations' }}</ion-title>
+    <ion-title class="popover-switch-title body">{{ $t('OrganizationSwitch.loggedInOrgs') }}</ion-title>
     <ion-list class="orga-list">
       <ion-item
         class="orga-list__item body"
@@ -35,7 +35,7 @@
             v-show="org.active"
             :outline="true"
           >
-            {{ 'Active' }}
+            {{ $t('OrganizationSwitch.active') }}
           </ion-text>
         </div>
       </ion-item>
@@ -53,7 +53,7 @@
           <div class="orga-text-content">
             <ion-label class="orga-text-content__name">
               <span class="body">
-                {{ 'Mes organisations' }}
+                {{ $t('OrganizationSwitch.myOrgs') }}
               </span>
             </ion-label>
           </div>
@@ -92,12 +92,11 @@ onMounted(async () => {
 });
 
 async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
-  if (org.handle === getConnectionHandle()) {
-    return;
+  if (org.handle !== getConnectionHandle()) {
+    await popoverController.dismiss({
+      handle: org.handle,
+    });
   }
-  await popoverController.dismiss({
-    handle: org.handle,
-  });
 }
 
 async function onAllOrganizationClick(): Promise<void> {

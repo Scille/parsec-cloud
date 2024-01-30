@@ -212,13 +212,12 @@
 </template>
 
 <script setup lang="ts">
-import { CaretExpand, MsImage, MsOption } from '@/components/core';
+import { CaretExpand, MsImage } from '@/components/core';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import {
   ClientInfo,
   UserProfile,
   WorkspaceInfo,
-  getLoggedInDevices,
   isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
@@ -234,7 +233,6 @@ import {
   switchOrganization,
   watchOrganizationSwitch,
 } from '@/router';
-import { getConnectionHandle } from '@/router/params';
 import useSidebarMenu from '@/services/sidebarMenu';
 import {
   GestureDetail,
@@ -348,17 +346,6 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   if (!isDesktop()) {
     return;
   }
-  const result = await getLoggedInDevices();
-  const options: Array<MsOption> = result.map((info) => {
-    return {
-      label: info.device.organizationId,
-      description: info.device.humanHandle.label,
-      disabled: getConnectionHandle() === info.handle,
-      key: info.handle,
-    };
-  });
-  options.push({ label: 'Mes organisations', disabled: false, key: null });
-
   const popover = await popoverController.create({
     component: OrganizationSwitchPopover,
     cssClass: 'dropdown-popover',

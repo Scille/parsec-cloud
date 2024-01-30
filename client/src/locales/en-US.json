@@ -1190,7 +1190,8 @@
         }
     },
     "OrganizationSwitch": {
-        "loggedInOrgs": "Connected organization",
-        "myOrgs": "My organizations"
+        "loggedInOrgs": "Connected organizations",
+        "myOrgs": "My organizations",
+        "active": "Active"
     }
 }
