@@ -4,7 +4,7 @@ describe('Check user details modal', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
-    cy.get('.organization-card__manageBtn').click();
+    cy.get('.organization-card-manageBtn').click();
   });
 
   afterEach(() => {
