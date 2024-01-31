@@ -23,7 +23,7 @@ async def test_unknown_org(family: str, client: httpx.AsyncClient) -> None:
             "Signature": "NDI=",
         },
     )
-    assert response.status_code == 404
+    assert response.status_code == 404, response.content
 
 
 async def test_good_org_authenticated(coolorg: CoolorgRpcClients) -> None:
@@ -84,7 +84,7 @@ async def test_authenticated_bad_auth_cmd(coolorg: CoolorgRpcClients, kind: str)
             expected_status_code = 401
         case "authorization_header_invalid":
             client.headers["Authorization"] = "<dummy>"
-            expected_status_code = 401
+            expected_status_code = 403
         case "content_type_header_missing":
             del client.headers["Content-Type"]
             expected_status_code = 415
@@ -96,10 +96,10 @@ async def test_authenticated_bad_auth_cmd(coolorg: CoolorgRpcClients, kind: str)
             expected_status_code = 401
         case "author_header_not_b64":
             client.headers["Author"] = "<dummy>"
-            expected_status_code = 401
+            expected_status_code = 403
         case "author_header_not_utf8":
             client.headers["Author"] = b64encode(b"alice\xC0").decode()
-            expected_status_code = 401
+            expected_status_code = 403
         case "signature_header_missing":
             vanilla_post = client.raw_client.post
 
@@ -117,7 +117,7 @@ async def test_authenticated_bad_auth_cmd(coolorg: CoolorgRpcClients, kind: str)
                 return await vanilla_post(url, headers=headers, content=content)
 
             client.raw_client.post = wrapper_post  # type: ignore
-            expected_status_code = 401
+            expected_status_code = 403
         case unknown:
             assert False, unknown
 
@@ -181,22 +181,22 @@ async def test_authenticated_bad_auth_sse(coolorg: CoolorgRpcClients, kind: str)
             expected_status_code = 401
         case "authorization_header_invalid":
             client.headers["Authorization"] = "<dummy>"
-            expected_status_code = 401
+            expected_status_code = 403
         case "author_header_missing":
             del client.headers["Author"]
             expected_status_code = 401
         case "author_header_not_b64":
             client.headers["Author"] = "<dummy>"
-            expected_status_code = 401
+            expected_status_code = 403
         case "author_header_not_utf8":
             client.headers["Author"] = b64encode(b"alice\xC0").decode()
-            expected_status_code = 401
+            expected_status_code = 403
         case "signature_header_missing":
             del client.headers["Signature"]
             expected_status_code = 401
         case "signature_header_invalid":
             client.headers["Signature"] = "<dummy>"
-            expected_status_code = 401
+            expected_status_code = 403
         case unknown:
             assert False, unknown
 

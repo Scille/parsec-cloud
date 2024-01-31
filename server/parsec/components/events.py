@@ -21,7 +21,7 @@ from parsec.events import (
     EventOrganizationConfig,
     EventOrganizationExpired,
     EventRealmCertificate,
-    EventUserRevoked,
+    EventUserRevokedOrFrozen,
     EventUserUpdated,
 )
 
@@ -59,11 +59,20 @@ class EventWaiter:
 
 @dataclass(repr=False, eq=False)
 class EventBusSpy:
-    events: list[Event] = field(default_factory=list)
+    _connected: bool = False
+    _events: list[Event] = field(default_factory=list)
     _waiters: set[Callable[[Event], None]] = field(default_factory=set)
 
+    @property
+    def events(self) -> list[Event]:
+        if not self._connected:
+            raise RuntimeError(
+                "Spy is no longer connected to the event bus (using it outside of its context manager ?)"
+            )
+        return self._events
+
     def __repr__(self):
-        return f"<{type(self).__name__}({self.events})>"
+        return f"<{type(self).__name__}({self._events})>"
 
     def _on_event_cb(self, event: Event) -> None:
         self.events.append(event)
@@ -197,11 +206,13 @@ class EventBus:
         """Only for tests !"""
         spy = EventBusSpy()
         self.connect(spy._on_event_cb)
+        spy._connected = True
         try:
             yield spy
 
         finally:
             self.disconnect(spy._on_event_cb)
+            spy._connected = False
 
     async def send(self, event: Event) -> None:
         raise NotImplementedError
@@ -252,7 +263,7 @@ class BaseEventsComponent:
                     registered.cancel_scope.cancel()
             return
 
-        if isinstance(event, EventUserRevoked):
+        if isinstance(event, EventUserRevokedOrFrozen):
             for registered in self._registered_clients.values():
                 if (
                     registered.organization_id == event.organization_id

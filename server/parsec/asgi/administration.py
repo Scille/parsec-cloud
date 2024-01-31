@@ -22,6 +22,7 @@ from parsec._parsec import (
     BootstrapToken,
     DateTime,
     OrganizationID,
+    UserID,
     UserProfile,
 )
 from parsec.components.organization import (
@@ -33,6 +34,7 @@ from parsec.components.organization import (
     OrganizationUpdateBadOutcome,
     Unset,
 )
+from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
 from parsec.events import OrganizationIDField
 
 if TYPE_CHECKING:
@@ -48,6 +50,18 @@ def check_administration_auth(
 ) -> None:
     if request.app.state.backend.config.administration_token != credentials.credentials:
         raise HTTPException(status_code=403, detail="Bad authorization token")
+
+
+# This function is a workaround for FastAPI's broken custom type in query parameters
+# (see https://github.com/tiangolo/fastapi/issues/10259)
+def parse_organization_id_or_die(raw_organization_id: str) -> OrganizationID:
+    try:
+        return OrganizationID(raw_organization_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=404,
+            detail="Invalid organization ID",
+        )
 
 
 class CreateOrganizationIn(BaseModel):
@@ -122,13 +136,7 @@ async def administration_get_organization(
 ) -> GetOrganizationOut:
     backend: Backend = request.app.state.backend
 
-    try:
-        organization_id = OrganizationID(raw_organization_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=404,
-            detail="Invalid organization ID",
-        )
+    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     # Check whether the organization actually exists
     outcome = await backend.organization.get(id=organization_id)
@@ -186,13 +194,7 @@ async def administration_patch_organization(
 ) -> PatchOrganizationOut:
     backend: Backend = request.app.state.backend
 
-    try:
-        organization_id = OrganizationID(raw_organization_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=404,
-            detail="Invalid organization ID",
-        )
+    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.organization.update(
         id=organization_id,
@@ -219,13 +221,7 @@ async def administration_organization_stat(
 ) -> Response:
     backend: Backend = request.app.state.backend
 
-    try:
-        organization_id = OrganizationID(raw_organization_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=404,
-            detail="Invalid organization ID",
-        )
+    organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.organization.organization_stats(organization_id)
     match outcome:
@@ -357,3 +353,99 @@ async def administration_server_stats(
 
         case unknown:
             assert_never(unknown)
+
+
+@administration_router.get("/administration/organizations/{raw_organization_id}/users")
+async def administration_organization_users(
+    raw_organization_id: str,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.user.list_users(organization_id)
+    match outcome:
+        case list() as users:
+            pass
+        case UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case unknown:
+            assert_never(unknown)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "users": [
+                {
+                    "user_id": user.user_id.str,
+                    "user_email": user.human_handle.email,
+                    "user_name": user.human_handle.label,
+                    "frozen": user.frozen,
+                }
+                for user in users
+            ]
+        },
+    )
+
+
+class UserFreezeIn(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    frozen: bool
+    user_email: str | None = None
+    user_id: UserID | None = None
+
+    @field_validator("user_id", mode="plain")
+    @classmethod
+    def validate_user_id(cls, v: Any) -> UserID | None:
+        match v:
+            case UserID():
+                return v
+            case None:
+                return None
+            case raw:
+                return UserID(raw)
+
+
+@administration_router.post("/administration/organizations/{raw_organization_id}/users/freeze")
+async def administration_organization_users_freeze(
+    raw_organization_id: str,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    body: UserFreezeIn,
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.user.freeze_user(
+        organization_id, user_id=body.user_id, user_email=body.user_email, frozen=body.frozen
+    )
+    match outcome:
+        case UserInfo() as user:
+            pass
+        case UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case UserFreezeUserBadOutcome.USER_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="User not found")
+        case UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL:
+            raise HTTPException(
+                status_code=400, detail="Both `user_id` and `user_email` fields are provided"
+            )
+        case UserFreezeUserBadOutcome.NO_USER_ID_NOR_EMAIL:
+            raise HTTPException(
+                status_code=400, detail="Missing either `user_id` or `user_email` field"
+            )
+        case unknown:
+            assert_never(unknown)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "user_id": user.user_id.str,
+            "user_email": user.human_handle.email,
+            "user_name": user.human_handle.label,
+            "frozen": user.frozen,
+        },
+    )

@@ -338,9 +338,17 @@ class EventOrganizationExpired(BaseModel):
     organization_id: OrganizationIDField
 
 
-class EventUserRevoked(BaseModel):
+class EventUserRevokedOrFrozen(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    type: Literal["USER_REVOKED"] = "USER_REVOKED"
+    type: Literal["USER_REVOKED_OR_FROZEN"] = "USER_REVOKED_OR_FROZEN"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+    user_id: UserID
+
+
+class EventUserUnfrozen(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["USER_UNFROZEN"] = "USER_UNFROZEN"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     user_id: UserID
@@ -367,7 +375,8 @@ type Event = (
     | EventOrganizationConfig
     | EventEnrollmentConduit
     | EventOrganizationExpired
-    | EventUserRevoked
+    | EventUserRevokedOrFrozen
+    | EventUserUnfrozen
     | EventUserUpdated
 )
 

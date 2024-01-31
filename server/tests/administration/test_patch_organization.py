@@ -12,7 +12,7 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
     # No Authorization header
     response = await client.patch(url, json={"is_expired": True})
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Invalid Authorization header
     response = await client.patch(
         url,
@@ -21,7 +21,7 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
         },
         json={"is_expired": True},
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Bad bearer token
     response = await client.patch(
         url,
@@ -30,7 +30,44 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
         },
         json={"is_expired": True},
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
+
+
+@pytest.mark.parametrize("kind", ("bad_json", "bad_data"))
+async def test_bad_data(
+    client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients, kind: str
+) -> None:
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
+
+    body_args: dict
+    match kind:
+        case "bad_json":
+            body_args = {"content": b"<dummy>"}
+        case "bad_data":
+            body_args = {"json": {"is_expired": "dummy"}}
+        case unknown:
+            assert False, unknown
+
+    response = await client.patch(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+        **body_args,
+    )
+    assert response.status_code == 422, response.content
+
+
+async def test_bad_method(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    coolorg: CoolorgRpcClients,
+) -> None:
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
+    response = await client.post(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+        json={},
+    )
+    assert response.status_code == 405, response.content
 
 
 @pytest.mark.parametrize(
@@ -55,7 +92,7 @@ async def test_ok(
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json=params,
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.content
     assert response.json() == {}
 
     dump = await backend.organization.test_dump_organizations()
@@ -82,5 +119,5 @@ async def test_404(
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
         json={"is_expired": True},
     )
-    assert response.status_code == 404
+    assert response.status_code == 404, response.content
     assert response.json() == {"detail": "Organization not found"}

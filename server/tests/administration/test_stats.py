@@ -29,7 +29,7 @@ async def test_organization_stats_auth(
     url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
     # No Authorization header
     response = await client.get(url)
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Invalid Authorization header
     response = await client.get(
         url,
@@ -37,7 +37,7 @@ async def test_organization_stats_auth(
             "Authorization": "DUMMY",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Bad bearer token
     response = await client.get(
         url,
@@ -45,7 +45,23 @@ async def test_organization_stats_auth(
             "Authorization": "Bearer BADTOKEN",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
+
+
+@pytest.mark.parametrize(
+    "route", ("/administration/stats", "/administration/organizations/{organization_id}/stats")
+)
+async def test_bad_method(
+    route: str, client: httpx.AsyncClient, backend: Backend, coolorg: CoolorgRpcClients
+) -> None:
+    url = "http://parsec.invalid" + route.format(organization_id=coolorg.organization_id.str)
+    response = await client.post(
+        url,
+        headers={
+            "Authorization": f"Bearer {backend.config.administration_token}",
+        },
+    )
+    assert response.status_code == 405, response.content
 
 
 async def test_ok(
@@ -61,24 +77,24 @@ async def test_ok(
     )
 
     async def server_stats():
-        r = await client.get(
+        response = await client.get(
             "http://parsec.invalid/administration/stats",
             headers={
                 "Authorization": f"Bearer {backend.config.administration_token}",
             },
         )
-        assert r.status_code == 200
-        return _strip_template_orgs(r.json())
+        assert response.status_code == 200, response.content
+        return _strip_template_orgs(response.json())
 
     async def org_stats(organization_id: OrganizationID):
-        r = await client.get(
+        response = await client.get(
             f"http://parsec.invalid/administration/organizations/{organization_id.str}/stats",
             headers={
                 "Authorization": f"Bearer {backend.config.administration_token}",
             },
         )
-        assert r.status_code == 200
-        return r.json()
+        assert response.status_code == 200, response.content
+        return response.json()
 
     expected_coolorg_stats = {
         "active_users": 3,
@@ -236,14 +252,14 @@ async def test_server_stats_format(
         return stats
 
     async def server_stats(format: str):
-        r = await client.get(
+        response = await client.get(
             f"http://parsec.invalid/administration/stats?format={format}",
             headers={
                 "Authorization": f"Bearer {backend.config.administration_token}",
             },
         )
-        assert r.status_code == 200
-        return r
+        assert response.status_code == 200, response.content
+        return response
 
     response = await server_stats("json")
     assert _strip_template_orgs(response.json()) == {
@@ -279,14 +295,14 @@ async def test_server_stats_at(
     client: httpx.AsyncClient, backend: Backend, minimalorg: MinimalorgRpcClients
 ) -> None:
     async def server_stats(at: str):
-        r = await client.get(
+        response = await client.get(
             f"http://parsec.invalid/administration/stats?format=json&at={at}",
             headers={
                 "Authorization": f"Bearer {backend.config.administration_token}",
             },
         )
-        assert r.status_code == 200
-        return r.json()
+        assert response.status_code == 200, response.content
+        return response.json()
 
     response = await server_stats("1990-01-01T00:00:00Z")
     expected = {

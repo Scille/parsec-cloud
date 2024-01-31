@@ -11,6 +11,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceName,
+    HumanHandle,
     OrganizationID,
     RevokedUserCertificate,
     UserCertificate,
@@ -44,6 +45,13 @@ class UserDump:
     devices: list[DeviceName]
     current_profile: UserProfile
     is_revoked: bool
+
+
+@dataclass(slots=True)
+class UserInfo:
+    user_id: UserID
+    human_handle: HumanHandle
+    frozen: bool
 
 
 UserCreateUserValidateBadOutcome = Enum(
@@ -304,6 +312,25 @@ UserGetActiveDeviceVerifyKeyBadOutcome = Enum(
         "USER_REVOKED",
     ),
 )
+UserListUsersBadOutcome = Enum(
+    "UserListUsersBadOutcome",
+    (
+        "ORGANIZATION_NOT_FOUND",
+        # Note we don't care the organization is expired here, this is because this
+        # command is used by the administration.
+    ),
+)
+UserFreezeUserBadOutcome = Enum(
+    "UserFreezeUserBadOutcome",
+    (
+        "ORGANIZATION_NOT_FOUND",
+        # Note we don't care the organization is expired here, this is because this
+        # command is used by the administration.
+        "USER_NOT_FOUND",
+        "BOTH_USER_ID_AND_EMAIL",
+        "NO_USER_ID_NOR_EMAIL",
+    ),
+)
 
 
 class BaseUserComponent:
@@ -398,6 +425,20 @@ class BaseUserComponent:
     async def test_dump_current_users(
         self, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
+        raise NotImplementedError
+
+    async def list_users(
+        self, organization_id: OrganizationID
+    ) -> list[UserInfo] | UserListUsersBadOutcome:
+        raise NotImplementedError
+
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID | None,
+        user_email: str | None,
+        frozen: bool,
+    ) -> UserInfo | UserFreezeUserBadOutcome:
         raise NotImplementedError
 
     #

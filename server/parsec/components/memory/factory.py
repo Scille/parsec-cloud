@@ -35,7 +35,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
     async with event_bus_factory() as event_bus:
         async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
             webhooks = WebhooksComponent(config, http_client)
-            auth = MemoryAuthComponent(data, config)
+            auth = MemoryAuthComponent(data, event_bus, config)
             organization = MemoryOrganizationComponent(data, event_bus, webhooks, config)
             user = MemoryUserComponent(data, event_bus)
             invite = MemoryInviteComponent(data, event_bus, config)

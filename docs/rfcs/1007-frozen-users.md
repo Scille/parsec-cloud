@@ -101,11 +101,11 @@ For parsec v2:
 - Invalid administration token: `403` with JSON body `{"error": "not_allowed"}`
 - Wrong request format: `400` with JSON body `{"error": "bad_data"}`
 
-For parsec v3 (note the different `detail` field due to the migration to `FastAPI`):
+For parsec v3, with an arbitrary JSON body only aimed at human consumption (and hence free to change at any time):
 
-- Organization not found: `404` with JSON body `{"detail": "not_found"}`
-- Invalid administration token: `403` with JSON body `{"detail": "not_allowed"}`
-- Wrong request format: `400` with JSON body `{"detail": "bad_data"}`
+- Organization not found: `404`
+- Invalid administration token: `403`
+- Wrong request format: `422`
 
 On top of it, an extra error is handled when the `POST` request contains a user that does not exist in the organization.
 
@@ -113,9 +113,9 @@ For parsec v2:
 
 - User not found: `404` with JSON body `{"error": "user_not_found"}`
 
-For parsec v3 (note the different `detail` field due to the migration to `FastAPI`):
+For parsec v3:
 
-- User not found: `404` with JSON body `{"detail": "user_not_found"}`
+- User not found: `404` (again with arbitrary JSON body)
 
 
 ## Implementation

@@ -92,6 +92,8 @@ class MemoryAuthComponent(BaseAuthComponent):
         user = org.users[device_id.user_id]
         if user.is_revoked:
             return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
+        if user.is_frozen:
+            return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,

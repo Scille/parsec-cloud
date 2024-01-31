@@ -32,8 +32,11 @@ from parsec.components.user import (
     UserCreateUserStoreBadOutcome,
     UserCreateUserValidateBadOutcome,
     UserDump,
+    UserFreezeUserBadOutcome,
     UserGetActiveDeviceVerifyKeyBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
+    UserInfo,
+    UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
     UserUpdateUserStoreBadOutcome,
@@ -45,7 +48,8 @@ from parsec.components.user import (
 )
 from parsec.events import (
     EventCommonCertificate,
-    EventUserRevoked,
+    EventUserRevokedOrFrozen,
+    EventUserUnfrozen,
     EventUserUpdated,
 )
 
@@ -294,7 +298,7 @@ class MemoryUserComponent(BaseUserComponent):
             )
         )
         await self._event_bus.send(
-            EventUserRevoked(
+            EventUserRevokedOrFrozen(
                 organization_id=organization_id,
                 user_id=certif.user_id,
             )
@@ -593,3 +597,78 @@ class MemoryUserComponent(BaseUserComponent):
             )
 
         return items
+
+    async def list_users(
+        self, organization_id: OrganizationID
+    ) -> list[UserInfo] | UserListUsersBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
+
+        users = []
+        for user in org.users.values():
+            users.append(
+                UserInfo(
+                    user_id=user.cooked.user_id,
+                    human_handle=user.cooked.human_handle,
+                    frozen=user.is_frozen,
+                )
+            )
+
+        return users
+
+    async def freeze_user(
+        self,
+        organization_id: OrganizationID,
+        user_id: UserID | None,
+        user_email: str | None,
+        frozen: bool,
+    ) -> UserInfo | UserFreezeUserBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
+
+        match (user_id, user_email):
+            case (None, None):
+                return UserFreezeUserBadOutcome.NO_USER_ID_NOR_EMAIL
+            case (UserID() as user_id, None):
+                try:
+                    user = org.users[user_id]
+                except KeyError:
+                    return UserFreezeUserBadOutcome.USER_NOT_FOUND
+            case (None, str() as user_email):
+                for user in org.users.values():
+                    if user.cooked.human_handle.email == user_email:
+                        break
+                else:
+                    return UserFreezeUserBadOutcome.USER_NOT_FOUND
+            case (UserID(), str()):
+                return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
+            case _:
+                assert (
+                    False
+                )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
+
+        user.is_frozen = frozen
+        if user.is_frozen:
+            await self._event_bus.send(
+                EventUserRevokedOrFrozen(
+                    organization_id=organization_id,
+                    user_id=user.cooked.user_id,
+                )
+            )
+        else:
+            await self._event_bus.send(
+                EventUserUnfrozen(
+                    organization_id=organization_id,
+                    user_id=user.cooked.user_id,
+                )
+            )
+
+        return UserInfo(
+            user_id=user.cooked.user_id,
+            human_handle=user.cooked.human_handle,
+            frozen=user.is_frozen,
+        )
