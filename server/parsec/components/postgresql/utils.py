@@ -238,7 +238,7 @@ def query(
     if in_transaction:
 
         def decorator(
-            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]
+            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
         ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
             @wraps(fn)
             async def wrapper(conn: asyncpg.Connection, *args: P.args, **kwargs: P.kwargs) -> T:
@@ -250,7 +250,7 @@ def query(
     else:
 
         def decorator(
-            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]
+            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
         ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
             return fn
 
