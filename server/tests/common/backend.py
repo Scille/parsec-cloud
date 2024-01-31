@@ -40,7 +40,7 @@ async def backend(backend_config: BackendConfig) -> AsyncGenerator[Backend, None
     # pytest-asyncio use different coroutines to run the init and teardown parts
     # of async generator fixtures.
     # However anyio's task group are required to run there async context manager init
-    # and teardon from the same coroutine.
+    # and teardown from the same coroutine.
     # So the solution is to start a dedicated task.
 
     started = asyncio.Event()
@@ -65,7 +65,7 @@ async def backend(backend_config: BackendConfig) -> AsyncGenerator[Backend, None
 
 @pytest.fixture
 def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> Iterator[AsgiApp]:
-    # `FastAPI.state` stays beteen runs, so must clean it manually
+    # `FastAPI.state` stays between runs, so must clean it manually
     asgi_app.state._state.clear()
     asgi_app.state.backend = backend
     yield asgi_app

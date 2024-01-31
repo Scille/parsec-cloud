@@ -18,7 +18,7 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
     # No Authorization header
     response = await client.post(url)
     assert response.status_code == 403
-    # Invilad Authorization header
+    # Invalid Authorization header
     response = await client.post(
         url,
         headers={

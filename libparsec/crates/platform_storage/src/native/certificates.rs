@@ -110,7 +110,7 @@ macro_rules! build_sql_in_fragment_types {
 
 // It is too error prone to specify the `certificate_type` by hand when writing
 // a SQL query filtering on a specific certificate topic (given it will silently
-// fail whener the topic gets a new certificate !). Hence those pre-made fragments.
+// fail whenever the topic gets a new certificate !). Hence those pre-made fragments.
 const SQL_IN_FRAGMENT_COMMON_TYPES: &str = build_sql_in_fragment_types!(CommonTopicArcCertificate);
 const SQL_IN_FRAGMENT_SEQUESTER_TYPES: &str =
     build_sql_in_fragment_types!(SequesterTopicArcCertificate);

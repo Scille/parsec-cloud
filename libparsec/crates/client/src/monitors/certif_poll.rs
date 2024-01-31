@@ -77,7 +77,7 @@ fn task_future_factory(
                         }
                         CertifPollServerError::Stopped => {
                             // Shouldn't occur in practice given the monitors are expected
-                            // to be stopped before the opses. In anycase we have no
+                            // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
                             return;
                         }

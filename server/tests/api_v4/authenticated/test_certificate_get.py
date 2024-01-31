@@ -262,7 +262,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     assert isinstance(outcome, RevokedUserCertificate)
     expected_common_certificates.append(bob_revoked_user_certificate)
 
-    # Nowe create the client and do the actual test \o/
+    # Now create the client and do the actual test \o/
 
     if redacted:
         user_client = AuthenticatedRpcClient(
@@ -335,7 +335,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
     wksp2_certificates = []
     wksp3_certificates = []
 
-    # First retreive the realms created from the template, we will just ignore them
+    # First retrieve the realms created from the template, we will just ignore them
     rep = await coolorg.alice.certificate_get(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
@@ -368,7 +368,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
 
     wksp2_certificates.append((certif_timestamp, certif))
 
-    # 2) Create another realm wskp3 (to ensure the filter doesn't leak on other realms)
+    # 2) Create another realm wksp3 (to ensure the filter doesn't leak on other realms)
 
     certif_timestamp = t2
     certif = RealmRoleCertificate(

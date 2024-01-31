@@ -54,7 +54,7 @@ impl From<CertifStoreError> for CertifRotateRealmKeyError {
     }
 }
 
-pub(super) async fn ensure_realm_intial_key_rotation(
+pub(super) async fn ensure_realm_initial_key_rotation(
     ops: &CertifOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
@@ -151,8 +151,8 @@ async fn realm_initial_key_rotation_idempotent(
     key: WorkspaceKeyOrigin,
 ) -> Result<RealmInitialKeyRotationOutcome, CertifRotateRealmKeyError> {
     // `never_legacy_reencrypted_or_fail` is a flag to ask the server to reject
-    // key rotation if the realm is a legacy one: in that case the intial key
-    // rotation must provide the current realm's key (wich must be retrieved
+    // key rotation if the realm is a legacy one: in that case the initial key
+    // rotation must provide the current realm's key (which must be retrieved
     // from the user manifest history) instead of a newly generated one.
     let (key, never_legacy_reencrypted_or_fail) = match key {
         WorkspaceKeyOrigin::NewlyGenerated(key) => (key, true),
@@ -215,7 +215,7 @@ async fn realm_initial_key_rotation_idempotent(
                 // certificates and retry.
                 // Note that if we are not part of the realm, the server will return a
                 // dedicated error that will stop this function, so there is no risk
-                // of inifinite loop here.
+                // of infinite loop here.
                 per_participant_keys_bundle_access.insert(
                     ops.device.user_id().to_owned(),
                     ops.device

@@ -17,7 +17,7 @@ async def test_unknown_org(family: str, client: httpx.AsyncClient) -> None:
             "Api-Version": "4.0",
             "Invitation-Token": "6f56a8579fc4425c82a71f9fc8531b77",
             "Authorization": "PARSEC-SIGN-ED25519",
-            "Author": "d2FsZG9Ad2hlcmU=",
+            "Author": "d2FsZG9Ad2hlcmU=",  # spell-checker: disable-line
             "Signature": "NDI=",
         },
     )

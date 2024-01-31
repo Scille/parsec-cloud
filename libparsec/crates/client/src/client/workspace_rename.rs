@@ -86,9 +86,9 @@ pub async fn rename_workspace(
             CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
                 ClientRenameWorkspaceError::InvalidCertificate(err)
             }
-            CertifBootstrapWorkspaceError::Internal(err) => {
-                err.context("Cannot ensure workspace is boostrapped").into()
-            }
+            CertifBootstrapWorkspaceError::Internal(err) => err
+                .context("Cannot ensure workspace is bootstrapped")
+                .into(),
         })?;
 
     let rename_done_in_bootstrap = match outcome {

@@ -78,7 +78,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                     Err(err) => match err {
                         UserSyncError::Stopped => {
                             // Shouldn't occur in practice given the monitors are expected
-                            // to be stopped before the opses. In anycase we have no
+                            // to be stopped before the opses. In any case we have no
                             // choice but to also stop.
                             return;
                         }

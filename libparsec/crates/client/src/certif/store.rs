@@ -199,7 +199,7 @@ impl CertificatesStore {
 
         // The cache may have been updated during the write operations, and those new cache
         // entries might be for items that have been added by the current write operation.
-        // If something goes wrong the database is rolledback, but this cannot be done
+        // If something goes wrong the database is rolled back, but this cannot be done
         // for the cache, so we simply clear it instead.
         let reset_cache = || {
             self.current_view_cache

@@ -101,7 +101,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 // Fallback to default name if we cannot decrypt the actual name.
                 // This is done to avoid having a single malfunctioning workspace breaking
                 // the whole refresh process.
-                // Note that, this may lead to the overwritting of the name while it is the
+                // Note that, this may lead to the overwriting of the name while it is the
                 // keys bundle that is at fault (e.g. realm name has been made with key
                 // index 1, then key rotation for index 2 is corrupted). We consider this
                 // okay given how low the risk is.
@@ -137,7 +137,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 // real name (e.g. we are the creator of the workspace, but our last
                 // bootstrap attempt didn't go to completion).
                 //
-                // Note we don't care if the old entry's name comes from a cerficate:
+                // Note we don't care if the old entry's name comes from a certificate:
                 // instead we rely on the fact the initial name certificate upload is
                 // idempotent. This is a more robust approach as it doesn't rely on
                 // a certificate that may no longer exist (in case of server rollback
@@ -203,7 +203,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
     // `client.workspaces` (on the list of running workspaces).
     // We need to keep `updater` locked to ensure we are refreshing the running
     // workspaces with the latest info.
-    // There is no risk of deadlock as this is the only place thoses two locks are
+    // There is no risk of deadlock as this is the only place those two locks are
     // held together.
 
     let mut running_workspaces = client.workspaces.lock().await;

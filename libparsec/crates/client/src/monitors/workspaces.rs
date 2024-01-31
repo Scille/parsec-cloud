@@ -19,7 +19,7 @@ fn task_future_factory(
     client_ops: Arc<ClientOps>,
 ) -> impl Future<Output = ()> {
     enum Action {
-        WorkspaceRemotlyRenamed,
+        WorkspaceRemotelyRenamed,
         WorkspaceLocallyCreated,
         WorkspaceLocallyRenamed,
     }
@@ -39,7 +39,7 @@ fn task_future_factory(
         {
             let tx = tx.clone();
             event_bus.connect(move |_: &EventWorkspaceRemotelyRenamed| {
-                let _ = tx.send(Action::WorkspaceRemotlyRenamed);
+                let _ = tx.send(Action::WorkspaceRemotelyRenamed);
             })
         },
         {
@@ -75,7 +75,7 @@ fn task_future_factory(
 
             loop {
                 let outcome = match action {
-                    Action::WorkspaceRemotlyRenamed
+                    Action::WorkspaceRemotelyRenamed
                     | Action::WorkspaceLocallyCreated
                     | Action::WorkspaceLocallyRenamed => {
                         client_ops.ensure_workspaces_minimal_sync().await

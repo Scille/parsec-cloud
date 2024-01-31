@@ -30,7 +30,7 @@ async def test_organization_stats_auth(
     # No Authorization header
     response = await client.get(url)
     assert response.status_code == 403
-    # Invilad Authorization header
+    # Invalid Authorization header
     response = await client.get(
         url,
         headers={

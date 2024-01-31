@@ -106,7 +106,7 @@ pub(super) async fn bootstrap_workspace(
 
     // Step 2
 
-    super::realm_key_rotation::ensure_realm_intial_key_rotation(ops, realm_id).await.map_err(|e| match e {
+    super::realm_key_rotation::ensure_realm_initial_key_rotation(ops, realm_id).await.map_err(|e| match e {
         CertifRotateRealmKeyError::Offline => CertifBootstrapWorkspaceError::Offline,
         CertifRotateRealmKeyError::Stopped => CertifBootstrapWorkspaceError::Stopped,
         CertifRotateRealmKeyError::AuthorNotAllowed => CertifBootstrapWorkspaceError::AuthorNotAllowed,
