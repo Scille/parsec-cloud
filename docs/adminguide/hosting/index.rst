@@ -42,11 +42,13 @@ The `Parsec`_ server depends on the following external components in order to wo
 
 - An `SMTP server`_ for sending emails.
 - A `TSL/SSL server certificate`_ for ``HTTPS`` communication with the clients.
+- (Optional) A `Sentry DSN` for telemetry report.
 
 .. _PostgreSQL: https://www.postgresql.org/
 .. _S3 object storage: https://aws.amazon.com/s3/
 .. _SMTP server: https://en.wikipedia.org/wiki/Simple_Mail_Transfer_Protocol
 .. _TSL/SSL server certificate: https://en.wikipedia.org/wiki/Public_key_certificate#TLS/SSL_server_certificate
+.. _Sentry DSN: https://docs.sentry.io/product/sentry-basics/concepts/dsn-explainer/
 
 .. warning::
 
