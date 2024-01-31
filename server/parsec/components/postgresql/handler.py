@@ -150,7 +150,7 @@ async def _idx_limit(conn: asyncpg.Connection) -> int:
 
 
 def retry_on_unique_violation(
-    fn: Callable[P, Awaitable[None]]
+    fn: Callable[P, Awaitable[None]],
 ) -> Callable[P, Coroutine[None, None, None]]:
     @wraps(fn)
     async def wrapper(*args: P.args, **kwargs: P.kwargs) -> None:

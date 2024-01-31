@@ -115,7 +115,7 @@ async def patch_handle_async_request(
             else:
                 return
 
-    _ = asyncio.create_task(run_app())
+    asyncio.create_task(run_app())  # noqa: RUF006
 
     await response_started.wait()
     assert status_code is not None

@@ -294,7 +294,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 
 
 async def test_anonymous_pki_enrollment_submit_invalid_payload_data(
-    coolorg: CoolorgRpcClients
+    coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_submit(
         enrollment_id=EnrollmentID.new(),
