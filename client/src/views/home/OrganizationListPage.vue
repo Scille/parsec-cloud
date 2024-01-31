@@ -104,7 +104,7 @@ import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parse
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonRow, IonText, popoverController } from '@ionic/vue';
+import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow, IonText, popoverController } from '@ionic/vue';
 import { ellipse } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, ref } from 'vue';

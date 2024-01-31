@@ -4,7 +4,7 @@ describe('Check manage org page', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
-    cy.get('.organization-card__manageBtn').click();
+    cy.get('.organization-card-manageBtn').click();
   });
 
   afterEach(() => {
@@ -13,8 +13,8 @@ describe('Check manage org page', () => {
 
   it('Checks initial status', () => {
     cy.get('.back-organization').find('ion-label').contains('Manage my organization');
-    cy.get('.organization-card__header').should('not.be.visible');
-    cy.get('.organization-card__manageBtn').should('not.be.visible');
+    cy.get('.organization-card-header').should('not.be.visible');
+    cy.get('.organization-card-manageBtn').should('not.be.visible');
     cy.get('.sidebar').find('.list-workspaces').should('not.be.visible');
     cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
     cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
