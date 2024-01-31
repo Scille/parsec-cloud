@@ -510,7 +510,7 @@ mod time_provider {
                 // This is okay given the code is designed around the fact config can be
                 // fired randomly (we just recompute the remaining time and go back to sleep).
                 if let Some(to_sleep) = to_sleep {
-                    libparsec_platform_async::select2!(
+                    libparsec_platform_async::select2_biased!(
                         _ = libparsec_platform_async::sleep(to_sleep) => break,
                         _ = config.changed() => {
                             recompute_time_we_have_to_sleep();

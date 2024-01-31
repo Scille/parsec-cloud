@@ -16,12 +16,7 @@ async-lock = { workspace = true }
 async-broadcast = { workspace = true }
 event-listener = { workspace = true }
 flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
-# Used for `futures_lite::future::or` and don't require `Unpin`
-futures-lite = { workspace = true, features = ["std"] }
-futures-core = { workspace = true, features = ["std"] }
-# # futures is used for its macros `select_all` and `join_all`
-# futures = { workspace = true, features = ["std", "async-await"] }
-pin-project-lite = { workspace = true }
+futures = { workspace = true, features = ["std", "async-await"] }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
@@ -37,6 +32,7 @@ wasm-bindgen-futures = { workspace = true }
 web-sys = { workspace = true, features = ["Window"] }
 js-sys = { workspace = true }
 gloo-timers = { workspace = true, features = ["futures"] }
+pin-project-lite = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = { workspace = true }

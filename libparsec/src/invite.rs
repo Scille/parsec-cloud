@@ -311,7 +311,7 @@ pub async fn claimer_user_initial_do_wait_peer(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -341,7 +341,7 @@ pub async fn claimer_device_initial_do_wait_peer(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -380,7 +380,7 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -408,7 +408,7 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -441,7 +441,7 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -465,7 +465,7 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -500,7 +500,7 @@ pub async fn claimer_user_in_progress_3_do_claim(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -525,7 +525,7 @@ pub async fn claimer_device_in_progress_3_do_claim(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
     )
@@ -875,7 +875,7 @@ pub async fn greeter_user_initial_do_wait_peer(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -903,7 +903,7 @@ pub async fn greeter_device_initial_do_wait_peer(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -943,7 +943,7 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -973,7 +973,7 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1009,7 +1009,7 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1033,7 +1033,7 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1071,7 +1071,7 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1099,7 +1099,7 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1136,7 +1136,7 @@ pub async fn greeter_user_in_progress_4_do_create(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
@@ -1159,7 +1159,7 @@ pub async fn greeter_device_in_progress_4_do_create(
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
-    libparsec_platform_async::select2!(
+    libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => Err(GreetInProgressError::Cancelled),
     )
