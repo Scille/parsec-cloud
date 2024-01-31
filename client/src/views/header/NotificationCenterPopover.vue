@@ -2,45 +2,72 @@
 
 <template>
   <div class="notification-center-container">
-    <ms-image :image="WavyCaretUp" />
     <div class="notification-center">
       <div class="notification-center-header">
-        <ion-text class="tooltip-text body-sm">
+        <ion-text class="notification-center-header__title title-h4">
           {{ $t('notificationCenter.title') }}
         </ion-text>
-        <ion-label class="notification-center-header-unread body-sm">
-          <span class="default-state">{{ $t('notificationCenter.unread', { count: unreadCount }) }}</span>
-        </ion-label>
+        <span class="notification-center-header__counter body-sm">
+          {{ unreadCount > 99 ? '+99' : unreadCount }}
+        </span>
+        <ion-toggle
+          class="notification-center-header__toggle dark small body-sm"
+          @ion-change="ReadOnlyToggle = !ReadOnlyToggle"
+        >
+          {{ console.log(ReadOnlyToggle) }}
+          {{ $t('notificationCenter.readOnly') }}
+        </ion-toggle>
       </div>
-      <ion-list
-        class="notification-center-content"
-        lines="full"
-      >
-        <notification-item
-          v-for="notification in notifications"
-          :key="notification.id"
-          :notification="notification"
-          @click="onNotificationClick($event)"
-          @mouse-over="onNotificationMouseOver($event)"
-        />
+      <ion-list class="notification-center-content">
+        <div
+          class="notification-center-content__empty"
+          v-if="notifications.length === 0"
+        >
+          <ms-image :image="NoNotification" />
+          <ion-text class="body-lg">
+            {{ $t('notificationCenter.noNotification') }}
+          </ion-text>
+        </div>
+        <template v-if="ReadOnlyToggle">
+          <notification-item
+            v-for="notification in unReadNotification"
+            :key="notification.id"
+            :notification="notification"
+            @click="onNotificationClick($event)"
+            @mouse-over="onNotificationMouseOver($event)"
+          />
+        </template>
+        <template v-else>
+          <notification-item
+            v-for="notification in notifications"
+            :key="notification.id"
+            :notification="notification"
+            @click="onNotificationClick($event)"
+            @mouse-over="onNotificationMouseOver($event)"
+          />
+        </template>
       </ion-list>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { MsImage, WavyCaretUp } from '@/components/core/ms-image';
+import { MsImage, NoNotification } from '@/components/core/ms-image';
 import NotificationItem from '@/components/header/NotificationItem.vue';
 import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
 import { translate } from '@/services/translation';
-import { IonLabel, IonList, IonText } from '@ionic/vue';
-import { computed, inject, onMounted } from 'vue';
+import { IonList, IonText, IonToggle } from '@ionic/vue';
+import { Ref, computed, inject, onMounted, ref } from 'vue';
 
 const notificationManager: NotificationManager = inject(NotificationKey)!;
 const unreadCount = notificationManager.getUnreadCount();
 const notifications = computed(() => {
   return notificationManager.getNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
 });
+const unReadNotification = computed(() => {
+  return notificationManager.getUnreadNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
+});
+const ReadOnlyToggle: Ref<boolean> = ref(false);
 
 onMounted(() => {
   // only for testing purpose
@@ -69,25 +96,56 @@ function onNotificationMouseOver(notification: Notification): void {
   align-items: center;
   flex-direction: column;
   --fill-color: var(--parsec-color-light-primary-900);
+  overflow: visible;
 }
 
 .notification-center {
   width: 100%;
-  border-radius: var(--parsec-radius-6);
-  // @SharkDesigner: boxShadow is not working atm; border here as a development workaround
-  box-shadow: 0px 0px 4px 12px var(--parsec-shadow-strong);
-  border: 1px solid var(--parsec-color-light-primary-900);
+  border-radius: var(--parsec-radius-12);
+  overflow: hidden;
 
   &-header {
-    background: var(--parsec-color-light-primary-900);
+    background: var(--parsec-color-light-primary-800);
     color: var(--parsec-color-light-primary-30);
-    padding: 1rem;
-    border-radius: var(--parsec-radius-6) var(--parsec-radius-6) 0 0;
+    padding: 1rem 1.5rem;
     display: flex;
+    gap: 0.5rem;
 
-    &-unread {
-      color: var(--parsec-color-light-secondary-grey);
+    &__title {
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    &__counter {
+      margin-right: auto;
+      padding: 0 0.25rem;
+      background: var(--parsec-color-light-primary-30-opacity15);
+      border-radius: var(--parsec-radius-12);
+      display: flex;
+      align-items: center;
+    }
+
+    // eslint-disable-next-line vue-scoped-css/no-unused-selector
+    &__toggle {
+      color: var(--parsec-color-light-secondary-medium);
       margin-left: auto;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+
+      &::part(label) {
+        transition: opacity 150ms ease-in-out;
+        opacity: 0.6;
+        margin-right: 0.5rem;
+      }
+
+      &:hover,
+      &.toggle-checked {
+        &::part(label) {
+          opacity: 1;
+        }
+      }
     }
   }
 
@@ -98,9 +156,20 @@ function onNotificationMouseOver(notification: Notification): void {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    padding: 0;
     height: 40vh;
     max-height: 25rem;
     transition: all 250ms ease-in-out;
+
+    &__empty {
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin: auto;
+      color: var(--parsec-color-light-secondary-grey);
+    }
   }
 }
 </style>

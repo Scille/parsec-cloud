@@ -51,8 +51,10 @@ ion-popover {
 /* --- notification center popover --- */
 .notification-center-popover {
   --background: none;
-  --box-shadow: none;
+  --box-shadow: var(--parsec-shadow-strong);
   --width: var(--popover-notification-center-width);
+  --offset-y: 0.5rem;
+  --offset-x: -5%;
 }
 
 /* --- sorter, dropdown popover --- */

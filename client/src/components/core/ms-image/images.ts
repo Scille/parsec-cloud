@@ -21,6 +21,7 @@ import Music from '@/assets/images/music.svg?raw';
 import NoImportDone from '@/assets/images/no-file-done.svg?raw';
 import NoImportError from '@/assets/images/no-file-error.svg?raw';
 import NoImportInProgress from '@/assets/images/no-file-in-progress.svg?raw';
+import NoNotification from '@/assets/images/no-notification.svg?raw';
 import PasswordLock from '@/assets/images/password-lock.svg?raw';
 import Pdf from '@/assets/images/pdf.svg?raw';
 import Photoshop from '@/assets/images/photoshop.svg?raw';
@@ -72,6 +73,7 @@ export {
   NoImportDone,
   NoImportError,
   NoImportInProgress,
+  NoNotification,
   PasswordLock,
   SwapArrows,
   WavyCaretUp,

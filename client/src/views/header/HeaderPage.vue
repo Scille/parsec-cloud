@@ -59,13 +59,13 @@
           slot="primary"
           class="topbar-right"
         >
-          <div class="topbar-button__list">
+          <div class="topbar-right-button">
             <ion-button
               v-show="false"
               v-if="!isMobile()"
               slot="icon-only"
               id="trigger-search-button"
-              class="topbar-button__item"
+              class="topbar-right-button__item"
             >
               <ion-icon
                 slot="icon-only"
@@ -76,13 +76,14 @@
               v-if="!isMobile()"
               slot="icon-only"
               id="trigger-notifications-button"
-              class="topbar-button__item"
+              class="topbar-right-button__item"
+              :class="{
+                active: notificationPopoverIsVisible,
+                unread: notificationManager.hasUnreadNotifications(),
+              }"
               @click="openNotificationCenter($event)"
             >
-              <ion-icon
-                slot="icon-only"
-                :icon="notifications"
-              />
+              <ion-icon :icon="notifications" />
             </ion-button>
           </div>
 
@@ -118,6 +119,7 @@ import {
   navigateTo,
   watchRoute,
 } from '@/router';
+import { NotificationKey, NotificationManager } from '@/services/notificationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
@@ -136,12 +138,14 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
-import { Ref, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
+const notificationPopoverIsVisible: Ref<boolean> = ref(false);
+const notificationManager: NotificationManager = inject(NotificationKey)!;
 
 const routeWatchCancel = watchRoute(async () => {
   const result = await getClientInfo();
@@ -261,6 +265,7 @@ function getTitleForRoute(): string {
 
 async function openNotificationCenter(event: Event): Promise<void> {
   event.stopPropagation();
+  notificationPopoverIsVisible.value = true;
   const popover = await popoverController.create({
     component: NotificationCenterPopover,
     alignment: 'center',
@@ -270,6 +275,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
   });
   await popover.present();
   await popover.onWillDismiss();
+  notificationPopoverIsVisible.value = false;
   await popover.dismiss();
 }
 </script>
@@ -284,49 +290,70 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-right {
   display: flex;
   gap: 1.5em;
-}
 
-.topbar-button__list {
-  display: flex;
-  gap: 1.5em;
-  align-items: center;
-  &::after {
-    content: '';
-    display: block;
-    width: 1px;
-    height: 1.5em;
-    margin: 0 0.5em 0 1em;
-    background: var(--parsec-color-light-secondary-light);
-  }
-}
+  &-button {
+    display: flex;
+    gap: 1em;
+    align-items: center;
 
-.topbar-button__item,
-.sc-ion-buttons-md-s .button {
-  border: 1px solid var(--parsec-color-light-secondary-light);
-  color: var(--parsec-color-light-primary-700);
-  border-radius: 50%;
-  --padding-top: 0;
-  --padding-end: 0;
-  --padding-bottom: 0;
-  --padding-start: 0;
-  width: 3em;
-  height: 3em;
+    &::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 1.5em;
+      margin: 0 0.5em 0 1em;
+      background: var(--parsec-color-light-secondary-light);
+    }
 
-  &:hover {
-    --background-hover: var(--parsec-color-light-primary-50);
-    background: var(--parsec-color-light-primary-50);
-    border: var(--parsec-color-light-primary-50);
-  }
+    // eslint-disable-next-line vue-scoped-css/no-unused-selector
+    &__item {
+      padding: 0.625rem;
+      border-radius: var(--parsec-radius-12);
+      cursor: pointer;
 
-  .button-native {
-    --padding-top: 0;
-    --padding-end: 0;
-    --padding-bottom: 0;
-    --padding-start: 0;
-  }
+      &::part(native) {
+        --padding-top: 0;
+        --padding-start: 0;
+        --padding-end: 0;
+        --padding-bottom: 0;
+        min-height: 0;
+      }
 
-  ion-icon {
-    font-size: 1.375rem;
+      ion-icon {
+        color: var(--parsec-color-light-secondary-grey);
+        font-size: 1.375rem;
+      }
+
+      &:hover {
+        --background-hover: var(--parsec-color-light-secondary-premiere);
+        background: var(--parsec-color-light-secondary-premiere);
+      }
+
+      &.active {
+        --background-hover: var(--parsec-color-light-primary-50);
+        background: var(--parsec-color-light-primary-50);
+
+        ion-icon {
+          color: var(--parsec-color-light-primary-700);
+        }
+      }
+
+      &#trigger-notifications-button.unread {
+        position: relative;
+
+        &::after {
+          content: '';
+          position: absolute;
+          right: 0.45rem;
+          top: 0.35rem;
+          width: 0.625rem;
+          height: 0.625rem;
+          background: var(--parsec-color-light-danger-500);
+          border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+          border-radius: var(--parsec-radius-12);
+        }
+      }
+    }
   }
 }
 

@@ -13,7 +13,7 @@ ion-toggle {
   &::part(track) {
     height: 28px;
     width: 50px;
-    border-radius: 20px;
+    border-radius: var(--parsec-radius-32);
     background: var(--parsec-color-light-secondary-inversed-contrast);
     box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
     /* Required for iOS handle to overflow the height of the track */
@@ -35,6 +35,41 @@ ion-toggle {
 
   &.toggle-checked::part(handle) {
     background: var(--parsec-color-light-secondary-inversed-contrast);
-    box-shadow: -2px 1px 6px rgba(0, 0, 0, 0.24);
+    box-shadow: var(--parsec-shadow-toggle);
+  }
+
+  &.dark {
+    &::part(track) {
+      background: var(--parsec-color-light-secondary-inversed-contrast);
+      box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-secondary-inversed-contrast);
+    }
+
+    &::part(handle) {
+      background: var(--parsec-color-light-primary-700);
+    }
+
+    // check
+    &.toggle-checked::part(track) {
+      box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-100);
+      background: var(--parsec-color-light-primary-100);
+      border: none;
+      opacity: 1;
+    }
+
+    &.toggle-checked::part(handle) {
+      background: var(--parsec-color-light-primary-800);
+      box-shadow: var(--parsec-shadow-toggle);
+    }
+  }
+
+  &.small {
+    --handle-width: 1rem;
+    --handle-height: 1rem;
+    --handle-spacing: 2px;
+
+    &::part(track) {
+      height: 20px;
+      width: 34px;
+    }
   }
 }

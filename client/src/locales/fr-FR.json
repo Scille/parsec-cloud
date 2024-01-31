@@ -56,8 +56,10 @@
     "notificationCenter": {
         "title": "Notifications",
         "unread": "non lues ({count})",
+        "readOnly": "Non lues uniquement",
         "empty": "Aucune notification",
-        "browse": "Aller à l'emplacement"
+        "browse": "Aller à l'emplacement",
+        "noNotification": "Vous êtes à jour !"
     },
     "HomePage": {
         "topbar": {

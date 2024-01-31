@@ -153,6 +153,10 @@ export class NotificationManager {
     return this.unreadCount.value > 0;
   }
 
+  getUnreadNotifications(): Notification[] {
+    return this.notifications.value.filter((n) => n.read === false);
+  }
+
   getUnreadCount(): Ref<number> {
     return this.unreadCount;
   }
