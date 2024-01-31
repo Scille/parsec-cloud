@@ -16,20 +16,17 @@
       </div>
       <!-- file name -->
       <div class="file-name">
-        <div class="file-name__icons">
-          <ion-icon
-            class="main-icon"
-            :icon="document"
-            size="default"
-          />
-          <ion-icon
-            class="cloud-overlay"
-            :icon="cloudOffline"
-          />
-        </div>
+        <ms-image
+          :image="getFileIcon(data.file.name)"
+          class="file-icon"
+        />
         <ion-label class="file-name__label cell">
           {{ data.file.name }}
         </ion-label>
+        <ion-icon
+          class="cloud-overlay"
+          :icon="cloudOffline"
+        />
       </div>
 
       <!-- updated by -->
@@ -66,12 +63,13 @@
 
 <script setup lang="ts">
 import SpinnerJSON from '@/assets/spinner.json';
-import { formatFileSize } from '@/common/file';
+import { formatFileSize, getFileIcon } from '@/common/file';
+import { MsImage } from '@/components/core/ms-image';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, getClientInfo } from '@/parsec';
 import { ImportData } from '@/services/importManager';
 import { IonIcon, IonItem, IonLabel } from '@ionic/vue';
-import { cloudOffline, document } from 'ionicons/icons';
+import { cloudOffline } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 import { Vue3Lottie } from 'vue3-lottie';
 
@@ -90,4 +88,21 @@ onMounted(async () => {
 });
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.file-name {
+  .file-icon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &__label {
+    color: var(--parsec-color-light-secondary-text);
+    margin-left: 1em;
+  }
+
+  .cloud-overlay {
+    font-size: 1rem;
+    color: var(--parsec-color-light-secondary-grey);
+  }
+}
+</style>

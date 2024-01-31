@@ -139,5 +139,6 @@ describe('Check organization list', () => {
     cy.get('.popover-viewport').contains('Log out').click();
     cy.get('.ion-page').find('.ms-modal').find('ion-buttons').contains('Log out').click();
     cy.get('.organization-title').contains('Your organizations');
+    cy.wait(300);
   });
 });

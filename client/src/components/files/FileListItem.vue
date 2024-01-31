@@ -142,8 +142,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   .cloud-overlay {
     font-size: 1rem;
-    // simulate the space taken by file-updatedBy + 1rem offset
-    margin-right: calc(14rem + 1rem);
+    // simulate the space taken by file-updatedBy
+    margin-right: 14rem;
 
     &-ok {
       color: var(--parsec-color-light-primary-500);
