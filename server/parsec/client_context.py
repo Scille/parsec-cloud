@@ -41,7 +41,7 @@ class AnonymousClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -49,7 +49,7 @@ class AnonymousClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationExpired.value,
+            CustomHttpStatus.OrganizationExpired,
             api_version=self.settled_api_version,
         )
 
@@ -81,7 +81,7 @@ class InvitedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -89,7 +89,7 @@ class InvitedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationExpired.value,
+            CustomHttpStatus.OrganizationExpired,
             api_version=self.settled_api_version,
         )
 
@@ -97,7 +97,7 @@ class InvitedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -136,7 +136,7 @@ class AuthenticatedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -144,7 +144,7 @@ class AuthenticatedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationExpired.value,
+            CustomHttpStatus.OrganizationExpired,
             api_version=self.settled_api_version,
         )
 
@@ -152,7 +152,7 @@ class AuthenticatedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.BadAuthenticationInfo.value,
+            CustomHttpStatus.BadAuthenticationInfo,
             api_version=self.settled_api_version,
         )
 
@@ -160,6 +160,6 @@ class AuthenticatedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.UserRevoked.value,
+            CustomHttpStatus.UserRevoked,
             api_version=self.settled_api_version,
         )

@@ -196,7 +196,8 @@ def settle_compatible_versions(
 # we are not settled on what should be used yet (who knows ! maybe in the future
 # we will use another serialization format for the command processing).
 # Instead we rely on the following HTTP status code:
-# - 401: Bad authentication info (bad Author/Signature/Timestamp headers)
+# - 401: Missing authentication info (no Authorization/Author/Signature headers)
+# - 403: Bad authentication info (bad Authorization/Author/Signature headers)
 # - 404: Organization / Invitation not found or invalid organization ID
 # - 406: Bad accept type (for the SSE events route)
 # - 410: Invitation already deleted / used
@@ -204,10 +205,12 @@ def settle_compatible_versions(
 # - 422: Unsupported API version
 # - 460: Organization is expired
 # - 461: User is revoked
+# - 462: User is frozen
 
 
 class CustomHttpStatus(Enum):
-    BadAuthenticationInfo = 401
+    MissingAuthenticationInfo = 401
+    BadAuthenticationInfo = 403
     OrganizationOrInvitationInvalidOrNotFound = 404
     BadAcceptType = 406
     InvitationAlreadyUsedOrDeleted = 410
@@ -215,30 +218,29 @@ class CustomHttpStatus(Enum):
     UnsupportedApiVersion = 422
     OrganizationExpired = 460
     UserRevoked = 461
+    UserFrozen = 462
 
 
-def _handshake_abort(status_code: int, api_version: ApiVersion) -> NoReturn:
-    detail: str | None
-    match status_code:
-        case 422:
-            detail = "Unsupported api version"
-        case 460:
-            detail = "Organization expired"
-        case 461:
-            detail = "User revoked"
-        case _:
-            detail = None
+# e.g. `InvitationAlreadyUsedOrDeleted` -> `Invitation already used or deleted`
+CUSTOM_HTTP_STATUS_DETAILS = {
+    status: ("".join(" " + c.lower() if c.isupper() else c for c in status.name))
+    .strip()
+    .capitalize()
+    for status in CustomHttpStatus
+}
+
+
+def _handshake_abort(status: CustomHttpStatus, api_version: ApiVersion) -> NoReturn:
+    detail = CUSTOM_HTTP_STATUS_DETAILS[status]
     raise HTTPException(
-        status_code=status_code,
+        status_code=status.value,
         headers={"Api-Version": str(api_version)},
         detail=detail,
     )
 
 
 def _handshake_abort_bad_content(api_version: ApiVersion) -> NoReturn:
-    _handshake_abort(
-        CustomHttpStatus.BadContentTypeOrInvalidBodyOrUnknownCommand.value, api_version
-    )
+    _handshake_abort(CustomHttpStatus.BadContentTypeOrInvalidBodyOrUnknownCommand, api_version)
 
 
 @dataclass
@@ -290,7 +292,7 @@ def _parse_auth_headers_or_abort(
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
             api_version=settled_api_version,
         )
 
@@ -299,7 +301,7 @@ def _parse_auth_headers_or_abort(
     if expected_content_type and headers.get("Content-Type") != expected_content_type:
         _handshake_abort_bad_content(api_version=settled_api_version)
     if expected_accept_type and headers.get("Accept") != expected_accept_type:
-        _handshake_abort(CustomHttpStatus.BadAcceptType.value, api_version=settled_api_version)
+        _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
 
     # 4) Check authenticated headers
     if not with_authenticated_headers:
@@ -311,12 +313,12 @@ def _parse_auth_headers_or_abort(
             authorization_method = headers["Authorization"]
         except KeyError:
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value, api_version=settled_api_version
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
         if authorization_method != AUTHORIZATION_PARSEC_ED25519:
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value, api_version=settled_api_version
+                CustomHttpStatus.BadAuthenticationInfo, api_version=settled_api_version
             )
 
         try:
@@ -324,7 +326,7 @@ def _parse_auth_headers_or_abort(
             raw_signature_b64 = headers["Signature"]
         except KeyError:
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value, api_version=settled_api_version
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
         try:
@@ -332,7 +334,7 @@ def _parse_auth_headers_or_abort(
             authenticated_device_id = DeviceID(b64decode(raw_device_id).decode("utf8"))
         except ValueError:
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value, api_version=settled_api_version
+                CustomHttpStatus.BadAuthenticationInfo, api_version=settled_api_version
             )
 
     # 5) Check invited headers
@@ -391,11 +393,11 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
             pass
         case AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED:
             _handshake_abort(
-                CustomHttpStatus.OrganizationExpired.value, api_version=parsed.settled_api_version
+                CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
             )
         case AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
                 api_version=parsed.settled_api_version,
             )
         case unknown:
@@ -455,19 +457,19 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
             pass
         case AuthInvitedAuthBadOutcome.ORGANIZATION_EXPIRED:
             _handshake_abort(
-                CustomHttpStatus.OrganizationExpired.value, api_version=parsed.settled_api_version
+                CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
             )
         case (
             AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             | AuthInvitedAuthBadOutcome.INVITATION_NOT_FOUND
         ):
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
                 api_version=parsed.settled_api_version,
             )
         case AuthInvitedAuthBadOutcome.INVITATION_ALREADY_USED:
             _handshake_abort(
-                CustomHttpStatus.InvitationAlreadyUsedOrDeleted.value,
+                CustomHttpStatus.InvitationAlreadyUsedOrDeleted,
                 api_version=parsed.settled_api_version,
             )
         case unknown:
@@ -526,11 +528,11 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
             pass
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED:
             _handshake_abort(
-                CustomHttpStatus.OrganizationExpired.value, api_version=parsed.settled_api_version
+                CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
             )
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
                 api_version=parsed.settled_api_version,
             )
         case (
@@ -538,12 +540,17 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
             | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
         ):
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value,
+                CustomHttpStatus.BadAuthenticationInfo,
                 api_version=parsed.settled_api_version,
             )
         case AuthAuthenticatedAuthBadOutcome.USER_REVOKED:
             _handshake_abort(
-                CustomHttpStatus.UserRevoked.value,
+                CustomHttpStatus.UserRevoked,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_FROZEN:
+            _handshake_abort(
+                CustomHttpStatus.UserFrozen,
                 api_version=parsed.settled_api_version,
             )
         case unknown:
@@ -600,11 +607,11 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
             pass
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED:
             _handshake_abort(
-                CustomHttpStatus.OrganizationExpired.value, api_version=parsed.settled_api_version
+                CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
             )
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound.value,
+                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
                 api_version=parsed.settled_api_version,
             )
         case (
@@ -612,12 +619,17 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
             | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
         ):
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo.value,
+                CustomHttpStatus.BadAuthenticationInfo,
                 api_version=parsed.settled_api_version,
             )
         case AuthAuthenticatedAuthBadOutcome.USER_REVOKED:
             _handshake_abort(
-                CustomHttpStatus.UserRevoked.value,
+                CustomHttpStatus.UserRevoked,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_FROZEN:
+            _handshake_abort(
+                CustomHttpStatus.UserFrozen,
                 api_version=parsed.settled_api_version,
             )
         case unknown:

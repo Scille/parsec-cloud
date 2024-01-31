@@ -138,6 +138,17 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         ) as event_source:
             yield EventsListenSSE(event_source)
 
+    async def raw_sse_connection(self) -> Response:
+        signature = b64encode(self.signing_key.sign_only_signature(b"")).decode()
+        return await self.raw_client.get(
+            f"{self.url}/events",
+            headers={
+                **self.headers,
+                "Signature": signature,
+                "Accept": "text/event-stream",
+            },
+        )
+
 
 class InvitedRpcClient(BaseInvitedRpcClient):
     def __init__(

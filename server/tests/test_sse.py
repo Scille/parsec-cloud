@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from base64 import b64encode
-
 import pytest
 
 from parsec._parsec import SigningKey
@@ -22,16 +20,9 @@ async def test_events_listen_auth_then_not_allowed(
     minimalorg.alice.signing_key = SigningKey.generate()
 
     # ...which cause authentication failure
-    signature = b64encode(minimalorg.alice.signing_key.sign_only_signature(b"")).decode()
-    rep = await minimalorg.raw_client.get(
-        f"{minimalorg.alice.url}/events",
-        headers={
-            **minimalorg.alice.headers,
-            "Signature": signature,
-            "Accept": "text/event-stream",
-        },
-    )
-    assert rep.status_code == 401
+
+    response = await minimalorg.alice.raw_sse_connection()
+    assert response.status_code == 403, response.content
 
 
 # TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:

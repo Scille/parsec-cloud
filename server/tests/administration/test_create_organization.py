@@ -17,7 +17,7 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
     url = "http://parsec.invalid/administration/organizations"
     # No Authorization header
     response = await client.post(url)
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Invalid Authorization header
     response = await client.post(
         url,
@@ -25,7 +25,7 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
             "Authorization": "DUMMY",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
     # Bad bearer token
     response = await client.post(
         url,
@@ -33,7 +33,42 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
             "Authorization": "Bearer BADTOKEN",
         },
     )
-    assert response.status_code == 403
+    assert response.status_code == 403, response.content
+
+
+@pytest.mark.parametrize("kind", ("bad_json", "bad_data"))
+async def test_bad_data(client: httpx.AsyncClient, backend: Backend, kind: str) -> None:
+    url = "http://parsec.invalid/administration/organizations"
+
+    body_args: dict
+    match kind:
+        case "bad_json":
+            body_args = {"content": b"<dummy>"}
+        case "bad_data":
+            body_args = {"json": {"dummy": "dummy"}}
+        case unknown:
+            assert False, unknown
+
+    response = await client.post(
+        url, headers={"Authorization": f"Bearer {backend.config.administration_token}"}, **body_args
+    )
+    assert response.status_code == 422, response.content
+
+
+async def test_bad_method(
+    client: httpx.AsyncClient,
+    backend: Backend,
+) -> None:
+    url = "http://parsec.invalid/administration/organizations"
+    org_id = OrganizationID("MyNewOrg")
+    response = await client.patch(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+        json={
+            "organization_id": org_id.str,
+        },
+    )
+    assert response.status_code == 405, response.content
 
 
 @pytest.mark.parametrize(
@@ -59,7 +94,7 @@ async def test_ok(
             **args,
         },
     )
-    assert response.status_code == 200
+    assert response.status_code == 200, response.content
     assert response.json() == {"bootstrap_token": ANY}
 
     expected_active_users_limit = ActiveUsersLimit.from_maybe_int(

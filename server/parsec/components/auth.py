@@ -12,7 +12,9 @@ from parsec._parsec import (
     OrganizationID,
     VerifyKey,
 )
+from parsec.components.events import EventBus
 from parsec.config import BackendConfig
+from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
 
 CACHE_TIME = 60  # seconds
 
@@ -39,6 +41,7 @@ AuthAuthenticatedAuthBadOutcome = Enum(
         "ORGANIZATION_EXPIRED",
         "ORGANIZATION_NOT_FOUND",
         "USER_REVOKED",
+        "USER_FROZEN",
         "DEVICE_NOT_FOUND",
         "INVALID_SIGNATURE",
     ),
@@ -70,12 +73,24 @@ class AuthenticatedAuthInfo:
 
 
 class BaseAuthComponent:
-    def __init__(self, config: BackendConfig):
+    def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._config = config
         self._device_cache: dict[
             tuple[OrganizationID, DeviceID],
             tuple[DateTime, AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome],
         ] = {}
+        event_bus.connect(self._on_event)
+
+    def _on_event(self, event: Event) -> None:
+        match event:
+            # Revocation and freezing/unfreezing affect the authentication process,
+            # so we clear the cache when such events occur.
+            case EventUserUnfrozen() | EventUserRevokedOrFrozen():
+                self._device_cache = {
+                    (org_id, device_id): v
+                    for ((org_id, device_id), v) in self._device_cache.items()
+                    if org_id != event.organization_id or device_id.user_id != event.user_id
+                }
 
     #
     # Public methods

@@ -195,6 +195,7 @@ class MemoryUser:
     revoked_user_certificate: bytes | None = field(default=None, repr=False)
     # Should be updated each time a new vlob is created/updated
     last_vlob_operation_timestamp: DateTime | None = None
+    is_frozen: bool = False
 
     @property
     def current_profile(self) -> UserProfile:
