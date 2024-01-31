@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use futures::FutureExt;
+
 pub mod oneshot {
     pub use tokio::sync::oneshot::{
         channel,
@@ -43,8 +45,7 @@ impl<T> crate::future::Future for JoinHandle<T> {
         mut self: std::pin::Pin<&mut Self>,
         cx: &mut std::task::Context<'_>,
     ) -> std::task::Poll<Self::Output> {
-        use crate::future::FutureExt;
-        self.0.poll(cx)
+        self.0.poll_unpin(cx)
     }
 }
 

@@ -114,7 +114,7 @@ async fn wait_server_online() {
 
     for _ in 0..2 {
         let switched_to_online = Cell::new(false);
-        libparsec_platform_async::future::zip(
+        libparsec_platform_async::future::join(
             // Event bus starts by considering we are offline...
             eb.wait_server_online(),
             async {

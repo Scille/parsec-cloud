@@ -2,7 +2,9 @@
 
 use std::{collections::HashMap, future::Future, pin::pin, sync::Arc};
 
-use libparsec_platform_async::{channel, event, pretend_future_is_send_on_web, select3, spawn};
+use libparsec_platform_async::{
+    channel, event, pretend_future_is_send_on_web, select3_biased, spawn,
+};
 use libparsec_types::prelude::*;
 
 use super::Monitor;
@@ -112,7 +114,14 @@ fn task_future_factory(
                 Some(due_time) => due_time - device.now(),
             };
 
-            let action = select3!(
+            let action = select3_biased!(
+                // The select macro is biased so the first future has priority.
+                // Hence we first check for stop to avoid famine if `rx` contains
+                // a lot of items.
+                //
+                // Also, `stop_requested` doesn't need to be fused (i.e. won't be
+                // polled once completed) given it signals it's time for shutdown.
+                _ = &mut stop_requested => Action::Stop,
                 outcome = rx.recv_async() => {
                     match outcome {
                         Ok(entry_id) => Action::NewLocalChange { entry_id },
@@ -120,9 +129,6 @@ fn task_future_factory(
                     }
                 },
                 _ = device.time_provider.sleep(to_sleep) => Action::DueTimeReached,
-                // `stop_requested` doesn't need to be fused (i.e. shouldn't be polled
-                // once completed) given it signals it's time for shutdown
-                _ = &mut stop_requested => Action::Stop,
             );
 
             match action {
@@ -130,6 +136,7 @@ fn task_future_factory(
                     // Shutdown the sub-task before leaving
                     drop(syncer_tx);
                     let _ = syncer.await;
+                    // This return is why `stop_requested` doesn't need to be fused
                     return;
                 }
 
