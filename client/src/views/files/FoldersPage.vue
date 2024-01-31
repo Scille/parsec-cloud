@@ -296,10 +296,13 @@ async function listFolder(): Promise<void> {
     children.value = [];
     allFilesSelected.value = false;
     for (const childName of (result.value as parsec.EntryStatFolder).children) {
-      const childPath = await parsec.Path.join(currentPath.value, childName);
-      const fileResult = await parsec.entryStat(childPath);
-      if (fileResult.ok) {
-        children.value.push(fileResult.value);
+      // Excluding files currently being imported
+      if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
+        const childPath = await parsec.Path.join(currentPath.value, childName);
+        const fileResult = await parsec.entryStat(childPath);
+        if (fileResult.ok) {
+          children.value.push(fileResult.value);
+        }
       }
     }
   } else {
