@@ -1,5 +1,7 @@
 aapt
 acapture
+aconnect
+aiter
 accesslog
 addoption
 adminguide
@@ -26,17 +28,17 @@ athrow
 authurl
 archivings
 archs
-STRINGTABLE
 autobuild
-crtime
-bkuptime
 autojump
 autotools
 autouse
+BADTOKEN
 Baka
+backpressure
 beafy
 BindGen
 Bitwarden
+bkuptime
 blockmeta
 blockmetas
 blockstore
@@ -94,6 +96,7 @@ coreutils
 coro
 corofn
 Couldnt
+crtime
 cryptolockers
 ctlr
 cuce
@@ -193,6 +196,7 @@ guce
 guci
 hashdigest
 hatin'
+hasnt
 headerlink
 helloerror
 Hellow
@@ -571,9 +575,11 @@ SPHINXBUILD
 SPHINXOPTS
 splashscreen
 sqldrivers
+sqlx
 SRCDIR
 SRSC
 staticlib
+STRINGTABLE
 structlog
 stucking
 styl

@@ -96,9 +96,9 @@ pub async fn share_workspace(
             CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
                 ClientShareWorkspaceError::InvalidCertificate(err)
             }
-            CertifBootstrapWorkspaceError::Internal(err) => {
-                err.context("Cannot ensure workspace is boostrapped").into()
-            }
+            CertifBootstrapWorkspaceError::Internal(err) => err
+                .context("Cannot ensure workspace is bootstrapped")
+                .into(),
         })?;
 
     match outcome {

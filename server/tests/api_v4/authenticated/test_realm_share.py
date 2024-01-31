@@ -39,7 +39,7 @@ async def test_authenticated_realm_share_ok_new_sharing(
         rep = await coolorg.alice.realm_share(
             key_index=1,
             realm_role_certificate=certif,
-            # Keys bundle access is not redable by the server, so we can put anything here
+            # Keys bundle access is not readable by the server, so we can put anything here
             recipient_keys_bundle_access=b"<mallory keys bundle access>",
         )
         assert rep == authenticated_cmds.v4.realm_share.RepOk()
@@ -82,7 +82,7 @@ async def test_authenticated_realm_share_ok_update_sharing_role(
         rep = await coolorg.alice.realm_share(
             key_index=1,
             realm_role_certificate=certif,
-            # Keys bundle access is not redable by the server, so we can put anything here
+            # Keys bundle access is not readable by the server, so we can put anything here
             recipient_keys_bundle_access=b"<bob keys bundle access>",
         )
         assert rep == authenticated_cmds.v4.realm_share.RepOk()
@@ -124,7 +124,7 @@ async def test_authenticated_realm_share_role_already_granted(
     rep = await coolorg.alice.realm_share(
         key_index=1,
         realm_role_certificate=certif,
-        # Keys bundle access is not redable by the server, so we can put anything here
+        # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepRoleAlreadyGranted(
@@ -149,7 +149,7 @@ async def test_authenticated_realm_share_invalid_certificate_role_none(
     rep = await coolorg.alice.realm_share(
         key_index=1,
         realm_role_certificate=certif,
-        # Keys bundle access is not redable by the server, so we can put anything here
+        # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepInvalidCertificate()
@@ -161,7 +161,7 @@ async def test_authenticated_realm_share_invalid_certificate_dummy_data(
     rep = await coolorg.alice.realm_share(
         key_index=1,
         realm_role_certificate=b"<dummy>",
-        # Keys bundle access is not redable by the server, so we can put anything here
+        # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepInvalidCertificate()
@@ -256,7 +256,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
     rep = await coolorg.alice.realm_share(
         key_index=bad_key_index,
         realm_role_certificate=certif,
-        # Keys bundle access is not redable by the server, so we can put anything here
+        # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<mallory keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepBadKeyIndex(

@@ -54,7 +54,7 @@ pub(super) async fn get_child_manifest(
                             FsOperationError::EntryNotFound
                         }
                         // The realm doesn't exist on server side, hence we are it creator and
-                        // it data only live on our local storage, which we have aleady checked.
+                        // it data only live on our local storage, which we have already checked.
                         FetchRemoteManifestError::RealmNotFound => FsOperationError::EntryNotFound,
                         FetchRemoteManifestError::NotAllowed => FsOperationError::NoRealmAccess,
                         FetchRemoteManifestError::InvalidKeysBundle(err) => {

@@ -336,7 +336,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
-                // A key rotation occored concurrently, should poll for new certificates and retry
+                // A key rotation occured concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops
@@ -411,7 +411,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
-                // A key rotation occored concurrently, should poll for new certificates and retry
+                // A key rotation occured concurrently, should poll for new certificates and retry
                 Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                     let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                     ops.certificates_ops
@@ -444,7 +444,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 bad_rep @ (
                     // Got sequester info from certificates
                     Rep::OrganizationNotSequestered
-                    // Already checked the vlob exists since the manifet has version > 0
+                    // Already checked the vlob exists since the manifest has version > 0
                     | Rep::VlobNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }

@@ -102,7 +102,7 @@ pub enum InvalidCertificateError {
     #[error("Certificate `{hint}` breaks consistency: user has Outsider profile, and hence cannot have Owner/Manager role in the realm given it is shared with others !")]
     RealmOutsiderCannotBeOwnerOrManager { hint: String },
     #[error(
-        "Certificate `{hint}` breaks consistency: no related shamire recovery brief certificate"
+        "Certificate `{hint}` breaks consistency: no related shamir recovery brief certificate"
     )]
     ShamirRecoveryMissingBriefCertificate { hint: String },
 }
@@ -230,7 +230,7 @@ pub(super) async fn add_certificates_batch(
         }
     }
 
-    // TOOD: sent dedicated events which certificates are added (e.g. share to self,
+    // TODO: sent dedicated events which certificates are added (e.g. share to self,
     //       realm rename) unless `storage_initially_empty` is true, in which case
     //       only send a single generic event.
 

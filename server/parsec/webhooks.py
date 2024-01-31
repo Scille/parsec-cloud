@@ -22,7 +22,7 @@ DeviceIDField = Annotated[DeviceID, PlainSerializer(lambda x: x.str, return_type
 DeviceLabelField = Annotated[DeviceLabel, PlainSerializer(lambda x: x.str, return_type=str)]
 
 
-class OrganizationBootstsrapWebhook(BaseModel):
+class OrganizationBootstrapWebhook(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     organization_id: OrganizationIDField
@@ -48,7 +48,7 @@ class WebhooksComponent:
         if not self._config.organization_bootstrap_webhook_url:
             return
 
-        data = OrganizationBootstsrapWebhook(
+        data = OrganizationBootstrapWebhook(
             organization_id=organization_id,
             device_id=device_id,
             device_label=device_label,

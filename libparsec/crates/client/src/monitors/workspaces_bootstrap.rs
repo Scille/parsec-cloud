@@ -14,7 +14,7 @@ use crate::{
 
 const WORKSPACES_BOOTSTRAP_MONITOR_NAME: &str = "workspaces_bootstrap";
 
-pub(crate) async fn start_workspaces_boostrap_monitor(
+pub(crate) async fn start_workspaces_bootstrap_monitor(
     event_bus: EventBus,
     client: Arc<Client>,
 ) -> Monitor {

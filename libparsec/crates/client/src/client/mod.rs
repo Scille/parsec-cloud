@@ -30,7 +30,7 @@ use crate::{
     event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_user_sync_monitor,
-        start_workspaces_boostrap_monitor, start_workspaces_refresh_list_monitor, Monitor,
+        start_workspaces_bootstrap_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
 };
@@ -133,8 +133,8 @@ impl Client {
         // Start the common monitors
 
         if with_monitors {
-            let workspaces_boostrap_monitor =
-                start_workspaces_boostrap_monitor(client.event_bus.clone(), client.clone()).await;
+            let workspaces_bootstrap_monitor =
+                start_workspaces_bootstrap_monitor(client.event_bus.clone(), client.clone()).await;
 
             let workspaces_refresh_list_monitor =
                 start_workspaces_refresh_list_monitor(client.event_bus.clone(), client.clone())
@@ -155,7 +155,7 @@ impl Client {
                 start_connection_monitor(client.cmds.clone(), client.event_bus.clone()).await;
 
             let mut monitors = client.monitors.lock().expect("Mutex is poisoned");
-            monitors.push(workspaces_boostrap_monitor);
+            monitors.push(workspaces_bootstrap_monitor);
             monitors.push(workspaces_refresh_list_monitor);
             monitors.push(user_sync_monitor);
             monitors.push(certif_poll_monitor);
@@ -340,7 +340,7 @@ impl Client {
     /// ```rust
     /// client.create_workspace("wksp1".parse().unwrap()).await?;
     /// // Workspace is local-only and need to be bootstrapped
-    /// client.ensure_workspaces_boostrap().await?;
+    /// client.ensure_workspaces_bootstrap().await?;
     /// // Workspace has been bootstrapped, but our client is not aware of the new
     /// // certificates (and its workspace list local cache is out-of-date).
     /// // We could wait for the monitors to catch up, or else do:
@@ -355,7 +355,7 @@ impl Client {
     /// so that it can be made accessible to other users/devices (i.e. in Parsec v3 sharing
     /// is only possible on a workspace with a key rotation).
     ///
-    /// In practice the workspace boostrap is composed of three steps:
+    /// In practice the workspace bootstrap is composed of three steps:
     /// 1. Upload the initial user role certificate. This step correspond to the actual
     ///    creation the realm on the server.
     /// 2. Do the initial key rotation. In Parsec v3+ sharing a workspace involve encrypting
@@ -365,7 +365,7 @@ impl Client {
     ///
     /// Note there is no global atomicity guarantee for those steps:
     /// - Given each step is idempotent, the idea is to repeatedly call them until
-    ///   bootstrape is no longer needed.
+    ///   bootstrap is no longer needed.
     /// - A realm created before Parsec v3 will not have step 2 and 3 (and may nevertheless
     ///   be shared !) until an OWNER using a Parsec v3 client calls this function.
     ///

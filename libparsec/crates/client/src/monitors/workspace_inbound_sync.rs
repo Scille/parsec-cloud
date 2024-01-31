@@ -116,7 +116,7 @@ fn task_future_factory(
                         Err(err) => match err {
                             WorkspaceSyncError::Stopped => {
                                 // Shouldn't occur in practice given the monitors are expected
-                                // to be stopped before the opses. In anycase we have no
+                                // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
                                 return;
                             }

@@ -13,7 +13,7 @@ async def test_get_organization_auth(client: httpx.AsyncClient, coolorg: Coolorg
     # No Authorization header
     response = await client.patch(url, json={"is_expired": True})
     assert response.status_code == 403
-    # Invilad Authorization header
+    # Invalid Authorization header
     response = await client.patch(
         url,
         headers={
