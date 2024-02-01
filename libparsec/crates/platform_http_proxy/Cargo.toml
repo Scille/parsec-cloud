@@ -14,7 +14,7 @@ workspace = true
 [dependencies]
 libparsec_types = { workspace = true }
 
-reqwest = { workspace = true, features = ["default-tls"] }
+reqwest = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { workspace = true, features = ["Win32_Networking_WinHttp", "Win32_Foundation"] }
