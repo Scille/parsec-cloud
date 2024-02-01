@@ -24,7 +24,14 @@ templates = Jinja2Templates(
 
 
 def app_factory() -> AsgiApp:
-    app = FastAPI()
+    app = FastAPI(
+        title="Parsec Server",
+        version=parsec_version,
+        # Disable auto-generated docs for the moment as it is broken (due to custom types validator for events)
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
 
     # Must be overwritten before the app is started !
     app.state.backend = None

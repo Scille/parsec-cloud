@@ -486,6 +486,7 @@ randr
 readonlydir
 recoverin
 recoveryfile
+redoc
 reenc
 Reencrypt
 ReEncrypted
