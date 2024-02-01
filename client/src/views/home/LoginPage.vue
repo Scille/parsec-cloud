@@ -22,6 +22,7 @@
         <div class="login-card-content__password">
           <ms-password-input
             :label="$t('HomePage.organizationLogin.passwordLabel')"
+            ref="passwordInputRef"
             v-model="password"
             @on-enter-keyup="onLoginClick()"
             id="ms-password-input"
@@ -60,7 +61,7 @@ import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -70,6 +71,12 @@ const emits = defineEmits<{
   (e: 'loginClick', device: AvailableDevice, password: string): void;
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
+
+const passwordInputRef = ref();
+
+onMounted(async () => {
+  await passwordInputRef.value.setFocus();
+});
 
 async function onLoginClick(): Promise<void> {
   emits('loginClick', props.device, password.value);

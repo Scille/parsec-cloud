@@ -20,7 +20,7 @@
     >
       <ion-input
         class="form-input input"
-        :autofocus="true"
+        ref="inputRef"
         :placeholder="$props.placeholder"
         :value="modelValue"
         @ion-input="onChange($event.detail.value || '')"
@@ -55,6 +55,7 @@ const props = defineProps<{
   validator?: IValidator;
 }>();
 
+const inputRef = ref();
 const errorMessage = ref('');
 const validity = ref(Validity.Intermediate);
 
@@ -63,6 +64,16 @@ const emits = defineEmits<{
   (e: 'change', value: string): void;
   (e: 'onEnterKeyup', value: string): void;
 }>();
+
+defineExpose({
+  setFocus,
+});
+
+function setFocus(): void {
+  setTimeout(() => {
+    inputRef.value.$el.setFocus();
+  }, 200);
+}
 
 async function onChange(value: string): Promise<void> {
   emits('update:modelValue', value);

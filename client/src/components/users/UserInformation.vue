@@ -6,6 +6,7 @@
     :placeholder="$t('CreateOrganization.fullnamePlaceholder')"
     name="fullname"
     v-model="fullName"
+    ref="firstInputFieldRef"
     :disabled="!$props.nameEnabled"
     @change="$emit('fieldUpdate')"
     @on-enter-keyup="$emit('onEnterKeyup', fullName)"
@@ -72,6 +73,7 @@ const props = defineProps({
 const deviceName = ref(props.defaultDevice || getDefaultDeviceName());
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
+const firstInputFieldRef = ref();
 
 defineEmits<{
   (e: 'fieldUpdate'): void;
@@ -83,7 +85,12 @@ defineExpose({
   deviceName,
   email,
   fullName,
+  setFocus,
 });
+
+function setFocus(): void {
+  firstInputFieldRef.value.setFocus();
+}
 
 async function areFieldsCorrect(): Promise<boolean> {
   return (

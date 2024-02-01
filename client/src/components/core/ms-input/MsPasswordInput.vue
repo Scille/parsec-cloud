@@ -13,6 +13,7 @@
         <ion-item class="input-item ion-no-padding">
           <ion-input
             class="form-input input"
+            ref="inputRef"
             aria-labelledby="passwordLabel"
             :type="passwordVisible ? 'text' : 'password'"
             @ion-input="onChange($event.target.value)"
@@ -20,7 +21,6 @@
             @keyup.enter="onEnterPress()"
             id="ms-password-input"
             :clear-on-edit="false"
-            :autofocus="autofocus || false"
           />
           <div
             class="input-icon"
@@ -42,10 +42,11 @@ import { IonCol, IonGrid, IonIcon, IonInput, IonItem, IonRow, IonText } from '@i
 import { eye, eyeOff } from 'ionicons/icons';
 import { ref } from 'vue';
 
+const inputRef = ref();
+
 const props = defineProps<{
   label: string;
   modelValue?: string;
-  autofocus?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -55,6 +56,16 @@ const emits = defineEmits<{
 }>();
 
 const passwordVisible = ref(false);
+
+defineExpose({
+  setFocus,
+});
+
+function setFocus(): void {
+  setTimeout(() => {
+    inputRef.value.$el.setFocus();
+  }, 200);
+}
 
 function onChange(value: any): void {
   emits('update:modelValue', value);

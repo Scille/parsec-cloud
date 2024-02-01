@@ -18,6 +18,7 @@
   >
     <ms-input
       :label="inputLabel || ''"
+      ref="msInputRef"
       :placeholder="placeholder || ''"
       v-model="text"
       @on-enter-keyup="confirm()"
@@ -33,13 +34,18 @@ import { MsInput } from '@/components/core/ms-input';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<GetTextOptions>();
+const msInputRef = ref();
 
 const text = ref(props.defaultValue || '');
 const textIsValid = asyncComputed(async () => {
   return text.value && (!props.validator || (props.validator && (await props.validator(text.value)).validity === Validity.Valid));
+});
+
+onMounted(() => {
+  msInputRef.value.setFocus();
 });
 
 async function confirm(): Promise<boolean> {

@@ -373,6 +373,7 @@ async function nextStep(): Promise<void> {
       return;
     }
     waitingForHost.value = false;
+    passwordPage.value.setFocus(50);
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Information({
       message: translate('JoinOrganization.successMessage.message'),
@@ -391,6 +392,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       waitingForHost.value = false;
       pageStep.value += 1;
+      userInfoPage.value.setFocus(50);
     } else {
       await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
     }
