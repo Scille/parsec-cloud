@@ -37,9 +37,11 @@ ALLOWED_API_VERSIONS = {
 
 
 def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:
-    # Unlike req/rep that have an absolute path, `client_ctx` is only specified
-    # in the signature by its name, hence we must hack `localns` so that it find
-    # something (as we don't really care to find the right element !)
+    # Unlike req/rep types that have an absolute path, `client_ctx`'s type is only
+    # specified in the signature by its name, hence we must hack `localns` so that
+    # it contains the different possible type names.
+    # Note only the key is important here (as we just want to know which type
+    # `client_ctx` is in the given signature).
     types = get_type_hints(
         fn,
         localns={
