@@ -7,7 +7,7 @@ import pytest
 from parsec._parsec import InvitationStatus, authenticated_cmds
 from parsec.components.invite import UserInvitation
 from parsec.events import EventInvitation
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 
 
 @pytest.mark.parametrize("send_email", (False, True))
@@ -54,3 +54,21 @@ async def test_authenticated_invite_new_user_ok(
         await backend.invite.test_dump_all_invitations(minimalorg.organization_id)
         == expected_invitations
     )
+
+
+async def test_authenticated_invite_new_user_author_not_allowed(coolorg: CoolorgRpcClients):
+    rep = await coolorg.bob.invite_new_user(
+        claimer_email="new@example.invalid",
+        send_email=False,
+    )
+    assert rep == authenticated_cmds.v4.invite_new_user.RepAuthorNotAllowed()
+
+
+async def test_authenticated_invite_new_user_claimer_email_already_enrolled(
+    coolorg: CoolorgRpcClients,
+):
+    rep = await coolorg.alice.invite_new_user(
+        claimer_email=coolorg.bob.human_handle.email,
+        send_email=False,
+    )
+    assert rep == authenticated_cmds.v4.invite_new_user.RepClaimerEmailAlreadyEnrolled()
