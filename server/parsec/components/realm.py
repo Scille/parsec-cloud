@@ -137,7 +137,10 @@ def realm_share_validate(
         case TimestampOutOfBallpark() as error:
             return error
 
-    if data.author == data.user_id:
+    assert (
+        data.author is not None
+    )  # TODO: remove me once RealmRoleCertificate's author is corrected
+    if data.author.user_id == data.user_id:
         return RealmShareValidateBadOutcome.CANNOT_SELF_SHARE
 
     if data.role is None:
@@ -177,7 +180,10 @@ def realm_unshare_validate(
         case TimestampOutOfBallpark() as error:
             return error
 
-    if data.author == data.user_id:
+    assert (
+        data.author is not None
+    )  # TODO: remove me once RealmRoleCertificate's author is corrected
+    if data.author.user_id == data.user_id:
         return RealmUnshareValidateBadOutcome.CANNOT_SELF_UNSHARE
 
     if data.role is not None:

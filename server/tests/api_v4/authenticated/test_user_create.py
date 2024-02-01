@@ -329,7 +329,7 @@ async def test_authenticated_user_create_user_already_exists(
     assert rep == authenticated_cmds.v4.user_create.RepUserAlreadyExists()
 
 
-async def test_authenticated_user_create_human_handle_already_exists(
+async def test_authenticated_user_create_human_handle_already_taken(
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     t1 = DateTime.now()
@@ -348,7 +348,7 @@ async def test_authenticated_user_create_human_handle_already_exists(
     assert rep == authenticated_cmds.v4.user_create.RepHumanHandleAlreadyTaken()
 
 
-async def test_authenticated_user_create_device_timestamp_out_of_ballpark(
+async def test_authenticated_user_create_timestamp_out_of_ballpark(
     minimalorg: MinimalorgRpcClients,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
@@ -372,7 +372,7 @@ async def test_authenticated_user_create_device_timestamp_out_of_ballpark(
 
 
 @pytest.mark.parametrize("kind", ("same_timestamp", "smaller_timestamp"))
-async def test_authenticated_user_create_device_require_greater_timestamp(
+async def test_authenticated_user_create_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     kind: str,

@@ -444,7 +444,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         timestamp=certif_timestamp,
         realm_id=wksp2_id,
         role=RealmRole.MANAGER,
-        user_id=coolorg.alice.user_id,
+        user_id=coolorg.bob.user_id,
     ).dump_and_sign(coolorg.alice.signing_key)
 
     outcome = await backend.realm.share(

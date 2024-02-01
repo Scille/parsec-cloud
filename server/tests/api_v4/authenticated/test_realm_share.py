@@ -8,8 +8,10 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmRole,
     RealmRoleCertificate,
+    RevokedUserCertificate,
     SecretKey,
     SecretKeyAlgorithm,
+    UserID,
     VlobID,
     authenticated_cmds,
 )
@@ -134,33 +136,37 @@ async def test_authenticated_realm_share_role_already_granted(
     )
 
 
-async def test_authenticated_realm_share_invalid_certificate_role_none(
-    coolorg: CoolorgRpcClients, backend: Backend
+@pytest.mark.parametrize("kind", ("dummy_certif", "role_none", "self_share"))
+async def test_authenticated_realm_share_invalid_certificate(
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     timestamp = DateTime.now()
-    certif = RealmRoleCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=timestamp,
-        realm_id=coolorg.wksp1_id,
-        role=None,
-        user_id=coolorg.bob.device_id.user_id,
-    ).dump_and_sign(coolorg.alice.signing_key)
+
+    match kind:
+        case "dummy_certif":
+            certif = b"<dummy>"
+        case "role_none":
+            certif = RealmRoleCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=timestamp,
+                realm_id=coolorg.wksp1_id,
+                role=None,
+                user_id=coolorg.bob.device_id.user_id,
+            ).dump_and_sign(coolorg.alice.signing_key)
+        case "self_share":
+            certif = RealmRoleCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=timestamp,
+                realm_id=coolorg.wksp1_id,
+                role=RealmRole.READER,
+                user_id=coolorg.alice.device_id.user_id,
+            ).dump_and_sign(coolorg.alice.signing_key)
+        case unknown:
+            assert False, unknown
 
     rep = await coolorg.alice.realm_share(
         key_index=1,
         realm_role_certificate=certif,
-        # Keys bundle access is not readable by the server, so we can put anything here
-        recipient_keys_bundle_access=b"<bob keys bundle access>",
-    )
-    assert rep == authenticated_cmds.v4.realm_share.RepInvalidCertificate()
-
-
-async def test_authenticated_realm_share_invalid_certificate_dummy_data(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    rep = await coolorg.alice.realm_share(
-        key_index=1,
-        realm_role_certificate=b"<dummy>",
         # Keys bundle access is not readable by the server, so we can put anything here
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
@@ -264,4 +270,218 @@ async def test_authenticated_realm_share_key_bad_key_index(
     )
 
 
-# TODO: test share on revoked user
+async def test_authenticated_realm_share_recipient_revoked(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    t0 = DateTime.now()
+    revoked_user_certificate = RevokedUserCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    outcome = await backend.user.revoke_user(
+        now=t0,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        revoked_user_certificate=revoked_user_certificate,
+    )
+    assert isinstance(outcome, RevokedUserCertificate)
+
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepRecipientRevoked()
+
+
+async def test_authenticated_realm_share_bad_key_index(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=2,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepBadKeyIndex(
+        last_realm_certificate_timestamp=get_last_realm_certificate_timestamp(
+            coolorg.testbed_template, coolorg.wksp1_id
+        )
+    )
+
+
+async def test_authenticated_realm_share_author_not_allowed(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.bob.device_id,
+        timestamp=timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.bob.signing_key)
+    rep = await coolorg.bob.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepAuthorNotAllowed()
+
+
+async def test_authenticated_realm_share_realm_not_found(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=timestamp,
+        realm_id=VlobID.new(),
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepRealmNotFound()
+
+
+async def test_authenticated_realm_share_recipient_not_found(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=UserID("dummy"),
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepRecipientNotFound()
+
+
+@pytest.mark.parametrize("role", (RealmRole.MANAGER, RealmRole.OWNER))
+async def test_authenticated_realm_share_role_incompatible_with_outsider(
+    coolorg: CoolorgRpcClients, role: RealmRole
+) -> None:
+    timestamp = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=timestamp,
+        realm_id=coolorg.wksp1_id,
+        role=role,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepRoleIncompatibleWithOutsider()
+
+
+async def test_authenticated_realm_share_require_greater_timestamp(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    t0 = DateTime.now().subtract(seconds=3600)
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert isinstance(rep, authenticated_cmds.v4.realm_share.RepTimestampOutOfBallpark)
+    assert rep.ballpark_client_early_offset == 300.0
+    assert rep.ballpark_client_late_offset == 320.0
+    assert rep.client_timestamp == t0
+
+
+@pytest.mark.parametrize("kind", ("same_timestamp", "smaller_timestamp"))
+async def test_authenticated_realm_share_timestamp_out_of_ballpark(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
+) -> None:
+    t1 = DateTime.now()
+    match kind:
+        case "same_timestamp":
+            t2 = t1
+        case "smaller_timestamp":
+            t2 = t1.subtract(seconds=1)
+        case unknown:
+            assert False, unknown
+
+    # 1) Create a new certificate in the realm
+
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t1,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.READER,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    outcome = await backend.realm.share(
+        now=t1,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        key_index=1,
+        realm_role_certificate=certif,
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    # 2) Our sharing's timestamp is clashing with the previous certificate
+
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t2,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.CONTRIBUTOR,
+        user_id=coolorg.mallory.device_id.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.realm_share(
+        key_index=1,
+        realm_role_certificate=certif,
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepRequireGreaterTimestamp(
+        strictly_greater_than=t1
+    )

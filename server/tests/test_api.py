@@ -38,6 +38,13 @@ def test_each_cmds_req_reps_have_dedicated_test() -> None:
                         cmd_rep_x_test_fn = getattr(api_mod, test_name, None)
 
                         if cmd_rep_x_test_fn is None or not callable(cmd_rep_x_test_fn):
-                            missing.append(test_name)
+                            # Last chance: the command might have multiple tests and hence have it name be used as prefix
+                            tests = [x for x in dir(api_mod) if x.startswith(test_name)]
+                            if tests:
+                                assert (
+                                    len(tests) > 1
+                                ), f"Test {tests[0]} should be simply named {test_name}"
+                            else:
+                                missing.append(test_name)
 
     assert not missing, f"Missing {len(missing)} tests:\n" + "\n".join(sorted(missing))
