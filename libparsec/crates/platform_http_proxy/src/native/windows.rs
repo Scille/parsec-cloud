@@ -1,12 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::ffi::c_void;
+
 use widestring::U16CStr;
 use windows_sys::Win32::{
-    Foundation::GetLastError,
+    Foundation::{GetLastError, GlobalFree},
     Networking::WinHttp::{
         WinHttpGetIEProxyConfigForCurrentUser, WINHTTP_CURRENT_USER_IE_PROXY_CONFIG,
     },
-    System::Memory::GlobalFree,
 };
 
 use libparsec_types::anyhow;
@@ -43,7 +44,7 @@ impl ProxyConfig {
             // According to Windows doc, we should free it.
             // https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetieproxyconfigforcurrentuser#remarks
             unsafe {
-                GlobalFree(proxy_config.lpszAutoConfigUrl as isize);
+                GlobalFree(proxy_config.lpszAutoConfigUrl as *mut c_void);
             }
         }
 
@@ -67,7 +68,7 @@ impl ProxyConfig {
             // According to Windows doc, we should free it.
             // https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetieproxyconfigforcurrentuser#remarks
             unsafe {
-                GlobalFree(proxy_config.lpszProxy as isize);
+                GlobalFree(proxy_config.lpszProxy as *mut c_void);
             }
         }
 
@@ -78,7 +79,7 @@ impl ProxyConfig {
             // According to Windows doc, we should free it.
             // https://learn.microsoft.com/en-us/windows/win32/api/winhttp/nf-winhttp-winhttpgetieproxyconfigforcurrentuser#remarks
             unsafe {
-                GlobalFree(proxy_config.lpszProxyBypass as isize);
+                GlobalFree(proxy_config.lpszProxyBypass as *mut c_void);
             }
         }
 
