@@ -47,6 +47,7 @@
             name="organization"
             id="org-name-input"
             v-model="orgName"
+            ref="organizationNameInputRef"
             @on-enter-keyup="nextStep()"
             :validator="organizationValidator"
           />
@@ -185,7 +186,7 @@ import { Information, InformationKey, InformationLevel, InformationManager, Pres
 import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
-import { Ref, inject, ref } from 'vue';
+import { Ref, inject, onMounted, ref } from 'vue';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -207,6 +208,7 @@ const userInfo = ref();
 const serverChoice = ref();
 const passwordChoice = ref();
 const summaryInfo = ref();
+const organizationNameInputRef = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
 const orgInfo: Ref<null | OrgInfoValues> = ref(null);
@@ -270,6 +272,10 @@ const titles = new Map<CreateOrganizationStep, Title>([
     },
   ],
 ]);
+
+onMounted(() => {
+  organizationNameInputRef.value.setFocus();
+});
 
 function getNextButtonText(): string {
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
@@ -371,6 +377,14 @@ async function nextStep(): Promise<void> {
     return;
   } else {
     pageStep.value = pageStep.value + 1;
+    switch (pageStep.value) {
+      case CreateOrganizationStep.UserInfoStep:
+        userInfo.value.setFocus(50);
+        break;
+      case CreateOrganizationStep.PasswordStep:
+        passwordChoice.value.setFocus(50);
+        break;
+    }
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;

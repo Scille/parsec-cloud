@@ -16,9 +16,9 @@
         :label="passwordLabel || $t('Password.password')"
         v-model="password"
         name="password"
+        ref="firstInputFieldRef"
         @change="onPasswordChange()"
         @on-enter-keyup="$emit('onEnterKeyup', password)"
-        :autofocus="true"
       />
     </div>
     <div class="ms-password-inputs-container">
@@ -66,6 +66,7 @@ import { ref } from 'vue';
 const password = ref('');
 const passwordConfirm = ref('');
 const passwordStrength = ref(PasswordStrength.None);
+const firstInputFieldRef = ref();
 
 defineEmits<{
   (e: 'onEnterKeyup', value: string): void;
@@ -79,7 +80,12 @@ defineExpose({
   areFieldsCorrect,
   password,
   clear,
+  setFocus,
 });
+
+function setFocus(): void {
+  firstInputFieldRef.value.setFocus();
+}
 
 async function areFieldsCorrect(): Promise<boolean> {
   return passwordStrength.value === PasswordStrength.High && password.value === passwordConfirm.value;

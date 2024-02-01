@@ -14,6 +14,7 @@
     />
     <ion-input
       class="form-input input"
+      ref="inputRef"
       v-model="searchRef"
       :value="modelValue"
       :placeholder="label"
@@ -37,6 +38,7 @@ defineProps<{
 }>();
 
 const searchRef = ref('');
+const inputRef = ref();
 
 const emits = defineEmits<{
   (e: 'change', value: string): void;
@@ -44,6 +46,15 @@ const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void;
 }>();
 
+defineExpose({
+  setFocus,
+});
+
+function setFocus(): void {
+  setTimeout(() => {
+    inputRef.value.$el.setFocus();
+  }, 200);
+}
 function onEnterPress(): void {
   if (searchRef.value.length > 0) {
     emits('enter');
