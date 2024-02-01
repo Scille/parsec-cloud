@@ -182,7 +182,7 @@ async def test_authenticated_device_create_device_already_exists(
     assert rep == authenticated_cmds.v4.device_create.RepDeviceAlreadyExists()
 
 
-async def test_authenticated_device_create_device_timestamp_out_of_ballpark(
+async def test_authenticated_device_create_timestamp_out_of_ballpark(
     coolorg: CoolorgRpcClients,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
@@ -201,7 +201,7 @@ async def test_authenticated_device_create_device_timestamp_out_of_ballpark(
 
 
 @pytest.mark.parametrize("kind", ("same_timestamp", "smaller_timestamp"))
-async def test_authenticated_device_create_device_require_greater_timestamp(
+async def test_authenticated_device_create_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     kind: str,
