@@ -176,7 +176,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -201,7 +201,7 @@ const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const profileOptions: MsOptions = new MsOptions([
   {
@@ -294,24 +294,24 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
   if (!result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.greet.errors.startFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.greet.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     await cancelModal();
     return;
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.greet.errors.startFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.greet.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     await cancelModal();
     return;
@@ -362,12 +362,12 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationManager.showToast(
-    new Notification({
-      title: translate('UsersPage.greet.errors.createUserFailed.title'),
+  informationManager.present(
+    new Information({
       message: message,
-      level: NotificationLevel.Error,
+      level: InformationLevel.Error,
     }),
+    PresentationMode.Toast,
   );
   await restartProcess();
 }
@@ -378,14 +378,14 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetUserStep.Summary) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.greet.success.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.greet.success.message', {
           user: guestInfoPage.value?.fullName,
         }),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;

@@ -21,7 +21,7 @@
       </div>
       <div class="element-details">
         <ion-label class="element-details__message body">
-          <span>{{ notification.message }}</span>
+          <span>{{ notification.information.message }}</span>
         </ion-label>
         <ion-text class="element-details__time body-sm">
           <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>

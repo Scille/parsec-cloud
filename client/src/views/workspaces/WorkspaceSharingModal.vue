@@ -48,12 +48,12 @@
 import { MsInput, MsModal } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate, translateWorkspaceRole } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
 
@@ -109,12 +109,12 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
       userRoles.value = result.value;
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('WorkspaceSharing.listFailure.title'),
+    informationManager.present(
+      new Information({
         message: translate('WorkspaceSharing.listFailure.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -134,23 +134,23 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   // Trying to set the same role again
   if (current && current[1] === role) {
     if (role === null) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspaceSharing.listFailure.alreadyNotShared.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspaceSharing.listFailure.alreadyNotShared.message', { user: user.humanHandle.label }),
-          level: NotificationLevel.Info,
+          level: InformationLevel.Info,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspaceSharing.listFailure.alreadyHasRole.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspaceSharing.listFailure.alreadyHasRole.message', {
             user: user.humanHandle.label,
             role: translateWorkspaceRole(role).label,
           }),
-          level: NotificationLevel.Info,
+          level: InformationLevel.Info,
         }),
+        PresentationMode.Toast,
       );
     }
     return;
@@ -158,36 +158,36 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspaceSharing.unshareSuccess.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspaceSharing.unshareSuccess.message', {
             user: user.humanHandle.label,
           }),
-          level: NotificationLevel.Success,
+          level: InformationLevel.Success,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspaceSharing.updateRoleSuccess.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspaceSharing.updateRoleSuccess.message', {
             user: user.humanHandle.label,
             role: translateWorkspaceRole(role).label,
           }),
-          level: NotificationLevel.Success,
+          level: InformationLevel.Success,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('WorkspaceSharing.updateRoleFailure.title'),
+    informationManager.present(
+      new Information({
         message: translate('WorkspaceSharing.updateRoleFailure.message', {
           user: user.humanHandle.label,
         }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
   await refreshSharingInfo();

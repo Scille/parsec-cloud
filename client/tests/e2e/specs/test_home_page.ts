@@ -33,7 +33,6 @@ describe('Check organization list', () => {
     cy.get('.login-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button').click();
     cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
-    cy.get('@notificationToast').shadow().find('.toast-header').should('contain.text', 'Could not login');
     cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
   });
 

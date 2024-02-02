@@ -135,14 +135,14 @@ import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const passwordSaved = ref(false);
 
@@ -162,12 +162,12 @@ async function refreshDevicesList(): Promise<void> {
       passwordSaved.value = true;
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     console.log('Could not list devices', result.error);
   }

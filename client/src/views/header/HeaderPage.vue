@@ -79,7 +79,7 @@
               class="topbar-right-button__item"
               :class="{
                 active: notificationPopoverIsVisible,
-                unread: notificationManager.hasUnreadNotifications(),
+                unread: informationManager.notificationManager.hasUnreadNotifications(),
               }"
               @click="openNotificationCenter($event)"
             >
@@ -119,7 +119,7 @@ import {
   navigateTo,
   watchRoute,
 } from '@/router';
-import { NotificationKey, NotificationManager } from '@/services/notificationManager';
+import { InformationKey, InformationManager } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
@@ -145,7 +145,7 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const routeWatchCancel = watchRoute(async () => {
   const result = await getClientInfo();

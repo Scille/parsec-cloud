@@ -94,7 +94,6 @@ Cypress.Commands.add('dropTestbed', () => {
 });
 
 Cypress.Commands.add('checkToastMessage', (level, title: string | RegExp, message: string | RegExp) => {
-  cy.get('.notification-toast').shadow().find('.toast-header').contains(title);
   cy.get('.notification-toast').should('have.class', `ms-${level}`);
   cy.get('.notification-toast').shadow().find('.toast-message').contains(message);
   cy.get('.notification-toast').shadow().find('.toast-button-confirm').first().click();

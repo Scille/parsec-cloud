@@ -60,7 +60,7 @@
 import { writeTextToClipboard } from '@/common/clipboard';
 import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate, translateInvitationStatus } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { inject } from 'vue';
@@ -74,25 +74,25 @@ defineEmits<{
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
   if (result) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.invitation.linkCopiedToClipboard.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.invitation.linkCopiedToClipboard.message'),
-        level: NotificationLevel.Info,
+        level: InformationLevel.Info,
       }),
+      PresentationMode.Toast,
     );
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.invitation.linkNotCopiedToClipboard.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.invitation.linkNotCopiedToClipboard.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }

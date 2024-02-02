@@ -83,7 +83,7 @@ import {
   getCurrentAvailableDevice,
   changePassword as parsecChangePassword,
 } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonPage, IonText } from '@ionic/vue';
 import { Ref, inject, onMounted, ref } from 'vue';
@@ -93,7 +93,7 @@ const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const oldPassword = ref('');
 const choosePasswordInput: Ref<typeof MsChoosePasswordInput | null> = ref(null);
 const fieldsUpdated = ref(false);
-const notificationManager = inject(NotificationKey) as NotificationManager;
+const informationManager = inject(InformationKey) as InformationManager;
 
 const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
   // forces the update
@@ -109,12 +109,12 @@ async function changePassword(): Promise<void> {
   const result = await parsecChangePassword(currentDevice.value, oldPassword.value, choosePasswordInput.value?.password);
 
   if (result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ContactDetailsPage.passwordUpdated.title'),
+    informationManager.present(
+      new Information({
         message: translate('ContactDetailsPage.passwordUpdated.message'),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
     oldPassword.value = '';
     choosePasswordInput.value.clear();
@@ -122,22 +122,22 @@ async function changePassword(): Promise<void> {
   } else {
     switch (result.error.tag) {
       case ChangeAuthErrorTag.DecryptionFailed: {
-        notificationManager.showToast(
-          new Notification({
-            title: translate('ContactDetailsPage.errors.wrongPassword.title'),
+        informationManager.present(
+          new Information({
             message: translate('ContactDetailsPage.errors.wrongPassword.message'),
-            level: NotificationLevel.Error,
+            level: InformationLevel.Error,
           }),
+          PresentationMode.Toast,
         );
         break;
       }
       default:
-        notificationManager.showToast(
-          new Notification({
-            title: translate('ContactDetailsPage.errors.cannotChangePassword.title'),
+        informationManager.present(
+          new Information({
             message: translate('ContactDetailsPage.errors.cannotChangePassword.message'),
-            level: NotificationLevel.Error,
+            level: InformationLevel.Error,
           }),
+          PresentationMode.Toast,
         );
     }
   }
@@ -148,12 +148,12 @@ onMounted(async () => {
   const deviceResult = await getCurrentAvailableDevice();
 
   if (!result.ok || !deviceResult.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ContactDetailsPage.errors.failedToRetrieveInformation.title'),
+    informationManager.present(
+      new Information({
         message: translate('ContactDetailsPage.errors.failedToRetrieveInformation.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     return;
   }

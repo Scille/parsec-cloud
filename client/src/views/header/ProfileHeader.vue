@@ -30,7 +30,7 @@
 import { Answer, askQuestion } from '@/components/core';
 import { logout as parsecLogout } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -39,7 +39,7 @@ import { inject, ref } from 'vue';
 
 const isPopoverOpen = ref(false);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const props = defineProps<{
   name: string;
@@ -78,12 +78,12 @@ async function openPopover(event: Event): Promise<void> {
       if (answer === Answer.Yes) {
         const result = await parsecLogout();
         if (!result.ok) {
-          notificationManager.showToast(
-            new Notification({
-              title: translate('HomePage.topbar.logoutFailed.title'),
+          informationManager.present(
+            new Information({
               message: translate('HomePage.topbar.logoutFailed.message'),
-              level: NotificationLevel.Error,
+              level: InformationLevel.Error,
             }),
+            PresentationMode.Toast,
           );
         } else {
           await navigateTo(Routes.Home, { replace: true, skipHandle: true });

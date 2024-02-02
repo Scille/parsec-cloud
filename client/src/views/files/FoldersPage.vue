@@ -203,7 +203,7 @@ import FileCardImporting from '@/components/files/FileCardImporting.vue';
 import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
@@ -223,7 +223,7 @@ import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil,
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
 const allFilesSelected = ref(false);
@@ -325,14 +325,14 @@ async function listFolder(): Promise<void> {
       }
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.errors.listFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.errors.listFailed.message', {
           path: currentPath.value,
         }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -376,14 +376,14 @@ async function createFolder(): Promise<void> {
   const folderPath = await parsec.Path.join(currentPath.value, folderName);
   const result = await parsec.createFolder(folderPath);
   if (!result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.errors.createFolderFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.errors.createFolderFailed.message', {
           name: folderName,
         }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   } else {
     console.log(`New folder ${folderName} created`);
@@ -448,12 +448,12 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const path = await parsec.Path.join(currentPath.value, entry.name);
     const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
     if (!result.ok) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.deleteFailed.title'),
+      informationManager.present(
+        new Information({
           message: translate('FoldersPage.errors.deleteFailed.message', { name: entry.name }),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
       console.log(`File ${entry.name} deleted`);
@@ -482,15 +482,15 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       }
     }
     if (errorsEncountered > 0) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.deleteMultipleFailed'),
+      informationManager.present(
+        new Information({
           message:
             errorsEncountered === entries.length
               ? translate('FoldersPage.errors.deleteMultipleAllFailed')
               : translate('FoldersPage.errors.deleteMultipleSomeFailed'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
       console.log(`${entries.length} entries deleted`);
@@ -522,12 +522,12 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.rename(filePath, newName);
   if (!result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.errors.renameFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.errors.renameFailed.message', { name: entry.name }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   } else {
     console.log(`File ${entry.name} renamed to ${newName}`);
@@ -544,29 +544,29 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   const result = await parsec.getPathLink(getWorkspaceId(), filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.linkNotCopiedToClipboard.title'),
+      informationManager.present(
+        new Information({
           message: translate('FoldersPage.linkNotCopiedToClipboard.message'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.linkCopiedToClipboard.title'),
+      informationManager.present(
+        new Information({
           message: translate('FoldersPage.linkCopiedToClipboard.message'),
-          level: NotificationLevel.Info,
+          level: InformationLevel.Info,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.getLinkError.title'),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.getLinkError.message', { reason: result.error.tag }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -592,32 +592,32 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   }
   if (errorCount > 0) {
     if (entries.length === 1) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.moveOneFailed.title'),
+      informationManager.present(
+        new Information({
           message: translate('FoldersPage.errors.moveOneFailed.message', { name: entries[0].name }),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.moveMultipleFailed'),
+      informationManager.present(
+        new Information({
           message:
             errorCount === entries.length
               ? translate('FoldersPage.errors.moveMultipleAllFailed')
               : translate('FoldersPage.errors.moveMultipleSomeFailed'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.moveSuccess.title', {}, entries.length),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.moveSuccess.message', { count: entries.length }, entries.length),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   }
   await listFolder();
@@ -662,32 +662,32 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
   if (errorCount > 0) {
     if (entries.length === 1) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.copyOneFailed.title'),
+      informationManager.present(
+        new Information({
           message: translate('FoldersPage.errors.copyOneFailed.message', { name: entries[0].name }),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('FoldersPage.errors.copyMultipleFailed'),
+      informationManager.present(
+        new Information({
           message:
             errorCount === entries.length
               ? translate('FoldersPage.errors.copyMultipleAllFailed')
               : translate('FoldersPage.errors.copyMultipleSomeFailed'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('FoldersPage.copySuccess.title', { count: entries.length }, entries.length),
+    informationManager.present(
+      new Information({
         message: translate('FoldersPage.copySuccess.message', {}, entries.length),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   }
   await listFolder();
@@ -709,12 +709,12 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   if (parsec.isWeb()) {
-    await notificationManager.showModal(
-      new Notification({
-        title: translate('FoldersPage.open.unavailableOnWeb.title'),
+    await informationManager.present(
+      new Information({
         message: translate('FoldersPage.open.unavailableOnWeb.message'),
-        level: NotificationLevel.Warning,
+        level: InformationLevel.Warning,
       }),
+      PresentationMode.Modal,
     );
     return;
   }
@@ -722,14 +722,14 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   const result = await parsec.getAbsolutePath(getWorkspaceHandle(), entry);
 
   if (!result.ok) {
-    await notificationManager.showModal(
-      new Notification({
-        title: entry.isFile() ? translate('FoldersPage.open.fileFailedTitle') : translate('FoldersPage.open.folderFailedTitle'),
+    await informationManager.present(
+      new Information({
         message: entry.isFile()
           ? translate('FoldersPage.open.fileFailedSubtitle', { name: entry.name })
           : translate('FoldersPage.open.folderFailedSubtitle', { name: entry.name }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Modal,
     );
   } else {
     window.electronAPI.openFile(result.value);

@@ -31,7 +31,7 @@
         <template v-if="ReadOnlyToggle">
           <notification-item
             v-for="notification in unReadNotification"
-            :key="notification.id"
+            :key="notification.information.id"
             :notification="notification"
             @click="onNotificationClick($event)"
             @mouse-over="onNotificationMouseOver($event)"
@@ -40,7 +40,7 @@
         <template v-else>
           <notification-item
             v-for="notification in notifications"
-            :key="notification.id"
+            :key="notification.information.id"
             :notification="notification"
             @click="onNotificationClick($event)"
             @mouse-over="onNotificationMouseOver($event)"
@@ -54,29 +54,28 @@
 <script setup lang="ts">
 import { MsImage, NoNotification } from '@/components/core/ms-image';
 import NotificationItem from '@/components/header/NotificationItem.vue';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
-import { translate } from '@/services/translation';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Notification } from '@/services/notificationManager';
 import { IonList, IonText, IonToggle } from '@ionic/vue';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
-const unreadCount = notificationManager.getUnreadCount();
+const informationManager: InformationManager = inject(InformationKey)!;
+const unreadCount = informationManager.notificationManager.getUnreadCount();
 const notifications = computed(() => {
-  return notificationManager.getNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
+  return informationManager.notificationManager.getNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
 });
 const unReadNotification = computed(() => {
-  return notificationManager.getUnreadNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
+  return informationManager.notificationManager.getNotifications(true).sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
 });
 const ReadOnlyToggle: Ref<boolean> = ref(false);
 
 onMounted(() => {
   // only for testing purpose
-  const testNotification = new Notification({
-    title: Math.random().toString(36).substring(7),
-    message: translate('link.invalid.message'),
-    level: NotificationLevel.Error,
+  const testInformation = new Information({
+    message: Math.random().toString(36).substring(2),
+    level: InformationLevel.Error,
   });
-  notificationManager.addToList(testNotification);
+  informationManager.present(testInformation, PresentationMode.Modal | PresentationMode.Console);
 });
 
 function onNotificationClick(notification: Notification): void {
@@ -85,7 +84,7 @@ function onNotificationClick(notification: Notification): void {
 
 function onNotificationMouseOver(notification: Notification): void {
   if (!notification.read) {
-    notificationManager.markAsRead(notification.id);
+    informationManager.notificationManager.markAsRead(notification.information.id);
   }
 }
 </script>

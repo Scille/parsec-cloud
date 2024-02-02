@@ -181,7 +181,7 @@ import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResul
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { AvailableDevice, BootstrapOrganizationErrorTag, createOrganization as parsecCreateOrganization } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
@@ -200,7 +200,7 @@ enum CreateOrganizationStep {
 const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();
@@ -414,12 +414,12 @@ async function nextStep(): Promise<void> {
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
       }
-      notificationManager.showToast(
-        new Notification({
-          title: translate('CreateOrganization.errors.title'),
+      informationManager.present(
+        new Information({
           message: message,
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     }
   }
