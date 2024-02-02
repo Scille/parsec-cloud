@@ -301,8 +301,12 @@ export async function getPathLink(
 ): Promise<Result<BackendOrganizationFileLinkAddr, LinkError>> {
   const handle = getParsecHandle();
 
+  const org = 'Org';
   // cspell:disable-next-line
-  let link = 'parsec://parsec.cloud/Org?action=file_link&workspace_id=94a350f2f629403db2269c44583f7aa1&path=KEFNEI3939jf39KEFsss';
+  workspaceId = '94a350f2f629403db2269c44583f7aa1';
+  // cspell:disable-next-line
+  path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+  let link = `parsec://parsec.cloud/${org}?action=file_link&workspace_id=${workspaceId}&path=${path}`;
   if (timestamp !== null) {
     // cspell:disable-next-line
     link += '&timestamp=JEFHNUJEF39350JFHNsss';

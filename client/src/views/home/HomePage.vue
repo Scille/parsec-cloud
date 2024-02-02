@@ -57,7 +57,7 @@
 <script setup lang="ts">
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
-import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin } from '@/parsec';
+import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin, startWorkspace } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -179,8 +179,24 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     }
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
-    const options: NavigationOptions = { params: { handle: result.value }, replace: true };
-    await navigateTo(Routes.Workspaces, options);
+    const query = getCurrentRouteQuery();
+    if (query.fileLink) {
+      const linkData = query.fileLink;
+      startWorkspace(linkData.workspaceId).then(async (wkResult) => {
+        if (wkResult.ok) {
+          await navigateTo(Routes.Documents, {
+            params: { handle: result.value, workspaceHandle: wkResult.value },
+            query: { documentPath: linkData.path, workspaceId: linkData.workspaceId },
+            replace: true,
+          });
+        } else {
+          console.log('Failed to start the workspace for file link');
+        }
+      });
+    } else {
+      const options: NavigationOptions = { params: { handle: result.value }, replace: true };
+      await navigateTo(Routes.Workspaces, options);
+    }
     state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Information({

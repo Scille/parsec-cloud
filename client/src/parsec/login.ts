@@ -21,6 +21,7 @@ import {
   ClientStopError,
   ConnectionHandle,
   DeviceAccessStrategyPassword,
+  OrganizationID,
   Result,
   UserProfile,
 } from '@/parsec/types';
@@ -46,6 +47,10 @@ export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | nul
     return info.handle;
   }
   return null;
+}
+
+export async function getOrganizationHandles(orgId: OrganizationID): Promise<Array<ConnectionHandle>> {
+  return loggedInDevices.filter((item) => item.device.organizationId === orgId).map((item) => item.handle);
 }
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {

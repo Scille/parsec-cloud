@@ -3,7 +3,7 @@
 import { createApp } from 'vue';
 
 import App from '@/App.vue';
-import { Routes, currentRouteIs, getRouter, navigateTo } from '@/router';
+import { Routes, currentRouteIs, getConnectionHandle, getRouter, navigateTo, navigateToWorkspace, switchOrganization } from '@/router';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -29,7 +29,7 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
-import { isElectron } from '@/parsec';
+import { getOrganizationHandles, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
@@ -145,14 +145,14 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('open-link', async (link: string) => {
-      if ((await fileLinkValidator(link)).validity === Validity.Valid || (await claimLinkValidator(link)).validity === Validity.Valid) {
-        if (currentRouteIs(Routes.Home)) {
-          await navigateTo(Routes.Home, { query: { claimLink: link } });
-        }
+      if ((await claimLinkValidator(link)).validity === Validity.Valid) {
+        await handleJoinLink(link);
+      } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
+        await handleFileLink(link, informationManager, t);
       } else {
         await informationManager.present(
           new Information({
-            message: t('link.invalid.message'),
+            message: t('link.invalid'),
             level: InformationLevel.Error,
           }),
           PresentationMode.Modal,
@@ -179,6 +179,51 @@ async function setupApp(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       openFile: (_path: string): void => {},
     };
+  }
+}
+
+async function handleJoinLink(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home)) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { claimLink: link } });
+}
+
+async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
+  const result = await parseFileLink(link);
+  if (!result.ok) {
+    return;
+  }
+  const linkData = result.value;
+  // Check if the org we want is already logged in
+  const handles = await getOrganizationHandles(linkData.organizationId);
+
+  // We have a matching organization already opened
+  if (handles.length > 0) {
+    if (handles[0] !== getConnectionHandle()) {
+      // Switch to the organization first
+      await switchOrganization(handles[0], true);
+    }
+    await navigateToWorkspace(linkData.workspaceId, linkData.path);
+  } else {
+    // Check if we have a device with the org
+    const devices = await listAvailableDevices();
+    // Always matching the first one, nothing else we can do.
+    const matchingDevice = devices.find((d) => d.organizationId === linkData.organizationId);
+    if (!matchingDevice) {
+      await informationManager.present(
+        new Information({
+          message: t('link.orgNotFound', { organization: linkData.organizationId }),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      return;
+    }
+    if (!currentRouteIs(Routes.Home)) {
+      await switchOrganization(null, true);
+    }
+    await navigateTo(Routes.Home, { query: { device: matchingDevice, fileLink: linkData } });
   }
 }
 
