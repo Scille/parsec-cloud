@@ -7,19 +7,15 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let (env, realm_id) =
-        env.customize_with_map(|builder| builder.new_realm("alice").map(|event| event.realm_id));
+    let (env, realm_id) = env.customize_with_map(|builder| {
+        let realm_id = builder.new_realm("alice").map(|event| event.realm_id);
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        realm_id
+    });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &env.get_realms_certificates_signed(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .list_workspace_users(realm_id)
@@ -50,20 +46,12 @@ async fn multiple(env: &TestbedEnv) {
             .map(|event| event.realm);
 
         builder.share_realm(realm_id, "bob", RealmRole::Contributor);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
 
         realm_id
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &env.get_realms_certificates_signed(),
-    )
-    .await
-    .unwrap();
 
     let mut res = ops
         .list_workspace_users(realm_id)
