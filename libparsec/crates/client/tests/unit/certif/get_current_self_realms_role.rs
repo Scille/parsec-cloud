@@ -3,6 +3,8 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
+use crate::certif::CertifGetCurrentSelfRealmsRoleError;
+
 use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
@@ -106,4 +108,16 @@ async fn empty(env: &TestbedEnv) {
     let res = ops.get_current_self_realms_role().await.unwrap();
 
     p_assert_eq!(res, []);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn stopped(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    ops.stop().await.unwrap();
+
+    let err = ops.get_current_self_realms_role().await.unwrap_err();
+
+    p_assert_matches!(err, CertifGetCurrentSelfRealmsRoleError::Stopped);
 }

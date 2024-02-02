@@ -34,3 +34,18 @@ async fn offline(env: &TestbedEnv) {
 
     p_assert_matches!(err, CertifEnsureRealmCreatedError::Offline);
 }
+
+#[parsec_test(testbed = "minimal")]
+async fn stopped(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    ops.stop().await.unwrap();
+
+    let err = ops
+        .ensure_realm_created(VlobID::default())
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(err, CertifEnsureRealmCreatedError::Stopped);
+}

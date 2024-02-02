@@ -35,3 +35,18 @@ async fn non_existing(env: &TestbedEnv) {
 
     p_assert_matches!(err, CertifGetUserDeviceError::NonExisting);
 }
+
+#[parsec_test(testbed = "minimal")]
+async fn stopped(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    ops.stop().await.unwrap();
+
+    let err = ops
+        .get_user_device("alice@dev1".parse().unwrap())
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(err, CertifGetUserDeviceError::Stopped);
+}

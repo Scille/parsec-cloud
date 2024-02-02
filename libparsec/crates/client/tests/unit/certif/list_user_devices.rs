@@ -2,6 +2,8 @@
 
 use libparsec_tests_fixtures::prelude::*;
 
+use crate::certif::CertifListUserDevicesError;
+
 use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
@@ -71,4 +73,19 @@ async fn empty(env: &TestbedEnv) {
         .unwrap();
 
     assert!(res.is_empty());
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn stopped(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    ops.stop().await.unwrap();
+
+    let err = ops
+        .list_user_devices("alice".parse().unwrap())
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(err, CertifListUserDevicesError::Stopped);
 }
