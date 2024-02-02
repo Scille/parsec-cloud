@@ -6,17 +6,11 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+    });
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
+    let ops = certificates_ops_factory(&env, &alice).await;
 
     let res = ops
         .list_users(false, None, None)
@@ -33,18 +27,10 @@ async fn ok(env: &TestbedEnv) {
 async fn multiple(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_user("bob");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .list_users(false, None, None)
@@ -62,18 +48,10 @@ async fn revoked(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.revoke_user("bob");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .list_users(false, None, None)
@@ -91,18 +69,10 @@ async fn revoked_filtered(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.revoke_user("bob");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &[],
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .list_users(true, None, None)

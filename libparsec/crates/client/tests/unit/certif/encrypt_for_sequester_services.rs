@@ -10,21 +10,16 @@ async fn ok(env: &TestbedEnv) {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-        builder
+        let (service_id, sequester_pubkey) = builder
             .new_sequester_service()
-            .map(|event| (event.id, event.encryption_private_key.clone()))
+            .map(|event| (event.id, event.encryption_private_key.clone()));
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        (service_id, sequester_pubkey)
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &env.get_sequester_certificates_signed(),
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .encrypt_for_sequester_services(b"data")
@@ -52,19 +47,12 @@ async fn multiple(env: &TestbedEnv) {
             .new_sequester_service()
             .map(|event| (event.id, event.encryption_private_key.clone()));
 
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
         (id0, pubkey0, id1, pubkey1)
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
-
-    ops.add_certificates_batch(
-        &env.get_common_certificates_signed(),
-        &env.get_sequester_certificates_signed(),
-        &[],
-        &Default::default(),
-    )
-    .await
-    .unwrap();
 
     let res = ops
         .encrypt_for_sequester_services(b"data")
