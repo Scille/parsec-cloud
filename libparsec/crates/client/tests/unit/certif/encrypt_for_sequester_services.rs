@@ -2,6 +2,8 @@
 
 use libparsec_tests_fixtures::prelude::*;
 
+use crate::certif::CertifEncryptForSequesterServicesError;
+
 use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "empty")]
@@ -76,4 +78,19 @@ async fn empty(env: &TestbedEnv) {
     let res = ops.encrypt_for_sequester_services(b"data").await.unwrap();
 
     p_assert_eq!(res, None);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn stopped(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    ops.stop().await.unwrap();
+
+    let err = ops
+        .encrypt_for_sequester_services(b"data")
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(err, CertifEncryptForSequesterServicesError::Stopped);
 }
