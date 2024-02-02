@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { AvailableDevice, FsPath, WorkspaceID } from '@/parsec';
+import { AvailableDevice, FileLinkData, FsPath, WorkspaceID } from '@/parsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -141,5 +141,6 @@ export interface Query {
   device?: AvailableDevice;
   workspaceId?: WorkspaceID;
   claimLink?: string;
+  fileLink?: FileLinkData;
   openInvite?: true;
 }

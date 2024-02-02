@@ -13,9 +13,11 @@ import {
   FsPath,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
+  OrganizationID,
   Result,
   WorkspaceFsOperationError,
   WorkspaceHandle,
+  WorkspaceID,
 } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
@@ -213,5 +215,39 @@ export async function copyEntry(_source: FsPath, _destination: FsPath): Promise<
     return { ok: true, value: null };
   } else {
     return { ok: true, value: null };
+  }
+}
+
+export interface ParseLinkError {
+  error: string;
+}
+
+export interface FileLinkData {
+  organizationId: OrganizationID;
+  path: FsPath;
+  workspaceId: WorkspaceID;
+}
+
+export async function parseFileLink(link: string): Promise<Result<FileLinkData, ParseLinkError>> {
+  const clientHandle = getParsecHandle();
+
+  if (clientHandle && !needsMocks()) {
+    return {
+      ok: true,
+      value: {
+        organizationId: 'MyOrg',
+        path: '/Dir/file.txt',
+        workspaceId: 'abcd',
+      },
+    };
+  } else {
+    return {
+      ok: true,
+      value: {
+        organizationId: 'MyOrg',
+        path: '/Dir/file.txt',
+        workspaceId: 'abcd',
+      },
+    };
   }
 }

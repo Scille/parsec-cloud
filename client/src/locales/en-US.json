@@ -48,10 +48,8 @@
         "none": "Not shared"
     },
     "link": {
-        "invalid": {
-            "title": "Invalid link",
-            "message": "The link you provided is invalid."
-        }
+        "invalid": "The link you provided is invalid.",
+        "orgNotFound": "You do not have access to the organization {organization} in which this file is stored."
     },
     "notificationCenter": {
         "title": "Notifications",

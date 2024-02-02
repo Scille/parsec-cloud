@@ -48,10 +48,8 @@
         "none": "Non partagé"
     },
     "link": {
-        "invalid": {
-            "title": "Lien invalide",
-            "message": "Le lien fourni n'est pas invalide."
-        }
+        "invalid": "Le lien fourni n'est pas valide.",
+        "orgNotFound": "Vous n'avez pas accès à l'organisation {organization} dans laquelle est hébergée ce fichier."
     },
     "notificationCenter": {
         "title": "Notifications",
