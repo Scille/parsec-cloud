@@ -147,7 +147,7 @@ import {
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
 import { navigateToWorkspace } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
@@ -159,7 +159,7 @@ const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const msSorterLabels = {
   asc: translate('HomePage.organizationList.sortOrderAsc'),
   desc: translate('HomePage.organizationList.sortOrderDesc'),
@@ -176,12 +176,12 @@ async function refreshWorkspacesList(): Promise<void> {
   if (result.ok) {
     workspaceList.value = result.value;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('WorkspacesPage.listError.title'),
+    informationManager.present(
+      new Information({
         message: translate('WorkspacesPage.listError.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -223,23 +223,23 @@ async function openCreateWorkspaceModal(): Promise<void> {
   if (workspaceName) {
     const result = await parsecCreateWorkspace(workspaceName);
     if (result.ok) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspacesPage.newWorkspaceSuccess.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
             workspace: workspaceName,
           }),
-          level: NotificationLevel.Success,
+          level: InformationLevel.Success,
         }),
+        PresentationMode.Toast,
       );
       await refreshWorkspacesList();
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspacesPage.newWorkspaceError.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspacesPage.newWorkspaceError.message'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     }
   }
@@ -293,29 +293,29 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspacesPage.linkNotCopiedToClipboard.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspacesPage.linkNotCopiedToClipboard.message'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('WorkspacesPage.linkCopiedToClipboard.title'),
+      informationManager.present(
+        new Information({
           message: translate('WorkspacesPage.linkCopiedToClipboard.message'),
-          level: NotificationLevel.Info,
+          level: InformationLevel.Info,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('WorkspacesPage.getLinkError.title'),
+    informationManager.present(
+      new Information({
         message: translate('WorkspacesPage.getLinkError.message', { reason: result.error.tag }),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }

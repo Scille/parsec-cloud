@@ -160,13 +160,13 @@ import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResul
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
 
-const notificationManager = inject(NotificationKey) as NotificationManager;
+const informationManager = inject(InformationKey) as InformationManager;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -246,12 +246,12 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationManager.showToast(
-    new Notification({
-      title: translate('ClaimDeviceModal.errors.title'),
+  informationManager.present(
+    new Information({
       message: message,
-      level: NotificationLevel.Error,
+      level: InformationLevel.Error,
     }),
+    PresentationMode.Toast,
   );
   await restartProcess();
 }
@@ -310,12 +310,12 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       const result = await claimer.value.finalize(passwordPage.value.password);
       if (!result.ok) {
-        notificationManager.showToast(
-          new Notification({
-            title: translate('ClaimDeviceModal.errors.saveDeviceFailed.title'),
+        informationManager.present(
+          new Information({
             message: translate('ClaimDeviceModal.errors.saveDeviceFailed.message'),
-            level: NotificationLevel.Error,
+            level: InformationLevel.Error,
           }),
+          PresentationMode.Toast,
         );
         return;
       }
@@ -324,12 +324,11 @@ async function nextStep(): Promise<void> {
       return;
     }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    const notification = new Notification({
-      title: translate('ClaimDeviceModal.successMessage.title'),
+    const notification = new Information({
       message: translate('ClaimDeviceModal.successMessage.message'),
-      level: NotificationLevel.Success,
+      level: InformationLevel.Success,
     });
-    notificationManager.showToast(notification, { trace: true });
+    informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -356,12 +355,12 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationManager.showModal(
-      new Notification({
-        title: translate('ClaimDeviceModal.errors.startFailed.title'),
+    await informationManager.present(
+      new Information({
         message: translate('ClaimDeviceModal.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Modal,
     );
     await cancelModal();
     return;
@@ -369,12 +368,12 @@ async function startProcess(): Promise<void> {
 
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationManager.showModal(
-      new Notification({
-        title: translate('ClaimDeviceModal.errors.startFailed.title'),
+    await informationManager.present(
+      new Information({
         message: translate('ClaimDeviceModal.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Modal,
     );
     await cancelModal();
     return;

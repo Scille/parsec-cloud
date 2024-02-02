@@ -33,7 +33,7 @@ import { isElectron } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
@@ -49,7 +49,7 @@ async function setupApp(): Promise<void> {
 
   const { t } = i18n.global;
 
-  const notificationManager = new NotificationManager();
+  const informationManager = new InformationManager();
   const importManager = new ImportManager();
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
@@ -63,7 +63,7 @@ async function setupApp(): Promise<void> {
     .use(Vue3Lottie);
 
   app.provide(StorageManagerKey, storageManager);
-  app.provide(NotificationKey, notificationManager);
+  app.provide(InformationKey, informationManager);
   app.provide(ImportManagerKey, importManager);
   app.provide(HotkeyManagerKey, hotkeyManager);
 
@@ -150,22 +150,22 @@ async function setupApp(): Promise<void> {
           await navigateTo(Routes.Home, { query: { link: link } });
         }
       } else {
-        await notificationManager.showModal(
-          new Notification({
-            title: t('link.invalid.title'),
+        await informationManager.present(
+          new Information({
             message: t('link.invalid.message'),
-            level: NotificationLevel.Error,
+            level: InformationLevel.Error,
           }),
+          PresentationMode.Modal,
         );
       }
     });
     window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
-      notificationManager.showToast(
-        new Notification({
-          title: t('openFile.failedTitle'),
+      informationManager.present(
+        new Information({
           message: t('openFile.failedSubtitle', { path: path }),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     });
   } else {

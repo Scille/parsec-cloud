@@ -152,7 +152,7 @@ import { Validity, secretKeyValidator } from '@/common/validators';
 import { MsChoosePasswordInput, MsInformativeText, MsInput, MsReportText, MsReportTheme } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -176,7 +176,7 @@ const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
 const recoveryFile: Ref<File | null> = ref(null);
 const newDeviceInfo: Ref<DeviceInfo | null> = ref(null);
 const isSecretKeyValid = ref(false);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const emits = defineEmits<{
   (e: 'organizationSelected', device: AvailableDevice): void;
@@ -213,57 +213,54 @@ async function goToPasswordChange(): Promise<void> {
     newDeviceInfo.value = result.value;
     state.value = ImportDevicePageState.Password;
   } else {
-    const notificationInfo = { title: '', message: '', level: NotificationLevel.Error };
+    const notificationInfo = { message: '', level: InformationLevel.Error };
 
     switch (result.error.tag) {
       case RecoveryImportErrorTag.KeyError:
-        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.keyErrorTitle');
         notificationInfo.message = translate('ImportRecoveryDevicePage.errors.keyErrorMessage');
         break;
       case RecoveryImportErrorTag.RecoveryFileError:
-        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.fileErrorTitle');
         notificationInfo.message = translate('ImportRecoveryDevicePage.errors.fileErrorMessage');
         break;
       case RecoveryImportErrorTag.Internal:
-        notificationInfo.title = translate('ImportRecoveryDevicePage.errors.internalErrorTitle');
         notificationInfo.message = translate('ImportRecoveryDevicePage.errors.internalErrorMessage');
         break;
     }
-    notificationManager.showToast(new Notification(notificationInfo));
+    informationManager.present(new Information(notificationInfo), PresentationMode.Toast);
   }
 }
 
 async function createNewDevice(): Promise<void> {
   // Check matching and valid passwords
   if (!choosePasswordInput.value || !(await choosePasswordInput.value.areFieldsCorrect())) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ImportRecoveryDevicePage.errors.passwordErrorTitle'),
+    informationManager.present(
+      new Information({
         message: translate('ImportRecoveryDevicePage.errors.passwordErrorMessage'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     return;
   }
   // Check new device info exists
   if (!newDeviceInfo.value) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ImportRecoveryDevicePage.errors.internalErrorTitle'),
+    informationManager.present(
+      new Information({
         message: translate('ImportRecoveryDevicePage.errors.internalErrorMessage'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     return;
   }
   // Save new device with password
   if (!(await saveDevice(newDeviceInfo.value, 'newPassword')).ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ImportRecoveryDevicePage.errors.saveDeviceErrorTitle'),
+    informationManager.present(
+      new Information({
         message: translate('ImportRecoveryDevicePage.errors.saveDeviceErrorMessage'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     return;
   }

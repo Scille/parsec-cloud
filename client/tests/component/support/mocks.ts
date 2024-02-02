@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { NotificationKey } from '@/services/notificationManager';
+import { InformationKey } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
@@ -12,7 +12,7 @@ async function mockShowToast(_notif: Notification): Promise<void> {
 function getDefaultProvideConfig(showToast = mockShowToast): any {
   const provide: any = {};
 
-  provide[NotificationKey] = {
+  provide[InformationKey] = {
     showToast: showToast,
   };
 

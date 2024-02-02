@@ -149,7 +149,7 @@ import {
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
 import { Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
@@ -174,7 +174,7 @@ const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const allUsersSelected = computed({
   // -1 to exclude the current user
@@ -263,20 +263,20 @@ async function revokeUser(user: UserInfo): Promise<void> {
   const result = await parsecRevokeUser(user.id);
 
   if (!result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.revocation.revokeFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.revocation.revokeFailed.message', {}, 1),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.revocation.revokeSuccess.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.revocation.revokeSuccess.message', { user: user.humanHandle.label }, 1),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   }
   await refreshUserList();
@@ -310,28 +310,28 @@ async function revokeSelectedUsers(): Promise<void> {
     }
   }
   if (errorCount === 0) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.revocation.revokeSuccess.title', { count: selectedUsers.length }, selectedUsers.length),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.revocation.revokeSuccess.message', { count: selectedUsers.length }, selectedUsers.length),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   } else if (errorCount < selectedUsers.length) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.revocation.revokeSomeFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.revocation.revokeSomeFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.revocation.revokeFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.revocation.revokeFailed.message', {}, selectedUsers.length),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
   await refreshUserList();
@@ -410,13 +410,12 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.listUsersFailed.title'),
-
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.listUsersFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
   selectAllUsers(false);

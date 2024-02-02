@@ -226,7 +226,7 @@ import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion 
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import {
   IonButton,
@@ -261,7 +261,7 @@ const waitingForGuest = ref(true);
 const isEmailSent = ref(false);
 const greeter = ref(new DeviceGreet());
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const linkCopiedToClipboard = ref(false);
 
 interface GreetDeviceTitle {
@@ -331,24 +331,24 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet();
   if (!result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('DevicesPage.greet.errors.startFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('DevicesPage.greet.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     await cancelModal();
     return;
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('DevicesPage.greet.errors.startFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('DevicesPage.greet.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     await cancelModal();
     return;
@@ -400,12 +400,12 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationManager.showToast(
-    new Notification({
-      title: translate('DevicesPage.greet.errors.unexpected.title'),
+  informationManager.present(
+    new Information({
       message: message,
-      level: NotificationLevel.Error,
+      level: InformationLevel.Error,
     }),
+    PresentationMode.Toast,
   );
   await restartProcess();
 }
@@ -416,14 +416,12 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetDeviceStep.Summary) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('DevicesPage.greet.success.title', {
-          label: greeter.value.requestedDeviceLabel,
-        }),
+    informationManager.present(
+      new Information({
         message: translate('DevicesPage.greet.success.message'),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
@@ -465,12 +463,12 @@ async function copyLink(): Promise<void> {
   setTimeout(() => {
     linkCopiedToClipboard.value = false;
   }, 5000);
-  notificationManager.showToast(
-    new Notification({
-      title: translate('DevicesPage.greet.linkCopiedToClipboard.title'),
+  informationManager.present(
+    new Information({
       message: translate('DevicesPage.greet.linkCopiedToClipboard.message'),
-      level: NotificationLevel.Info,
+      level: InformationLevel.Info,
     }),
+    PresentationMode.Toast,
   );
 }
 
@@ -478,12 +476,12 @@ async function sendEmail(): Promise<void> {
   if (await greeter.value.sendEmail()) {
     isEmailSent.value = true;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('DevicesPage.greet.errors.emailFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('DevicesPage.greet.errors.emailFailed.subtitle'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }

@@ -154,7 +154,7 @@ import { MsInformativeText, getPasswordFromUser } from '@/components/core';
 import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
@@ -171,7 +171,7 @@ let file = '';
 const downloadLink = ref();
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const orgId = ref('');
 
 onMounted(async (): Promise<void> => {
@@ -196,12 +196,12 @@ async function exportDevice(): Promise<void> {
         ? translate('PasswordInputModal.invalid')
         : translate('PasswordInputModal.otherError');
     // toast atm but to be changed
-    notificationManager.showToast(
-      new Notification({
-        title: translate('PasswordInputModal.invalid'),
+    informationManager.present(
+      new Information({
         message: notificationMsg,
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
     return;
   }
@@ -214,12 +214,12 @@ async function downloadRecoveryKey(): Promise<void> {
   fileDownload(code, translate('ExportRecoveryDevicePage.filenames.recoveryKey', { org: orgId.value }));
   setTimeout(() => {
     recoveryKeyDownloaded.value = true;
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk.title'),
+    informationManager.present(
+      new Information({
         message: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk.message'),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   }, 500);
 }
@@ -228,12 +228,12 @@ async function downloadRecoveryFile(): Promise<void> {
   fileDownload(file, translate('ExportRecoveryDevicePage.filenames.recoveryFile', { org: orgId.value }));
   setTimeout(() => {
     recoveryFileDownloaded.value = true;
-    notificationManager.showToast(
-      new Notification({
-        title: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk.title'),
+    informationManager.present(
+      new Information({
         message: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk.message'),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
   }, 500);
 }

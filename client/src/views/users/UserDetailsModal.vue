@@ -87,14 +87,14 @@ import { formatTimeSince } from '@/common/date';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const props = defineProps<{
   user: UserInfo;
@@ -106,12 +106,12 @@ onMounted(async () => {
   if (result.ok) {
     sharedWorkspaces.value = result.value;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.UserDetailsModal.failedToListWorkspaces.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.UserDetailsModal.failedToListWorkspaces.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 });

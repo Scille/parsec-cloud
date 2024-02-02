@@ -59,7 +59,7 @@ import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkVa
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
@@ -82,7 +82,7 @@ enum HomePageState {
   ForgottenPassword = 'forgotten-password',
 }
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
@@ -181,12 +181,11 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     await navigateTo(Routes.Workspaces, options);
     state.value = HomePageState.OrganizationList;
   } else {
-    const notification = new Notification({
-      title: translate('HomePage.loginNotification.title'),
+    const notification = new Information({
       message: translate('HomePage.loginNotification.message'),
-      level: NotificationLevel.Error,
+      level: InformationLevel.Error,
     });
-    notificationManager.showToast(notification);
+    informationManager.present(notification, PresentationMode.Toast);
   }
 }
 

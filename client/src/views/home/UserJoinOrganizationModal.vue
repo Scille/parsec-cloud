@@ -190,7 +190,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserClaim } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
@@ -204,7 +204,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const passwordPage = ref();
@@ -269,12 +269,12 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 ]);
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  notificationManager.showToast(
-    new Notification({
-      title: translate('JoinOrganization.errors.title'),
+  informationManager.present(
+    new Information({
       message: message,
-      level: NotificationLevel.Error,
+      level: InformationLevel.Error,
     }),
+    PresentationMode.Toast,
   );
   await restartProcess();
 }
@@ -356,12 +356,12 @@ async function nextStep(): Promise<void> {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
-      notificationManager.showToast(
-        new Notification({
-          title: translate('JoinOrganization.errors.saveDeviceFailed.title'),
+      informationManager.present(
+        new Information({
           message: translate('JoinOrganization.errors.saveDeviceFailed.message'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
       return;
     }
@@ -374,12 +374,11 @@ async function nextStep(): Promise<void> {
     }
     waitingForHost.value = false;
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    const notification = new Notification({
-      title: translate('JoinOrganization.successMessage.title'),
+    const notification = new Information({
       message: translate('JoinOrganization.successMessage.message'),
-      level: NotificationLevel.Success,
+      level: InformationLevel.Success,
     });
-    notificationManager.showToast(notification, { trace: true });
+    informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
     return;
   }
@@ -404,12 +403,12 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
-    await notificationManager.showModal(
-      new Notification({
-        title: translate('JoinOrganization.errors.startFailed.title'),
+    await informationManager.present(
+      new Information({
         message: translate('JoinOrganization.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Modal,
     );
     await cancelModal();
     return;
@@ -419,12 +418,12 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await claimer.value.initialWaitHost();
   if (!waitResult.ok) {
-    await notificationManager.showModal(
-      new Notification({
-        title: translate('JoinOrganization.errors.startFailed.title'),
+    await informationManager.present(
+      new Information({
         message: translate('JoinOrganization.errors.startFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Modal,
     );
     await cancelModal();
     return;

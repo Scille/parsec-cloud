@@ -115,7 +115,7 @@ import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle } from '
 import UserCard from '@/components/users/UserCard.vue';
 import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
@@ -138,7 +138,7 @@ const displayView = ref(DisplayState.List);
 const userList: Ref<UserInfo[]> = ref([]);
 const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
 const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const allUsersSelected = computed({
   get: (): boolean => selectedUsersCount.value === userList.value.length,
@@ -270,12 +270,12 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     userList.value = result.value;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.listRevokedUsersFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.listRevokedUsersFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }

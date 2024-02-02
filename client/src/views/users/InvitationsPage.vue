@@ -84,7 +84,7 @@ import {
   listUserInvitations as parsecListUserInvitations,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
-import { Notification, NotificationKey, NotificationLevel, NotificationManager } from '@/services/notificationManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import { IonContent, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
@@ -94,7 +94,7 @@ import { Ref, inject, onMounted, onUnmounted, onUpdated, ref } from 'vue';
 const invitations: Ref<UserInvitation[]> = ref([]);
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
-const notificationManager: NotificationManager = inject(NotificationKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
 
 const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
@@ -127,12 +127,12 @@ async function refreshInvitationsList(): Promise<void> {
   if (result.ok) {
     invitations.value = result.value;
   } else {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.invitation.invitationsListFailed.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.invitation.invitationsListFailed.message'),
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -156,24 +156,24 @@ async function inviteUser(): Promise<void> {
   if (result.ok) {
     await refreshInvitationsList();
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('UsersPage.invitation.inviteSuccessMailSent.title'),
+      informationManager.present(
+        new Information({
           message: translate('UsersPage.invitation.inviteSuccessMailSent.message', {
             email: email,
           }),
-          level: NotificationLevel.Success,
+          level: InformationLevel.Success,
         }),
+        PresentationMode.Toast,
       );
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('UsersPage.invitation.inviteSuccessNoMail.title'),
+      informationManager.present(
+        new Information({
           message: translate('UsersPage.invitation.inviteSuccessNoMail.message', {
             email: email,
           }),
-          level: NotificationLevel.Success,
+          level: InformationLevel.Success,
         }),
+        PresentationMode.Toast,
       );
     }
   } else {
@@ -195,12 +195,12 @@ async function inviteUser(): Promise<void> {
         break;
     }
 
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.invitation.inviteFailedUnknown.title'),
+    informationManager.present(
+      new Information({
         message,
-        level: NotificationLevel.Error,
+        level: InformationLevel.Error,
       }),
+      PresentationMode.Toast,
     );
   }
 }
@@ -228,12 +228,12 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   const result = await parsecCancelInvitation(invitation.token);
 
   if (result.ok) {
-    notificationManager.showToast(
-      new Notification({
-        title: translate('UsersPage.invitation.cancelSuccess.title'),
+    informationManager.present(
+      new Information({
         message: translate('UsersPage.invitation.cancelSuccess.message'),
-        level: NotificationLevel.Success,
+        level: InformationLevel.Success,
       }),
+      PresentationMode.Toast,
     );
     await refreshInvitationsList();
   } else {
@@ -245,12 +245,12 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
     ) {
       await refreshInvitationsList();
     } else {
-      notificationManager.showToast(
-        new Notification({
-          title: translate('UsersPage.invitation.cancelFailed.title'),
+      informationManager.present(
+        new Information({
           message: translate('UsersPage.invitation.cancelFailed.message'),
-          level: NotificationLevel.Error,
+          level: InformationLevel.Error,
         }),
+        PresentationMode.Toast,
       );
     }
   }
