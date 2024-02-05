@@ -261,7 +261,7 @@ async fn non_placeholder(
 
     wksp1_ops.inbound_sync(wksp1_foo_id).await.unwrap();
     let foo_manifest = match wksp1_ops
-        .data_storage
+        .store
         .get_child_manifest(wksp1_foo_id)
         .await
         .unwrap()

@@ -176,6 +176,7 @@ pub enum TestbedEvent {
         TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate,
     ),
     WorkspaceDataStorageFetchRealmCheckpoint(TestbedEventWorkspaceDataStorageFetchRealmCheckpoint),
+    WorkspaceDataStorageChunkCreate(TestbedEventWorkspaceDataStorageChunkCreate),
 }
 
 impl CrcHash for TestbedEvent {
@@ -211,6 +212,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::WorkspaceDataStorageFetchFileVlob(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
+            TestbedEvent::WorkspaceDataStorageChunkCreate(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceCacheStorageFetchBlock(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x) => {
@@ -373,7 +375,8 @@ impl TestbedEvent {
             | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_) => {
+            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => {
                 TestbedEventCertificatesIterator::Other
             }
         }
@@ -412,6 +415,7 @@ impl TestbedEvent {
             | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
             | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
@@ -3139,6 +3143,54 @@ impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
             realm,
             checkpoint,
             changed_vlobs,
+        }
+    }
+}
+
+/*
+ * TestbedEventWorkspaceDataStorageChunkCreate
+ */
+
+no_certificate_event!(
+    TestbedEventWorkspaceDataStorageChunkCreate,
+    [
+        timestamp: DateTime,
+        device: DeviceID,
+        realm: VlobID,
+        chunk_id: ChunkID,
+        chunk: Bytes,
+    ]
+);
+
+impl TestbedEventWorkspaceDataStorageChunkCreate {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        device: DeviceID,
+        realm: VlobID,
+        chunk: Bytes,
+    ) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            // We don't care that the user is revoked here given we don't modify
+            // anything in the server
+            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_realm_exists(&builder.events, realm);
+            // Changes are in local, so no need to check for realm read/write access
+        }
+
+        let timestamp = builder.counters.next_timestamp();
+        let chunk_id = ChunkID::from(*builder.counters.next_entry_id());
+
+        // 2) Actual creation
+
+        Self {
+            timestamp,
+            device,
+            realm,
+            chunk_id,
+            chunk,
         }
     }
 }

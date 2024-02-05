@@ -3,14 +3,20 @@
 use std::sync::Arc;
 
 use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
-use libparsec_platform_storage::workspace::WorkspaceDataStorage;
 use libparsec_types::prelude::*;
 
 use super::super::WorkspaceOps;
-use crate::certif::{
-    CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
-    InvalidManifestError,
+use crate::{
+    certif::{
+        CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
+        InvalidManifestError,
+    },
+    workspace::store::{
+        ForUpdateChildLocalOnlyError, WorkspaceStore, WorkspaceStoreOperationError,
+    },
 };
+
+pub type GetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceSyncError {
@@ -51,7 +57,16 @@ impl From<ConnectionError> for WorkspaceSyncError {
 }
 
 pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), WorkspaceSyncError> {
-    let last_checkpoint = ops.data_storage.get_realm_checkpoint().await?;
+    let last_checkpoint = ops
+        .store
+        .get_realm_checkpoint()
+        .await
+        .map_err(|err| match err {
+            WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+            WorkspaceStoreOperationError::Internal(err) => {
+                err.context("cannot get local realm checkpoint").into()
+            }
+        })?;
 
     let (changes, current_checkpoint) = {
         use authenticated_cmds::latest::vlob_poll_changes::{Rep, Req};
@@ -64,7 +79,7 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
             Rep::Ok {
                 changes,
                 current_checkpoint,
-            } => (changes.into_iter().collect(), current_checkpoint),
+            } => (changes, current_checkpoint),
             // TODO: error handling !
             Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
             Rep::RealmNotFound { .. } => return Err(WorkspaceSyncError::NoRealm),
@@ -75,23 +90,35 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
     };
 
     if last_checkpoint != current_checkpoint {
-        ops.data_storage
-            .update_realm_checkpoint(current_checkpoint, changes)
-            .await?;
+        ops.store
+            .update_realm_checkpoint(current_checkpoint, &changes)
+            .await
+            .map_err(|err| match err {
+                WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                WorkspaceStoreOperationError::Internal(err) => {
+                    err.context("cannot update realm checkpoint").into()
+                }
+            })?;
     }
 
     Ok(())
 }
 
-pub async fn get_need_inbound_sync(ops: &WorkspaceOps) -> anyhow::Result<Vec<VlobID>> {
-    let need_sync = ops.data_storage.get_need_sync_entries().await?;
-    Ok(need_sync.remote)
+pub async fn get_need_inbound_sync(
+    ops: &WorkspaceOps,
+    limit: u32,
+) -> Result<Vec<VlobID>, GetNeedInboundSyncEntriesError> {
+    ops.store.get_inbound_need_sync_entries(limit).await
 }
 
 #[derive(Debug)]
 pub enum InboundSyncOutcome {
     Updated,
     NoChange,
+    /// The entry is already locked, this is typically because it is being modified.
+    /// Hence now is not the right time to sync it given our incoming changes will
+    /// be overwritten by the ongoing modification. Instead we should just retry later.
+    EntryIsBusy,
 }
 
 /// Download and merge remote changes from the server.
@@ -133,7 +160,7 @@ async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, Wor
         };
 
     // Now merge the remote with the current local manifest
-    update_storage_with_remote_root(ops, remote)
+    update_store_with_remote_root(ops, remote)
         .await
         .map_err(|err| err.into())
 
@@ -145,11 +172,11 @@ async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, Wor
     // from WorkspaceOps...)
 }
 
-pub(super) async fn update_storage_with_remote_root(
+pub(super) async fn update_store_with_remote_root(
     ops: &WorkspaceOps,
     remote: WorkspaceManifest,
 ) -> anyhow::Result<InboundSyncOutcome> {
-    let (updater, local) = ops.data_storage.for_update_workspace_manifest().await;
+    let (updater, local) = ops.store.for_update_root().await;
     // Note merge may end up with nothing new, typically if the remote version is
     // already the one local is based on
     if let Some(merged) = super::super::merge::merge_local_workspace_manifests(
@@ -158,7 +185,9 @@ pub(super) async fn update_storage_with_remote_root(
         &local,
         remote,
     ) {
-        updater.update_workspace_manifest(Arc::new(merged)).await?;
+        updater
+            .update_workspace_manifest(Arc::new(merged), None)
+            .await?;
         Ok(InboundSyncOutcome::Updated)
     } else {
         Ok(InboundSyncOutcome::NoChange)
@@ -169,8 +198,17 @@ async fn inbound_sync_child(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
+    // Start by a cheap optional check: the sync is going to end up with `EntryInBusy`
+    // if the entry is locked at the time we want to merge the remote manifest with
+    // the local one. In such case, the caller is expected to retry later.
+    // But what if the entry stay locked for a long time ? Hence this check that
+    // will fail early instead of fetching the remote manifest.
+    if ops.store.is_child_entry_locked(entry_id).await {
+        return Ok(InboundSyncOutcome::EntryIsBusy);
+    }
+
     // Retrieve remote
-    let remote: ChildManifest = match fetch_remote_manifest_with_self_heal(ops, entry_id).await? {
+    let remote = match fetch_remote_manifest_with_self_heal(ops, entry_id).await? {
         FetchWithSelfHealOutcome::LastVersion(manifest) => manifest,
         FetchWithSelfHealOutcome::SelfHeal {
             last_version,
@@ -193,21 +231,30 @@ async fn inbound_sync_child(
     };
 
     // Now merge the remote with the current local manifest
-    update_storage_with_remote_child(ops, remote)
-        .await
-        .map_err(|err| err.into())
+    update_store_with_remote_child(ops, remote).await
 }
 
-pub(super) async fn update_storage_with_remote_child(
+pub(super) async fn update_store_with_remote_child(
     ops: &WorkspaceOps,
     remote: ChildManifest,
-) -> Result<InboundSyncOutcome, anyhow::Error> {
+) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
     let entry_id = match &remote {
         ChildManifest::File(m) => m.id,
         ChildManifest::Folder(m) => m.id,
     };
 
-    let (updater, local) = ops.data_storage.for_update_child_manifest(entry_id).await?;
+    let outcome = ops.store.for_update_child_local_only(entry_id).await;
+    let (updater, local) = match outcome {
+        Ok((updater, manifest)) => (updater, manifest),
+        Err(ForUpdateChildLocalOnlyError::WouldBlock) => {
+            return Ok(InboundSyncOutcome::EntryIsBusy)
+        }
+        Err(ForUpdateChildLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
+        Err(ForUpdateChildLocalOnlyError::Internal(err)) => {
+            return Err(err.context("cannot lock for update").into())
+        }
+    };
+
     // Note merge may end up with nothing new, typically if the remote version is
     // already the one local is based on
     match (local, remote) {
@@ -215,15 +262,29 @@ pub(super) async fn update_storage_with_remote_child(
         (None, ChildManifest::File(remote)) => {
             let local_manifest = Arc::new(LocalFileManifest::from_remote(remote));
             updater
-                .update_as_file_manifest(local_manifest, false, [].into_iter())
-                .await?;
+                .update_manifest(ArcLocalChildManifest::File(local_manifest))
+                .await
+                .map_err(|err| match err {
+                    WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                    WorkspaceStoreOperationError::Internal(err) => {
+                        err.context("cannot update manifest").into()
+                    }
+                })?;
             Ok(InboundSyncOutcome::Updated)
         }
 
         // Folder added remotely
         (None, ChildManifest::Folder(remote)) => {
             let local_manifest = Arc::new(LocalFolderManifest::from_remote(remote, None));
-            updater.update_as_folder_manifest(local_manifest).await?;
+            updater
+                .update_manifest(ArcLocalChildManifest::Folder(local_manifest))
+                .await
+                .map_err(|err| match err {
+                    WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                    WorkspaceStoreOperationError::Internal(err) => {
+                        err.context("cannot update manifest").into()
+                    }
+                })?;
             Ok(InboundSyncOutcome::Updated)
         }
 
@@ -238,8 +299,14 @@ pub(super) async fn update_storage_with_remote_child(
                 remote,
             ) {
                 updater
-                    .update_as_folder_manifest(Arc::new(merged_manifest))
-                    .await?;
+                    .update_manifest(ArcLocalChildManifest::Folder(Arc::new(merged_manifest)))
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update manifest").into()
+                        }
+                    })?;
                 Ok(InboundSyncOutcome::Updated)
             } else {
                 Ok(InboundSyncOutcome::NoChange)
@@ -264,7 +331,7 @@ pub trait RemoteManifest: Sized {
     fn extract_base_from_local(local: Self::LocalManifest) -> Self;
 
     async fn get_from_storage(
-        storage: &WorkspaceDataStorage,
+        store: &WorkspaceStore,
         entry_id: VlobID,
     ) -> Result<(VersionInt, Self::LocalManifest), anyhow::Error>;
 
@@ -292,10 +359,10 @@ impl RemoteManifest for WorkspaceManifest {
 
     // TODO: handle entry not found
     async fn get_from_storage(
-        storage: &WorkspaceDataStorage,
+        store: &WorkspaceStore,
         _entry_id: VlobID,
     ) -> Result<(VersionInt, Self::LocalManifest), anyhow::Error> {
-        let manifest = storage.get_workspace_manifest();
+        let manifest = store.get_workspace_manifest();
         Ok((manifest.base.version, manifest))
     }
 
@@ -339,10 +406,10 @@ impl RemoteManifest for ChildManifest {
 
     // TODO: handle entry not found
     async fn get_from_storage(
-        storage: &WorkspaceDataStorage,
+        store: &WorkspaceStore,
         entry_id: VlobID,
     ) -> Result<(VersionInt, Self::LocalManifest), anyhow::Error> {
-        let manifest = storage.get_child_manifest(entry_id).await?;
+        let manifest = store.get_child_manifest(entry_id).await?;
         let base_version = match &manifest {
             Self::LocalManifest::File(m) => m.base.version,
             Self::LocalManifest::Folder(m) => m.base.version,
@@ -428,8 +495,7 @@ async fn find_last_valid_manifest<M: RemoteManifest>(
     entry_id: VlobID,
     last_version: VersionInt,
 ) -> Result<M, WorkspaceSyncError> {
-    let (local_base_version, local_manifest) =
-        M::get_from_storage(&ops.data_storage, entry_id).await?;
+    let (local_base_version, local_manifest) = M::get_from_storage(&ops.store, entry_id).await?;
 
     for candidate_version in (local_base_version + 1..last_version).rev() {
         let outcome = fetch_remote_manifest_version(ops, entry_id, candidate_version).await?;

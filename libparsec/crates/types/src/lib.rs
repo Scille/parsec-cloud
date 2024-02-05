@@ -22,6 +22,7 @@ extern crate lazy_static;
 /// }
 /// ```
 pub use anyhow;
+pub use bytes;
 pub use bytes::Bytes;
 pub use thiserror;
 

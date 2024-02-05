@@ -13,6 +13,12 @@ use libparsec_types::prelude::*;
 pub(super) struct UserStore {
     device: Arc<LocalDevice>,
     storage: AsyncMutex<Option<UserStorage>>,
+    // TODO: it could be possible to remove `lock_update_user_manifest` and rely on
+    //       `storage`'s lock instead (in a nutshell, `storage` would be locked at the
+    //       beginning of `UserStore::for_update`).
+    //       This should work fine given the read/write operations that need `storage`'s
+    //       lock are all short in user store (i.e. they only read/write a single thing,
+    //       unlike certificates store where multiple certificates are verified and added).
     /// A lock that will be used to prevent concurrent update on the user manifest.
     /// This is needed to ensure `user_manifest` stays in sync with the content of the database.
     lock_update_user_manifest: AsyncMutex<()>,

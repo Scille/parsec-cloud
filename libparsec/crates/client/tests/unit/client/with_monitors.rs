@@ -70,7 +70,7 @@ async fn multi_devices(env: &TestbedEnv) {
 
     let alice1_workspace = alice1_client.start_workspace(wid).await.unwrap();
     alice1_workspace
-        .create_folder(&"/foo".parse().unwrap())
+        .create_folder("/foo".parse().unwrap())
         .await
         .unwrap();
 
@@ -97,7 +97,7 @@ async fn multi_devices(env: &TestbedEnv) {
     // 4a) Now time for Alice2 to modify the workspace while Alice1 workspace is running...
 
     alice2_workspace
-        .remove_entry(&"/foo".parse().unwrap())
+        .remove_entry("/foo".parse().unwrap())
         .await
         .unwrap();
 

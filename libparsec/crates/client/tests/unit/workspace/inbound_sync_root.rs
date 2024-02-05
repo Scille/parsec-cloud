@@ -231,7 +231,7 @@ async fn non_placeholder(
     );
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
-    let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
 
     // 4) Check the outcome
 
@@ -415,7 +415,7 @@ async fn placeholder(
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
 
-    let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.base, *wksp1_last_remote_manifest);
     if local_change {

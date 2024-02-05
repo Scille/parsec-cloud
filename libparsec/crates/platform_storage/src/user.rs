@@ -22,11 +22,11 @@ pub struct UserStorage {
 
 impl UserStorage {
     pub async fn start(data_base_dir: &Path, device: &LocalDevice) -> anyhow::Result<Self> {
-        // `maybe_populate_certificate_storage` needs to start a `CertificatesStorage`,
+        // `maybe_populate_certificate_storage` needs to start a `UserStorage`,
         // leading to a recursive call which is not supported for async functions.
         // Hence `no_populate_start` which breaks the recursion.
         //
-        // Also note we don't try to return the `CertificatesStorage` that has been
+        // Also note we don't try to return the `UserStorage` that has been
         // used during the populate as it would change the internal state of the
         // storage (typically caches) depending of if populate has been needed or not.
 

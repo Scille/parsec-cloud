@@ -46,21 +46,25 @@ macro_rules! impl_local_manifest_dump_load {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+// TODO: Rework this documentation, it's really not clear :'(
+/// Represents a chunk of a data in file manifest.
+///
+/// The raw data is identified by its `id` attribute and is aligned using the
+/// `raw_offset` attribute with respect to the file addressing. The raw data
+/// size is stored as `raw_size`.
+///
+/// The `start` and `stop` attributes then describes the span of the actual data
+/// still with respect to the file addressing.
+///
+/// This means the following rule applies:
+///     raw_offset <= start < stop <= raw_offset + raw_size
+///
+/// Access is an optional block access that can be used to produce a remote manifest
+/// when the chunk corresponds to an actual block within the context of this manifest.
 pub struct Chunk {
-    // Represents a chunk of a data in file manifest.
-    // The raw data is identified by its `id` attribute and is aligned using the
-    // `raw_offset` attribute with respect to the file addressing. The raw data
-    // size is stored as `raw_size`.
-    //
-    // The `start` and `stop` attributes then describes the span of the actual data
-    // still with respect to the file addressing.
-    //
-    // This means the following rule applies:
-    //     raw_offset <= start < stop <= raw_start + raw_size
-    //
-    // Access is an optional block access that can be used to produce a remote manifest
-    // when the chunk corresponds to an actual block within the context of this manifest.
     pub id: ChunkID,
+    // TODO: don't directly expose those fields, this way we can guarantee
+    //       invariances on their order (e.g. start < stop, raw_offset <= start, etc.)
     pub start: u64,
     pub stop: NonZeroU64,
     pub raw_offset: u64,
@@ -82,6 +86,9 @@ impl PartialOrd<u64> for Chunk {
 
 impl Chunk {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
+        // TODO: Return an error instead of panicking
+        // TODO: also to this check when deserializing data
+        assert!(start < stop.get());
         Self {
             id: ChunkID::default(),
             start,
@@ -92,6 +99,10 @@ impl Chunk {
                 .expect("Chunk raw_size should be NonZeroU64"),
             access: None,
         }
+    }
+
+    pub fn size(&self) -> u64 {
+        self.stop.get() - self.start
     }
 
     pub fn from_block_access(block_access: BlockAccess) -> Self {
@@ -110,15 +121,15 @@ impl Chunk {
         }
     }
 
-    pub fn evolve_as_block(mut self, data: &[u8]) -> Result<Self, &'static str> {
+    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), &'static str> {
         // No-op
         if self.is_block() {
-            return Ok(self);
+            return Err("already a block");
         }
 
         // Check alignement
         if self.raw_offset != self.start {
-            return Err("This chunk is not aligned");
+            return Err("not aligned");
         }
 
         // Craft access
@@ -126,13 +137,11 @@ impl Chunk {
             id: BlockID::from(*self.id),
             key: SecretKey::generate(),
             offset: self.start,
-            size: (self.stop.get() - self.start)
-                .try_into()
-                .map_err(|_| "Stop - Start must be > 0")?,
+            size: self.size().try_into().expect("size must be > 0"),
             digest: HashDigest::from_data(data),
         });
 
-        Ok(self)
+        Ok(())
     }
 
     fn block(&self) -> Option<&BlockAccess> {

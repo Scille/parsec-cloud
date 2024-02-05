@@ -11,6 +11,7 @@ use std::{
 };
 
 use super::utils::workspace_ops_factory;
+use crate::workspace::{InboundSyncOutcome, OutboundSyncOutcome};
 
 enum Modification {
     Nothing,
@@ -218,7 +219,17 @@ async fn non_placeholder(
         }
     }
 
-    wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
+    let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
+
+    if !remote_change {
+        p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+    } else {
+        p_assert_matches!(outcome, OutboundSyncOutcome::InboundSyncNeeded);
+        let outcome = wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
+        p_assert_matches!(outcome, InboundSyncOutcome::Updated);
+        let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
+        p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+    }
 
     // 4) Check the outcome
 
@@ -268,7 +279,7 @@ async fn non_placeholder(
     };
 
     // Check the user manifest is not longer need sync
-    let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.need_sync, false);
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.children, expected_children);
@@ -309,7 +320,7 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
     let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // Check the workspace manifest is need sync
-    let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.need_sync, true);
     p_assert_eq!(workspace_manifest.speculative, is_speculative);
     p_assert_eq!(workspace_manifest.base.version, 0);
@@ -418,7 +429,7 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
     wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
 
     // Check the workspace manifest is no longer need sync
-    let workspace_manifest = wksp1_ops.data_storage.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
     p_assert_eq!(workspace_manifest.need_sync, false);
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.base.version, 1);

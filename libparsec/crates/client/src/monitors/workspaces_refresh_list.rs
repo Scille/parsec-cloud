@@ -73,10 +73,7 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
             loop {
                 let outcome = match action {
                     Action::MissedServerEvents | Action::WorkspaceChanged => {
-                        println!("{} refresh list...", client.device_id());
-                        let o = client.refresh_workspaces_list().await;
-                        println!("{} refresh list DONE !", client.device_id());
-                        o
+                        client.refresh_workspaces_list().await
                     }
                 };
                 match outcome {

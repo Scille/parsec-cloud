@@ -12,7 +12,7 @@ use std::path::Path;
 
 use libparsec_types::prelude::*;
 
-use super::model::get_user_data_storage_db_relative_path;
+use super::model::get_user_storage_db_relative_path;
 
 #[derive(Debug)]
 pub(crate) struct PlatformUserStorage {
@@ -29,7 +29,7 @@ impl PlatformUserStorage {
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
-        let db_relative_path = get_user_data_storage_db_relative_path(device);
+        let db_relative_path = get_user_storage_db_relative_path(device);
         let db_path = data_base_dir.join(&db_relative_path);
 
         #[cfg(feature = "test-with-testbed")]

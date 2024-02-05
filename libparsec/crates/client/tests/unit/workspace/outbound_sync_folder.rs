@@ -7,6 +7,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
+use crate::workspace::OutboundSyncOutcome;
 
 enum Modification {
     Create,
@@ -28,11 +29,7 @@ async fn base(
     let get_folder_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
         async move {
-            let child_manifest = wksp1_ops
-                .data_storage
-                .get_child_manifest(entry_id)
-                .await
-                .unwrap();
+            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
             match child_manifest {
                 ArcLocalChildManifest::File(m) => panic!("Expected folder, got {:?}", m),
                 ArcLocalChildManifest::Folder(m) => m,
@@ -51,7 +48,7 @@ async fn base(
     let expected_children = match modification {
         Modification::Create => {
             let new_folder_id = wksp1_ops
-                .create_folder(&"/foo/new_folder".parse().unwrap())
+                .create_folder("/foo/new_folder".parse().unwrap())
                 .await
                 .unwrap();
             let mut expected_children = base_children.clone();
@@ -60,7 +57,7 @@ async fn base(
         }
         Modification::Remove => {
             wksp1_ops
-                .remove_entry(&"/foo/spam".parse().unwrap())
+                .remove_entry("/foo/spam".parse().unwrap())
                 .await
                 .unwrap();
             let mut expected_children = base_children.clone();
@@ -70,7 +67,7 @@ async fn base(
         Modification::Rename => {
             wksp1_ops
                 .rename_entry(
-                    &"/foo/spam".parse().unwrap(),
+                    "/foo/spam".parse().unwrap(),
                     "spam_renamed".parse().unwrap(),
                     false,
                 )
@@ -116,7 +113,8 @@ async fn base(
         },
     );
 
-    wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
+    let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
+    p_assert_matches!(outcome, OutboundSyncOutcome::Done);
 
     // Check the user manifest is not longer need sync
     let foo_manifest = get_folder_manifest(wksp1_foo_id).await;
@@ -125,5 +123,12 @@ async fn base(
     p_assert_eq!(foo_manifest.children, expected_children);
     p_assert_eq!(foo_manifest.base.children, expected_children);
 
+    // Subsequent sync is an idempotent noop
+
+    let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
+    p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+
     wksp1_ops.stop().await.unwrap();
 }
+
+// TODO: test outbound sync returning `OutboundSyncOutcome::InboundSyncNeeded`

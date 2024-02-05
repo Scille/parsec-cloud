@@ -4799,159 +4799,448 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
     Ok(js_obj)
 }
 
-// WorkspaceFsOperationError
+// WorkspaceCreateFileError
 
 #[allow(dead_code)]
-fn variant_workspace_fs_operation_error_rs_to_js(
-    rs_obj: libparsec::WorkspaceFsOperationError,
+fn variant_workspace_create_file_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceCreateFileError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::WorkspaceFsOperationError::CannotRenameRoot { .. } => {
+        libparsec::WorkspaceCreateFileError::EntryExists { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorCannotRenameRoot".into(),
+                &"WorkspaceCreateFileErrorEntryExists".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::EntryExists { .. } => {
+        libparsec::WorkspaceCreateFileError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorEntryExists".into(),
+                &"WorkspaceCreateFileErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::EntryNotFound { .. } => {
+        libparsec::WorkspaceCreateFileError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorEntryNotFound".into(),
+                &"WorkspaceCreateFileErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::FolderNotEmpty { .. } => {
+        libparsec::WorkspaceCreateFileError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorFolderNotEmpty".into(),
+                &"WorkspaceCreateFileErrorInvalidKeysBundle".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::Internal { .. } => {
+        libparsec::WorkspaceCreateFileError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorInternal".into(),
+                &"WorkspaceCreateFileErrorInvalidManifest".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceCreateFileError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorInvalidCertificate".into(),
+                &"WorkspaceCreateFileErrorNoRealmAccess".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceCreateFileError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorInvalidKeysBundle".into(),
+                &"WorkspaceCreateFileErrorOffline".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::InvalidManifest { .. } => {
+        libparsec::WorkspaceCreateFileError::ParentIsFile { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorInvalidManifest".into(),
+                &"WorkspaceCreateFileErrorParentIsFile".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::IsAFolder { .. } => {
+        libparsec::WorkspaceCreateFileError::ParentNotFound { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorIsAFolder".into(),
+                &"WorkspaceCreateFileErrorParentNotFound".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::NoRealmAccess { .. } => {
+        libparsec::WorkspaceCreateFileError::ReadOnlyRealm { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorNoRealmAccess".into(),
+                &"WorkspaceCreateFileErrorReadOnlyRealm".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::NotAFolder { .. } => {
+        libparsec::WorkspaceCreateFileError::Stopped { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorNotAFolder".into(),
+                &"WorkspaceCreateFileErrorStopped".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::Offline { .. } => {
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceCreateFolderError
+
+#[allow(dead_code)]
+fn variant_workspace_create_folder_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceCreateFolderError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceCreateFolderError::EntryExists { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorOffline".into(),
+                &"WorkspaceCreateFolderErrorEntryExists".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::ReadOnlyRealm { .. } => {
+        libparsec::WorkspaceCreateFolderError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorReadOnlyRealm".into(),
+                &"WorkspaceCreateFolderErrorInternal".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::Stopped { .. } => {
+        libparsec::WorkspaceCreateFolderError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorStopped".into(),
+                &"WorkspaceCreateFolderErrorInvalidCertificate".into(),
             )?;
         }
-        libparsec::WorkspaceFsOperationError::TimestampOutOfBallpark {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
+        libparsec::WorkspaceCreateFolderError::InvalidKeysBundle { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"WorkspaceFsOperationErrorTimestampOutOfBallpark".into(),
+                &"WorkspaceCreateFolderErrorInvalidKeysBundle".into(),
             )?;
-            let js_server_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(server_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
-            let js_client_timestamp = {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
-                };
-                let v = match custom_to_rs_f64(client_timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                };
-                JsValue::from(v)
-            };
-            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
-            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+        }
+        libparsec::WorkspaceCreateFolderError::InvalidManifest { .. } => {
             Reflect::set(
                 &js_obj,
-                &"ballparkClientEarlyOffset".into(),
-                &js_ballpark_client_early_offset,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorInvalidManifest".into(),
             )?;
-            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+        }
+        libparsec::WorkspaceCreateFolderError::NoRealmAccess { .. } => {
             Reflect::set(
                 &js_obj,
-                &"ballparkClientLateOffset".into(),
-                &js_ballpark_client_late_offset,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceCreateFolderError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceCreateFolderError::ParentIsFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorParentIsFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceCreateFolderError::ParentNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorParentNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceCreateFolderError::ReadOnlyRealm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorReadOnlyRealm".into(),
+            )?;
+        }
+        libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceCreateFolderErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceRemoveEntryError
+
+#[allow(dead_code)]
+fn variant_workspace_remove_entry_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceRemoveEntryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceRemoveEntryError::CannotRemoveRoot { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorCannotRemoveRoot".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::EntryIsFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorEntryIsFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::EntryIsFolder { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorEntryIsFolder".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::EntryIsNonEmptyFolder { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::ReadOnlyRealm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorReadOnlyRealm".into(),
+            )?;
+        }
+        libparsec::WorkspaceRemoveEntryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRemoveEntryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceRenameEntryError
+
+#[allow(dead_code)]
+fn variant_workspace_rename_entry_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceRenameEntryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceRenameEntryError::CannotRenameRoot { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorCannotRenameRoot".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::DestinationExists { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorDestinationExists".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::ReadOnlyRealm { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorReadOnlyRealm".into(),
+            )?;
+        }
+        libparsec::WorkspaceRenameEntryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceRenameEntryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceStatEntryError
+
+#[allow(dead_code)]
+fn variant_workspace_stat_entry_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceStatEntryError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceStatEntryError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatEntryError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatEntryErrorStopped".into(),
             )?;
         }
     }
@@ -6868,8 +7157,7 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_create_file(workspace, &path).await;
+        let ret = libparsec::workspace_create_file(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -6889,7 +7177,7 @@ pub fn workspaceCreateFile(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_create_file_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -6908,8 +7196,7 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_create_folder(workspace, &path).await;
+        let ret = libparsec::workspace_create_folder(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -6929,7 +7216,7 @@ pub fn workspaceCreateFolder(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_create_folder_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -6948,8 +7235,7 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_create_folder_all(workspace, &path).await;
+        let ret = libparsec::workspace_create_folder_all(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -6969,7 +7255,7 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_create_folder_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -6988,8 +7274,7 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_remove_entry(workspace, &path).await;
+        let ret = libparsec::workspace_remove_entry(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7004,7 +7289,7 @@ pub fn workspaceRemoveEntry(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_remove_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -7023,8 +7308,7 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_remove_file(workspace, &path).await;
+        let ret = libparsec::workspace_remove_file(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7039,7 +7323,7 @@ pub fn workspaceRemoveFile(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_remove_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -7058,8 +7342,7 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_remove_folder(workspace, &path).await;
+        let ret = libparsec::workspace_remove_folder(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7074,7 +7357,7 @@ pub fn workspaceRemoveFolder(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_remove_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -7093,8 +7376,7 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
-        let ret = libparsec::workspace_remove_folder_all(workspace, &path).await;
+        let ret = libparsec::workspace_remove_folder_all(workspace, path).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7109,7 +7391,7 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_remove_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -7133,7 +7415,6 @@ pub fn workspaceRenameEntry(
             };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-
         let new_name = {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -7141,7 +7422,7 @@ pub fn workspaceRenameEntry(
             custom_from_rs_string(new_name).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let ret = libparsec::workspace_rename_entry(workspace, &path, new_name, overwrite).await;
+        let ret = libparsec::workspace_rename_entry(workspace, path, new_name, overwrite).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7156,7 +7437,7 @@ pub fn workspaceRenameEntry(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_rename_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -7188,7 +7469,7 @@ pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fs_operation_error_rs_to_js(err)?;
+                let js_err = variant_workspace_stat_entry_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

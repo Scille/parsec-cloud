@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{EntryStat, WorkspaceFsOperationError},
+    workspace::{EntryStat, WorkspaceCreateFolderError},
     EventWorkspaceOpsOutboundSyncNeeded,
 };
 
@@ -51,7 +51,7 @@ async fn create_in_root(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     let new_folder_id = ops
-        .create_folder(&"/new_folder".parse().unwrap())
+        .create_folder("/new_folder".parse().unwrap())
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -81,7 +81,7 @@ async fn create_in_child(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     let new_folder_id = ops
-        .create_folder(&"/foo/new_folder".parse().unwrap())
+        .create_folder("/foo/new_folder".parse().unwrap())
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -105,8 +105,8 @@ async fn create_as_root(env: &TestbedEnv) {
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    let err = ops.create_folder(&"/".parse().unwrap()).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == wksp1_id);
+    let err = ops.create_folder("/".parse().unwrap()).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == wksp1_id);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
@@ -133,8 +133,8 @@ async fn already_exists_in_root(#[values(true, false)] existing_is_file: bool, e
         let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
         (path, wksp1_foo_id)
     };
-    let err = ops.create_folder(&path).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == already_exists_id);
+    let err = ops.create_folder(path).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == already_exists_id);
     spy.assert_no_events();
 
     // Ensure nothing has changed
@@ -162,8 +162,8 @@ async fn already_exists_in_child(#[values(true, false)] existing_is_file: bool, 
         let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
         (path, wksp1_foo_spam_id)
     };
-    let err = ops.create_folder(&path).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == already_exists_id);
+    let err = ops.create_folder(path).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == already_exists_id);
     spy.assert_no_events();
 
     // Ensure nothing has changed
@@ -172,3 +172,4 @@ async fn already_exists_in_child(#[values(true, false)] existing_is_file: bool, 
 
 // TODO: test parent manifest not present in local (with and without server available)
 // TODO: test entry already exists but not present in local
+// TODO: test entry already exists but is a file

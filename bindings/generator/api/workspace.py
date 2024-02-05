@@ -40,35 +40,26 @@ async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
     raise NotImplementedError
 
 
-class WorkspaceFsOperationError(ErrorVariant):
-    class Stopped:
-        pass
-
+class WorkspaceCreateFileError(ErrorVariant):
     class Offline:
         pass
 
-    class EntryExists:
+    class Stopped:
         pass
 
-    class EntryNotFound:
-        pass
-
-    class IsAFolder:
-        pass
-
-    class CannotRenameRoot:
-        pass
-
-    class NotAFolder:
-        pass
-
-    class FolderNotEmpty:
+    class ReadOnlyRealm:
         pass
 
     class NoRealmAccess:
         pass
 
-    class ReadOnlyRealm:
+    class ParentNotFound:
+        pass
+
+    class ParentIsFile:
+        pass
+
+    class EntryExists:
         pass
 
     class InvalidKeysBundle:
@@ -80,11 +71,142 @@ class WorkspaceFsOperationError(ErrorVariant):
     class InvalidManifest:
         pass
 
-    class TimestampOutOfBallpark:
-        server_timestamp: DateTime
-        client_timestamp: DateTime
-        ballpark_client_early_offset: float
-        ballpark_client_late_offset: float
+    class Internal:
+        pass
+
+
+class WorkspaceCreateFolderError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class ParentNotFound:
+        pass
+
+    class ParentIsFile:
+        pass
+
+    class EntryExists:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+class WorkspaceRemoveEntryError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class CannotRemoveRoot:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class EntryIsFile:
+        pass
+
+    class EntryIsFolder:
+        pass
+
+    class EntryIsNonEmptyFolder:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+class WorkspaceRenameEntryError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class CannotRenameRoot:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class DestinationExists:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+class WorkspaceStatEntryError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
 
     class Internal:
         pass
@@ -115,56 +237,56 @@ class EntryStat(Variant):
 async def workspace_stat_entry(
     workspace: Handle,
     path: Ref[FsPath],
-) -> Result[EntryStat, WorkspaceFsOperationError]:
+) -> Result[EntryStat, WorkspaceStatEntryError]:
     raise NotImplementedError
 
 
 async def workspace_rename_entry(
     workspace: Handle,
-    path: Ref[FsPath],
+    path: FsPath,
     new_name: EntryName,
     overwrite: bool,
-) -> Result[None, WorkspaceFsOperationError]:
+) -> Result[None, WorkspaceRenameEntryError]:
     raise NotImplementedError
 
 
 async def workspace_create_folder(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[VlobID, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[VlobID, WorkspaceCreateFolderError]:
     raise NotImplementedError
 
 
 async def workspace_create_folder_all(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[VlobID, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[VlobID, WorkspaceCreateFolderError]:
     raise NotImplementedError
 
 
 async def workspace_create_file(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[VlobID, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[VlobID, WorkspaceCreateFileError]:
     raise NotImplementedError
 
 
 async def workspace_remove_entry(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[None, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[None, WorkspaceRemoveEntryError]:
     raise NotImplementedError
 
 
 async def workspace_remove_file(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[None, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[None, WorkspaceRemoveEntryError]:
     raise NotImplementedError
 
 
 async def workspace_remove_folder(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[None, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[None, WorkspaceRemoveEntryError]:
     raise NotImplementedError
 
 
 async def workspace_remove_folder_all(
-    workspace: Handle, path: Ref[FsPath]
-) -> Result[None, WorkspaceFsOperationError]:
+    workspace: Handle, path: FsPath
+) -> Result[None, WorkspaceRemoveEntryError]:
     raise NotImplementedError

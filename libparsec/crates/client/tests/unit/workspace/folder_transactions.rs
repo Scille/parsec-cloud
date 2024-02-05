@@ -70,7 +70,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     macro_rules! create_folder {
         ($path:expr, $parent_id: ident) => {
             async {
-                let child_id = ops.create_folder($path).await.unwrap();
+                let child_id = ops.create_folder($path.clone()).await.unwrap();
                 spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
                     p_assert_eq!(e.realm_id, wksp1_id);
                     p_assert_eq!(e.entry_id, child_id);
@@ -84,13 +84,13 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         };
     }
     let parent_id = if root_level { wksp1_id } else { wksp1_foo_id };
-    let dir1_id = create_folder!(&dir1, parent_id).await;
-    create_folder!(&dir2, parent_id).await;
-    let dir3_id = create_folder!(&dir3, parent_id).await;
+    let dir1_id = create_folder!(dir1, parent_id).await;
+    create_folder!(dir2, parent_id).await;
+    let dir3_id = create_folder!(dir3, parent_id).await;
 
     // Add subdirs to know which dir is which once we start renaming them
-    create_folder!(&dir1.join("subdir1".parse().unwrap(),), dir1_id).await;
-    create_folder!(&dir3.join("subdir3".parse().unwrap(),), dir3_id).await;
+    create_folder!(dir1.join("subdir1".parse().unwrap(),), dir1_id).await;
+    create_folder!(dir3.join("subdir3".parse().unwrap(),), dir3_id).await;
 
     p_assert_eq!(
         ls!(&base_path).await,
@@ -106,7 +106,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     // Remove folder
 
-    ops.remove_folder(&dir2).await.unwrap();
+    ops.remove_folder(dir2.clone()).await.unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, parent_id);
@@ -121,7 +121,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     // Rename folder
 
-    ops.rename_entry(&dir1, "dir2".parse().unwrap(), false)
+    ops.rename_entry(dir1, "dir2".parse().unwrap(), false)
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -138,7 +138,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     // Overwrite by rename folder
 
-    ops.rename_entry(&dir3, "dir2".parse().unwrap(), true)
+    ops.rename_entry(dir3, "dir2".parse().unwrap(), true)
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
