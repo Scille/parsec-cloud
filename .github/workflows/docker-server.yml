@@ -49,7 +49,7 @@ jobs:
           sed -n 's/^.*Tool.Parsec: "\(.*\)",$/current=\1/p' misc/version_updater.py | tee $GITHUB_OUTPUT
 
       - name: Generate build metadata
-        uses: docker/metadata-action@dbef88086f6cef02e264edb7dbf63250c17cef6c # v5.5.0
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         id: metadata
         with:
           images:
