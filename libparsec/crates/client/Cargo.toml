@@ -19,7 +19,6 @@ libparsec_platform_storage = { workspace = true }
 libparsec_platform_device_loader = { workspace = true }
 libparsec_protocol = { workspace = true }
 
-async-trait = { workspace = true }
 paste = { workspace = true }
 log = { workspace = true }
 

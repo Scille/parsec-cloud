@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use async_trait::async_trait;
 use std::sync::Arc;
 
 use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
@@ -259,8 +258,6 @@ pub(super) async fn update_storage_with_remote_child(
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait RemoteManifest: Sized {
     type LocalManifest: Sized;
 
@@ -286,8 +283,6 @@ pub trait RemoteManifest: Sized {
     ) -> Result<Self, CertifValidateManifestError>;
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RemoteManifest for WorkspaceManifest {
     type LocalManifest = Arc<LocalWorkspaceManifest>;
 
@@ -332,8 +327,6 @@ impl RemoteManifest for WorkspaceManifest {
     }
 }
 
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 impl RemoteManifest for ChildManifest {
     type LocalManifest = ArcLocalChildManifest;
 
