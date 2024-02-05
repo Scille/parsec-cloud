@@ -338,7 +338,6 @@ async function listFolder(): Promise<void> {
 }
 
 function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
-  console.log('File Selected');
   if (selectedFilesCount.value === 0) {
     allFilesSelected.value = false;
     selectAllFiles(false);

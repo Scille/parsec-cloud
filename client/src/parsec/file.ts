@@ -76,12 +76,25 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
   }
 }
 
+let MOCK_FILE_ID = 1;
+
 export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceFsOperationError>> {
   function generateEntryName(prefix: string = '', addExtension = false): string {
     const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
     const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
     return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
   }
+
+  function generateChildren(): Array<string> {
+    const fileCount = Math.floor(Math.random() * 15) + 1;
+    const folderCount = Math.floor(Math.random() * 15) + 1;
+    const result = [];
+    for (let i = 0; i < fileCount + folderCount; i++) {
+      result.push(generateEntryName(i < fileCount ? FILE_PREFIX : FOLDER_PREFIX, i < fileCount));
+    }
+    return result;
+  }
+
   const FOLDER_PREFIX = 'Dir_';
   const FILE_PREFIX = 'File_';
 
@@ -105,13 +118,14 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     }
     return result as Result<EntryStat, WorkspaceFsOperationError>;
   } else {
+    MOCK_FILE_ID += 1;
     if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
       return {
         ok: true,
         value: {
           tag: FileType.File,
           confinementPoint: null,
-          id: '67',
+          id: `${MOCK_FILE_ID}`,
           created: DateTime.now(),
           updated: DateTime.now(),
           baseVersion: 1,
@@ -128,7 +142,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
         value: {
           tag: FileType.Folder,
           confinementPoint: null,
-          id: '68',
+          id: `${MOCK_FILE_ID}`,
           created: DateTime.now(),
           updated: DateTime.now(),
           baseVersion: 1,
@@ -136,7 +150,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           needSync: Math.floor(Math.random() * 2) === 1,
           name: fileName,
           isFile: (): boolean => false,
-          children: [generateEntryName(FILE_PREFIX, true), generateEntryName(FILE_PREFIX, true), generateEntryName(FOLDER_PREFIX)],
+          children: generateChildren(),
         },
       };
     }
