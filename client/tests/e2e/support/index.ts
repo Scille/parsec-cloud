@@ -39,7 +39,7 @@ declare global {
       visitApp(template?: 'coolorg' | 'empty'): Chainable<string>;
       dropTestbed(): Chainable<null>;
       login(userName: string, password: string): Chainable<null>;
-      checkToastMessage(level: 'error' | 'warning' | 'info' | 'success', title: string, message: string): Chainable<null>;
+      checkToastMessage(level: 'error' | 'warning' | 'info' | 'success', title: string | RegExp, message: string | RegExp): Chainable<null>;
     }
   }
 }
@@ -93,7 +93,7 @@ Cypress.Commands.add('dropTestbed', () => {
   });
 });
 
-Cypress.Commands.add('checkToastMessage', (level, title, message) => {
+Cypress.Commands.add('checkToastMessage', (level, title: string | RegExp, message: string | RegExp) => {
   cy.get('.notification-toast').shadow().find('.toast-header').contains(title);
   cy.get('.notification-toast').should('have.class', `ms-${level}`);
   cy.get('.notification-toast').shadow().find('.toast-message').contains(message);

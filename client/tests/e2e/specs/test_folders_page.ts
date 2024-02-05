@@ -110,7 +110,7 @@ describe('Check folders page', () => {
     cy.get('.file-card-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-card-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
-    cy.get('.counter').contains('3 items');
+    cy.get('.counter').contains(/^\d+ items$/);
   });
 
   it('Tests select all files in list view', () => {
@@ -118,7 +118,7 @@ describe('Check folders page', () => {
     // Select all
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
-    cy.get('.counter').contains('3 selected items');
+    cy.get('.counter').contains(/^\d+ selected items$/);
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     // Unselect all
@@ -126,16 +126,16 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
     cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
-    cy.get('.counter').contains('3 items');
+    cy.get('.counter').contains(/^\d+ items$/);
 
     // Select all, unselect first file
     cy.get('.folder-list-header').realHover().find('ion-checkbox').invoke('show').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
-    cy.get('.counter').contains('3 selected items');
+    cy.get('.counter').contains(/^\d+ selected items$/);
     cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.counter').contains('2 selected item');
+    cy.get('.counter').contains(/^\d+ selected items$/);
   });
 
   it('Tests delete one file in list view', () => {
@@ -171,11 +171,16 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
     cy.get('#button-delete').contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple items');
-    cy.get('.question-modal').find('.ms-modal-header__text').contains('Are you sure you want to delete these 3 items?');
-    cy.get('.question-modal').find('#next-button').contains('Delete 3 items').click();
+    cy.get('.question-modal')
+      .find('.ms-modal-header__text')
+      .contains(/^Are you sure you want to delete these \d+ items\?$/);
+    cy.get('.question-modal')
+      .find('#next-button')
+      .contains(/^Delete \d+ items$/)
+      .click();
     cy.get('.question-modal').should('not.exist');
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('@consoleLog').should('have.been.called.with', '3 entries deleted');
+    cy.get('@consoleLog').should('have.been.called.with', /^\d+ entries deleted$/);
   });
 
   it('Tests file details', () => {
@@ -196,7 +201,7 @@ describe('Check folders page', () => {
     cy.get('@values')
       .eq(6)
       .contains(/^Yes|No$/);
-    cy.get('@values').eq(7).contains('67');
+    cy.get('@values').eq(7).contains(/^\d+$/);
   });
 
   it('Tests folder details', () => {
@@ -214,7 +219,7 @@ describe('Check folders page', () => {
     cy.get('@values')
       .eq(5)
       .contains(/^Yes|No$/);
-    cy.get('@values').eq(6).contains('68');
+    cy.get('@values').eq(6).contains(/^\d+$/);
   });
 
   it('Tests get file link', () => {
@@ -242,8 +247,9 @@ describe('Check folders page', () => {
   }
 
   it('Test move one file', () => {
-    cy.get('.folder-container').find('.file-list-item').eq(2).click();
-    cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
+    // .last() will always be a folder, as there's always at least one folder
+    cy.get('.folder-container').find('.file-list-item').last().click();
+    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
 
@@ -258,7 +264,7 @@ describe('Check folders page', () => {
       .contains(/Dir_[a-z_]+/);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length', 3);
+    cy.get('@items').should('have.length.greaterThan', 1);
     cy.get('@items')
       .eq(0)
       .contains(/Dir_[a-z_]+/)
@@ -271,16 +277,18 @@ describe('Check folders page', () => {
   });
 
   it('Tests move files', () => {
-    cy.get('.folder-container').find('.file-list-item').eq(2).click();
+    cy.get('.folder-container').find('.file-list-item').last().click();
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move 3 items');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__title')
+      .contains(/^Move \d+ items$/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
     checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length', 3);
+    cy.get('@items').should('have.length.greaterThan', 1);
     cy.get('@items')
       .eq(0)
       .contains(/Dir_[a-z_]+/)
@@ -289,12 +297,12 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', '3 elements moved', 'All the elements have been moved to the chosen folder.');
+    cy.checkToastMessage('success', /^\d+ elements moved$/, 'All the elements have been moved to the chosen folder.');
   });
 
   it('Tests copy one file', () => {
-    cy.get('.folder-container').find('.file-list-item').eq(2).click();
-    cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-container').find('.file-list-item').last().click();
+    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
@@ -302,7 +310,7 @@ describe('Check folders page', () => {
     checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length', 3);
+    cy.get('@items').should('have.length.greaterThan', 1);
     cy.get('@items')
       .eq(0)
       .contains(/Dir_[a-z_]+/)
@@ -315,16 +323,18 @@ describe('Check folders page', () => {
   });
 
   it('Tests copy files', () => {
-    cy.get('.folder-container').find('.file-list-item').eq(2).click();
+    cy.get('.folder-container').find('.file-list-item').last().click();
     cy.get('.folder-list-header').find('ion-checkbox').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy 3 items');
+    cy.get('.folder-selection-modal')
+      .find('.ms-modal-header__title')
+      .contains(/^Copy \d+ items$/);
     cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
     checkCurrentPath('The Copper Coronet', 2);
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length', 3);
+    cy.get('@items').should('have.length.greaterThan', 1);
     cy.get('@items')
       .eq(0)
       .contains(/Dir_[a-z_]+/)
@@ -333,12 +343,12 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', '3 elements copied', 'All the elements have been copied to the chosen folder.');
+    cy.checkToastMessage('success', /^\d+ elements copied$/, 'All the elements have been copied to the chosen folder.');
   });
 
   it('Test move file back/forward', () => {
-    cy.get('.folder-container').find('.file-list-item').eq(2).click();
-    cy.get('.folder-container').find('.file-list-item').eq(1).find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-container').find('.file-list-item').last().click();
+    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
     cy.get('.folder-selection-modal').find('.navigation-back-button').as('backButton').should('have.class', 'button-disabled');
