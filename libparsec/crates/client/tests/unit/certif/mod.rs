@@ -25,5 +25,6 @@ mod poll_server_for_new_certificates;
 mod rename_realm;
 mod store;
 mod utils;
+mod validate_child_manifest;
 mod validate_user_manifest;
 mod validate_workspace_manifest;
