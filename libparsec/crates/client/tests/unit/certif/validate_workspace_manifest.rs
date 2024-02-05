@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::test_register_send_hook;
+use libparsec_client_connection::{
+    test_register_low_level_send_hook, test_register_send_hook, HeaderMap, ResponseMock, StatusCode,
+};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -416,6 +418,172 @@ async fn cannot_write(env: &TestbedEnv) {
         },
         )
     );
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case::access_not_available_for_author(
+    authenticated_cmds::latest::realm_get_keys_bundle::Rep::AccessNotAvailableForAuthor,
+    |err| p_assert_matches!(err, CertifValidateManifestError::NotAllowed),
+)]
+#[case::author_not_allowed(
+    authenticated_cmds::latest::realm_get_keys_bundle::Rep::AuthorNotAllowed,
+    |err| p_assert_matches!(err, CertifValidateManifestError::NotAllowed),
+)]
+#[case::bad_key_index(
+    authenticated_cmds::latest::realm_get_keys_bundle::Rep::BadKeyIndex,
+    |err| p_assert_matches!(err, CertifValidateManifestError::Internal(_)),
+)]
+#[case::unknown_status(
+    authenticated_cmds::latest::realm_get_keys_bundle::Rep::UnknownStatus { unknown_status: "".into(), reason: None },
+    |err| p_assert_matches!(err, CertifValidateManifestError::Internal(_)),
+)]
+async fn server_error(
+    #[case] rep: authenticated_cmds::latest::realm_get_keys_bundle::Rep,
+    #[case] assert: impl FnOnce(CertifValidateManifestError),
+    env: &TestbedEnv,
+) {
+    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|event| event.realm);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .create_or_update_workspace_manifest_vlob("alice@dev1", realm_id)
+            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+    });
+    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    test_register_send_hook(
+        &env.discriminant_dir,
+        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| rep,
+    );
+
+    let err = ops
+        .validate_workspace_manifest(
+            env.get_last_realm_certificate_timestamp(realm_id),
+            env.get_last_common_certificate_timestamp(),
+            realm_id,
+            realm_key_index,
+            &alice.device_id,
+            1,
+            vlob_timestamp,
+            &vlob,
+        )
+        .await
+        .unwrap_err();
+
+    assert(err);
+}
+
+#[parsec_test(testbed = "minimal")]
+#[case::invalid_keys_bundle(
+    |env: &TestbedEnv, realm_id, user_id: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+        keys_bundle: Bytes::from_static(b""),
+        keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
+    },
+    |err| p_assert_matches!(err, CertifValidateManifestError::InvalidKeysBundle(_))
+)]
+#[case::invalid_keys_bundle_access(
+    |env: &TestbedEnv, realm_id, _: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+        keys_bundle: env.get_last_realm_keys_bundle(realm_id),
+        keys_bundle_access: Bytes::from_static(b""),
+    },
+    |err| p_assert_matches!(err, CertifValidateManifestError::InvalidKeysBundle(_))
+)]
+async fn invalid_keys_bundle(
+    #[case] rep: impl FnOnce(
+        &TestbedEnv,
+        VlobID,
+        &UserID,
+    ) -> authenticated_cmds::latest::realm_get_keys_bundle::Rep,
+    #[case] assert: impl FnOnce(CertifValidateManifestError),
+    env: &TestbedEnv,
+) {
+    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|event| event.realm);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .create_or_update_workspace_manifest_vlob("alice@dev1", realm_id)
+            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+    });
+    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let rep = rep(&env, realm_id, alice.user_id());
+    test_register_send_hook(
+        &env.discriminant_dir,
+        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| rep,
+    );
+
+    let err = ops
+        .validate_workspace_manifest(
+            env.get_last_realm_certificate_timestamp(realm_id),
+            env.get_last_common_certificate_timestamp(),
+            realm_id,
+            realm_key_index,
+            &alice.device_id,
+            1,
+            vlob_timestamp,
+            &vlob,
+        )
+        .await
+        .unwrap_err();
+
+    assert(err);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn invalid_response(env: &TestbedEnv) {
+    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|event| event.realm);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder
+            .create_or_update_workspace_manifest_vlob("alice@dev1", realm_id)
+            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+    });
+    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+        Ok(ResponseMock::Mocked((
+            StatusCode::IM_A_TEAPOT,
+            HeaderMap::new(),
+            Bytes::new(),
+        )))
+    });
+
+    let err = ops
+        .validate_workspace_manifest(
+            env.get_last_realm_certificate_timestamp(realm_id),
+            env.get_last_common_certificate_timestamp(),
+            realm_id,
+            realm_key_index,
+            &alice.device_id,
+            1,
+            vlob_timestamp,
+            &vlob,
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(err, CertifValidateManifestError::Internal(_));
 }
 
 #[parsec_test(testbed = "minimal")]
