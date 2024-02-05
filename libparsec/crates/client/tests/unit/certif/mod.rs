@@ -20,4 +20,5 @@ mod list_workspace_users;
 mod poll_server_for_new_certificates;
 mod store;
 mod utils;
-mod validate_manifest;
+mod validate_user_manifest;
+mod validate_workspace_manifest;
