@@ -13,7 +13,7 @@ pub enum DatabaseError {
     InvalidData(DataError),
     /// The database returned an error.
     #[error("{}", .1.message())]
-    DieselDatabaseError(
+    DieselDatabase(
         diesel::result::DatabaseErrorKind,
         Box<dyn diesel::result::DatabaseErrorInformation + Send + Sync>,
     ),
@@ -28,7 +28,7 @@ pub enum DatabaseError {
 impl From<diesel::result::Error> for DatabaseError {
     fn from(e: diesel::result::Error) -> Self {
         match e {
-            diesel::result::Error::DatabaseError(kind, err) => Self::DieselDatabaseError(kind, err),
+            diesel::result::Error::DatabaseError(kind, err) => Self::DieselDatabase(kind, err),
             _ => Self::Diesel(e),
         }
     }

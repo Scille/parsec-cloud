@@ -11,5 +11,4 @@ mod testbed;
 
 pub use error::{DatabaseError, DatabaseResult};
 pub use local_database::{LocalDatabase, VacuumMode, LOCAL_DATABASE_MAX_VARIABLE_NUMBER};
-pub use option::AutoVacuum;
-pub use types::{CoalesceTotalSize, DateTime};
+pub use types::DateTime;
