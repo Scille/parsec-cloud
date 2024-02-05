@@ -500,7 +500,7 @@ mod time_provider {
                 // Recompute the time we still have to sleep
                 let mut recompute_time_we_have_to_sleep = || {
                     let now = self.now();
-                    remaining_time = remaining_time - (now - sleep_started_at);
+                    remaining_time -= now - sleep_started_at;
                     sleep_started_at = now;
                 };
 
