@@ -278,7 +278,7 @@ impl LocalDatabase {
         let res = self.executor.exec(job).await?.map_err(DatabaseError::from);
         let mut close_needed = false;
         // TODO: move this directly in the background executor thread for more reliable close
-        if let Err(DatabaseError::DieselDatabaseError(kind, _err)) = res.as_ref() {
+        if let Err(DatabaseError::DieselDatabase(kind, _err)) = res.as_ref() {
             match kind {
                 // Expected errors that can be trigger by a regular SQL query
                 diesel::result::DatabaseErrorKind::UniqueViolation

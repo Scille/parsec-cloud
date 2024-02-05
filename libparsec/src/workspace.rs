@@ -5,7 +5,6 @@ use std::sync::Arc;
 pub use libparsec_client::workspace::{EntryStat, WorkspaceFsOperationError};
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
-pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
 use crate::handle::{
     borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,

@@ -437,7 +437,6 @@ macro_rules! test_register_sequence_of_send_hooks {
         });
     };
 }
-pub use test_register_sequence_of_send_hooks;
 
 pub fn test_register_send_hook<F, A>(config_dir: &Path, hook: F)
 where
