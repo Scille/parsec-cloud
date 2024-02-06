@@ -95,7 +95,7 @@ def build() -> None:
     # native module and discard the rest !
 
     with tempfile.TemporaryDirectory() as distdir:
-        cmd = f"maturin build --locked {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
+        cmd = f"CARGO_NET_GIT_FETCH_WITH_CLI=true maturin build -vv --locked {cargo_flags} --manifest-path {BASEDIR / 'Cargo.toml'} --interpreter {PYTHON_EXECUTABLE_PATH} --out {distdir}"
 
         if not bundle_extra_so:
             cmd += " --compatibility linux"
