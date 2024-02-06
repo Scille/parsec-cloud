@@ -12,6 +12,7 @@ from parsec._parsec import InvitationEmailSentStatus, InvitationType, InviteList
 from parsec.api.protocol import InvitationToken, UserProfile
 from parsec.core.backend_connection import (
     BackendConnectionError,
+    BackendConnStatus,
     BackendInvitationOnExistingMember,
     BackendNotAvailable,
 )
@@ -308,11 +309,6 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_ADMIN"), UserProfile.ADMIN)
         self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_STANDARD"), UserProfile.STANDARD)
         self.combo_filter_role.addItem(T("TEXT_FILTER_USERS_ROLE_OUTSIDER"), UserProfile.OUTSIDER)
-
-        if not self.core.get_organization_config().user_profile_outsider_allowed:
-            item = self.combo_filter_role.model().item(3)
-            item.setEnabled(False)
-            item.setToolTip(T("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
 
         self.combo_filter_role.currentIndexChanged.connect(self._on_filter_role_changed)
         if core.device.is_admin:
@@ -634,6 +630,15 @@ class UsersWidget(QWidget, Ui_UsersWidget):
         show_error(self, errmsg, exception=job.exc)
 
     def reset(self) -> None:
+        connected = self.core.backend_status == BackendConnStatus.READY
+        user_profile_outsider_allowed = (
+            self.core.get_organization_config().user_profile_outsider_allowed
+        )
+        if connected and not user_profile_outsider_allowed:
+            item = self.combo_filter_role.model().item(3)
+            item.setEnabled(False)
+            item.setToolTip(T("NOT_ALLOWED_OUTSIDER_PROFILE_TOOLTIP"))
+
         self.label_page_info.hide()
         self.button_previous_page.hide()
         self.button_next_page.hide()
