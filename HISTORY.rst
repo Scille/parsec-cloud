@@ -5,6 +5,20 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.17.0-rc.3 (2024-02-06)
+--------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the filter list when filtering user profiles.
+  (`#6369 <https://github.com/Scille/parsec-cloud/issues/6369>`__)
+
+* Add missing translation for offline availability dialog.
+  (`#6224 <https://github.com/Scille/parsec-cloud/issues/6224>`__)
+
+
+
 Parsec v2.17.0-rc.2 (2024-01-24)
 --------------------------------
 
