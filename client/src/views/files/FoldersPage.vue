@@ -103,6 +103,15 @@
               {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
             </ion-text>
           </div>
+
+          <ms-sorter
+            :label="$t('FoldersPage.sort.byName')"
+            :options="msSorterOptions"
+            :default-option="SortProperty.Name"
+            :sorter-labels="msSorterLabels"
+            @change="onSortChange"
+          />
+
           <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
@@ -139,7 +148,7 @@
               <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
             </ion-list-header>
             <file-list-item
-              v-for="child in children"
+              v-for="child in files"
               :key="child.id"
               :file="child"
               :show-checkbox="selectedFilesCount > 0 || allFilesSelected"
@@ -162,7 +171,7 @@
         >
           <file-card
             class="folder-grid-item"
-            v-for="child in children"
+            v-for="child in files"
             :key="child.id"
             :file="child"
             :show-checkbox="selectedFilesCount > 0"
@@ -199,6 +208,7 @@ import FileCard from '@/components/files/FileCard.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import * as parsec from '@/parsec';
 
+import { MsOptions, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import FileCardImporting from '@/components/files/FileCardImporting.vue';
 import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
@@ -227,6 +237,26 @@ const notificationManager: NotificationManager = inject(NotificationKey)!;
 const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
 const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
 const allFilesSelected = ref(false);
+
+enum SortProperty {
+  Name,
+  Size,
+  LastUpdate,
+}
+
+const msSorterOptions: MsOptions = new MsOptions([
+  {
+    label: translate('FoldersPage.sort.byName'),
+    key: SortProperty.Name,
+  },
+  { label: translate('FoldersPage.sort.byLastUpdate'), key: SortProperty.LastUpdate },
+  { label: translate('FoldersPage.sort.bySize'), key: SortProperty.Size },
+]);
+
+const msSorterLabels = {
+  asc: translate('FoldersPage.sort.asc'),
+  desc: translate('FoldersPage.sort.desc'),
+};
 
 interface FileImport {
   data: ImportData;
@@ -259,6 +289,30 @@ const importManager: ImportManager = inject(ImportManagerKey)!;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
+const sortProp = ref(SortProperty.Name);
+const sortByAsc = ref(true);
+
+const files = computed(() => {
+  return children.value.slice().sort((item1, item2) => {
+    // Because the difference between item1 and item2 will always be -1, 0 or 1, by setting
+    // a folder with a score of 3 by default, we're ensuring that it will always be on top
+    // of the list.
+    const item1Score = item1.isFile() ? 3 : 0;
+    const item2Score = item2.isFile() ? 3 : 0;
+    let diff = 0;
+
+    if (sortProp.value === SortProperty.Name) {
+      diff = sortByAsc.value ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
+    } else if (sortProp.value === SortProperty.LastUpdate) {
+      diff = sortByAsc.value ? (item1.updated > item2.updated ? 1 : 0) : item2.updated > item1.updated ? 1 : 0;
+    } else if (sortProp.value === SortProperty.Size) {
+      const size1 = item1.isFile() ? (item1 as parsec.EntryStatFile).size : 0;
+      const size2 = item1.isFile() ? (item2 as parsec.EntryStatFile).size : 0;
+      diff = sortByAsc.value ? (size1 < size2 ? 1 : 0) : size2 < size1 ? 1 : 0;
+    }
+    return item1Score - item2Score - diff;
+  });
+});
 
 onMounted(async () => {
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
@@ -276,6 +330,11 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+function onSortChange(event: MsSorterChangeEvent): void {
+  sortProp.value = event.option.key;
+  sortByAsc.value = event.sortByAsc;
+}
 
 async function onFileImportState(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
   if (fileUploadModal && state === ImportState.FileAdded) {

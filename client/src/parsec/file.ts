@@ -95,6 +95,13 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     return result;
   }
 
+  function generateDate(start?: DateTime): DateTime {
+    if (!start) {
+      start = DateTime.now();
+    }
+    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
+  }
+
   const FOLDER_PREFIX = 'Dir_';
   const FILE_PREFIX = 'File_';
 
@@ -119,6 +126,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     return result as Result<EntryStat, WorkspaceFsOperationError>;
   } else {
     MOCK_FILE_ID += 1;
+    const createdDate = generateDate();
     if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
       return {
         ok: true,
@@ -126,8 +134,8 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           tag: FileType.File,
           confinementPoint: null,
           id: `${MOCK_FILE_ID}`,
-          created: DateTime.now(),
-          updated: DateTime.now(),
+          created: createdDate,
+          updated: generateDate(createdDate),
           baseVersion: 1,
           isPlaceholder: false,
           needSync: Math.floor(Math.random() * 2) === 1,
@@ -143,8 +151,8 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
           tag: FileType.Folder,
           confinementPoint: null,
           id: `${MOCK_FILE_ID}`,
-          created: DateTime.now(),
-          updated: DateTime.now(),
+          created: createdDate,
+          updated: generateDate(createdDate),
           baseVersion: 1,
           isPlaceholder: false,
           needSync: Math.floor(Math.random() * 2) === 1,
