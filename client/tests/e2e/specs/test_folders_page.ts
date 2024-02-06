@@ -140,7 +140,7 @@ describe('Check folders page', () => {
 
   it('Tests delete one file in list view', () => {
     // list view
-    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
+    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
@@ -155,7 +155,7 @@ describe('Check folders page', () => {
   it('Tests delete one file in grid view', () => {
     cy.get('#folders-ms-action-bar').find('#grid-view').as('gridButton');
     cy.get('@gridButton').click();
-    cy.get('.file-card-item').first().find('.card-option').invoke('show').click();
+    cy.get('.file-card-item').last().find('.card-option').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(4).contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
@@ -184,7 +184,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests file details', () => {
-    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
+    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
     cy.get('.file-details-modal')
       .find('.ms-modal-header__title')
@@ -205,7 +205,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests folder details', () => {
-    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
     cy.get('.file-details-modal')
       .find('.ms-modal-header__title')
@@ -247,9 +247,9 @@ describe('Check folders page', () => {
   }
 
   it('Test move one file', () => {
-    // .last() will always be a folder, as there's always at least one folder
-    cy.get('.folder-container').find('.file-list-item').last().click();
-    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
+    // .first() will always be a folder, as there's always at least one folder
+    cy.get('.folder-container').find('.file-list-item').first().click();
+    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
 
@@ -277,7 +277,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests move files', () => {
-    cy.get('.folder-container').find('.file-list-item').last().click();
+    cy.get('.folder-container').find('.file-list-item').first().click();
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal')
@@ -301,8 +301,8 @@ describe('Check folders page', () => {
   });
 
   it('Tests copy one file', () => {
-    cy.get('.folder-container').find('.file-list-item').last().click();
-    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-container').find('.file-list-item').first().click();
+    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
@@ -323,7 +323,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests copy files', () => {
-    cy.get('.folder-container').find('.file-list-item').last().click();
+    cy.get('.folder-container').find('.file-list-item').first().click();
     cy.get('.folder-list-header').find('ion-checkbox').click();
     // cspell:disable-next-line
     cy.get('#button-makeacopy').contains('Make a copy').click();
@@ -347,8 +347,8 @@ describe('Check folders page', () => {
   });
 
   it('Test move file back/forward', () => {
-    cy.get('.folder-container').find('.file-list-item').last().click();
-    cy.get('.folder-container').find('.file-list-item').eq(0).find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-container').find('.file-list-item').first().click();
+    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
     cy.get('#button-moveto').contains('Move to').click();
     cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
     cy.get('.folder-selection-modal').find('.navigation-back-button').as('backButton').should('have.class', 'button-disabled');

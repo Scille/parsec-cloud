@@ -399,6 +399,13 @@
             "lastUpdate": "Dernière modif.",
             "size": "Taille"
         },
+        "sort": {
+            "byName": "Par nom",
+            "byLastUpdate": "Par dernière mise à jour",
+            "bySize": "Par taille",
+            "asc": "Croissant",
+            "desc": "Décroissant"
+        },
         "File": {
             "lastUpdate": "Dernière modification :",
             "importing": "Importation..."
