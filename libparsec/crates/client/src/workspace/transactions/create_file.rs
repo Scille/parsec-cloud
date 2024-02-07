@@ -27,6 +27,9 @@ pub(crate) async fn create_file(
     // Special case for /
     let (parent_id, child_id) = if parent_path.is_root() {
         let (updater, mut parent) = ops.data_storage.for_update_workspace_manifest().await;
+        if let Some(entry) = parent.children.get(child_name) {
+            return Err(FsOperationError::EntryExists { entry_id: *entry });
+        }
         let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();
@@ -59,6 +62,9 @@ pub(crate) async fn create_file(
                 return Err(FsOperationError::EntryNotFound)
             }
         };
+        if let Some(entry) = parent.children.get(child_name) {
+            return Err(FsOperationError::EntryExists { entry_id: *entry });
+        }
         let parent_id = parent.base.id;
 
         let now = ops.device.time_provider.now();
