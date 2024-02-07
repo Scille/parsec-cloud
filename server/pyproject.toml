@@ -72,7 +72,7 @@ setuptools = ">=63.1,<70.0"
 maturin = "1.4.0"
 patchelf = { version = "^0.17.2.1", markers = "platform_system=='Linux'" }
 
-cibuildwheel = "2.16.4"
+cibuildwheel = "2.16.5"
 editorconfig-checker = "2.7.3"
 types-requests = "^2.28"
 

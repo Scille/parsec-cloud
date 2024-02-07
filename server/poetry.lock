@@ -687,13 +687,13 @@ unicode-backport = ["unicodedata2"]
 
 [[package]]
 name = "cibuildwheel"
-version = "2.16.4"
+version = "2.16.5"
 description = "Build Python wheels on CI with minimal configuration."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "cibuildwheel-2.16.4-py3-none-any.whl", hash = "sha256:7dab00ecb30405fe80c6c3a88416c0595449b6b91466cfe91598a435f9136668"},
-    {file = "cibuildwheel-2.16.4.tar.gz", hash = "sha256:2bd6fa7991192861f52d42928c56cc4432e958d6e72ee1034ab0d1dc2cdb7708"},
+    {file = "cibuildwheel-2.16.5-py3-none-any.whl", hash = "sha256:e9a0b743a57cf2a2861e1e580765fd70237689aeda6c79db4870ee688ee24d1f"},
+    {file = "cibuildwheel-2.16.5.tar.gz", hash = "sha256:9fe763405afac4aef33eb8641891dda83312848ec18cd44e30daac34dfa9336d"},
 ]
 
 [package.dependencies]
@@ -1884,4 +1884,4 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12.0"
-content-hash = "c2e14364eb3999d8b860c4476313e1f846ff063b16d1461401780b437715542c"
+content-hash = "dd228ea486dba59a09509b11185dd8cd9d577aad9c9e3421e9371e40af5c7fec"
