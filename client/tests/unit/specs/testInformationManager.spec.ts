@@ -1,7 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsReportTheme } from '@/components/core';
-import { Information, InformationLevel, InformationManager, InformationOptions, PresentationMode } from '@/services/informationManager';
+import { WorkspaceRole } from '@/parsec';
+import {
+  Information,
+  InformationDataType,
+  InformationLevel,
+  InformationManager,
+  InformationOptions,
+  PresentationMode,
+} from '@/services/informationManager';
 import { vi } from 'vitest';
 
 describe('Information Manager', () => {
@@ -34,13 +42,15 @@ describe('Information Manager', () => {
       {
         message: 'information2',
         level: InformationLevel.Success,
-        data: {},
       },
       {
         message: 'information3',
         level: InformationLevel.Warning,
         data: {
-          test: 'test',
+          type: InformationDataType.WorkspaceRoleChanged,
+          workspaceId: 'workspaceId',
+          oldRole: WorkspaceRole.Reader,
+          newRole: WorkspaceRole.Contributor,
         },
       },
       {
@@ -67,18 +77,21 @@ describe('Information Manager', () => {
     const informationWithoutData = new Information(INFOS[0]);
 
     expect(informationWithoutData).to.exist;
-    expect(informationWithoutData.data).to.deep.equal({});
+    expect(informationWithoutData.data).to.be.undefined;
 
     const informationWithEmptyData = new Information(INFOS[1]);
 
     expect(informationWithEmptyData).to.exist;
-    expect(informationWithEmptyData.data).to.deep.equal({});
+    expect(informationWithEmptyData.data).to.be.undefined;
 
     const informationWithSomeData = new Information(INFOS[2]);
 
     expect(informationWithSomeData).to.exist;
     expect(informationWithSomeData.data).to.deep.equal({
-      test: 'test',
+      type: InformationDataType.WorkspaceRoleChanged,
+      workspaceId: 'workspaceId',
+      oldRole: WorkspaceRole.Reader,
+      newRole: WorkspaceRole.Contributor,
     });
   });
 

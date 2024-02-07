@@ -1,12 +1,32 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/core';
+import { WorkspaceID, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 
 export const InformationKey = 'information';
+
+export enum InformationDataType {
+  WorkspaceRoleChanged,
+  // Add specific events here
+}
+
+export interface AbstractInformationData {
+  type: InformationDataType;
+}
+
+// Left as an example of how to add additional information type
+export interface WorkspaceRoleChangedData extends AbstractInformationData {
+  type: InformationDataType.WorkspaceRoleChanged;
+  workspaceId: WorkspaceID;
+  oldRole: WorkspaceRole;
+  newRole: WorkspaceRole;
+}
+
+export type InformationData = WorkspaceRoleChangedData;
 
 export enum InformationLevel {
   Info = 'INFO',
@@ -18,15 +38,15 @@ export enum InformationLevel {
 export interface InformationOptions {
   message: string;
   level: InformationLevel;
-  data?: object;
+  data?: InformationData;
 }
 
 export class Information {
   id: string;
   message: string;
   level: InformationLevel;
-  data?: object;
-  constructor({ message, level, data = {} }: InformationOptions) {
+  data?: InformationData;
+  constructor({ message, level, data }: InformationOptions) {
     this.id = uuid4();
     this.message = message;
     this.level = level;
