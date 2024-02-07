@@ -73,9 +73,9 @@ onMounted(() => {
   // only for testing purpose
   const testInformation = new Information({
     message: Math.random().toString(36).substring(2),
-    level: InformationLevel.Error,
+    level: InformationLevel.Info,
   });
-  informationManager.present(testInformation, PresentationMode.Modal | PresentationMode.Console);
+  informationManager.present(testInformation, PresentationMode.Notification);
 });
 
 function onNotificationClick(notification: Notification): void {
