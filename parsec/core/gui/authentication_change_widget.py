@@ -14,6 +14,7 @@ from parsec._parsec import (
     LocalDeviceError,
     LocalDeviceNotFoundError,
     get_available_device,
+    save_device_with_keyring_in_config,
     save_device_with_password_in_config,
 )
 from parsec.core.gui.custom_dialogs import GreyedDialog, get_text_input, show_error, show_info
@@ -58,6 +59,8 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 await save_device_with_smartcard_in_config(
                     self.core.config.config_dir, self.loaded_device
                 )
+            elif auth_method == DeviceFileType.KEYRING:
+                save_device_with_keyring_in_config(self.core.config.config_dir, self.loaded_device)
             show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
             if self.dialog:
                 self.dialog.accept()
@@ -108,10 +111,14 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 loaded_device = LocalDevice.load_device_with_password(
                     available_device.key_file_path, password
                 )
-            else:
+            elif available_device.type == DeviceFileType.SMARTCARD:
                 loaded_device = await load_device_with_smartcard(
                     Path(available_device.key_file_path)
                 )
+            elif available_device.type == DeviceFileType.KEYRING:
+                loaded_device = LocalDevice.load_device_with_keyring(available_device.key_file_path)
+            else:
+                assert False
         except LocalDeviceError:
             show_error(parent, _("TEXT_LOGIN_ERROR_AUTHENTICATION_FAILED"))
             return None

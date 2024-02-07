@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
 from parsec._parsec import DeviceFileType
+from parsec.core.gui.keyring_authentication_widget import KeyringAuthenticationWidget
 from parsec.core.gui.lang import translate
 from parsec.core.gui.password_authentication_widget import PasswordAuthenticationWidget
 from parsec.core.gui.smartcard_authentication_widget import SmartCardAuthenticationWidget
@@ -23,6 +24,9 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
         self.combo_auth_method.addItem(
             translate("TEXT_AUTH_METHOD_PASSWORD"), DeviceFileType.PASSWORD
         )
+        self.combo_auth_method.addItem(
+            translate("TEXT_AUTH_METHOD_KEYRING"), DeviceFileType.KEYRING
+        )
         if is_smartcard_extension_available():
             self.combo_auth_method.addItem(
                 translate("TEXT_AUTH_METHOD_SMARTCARD"), DeviceFileType.SMARTCARD
@@ -33,18 +37,24 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
             self.combo_auth_method.setToolTip(translate("TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"))
         self.auth_widgets: dict[
             DeviceFileType,
-            PasswordAuthenticationWidget | SmartCardAuthenticationWidget,
+            PasswordAuthenticationWidget
+            | SmartCardAuthenticationWidget
+            | KeyringAuthenticationWidget,
         ] = {
             DeviceFileType.PASSWORD: PasswordAuthenticationWidget(),
             DeviceFileType.SMARTCARD: SmartCardAuthenticationWidget(),
+            DeviceFileType.KEYRING: KeyringAuthenticationWidget(),
         }
         self.current_auth_method: DeviceFileType = DeviceFileType.PASSWORD
 
-        PasswordAuthenticationWidget, self.auth_widgets[
-            DeviceFileType.PASSWORD
-        ].authentication_state_changed.connect(self._on_password_state_changed)
+        self.auth_widgets[DeviceFileType.PASSWORD].authentication_state_changed.connect(
+            self._on_password_state_changed
+        )
         self.auth_widgets[DeviceFileType.SMARTCARD].authentication_state_changed.connect(
             self._on_smartcard_state_changed
+        )
+        self.auth_widgets[DeviceFileType.KEYRING].authentication_state_changed.connect(
+            self._on_keyring_state_changed
         )
         self.main_layout.addWidget(self.auth_widgets[self.current_auth_method])
         self.combo_auth_method.currentIndexChanged.connect(self._on_auth_method_changed)
@@ -63,6 +73,9 @@ class AuthenticationChoiceWidget(QWidget, Ui_AuthenticationChoiceWidget):
         self.authentication_state_changed.emit(self.current_auth_method, state)
 
     def _on_smartcard_state_changed(self, state: Any) -> None:
+        self.authentication_state_changed.emit(self.current_auth_method, state)
+
+    def _on_keyring_state_changed(self, state: Any) -> None:
         self.authentication_state_changed.emit(self.current_auth_method, state)
 
     def exclude_strings(self, strings: List[str]) -> None:

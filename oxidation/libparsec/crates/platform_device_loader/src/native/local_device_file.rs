@@ -9,6 +9,8 @@ use std::{
 
 use libparsec_types::prelude::*;
 
+use keyring::Entry as KeyringEntry;
+
 use crate::load_device_with_password_from_path;
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
@@ -179,6 +181,14 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
                 device.device_label,
                 device.slug,
             ),
+            DeviceFile::Keyring(device) => (
+                DeviceFileType::Keyring,
+                device.organization_id,
+                device.device_id,
+                device.human_handle,
+                device.device_label,
+                device.slug,
+            ),
         };
 
     Ok(AvailableDevice {
@@ -260,6 +270,40 @@ pub fn save_device_with_password(
     Ok(())
 }
 
+pub fn save_device_with_keyring(
+    key_file: &Path,
+    device: &LocalDevice,
+    force: bool,
+) -> Result<(), LocalDeviceError> {
+    if key_file.exists() && !force {
+        return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
+    }
+    let entry = KeyringEntry::new("parsec", device.slughash().as_str())
+        .map_err(|x| LocalDeviceError::Keyring(x.to_string()))?;
+    if entry.get_password().is_ok() && !force {
+        return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
+    }
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+    entry
+        .set_password(passphrase.as_str())
+        .map_err(|x| LocalDeviceError::Keyring(x.to_string()))?;
+
+    let cleartext = device.dump();
+    let ciphertext = key.encrypt(&cleartext);
+    let key_file_content = DeviceFile::Keyring(DeviceFileKeyring {
+        ciphertext,
+        // TODO: Can we avoid these copy?
+        human_handle: device.human_handle.clone(),
+        device_label: device.device_label.clone(),
+        device_id: device.device_id.clone(),
+        organization_id: device.organization_id().clone(),
+        slug: device.slug(),
+    });
+    save_device_file(key_file, &key_file_content)?;
+
+    Ok(())
+}
+
 pub fn save_device_with_password_in_config(
     config_dir: &Path,
     device: &LocalDevice,
@@ -278,6 +322,27 @@ pub fn save_device_with_password_in_config(
     //   Parsec server), in this case the old device object is now invalid
     //   and it's a good thing to replace it.
     save_device_with_password(&key_file, device, password, true)?;
+
+    Ok(key_file)
+}
+
+pub fn save_device_with_keyring_in_config(
+    config_dir: &Path,
+    device: &LocalDevice,
+) -> Result<PathBuf, LocalDeviceError> {
+    let key_file = get_default_key_file(config_dir, device);
+
+    // Why do we use `force=True` here ?
+    // Key file name is per-device unique (given it contains the device slughash),
+    // hence there is no risk to overwrite another device.
+    // So if we are overwriting a key file it could be by:
+    // - the same device object, hence overwriting has no effect
+    // - a device object with same slughash but different device/user keys
+    //   This would mean the device enrollment has been replayed (which is
+    //   not possible in theory, but could occur in case of a rollback in the
+    //   Parsec server), in this case the old device object is now invalid
+    //   and it's a good thing to replace it.
+    save_device_with_keyring(&key_file, device, true)?;
 
     Ok(key_file)
 }

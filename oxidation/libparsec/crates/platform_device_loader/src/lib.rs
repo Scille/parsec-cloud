@@ -25,3 +25,15 @@ pub(crate) fn load_device_with_password_core(
         ty: DeviceFileType::Password,
     })
 }
+
+pub(crate) fn load_device_with_keyring_core(
+    device: &DeviceFileKeyring,
+    passphrase: &str,
+) -> LocalDeviceResult<LocalDevice> {
+    let key = SecretKey::from_recovery_passphrase(passphrase)?;
+    let data = key.decrypt(&device.ciphertext)?;
+
+    LocalDevice::load(&data).map_err(|_| LocalDeviceError::Validation {
+        ty: DeviceFileType::Keyring,
+    })
+}

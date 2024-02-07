@@ -6,6 +6,7 @@ class DeviceFileType:
     PASSWORD: DeviceFileType
     SMARTCARD: DeviceFileType
     RECOVERY: DeviceFileType
+    KEYRING: DeviceFileType
 
     def values(self) -> tuple[DeviceFileType, ...]: ...
     def str(self) -> str: ...

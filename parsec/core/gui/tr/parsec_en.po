@@ -48,6 +48,12 @@ msgstr "Password"
 msgid "TEXT_AUTH_METHOD_SMARTCARD"
 msgstr "Smartcard"
 
+msgid "TEXT_AUTH_METHOD_KEYRING"
+msgstr "System credentials"
+
+msgid "TEXT_EXPLAIN_KEYRING"
+msgstr "The system credentials manager is used to access the PARSEC device."
+
 msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Only one method authentication method is available in this version of "

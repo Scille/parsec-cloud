@@ -302,6 +302,7 @@ class LoginNoDevicesWidget(QWidget, Ui_LoginNoDevicesWidget):
 class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(Path, str)
     login_with_smartcard_clicked = pyqtSignal(Path)
+    login_with_keyring_clicked = pyqtSignal(Path)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     recover_device_clicked = pyqtSignal()
@@ -329,7 +330,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
         item = self.widget.layout().itemAt(0)
         if item:
             lw = item.widget()
-            lw.reset()
+            if hasattr(lw, "reset"):
+                lw.reset()
 
     def list_devices_and_enrollments(self) -> None:
         pendings = PkiEnrollmentSubmitterSubmittedCtx.list_from_disk(
@@ -441,19 +443,26 @@ class LoginWidget(QWidget, Ui_LoginWidget):
                 w.setParent(None)
 
     def _on_account_clicked(self, device: AvailableDevice, hide_back: bool = False) -> None:
-        self._clear_widget()
         lw: LoginPasswordInputWidget | LoginSmartcardInputWidget
         if device.type == DeviceFileType.PASSWORD:
+            self._clear_widget()
             lw = LoginPasswordInputWidget(device, hide_back=hide_back)
             lw.back_clicked.connect(self._on_back_clicked)
             lw.log_in_clicked.connect(self.try_login_with_password)
             self.widget.layout().addWidget(lw)
             lw.line_edit_password.setFocus()
         elif device.type == DeviceFileType.SMARTCARD:
+            self._clear_widget()
             lw = LoginSmartcardInputWidget(device, hide_back=hide_back)
             lw.back_clicked.connect(self._on_back_clicked)
             lw.log_in_clicked.connect(self.try_login_with_smartcard)
             self.widget.layout().addWidget(lw)
+        elif device.type == DeviceFileType.KEYRING:
+            self.try_login_with_keyring(device)
+            # lw = LoginSmartcardInputWidget(device, hide_back=hide_back)
+            # lw.back_clicked.connect(self._on_back_clicked)
+            # lw.log_in_clicked.connect(self.try_login_with_keyring)
+            # self.widget.layout().addWidget(lw)
 
     def _on_back_clicked(self) -> None:
         self.login_canceled.emit()
@@ -464,6 +473,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def try_login_with_smartcard(self, device: AvailableDevice) -> None:
         self.login_with_smartcard_clicked.emit(Path(device.key_file_path))
+
+    def try_login_with_keyring(self, device: AvailableDevice) -> None:
+        self.login_with_keyring_clicked.emit(Path(device.key_file_path))
 
     def disconnect_all(self) -> None:
         pass

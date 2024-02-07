@@ -29,6 +29,8 @@ pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
 
     m.add_function(wrap_pyfunction!(save_device_with_password, m)?)?;
     m.add_function(wrap_pyfunction!(save_device_with_password_in_config, m)?)?;
+    m.add_function(wrap_pyfunction!(save_device_with_keyring, m)?)?;
+    m.add_function(wrap_pyfunction!(save_device_with_keyring_in_config, m)?)?;
     m.add_function(wrap_pyfunction!(change_device_password, m)?)?;
     m.add_function(wrap_pyfunction!(list_available_devices, m)?)?;
     m.add_function(wrap_pyfunction!(get_available_device, m)?)?;
@@ -247,6 +249,13 @@ impl LocalDevice {
         password: &str,
     ) -> LocalDeviceResult<Self> {
         platform_device_loader::load_device_with_password_from_path(&key_file, password)
+            .map(|local_device| LocalDevice(Arc::new(local_device)))
+            .map_err(|e| e.into())
+    }
+
+    #[classmethod]
+    fn load_device_with_keyring(_cls: &PyType, key_file: PathBuf) -> LocalDeviceResult<Self> {
+        platform_device_loader::load_device_with_keyring_from_path(&key_file)
             .map(|local_device| LocalDevice(Arc::new(local_device)))
             .map_err(|e| e.into())
     }
@@ -556,7 +565,8 @@ impl From<LocalDeviceError> for PyErr {
             }
             types::LocalDeviceError::Access(_)
             | types::LocalDeviceError::InvalidSlug
-            | types::LocalDeviceError::Serialization(_) => {
+            | types::LocalDeviceError::Serialization(_)
+            | types::LocalDeviceError::Keyring(_) => {
                 LocalDeviceErrorExc::new_err(internal.to_string())
             }
         }
@@ -583,6 +593,25 @@ fn save_device_with_password_in_config(
     password: &str,
 ) -> LocalDeviceResult<PathBuf> {
     platform_device_loader::save_device_with_password_in_config(&config_dir, &device.0, password)
+        .map_err(|e| e.into())
+}
+
+#[pyfunction]
+fn save_device_with_keyring(
+    key_file: PathBuf,
+    device: &LocalDevice,
+    force: bool,
+) -> LocalDeviceResult<()> {
+    platform_device_loader::save_device_with_keyring(&key_file, &device.0, force)
+        .map_err(|e| e.into())
+}
+
+#[pyfunction]
+fn save_device_with_keyring_in_config(
+    config_dir: PathBuf,
+    device: &LocalDevice,
+) -> LocalDeviceResult<PathBuf> {
+    platform_device_loader::save_device_with_keyring_in_config(&config_dir, &device.0)
         .map_err(|e| e.into())
 }
 

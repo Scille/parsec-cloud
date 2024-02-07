@@ -128,6 +128,36 @@ impl DeviceFile {
                     certificate_sha1,
                 })
             }
+            DeviceFileType(libparsec::types::DeviceFileType::Keyring) => {
+                if encrypted_key.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found encrypted_key attribute for keyring",
+                    ))
+                } else if certificate_id.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found certificate_id attribute for keyring",
+                    ))
+                } else if certificate_sha1.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found certificate_sha1 attribute for keyring",
+                    ))
+                } else if salt.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found salt attribute for keyring",
+                    ))
+                } else {
+                    Ok(())
+                }?;
+
+                libparsec::types::DeviceFile::Keyring(libparsec::types::DeviceFileKeyring {
+                    ciphertext,
+                    human_handle: human_handle.map(|x| x.0),
+                    device_label: device_label.map(|x| x.0),
+                    device_id: device_id.0,
+                    organization_id: organization_id.0,
+                    slug,
+                })
+            }
         };
 
         Ok(Self(device))
@@ -139,6 +169,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Password(_) => DeviceFileType::password(),
             libparsec::types::DeviceFile::Recovery(_) => DeviceFileType::recovery(),
             libparsec::types::DeviceFile::Smartcard(_) => DeviceFileType::smartcard(),
+            libparsec::types::DeviceFile::Keyring(_) => DeviceFileType::keyring(),
         }
     }
 
@@ -150,6 +181,7 @@ impl DeviceFile {
                 libparsec::types::DeviceFile::Password(device) => &device.ciphertext,
                 libparsec::types::DeviceFile::Recovery(device) => &device.ciphertext,
                 libparsec::types::DeviceFile::Smartcard(device) => &device.ciphertext,
+                libparsec::types::DeviceFile::Keyring(device) => &device.ciphertext,
             },
         )
     }
@@ -164,6 +196,9 @@ impl DeviceFile {
                 device.human_handle.clone().map(HumanHandle)
             }
             libparsec::types::DeviceFile::Smartcard(device) => {
+                device.human_handle.clone().map(HumanHandle)
+            }
+            libparsec::types::DeviceFile::Keyring(device) => {
                 device.human_handle.clone().map(HumanHandle)
             }
         }
@@ -181,6 +216,9 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Smartcard(device) => {
                 device.device_label.clone().map(DeviceLabel)
             }
+            libparsec::types::DeviceFile::Keyring(device) => {
+                device.device_label.clone().map(DeviceLabel)
+            }
         }
     }
 
@@ -190,6 +228,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Password(device) => device.device_id.clone(),
             libparsec::types::DeviceFile::Recovery(device) => device.device_id.clone(),
             libparsec::types::DeviceFile::Smartcard(device) => device.device_id.clone(),
+            libparsec::types::DeviceFile::Keyring(device) => device.device_id.clone(),
         })
     }
 
@@ -199,6 +238,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Password(device) => device.organization_id.clone(),
             libparsec::types::DeviceFile::Recovery(device) => device.organization_id.clone(),
             libparsec::types::DeviceFile::Smartcard(device) => device.organization_id.clone(),
+            libparsec::types::DeviceFile::Keyring(device) => device.organization_id.clone(),
         })
     }
 
@@ -208,6 +248,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Password(device) => &device.slug,
             libparsec::types::DeviceFile::Recovery(device) => &device.slug,
             libparsec::types::DeviceFile::Smartcard(device) => &device.slug,
+            libparsec::types::DeviceFile::Keyring(device) => &device.slug,
         }
     }
 
