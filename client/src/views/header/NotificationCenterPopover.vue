@@ -12,9 +12,8 @@
         </span>
         <ion-toggle
           class="notification-center-header__toggle dark small body-sm"
-          @ion-change="ReadOnlyToggle = !ReadOnlyToggle"
+          @ion-change="onlyReadToggle = !onlyReadToggle"
         >
-          {{ console.log(ReadOnlyToggle) }}
           {{ $t('notificationCenter.readOnly') }}
         </ion-toggle>
       </div>
@@ -28,24 +27,14 @@
             {{ $t('notificationCenter.noNotification') }}
           </ion-text>
         </div>
-        <template v-if="ReadOnlyToggle">
-          <notification-item
-            v-for="notification in unReadNotification"
-            :key="notification.information.id"
-            :notification="notification"
-            @click="onNotificationClick($event)"
-            @mouse-over="onNotificationMouseOver($event)"
-          />
-        </template>
-        <template v-else>
-          <notification-item
-            v-for="notification in notifications"
-            :key="notification.information.id"
-            :notification="notification"
-            @click="onNotificationClick($event)"
-            @mouse-over="onNotificationMouseOver($event)"
-          />
-        </template>
+        <component
+          v-for="notification in notifications"
+          :is="getComponentType(notification)"
+          :key="notification.information.id"
+          :notification="notification"
+          @click="onNotificationClick($event)"
+          @mouse-over="onNotificationMouseOver($event)"
+        />
       </ion-list>
     </div>
   </div>
@@ -53,30 +42,61 @@
 
 <script setup lang="ts">
 import { MsImage, NoNotification } from '@/components/core/ms-image';
-import NotificationItem from '@/components/header/NotificationItem.vue';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import DefaultNotification from '@/components/notifications/DefaultNotification.vue';
+import WorkspaceRoleChangedNotification from '@/components/notifications/WorkspaceRoleChangedNotification.vue';
+import { WorkspaceRole } from '@/parsec';
+import {
+  Information,
+  InformationDataType,
+  InformationKey,
+  InformationLevel,
+  InformationManager,
+  PresentationMode,
+} from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonList, IonText, IonToggle } from '@ionic/vue';
-import { Ref, computed, inject, onMounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, ref, type Component } from 'vue';
 
 const informationManager: InformationManager = inject(InformationKey)!;
 const unreadCount = informationManager.notificationManager.getUnreadCount();
 const notifications = computed(() => {
-  return informationManager.notificationManager.getNotifications().sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
+  return informationManager.notificationManager
+    .getNotifications()
+    .filter((n) => (onlyReadToggle.value ? !n.read : true))
+    .sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
 });
-const unReadNotification = computed(() => {
-  return informationManager.notificationManager.getNotifications(true).sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
-});
-const ReadOnlyToggle: Ref<boolean> = ref(false);
+const onlyReadToggle: Ref<boolean> = ref(false);
 
 onMounted(() => {
-  // only for testing purpose
-  const testInformation = new Information({
-    message: Math.random().toString(36).substring(2),
-    level: InformationLevel.Info,
-  });
-  informationManager.present(testInformation, PresentationMode.Notification);
+  // Add a new notification every 5 seconds, for a total of 10 notifications
+  for (let i = 1; i < 10; i++) {
+    setTimeout(() => {
+      const info = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Error,
+        data: {
+          type: InformationDataType.WorkspaceRoleChanged,
+          workspaceId: '1337',
+          oldRole: WorkspaceRole.Contributor,
+          newRole: WorkspaceRole.Manager,
+        },
+      });
+      informationManager.present(info, PresentationMode.Notification);
+    }, i * 5000);
+  }
 });
+
+function getComponentType(notification: Notification): Component {
+  if (!notification.information.data) {
+    return DefaultNotification;
+  }
+  switch (notification.information.data.type) {
+    case InformationDataType.WorkspaceRoleChanged:
+      return WorkspaceRoleChangedNotification;
+    default:
+      return DefaultNotification;
+  }
+}
 
 function onNotificationClick(notification: Notification): void {
   console.log(notification);

@@ -15,6 +15,10 @@ export class Notification {
     this.time = DateTime.now();
     this.read = false;
   }
+
+  getData<Type>(): Type {
+    return this.information.data as Type;
+  }
 }
 
 export interface NotificationOptions {
@@ -43,12 +47,8 @@ export class NotificationManager {
     }
   }
 
-  getNotifications(unreadOnly: boolean = false): Notification[] {
-    if (unreadOnly) {
-      return this.notifications.value.filter((notif) => notif.read === false);
-    } else {
-      return this.notifications.value;
-    }
+  getNotifications(): Notification[] {
+    return this.notifications.value;
   }
 
   hasUnreadNotifications(): boolean {
