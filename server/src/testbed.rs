@@ -413,6 +413,24 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventCreateBlock,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        realm: VlobID,
+        block_id: BlockID,
+        cleartext: Py<PyBytes>,
+        encrypted: Py<PyBytes>,
+    ],
+    |_py, x: &TestbedEventCreateBlock| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventCreateOpaqueBlock,
     [
         timestamp: DateTime,
@@ -1026,11 +1044,12 @@ fn event_to_pyobject(
         }
 
         libparsec_testbed::TestbedEvent::CreateBlock(x) => {
-            let obj = TestbedEventCreateOpaqueBlock {
+            let obj = TestbedEventCreateBlock {
                 timestamp: x.timestamp.into(),
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
+                cleartext: PyBytes::new(py, &x.cleartext).into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };
             Some(obj.into_py(py))

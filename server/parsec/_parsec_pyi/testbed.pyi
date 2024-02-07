@@ -237,6 +237,16 @@ class TestbedEventCreateOrUpdateOpaqueVlob:
     encrypted: bytes
     sequestered: dict[SequesterServiceID, bytes] | None
 
+class TestbedEventCreateBlock:
+    timestamp: DateTime
+    author: DeviceID
+    realm: VlobID
+    block_id: BlockID
+    block_key: SecretKey
+    cleartext: bytes
+
+    encrypted: bytes
+
 class TestbedEventCreateOpaqueBlock:
     timestamp: DateTime
     author: DeviceID

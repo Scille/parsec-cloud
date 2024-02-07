@@ -41,9 +41,6 @@ from parsec.components.sequester import SequesterServiceType
 @dataclass(slots=True)
 class MemoryDatamodel:
     organizations: dict[OrganizationID, MemoryOrganization] = field(default_factory=dict)
-    block_store: dict[tuple[OrganizationID, BlockID], bytes] = field(
-        default_factory=dict, repr=False
-    )
 
 
 @dataclass(slots=True)
@@ -69,6 +66,7 @@ class MemoryOrganization:
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
+    block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
 
     @property
     def last_sequester_certificate_timestamp(self) -> DateTime:
