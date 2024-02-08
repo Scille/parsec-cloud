@@ -414,7 +414,7 @@ async function onFileClick(_event: Event, file: parsec.EntryStat): Promise<void>
     const newPath = await parsec.Path.join(currentPath.value, file.name);
     navigateTo(Routes.Documents, {
       params: { workspaceHandle: getWorkspaceHandle() },
-      query: { path: newPath, workspaceId: getWorkspaceId() },
+      query: { documentPath: newPath, workspaceId: getWorkspaceId() },
     });
   }
 }

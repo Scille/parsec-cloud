@@ -5,7 +5,7 @@ import { getDefaultProvideConfig, mockRouter, resetRoutesCalled } from '@tests/c
 // Before importing anything else
 mockRouter();
 
-import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
+import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { mount } from '@vue/test-utils';
 
 describe('Header breadcrumbs', () => {
@@ -14,27 +14,27 @@ describe('Header breadcrumbs', () => {
   });
 
   it('Display current device', () => {
-    const NODES = [
+    const NODES: RouterPathNode[] = [
       {
         id: 1,
         display: 'First Node',
         name: 'route1',
         params: { param1: 1 },
-        query: { query1: 1 },
+        query: { openInvite: true },
       },
       {
         id: 2,
         display: 'Second Node',
         name: 'route2',
         params: { param2: 2 },
-        query: { query2: 2 },
+        query: { openInvite: true },
       },
       {
         id: 3,
         display: 'Third Node',
         name: 'route3',
         params: { param3: 3 },
-        query: { query3: 3 },
+        query: { openInvite: true },
       },
     ];
     const wrapper = mount(HeaderBreadcrumbs, {

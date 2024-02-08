@@ -147,7 +147,7 @@ async function setupApp(): Promise<void> {
     window.electronAPI.receive('open-link', async (link: string) => {
       if ((await fileLinkValidator(link)).validity === Validity.Valid || (await claimLinkValidator(link)).validity === Validity.Valid) {
         if (currentRouteIs(Routes.Home)) {
-          await navigateTo(Routes.Home, { query: { link: link } });
+          await navigateTo(Routes.Home, { query: { claimLink: link } });
         }
       } else {
         await informationManager.present(
