@@ -490,7 +490,7 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_name_certificate_consistency(store, &cooked).await?;
+            check_realm_name_certificate_consistency(ops, store, &cooked).await?;
 
             Ok(RealmTopicArcCertificate::RealmName(cooked))
         }
@@ -1422,7 +1422,7 @@ async fn check_realm_role_certificate_consistency(
 
     check_user_not_revoked(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
 
-    // 5) Make sure the user's profile is compatible with the realm and it given role
+    // 5) Make sure the user's profile is compatible with the realm and its given role
 
     let profile = get_user_profile(
         store,
@@ -1458,6 +1458,7 @@ async fn check_realm_role_certificate_consistency(
 }
 
 async fn check_realm_name_certificate_consistency(
+    ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmNameCertificate,
 ) -> Result<(), CertifAddCertificatesBatchError> {
@@ -1525,6 +1526,18 @@ async fn check_realm_name_certificate_consistency(
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
+
+    // 3) Make sure the author is not already revoked
+
+    check_author_not_revoked_and_profile(
+        ops,
+        store,
+        cooked.timestamp,
+        cooked.author.user_id(),
+        false,
+        mk_hint,
+    )
+    .await?;
 
     Ok(())
 }
