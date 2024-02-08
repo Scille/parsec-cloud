@@ -125,7 +125,7 @@ jobs:
   quality-assurance:
     name: 📊 Q&A
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
@@ -139,11 +139,17 @@ jobs:
             newsfragments:
               - newsfragments/**
 
+      - name: Install python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # pin v5.0.0
+        id: setup-python
+        with:
+          python-version: 3.12
+
       - name: Check tools version
         run: |
           echo "::add-matcher::.github/custom-problem-matchers/version-updater.json"
-          python3 --version
-          python3 misc/version_updater.py --check
+          python --version
+          python misc/version_updater.py --check
           echo "::remove-matcher owner=version-updater::"
         timeout-minutes: 2
 

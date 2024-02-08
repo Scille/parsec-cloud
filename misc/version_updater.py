@@ -7,6 +7,7 @@ Helper that help changing the version of a tool across the repository.
 import enum
 import glob
 import re
+import subprocess
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
@@ -71,6 +72,33 @@ class Tool(enum.Enum):
     License = "license"
     PostgreSQL = "postgres"
 
+    def post_update_hook(self) -> None:
+        match self:
+            case Tool.Parsec:
+                refresh_cargo_lock()
+            case _:
+                pass
+
+
+def refresh_cargo_lock() -> None:
+    print("Listing installed rust toolchains ...")
+    rust_installed_toolchain = subprocess.check_output(["rustup", "toolchain", "list"]).decode()
+
+    if "nightly" not in rust_installed_toolchain:
+        print("Missing nightly toolchain, installing it ...")
+        subprocess.check_call(["rustup", "toolchain", "install", "nightly"])
+
+    print("Refreshing Cargo.lock ...")
+    subprocess.check_call(
+        [
+            "cargo",
+            "+nightly",
+            "generate-lockfile",
+            "-Z",
+            "direct-minimal-versions",
+        ]
+    )
+
 
 TOOLS_VERSION: Dict[Tool, str] = {
     Tool.Rust: "1.75.0",
@@ -93,7 +121,8 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.PostgreSQL: [
             ReplaceRegex(
-                r"postgresql-version: \d+", only_major_version("postgresql-version: {version}")
+                r"postgresql-version: \d+",
+                only_major_version("postgresql-version: {version}"),
             )
         ],
     },
@@ -103,6 +132,13 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
+    },
+    ROOT_DIR / ".github/workflows/ci.yml": {
+        Tool.Python: [
+            ReplaceRegex(
+                r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
+            )
+        ],
     },
     ROOT_DIR / ".github/workflows/codeql.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
@@ -323,6 +359,8 @@ def check_tool(tool: Tool, version: str, update: bool) -> List[str]:
             else:
                 errors += check_tool_version(file, regexes, version)
 
+    if not errors and update:
+        tool.post_update_hook()
     return errors
 
 

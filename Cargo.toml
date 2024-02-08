@@ -129,7 +129,7 @@ getrandom_02 = { package = "getrandom", version = "0.2.10", default-features = f
 glob = { version = "0.3.1", default-features = false }
 gloo-timers = { version = "0.3.0", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
-hex = { version = "0.4", default-features = false }
+hex = { version = "0.4.3", default-features = false }
 instant = { version = "0.1.12", default-features = false }
 itertools = { version = "0.12.0", default-features = false }
 jni = { version = "0.21.1", default-features = false }
@@ -140,7 +140,7 @@ libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.20", default-features = false }
 miniserde = { version = "0.1.36", default-features = false }
-neon = { version = "0.10", default-features = false }
+neon = { version = "0.10.1", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 openssl = { version = "0.10.63", default-features = false }
 paste = { version = "1.0.14", default-features = false }
@@ -150,9 +150,9 @@ predicates = { version = "3.1.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proc-macro2 = { version = "1.0.78", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
-quote = { version = "1.0.34", default-features = false }
+quote = { version = "1.0.35", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
-rand_08 = { package = "rand", version = "0.8", default-features = false }
+rand_08 = { package = "rand", version = "0.8.5", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.10.3", default-features = false }
 regex-syntax = { version = "0.8.2", default-features = false }
@@ -171,7 +171,7 @@ serde_with = { version = "3.6.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
-syn = { version = "2.0.44", default-features = false }
+syn = { version = "2.0.48", default-features = false }
 terminal-spinners = { version = "0.3.2", default-features = false }
 thiserror = { version = "1.0.56", default-features = false }
 tokio = { version = "1.36.0", default-features = false }
@@ -180,7 +180,7 @@ url = { version = "2.5.0", default-features = false }
 uuid = { version = "1.7.0", default-features = false }
 wasm-bindgen-futures = { version = "0.4.40", default-features = false }
 wasm-bindgen-test = { version = "0.3.40", default-features = false }
-wasm-bindgen = { version = "0.2.87", default-features = false }
+wasm-bindgen = { version = "0.2.91", default-features = false }
 web-sys = { version = "0.3.67", default-features = false }
 widestring = { version = "1.0.2", default-features = false }
 windows-sys = { version = "0.52.0", default-features = false }
