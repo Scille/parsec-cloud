@@ -57,7 +57,9 @@ async fn content_already_exists(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::ContentAlreadyExists { .. }
         )
     );
@@ -85,11 +87,14 @@ async fn older_than_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::OlderThanAuthor {
-            author_created_on,
-            ..
-        }
-        if author_created_on == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::OlderThanAuthor {
+                author_created_on,
+                ..
+            }
+            if author_created_on == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
         )
     );
 }
@@ -121,11 +126,14 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::InvalidTimestamp {
-            last_certificate_timestamp,
-            ..
-        }
-        if last_certificate_timestamp == timestamp
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::InvalidTimestamp {
+                last_certificate_timestamp,
+                ..
+            }
+            if last_certificate_timestamp == timestamp
         )
     );
 }
@@ -183,7 +191,9 @@ async fn non_existing_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::NonExistingAuthor { .. }
         )
     );
@@ -214,8 +224,11 @@ async fn revoked(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::RelatedUserAlreadyRevoked { user_revoked_on, .. }
-        if user_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::RelatedUserAlreadyRevoked { user_revoked_on, .. }
+            if user_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
         )
     );
 }
@@ -270,9 +283,8 @@ async fn authored_by_root(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
-            InvalidCertificateError::Corrupted { .. }
-        )
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::Corrupted { .. })
     )
 }
 
@@ -305,7 +317,9 @@ async fn initial_realm_role_not_signed_by_self(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { .. }
         )
     )
@@ -341,7 +355,9 @@ async fn initial_realm_role_owner(#[case] role: Option<RealmRole>, env: &Testbed
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RealmFirstRoleMustBeOwner { .. }
         )
     )
@@ -372,7 +388,9 @@ async fn share_with_no_role(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::ContentAlreadyExists { .. }
         )
     )
@@ -403,7 +421,9 @@ async fn same_realm_id(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RealmAuthorHasNoRole { .. }
         )
     )
@@ -436,7 +456,7 @@ async fn share_realm_with_outsider(#[case] role: RealmRole, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch,)
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -468,7 +488,9 @@ async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &Tes
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { .. }
         )
     )
@@ -568,9 +590,8 @@ async fn manager_trying_to_give_admin_role(#[case] role: RealmRole, env: &Testbe
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
-            InvalidCertificateError::RealmAuthorNotOwner { .. }
-        )
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::RealmAuthorNotOwner { .. })
     )
 }
 
@@ -611,7 +632,9 @@ async fn member_trying_to_give_role(
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RealmAuthorNotOwnerOrManager { .. }
         )
     )

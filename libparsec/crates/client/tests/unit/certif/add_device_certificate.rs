@@ -50,7 +50,8 @@ async fn content_already_exists(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(x) if matches!(*x, InvalidCertificateError::ContentAlreadyExists { .. })
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::ContentAlreadyExists { .. })
     )
 }
 
@@ -77,7 +78,9 @@ async fn older_than_author(env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::OlderThanAuthor {
+        if matches!(
+            *boxed,
+            InvalidCertificateError::OlderThanAuthor {
                 author_created_on,
                 ..
             }
@@ -111,11 +114,13 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::InvalidTimestamp {
-            last_certificate_timestamp,
-            ..
-        }
-        if last_certificate_timestamp == timestamp
+        if matches!(
+            *boxed,
+            InvalidCertificateError::InvalidTimestamp {
+                last_certificate_timestamp,
+                ..
+            }
+            if last_certificate_timestamp == timestamp
         )
     );
 }
@@ -223,7 +228,11 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::AuthorNotAdmin { author_profile, .. } if author_profile == profile)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::AuthorNotAdmin { author_profile, .. }
+            if author_profile == profile
+        )
     );
 }
 
