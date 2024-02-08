@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { Routes, getRouter } from '@/router/types';
+import { ConnectionHandle, FsPath, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { Query, Routes, getRouter } from '@/router/types';
 
 export function getConnectionHandle(): ConnectionHandle | null {
   const router = getRouter();
@@ -24,11 +24,10 @@ export function getWorkspaceHandle(): WorkspaceHandle {
 }
 
 export function getWorkspaceId(): WorkspaceID {
-  const router = getRouter();
-  const currentRoute = router.currentRoute.value;
+  const query = getCurrentRouteQuery();
 
-  if (currentRoute && currentRoute.name === Routes.Documents && currentRoute.query && 'workspaceId' in currentRoute.query) {
-    return currentRoute.query.workspaceId as WorkspaceID;
+  if (getCurrentRouteName() === Routes.Documents && query.workspaceId) {
+    return query.workspaceId;
   }
   return '';
 }
@@ -43,11 +42,10 @@ export function getRoutePath(): string {
   return '';
 }
 
-export function getDocumentPath(): string {
-  const router = getRouter();
-  const currentRoute = router.currentRoute.value;
-  if (currentRoute && currentRoute.query && 'path' in currentRoute.query) {
-    return currentRoute.query.path as string;
+export function getDocumentPath(): FsPath {
+  const query = getCurrentRouteQuery();
+  if (query.documentPath) {
+    return query.documentPath;
   }
   return '';
 }
@@ -61,12 +59,12 @@ export function getCurrentRouteParams(): object {
   return {};
 }
 
-export function getCurrentRouteQuery(): object {
+export function getCurrentRouteQuery(): Query {
   const router = getRouter();
 
   const currentRoute = router.currentRoute.value;
   if (currentRoute) {
-    return currentRoute.query;
+    return currentRoute.query as Query;
   }
   return {};
 }

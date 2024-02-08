@@ -2,13 +2,13 @@
 
 import { ConnectionHandle, startWorkspace, WorkspaceID } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { getCurrentRoute, getRouter, Routes } from '@/router/types';
+import { getCurrentRoute, getRouter, Query, Routes } from '@/router/types';
 import { organizationKey } from '@/router/watchers';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
 export interface NavigationOptions {
   params?: object;
-  query?: object;
+  query?: Query;
   replace?: boolean;
   skipHandle?: boolean;
 }
@@ -41,7 +41,10 @@ export async function navigateTo(routeName: Routes, options?: NavigationOptions)
 export async function navigateToWorkspace(workspaceId: WorkspaceID, path = '/'): Promise<void> {
   startWorkspace(workspaceId).then(async (result) => {
     if (result.ok) {
-      await navigateTo(Routes.Documents, { params: { workspaceHandle: result.value }, query: { path: path, workspaceId: workspaceId } });
+      await navigateTo(Routes.Documents, {
+        params: { workspaceHandle: result.value },
+        query: { documentPath: path, workspaceId: workspaceId },
+      });
     } else {
       console.error(`Failed to navigate to workspace: ${result.error.tag}`);
     }
@@ -58,7 +61,7 @@ interface RouteBackup {
   data: {
     route: Routes;
     params: object;
-    query: object;
+    query: Query;
   };
 }
 
@@ -70,27 +73,25 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
 
     if (currentHandle === null) {
       console.error('No current handle');
-      return;
-    }
-    if (handle === currentHandle) {
+    } else if (handle === currentHandle) {
       console.error('Cannot switch to same organization');
-      return;
+    } else {
+      // Backup the current route
+      const currentRoute = getCurrentRoute();
+      const index = routesBackup.findIndex((bk) => bk.handle === currentHandle);
+      if (index !== -1) {
+        routesBackup.splice(index, 1);
+      }
+      console.log('Saving', currentRoute.value.name, currentRoute.value.params, currentRoute.value.query);
+      routesBackup.push({
+        handle: currentHandle,
+        data: {
+          route: currentRoute.value.name as Routes,
+          params: currentRoute.value.params,
+          query: currentRoute.value.query as Query,
+        },
+      });
     }
-    // Backup the current route
-    const currentRoute = getCurrentRoute();
-    const index = routesBackup.findIndex((bk) => bk.handle === currentHandle);
-    if (index !== -1) {
-      routesBackup.splice(index, 1);
-    }
-    console.log('Saving', currentRoute.value.name, currentRoute.value.params, currentRoute.value.query);
-    routesBackup.push({
-      handle: currentHandle,
-      data: {
-        route: currentRoute.value.name as Routes,
-        params: currentRoute.value.params,
-        query: currentRoute.value.query,
-      },
-    });
   }
 
   // No handle, navigate to organization list

@@ -122,7 +122,7 @@ async function update(): Promise<void> {
     id: 0,
     display: workspaceName,
     name: '',
-    query: { path: path },
+    query: { documentPath: path },
   });
   let id = 1;
   for (const comp of components) {
@@ -131,7 +131,7 @@ async function update(): Promise<void> {
       id: id,
       display: comp === '/' ? '' : comp,
       name: '',
-      query: { path: path },
+      query: { documentPath: path },
     });
     id += 1;
   }
@@ -161,8 +161,8 @@ async function back(): Promise<void> {
 
 async function onPathChange(node: RouterPathNode): Promise<void> {
   forwardStack.splice(0, forwardStack.length);
-  if (node.query && 'path' in node.query) {
-    selectedPath.value = node.query.path as string;
+  if (node.query && node.query.documentPath) {
+    selectedPath.value = node.query.documentPath;
     await update();
   }
 }

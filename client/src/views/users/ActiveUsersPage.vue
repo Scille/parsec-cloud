@@ -148,7 +148,7 @@ import {
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { Routes, getCurrentRouteQuery, navigateTo, watchRoute } from '@/router';
+import { Routes, navigateTo, watchRoute } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
@@ -422,10 +422,7 @@ async function refreshUserList(): Promise<void> {
 }
 
 const routeWatchCancel = watchRoute(async () => {
-  const query = getCurrentRouteQuery();
-  if ('refresh' in query) {
-    await refreshUserList();
-  }
+  await refreshUserList();
 });
 
 onMounted(async (): Promise<void> => {

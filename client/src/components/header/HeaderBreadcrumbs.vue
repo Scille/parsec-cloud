@@ -37,11 +37,12 @@ export interface RouterPathNode {
   icon?: string;
   name: string;
   params?: object;
-  query?: object;
+  query?: Query;
 }
 </script>
 
 <script setup lang="ts">
+import { Query } from '@/router';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
 import { Ref, computed, ref } from 'vue';

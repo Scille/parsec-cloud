@@ -98,7 +98,7 @@ const informationManager: InformationManager = inject(InformationKey)!;
 
 const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
-  if ('openInvite' in query) {
+  if (query.openInvite) {
     await inviteUser();
   }
 });
@@ -107,7 +107,7 @@ onMounted(async () => {
   isAdmin.value = await parsecIsAdmin();
   await refreshInvitationsList();
   const query = getCurrentRouteQuery();
-  if ((query as any).openInvite) {
+  if (query.openInvite) {
     await inviteUser();
   }
 });
@@ -220,7 +220,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   await modal.dismiss();
   await refreshInvitationsList();
   if (modalResult.role === MsModalResult.Confirm) {
-    await navigateTo(Routes.ActiveUsers, { query: { refresh: true } });
+    await navigateTo(Routes.ActiveUsers);
   }
 }
 

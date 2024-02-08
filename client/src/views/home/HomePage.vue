@@ -90,8 +90,11 @@ const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 
 const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
-  if ('link' in query && query.link) {
-    await openJoinByLinkModal(query.link as string);
+  if (query.claimLink) {
+    await openJoinByLinkModal(query.claimLink);
+  } else if (query.device) {
+    selectedDevice.value = query.device;
+    state.value = HomePageState.Login;
   }
 });
 
@@ -177,7 +180,6 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
     const options: NavigationOptions = { params: { handle: result.value }, replace: true };
-
     await navigateTo(Routes.Workspaces, options);
     state.value = HomePageState.OrganizationList;
   } else {
