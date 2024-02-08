@@ -17,8 +17,9 @@ describe('Check organization list', () => {
   it('Go to login page and back to organizations', () => {
     cy.get('.organization-list-row__col').should('have.length', 5);
     cy.get('.login-button').should('not.exist');
-    cy.contains('Boby McBobFace').click();
-    cy.get('.login-card').contains('Org');
+    cy.get('.organization-list').contains('Boby McBobFace').click();
+    cy.wait(200);
+    cy.get('.login-card-header').contains('Boby McBobFace');
     cy.get('.login-button').should('exist');
     cy.contains('Return to organizations').click();
     cy.contains('Your organizations');

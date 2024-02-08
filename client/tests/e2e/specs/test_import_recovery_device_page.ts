@@ -20,6 +20,7 @@ describe('Display import recovery device page', () => {
     cy.get('@file-item').eq(0).as('file').contains('Recovery file');
     cy.get('@file').contains('No file selected');
     // Upload invalid file
+    cy.wait(200);
     cy.get('@file').find('#browse-button').click();
     cy.get('input[type="file"]').attachFile('splash.png');
     cy.get('@file').contains('splash.png');

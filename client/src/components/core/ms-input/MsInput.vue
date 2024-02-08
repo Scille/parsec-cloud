@@ -71,7 +71,9 @@ defineExpose({
 
 function setFocus(): void {
   setTimeout(() => {
-    inputRef.value.$el.setFocus();
+    if (inputRef.value && inputRef.value.$el) {
+      inputRef.value.$el.setFocus();
+    }
   }, 200);
 }
 
