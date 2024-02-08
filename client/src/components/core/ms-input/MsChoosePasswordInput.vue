@@ -84,7 +84,9 @@ defineExpose({
 });
 
 function setFocus(): void {
-  firstInputFieldRef.value.setFocus();
+  if (firstInputFieldRef.value) {
+    firstInputFieldRef.value.setFocus();
+  }
 }
 
 async function areFieldsCorrect(): Promise<boolean> {
