@@ -55,9 +55,11 @@ async fn related_user_already_revoked(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::RelatedUserAlreadyRevoked { user_revoked_on, .. }
-        if user_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
+            if user_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
         )
     )
 }
@@ -85,11 +87,14 @@ async fn older_than_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::OlderThanAuthor {
-            author_created_on,
-            ..
-        }
-        if author_created_on == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::OlderThanAuthor {
+                author_created_on,
+                ..
+            }
+            if author_created_on == DateTime::from_ymd_hms_us(2000, 1, 2, 0, 0, 0, 0).unwrap()
         )
     );
 }
@@ -119,11 +124,14 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::InvalidTimestamp {
-            last_certificate_timestamp,
-            ..
-        }
-        if last_certificate_timestamp == timestamp
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::InvalidTimestamp {
+                last_certificate_timestamp,
+                ..
+            }
+            if last_certificate_timestamp == timestamp
         )
     );
 }
@@ -154,7 +162,9 @@ async fn non_existing_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
             InvalidCertificateError::NonExistingAuthor { .. }
         )
     )
@@ -185,8 +195,11 @@ async fn revoked_by_revoked_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::RevokedAuthor { author_revoked_on, .. }
-        if author_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 5, 0, 0, 0, 0).unwrap()
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::RevokedAuthor { author_revoked_on, .. }
+            if author_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 5, 0, 0, 0, 0).unwrap()
         )
     );
 }
@@ -217,8 +230,11 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed, InvalidCertificateError::AuthorNotAdmin { author_profile, .. }
-        if author_profile == profile
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::AuthorNotAdmin { author_profile, .. }
+            if author_profile == profile
         )
     );
 }
@@ -248,9 +264,8 @@ async fn self_author(env: &TestbedEnv) {
 
     p_assert_matches!(
         err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed) if matches!(*boxed,
-            InvalidCertificateError::SelfSigned { .. }
-        )
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::SelfSigned { .. })
     );
 }
 
@@ -278,5 +293,5 @@ async fn revoke_owner(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch,);
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
 }
