@@ -185,7 +185,7 @@ web-sys = { version = "0.3.67", default-features = false }
 widestring = { version = "1.0.2", default-features = false }
 windows-sys = { version = "0.52.0", default-features = false }
 winfsp_build = { version = "0.1.1", default-features = false }
-winfsp_wrs = { version = "0.1.0", git = "https://github.com/Scille/winfsp_wrs.git", rev = "d768c7e", default-features = false }
+winfsp_wrs = { version = "0.1.0", git = "https://github.com/Scille/winfsp_wrs.git", rev = "317b700", default-features = false }
 x25519-dalek = { version = "2.0.0", default-features = false }
 zeroize = { version = "1.7.0", default-features = false }
 
