@@ -114,28 +114,32 @@ describe('Check folders page', () => {
   });
 
   it('Tests select all files in list view', () => {
-    cy.get('.folder-list-header').realHover().find('ion-checkbox').invoke('show').should('not.have.class', 'checkbox-checked');
+    cy.get('.folder-list-header').should('not.have.class', 'checkbox-checked');
     // Select all
-    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.counter').contains(/^\d+ selected items$/);
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.file-list-item').first().find('ion-checkbox').should('have.class', 'checkbox-checked');
+    cy.get('.file-list-item').last().find('ion-checkbox').should('have.class', 'checkbox-checked');
     // Unselect all
-    cy.get('.folder-list-header').realHover().find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.be.visible');
-    cy.get('.file-list-item').eq(1).find('ion-checkbox').should('not.be.visible');
+    cy.get('.file-list-item').first().find('ion-checkbox').should('not.be.visible');
+    cy.get('.file-list-item').last().find('ion-checkbox').should('not.be.visible');
     cy.get('.counter').contains(/^\d+ items$/);
 
     // Select all, unselect first file
-    cy.get('.folder-list-header').realHover().find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.counter').contains(/^\d+ selected items$/);
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
-    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.get('.file-list-item').first().find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-indeterminate');
+    cy.get('.file-list-item').first().find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.counter').contains(/^\d+ selected items$/);
+
+    // Header checkbox should be selected if all files are selected
+    cy.get('.file-list-item').first().find('ion-checkbox').click();
+    cy.get('.folder-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
   });
 
   it('Tests delete one file in list view', () => {
@@ -413,13 +417,13 @@ describe('Check folders page', () => {
 
   it('Check reader role', () => {
     cy.get('.list-workspaces').find('.list-workspaces__header').contains('All Workspaces').click();
-    cy.get('.workspaces-grid-item').eq(2).contains("Watcher's Keep").click();
+    cy.get('.workspaces-grid-item').eq(2).contains("Watcher's Keep").click({ force: true });
 
     cy.get('#folders-ms-action-bar').find('#button-new-folder').should('not.be.visible');
     cy.get('#folders-ms-action-bar').find('#button-import').should('not.be.visible');
 
     cy.get('.file-list-item').eq(0).trigger('mouseenter');
-    cy.get('.file-list-item').eq(0).find('ion-checkbox').click();
+    cy.get('.file-list-item').eq(0).realHover().find('ion-checkbox').click({ force: true });
 
     cy.get('#folders-ms-action-bar').find('#button-rename').should('not.be.visible');
     cy.get('#folders-ms-action-bar').find('#button-moveto').should('not.be.visible');

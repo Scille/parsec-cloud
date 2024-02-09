@@ -5,30 +5,32 @@
     button
     lines="full"
     :detail="false"
-    :class="{ selected: isSelected }"
-    @click="$emit('click', $event, file)"
+    :class="{ selected: entry.isSelected }"
+    @click="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="file-list-item">
       <div class="file-selected">
+        <!-- eslint-disable vue/no-mutating-props -->
         <ion-checkbox
           aria-label=""
           class="checkbox"
-          v-model="isSelected"
-          v-show="isSelected || isHovered || showCheckbox"
+          v-model="entry.isSelected"
+          v-show="entry.isSelected || isHovered || showCheckbox"
+          @ion-change="$emit('selectedChange', entry, $event.detail.checked)"
           @click.stop
-          @ion-change="$emit('select', file, isSelected)"
         />
+        <!-- eslint-enable vue/no-mutating-props -->
       </div>
       <!-- file name -->
       <div class="file-name">
         <ms-image
-          :image="file.isFile() ? getFileIcon(props.file.name) : Folder"
+          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
         <ion-label class="file-name__label cell">
-          {{ file.name }}
+          {{ entry.name }}
         </ion-label>
         <ion-icon
           class="cloud-overlay"
@@ -44,25 +46,25 @@
         v-if="false"
       >
         <user-avatar-name
-          :user-avatar="file.id"
-          :user-name="file.id"
+          :user-avatar="entry.id"
+          :user-name="entry.id"
         />
       </div>
 
       <!-- last update -->
       <div class="file-lastUpdate">
         <ion-label class="label-last-update cell">
-          {{ formatTimeSince(file.updated, '--', 'short') }}
+          {{ formatTimeSince(entry.updated, '--', 'short') }}
         </ion-label>
       </div>
 
       <!-- file size -->
       <div class="file-size">
         <ion-label
-          v-show="file.isFile()"
+          v-show="entry.isFile()"
           class="label-size cell"
         >
-          {{ formatFileSize((file as EntryStatFile).size) }}
+          {{ formatFileSize((entry as FileModel).size) }}
         </ion-label>
       </div>
 
@@ -89,40 +91,38 @@
 import { formatTimeSince } from '@/common/date';
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { Folder, MsImage } from '@/components/core/ms-image';
+import { EntryModel, FileModel } from '@/components/files/types';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
-const isSelected = ref(false);
 
 const props = defineProps<{
-  file: EntryStat;
+  entry: EntryModel;
   showCheckbox: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, file: EntryStat): void;
-  (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
-  (e: 'select', file: EntryStat, selected: boolean): void;
+  (e: 'click', event: Event, entry: EntryModel): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'selectedChange', entry: EntryModel, checked: boolean): void;
 }>();
 
 defineExpose({
   isHovered,
-  isSelected,
   props,
 });
 
 function isFileSynced(): boolean {
-  return !props.file.needSync;
+  return !props.entry.needSync;
 }
 
 async function onOptionsClick(event: Event): Promise<void> {
   menuOpened.value = true;
-  emits('menuClick', event, props.file, () => {
+  emits('menuClick', event, props.entry, () => {
     menuOpened.value = false;
   });
 }

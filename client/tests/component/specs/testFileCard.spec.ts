@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { FileModel, FolderModel } from '@/components/files';
 import FileCard from '@/components/files/FileCard.vue';
-import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
+import { FileType } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -18,7 +19,7 @@ describe('File Card Item', () => {
   });
 
   it('Display item for file', () => {
-    const FILE: EntryStatFile = {
+    const FILE: FileModel = {
       tag: FileType.File,
       confinementPoint: null,
       id: '67',
@@ -30,13 +31,13 @@ describe('File Card Item', () => {
       size: 43_297_832_478,
       name: 'A File.txt',
       isFile: (): boolean => true,
+      isSelected: false,
     };
 
     const wrapper = mount(FileCard, {
       props: {
-        file: FILE,
+        entry: FILE,
         showCheckbox: true,
-        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),
@@ -54,7 +55,7 @@ describe('File Card Item', () => {
   });
 
   it('Display item for folder', () => {
-    const FOLDER: EntryStatFolder = {
+    const FOLDER: FolderModel = {
       tag: FileType.Folder,
       confinementPoint: null,
       id: '67',
@@ -66,13 +67,13 @@ describe('File Card Item', () => {
       name: 'A Folder',
       isFile: (): boolean => false,
       children: ['A File.txt', 'Another File.png'],
+      isSelected: false,
     };
 
     const wrapper = mount(FileCard, {
       props: {
-        file: FOLDER,
+        entry: FOLDER,
         showCheckbox: true,
-        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

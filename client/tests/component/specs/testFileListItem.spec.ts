@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { FileModel, FolderModel } from '@/components/files';
 import FileListItem from '@/components/files/FileListItem.vue';
-import { EntryStatFile, EntryStatFolder, FileType } from '@/parsec';
+import { FileType } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -18,7 +19,7 @@ describe('File List Item', () => {
   });
 
   it('Display item for file', () => {
-    const FILE: EntryStatFile = {
+    const FILE: FileModel = {
       tag: FileType.File,
       confinementPoint: null,
       id: '67',
@@ -30,11 +31,12 @@ describe('File List Item', () => {
       size: 43_297_832_478,
       name: 'A File.txt',
       isFile: (): boolean => true,
+      isSelected: false,
     };
 
     const wrapper = mount(FileListItem, {
       props: {
-        file: FILE,
+        entry: FILE,
         showCheckbox: false,
       },
       global: {
@@ -42,7 +44,6 @@ describe('File List Item', () => {
       },
     });
 
-    expect((wrapper.vm as any).isSelected).to.be.false;
     expect(wrapper.get('.file-name__label').text()).to.equal('A File.txt');
     expect(wrapper.get('.label-last-update').text()).to.equal('one second ago');
     expect(wrapper.get('.label-size').text()).to.equal('40.3 GB');
@@ -55,7 +56,7 @@ describe('File List Item', () => {
   });
 
   it('Display item for folder', () => {
-    const FOLDER: EntryStatFolder = {
+    const FOLDER: FolderModel = {
       tag: FileType.Folder,
       confinementPoint: null,
       id: '67',
@@ -67,11 +68,12 @@ describe('File List Item', () => {
       name: 'A Folder',
       isFile: (): boolean => false,
       children: ['A File.txt', 'Another File.png'],
+      isSelected: false,
     };
 
     const wrapper = mount(FileListItem, {
       props: {
-        file: FOLDER,
+        entry: FOLDER,
         showCheckbox: false,
       },
       global: {
@@ -79,7 +81,6 @@ describe('File List Item', () => {
       },
     });
 
-    expect((wrapper.vm as any).isSelected).to.be.false;
     expect(wrapper.get('.file-name__label').text()).to.equal('A Folder');
     expect(wrapper.get('.label-last-update').text()).to.equal('one second ago');
     // expect(wrapper.get('.label-size')).not.to.be.visible;
