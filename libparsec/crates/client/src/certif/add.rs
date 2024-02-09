@@ -528,7 +528,7 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_archiving_certificate_consistency(store, &cooked).await?;
+            check_realm_archiving_certificate_consistency(ops, store, &cooked).await?;
 
             Ok(RealmTopicArcCertificate::RealmArchiving(cooked))
         }
@@ -1602,6 +1602,7 @@ async fn check_realm_key_rotation_certificate_consistency(
 }
 
 async fn check_realm_archiving_certificate_consistency(
+    ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmArchivingCertificate,
 ) -> Result<(), CertifAddCertificatesBatchError> {
@@ -1669,6 +1670,18 @@ async fn check_realm_archiving_certificate_consistency(
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
+
+    // 3) Make sure the author is not already revoked
+
+    check_author_not_revoked_and_profile(
+        ops,
+        store,
+        cooked.timestamp,
+        cooked.author.user_id(),
+        false,
+        mk_hint,
+    )
+    .await?;
 
     Ok(())
 }
