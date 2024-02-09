@@ -122,7 +122,7 @@
 
 <script setup lang="ts">
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from '@/components/core/ms-image';
-import FileUploadItem from '@/components/files/FileUploadItem.vue';
+import { FileUploadItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';

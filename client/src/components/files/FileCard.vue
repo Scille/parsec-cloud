@@ -3,20 +3,21 @@
 <template>
   <ion-item
     class="file-card-item ion-no-padding"
-    :class="{ selected: isSelected }"
-    @click="$emit('click', $event, file)"
+    :class="{ selected: entry.isSelected }"
+    @click="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="card-checkbox">
+      <!-- eslint-disable vue/no-mutating-props -->
       <ion-checkbox
         aria-label=""
         class="checkbox"
-        v-model="isSelected"
-        v-show="isSelected || isHovered || showCheckbox"
+        v-model="entry.isSelected"
+        v-show="entry.isSelected || isHovered || showCheckbox"
         @click.stop
-        @ion-change="$emit('select', file, isSelected)"
       />
+      <!-- eslint-enable vue/no-mutating-props -->
     </div>
     <div
       class="card-option"
@@ -28,7 +29,7 @@
     <div class="card-content">
       <div class="card-content-icons">
         <ms-image
-          :image="file.isFile() ? getFileIcon(props.file.name) : Folder"
+          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
           class="file-icon"
         />
         <ion-icon
@@ -39,12 +40,12 @@
       </div>
 
       <ion-title class="card-content__title body">
-        {{ file.name }}
+        {{ entry.name }}
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
         <span>{{ $t('FoldersPage.File.lastUpdate') }}</span>
-        <span>{{ formatTimeSince(file.updated, '--', 'short') }}</span>
+        <span>{{ formatTimeSince(entry.updated, '--', 'short') }}</span>
       </ion-text>
     </div>
   </ion-item>
@@ -54,38 +55,35 @@
 import { formatTimeSince } from '@/common/date';
 import { getFileIcon } from '@/common/file';
 import { Folder, MsImage } from '@/components/core/ms-image';
-import { EntryStat } from '@/parsec';
+import { EntryModel } from '@/components/files/types';
 import { IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
-const isSelected = ref(false);
 
 const props = defineProps<{
-  file: EntryStat;
+  entry: EntryModel;
   showCheckbox: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, file: EntryStat): void;
-  (e: 'menuClick', event: Event, file: EntryStat, onFinished: () => void): void;
-  (e: 'select', file: EntryStat, selected: boolean): void;
+  (e: 'click', event: Event, entry: EntryModel): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
 }>();
 
 defineExpose({
-  isSelected,
   props,
 });
 
 function isFileSynced(): boolean {
-  return !props.file.needSync;
+  return !props.entry.needSync;
 }
 
 async function onOptionsClick(event: Event): Promise<void> {
   menuOpened.value = true;
-  emits('menuClick', event, props.file, () => {
+  emits('menuClick', event, props.entry, () => {
     menuOpened.value = false;
   });
 }

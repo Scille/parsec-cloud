@@ -94,7 +94,13 @@
               class="body"
               v-if="selectedFilesCount === 0"
             >
-              {{ $t('FoldersPage.itemCount', { count: children.length }, children.length) }}
+              {{
+                $t(
+                  'FoldersPage.itemCount',
+                  { count: folders.entriesCount() + files.entriesCount() },
+                  folders.entriesCount() + files.entriesCount(),
+                )
+              }}
             </ion-text>
             <ion-text
               class="body item-selected"
@@ -116,75 +122,28 @@
         </div>
       </ms-action-bar>
       <div class="folder-container scroll">
-        <div v-if="children.length === 0">
+        <div v-if="folders.entriesCount() + files.entriesCount() === 0">
           {{ $t('FoldersPage.emptyFolder') }}
         </div>
-
-        <div v-if="children.length && displayView === DisplayState.List">
-          <ion-list class="list">
-            <ion-list-header
-              class="folder-list-header"
-              lines="full"
-            >
-              <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
-                <ion-checkbox
-                  class="checkbox"
-                  @ion-change="selectAllFiles($event.detail.checked)"
-                  v-model="allFilesSelected"
-                />
-              </ion-label>
-              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
-                {{ $t('FoldersPage.listDisplayTitles.name') }}
-              </ion-label>
-              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
-                {{ $t('FoldersPage.listDisplayTitles.updatedBy') }}
-              </ion-label>
-              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
-                {{ $t('FoldersPage.listDisplayTitles.lastUpdate') }}
-              </ion-label>
-              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
-                {{ $t('FoldersPage.listDisplayTitles.size') }}
-              </ion-label>
-              <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
-            </ion-list-header>
-            <file-list-item
-              v-for="child in files"
-              :key="child.id"
-              :file="child"
-              :show-checkbox="selectedFilesCount > 0 || allFilesSelected"
-              @click="onFileClick"
-              @menu-click="openFileContextMenu"
-              @select="onFileSelect"
-              ref="fileListItemRefs"
+        <div v-else>
+          <div v-if="displayView === DisplayState.List">
+            <file-list-display
+              :files="files"
+              :folders="folders"
+              :importing="fileImportsCurrentDir"
+              @click="onEntryClick"
+              @menu-click="openEntryContextMenu"
             />
-            <file-list-item-importing
-              v-for="fileImport in fileImportsCurrentDir"
-              :key="fileImport.data.id"
-              :data="fileImport.data"
-              :progress="fileImport.progress"
+          </div>
+          <div v-if="displayView === DisplayState.Grid">
+            <file-grid-display
+              :files="files"
+              :folders="folders"
+              :importing="fileImportsCurrentDir"
+              @click="onEntryClick"
+              @menu-click="openEntryContextMenu"
             />
-          </ion-list>
-        </div>
-        <div
-          v-if="children.length && displayView === DisplayState.Grid"
-          class="folders-container-grid"
-        >
-          <file-card
-            class="folder-grid-item"
-            v-for="child in files"
-            :key="child.id"
-            :file="child"
-            :show-checkbox="selectedFilesCount > 0"
-            @click="onFileClick"
-            @menu-click="openFileContextMenu"
-            ref="fileGridItemRefs"
-          />
-          <file-card-importing
-            v-for="fileImport in fileImportsCurrentDir"
-            :key="fileImport.data.id"
-            :data="fileImport.data"
-            :progress="fileImport.progress"
-          />
+          </div>
         </div>
       </div>
     </ion-content>
@@ -204,13 +163,18 @@ import {
   getTextInputFromUser,
   selectFolder,
 } from '@/components/core';
-import FileCard from '@/components/files/FileCard.vue';
-import FileListItem from '@/components/files/FileListItem.vue';
 import * as parsec from '@/parsec';
 
 import { MsOptions, MsSorter, MsSorterChangeEvent } from '@/components/core';
-import FileCardImporting from '@/components/files/FileCardImporting.vue';
-import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
+import {
+  EntryCollection,
+  FileGridDisplay,
+  FileImportProgress,
+  FileListDisplay,
+  FileModel,
+  FolderModel,
+  SortProperty,
+} from '@/components/files';
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -218,31 +182,12 @@ import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
-import {
-  IonCheckbox,
-  IonContent,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonPage,
-  IonText,
-  modalController,
-  popoverController,
-} from '@ionic/vue';
+import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const informationManager: InformationManager = inject(InformationKey)!;
-const fileListItemRefs: Ref<(typeof FileListItem)[]> = ref([]);
-const fileGridItemRefs: Ref<(typeof FileCard)[]> = ref([]);
-const allFilesSelected = ref(false);
-
-enum SortProperty {
-  Name,
-  Size,
-  LastUpdate,
-}
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
@@ -258,13 +203,6 @@ const msSorterLabels = {
   desc: translate('FoldersPage.sort.desc'),
 };
 
-interface FileImport {
-  data: ImportData;
-  progress: number;
-}
-
-const fileImports: Ref<Array<FileImport>> = ref([]);
-
 const routeWatchCancel = watchRoute(async () => {
   const newPath = getDocumentPath();
   if (newPath === '') {
@@ -278,41 +216,23 @@ const routeWatchCancel = watchRoute(async () => {
   }
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
 });
+
+const importManager: ImportManager = inject(ImportManagerKey)!;
+
+const fileImports: Ref<Array<FileImportProgress>> = ref([]);
 const currentPath = ref('/');
 const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
-const children: Ref<Array<parsec.EntryStat>> = ref([]);
+const folders = ref(new EntryCollection<FolderModel>());
+const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
+
 const selectedFilesCount = computed(() => {
-  return getSelectedEntries().length;
+  return files.value.selectedCount() + folders.value.selectedCount();
 });
-const importManager: ImportManager = inject(ImportManagerKey)!;
+
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
-const sortProp = ref(SortProperty.Name);
-const sortByAsc = ref(true);
-
-const files = computed(() => {
-  return children.value.slice().sort((item1, item2) => {
-    // Because the difference between item1 and item2 will always be -1, 0 or 1, by setting
-    // a folder with a score of 3 by default, we're ensuring that it will always be on top
-    // of the list.
-    const item1Score = item1.isFile() ? 3 : 0;
-    const item2Score = item2.isFile() ? 3 : 0;
-    let diff = 0;
-
-    if (sortProp.value === SortProperty.Name) {
-      diff = sortByAsc.value ? item2.name.localeCompare(item1.name) : item1.name.localeCompare(item2.name);
-    } else if (sortProp.value === SortProperty.LastUpdate) {
-      diff = sortByAsc.value ? (item1.updated > item2.updated ? 1 : 0) : item2.updated > item1.updated ? 1 : 0;
-    } else if (sortProp.value === SortProperty.Size) {
-      const size1 = item1.isFile() ? (item1 as parsec.EntryStatFile).size : 0;
-      const size2 = item1.isFile() ? (item2 as parsec.EntryStatFile).size : 0;
-      diff = sortByAsc.value ? (size1 < size2 ? 1 : 0) : size2 < size1 ? 1 : 0;
-    }
-    return item1Score - item2Score - diff;
-  });
-});
 
 onMounted(async () => {
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
@@ -332,8 +252,8 @@ onUnmounted(async () => {
 });
 
 function onSortChange(event: MsSorterChangeEvent): void {
-  sortProp.value = event.option.key;
-  sortByAsc.value = event.sortByAsc;
+  folders.value.sort(event.option.key, event.sortByAsc);
+  files.value.sort(event.option.key, event.sortByAsc);
 }
 
 async function onFileImportState(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
@@ -371,15 +291,21 @@ async function listFolder(): Promise<void> {
   const result = await parsec.entryStat(currentPath.value);
   if (result.ok) {
     folderInfo.value = result.value as parsec.EntryStatFolder;
-    children.value = [];
-    allFilesSelected.value = false;
+    folders.value.clear();
+    files.value.clear();
     for (const childName of (result.value as parsec.EntryStatFolder).children) {
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
         const childPath = await parsec.Path.join(currentPath.value, childName);
         const fileResult = await parsec.entryStat(childPath);
         if (fileResult.ok) {
-          children.value.push(fileResult.value);
+          if (fileResult.value.isFile()) {
+            (fileResult.value as FileModel).isSelected = false;
+            files.value.append(fileResult.value as FileModel);
+          } else {
+            (fileResult.value as FolderModel).isSelected = false;
+            folders.value.append(fileResult.value as FolderModel);
+          }
         }
       }
     }
@@ -396,22 +322,9 @@ async function listFolder(): Promise<void> {
   }
 }
 
-function onFileSelect(_file: parsec.EntryStat, _selected: boolean): void {
-  if (selectedFilesCount.value === 0) {
-    allFilesSelected.value = false;
-    selectAllFiles(false);
-  }
-  // check global checkbox if all files are selected
-  if (selectedFilesCount.value === children.value.length) {
-    allFilesSelected.value = true;
-  } else {
-    allFilesSelected.value = false;
-  }
-}
-
-async function onFileClick(_event: Event, file: parsec.EntryStat): Promise<void> {
-  if (!file.isFile()) {
-    const newPath = await parsec.Path.join(currentPath.value, file.name);
+async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<void> {
+  if (!entry.isFile()) {
+    const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
       params: { workspaceHandle: getWorkspaceHandle() },
       query: { documentPath: newPath, workspaceId: getWorkspaceId() },
@@ -468,20 +381,8 @@ async function importFiles(): Promise<void> {
   fileUploadModal = null;
 }
 
-function selectAllFiles(checked: boolean): void {
-  for (const item of displayView.value === DisplayState.List ? fileListItemRefs.value : fileGridItemRefs.value) {
-    item.isSelected = checked;
-    item.showCheckbox = checked;
-  }
-  allFilesSelected.value = checked;
-}
-
 function getSelectedEntries(): parsec.EntryStat[] {
-  if (displayView.value === DisplayState.List) {
-    return fileListItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
-  } else {
-    return fileGridItemRefs.value.filter((item) => item.isSelected).map((item) => item.props.file);
-  }
+  return [...folders.value.getSelectedEntries(), ...files.value.getSelectedEntries()];
 }
 
 async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
@@ -797,7 +698,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinished?: () => void): Promise<void> {
+async function openEntryContextMenu(entry: parsec.EntryStat, event: Event, onFinished?: () => void): Promise<void> {
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -835,7 +736,7 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
 
   const fn = actions.get(data.action);
   if (fn) {
-    await fn([file]);
+    await fn([entry]);
   }
   if (onFinished) {
     onFinished();
@@ -846,28 +747,5 @@ async function openFileContextMenu(event: Event, file: parsec.EntryStat, onFinis
 <style scoped lang="scss">
 .folder-container {
   background-color: white;
-}
-
-.folder-list-header {
-  &__label {
-    padding: 0.75rem 1rem;
-  }
-  .label-selected {
-    display: flex;
-    align-items: center;
-  }
-
-  .label-space {
-    min-width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
-  }
-}
-
-.folders-container-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5em;
-  overflow-y: auto;
 }
 </style>

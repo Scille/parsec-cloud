@@ -15,9 +15,8 @@
 
 <script setup lang="ts">
 import { MsModal } from '@/components/core';
-import FileDropZone from '@/components/files/FileDropZone.vue';
-import FileImport from '@/components/files/FileImport.vue';
-import { createFolder, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { FileDropZone, FileImport } from '@/components/files';
+import { Path, WorkspaceHandle, WorkspaceID, createFolder } from '@/parsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { inject } from 'vue';
 
