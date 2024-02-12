@@ -9,6 +9,8 @@ mod add_realm_role_certificate;
 mod add_sequester_authority_certificate;
 mod add_sequester_revoked_service_certificate;
 mod add_sequester_service_certificate;
+mod add_shamir_recovery_brief_certificate;
+mod add_shamir_recovery_share_certificate;
 mod add_user_certificate;
 mod add_user_revoked_certificate;
 mod add_user_update_certificate;
