@@ -15,7 +15,6 @@
     <ion-input
       class="form-input input"
       ref="inputRef"
-      v-model="searchRef"
       :value="modelValue"
       :placeholder="label"
       :clear-input="true"
@@ -32,12 +31,11 @@ import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { search } from 'ionicons/icons';
 import { ref } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   label: string;
   modelValue?: string;
 }>();
 
-const searchRef = ref('');
 const inputRef = ref();
 
 const emits = defineEmits<{
@@ -48,6 +46,7 @@ const emits = defineEmits<{
 
 defineExpose({
   setFocus,
+  selectText,
 });
 
 function setFocus(): void {
@@ -57,8 +56,21 @@ function setFocus(): void {
     }
   }, 200);
 }
+
+async function selectText(range?: [number, number]): Promise<void> {
+  const input = await inputRef.value.$el.getInputElement();
+
+  let begin = 0;
+  let end = props.modelValue ? props.modelValue.length : 0;
+  if (range) {
+    begin = range[0];
+    end = range[1];
+  }
+  input.setSelectionRange(begin, end);
+}
+
 function onEnterPress(): void {
-  if (searchRef.value.length > 0) {
+  if (props.modelValue && props.modelValue.length > 0) {
     emits('enter');
   }
 }

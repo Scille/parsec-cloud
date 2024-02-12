@@ -23,7 +23,7 @@ describe('Search Input', () => {
 
   it('should emit enter when Enter key is pressed', async () => {
     // Setting a value
-    (wrapper.vm as any).searchRef = 'Search string';
+    await wrapper.setProps({ modelValue: 'Search string' });
     const ionInput = wrapper.findComponent(IonInput);
     await ionInput.trigger('keyup.enter');
     expect(wrapper.emitted('enter')?.length).to.equal(1);

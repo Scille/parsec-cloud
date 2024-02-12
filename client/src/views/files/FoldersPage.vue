@@ -573,6 +573,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
       : translate('FoldersPage.RenameModal.folderPlaceholder'),
     okButtonText: translate('FoldersPage.RenameModal.rename'),
     defaultValue: entry.name,
+    selectionRange: [0, entry.name.length - parsec.Path.getFileExtension(entry.name).length],
   });
 
   if (!newName) {

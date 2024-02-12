@@ -26,6 +26,7 @@ export interface GetTextOptions {
   placeholder?: string;
   okButtonText?: string;
   defaultValue?: string;
+  selectionRange?: [number, number];
 }
 
 export interface GetPasswordOptions {
