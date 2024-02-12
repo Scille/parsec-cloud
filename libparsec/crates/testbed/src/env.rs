@@ -444,7 +444,8 @@ impl TestbedEnv {
             .certificates()
             .filter_map(|event| match event.certificate {
                 AnyArcCertificate::SequesterAuthority(_)
-                | AnyArcCertificate::SequesterService(_) => Some(event.signed.clone()),
+                | AnyArcCertificate::SequesterService(_)
+                | AnyArcCertificate::SequesterRevokedService(_) => Some(event.signed.clone()),
                 AnyArcCertificate::User(_)
                 | AnyArcCertificate::Device(_)
                 | AnyArcCertificate::UserUpdate(_)
@@ -454,8 +455,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::RealmArchiving(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
                 | AnyArcCertificate::ShamirRecoveryShare(_)
-                | AnyArcCertificate::RealmKeyRotation(_)
-                | AnyArcCertificate::SequesterRevokedService(_) => None,
+                | AnyArcCertificate::RealmKeyRotation(_) => None,
             })
             .collect()
     }
