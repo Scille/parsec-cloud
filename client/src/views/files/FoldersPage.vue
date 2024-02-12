@@ -563,6 +563,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
+  const ext = parsec.Path.getFileExtension(entry.name);
   const newName = await getTextInputFromUser({
     title: entry.isFile() ? translate('FoldersPage.RenameModal.fileTitle') : translate('FoldersPage.RenameModal.folderTitle'),
     trim: true,
@@ -573,7 +574,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
       : translate('FoldersPage.RenameModal.folderPlaceholder'),
     okButtonText: translate('FoldersPage.RenameModal.rename'),
     defaultValue: entry.name,
-    selectionRange: [0, entry.name.length - parsec.Path.getFileExtension(entry.name).length],
+    selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
   });
 
   if (!newName) {
