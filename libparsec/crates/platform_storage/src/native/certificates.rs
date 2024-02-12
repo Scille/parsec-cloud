@@ -37,14 +37,6 @@ macro_rules! ident_concat {
             }
             out
         }
-        const fn copy_slice(input: &[u8], mut output: [u8; LEN], offset: usize) -> [u8; LEN] {
-            let mut i = 0;
-            while i < input.len() {
-                output[offset+i] = input[i];
-                i += 1;
-            }
-            output
-        }
         const RAW: &[u8] = &combine(&[$first $(, $remain )*]);
         // SAFETY: `RAW` is a concatenation strings, hence it is a valid UTF-8 string
         const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
@@ -93,19 +85,24 @@ macro_rules! build_sql_in_fragment_types {
             }
             out
         }
-        const fn copy_slice(input: &[u8], mut output: [u8; LEN], offset: usize) -> [u8; LEN] {
-            let mut i = 0;
-            while i < input.len() {
-                output[offset + i] = input[i];
-                i += 1;
-            }
-            output
-        }
         const RAW: &[u8] = &combine();
         // SAFETY: `RAW` is a concatenation strings, hence it is a valid UTF-8 string
         const COOKED: &str = unsafe { std::str::from_utf8_unchecked(RAW) };
         COOKED
     }};
+}
+
+const fn copy_slice<const LEN: usize>(
+    input: &[u8],
+    mut output: [u8; LEN],
+    offset: usize,
+) -> [u8; LEN] {
+    let mut i = 0;
+    while i < input.len() {
+        output[offset + i] = input[i];
+        i += 1;
+    }
+    output
 }
 
 // It is too error prone to specify the `certificate_type` by hand when writing
