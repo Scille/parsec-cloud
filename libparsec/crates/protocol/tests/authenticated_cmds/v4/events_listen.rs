@@ -176,9 +176,7 @@ pub fn rep_ok() {
         assert_eq!(data, expected);
 
         // Also test serialization round trip
-        println!("{expected:?}");
         let raw2 = data.dump().unwrap();
-        println!("{raw2:02x?}");
 
         let data2 = authenticated_cmds::events_listen::Rep::load(&raw2).unwrap();
 
