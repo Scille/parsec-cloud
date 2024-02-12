@@ -67,6 +67,7 @@ const emits = defineEmits<{
 
 defineExpose({
   setFocus,
+  selectText,
 });
 
 function setFocus(): void {
@@ -75,6 +76,18 @@ function setFocus(): void {
       inputRef.value.$el.setFocus();
     }
   }, 200);
+}
+
+async function selectText(range?: [number, number]): Promise<void> {
+  const input = await inputRef.value.$el.getInputElement();
+
+  let begin = 0;
+  let end = props.modelValue ? props.modelValue.length : 0;
+  if (range) {
+    begin = range[0];
+    end = range[1];
+  }
+  input.setSelectionRange(begin, end);
 }
 
 async function onChange(value: string): Promise<void> {

@@ -81,6 +81,7 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
       placeholder: options.placeholder,
       okButtonText: options.okButtonText,
       defaultValue: options.defaultValue,
+      selectionRange: options.selectionRange,
     },
   });
   await modal.present();

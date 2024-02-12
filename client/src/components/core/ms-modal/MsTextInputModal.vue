@@ -44,8 +44,11 @@ const textIsValid = asyncComputed(async () => {
   return text.value && (!props.validator || (props.validator && (await props.validator(text.value)).validity === Validity.Valid));
 });
 
-onMounted(() => {
+onMounted(async () => {
   msInputRef.value.setFocus();
+  if (props.selectionRange) {
+    await msInputRef.value.selectText(props.selectionRange);
+  }
 });
 
 async function confirm(): Promise<boolean> {
