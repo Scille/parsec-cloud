@@ -1722,7 +1722,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
-    // 0) Small sanity check: ensure the is enough shares for the threshold
+    // 0) Small sanity check: ensure there is enough shares for the threshold
 
     let total_shares = {
         let mut total_shares: u64 = 0;
