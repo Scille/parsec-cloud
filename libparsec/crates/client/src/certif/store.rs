@@ -890,6 +890,40 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        pub async fn get_sequester_revoked_service_certificate(
+            &mut self,
+            up_to: UpTo,
+            service_id: SequesterServiceID,
+        ) -> anyhow::Result<Option<Arc<SequesterRevokedServiceCertificate>>> {
+            let query = GetCertificateQuery::sequester_revoked_service_certificate(service_id);
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let maybe_authority = self.get_sequester_authority_certificate().await?;
+            let authority = match maybe_authority {
+                Some(authority) => authority,
+                // Not a sequestered organization
+                None => return Ok(None),
+            };
+
+            get_sequester_authority_signed_certificate_from_encrypted(
+                self.store,
+                &authority.verify_key_der,
+                &encrypted,
+                SequesterRevokedServiceCertificate::verify_and_load,
+            )
+            .map(Some)
+        }
+
+        #[allow(unused)]
         pub async fn get_last_shamir_recovery_brief_certificate(
             &mut self,
             up_to: UpTo,

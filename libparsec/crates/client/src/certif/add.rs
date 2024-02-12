@@ -67,6 +67,11 @@ pub enum InvalidCertificateError {
         hint: String,
         user_revoked_on: DateTime,
     },
+    #[error("Certificate `{hint}` breaks consistency: it refers to a sequester service that has already been revoked on {service_revoked_on}")]
+    RelatedSequesterServiceAlreadyRevoked {
+        hint: String,
+        service_revoked_on: DateTime,
+    },
     #[error("Certificate `{hint}` breaks consistency: related user cannot change profile to Outsider given it still has Owner/Manager role in some realms")]
     CannotDowngradeUserToOutsider { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first device certificate for it user it must have the same author that the user certificate ({user_author:?})")]
@@ -658,26 +663,47 @@ async fn validate_sequester_non_authority_certificate(
 
     // 2) Deserialize the certificate and verify its signature
 
-    let cooked =
-        match SequesterServiceCertificate::verify_and_load(&signed, &authority.verify_key_der) {
-            Ok(cooked) => Arc::new(cooked),
+    match SequesterServiceCertificate::verify_and_load(&signed, &authority.verify_key_der) {
+        Ok(cooked) => {
+            let cooked = Arc::new(cooked);
+
+            // 3) The certificate is valid, last check is the consistency with other certificates
+            check_sequester_service_certificate_consistency(
+                store,
+                last_stored_sequester_timestamp,
+                &cooked,
+            )
+            .await?;
+
+            Ok(SequesterTopicArcCertificate::SequesterService(cooked))
+        }
+        Err(_) => match SequesterRevokedServiceCertificate::verify_and_load(
+            &signed,
+            &authority.verify_key_der,
+        ) {
+            Ok(cooked) => {
+                let cooked = Arc::new(cooked);
+
+                // 3) The certificate is valid, last check is the consistency with other certificates
+                check_sequester_revoked_service_certificate_consistency(
+                    store,
+                    last_stored_sequester_timestamp,
+                    &cooked,
+                )
+                .await?;
+
+                Ok(SequesterTopicArcCertificate::SequesterRevokedService(
+                    cooked,
+                ))
+            }
             Err(error) => {
                 // No information can be extracted from the binary data...
                 let hint = "<unknown>".into();
                 let what = Box::new(InvalidCertificateError::Corrupted { hint, error });
-                return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+                Err(CertifAddCertificatesBatchError::InvalidCertificate(what))
             }
-        };
-
-    // 3) The certificate is valid, last check is the consistency with other certificates
-    check_sequester_service_certificate_consistency(
-        store,
-        last_stored_sequester_timestamp,
-        &cooked,
-    )
-    .await?;
-
-    Ok(SequesterTopicArcCertificate::SequesterService(cooked))
+        },
+    }
 }
 
 async fn check_user_exists(
@@ -1906,6 +1932,56 @@ async fn check_sequester_service_certificate_consistency(
         if existing_service.service_id == cooked.service_id {
             let hint = format!("{:?}", cooked);
             let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+    }
+
+    Ok(())
+}
+
+async fn check_sequester_revoked_service_certificate_consistency(
+    store: &mut CertificatesStoreWriteGuard<'_>,
+    last_stored_sequester_timestamp: DateTime,
+    cooked: &SequesterRevokedServiceCertificate,
+) -> Result<(), CertifAddCertificatesBatchError> {
+    let mk_hint = || format!("{:?}", cooked);
+
+    // 1) Certificate must be the newest among the ones in sequester topic.
+    // Note we also reject same timestamp given sequester server certificates
+    // is always created alone.
+
+    if cooked.timestamp <= last_stored_sequester_timestamp {
+        // We already know more recent certificates, hence this certificate
+        // cannot be added without breaking causality !
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::InvalidTimestamp {
+            hint,
+            last_certificate_timestamp: last_stored_sequester_timestamp,
+        });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 2) Make sure the sequester service is not already revoked
+
+    match store
+        .get_sequester_revoked_service_certificate(
+            UpTo::Timestamp(cooked.timestamp),
+            cooked.service_id.to_owned(),
+        )
+        .await?
+    {
+        // Not revoked, as expected :)
+        None => (),
+
+        // Sequester service can only be revoked once :(
+        Some(revoked_certificate) => {
+            let hint = mk_hint();
+            let what = Box::new(
+                InvalidCertificateError::RelatedSequesterServiceAlreadyRevoked {
+                    hint,
+                    service_revoked_on: revoked_certificate.timestamp,
+                },
+            );
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
     }
