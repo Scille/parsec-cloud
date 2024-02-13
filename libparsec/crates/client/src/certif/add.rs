@@ -2,7 +2,6 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
 use super::{
@@ -154,15 +153,7 @@ pub(super) async fn add_certificates_batch(
     };
 
     let initial_stored_last_timestamps = store.get_last_timestamps().await?;
-    let storage_initially_empty = {
-        let PerTopicLastTimestamps {
-            common,
-            sequester,
-            realm,
-            shamir_recovery,
-        } = &initial_stored_last_timestamps;
-        common.is_none() && sequester.is_none() && realm.is_empty() && shamir_recovery.is_none()
-    };
+    let storage_initially_empty = initial_stored_last_timestamps.is_empty();
     let initial_self_profile = store.get_current_self_profile().await?;
 
     // If a certificate is invalid we exit without any further validation: the
@@ -1885,14 +1876,9 @@ async fn check_sequester_authority_certificate_consistency(
     // Sequester authority certificate must be the very first certificate provided,
     // so we just have to check the storage is currently empty !
 
-    let PerTopicLastTimestamps {
-        common,
-        sequester,
-        realm,
-        shamir_recovery,
-    } = store.get_last_timestamps().await?;
+    let stored_last_timestamps = store.get_last_timestamps().await?;
 
-    if common.is_some() || sequester.is_some() || !realm.is_empty() || shamir_recovery.is_some() {
+    if !stored_last_timestamps.is_empty() {
         let hint = format!("{:?}", cooked);
         let what = Box::new(InvalidCertificateError::SequesterAuthorityMustBeFirst { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));

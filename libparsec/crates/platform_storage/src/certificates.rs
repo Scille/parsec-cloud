@@ -35,6 +35,12 @@ pub struct PerTopicLastTimestamps {
 }
 
 impl PerTopicLastTimestamps {
+    pub fn is_empty(&self) -> bool {
+        self.common.is_none()
+            && self.sequester.is_none()
+            && self.realm.is_empty()
+            && self.shamir_recovery.is_none()
+    }
     pub fn new_for_common(common_timestamp: DateTime) -> Self {
         Self {
             common: Some(common_timestamp),
