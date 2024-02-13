@@ -18,4 +18,4 @@ reqwest = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { workspace = true, features = ["Win32_Networking_WinHttp", "Win32_Foundation"] }
-widestring = { workspace = true }
+widestring = { workspace = true, features = ["alloc"] }
