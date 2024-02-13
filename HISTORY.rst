@@ -5,40 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v2.17.0-rc.5 (2024-02-07)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.17.0-rc.4 (2024-02-06)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.17.0-rc.3 (2024-02-06)
---------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fix the filter list when filtering user profiles.
-  (`#6369 <https://github.com/Scille/parsec-cloud/issues/6369>`__)
-
-* Add missing translation for offline availability dialog.
-  (`#6224 <https://github.com/Scille/parsec-cloud/issues/6224>`__)
-
-
-
-Parsec v2.17.0-rc.2 (2024-01-24)
---------------------------------
-
-No significant changes.
-
-
-Parsec v2.17.0-rc.1 (2024-01-24)
---------------------------------
+Parsec v2.17.0 (2024-02-13)
+---------------------------
 
 Features
 ~~~~~~~~
@@ -57,13 +25,17 @@ Features
   workspaces
   (`#5940 <https://github.com/Scille/parsec-cloud/issues/5940>`__)
 
-
 Bugfixes
 ~~~~~~~~
 
 * Make write access to the Windows registry more robust.
   (`#6142 <https://github.com/Scille/parsec-cloud/issues/6142>`__)
 
+* Fix the filter list when filtering user profiles.
+  (`#6369 <https://github.com/Scille/parsec-cloud/issues/6369>`__)
+
+* Add missing translation for offline availability dialog.
+  (`#6224 <https://github.com/Scille/parsec-cloud/issues/6224>`__)
 
 Improved Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -71,7 +43,6 @@ Improved Documentation
 * Add documentation for the ``recovery device`` feature. This feature was
   introduced in v2.6.0 and it was not documented until now.
   (`#5630 <https://github.com/Scille/parsec-cloud/issues/5630>`__)
-
 
 
 Parsec v2.16.3 (2023-12-01)
