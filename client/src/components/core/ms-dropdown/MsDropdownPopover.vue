@@ -40,7 +40,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsInformationTooltip, MsOption, MsOptions } from '@/components/core';
+import { MsInformationTooltip } from '@/components/core/ms-tooltip';
+import { MsOption, MsOptions } from '@/components/core/ms-types';
 import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
 import { ref } from 'vue';
