@@ -529,6 +529,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   }
 }
 
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
 .list-md {
   background: none;
 }

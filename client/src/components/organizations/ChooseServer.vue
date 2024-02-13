@@ -112,6 +112,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   flex-direction: column;
 }
 
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
 .radio-list-item {
   display: flex;
   flex-direction: column;
@@ -171,6 +172,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
 }
 
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
 .item-radio.radio-checked {
   &::part(container) {
     border-color: var(--parsec-color-light-primary-600);

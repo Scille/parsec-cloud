@@ -14,7 +14,6 @@
           class="notification-center-header__toggle dark small body-sm"
           @ion-change="ReadOnlyToggle = !ReadOnlyToggle"
         >
-          {{ console.log(ReadOnlyToggle) }}
           {{ $t('notificationCenter.readOnly') }}
         </ion-toggle>
       </div>

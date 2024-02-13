@@ -228,7 +228,7 @@ export interface FileLinkData {
   workspaceId: WorkspaceID;
 }
 
-export async function parseFileLink(link: string): Promise<Result<FileLinkData, ParseLinkError>> {
+export async function parseFileLink(_link: string): Promise<Result<FileLinkData, ParseLinkError>> {
   const clientHandle = getParsecHandle();
 
   if (clientHandle && !needsMocks()) {

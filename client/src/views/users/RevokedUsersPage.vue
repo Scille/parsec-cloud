@@ -341,13 +341,6 @@ onMounted(async (): Promise<void> => {
   overflow-y: auto;
 }
 
-.users-toolbar {
-  padding: 1em 2em;
-  height: 6em;
-  background-color: var(--parsec-color-light-secondary-background);
-  border-top: 1px solid var(--parsec-color-light-secondary-light);
-}
-
 .users-grid-item {
   --inner-padding-end: 0px;
   --inner-padding-start: 0px;

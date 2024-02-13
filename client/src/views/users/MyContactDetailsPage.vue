@@ -189,33 +189,33 @@ onMounted(async () => {
   }
 }
 
-.avatar {
-  // display: flex;
-  display: none;
-  flex-wrap: wrap;
-  margin-bottom: 1.5rem;
-  justify-content: space-between;
-  position: relative;
-  opacity: 0.5;
+// .avatar {
+//   // display: flex;
+//   display: none;
+//   flex-wrap: wrap;
+//   margin-bottom: 1.5rem;
+//   justify-content: space-between;
+//   position: relative;
+//   opacity: 0.5;
 
-  &-title {
-    flex-basis: 100%;
-  }
+//   &-title {
+//     flex-basis: 100%;
+//   }
 
-  &-image {
-    width: 200%;
-  }
+//   &-image {
+//     width: 200%;
+//   }
 
-  &-unavailable {
-    margin-left: auto;
-    position: absolute;
-    top: 40%;
-    right: 5%;
-  }
-}
+//   &-unavailable {
+//     margin-left: auto;
+//     position: absolute;
+//     top: 40%;
+//     right: 5%;
+//   }
+// }
 
-.password-change,
-.avatar {
+.password-change {
+  // .avatar {
   background-color: var(--parsec-color-light-secondary-background);
   border-radius: var(--parsec-radius-8);
   padding: 1.5em;
