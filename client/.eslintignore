@@ -9,5 +9,5 @@ electron/app
 electron/src/
 electron/dist
 electron/node_modules
-src/views/TestPage.vue
+src/views/testing/TestPage.vue
 bindings

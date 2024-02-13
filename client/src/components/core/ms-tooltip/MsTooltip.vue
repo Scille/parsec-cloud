@@ -27,13 +27,13 @@ defineProps<{
   flex-direction: column;
   --fill-color: var(--parsec-color-light-primary-900);
 
-  &.bottom {
-    flex-direction: column-reverse;
+  // &.bottom {
+  //   flex-direction: column-reverse;
 
-    svg {
-      transform: rotate(180deg);
-    }
-  }
+  //   svg {
+  //     transform: rotate(180deg);
+  //   }
+  // }
 }
 
 .tooltip-content {

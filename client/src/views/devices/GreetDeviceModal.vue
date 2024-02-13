@@ -685,14 +685,5 @@ onMounted(async () => {
   border-radius: var(--parsec-radius-6);
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
-
-  &__icon {
-    font-size: 1.5rem;
-    color: var(--parsec-color-light-primary-500);
-  }
-
-  &__name {
-    font-weight: 500;
-  }
 }
 </style>

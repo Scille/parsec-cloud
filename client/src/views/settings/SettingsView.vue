@@ -221,6 +221,7 @@ onUnmounted(async (): Promise<void> => {
     width: 100%;
     max-width: 11.25rem;
 
+    // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__item {
       color: var(--parsec-color-light-secondary-text);
       border-radius: 4px;

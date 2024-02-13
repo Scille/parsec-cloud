@@ -196,7 +196,6 @@ defineEmits<{
 }
 
 .label-size,
-.label-shared-with,
 .label-last-update {
   color: var(--parsec-color-light-secondary-grey);
 }

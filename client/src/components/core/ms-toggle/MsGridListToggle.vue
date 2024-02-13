@@ -82,6 +82,7 @@ defineExpose({
   }
 }
 
+// eslint-disable-next-line vue-scoped-css/no-unused-selector
 .button-disabled {
   border: 1px solid var(--parsec-color-light-primary-700);
   background: var(--parsec-color-light-secondary-premiere);

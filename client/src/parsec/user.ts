@@ -95,7 +95,7 @@ export interface RevokeUserError {
   tag: RevokeUserTag.Internal;
 }
 
-export async function revokeUser(userId: UserID): Promise<Result<null, RevokeUserError>> {
+export async function revokeUser(_userId: UserID): Promise<Result<null, RevokeUserError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {

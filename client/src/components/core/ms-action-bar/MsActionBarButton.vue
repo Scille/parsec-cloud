@@ -45,8 +45,4 @@ defineProps<{
     margin-right: 0.375rem;
   }
 }
-
-.danger:hover {
-  color: var(--parsec-color-light-danger-700);
-}
 </style>

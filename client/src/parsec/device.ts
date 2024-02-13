@@ -120,7 +120,7 @@ export async function importRecoveryDevice(
   }
 }
 
-export async function saveDevice(deviceInfo: DeviceInfo, password: string): Promise<Result<AvailableDevice, RecoveryImportError>> {
+export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Promise<Result<AvailableDevice, RecoveryImportError>> {
   // const _saveStrategy: DeviceSaveStrategyPassword = { tag: DeviceSaveStrategyTag.Password, password: password };
   return {
     ok: true,
@@ -139,7 +139,7 @@ export async function saveDevice(deviceInfo: DeviceInfo, password: string): Prom
   };
 }
 
-export async function deleteDevice(device: AvailableDevice): Promise<Result<boolean>> {
+export async function deleteDevice(_device: AvailableDevice): Promise<Result<boolean>> {
   return { ok: true, value: true };
 }
 
