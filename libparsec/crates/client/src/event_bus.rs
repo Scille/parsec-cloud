@@ -24,21 +24,11 @@ macro_rules! impl_any_spied_event_type {
 
 macro_rules! impl_event_bus_internal_and_event_bus_debug {
     ($([$event_struct:ident, $field_on_event_cbs:ident])*) => {
-
+        #[derive(Default)]
         pub struct EventBusInternal {
             $(
                 $field_on_event_cbs: Mutex<Vec<Box<dyn Fn(&$event_struct) + Send>>>,
             )*
-        }
-
-        impl Default for EventBusInternal {
-            fn default() -> Self {
-                Self{
-                    $(
-                    $field_on_event_cbs: Mutex::new(vec![]),
-                    )*
-                }
-            }
         }
 
         impl std::fmt::Debug for EventBus {
@@ -342,25 +332,18 @@ mod spy {
 
     use super::*;
 
+    #[derive(Default)]
     struct EventBusSpyInternal {
         events: Vec<AnySpiedEvent>,
         on_new_event: Option<Event>,
     }
 
-    #[derive(Clone)]
+    #[derive(Default, Clone)]
     pub struct EventBusSpy {
         internal: Arc<Mutex<EventBusSpyInternal>>,
     }
 
     impl EventBusSpy {
-        pub(super) fn new() -> Self {
-            Self {
-                internal: Arc::new(Mutex::new(EventBusSpyInternal {
-                    events: Default::default(),
-                    on_new_event: None,
-                })),
-            }
-        }
         pub(super) fn add(&self, event: AnySpiedEvent) {
             let mut guard = self.internal.lock().expect("Mutex is poisoned");
             guard.events.push(event);
@@ -501,7 +484,7 @@ impl Default for EventBus {
             internal,
             server_state,
             #[cfg(test)]
-            spy: EventBusSpy::new(),
+            spy: EventBusSpy::default(),
         }
     }
 }
