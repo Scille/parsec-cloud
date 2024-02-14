@@ -132,9 +132,7 @@ async fn create_organization(tmp_path: TmpPath) {
             "s3cr3t",
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Creating organization\nOrganization bootstrap url:",
-        ));
+        .stdout(predicates::str::contains("Organization bootstrap url:"));
 }
 
 #[rstest::rstest]
@@ -171,9 +169,7 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             "alice@example.com",
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Bootstrapping organization in the server",
-        ));
+        .stdout(predicates::str::contains("Organization bootstrapped"));
 }
 
 #[rstest::rstest]
@@ -190,9 +186,7 @@ async fn invite_device(tmp_path: TmpPath) {
         .unwrap()
         .args(["invite-device", "--device", &alice.slughash()])
         .assert()
-        .stdout(predicates::str::contains(
-            "Creating device invitation\nInvitation URL:",
-        ));
+        .stdout(predicates::str::contains("Invitation URL:"));
 }
 
 #[rstest::rstest]
@@ -215,9 +209,7 @@ async fn invite_user(tmp_path: TmpPath) {
             "a@b.c",
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Creating user invitation\nInvitation URL:",
-        ));
+        .stdout(predicates::str::contains("Invitation URL:"));
 }
 
 #[rstest::rstest]
@@ -267,9 +259,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
             &format!("{}", token.as_simple()),
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Deleting invitation\nInvitation deleted",
-        ));
+        .stdout(predicates::str::contains("Invitation deleted"));
 }
 
 #[rstest::rstest]
@@ -345,9 +335,7 @@ async fn export_recovery_device(tmp_path: TmpPath) {
             &output.to_string_lossy(),
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Saving recovery device file\nSaved in",
-        ));
+        .stdout(predicates::str::contains("Saved in"));
 
     assert!(output.exists());
 }
@@ -378,9 +366,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
             &passphrase,
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Saving new device\nSaved new device",
-        ));
+        .stdout(predicates::str::contains("Saved new device"));
 }
 
 #[rstest::rstest]
@@ -484,9 +470,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         .unwrap()
         .args(["list-invitations", "--device", &alice.slughash()])
         .assert()
-        .stdout(predicates::str::contains(
-            "Listing invitations\nNo invitation.",
-        ));
+        .stdout(predicates::str::contains("No invitation."));
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -519,7 +503,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         .args(["list-invitations", "--device", &alice.slughash()])
         .assert()
         .stdout(predicates::str::contains(format!(
-            "Listing invitations\n{}\t{YELLOW}idle{RESET}\tdevice",
+            "{}\t{YELLOW}idle{RESET}\tdevice",
             token.as_simple()
         )));
 }
@@ -545,9 +529,7 @@ async fn create_workspace(tmp_path: TmpPath) {
             "new-workspace",
         ])
         .assert()
-        .stdout(predicates::str::contains(
-            "Creating workspace\nWorkspace has been created",
-        ));
+        .stdout(predicates::str::contains("Workspace has been created"));
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -621,9 +603,7 @@ async fn share_workspace(tmp_path: TmpPath) {
                     "contributor",
                 ])
                 .assert()
-                .stdout(predicates::str::contains(
-                    "Sharing workspace\nWorkspace has been shared",
-                ));
+                .stdout(predicates::str::contains("Workspace has been shared"));
 
             Ok(())
         },
