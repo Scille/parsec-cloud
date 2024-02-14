@@ -67,7 +67,7 @@ pub async fn bootstrap_organization(
     #[cfg(not(feature = "testenv"))]
     let password = rpassword::prompt_password("password:")?.into();
 
-    let handle = start_spinner("Bootstrapping organization in the server");
+    let mut handle = start_spinner("Bootstrapping organization in the server".into());
 
     bootstrap_organization_req(
         ClientConfig::default(),
@@ -78,7 +78,7 @@ pub async fn bootstrap_organization(
     )
     .await?;
 
-    handle.done();
+    handle.stop_with_message("Organization bootstrapped".into());
 
     Ok(())
 }

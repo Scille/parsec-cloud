@@ -8,7 +8,7 @@ use libparsec::{
     DeviceAccessStrategy, DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password,
     ProxyConfig, SASCode, UserProfile,
 };
-use terminal_spinners::{SpinnerBuilder, SpinnerHandle, DOTS};
+use spinners::{Spinner, Spinners, Stream};
 
 pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
@@ -162,8 +162,8 @@ where
     .await
 }
 
-pub fn start_spinner(text: &'static str) -> SpinnerHandle {
-    SpinnerBuilder::new().spinner(&DOTS).text(text).start()
+pub fn start_spinner(text: String) -> Spinner {
+    Spinner::with_stream(Spinners::Dots, text, Stream::Stdout)
 }
 
 pub fn choose_password() -> anyhow::Result<Password> {

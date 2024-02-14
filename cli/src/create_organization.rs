@@ -56,16 +56,16 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
         token,
     } = create_organization;
 
-    let handle = start_spinner("Creating organization");
+    let mut handle = start_spinner("Creating organization".into());
 
     let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await?;
-
-    handle.done();
 
     let organization_addr =
         BackendOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
-    println!("Organization bootstrap url: {YELLOW}{organization_addr}{RESET}");
+    handle.stop_with_message(format!(
+        "Organization bootstrap url: {YELLOW}{organization_addr}{RESET}"
+    ));
 
     Ok(())
 }

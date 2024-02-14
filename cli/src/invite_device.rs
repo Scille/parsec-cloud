@@ -24,7 +24,7 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
     let InviteDevice { config_dir, device } = invite_device;
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
-        let handle = start_spinner("Creating device invitation");
+        let mut handle = start_spinner("Creating device invitation".into());
 
         let rep = cmds
             .send(invite_new_device::Req { send_email: false })
@@ -45,9 +45,7 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
             }
         };
 
-        handle.done();
-
-        println!("Invitation URL: {YELLOW}{url}{RESET}");
+        handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
 
         Ok(())
     })

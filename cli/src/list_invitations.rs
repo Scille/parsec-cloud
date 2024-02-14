@@ -24,7 +24,7 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
     let ListInvitations { config_dir, device } = list_invitations;
 
     load_cmds_and_run(config_dir, device, |cmds, _| async move {
-        let handle = start_spinner("Listing invitations");
+        let mut handle = start_spinner("Listing invitations".into());
 
         let rep = cmds.send(invite_list::Req).await?;
 
@@ -37,10 +37,8 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
             }
         };
 
-        handle.done();
-
         if invitations.is_empty() {
-            println!("No invitation.");
+            handle.stop_with_message("No invitation.".into());
         } else {
             for invitation in invitations {
                 let (token, status, display_type) = match invitation {
@@ -64,7 +62,7 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
                     InvitationStatus::Finished => format!("{GREEN}finished{RESET}"),
                 };
 
-                println!("{token}\t{display_status}\t{display_type}")
+                handle.stop_with_message(format!("{token}\t{display_status}\t{display_type}"))
             }
         }
 

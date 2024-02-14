@@ -36,15 +36,13 @@ pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<
     } = share_workspace;
 
     load_client_and_run(config_dir, device, |client| async move {
-        let handle = start_spinner("Sharing workspace");
+        let mut handle = start_spinner("Sharing workspace".into());
 
         client
             .share_workspace(workspace_id, user_id, Some(role))
             .await?;
 
-        handle.done();
-
-        println!("Workspace has been shared");
+        handle.stop_with_message("Workspace has been shared".into());
 
         client.stop().await;
 
