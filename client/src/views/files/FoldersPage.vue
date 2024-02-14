@@ -118,7 +118,10 @@
             @change="onSortChange"
           />
 
-          <ms-grid-list-toggle v-model="displayView" />
+          <ms-grid-list-toggle
+            v-model="displayView"
+            @update:model-value="onDisplayStateChange"
+          />
         </div>
       </ms-action-bar>
       <div class="folder-container scroll">
@@ -178,6 +181,7 @@ import {
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
@@ -186,8 +190,9 @@ import { IonContent, IonPage, IonText, modalController, popoverController } from
 import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const informationManager: InformationManager = inject(InformationKey)!;
+interface FoldersPageSavedData {
+  displayState?: DisplayState;
+}
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
@@ -218,6 +223,10 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 const importManager: ImportManager = inject(ImportManagerKey)!;
+const informationManager: InformationManager = inject(InformationKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+
+const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
 const fileImports: Ref<Array<FileImportProgress>> = ref([]);
 const currentPath = ref('/');
@@ -235,6 +244,12 @@ let fileUploadModal: HTMLIonModalElement | null = null;
 const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
 
 onMounted(async () => {
+  const savedData = await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY);
+
+  if (savedData && savedData.displayState !== undefined) {
+    displayView.value = savedData.displayState;
+  }
+
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
   const path = getDocumentPath();
@@ -250,6 +265,10 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+async function onDisplayStateChange(): Promise<void> {
+  await storageManager.storeComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, { displayState: displayView.value });
+}
 
 function onSortChange(event: MsSorterChangeEvent): void {
   folders.value.sort(event.option.key, event.sortByAsc);

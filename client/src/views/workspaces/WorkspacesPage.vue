@@ -28,7 +28,10 @@
             :sorter-labels="msSorterLabels"
             @change="onMsSorterChange($event)"
           />
-          <ms-grid-list-toggle v-model="displayView" />
+          <ms-grid-list-toggle
+            v-model="displayView"
+            @update:model-value="onDisplayStateChange"
+          />
         </div>
       </ms-action-bar>
       <!-- workspaces -->
@@ -148,6 +151,7 @@ import {
 } from '@/parsec';
 import { navigateToWorkspace } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
@@ -158,8 +162,16 @@ const sortBy = ref('name');
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
 const informationManager: InformationManager = inject(InformationKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+
+const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
+
+interface WorkspacesPageSavedData {
+  displayState?: DisplayState;
+}
+
 const msSorterLabels = {
   asc: translate('HomePage.organizationList.sortOrderAsc'),
   desc: translate('HomePage.organizationList.sortOrderDesc'),
@@ -167,9 +179,19 @@ const msSorterLabels = {
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 
 onMounted(async (): Promise<void> => {
+  const savedData = await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY);
+
+  if (savedData && savedData.displayState !== undefined) {
+    displayView.value = savedData.displayState;
+  }
+
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
 });
+
+async function onDisplayStateChange(): Promise<void> {
+  await storageManager.storeComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, { displayState: displayView.value });
+}
 
 async function refreshWorkspacesList(): Promise<void> {
   const result = await parsecListWorkspaces();
