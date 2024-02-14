@@ -23,6 +23,7 @@ export interface Config {
 export class StorageManager {
   static STORED_DEVICE_DATA_KEY = 'devicesData';
   static STORED_CONFIG_KEY = 'config';
+  static STORED_COMPONENT_PREFIX = 'comp';
 
   // TODO: CHANGE BACK THEME TO SYSTEM WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427
   static get DEFAULT_CONFIG(): Config {
@@ -82,6 +83,20 @@ export class StorageManager {
       }
     });
     return deviceData;
+  }
+
+  async storeComponentData<Type>(componentKey: string, data: Type): Promise<void> {
+    const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
+    await this.internalStore.set(key, data);
+  }
+
+  async retrieveComponentData<Type>(componentKey: string): Promise<Type | undefined> {
+    const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
+    const data = await this.internalStore.get(key);
+
+    if (data) {
+      return data as Type;
+    }
   }
 
   async storeConfig(data: Config): Promise<void> {
