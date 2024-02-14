@@ -33,6 +33,31 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder
+            .bootstrap_organization("alice")
+            .and_set_sequestered_organization();
+        builder.new_sequester_service();
+        builder.new_sequester_service();
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &env.get_sequester_certificates_signed(),
+            &[],
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "empty")]
 async fn content_already_exists(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder

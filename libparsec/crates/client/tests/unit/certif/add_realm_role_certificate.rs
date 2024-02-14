@@ -33,6 +33,28 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.new_realm("alice");
+        builder.new_realm("alice");
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &env.get_realms_certificates_signed(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);

@@ -32,6 +32,30 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.new_user("bob");
+        builder.new_user("mallory");
+        builder.revoke_user("bob");
+        builder.revoke_user("mallory");
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn related_user_already_revoked(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_user("bob");
