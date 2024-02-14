@@ -29,11 +29,11 @@ pub async fn import_recovery_device(
         config_dir,
     } = import_recovery_device;
 
-    let handle = start_spinner("Loading recovery device file");
+    let mut handle = start_spinner("Loading recovery device file".into());
 
     let device = load_recovery_device(&input, passphrase.into()).await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     let password = choose_password()?;
 
@@ -41,13 +41,11 @@ pub async fn import_recovery_device(
 
     let access = DeviceAccessStrategy::Password { key_file, password };
 
-    let handle = start_spinner("Saving new device");
+    let mut handle = start_spinner("Saving new device".into());
 
     libparsec::save_device(Path::new(""), &access, &device).await?;
 
-    handle.done();
-
-    println!("Saved new device");
+    handle.stop_with_message("Saved new device".into());
 
     Ok(())
 }

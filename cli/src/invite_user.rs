@@ -35,7 +35,7 @@ pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
     } = invite_user;
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
-        let handle = start_spinner("Creating user invitation");
+        let mut handle = start_spinner("Creating user invitation".into());
 
         let rep = cmds
             .send(invite_new_user::Req {
@@ -59,9 +59,7 @@ pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
             }
         };
 
-        handle.done();
-
-        println!("Invitation URL: {YELLOW}{url}{RESET}");
+        handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
 
         Ok(())
     })

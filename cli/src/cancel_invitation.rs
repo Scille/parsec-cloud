@@ -31,7 +31,7 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
     } = cancel_invitation;
 
     load_cmds_and_run(config_dir, device, |cmds, _| async move {
-        let handle = start_spinner("Deleting invitation");
+        let mut handle = start_spinner("Deleting invitation".into());
 
         let rep = cmds.send(invite_cancel::Req { token }).await?;
 
@@ -44,9 +44,7 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
             }
         };
 
-        handle.done();
-
-        println!("Invitation deleted");
+        handle.stop_with_message("Invitation deleted".into());
 
         Ok(())
     })

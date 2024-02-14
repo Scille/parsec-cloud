@@ -71,7 +71,7 @@ async fn step0(
     cmds: &AuthenticatedCmds,
     invitation_token: InvitationToken,
 ) -> anyhow::Result<InviteListItem> {
-    let handle = start_spinner("Retrieving invitation info");
+    let mut handle = start_spinner("Retrieving invitation info".into());
 
     let rep = cmds.send(invite_list::Req).await?;
 
@@ -89,29 +89,29 @@ async fn step0(
         None => return Err(anyhow::anyhow!("Invitation not found")),
     };
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(invitation)
 }
 
 /// Step 1: wait peer
 async fn step1_user(ctx: UserGreetInitialCtx) -> anyhow::Result<UserGreetInProgress1Ctx> {
-    let handle = start_spinner("Waiting for claimer");
+    let mut handle = start_spinner("Waiting for claimer".into());
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
 
 /// Step 1: wait peer
 async fn step1_device(ctx: DeviceGreetInitialCtx) -> anyhow::Result<DeviceGreetInProgress1Ctx> {
-    let handle = start_spinner("Waiting for claimer");
+    let mut handle = start_spinner("Waiting for claimer".into());
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -123,11 +123,11 @@ async fn step2_user(ctx: UserGreetInProgress1Ctx) -> anyhow::Result<UserGreetInP
         ctx.greeter_sas()
     );
 
-    let handle = start_spinner("Waiting for claimer");
+    let mut handle = start_spinner("Waiting for claimer".into());
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -139,11 +139,11 @@ async fn step2_device(ctx: DeviceGreetInProgress1Ctx) -> anyhow::Result<DeviceGr
         ctx.greeter_sas()
     );
 
-    let handle = start_spinner("Waiting for claimer");
+    let mut handle = start_spinner("Waiting for claimer".into());
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -198,12 +198,12 @@ async fn step5_user(ctx: UserGreetInProgress4Ctx) -> anyhow::Result<()> {
 
     let profile = choose_user_profile(&mut input)?;
 
-    let handle = start_spinner("Creating the user in the server");
+    let mut handle = start_spinner("Creating the user in the server".into());
 
     ctx.do_create_new_user(device_label, human_handle, profile)
         .await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(())
 }
@@ -213,11 +213,11 @@ async fn step5_device(ctx: DeviceGreetInProgress4Ctx) -> anyhow::Result<()> {
     let device_label = ctx.requested_device_label.clone();
     println!("New device label: [{device_label}]");
 
-    let handle = start_spinner("Creating the device in the server");
+    let mut handle = start_spinner("Creating the device in the server".into());
 
     ctx.do_create_new_device(device_label).await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(())
 }

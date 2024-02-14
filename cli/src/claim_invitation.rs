@@ -45,11 +45,11 @@ pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Resu
 
 /// Step 0: retrieve info
 async fn step0(addr: BackendInvitationAddr) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
-    let handle = start_spinner("Retrieving invitation info");
+    let mut handle = start_spinner("Retrieving invitation info".into());
 
     let ctx = claimer_retrieve_info(Arc::new(ClientConfig::default().into()), addr).await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -61,11 +61,11 @@ async fn step1_user(ctx: UserClaimInitialCtx) -> anyhow::Result<UserClaimInProgr
         ctx.greeter_human_handle()
     );
 
-    let handle = start_spinner("Waiting the greeter to start the invitation procedure");
+    let mut handle = start_spinner("Waiting the greeter to start the invitation procedure".into());
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -77,11 +77,11 @@ async fn step1_device(ctx: DeviceClaimInitialCtx) -> anyhow::Result<DeviceClaimI
         ctx.greeter_human_handle()
     );
 
-    let handle = start_spinner("Waiting the greeter to start the invitation procedure");
+    let mut handle = start_spinner("Waiting the greeter to start the invitation procedure".into());
 
     let ctx = ctx.do_wait_peer().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -125,11 +125,11 @@ async fn step3_user(ctx: UserClaimInProgress2Ctx) -> anyhow::Result<UserClaimInP
         ctx.claimer_sas()
     );
 
-    let handle = start_spinner("Waiting for greeter");
+    let mut handle = start_spinner("Waiting for greeter".into());
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -141,11 +141,11 @@ async fn step3_device(ctx: DeviceClaimInProgress2Ctx) -> anyhow::Result<DeviceCl
         ctx.claimer_sas()
     );
 
-    let handle = start_spinner("Waiting for greeter");
+    let mut handle = start_spinner("Waiting for greeter".into());
 
     let ctx = ctx.do_wait_peer_trust().await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -156,11 +156,11 @@ async fn step4_user(ctx: UserClaimInProgress3Ctx) -> anyhow::Result<UserClaimFin
     let device_label = choose_device_label(&mut input)?;
     let human_handle = choose_human_handle(&mut input)?;
 
-    let handle = start_spinner("Waiting for greeter");
+    let mut handle = start_spinner("Waiting for greeter".into());
 
     let ctx = ctx.do_claim_user(device_label, human_handle).await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }
@@ -170,11 +170,11 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
     let mut input = String::new();
     let device_label = choose_device_label(&mut input)?;
 
-    let handle = start_spinner("Waiting for greeter");
+    let mut handle = start_spinner("Waiting for greeter".into());
 
     let ctx = ctx.do_claim_device(device_label).await?;
 
-    handle.done();
+    handle.stop_with_newline();
 
     Ok(ctx)
 }

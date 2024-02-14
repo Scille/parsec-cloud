@@ -30,16 +30,16 @@ pub async fn export_recovery_device(
     } = export_recovery_device;
 
     load_device_and_run(config_dir, device, |device| async move {
-        let handle = start_spinner("Saving recovery device file");
+        let mut handle = start_spinner("Saving recovery device file".into());
 
         let passphrase = save_recovery_device(&output, &device).await?;
 
-        handle.done();
-
-        println!("Saved in {}", output.display());
-        println!(
-            "{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
-            passphrase.as_str()
+        handle.stop_with_message(
+            format!(
+                "Saved in {}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
+                output.display(),
+                passphrase.as_str()
+            )
         );
 
         Ok(())
