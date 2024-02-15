@@ -158,7 +158,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             if org.bootstrap_token != bootstrap_token:
                 return OrganizationBootstrapStoreBadOutcome.INVALID_BOOTSTRAP_TOKEN
 
-            if org.bootstrapped_on is not None:
+            if org.is_bootstrapped:
                 return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_ALREADY_BOOTSTRAPPED
 
             match organization_bootstrap_validate(
@@ -339,3 +339,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             )
         return items
+
+    async def test_drop_organization(self, id: OrganizationID) -> None:
+        self._data.organizations.pop(id, None)
+
+    async def test_duplicate_organization(
+        self, source_id: OrganizationID, target_id: OrganizationID
+    ) -> None:
+        duplicated_org = self._data.organizations[source_id].clone_as(target_id)
+        self._data.organizations[target_id] = duplicated_org

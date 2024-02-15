@@ -4,6 +4,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
+import asyncpg
+
 from parsec._parsec import BlockID, OrganizationID
 from parsec.config import (
     BaseBlockStoreConfig,
@@ -18,7 +20,6 @@ from parsec.config import (
 
 if TYPE_CHECKING:
     from parsec.components.memory.datamodel import MemoryDatamodel
-    from parsec.components.postgresql.handler import PGHandler
 
 
 BlockStoreReadBadOutcome = Enum(
@@ -71,7 +72,7 @@ class BaseBlockStoreComponent:
 
 def blockstore_factory(
     config: BaseBlockStoreConfig,
-    postgresql_dbh: PGHandler | None = None,
+    postgresql_pool: asyncpg.Pool | None = None,
     mocked_data: MemoryDatamodel | None = None,
 ) -> BaseBlockStoreComponent:
     if isinstance(config, MockedBlockStoreConfig):
@@ -84,10 +85,10 @@ def blockstore_factory(
     elif isinstance(config, PostgreSQLBlockStoreConfig):
         from parsec.components.postgresql import PGBlockStoreComponent
 
-        if not postgresql_dbh:
+        if not postgresql_pool:
             raise ValueError("PostgreSQL block store is not available")
         # TODO: PostgreSQL is currently broken !
-        return PGBlockStoreComponent(postgresql_dbh)  # type: ignore
+        return PGBlockStoreComponent(postgresql_pool)  # type: ignore
 
     elif isinstance(config, S3BlockStoreConfig):
         try:
@@ -120,14 +121,14 @@ def blockstore_factory(
     elif isinstance(config, RAID1BlockStoreConfig):
         from parsec.components.raid1_blockstore import RAID1BlockStoreComponent
 
-        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_pool) for sub_conf in config.blockstores]
 
         return RAID1BlockStoreComponent(blocks, partial_create_ok=config.partial_create_ok)
 
     elif isinstance(config, RAID0BlockStoreConfig):
         from parsec.components.raid0_blockstore import RAID0BlockStoreComponent
 
-        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_pool) for sub_conf in config.blockstores]
 
         return RAID0BlockStoreComponent(blocks)
 
@@ -137,7 +138,7 @@ def blockstore_factory(
         if len(config.blockstores) < 3:
             raise ValueError("RAID5 block store needs at least 3 nodes")
 
-        blocks = [blockstore_factory(sub_conf, postgresql_dbh) for sub_conf in config.blockstores]
+        blocks = [blockstore_factory(sub_conf, postgresql_pool) for sub_conf in config.blockstores]
 
         return RAID5BlockStoreComponent(blocks, partial_create_ok=config.partial_create_ok)
 

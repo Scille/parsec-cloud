@@ -31,11 +31,7 @@ from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.organization import BaseOrganizationComponent
 from parsec.components.ping import BasePingComponent
 from parsec.components.pki import BasePkiEnrollmentComponent
-
-if TYPE_CHECKING:
-    from parsec.api import ApiFn
-
-# from parsec.components.postgresql import components_factory as postgresql_components_factory
+from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
 from parsec.components.sequester import BaseSequesterComponent
 from parsec.components.user import BaseUserComponent
@@ -43,15 +39,16 @@ from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
 from parsec.webhooks import WebhooksComponent
 
+if TYPE_CHECKING:
+    from parsec.api import ApiFn
+
 
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
     if config.db_url == "MOCKED":
         components_factory = mocked_components_factory
     else:
-        raise NotImplementedError
-        # components_factory = postgresql_components_factory
-        # mocked_data = None
+        components_factory = postgresql_components_factory
 
     async with components_factory(config=config) as components:
         yield Backend(
@@ -113,14 +110,11 @@ class Backend:
             include_ping=self.config.debug,
         )
 
-    def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
-        assert self.mocked_data is not None
-        duplicated_org = self.mocked_data.organizations[id].clone_as(new_id)
-        self.mocked_data.organizations[new_id] = duplicated_org
+    async def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
+        await self.organization.test_duplicate_organization(id, new_id)
 
-    def test_drop_organization(self, id: OrganizationID) -> None:
-        assert self.mocked_data is not None
-        self.mocked_data.organizations.pop(id, None)
+    async def test_drop_organization(self, id: OrganizationID) -> None:
+        await self.organization.test_drop_organization(id)
 
     async def test_load_template(self, template: Any) -> OrganizationID:
         from parsec._parsec import testbed

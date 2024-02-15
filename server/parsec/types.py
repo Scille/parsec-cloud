@@ -10,3 +10,11 @@ from typing import Final
 # https://github.com/python/typing/issues/689#issuecomment-561425237)
 UnsetType = Enum("UnsetType", "Unset")
 Unset: Final = UnsetType.Unset
+
+
+class BadOutcome:
+    pass
+
+
+class BadOutcomeEnum(BadOutcome, Enum):
+    pass

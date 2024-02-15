@@ -8,7 +8,9 @@ from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
     DateTime,
+    DeviceCertificate,
     OrganizationID,
+    UserCertificate,
 )
 from parsec.components.postgresql.utils import (
     Q,
@@ -19,12 +21,8 @@ from parsec.components.postgresql.utils import (
     query,
 )
 from parsec.components.user import (
-    Device,
-    User,
-    UserActiveUsersLimitReached,
-    UserAlreadyExistsError,
-    UserError,
-    UserNotFoundError,
+    UserCreateDeviceStoreBadOutcome,
+    UserCreateUserStoreBadOutcome,
 )
 
 _q_check_active_users_limit = Q(
@@ -189,92 +187,75 @@ async def q_take_user_device_write_lock(
     await conn.execute(*_q_lock(organization_id=organization_id.str))
 
 
-async def _do_create_user_with_human_handle(
+async def _do_create_user(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    user: User,
-    first_device: Device,
-) -> None:
-    assert user.human_handle is not None
+    user_certificate_cooked: UserCertificate,
+    user_certificate: bytes,
+    user_certificate_redacted: bytes,
+) -> None | UserCreateUserStoreBadOutcome:
+    assert user_certificate_cooked.human_handle is not None
     # Create human handle if needed
     await conn.execute(
         *_q_insert_human_if_not_exists(
             organization_id=organization_id.str,
-            email=user.human_handle.email,
-            label=user.human_handle.label,
+            email=user_certificate_cooked.human_handle.email,
+            label=user_certificate_cooked.human_handle.label,
         )
     )
 
     # Now insert the new user
     try:
+        user_certifier = (
+            user_certificate_cooked.author.str if user_certificate_cooked.author else None
+        )
         result = await conn.execute(
             *_q_insert_user_with_human_handle(
                 organization_id=organization_id.str,
-                user_id=user.user_id.str,
-                profile=user.profile.str,
-                user_certificate=user.user_certificate,
-                redacted_user_certificate=user.redacted_user_certificate,
-                user_certifier=user.user_certifier.str if user.user_certifier else None,
-                created_on=user.created_on,
-                email=user.human_handle.email,
+                user_id=user_certificate_cooked.user_id.str,
+                profile=user_certificate_cooked.profile.str,
+                user_certificate=user_certificate,
+                redacted_user_certificate=user_certificate_redacted,
+                user_certifier=user_certifier,
+                created_on=user_certificate_cooked.timestamp,
+                email=user_certificate_cooked.human_handle.email,
             )
         )
 
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
+        return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
 
     if result != "INSERT 0 1":
-        raise UserError(f"Insertion error: {result}")
+        assert False, f"Insertion error: {result}"
 
     # Finally make sure there is only one non-revoked user with this human handle
     now = DateTime.now()
     not_revoked_users = await conn.fetch(
         *_q_get_not_revoked_users_for_human(
             organization_id=organization_id.str,
-            email=user.human_handle.email,
+            email=user_certificate_cooked.human_handle.email,
             now=now,
         )
     )
-    if len(not_revoked_users) != 1 or not_revoked_users[0]["user_id"] != user.user_id.str:
+    if (
+        len(not_revoked_users) != 1
+        or not_revoked_users[0]["user_id"] != user_certificate_cooked.user_id.str
+    ):
         # Exception cancels the transaction so the user insertion is automatically cancelled
-        raise UserAlreadyExistsError(
-            f"Human handle `{user.human_handle.str}` already corresponds to a non-revoked user"
-        )
-
-
-async def _do_create_user_without_human_handle(
-    conn: asyncpg.Connection,
-    organization_id: OrganizationID,
-    user: User,
-    first_device: Device,
-) -> None:
-    try:
-        result = await conn.execute(
-            *_q_insert_user(
-                organization_id=organization_id.str,
-                user_id=user.user_id.str,
-                profile=user.profile.str,
-                user_certificate=user.user_certificate,
-                redacted_user_certificate=user.redacted_user_certificate,
-                user_certifier=user.user_certifier.str if user.user_certifier else None,
-                created_on=user.created_on,
-            )
-        )
-
-    except UniqueViolationError:
-        raise UserAlreadyExistsError(f"User `{user.user_id.str}` already exists")
-
-    if result != "INSERT 0 1":
-        raise UserError(f"Insertion error: {result}")
+        return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
 
 
 async def q_create_user(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    user: User,
-    first_device: Device,
+    user_certificate_cooked: UserCertificate,
+    user_certificate: bytes,
+    user_certificate_redacted: bytes,
+    device_certificate_cooked: DeviceCertificate,
+    device_certificate: bytes,
+    device_certificate_redacted: bytes,
     lock_already_held: bool = False,
-) -> None:
+) -> None | UserCreateUserStoreBadOutcome | UserCreateDeviceStoreBadOutcome:
     if not lock_already_held:
         await q_take_user_device_write_lock(conn, organization_id)
 
@@ -282,14 +263,26 @@ async def q_create_user(
     # Note with the user/device write lock held we have the guarantee the active users
     # limit won't change in our back.
     if not record["allowed"]:
-        raise UserActiveUsersLimitReached()
+        raise UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
-    if user.human_handle:
-        await _do_create_user_with_human_handle(conn, organization_id, user, first_device)
-    else:
-        await _do_create_user_without_human_handle(conn, organization_id, user, first_device)
+    if not user_certificate_cooked.human_handle:
+        assert False, "User creation without human handle is not supported anymore"
 
-    await _create_device(conn, organization_id, first_device, first_device=True)
+    match await _do_create_user(
+        conn, organization_id, user_certificate_cooked, user_certificate, user_certificate_redacted
+    ):
+        case UserCreateUserStoreBadOutcome() as bad_outcome:
+            return bad_outcome
+    match await _create_device(
+        conn,
+        organization_id,
+        device_certificate_cooked,
+        device_certificate,
+        device_certificate_redacted,
+        first_device=True,
+    ):
+        case UserCreateDeviceStoreBadOutcome() as bad_outcome:
+            return bad_outcome
 
 
 @query(in_transaction=True)
@@ -305,37 +298,46 @@ async def query_create_user(
 async def _create_device(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    device: Device,
+    device_certificate_cooked: DeviceCertificate,
+    device_certificate: bytes,
+    device_certificate_redacted: bytes,
     first_device: bool = False,
-) -> None:
+) -> None | UserCreateDeviceStoreBadOutcome:
     if not first_device:
         existing_devices = await conn.fetch(
-            *_q_get_user_devices(organization_id=organization_id.str, user_id=device.user_id.str)
+            *_q_get_user_devices(
+                organization_id=organization_id.str, user_id=device_certificate_cooked.user_id.str
+            )
         )
         if not existing_devices:
-            raise UserNotFoundError(f"User `{device.user_id.str}` doesn't exists")
+            return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
 
-        if device.device_id in itertools.chain(*existing_devices):
-            raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
+        if device_certificate_cooked.device_id in itertools.chain(*existing_devices):
+            return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
 
     try:
+        device_certifier = (
+            device_certificate_cooked.author.str if device_certificate_cooked.author else None
+        )
         result = await conn.execute(
             *_q_insert_device(
                 organization_id=organization_id.str,
-                user_id=device.user_id.str,
-                device_id=device.device_id.str,
-                device_label=device.device_label.str if device.device_label else None,
-                device_certificate=device.device_certificate,
-                redacted_device_certificate=device.redacted_device_certificate,
-                device_certifier=device.device_certifier.str if device.device_certifier else None,
-                created_on=device.created_on,
+                user_id=device_certificate_cooked.device_id.user_id.str,
+                device_id=device_certificate_cooked.device_id.str,
+                device_label=device_certificate_cooked.device_label.str
+                if device_certificate_cooked.device_label
+                else None,
+                device_certificate=device_certificate,
+                redacted_device_certificate=device_certificate_redacted,
+                device_certifier=device_certifier,
+                created_on=device_certificate_cooked.timestamp,
             )
         )
     except UniqueViolationError:
-        raise UserAlreadyExistsError(f"Device `{device.device_id.str}` already exists")
+        return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
 
     if result != "INSERT 0 1":
-        raise UserError(f"Insertion error: {result}")
+        assert False, f"Insertion error: {result}"
 
 
 @query(in_transaction=True)

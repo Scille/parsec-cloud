@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncpg
 
 from parsec._parsec import (
-    BackendEventUserUpdatedOrRevoked,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -19,7 +18,6 @@ from parsec.components.postgresql.utils import (
     q_user,
     query,
 )
-from parsec.components.user import UserAlreadyRevokedError, UserError, UserNotFoundError
 
 _q_revoke_user = Q(
     f"""

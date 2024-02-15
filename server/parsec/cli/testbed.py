@@ -85,12 +85,12 @@ class TestbedBackend:
 
         self._org_count += 1
         new_org_id = OrganizationID(f"Org{self._org_count}")
-        self.backend.test_duplicate_organization(template_org_id, new_org_id)
+        await self.backend.test_duplicate_organization(template_org_id, new_org_id)
 
         return (new_org_id, template_crc, template_content)
 
-    def drop_organization(self, id: OrganizationID) -> None:
-        self.backend.test_drop_organization(id)
+    async def drop_organization(self, id: OrganizationID) -> None:
+        await self.backend.test_drop_organization(id)
 
 
 app = app_factory()
@@ -137,7 +137,7 @@ async def test_new(template: str, request: Request, background_tasks: Background
         await asyncio.sleep(orga_life_limit)
         print(f"drop {new_org_id}")
         # Dropping is idempotent, so no need for error handling
-        testbed.backend.test_drop_organization(new_org_id)
+        await testbed.backend.test_drop_organization(new_org_id)
 
     background_tasks.add_task(_organization_garbage_collector)
 
@@ -157,7 +157,7 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
         return Response(status_code=400, content=b"")
     print(f"drop {organization_id}")
     # Dropping is idempotent, so no need for error handling
-    testbed.drop_organization(organization_id)
+    await testbed.drop_organization(organization_id)
 
     return Response(status_code=200, content=b"")
 

@@ -19,13 +19,6 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     query,
 )
-from parsec.components.user import (
-    Device,
-    # GetUserAndDevicesResult,
-    # Trustchain,
-    User,
-    UserNotFoundError,
-)
 
 _q_get_organization_users = Q(
     f"""

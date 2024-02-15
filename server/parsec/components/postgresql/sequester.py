@@ -8,7 +8,6 @@ import asyncpg
 
 from parsec._parsec import (
     CryptoError,
-    DataError,
     DateTime,
     OrganizationID,
     SequesterServiceCertificate,
@@ -16,22 +15,11 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
     VlobID,
 )
-from parsec.components.organization import SequesterAuthority
-from parsec.components.postgresql.handler import PGHandler
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, q_realm_internal_id
 from parsec.components.sequester import (
     BaseSequesterComponent,
     BaseSequesterService,
-    SequesterCertificateValidationError,
-    SequesterDisabledError,
-    SequesterError,
-    SequesterOrganizationNotFoundError,
-    SequesterServiceAlreadyDisabledError,
-    SequesterServiceAlreadyEnabledError,
-    SequesterServiceAlreadyExists,
-    SequesterServiceNotFoundError,
     SequesterServiceType,
-    SequesterWrongServiceTypeError,
     StorageSequesterService,
     WebhookSequesterService,
 )
@@ -222,7 +210,7 @@ def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
         )
 
 
-class PGPSequesterComponent(BaseSequesterComponent):
+class PGSequesterComponent(BaseSequesterComponent):
     def __init__(self, dbh: PGHandler):
         self.dbh = dbh
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC
 from base64 import b64encode
-from typing import TYPE_CHECKING, Annotated, Literal, override
+from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias, override
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, PlainValidator
@@ -362,7 +362,8 @@ class EventUserUpdated(BaseModel):
     new_profile: UserProfile
 
 
-type Event = (
+# TODO: Replace with `type` once the linter supports it
+Event: TypeAlias = (
     EventPinged
     | EventInvitation
     | EventPkiEnrollment

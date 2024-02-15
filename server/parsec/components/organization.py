@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import auto
 from typing import Literal, assert_never
 
 from parsec._parsec import (
@@ -23,7 +23,7 @@ from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
 from parsec.client_context import AnonymousClientContext
 from parsec.config import BackendConfig
-from parsec.types import Unset
+from parsec.types import BadOutcomeEnum, Unset
 from parsec.webhooks import WebhooksComponent
 
 
@@ -53,17 +53,13 @@ class OrganizationDump:
     user_profile_outsider_allowed: bool
 
 
-OrganizationBootstrapValidateBadOutcome = Enum(
-    "OrganizationBootstrapValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "INVALID_USER_PROFILE",
-        "USER_ID_MISMATCH",
-        "INVALID_REDACTED",
-        "REDACTED_MISMATCH",
-    ),
-)
+class OrganizationBootstrapValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    INVALID_USER_PROFILE = auto()
+    USER_ID_MISMATCH = auto()
+    INVALID_REDACTED = auto()
+    REDACTED_MISMATCH = auto()
 
 
 def organization_bootstrap_validate(
@@ -173,31 +169,35 @@ class Organization:
         return self.sequester_authority_certificate is not None
 
 
-OrganizationCreateBadOutcome = Enum(
-    "OrganizationCreateBadOutcome", ("ORGANIZATION_ALREADY_EXISTS",)
-)
-OrganizationGetBadOutcome = Enum("OrganizationGetBadOutcome", ("ORGANIZATION_NOT_FOUND",))
-OrganizationBootstrapStoreBadOutcome = Enum(
-    "OrganizationBootstrapStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "ORGANIZATION_ALREADY_BOOTSTRAPPED",
-        "INVALID_BOOTSTRAP_TOKEN",
-    ),
-)
-OrganizationStatsAsUserBadOutcome = Enum(
-    "OrganizationStatsAsUserBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-    ),
-)
-OrganizationStatsBadOutcome = Enum("OrganizationStatsBadOutcome", ("ORGANIZATION_NOT_FOUND",))
-OrganizationUpdateBadOutcome = Enum("OrganizationUpdateBadOutcome", ("ORGANIZATION_NOT_FOUND",))
+class OrganizationCreateBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_ALREADY_EXISTS = auto()
+
+
+class OrganizationGetBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+class OrganizationBootstrapStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_ALREADY_BOOTSTRAPPED = auto()
+    INVALID_BOOTSTRAP_TOKEN = auto()
+
+
+class OrganizationStatsAsUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
+class OrganizationStatsBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+class OrganizationUpdateBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
 
 
 class BaseOrganizationComponent:
@@ -278,6 +278,14 @@ class BaseOrganizationComponent:
     async def test_dump_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
+        raise NotImplementedError
+
+    async def test_drop_organization(self, id: OrganizationID) -> None:
+        raise NotImplementedError
+
+    async def test_duplicate_organization(
+        self, source_id: OrganizationID, target_id: OrganizationID
+    ) -> None:
         raise NotImplementedError
 
     #

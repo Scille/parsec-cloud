@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 # from parsec.components.postgresql.block import PGBlockComponent, PGBlockStoreComponent
-# from parsec.components.postgresql.factory import components_factory
+from parsec.components.postgresql.factory import components_factory
+
 # from parsec.components.postgresql.handler import (
 #     MigrationItem,
 #     MigrationResult,
@@ -32,7 +33,6 @@ PGVlobComponent = object()
 PGBlockComponent = object()
 PGBlockStoreComponent = object()
 PGPkiEnrollmentComponent = object()
-components_factory = object()
 
 __all__ = [
     "retrieve_migrations",

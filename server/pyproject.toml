@@ -118,10 +118,12 @@ line-length = 100
 target-version = "py312"
 
 extend-exclude = [
-    "../misc/bench.py",
-    # TODO: PostgreSQL is currently broken
     "tests/cli/common.py",
-    "parsec/components/postgresql/*",
+    "../misc/bench.py",
+    "parsec/components/postgresql/vlob.py",
+    "parsec/components/postgresql/user.py",
+    "parsec/components/postgresql/sequester.py",
+    "parsec/components/postgresql/*_queries/*",
     "parsec/cli/sequester.py",
     "tests/cli/test_sequester.py",
 ]
@@ -182,9 +184,19 @@ include = ["parsec", "tests", "build.py", "../docs", "../misc", "../bindings/gen
 exclude = [
     "**/__pycache__",
 ]
-# TODO: PostgreSQL is currently broken
 ignore = [
-    "parsec/components/postgresql",
+    "parsec/components/postgresql/vlob.py",
+    "parsec/components/postgresql/user.py",
+    "parsec/components/postgresql/pki.py",
+    "parsec/components/postgresql/invite.py",
+    "parsec/components/postgresql/user.py",
+    "parsec/components/postgresql/blockstore.py",
+    "parsec/components/postgresql/sequester_export.py",
+    "parsec/components/postgresql/message.py",
+    "parsec/components/postgresql/realm.py",
+    "parsec/components/postgresql/block.py",
+    "parsec/components/postgresql/sequester.py",
+    "parsec/components/postgresql/*_queries/*",
     "parsec/cli/sequester.py",
     "parsec/cli/migration.py",
     "tests/cli/test_migrate.py",
