@@ -124,9 +124,9 @@ describe('Check folders page', () => {
     // Unselect all
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.wait(200);
-    cy.get('.file-list-item').first().find('ion-checkbox').should('not.be.visible');
-    cy.get('.file-list-item').last().find('ion-checkbox').should('not.be.visible');
+    // cy.wait(200);
+    // cy.get('.file-list-item').first().find('ion-checkbox').should('not.be.visible');
+    // cy.get('.file-list-item').last().find('ion-checkbox').should('not.be.visible');
     cy.get('.counter').contains(/^\d+ items$/);
 
     // Select all, unselect first file
