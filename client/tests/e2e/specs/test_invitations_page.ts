@@ -34,6 +34,7 @@ describe('Check invitations page', () => {
 
   it('Check copy link button', () => {
     cy.get('.invitation-list').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('.counter').contains('2 pending invitations');
     cy.get('@invitations').eq(0).find('.invitation-email').contains('shadowheart@swordcoast.faerun');
     cy.get('@invitations').eq(0).find('ion-button').eq(0).click();
     cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');

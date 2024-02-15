@@ -985,6 +985,7 @@
             "dateTitle": "Date d'invitation",
             "statusTitle": "Statut",
             "noInvitations": "Aucune invitation en cours",
+            "invitationCount": "Aucune invitation en attente | Une invitation en attente | {count} invitations en attente",
             "invitationsListFailed": {
                 "title": "Impossible de lister les invitations",
                 "message": "Veuillez vérifier votre connexion internet."

@@ -16,6 +16,11 @@
           v-show="isAdmin"
         />
         <div class="right-side">
+          <div class="counter">
+            <ion-text class="body">
+              {{ $t('UsersPage.invitation.invitationCount', { count: invitations.length }, invitations.length) }}
+            </ion-text>
+          </div>
           <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
@@ -87,7 +92,7 @@ import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, watchRoute } 
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import { IonContent, IonLabel, IonList, IonListHeader, IonPage, modalController } from '@ionic/vue';
+import { IonContent, IonLabel, IonList, IonListHeader, IonPage, IonText, modalController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, onUpdated, ref } from 'vue';
 
@@ -279,7 +284,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 
   .label-date {
     width: 100%;
-    max-width: 10vw;
+    max-width: 15vw;
     flex-grow: 0;
   }
 
@@ -290,8 +295,9 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   }
 
   .label-space {
-    width: 100%;
     min-width: 4rem;
+    max-width: 20rem;
+    width: 100%;
     flex-grow: 0;
   }
 }

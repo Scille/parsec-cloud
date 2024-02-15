@@ -100,7 +100,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 
 <style scoped lang="scss">
 .invitation-list-item > [class^='invitation-'] {
-  padding: 0 1rem;
+  padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
 }
@@ -137,7 +137,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 
 .invitation-date {
   width: 100%;
-  max-width: 10vw;
+  max-width: 15vw;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);
 }
@@ -150,11 +150,13 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 }
 
 .invitation-action {
+  min-width: 4rem;
+  max-width: 20rem;
+  flex-grow: 0;
+
   &-buttons {
     opacity: 0;
     gap: 1rem;
-    max-width: 17.25rem;
-    width: 100%;
 
     ion-button {
       width: 100%;
