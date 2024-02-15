@@ -16,6 +16,10 @@ appendleft
 aqtbot
 aread
 armv
+arrowleft
+arrowup
+arrowdown
+arrowright
 arwx
 Asas
 asend
