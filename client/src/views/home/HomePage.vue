@@ -59,6 +59,7 @@ import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkVa
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin, startWorkspace } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -84,9 +85,12 @@ enum HomePageState {
 
 const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
+
+let hotkeys: Hotkeys | null = null;
 
 const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
@@ -99,14 +103,23 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Home);
+  hotkeys.add('n', Modifiers.Ctrl | Modifiers.Shift, Platforms.Desktop, openCreateOrganizationModal);
+  hotkeys.add('j', Modifiers.Ctrl, Platforms.Desktop, onJoinOrganizationClicked);
+  hotkeys.add(',', Modifiers.Ctrl, Platforms.Desktop, openSettingsModal);
+  hotkeys.add('a', Modifiers.Ctrl | Modifiers.Alt, Platforms.Desktop, openAboutModal);
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
 });
 
 onUnmounted(() => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
   routeWatchCancel();
 });
 
 async function openCreateOrganizationModal(): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Home);
   const modal = await modalController.create({
     component: CreateOrganizationModal,
     canDismiss: true,
@@ -116,6 +129,7 @@ async function openCreateOrganizationModal(): Promise<void> {
   await modal.present();
   const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
+  hotkeyManager.enableGroup(Groups.Home);
 
   if (role === MsModalResult.Confirm) {
     await login(data.device, data.password);
@@ -135,6 +149,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
     console.log('Invalid link');
     return;
   }
+  hotkeyManager.disableGroup(Groups.Home);
   const modal = await modalController.create({
     component: component,
     canDismiss: true,
@@ -147,6 +162,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   await modal.present();
   const result = await modal.onWillDismiss();
   await modal.dismiss();
+  hotkeyManager.enableGroup(Groups.Home);
   if (result.role === MsModalResult.Confirm) {
     await login(result.data.device, result.data.password);
   }
@@ -213,15 +229,19 @@ function onForgottenPasswordClicked(device: AvailableDevice): void {
 }
 
 async function openAboutModal(): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Home);
   const modal = await modalController.create({
     component: AboutModal,
     cssClass: 'about-modal',
   });
   await modal.present();
   await modal.onWillDismiss();
+  await modal.dismiss();
+  hotkeyManager.enableGroup(Groups.Home);
 }
 
 async function openSettingsModal(): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Home);
   const modal = await modalController.create({
     component: SettingsModal,
     cssClass: 'settings-modal',
@@ -229,9 +249,11 @@ async function openSettingsModal(): Promise<void> {
   await modal.present();
   await modal.onWillDismiss();
   await modal.dismiss();
+  hotkeyManager.enableGroup(Groups.Home);
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Home);
   const link = await getTextInputFromUser({
     title: translate('JoinByLinkModal.pageTitle'),
     subtitle: translate('JoinByLinkModal.pleaseEnterUrl'),
@@ -241,6 +263,7 @@ async function onJoinOrganizationClicked(): Promise<void> {
     placeholder: translate('JoinOrganization.linkFormPlaceholder'),
     okButtonText: translate('JoinByLinkModal.join'),
   });
+  hotkeyManager.enableGroup(Groups.Home);
 
   if (link) {
     await openJoinByLinkModal(link);

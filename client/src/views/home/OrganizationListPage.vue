@@ -22,6 +22,7 @@
             :label="$t('HomePage.organizationList.search')"
             v-model="searchQuery"
             id="ms-search-input"
+            ref="searchInputRef"
           />
           <ms-sorter
             v-show="deviceList.length > 1"
@@ -101,13 +102,14 @@ import { formatTimeSince } from '@/common/date';
 import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow, IonText, popoverController } from '@ionic/vue';
 import { ellipse } from 'ionicons/icons';
 import { DateTime } from 'luxon';
-import { Ref, computed, inject, onMounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
@@ -118,10 +120,14 @@ const emits = defineEmits<{
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const sortBy = ref('organization');
 const sortByAsc = ref(true);
 const searchQuery = ref('');
 const querying = ref(true);
+const searchInputRef = ref();
+
+let hotkeys: Hotkeys | null = null;
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
@@ -177,8 +183,16 @@ async function onAction(action: HomePageAction): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Home);
+  hotkeys.add('f', Modifiers.Ctrl, Platforms.Web | Platforms.Desktop, searchInputRef.value.setFocus);
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   await refreshDeviceList();
+});
+
+onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
 });
 
 async function refreshDeviceList(): Promise<void> {

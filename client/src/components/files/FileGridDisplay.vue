@@ -34,6 +34,26 @@
 import FileCard from '@/components/files/FileCard.vue';
 import FileCardImporting from '@/components/files/FileCardImporting.vue';
 import { EntryCollection, EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { inject, onMounted, onUnmounted } from 'vue';
+
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+
+let hotkeys: Hotkeys | null = null;
+
+onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Workspaces);
+  hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop | Platforms.Web, async () => {
+    props.files.selectAll(true);
+    props.folders.selectAll(true);
+  });
+});
+
+onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
+});
 
 const props = defineProps<{
   importing: Array<FileImportProgress>;
