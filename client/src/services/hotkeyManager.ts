@@ -151,6 +151,9 @@ export class HotkeyManager {
     if (['control', 'shift', 'alt'].includes(event.key.toLowerCase())) {
       return;
     }
+    if (event.repeat) {
+      return;
+    }
 
     if (!isDesktop() && !isWeb()) {
       return;
@@ -174,7 +177,7 @@ export class HotkeyManager {
   }
 
   private doModifiersMatch(event: KeyboardEvent, modifiers: number): boolean {
-    const ctrlKey = isMacOS() ? event.metaKey : isDesktop() ? event.ctrlKey : event.ctrlKey || event.metaKey;
+    const ctrlKey = event.ctrlKey || (isMacOS() && event.metaKey) || (isWeb() && event.metaKey);
     let eventMods = 0;
     eventMods |= ctrlKey ? Modifiers.Ctrl : Modifiers.None;
     eventMods |= event.altKey ? Modifiers.Alt : Modifiers.None;
