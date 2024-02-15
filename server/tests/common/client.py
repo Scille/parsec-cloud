@@ -372,7 +372,7 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
             testbed_template=template_content,
         )
 
-        testbed.drop_organization(organization_id)
+        await testbed.drop_organization(organization_id)
 
 
 @dataclass(slots=True)
@@ -446,7 +446,7 @@ async def minimalorg(
             testbed_template=template_content,
         )
 
-        testbed.drop_organization(organization_id)
+        await testbed.drop_organization(organization_id)
 
 
 def get_last_realm_certificate_timestamp(

@@ -53,14 +53,12 @@ async def backend(backend_config: BackendConfig) -> AsyncGenerator[Backend, None
             started.set()
             await should_stop.wait()
 
-    task = asyncio.create_task(_run_backend())
-    await started.wait()
-    assert isinstance(backend, Backend)
-
-    yield backend
-
-    should_stop.set()
-    await task
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(_run_backend())
+        await started.wait()
+        assert isinstance(backend, Backend)
+        yield backend
+        should_stop.set()
 
 
 @pytest.fixture

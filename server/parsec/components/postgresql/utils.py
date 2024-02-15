@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import re
 from functools import wraps
-from typing import Any, Awaitable, Callable, TypeVar
+from typing import Any, Awaitable, Callable, Protocol, TypeVar, cast
 
 import asyncpg
 from typing_extensions import Concatenate, ParamSpec
+
+from parsec.types import BadOutcome
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -14,7 +16,7 @@ P = ParamSpec("P")
 
 class Q:
     """
-    Dead simple SQL query composition framework (◠﹏◠)
+    Dead simple SQL query composition framework (◠_◠)
     """
 
     def __init__(self, src: str, **kwargs: Any):
@@ -235,23 +237,44 @@ def query(
     [Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]],
     Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
 ]:
-    if in_transaction:
+    if not in_transaction:
+        return lambda fn: fn
 
-        def decorator(
-            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
-        ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
-            @wraps(fn)
-            async def wrapper(conn: asyncpg.Connection, *args: P.args, **kwargs: P.kwargs) -> T:
-                async with conn.transaction():
-                    return await fn(conn, *args, **kwargs)
+    def decorator(
+        fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
+    ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
+        @wraps(fn)
+        async def wrapper(conn: asyncpg.Connection, *args: P.args, **kwargs: P.kwargs) -> T:
+            async with conn.transaction():
+                return await fn(conn, *args, **kwargs)
 
-            return wrapper
-
-    else:
-
-        def decorator(
-            fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
-        ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
-            return fn
+        return wrapper
 
     return decorator
+
+
+class WithPool(Protocol):
+    pool: asyncpg.Pool
+
+
+def transaction[**P, T, S: WithPool](
+    func: Callable[Concatenate[S, asyncpg.Connection, P], Awaitable[T]],
+):
+    """
+    This is used to decorate API method that need to be executed in a transaction.
+
+    It makes sure that the transaction is rolled back if the function returns a BadOutcome.
+    """
+
+    async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
+        async with self.pool.acquire() as conn:
+            transaction = conn.transaction()
+            conn = cast(asyncpg.Connection, conn)
+            async with transaction:
+                result = await func(self, conn, *args, **kwargs)
+                match result:
+                    case BadOutcome():
+                        await transaction.rollback()
+                return result
+
+    return wrapper

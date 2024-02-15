@@ -2,84 +2,94 @@
 
 from __future__ import annotations
 
+import ssl
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator
 
-import anyio
-import asyncpg
+import httpx
 
-from parsec.components.blockstore import blockstore_factory
-from parsec.components.events import BaseEventsComponent, EventBus
-from parsec.components.postgresql.block import PGBlockComponent
-from parsec.components.postgresql.handler import PGHandler, send_signal
-from parsec.components.postgresql.invite import PGInviteComponent
-from parsec.components.postgresql.message import PGMessageComponent
+# from parsec.components.postgresql.pki import PGPkiEnrollmentComponent
+# from parsec.components.postgresql.realm import PGRealmComponent
+# from parsec.components.postgresql.sequester import PGSequesterComponent
+# from parsec.components.postgresql.user import PGUserComponent
+# from parsec.components.postgresql.vlob import PGVlobComponent
+from parsec.components.postgresql.auth import PGAuthComponent
+from parsec.components.postgresql.events import PGEventsComponent, event_bus_factory
+
+# from parsec.components.postgresql.block import PGBlockComponent
+from parsec.components.postgresql.handler import asyncpg_pool_factory
+
+# from parsec.components.postgresql.invite import PGInviteComponent
+# from parsec.components.postgresql.message import PGMessageComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
-from parsec.components.postgresql.pki import PGPkiEnrollmentComponent
-from parsec.components.postgresql.realm import PGRealmComponent
-from parsec.components.postgresql.sequester import PGPSequesterComponent
-from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.vlob import PGVlobComponent
 from parsec.config import BackendConfig
-from parsec.events import Event
 from parsec.webhooks import WebhooksComponent
+
+# SSL context is costly to setup, so cache it instead of having `httpx.AsyncClient`
+# re-creating it for each test.
+SSL_CONTEXT = ssl.create_default_context()
 
 
 @asynccontextmanager
-async def components_factory(  # type: ignore[misc]
-    config: BackendConfig, event_bus: EventBus
+async def components_factory(
+    config: BackendConfig,
 ) -> AsyncGenerator[dict[str, Any], None]:
-    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
+    async with asyncpg_pool_factory(
+        url=config.db_url,
+        min_connections=config.db_min_connections,
+        max_connections=config.db_max_connections,
+    ) as pool:
+        async with event_bus_factory(url=config.db_url) as event_bus:
+            async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
+                webhooks = WebhooksComponent(config, http_client)
+                events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
+                ping = PGPingComponent(pool=pool)
+                organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
+                auth = PGAuthComponent(pool=pool, config=config)
 
-    async def _send_event(
-        event: Event,
-        conn: asyncpg.Connection | None = None,
-    ) -> None:
-        if conn is None:
-            async with dbh.pool.acquire() as conn:
-                await send_signal(conn, event)
-        else:
-            await send_signal(conn, event)
+                # user = PGUserComponent(pool=pool, event_bus=event_bus)
+                # invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
+                # message = PGMessageComponent(pool=pool)
+                # realm = PGRealmComponent(pool=pool)
+                # vlob = PGVlobComponent(pool=pool)
+                # blockstore = blockstore_factory(
+                #     config=config.blockstore_config, postgresql_pool=pool
+                # )
+                # block = PGBlockComponent(pool=pool, blockstore_component=blockstore)
+                # pki = PGPkiEnrollmentComponent(pool=pool)
+                # sequester = PGSequesterComponent(pool=pool)
 
-    webhooks = WebhooksComponent(config)
-    organization = PGOrganizationComponent(dbh=dbh, webhooks=webhooks, config=config)
-    user = PGUserComponent(dbh=dbh, event_bus=event_bus)
-    invite = PGInviteComponent(dbh=dbh, event_bus=event_bus, config=config)
-    message = PGMessageComponent(dbh)
-    realm = PGRealmComponent(dbh)
-    vlob = PGVlobComponent(dbh)
-    ping = PGPingComponent(dbh)
-    blockstore = blockstore_factory(config=config.blockstore_config, postgresql_dbh=dbh)
-    block = PGBlockComponent(dbh=dbh, blockstore_component=blockstore)
-    pki = PGPkiEnrollmentComponent(dbh)
-    sequester = PGPSequesterComponent(dbh)
-    events = BaseEventsComponent(realm_component=realm, send_event=_send_event)
+                user = None
+                invite = None
+                message = None
+                realm = None
+                vlob = None
+                block = None
+                pki = None
+                sequester = None
+                blockstore = None
 
-    components = {
-        "events": events,
-        "webhooks": webhooks,
-        "organization": organization,
-        "user": user,
-        "invite": invite,
-        "message": message,
-        "realm": realm,
-        "vlob": vlob,
-        "ping": ping,
-        "block": block,
-        "blockstore": blockstore,
-        "pki": pki,
-        "sequester": sequester,
-    }
-    for component in components.values():
-        method = getattr(component, "register_components", None)
-        if method is not None:
-            method(**components)
+                components = {
+                    "event_bus": event_bus,
+                    "events": events,
+                    "webhooks": webhooks,
+                    "organization": organization,
+                    "user": user,
+                    "auth": auth,
+                    "invite": invite,
+                    "message": message,
+                    "realm": realm,
+                    "vlob": vlob,
+                    "ping": ping,
+                    "block": block,
+                    "blockstore": blockstore,
+                    "pki": pki,
+                    "sequester": sequester,
+                }
+                for component in components.values():
+                    method = getattr(component, "register_components", None)
+                    if method is not None:
+                        method(**components)
 
-    async with anyio.create_task_group() as task_group:
-        await dbh.init(task_group=task_group, events_component=events)
-        try:
-            yield components
-
-        finally:
-            await dbh.teardown()
+                yield components

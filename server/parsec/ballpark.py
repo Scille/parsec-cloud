@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from structlog import get_logger
 
 from parsec._parsec import DateTime
+from parsec.types import BadOutcome
 
 __all__ = ("timestamps_in_the_ballpark", "TimestampOutOfBallpark")
 
@@ -14,7 +15,7 @@ logger = get_logger()
 
 
 @dataclass(slots=True)
-class RequireGreaterTimestamp:
+class RequireGreaterTimestamp(BadOutcome):
     strictly_greater_than: DateTime
 
 
@@ -71,7 +72,7 @@ BALLPARK_ALWAYS_OK = False  # Useful for disabling ballpark checks in the tests
 
 
 @dataclass(slots=True)
-class TimestampOutOfBallpark:
+class TimestampOutOfBallpark(BadOutcome):
     client_timestamp: DateTime
     server_timestamp: DateTime
     ballpark_client_early_offset: int = BALLPARK_CLIENT_EARLY_OFFSET

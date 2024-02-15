@@ -2,7 +2,7 @@
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 
 from parsec._parsec import (
     CryptoError,
@@ -19,34 +19,26 @@ from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
 
-AuthAnonymousAuthBadOutcome = Enum(
-    "AuthAnonymousAuthBadOutcome",
-    (
-        "ORGANIZATION_EXPIRED",
-        "ORGANIZATION_NOT_FOUND",
-    ),
-)
-AuthInvitedAuthBadOutcome = Enum(
-    "AuthInvitedAuthBadOutcome",
-    (
-        "ORGANIZATION_EXPIRED",
-        "ORGANIZATION_NOT_FOUND",
-        "INVITATION_NOT_FOUND",
-        "INVITATION_ALREADY_USED",
-    ),
-)
-AuthAuthenticatedAuthBadOutcome = Enum(
-    "AuthAuthenticatedAuthBadOutcome",
-    (
-        "ORGANIZATION_EXPIRED",
-        "ORGANIZATION_NOT_FOUND",
-        "USER_REVOKED",
-        "USER_FROZEN",
-        "DEVICE_NOT_FOUND",
-        "INVALID_SIGNATURE",
-        "TOKEN_TOO_OLD",
-    ),
-)
+class AuthAnonymousAuthBadOutcome(Enum):
+    ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+class AuthInvitedAuthBadOutcome(Enum):
+    ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_NOT_FOUND = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_ALREADY_USED = auto()
+
+
+class AuthAuthenticatedAuthBadOutcome(Enum):
+    ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_NOT_FOUND = auto()
+    USER_REVOKED = auto()
+    USER_FROZEN = auto()
+    DEVICE_NOT_FOUND = auto()
+    INVALID_SIGNATURE = auto()
+    TOKEN_TOO_OLD = auto()
 
 
 @dataclass

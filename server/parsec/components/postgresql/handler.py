@@ -4,22 +4,20 @@ from __future__ import annotations
 import importlib.resources
 import re
 from base64 import b64decode, b64encode
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from functools import wraps
-from typing import Awaitable, Callable, Coroutine, Iterable
+from typing import AsyncIterator, Awaitable, Callable, Coroutine, Iterable
 from uuid import uuid4
 
-import anyio
 import asyncpg
-from anyio.abc import TaskGroup
 from asyncpg import PostgresError, UndefinedTableError, UniqueViolationError
 from structlog.stdlib import get_logger
 from typing_extensions import ParamSpec
 
 from parsec._parsec import ActiveUsersLimit, DateTime
-from parsec.components.events import BaseEventsComponent
-from parsec.joinable_task import JoinableTaskStatus, start_joinable_task
+from parsec.events import AnyEvent, Event
 
 from . import migrations as migrations_module
 
@@ -189,7 +187,9 @@ async def handle_integer(conn: asyncpg.Connection) -> None:
         if isinstance(x, ActiveUsersLimit):
             # encoder cannot return `None`. `NO_LIMIT` case should be handled before the insertion/update
             assert x is not ActiveUsersLimit.NO_LIMIT
-            return str(x.to_int())
+            value = x.to_maybe_int()
+            assert value is not None
+            return str(value)
         return str(x)
 
     await conn.set_type_codec(
@@ -201,98 +201,41 @@ async def handle_integer(conn: asyncpg.Connection) -> None:
     )
 
 
-# TODO: replace by a function
-class PGHandler:
-    def __init__(self, url: str, min_connections: int, max_connections: int, event_bus: EventBus):
-        self.url = url
-        self.min_connections = min_connections
-        self.max_connections = max_connections
-        self.event_bus = event_bus
-        self.pool: asyncpg.Pool
-        self.notification_conn: asyncpg.Connection
-        self._task_status: JoinableTaskStatus[None] | None = None
-        self._connection_lost = False
-        self._events_component: BaseEventsComponent | None = None
+@asynccontextmanager
+async def asyncpg_pool_factory(
+    url: str, min_connections: int, max_connections: int
+) -> AsyncIterator[asyncpg.Pool]:
+    # By default AsyncPG only work with Python standard `datetime.DateTime`
+    # for timestamp types, here we override this behavior to uses our own custom
+    # - DateTime type
+    # - Uuid type
+    async def _init_connection(conn: asyncpg.Connection) -> None:
+        await handle_datetime(conn)
+        await handle_uuid(conn)
+        await handle_integer(conn)
 
-    async def init(
-        self, task_group: TaskGroup, events_component: BaseEventsComponent | None
-    ) -> None:
-        self._task_status = await start_joinable_task(task_group, self._run_connections)
-        self._events_component = events_component
-
-    async def _run_connections(
-        self, task_status: anyio.TaskStatus[None] = anyio.TASK_STATUS_IGNORED
-    ) -> None:
-        # By default AsyncPG only work with Python standard `datetime.DateTime`
-        # for timestamp types, here we override this behavior to uses our own custom
-        # - DateTime type
-        # - Uuid type
-        async def _init_connection(conn: asyncpg.Connection) -> None:
-            await handle_datetime(conn)
-            await handle_uuid(conn)
-            await handle_integer(conn)
-
-        async with asyncpg.create_pool(
-            self.url,
-            min_size=self.min_connections,
-            max_size=self.max_connections,
-            init=_init_connection,
-        ) as self.pool:
-            # This connection is dedicated to the notifications listening, so it
-            # would only complicate stuff to include it into the connection pool
-            self.notification_conn = await asyncpg.connect(self.url)
-            try:
-                self.notification_conn.add_termination_listener(
-                    self._on_notification_conn_termination
-                )
-                await self.notification_conn.add_listener("app_notification", self._on_notification)
-                task_status.started()
-                try:
-                    await anyio.sleep_forever()
-                finally:
-                    if self._connection_lost:
-                        raise ConnectionError("PostgreSQL notification query has been lost")
-
-            finally:
-                await self.notification_conn.close()
-
-    # Notification listening is achieve by a never-ending LISTEN
-    # query to PostgreSQL.
-    # If this query is terminated (most likely because the database has
-    # been restarted) we might miss some notifications.
-    # Hence all client connections should be closed in order not to mislead
-    # them into thinking no notifications has occurred.
-    # And the simplest way to do that is to raise a big exception in _run_connections ;-)
-    def _on_notification_conn_termination(self, conn: asyncpg.Connection) -> None:
-        self._connection_lost = True
-        if self._task_status:
-            self._task_status.cancel()
-
-    def _on_notification(
-        self, conn: asyncpg.Connection, pid: int, channel: str, payload: str
-    ) -> None:
-        try:
-            event_id, raw_event = payload.split(":")
-            event = BackendEvent.load(b64decode(raw_event.encode("ascii")))
-        except ValueError as exc:
-            logger.warning(
-                "Invalid notif received", pid=pid, channel=channel, payload=payload, exc_info=exc
-            )
-            return
-
-        if self._events_component:
-            self._events_component.add_event_to_cache(event_id, event)
-        self.event_bus.send(type(event), event_id=event_id, payload=event)
-
-    async def teardown(self) -> None:
-        if self._task_status:
-            await self._task_status.cancel_and_join()
+    async with asyncpg.create_pool(
+        url,
+        min_size=min_connections,
+        max_size=max_connections,
+        init=_init_connection,
+    ) as pool:
+        yield pool
 
 
-async def send_signal(conn: asyncpg.Connection, event: BackendEvent) -> None:
+async def send_signal(conn: asyncpg.Connection, event: Event) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
-    raw_event = b64encode(event.dump()).decode("ascii")
+    raw_event = b64encode(event.model_dump_json().encode("utf-8")).decode("ascii")
+    # Add UUID to ensure the payload is unique given it seems Postgresql can
+    # drop duplicated NOTIFY (same channel/payload)
+    # see: https://github.com/Scille/parsec-cloud/issues/199
     event_id = uuid4().hex
     payload = f"{event_id}:{raw_event}"
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", payload)
+
+
+def parse_signal(payload: str) -> Event:
+    _, raw_event = payload.split(":")
+    any_event = AnyEvent.model_validate_json(b64decode(raw_event.encode("ascii")))
+    return any_event.event

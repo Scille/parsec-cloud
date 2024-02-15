@@ -8,9 +8,8 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator
+from typing import AsyncIterator
 
-import anyio
 import click
 
 from parsec._parsec import (
@@ -30,13 +29,9 @@ from parsec._parsec import (
 from parsec.cli.options import blockstore_server_options, db_server_options, debug_config_options
 from parsec.cli.utils import cli_exception_handler, operation
 from parsec.components.blockstore import blockstore_factory
-from parsec.components.postgresql.handler import PGHandler
 
-# from parsec.components.postgresql.organization import PGOrganizationComponent
-# from parsec.components.postgresql.realm import PGRealmComponent
-# from parsec.components.postgresql.sequester import PGPSequesterComponent
-# from parsec.components.postgresql.sequester_export import RealmExporter
-# from parsec.components.postgresql.user import PGUserComponent
+
+from parsec.components.postgresql.sequester import PGSequesterComponent
 from parsec.components.realm import RealmGrantedRole
 from parsec.components.sequester import (
     BaseSequesterService,
@@ -107,16 +102,8 @@ class BackendDbConfig:
 
 
 @asynccontextmanager
-async def run_pg_db_handler(config: BackendDbConfig) -> AsyncGenerator[PGHandler, None]:
-    event_bus = EventBus()
-    dbh = PGHandler(config.db_url, config.db_min_connections, config.db_max_connections, event_bus)
-
-    async with anyio.create_task_group() as task_group:
-        await dbh.init(task_group, events_component=None)
-        try:
-            yield dbh
-        finally:
-            await dbh.teardown()
+async def run_sequester_component(config: BackendDbConfig) -> AsyncIterator[PGSequesterComponent]:
+    raise NotImplementedError
 
 
 async def _create_service(
@@ -124,8 +111,7 @@ async def _create_service(
     organization_id: OrganizationID,
     register_service_req: BaseSequesterService,
 ) -> None:
-    async with run_pg_db_handler(config) as dbh:
-        sequester_component = PGPSequesterComponent(dbh)
+    async with run_sequester_component(config) as sequester_component:
         await sequester_component.create_service(organization_id, register_service_req)
 
 
@@ -143,8 +129,7 @@ def _display_service(service: BaseSequesterService) -> None:
 
 
 async def _list_services(config: BackendDbConfig, organization_id: OrganizationID) -> None:
-    async with run_pg_db_handler(config) as dbh:
-        sequester_component = PGPSequesterComponent(dbh)
+    async with run_sequester_component(config) as sequester_component:
         services = await sequester_component.get_organization_services(organization_id)
 
     display_services_count = click.style(len(services), fg="green")
@@ -162,16 +147,14 @@ async def _list_services(config: BackendDbConfig, organization_id: OrganizationI
 async def _disable_service(
     config: BackendDbConfig, organization_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
-    async with run_pg_db_handler(config) as dbh:
-        sequester_component = PGPSequesterComponent(dbh)
+    async with run_sequester_component(config) as sequester_component:
         await sequester_component.disable_service(organization_id, service_id)
 
 
 async def _enable_service(
     config: BackendDbConfig, organization_id: OrganizationID, service_id: SequesterServiceID
 ) -> None:
-    async with run_pg_db_handler(config) as dbh:
-        sequester_component = PGPSequesterComponent(dbh)
+    async with run_sequester_component(config) as sequester_component:
         await sequester_component.enable_service(organization_id, service_id)
 
 
@@ -363,7 +346,7 @@ async def _import_service_certificate(
                 webhook_url=webhook_url,
             )
 
-        sequester_component = PGPSequesterComponent(dbh)
+        sequester_component = PGSequesterComponent(dbh)
         await sequester_component.create_service(organization_id, service)
 
 
