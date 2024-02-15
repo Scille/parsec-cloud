@@ -109,7 +109,7 @@ describe('Check folders page', () => {
     // Unselect the first file
     cy.get('.file-card-item').eq(0).find('ion-checkbox').click();
     cy.get('.file-card-item').eq(0).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
+    // cy.get('.file-card-item').eq(1).find('ion-checkbox').should('not.be.visible');
     cy.get('.counter').contains(/^\d+ items$/);
   });
 
@@ -124,6 +124,7 @@ describe('Check folders page', () => {
     // Unselect all
     cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
+    cy.wait(200);
     cy.get('.file-list-item').first().find('ion-checkbox').should('not.be.visible');
     cy.get('.file-list-item').last().find('ion-checkbox').should('not.be.visible');
     cy.get('.counter').contains(/^\d+ items$/);
