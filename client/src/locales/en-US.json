@@ -59,6 +59,9 @@
         "browse": "Go to location",
         "noNotification": "You are up to date!"
     },
+    "notification": {
+        "changeRole": "Your role a been changed to {role} on the workspace {workspace}"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Settings",

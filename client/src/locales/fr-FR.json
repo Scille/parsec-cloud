@@ -59,6 +59,9 @@
         "browse": "Aller à l'emplacement",
         "noNotification": "Vous êtes à jour !"
     },
+    "notification": {
+        "changeRole": "Votre role a été modifié en tant que {role} on the workspace {workspace}"
+    },
     "HomePage": {
         "topbar": {
             "settings": "Paramètres",
