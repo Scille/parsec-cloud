@@ -12,7 +12,7 @@ ion-modal {
   --width: var(--parsec-modal-width);
   --max-width: var(--parsec-modal-width);
   --height: auto;
-  --max-height: var(--parsec-modal-max-height);
+  --max-height: auto;
 }
 
 ion-modal .ion-page {
@@ -196,6 +196,7 @@ ion-modal.join-by-link-modal::part(content) {
 .workspace-sharing-modal {
   --width: 642px;
   --height: 636px;
+  --max-height: var(--parsec-modal-max-height);
 
   &::part(content) {
     height: 100%;
@@ -209,6 +210,7 @@ ion-modal.join-by-link-modal::part(content) {
 
 .user-details-modal {
   --width: 642px;
+  --max-height: var(--parsec-modal-max-height);
 
   &::part(content) {
     height: 100%;
