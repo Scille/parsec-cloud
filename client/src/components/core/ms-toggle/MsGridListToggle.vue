@@ -47,7 +47,6 @@ defineExpose({
 .ms-grid-list-toggle {
   display: flex;
   align-items: center;
-  background: var(--parsec-color-light-secondary-white);
   padding: 0;
   gap: 0.25rem;
 }
@@ -64,8 +63,7 @@ defineExpose({
     --background-hover: none;
 
     &:hover {
-      color: var(--parsec-color-light-primary-700);
-      opacity: 0.5;
+      color: var(--parsec-color-light-secondary-grey);
     }
   }
 
