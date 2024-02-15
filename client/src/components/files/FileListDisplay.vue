@@ -12,7 +12,7 @@
             aria-label=""
             class="checkbox"
             @ion-change="selectAll($event.detail.checked)"
-            :value="allSelected"
+            :checked="allSelected"
             :indeterminate="someSelected && !allSelected"
           />
         </ion-label>
@@ -62,8 +62,13 @@
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
 import { EntryCollection, EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+
+let hotkeys: Hotkeys | null = null;
 
 const props = defineProps<{
   importing: Array<FileImportProgress>;
@@ -77,6 +82,17 @@ defineEmits<{
 }>();
 
 const selectedCount = ref(0);
+
+onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Workspaces);
+  hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop | Platforms.Web, async () => await selectAll(true));
+});
+
+onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
+});
 
 const allSelected = computed(() => {
   return selectedCount.value === props.files.getEntries().length + props.folders.getEntries().length;

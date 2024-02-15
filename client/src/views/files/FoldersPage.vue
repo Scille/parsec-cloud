@@ -188,6 +188,7 @@ import {
   SortProperty,
 } from '@/components/files';
 import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -232,6 +233,7 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 const importManager: ImportManager = inject(ImportManagerKey)!;
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 
@@ -248,6 +250,7 @@ const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
 });
 
+let hotkeys: Hotkeys | null = null;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
@@ -258,6 +261,23 @@ onMounted(async () => {
   if (savedData && savedData.displayState !== undefined) {
     displayView.value = savedData.displayState;
   }
+  hotkeys = hotkeyManager.newHotkeys(Groups.Documents);
+  hotkeys.add('o', Modifiers.Ctrl, Platforms.Desktop | Platforms.Web, importFiles);
+  hotkeys.add('enter', Modifiers.None, Platforms.MacOS, async () => await renameEntries(getSelectedEntries()));
+  hotkeys.add('f2', Modifiers.None, Platforms.Windows | Platforms.Linux, async () => await renameEntries(getSelectedEntries()));
+  hotkeys.add('i', Modifiers.Ctrl | Modifiers.Shift, Platforms.Desktop, async () => await showDetails(getSelectedEntries()));
+  hotkeys.add('c', Modifiers.Ctrl, Platforms.Desktop, async () => await moveEntriesTo(getSelectedEntries()));
+  hotkeys.add('l', Modifiers.Ctrl, Platforms.Desktop, async () => await copyLink(getSelectedEntries()));
+  hotkeys.add(
+    'delete',
+    Modifiers.None,
+    Platforms.Windows | Platforms.Linux | Platforms.Web,
+    async () => await deleteEntries(getSelectedEntries()),
+  );
+  hotkeys.add('backspace', Modifiers.Ctrl, Platforms.MacOS, async () => await deleteEntries(getSelectedEntries()));
+  hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
+    displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
+  });
 
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
@@ -269,6 +289,9 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
   if (callbackId) {
     importManager.removeCallback(callbackId);
   }
@@ -361,6 +384,7 @@ async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<voi
 }
 
 async function createFolder(): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Documents);
   const folderName = await getTextInputFromUser({
     title: translate('FoldersPage.CreateFolderModal.title'),
     trim: true,
@@ -369,6 +393,7 @@ async function createFolder(): Promise<void> {
     placeholder: translate('FoldersPage.CreateFolderModal.placeholder'),
     okButtonText: translate('FoldersPage.CreateFolderModal.create'),
   });
+  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!folderName) {
     return;
@@ -395,6 +420,7 @@ async function importFiles(): Promise<void> {
   if (fileUploadModal) {
     return;
   }
+  hotkeyManager.disableGroup(Groups.Documents);
   fileUploadModal = await modalController.create({
     component: FileUploadModal,
     cssClass: 'file-upload-modal',
@@ -406,6 +432,7 @@ async function importFiles(): Promise<void> {
   });
   await fileUploadModal.present();
   await fileUploadModal.onDidDismiss();
+  hotkeyManager.enableGroup(Groups.Documents);
   fileUploadModal = null;
 }
 
@@ -424,11 +451,13 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const subtitle = entry.isFile()
       ? translate('FoldersPage.deleteOneFileQuestionSubtitle', { name: entry.name })
       : translate('FoldersPage.deleteOneFolderQuestionSubtitle', { name: entry.name });
+    hotkeyManager.disableGroup(Groups.Documents);
     const answer = await askQuestion(title, subtitle, {
       yesIsDangerous: true,
       yesText: entry.isFile() ? translate('FoldersPage.deleteOneFileYes') : translate('FoldersPage.deleteOneFolderYes'),
       noText: entry.isFile() ? translate('FoldersPage.deleteOneFileNo') : translate('FoldersPage.deleteOneFolderNo'),
     });
+    hotkeyManager.enableGroup(Groups.Documents);
 
     if (answer === Answer.No) {
       return;
@@ -447,6 +476,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       console.log(`File ${entry.name} deleted`);
     }
   } else {
+    hotkeyManager.disableGroup(Groups.Documents);
     const answer = await askQuestion(
       translate('FoldersPage.deleteMultipleQuestionTitle'),
       translate('FoldersPage.deleteMultipleQuestionSubtitle', {
@@ -458,6 +488,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
         noText: translate('FoldersPage.deleteMultipleNo', { count: entries.length }),
       },
     );
+    hotkeyManager.enableGroup(Groups.Documents);
     if (answer === Answer.No) {
       return;
     }
@@ -488,11 +519,12 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length === 0) {
+  if (entries.length !== 1) {
     return;
   }
   const entry = entries[0];
   const ext = parsec.Path.getFileExtension(entry.name);
+  hotkeyManager.disableGroup(Groups.Documents);
   const newName = await getTextInputFromUser({
     title: entry.isFile() ? translate('FoldersPage.RenameModal.fileTitle') : translate('FoldersPage.RenameModal.folderTitle'),
     trim: true,
@@ -505,6 +537,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
     defaultValue: entry.name,
     selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
   });
+  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!newName) {
     return;
@@ -565,11 +598,13 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0) {
     return;
   }
+  hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
     startingPath: currentPath.value,
     workspaceId: getWorkspaceId(),
   });
+  hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
     return;
   }
@@ -618,6 +653,7 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
+  hotkeyManager.disableGroup(Groups.Documents);
   const modal = await modalController.create({
     component: FileDetailsModal,
     cssClass: 'file-details-modal',
@@ -628,18 +664,21 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
+  hotkeyManager.enableGroup(Groups.Documents);
 }
 
 async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0) {
     return;
   }
+  hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
     workspaceId: getWorkspaceId(),
   });
+  hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
     return;
   }
@@ -691,7 +730,9 @@ async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
+  hotkeyManager.disableGroup(Groups.Documents);
   console.log('Show history', entries[0]);
+  hotkeyManager.enableGroup(Groups.Documents);
 }
 
 async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
@@ -699,6 +740,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   if (parsec.isWeb()) {
+    hotkeyManager.disableGroup(Groups.Documents);
     await informationManager.present(
       new Information({
         message: translate('FoldersPage.open.unavailableOnWeb.message'),
@@ -706,6 +748,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
       }),
       PresentationMode.Modal,
     );
+    hotkeyManager.enableGroup(Groups.Documents);
     return;
   }
   const entry = entries[0];
@@ -727,6 +770,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function openEntryContextMenu(entry: parsec.EntryStat, event: Event, onFinished?: () => void): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Documents);
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -742,6 +786,7 @@ async function openEntryContextMenu(entry: parsec.EntryStat, event: Event, onFin
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
+  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!data) {
     if (onFinished) {

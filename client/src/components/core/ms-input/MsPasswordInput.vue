@@ -21,6 +21,8 @@
             @keyup.enter="onEnterPress()"
             id="ms-password-input"
             :clear-on-edit="false"
+            @ion-focus="hasFocus = true"
+            @ion-blur="hasFocus = false"
           />
           <div
             class="input-icon"
@@ -38,11 +40,16 @@
 </template>
 
 <script setup lang="ts">
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCol, IonGrid, IonIcon, IonInput, IonItem, IonRow, IonText } from '@ionic/vue';
 import { eye, eyeOff } from 'ionicons/icons';
-import { ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const inputRef = ref();
+let hotkeys: Hotkeys | null = null;
+const passwordVisible = ref(false);
+const hasFocus = ref(false);
 
 const props = defineProps<{
   label: string;
@@ -55,10 +62,24 @@ const emits = defineEmits<{
   (e: 'update:modelValue', value: string): void;
 }>();
 
-const passwordVisible = ref(false);
-
 defineExpose({
   setFocus,
+});
+
+onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Unique);
+
+  hotkeys.add('/', Modifiers.Ctrl, Platforms.Desktop, async () => {
+    if (hasFocus.value) {
+      passwordVisible.value = !passwordVisible.value;
+    }
+  });
+});
+
+onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
 });
 
 function setFocus(): void {

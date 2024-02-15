@@ -82,6 +82,7 @@
                 unread: informationManager.notificationManager.hasUnreadNotifications(),
               }"
               @click="openNotificationCenter($event)"
+              ref="notificationCenterButton"
             >
               <ion-icon :icon="notifications" />
             </ion-button>
@@ -117,8 +118,10 @@ import {
   getWorkspaceId,
   hasHistory,
   navigateTo,
+  routerGoBack,
   watchRoute,
 } from '@/router';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationKey, InformationManager } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
@@ -140,12 +143,15 @@ import {
 import { home, menu, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+let hotkeys: Hotkeys | null = null;
 const workspaceName: Ref<WorkspaceName> = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationKey)!;
+const notificationCenterButton = ref();
 
 const routeWatchCancel = watchRoute(async () => {
   const result = await getClientInfo();
@@ -222,6 +228,11 @@ async function updateRoute(): Promise<void> {
 }
 
 onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Global);
+  hotkeys.add(',', Modifiers.Ctrl, Platforms.Desktop, async () => await navigateTo(Routes.Settings));
+  hotkeys.add('arrowup', Modifiers.Ctrl, Platforms.Desktop, async () => await routerGoBack());
+  hotkeys.add('arrowleft', Modifiers.Ctrl, Platforms.Desktop, async () => await routerGoBack());
+  hotkeys.add('n', Modifiers.Ctrl | Modifiers.Shift, Platforms.Desktop, async () => await notificationCenterButton.value.$el.click());
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
@@ -232,6 +243,9 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
   routeWatchCancel();
 });
 
@@ -264,6 +278,7 @@ function getTitleForRoute(): string {
 }
 
 async function openNotificationCenter(event: Event): Promise<void> {
+  hotkeyManager.disableGroup(Groups.Global);
   event.stopPropagation();
   notificationPopoverIsVisible.value = true;
   const popover = await popoverController.create({
@@ -277,6 +292,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
   await popover.onWillDismiss();
   notificationPopoverIsVisible.value = false;
   await popover.dismiss();
+  hotkeyManager.enableGroup(Groups.Global);
 }
 </script>
 
