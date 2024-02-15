@@ -15,10 +15,11 @@ import { IonItemDivider } from '@ionic/vue';
 <style scoped lang="scss">
 .toolbar {
   margin: 0 1.25rem;
-  padding: 0.5em 1em;
+  padding: 0.75em 1em;
   background-color: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-disabled);
   border-radius: var(--parsec-radius-12);
   width: -webkit-fill-available;
+  --inner-padding-end: 0;
 }
 </style>

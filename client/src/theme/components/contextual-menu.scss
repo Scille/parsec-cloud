@@ -12,6 +12,7 @@
     margin-left: auto;
     display: flex;
     flex-shrink: 0;
+    align-items: center;
   }
 
   & > div:not(.right-side) {
