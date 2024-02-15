@@ -988,6 +988,7 @@
             "dateTitle": "Invitation date",
             "statusTitle": "Status",
             "noInvitations": "No pending invitations",
+            "invitationCount": "No pending invitation | One pending invitation | {count} pending invitations",
             "invitationsListFailed": {
                 "title": "Could not retrieve the invitations list",
                 "message": "Please make sure you're connected to the internet."

@@ -121,7 +121,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-name {
-  padding: 0.75rem 1rem;
+  padding: 0.5rem 1rem;
   width: auto;
   flex-grow: 1;
   max-width: 20vw;
