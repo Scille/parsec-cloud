@@ -125,8 +125,16 @@
         </div>
       </ms-action-bar>
       <div class="folder-container scroll">
-        <div v-if="folders.entriesCount() + files.entriesCount() === 0">
-          {{ $t('FoldersPage.emptyFolder') }}
+        <div
+          v-if="folders.entriesCount() + files.entriesCount() === 0"
+          class="no-files body-lg"
+        >
+          <div class="no-files-content">
+            <ms-image :image="EmptyFolder" />
+            <ion-text>
+              {{ $t('FoldersPage.emptyFolder') }}
+            </ion-text>
+          </div>
         </div>
         <div v-else>
           <div v-if="displayView === DisplayState.List">
@@ -166,6 +174,7 @@ import {
   getTextInputFromUser,
   selectFolder,
 } from '@/components/core';
+import { EmptyFolder, MsImage } from '@/components/core/ms-image';
 import * as parsec from '@/parsec';
 
 import { MsOptions, MsSorter, MsSorterChangeEvent } from '@/components/core';
@@ -764,7 +773,24 @@ async function openEntryContextMenu(entry: parsec.EntryStat, event: Event, onFin
 </script>
 
 <style scoped lang="scss">
-.folder-container {
-  background-color: white;
+.no-files {
+  width: 100%;
+  height: 100%;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    width: 100%;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
 }
 </style>

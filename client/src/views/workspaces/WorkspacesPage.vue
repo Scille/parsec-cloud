@@ -17,7 +17,7 @@
         />
         <div class="right-side">
           <div class="counter">
-            <ion-text class="body">
+            <ion-text class="body-lg">
               {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
             </ion-text>
           </div>
@@ -36,8 +36,28 @@
       </ms-action-bar>
       <!-- workspaces -->
       <div class="workspaces-container scroll">
-        <div v-if="filteredWorkspaces.length === 0">
-          {{ $t('WorkspacesPage.noWorkspaces') }}
+        <div
+          v-if="filteredWorkspaces.length === 0"
+          class="no-workspaces body"
+        >
+          <div class="no-workspaces-content">
+            <ms-image
+              :image="NoWorkspace"
+              class="no-workspaces-content__image"
+            />
+            <ion-text>
+              {{ $t('WorkspacesPage.noWorkspaces') }}
+            </ion-text>
+            <ion-button
+              v-show="clientProfile != UserProfile.Outsider"
+              id="new-workspace"
+              fill="outline"
+              @click="openCreateWorkspaceModal()"
+            >
+              <ion-icon :icon="addCircle" />
+              {{ $t('WorkspacesPage.createWorkspace') }}
+            </ion-button>
+          </div>
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
@@ -111,22 +131,6 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonContent,
-  IonFab,
-  IonFabButton,
-  IonIcon,
-  IonItem,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonPage,
-  IonText,
-  isPlatform,
-  modalController,
-  popoverController,
-} from '@ionic/vue';
-
 import { writeTextToClipboard } from '@/common/clipboard';
 import { workspaceNameValidator } from '@/common/validators';
 import {
@@ -139,6 +143,7 @@ import {
   MsSorterChangeEvent,
   getTextInputFromUser,
 } from '@/components/core';
+import { MsImage, NoWorkspace } from '@/components/core/ms-image';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
@@ -155,6 +160,22 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
+import {
+  IonButton,
+  IonContent,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList,
+  IonListHeader,
+  IonPage,
+  IonText,
+  isPlatform,
+  modalController,
+  popoverController,
+} from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, ref } from 'vue';
 
@@ -344,8 +365,34 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.workspaces-container {
-  background-color: white;
+.no-workspaces {
+  max-width: 30rem;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  height: 100%;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+
+    #new-workspace {
+      display: flex;
+      align-items: center;
+
+      ion-icon {
+        margin-inline: 0em;
+        margin-right: 0.375rem;
+      }
+    }
+  }
 }
 
 .workspace-list-header {

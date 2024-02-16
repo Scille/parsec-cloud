@@ -58,8 +58,16 @@
       </ms-action-bar>
       <!-- users -->
       <div class="users-container scroll">
-        <div v-if="userList.length === 0">
-          {{ $t('UsersPage.emptyList') }}
+        <div
+          v-if="userList.length === 0"
+          class="no-active body-lg"
+        >
+          <div class="no-active-content">
+            <ms-image :image="NoActiveUser" />
+            <ion-text>
+              {{ $t('UsersPage.emptyList') }}
+            </ion-text>
+          </div>
         </div>
         <div v-else>
           <div v-if="displayView === DisplayState.List">
@@ -137,6 +145,7 @@
 
 <script setup lang="ts">
 import { Answer, DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, askQuestion } from '@/components/core';
+import { MsImage, NoActiveUser } from '@/components/core/ms-image';
 import UserCard from '@/components/users/UserCard.vue';
 import UserListItem from '@/components/users/UserListItem.vue';
 import {
@@ -441,6 +450,27 @@ onUnmounted(async () => {
 </script>
 
 <style scoped lang="scss">
+.no-active {
+  width: 100%;
+  height: 100%;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    width: 100%;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+}
+
 .user-list-header {
   &__label {
     padding: 0 1rem;
