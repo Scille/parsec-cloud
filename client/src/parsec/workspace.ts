@@ -99,7 +99,6 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         value[i].sharing = result.value;
       }
     }
-
     return { ok: true, value: value };
   }
 }

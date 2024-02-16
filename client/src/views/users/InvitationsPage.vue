@@ -27,8 +27,16 @@
 
       <!-- content -->
       <div class="invitation-container scroll">
-        <div v-if="invitations.length === 0">
-          {{ $t('UsersPage.invitation.noInvitations') }}
+        <div
+          v-if="invitations.length === 0"
+          class="no-invitation body-lg"
+        >
+          <div class="no-invitation-content">
+            <ms-image :image="NoInvitation" />
+            <ion-text>
+              {{ $t('UsersPage.invitation.noInvitations') }}
+            </ion-text>
+          </div>
         </div>
         <div v-if="invitations.length > 0 && displayView === DisplayState.List">
           <ion-list class="invitation-list">
@@ -76,6 +84,7 @@
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
 import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, MsModalResult, getTextInputFromUser } from '@/components/core';
+import { MsImage, NoInvitation } from '@/components/core/ms-image';
 import InvitationCard from '@/components/users/InvitationCard.vue';
 import InvitationListItem from '@/components/users/InvitationListItem.vue';
 import {
@@ -263,6 +272,26 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.no-invitation {
+  width: 100%;
+  height: 100%;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    width: 100%;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+}
 .invitation-list-header {
   color: var(--parsec-color-light-secondary-grey);
   padding-inline-start: 0;

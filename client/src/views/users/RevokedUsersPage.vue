@@ -41,8 +41,16 @@
       </ms-action-bar>
       <!-- users -->
       <div class="revoked-users-container scroll">
-        <div v-if="userList.length === 0">
-          {{ $t('UsersPage.revokedEmptyList') }}
+        <div
+          v-if="userList.length === 0"
+          class="no-revoked body-lg"
+        >
+          <div class="no-revoked-content">
+            <ms-image :image="NoRevokedUser" />
+            <ion-text>
+              {{ $t('UsersPage.revokedEmptyList') }}
+            </ion-text>
+          </div>
         </div>
         <div v-else>
           <div v-if="displayView === DisplayState.List">
@@ -112,6 +120,7 @@
 
 <script setup lang="ts">
 import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle } from '@/components/core';
+import { MsImage, NoRevokedUser } from '@/components/core/ms-image';
 import UserCard from '@/components/users/UserCard.vue';
 import UserListItem from '@/components/users/UserListItem.vue';
 import { UserInfo, listRevokedUsers as parsecListRevokedUsers } from '@/parsec';
@@ -286,6 +295,27 @@ onMounted(async (): Promise<void> => {
 </script>
 
 <style scoped lang="scss">
+.no-revoked {
+  width: 100%;
+  height: 100%;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    width: 100%;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+  }
+}
+
 .user-list-header {
   &__label {
     padding: 0 1rem;

@@ -17,7 +17,7 @@
         />
         <div class="right-side">
           <div class="counter">
-            <ion-text class="body">
+            <ion-text class="body-lg">
               {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
             </ion-text>
           </div>
@@ -36,8 +36,28 @@
       </ms-action-bar>
       <!-- workspaces -->
       <div class="workspaces-container scroll">
-        <div v-if="filteredWorkspaces.length === 0">
-          {{ $t('WorkspacesPage.noWorkspaces') }}
+        <div
+          v-if="filteredWorkspaces.length === 0"
+          class="no-workspaces body"
+        >
+          <div class="no-workspaces-content">
+            <ms-image
+              :image="NoWorkspace"
+              class="no-workspaces-content__image"
+            />
+            <ion-text>
+              {{ $t('WorkspacesPage.noWorkspaces') }}
+            </ion-text>
+            <ion-button
+              v-show="clientProfile != UserProfile.Outsider"
+              id="new-workspace"
+              fill="outline"
+              @click="openCreateWorkspaceModal()"
+            >
+              <ion-icon :icon="addCircle" />
+              {{ $t('WorkspacesPage.createWorkspace') }}
+            </ion-button>
+          </div>
         </div>
 
         <div v-if="filteredWorkspaces.length > 0 && displayView === DisplayState.List">
@@ -111,7 +131,38 @@
 </template>
 
 <script setup lang="ts">
+import { writeTextToClipboard } from '@/common/clipboard';
+import { workspaceNameValidator } from '@/common/validators';
 import {
+  DisplayState,
+  MsActionBar,
+  MsActionBarButton,
+  MsGridListToggle,
+  MsOptions,
+  MsSorter,
+  MsSorterChangeEvent,
+  getTextInputFromUser,
+} from '@/components/core';
+import { MsImage, NoWorkspace } from '@/components/core/ms-image';
+import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
+import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
+import {
+  UserProfile,
+  WorkspaceInfo,
+  WorkspaceName,
+  getClientProfile,
+  createWorkspace as parsecCreateWorkspace,
+  getPathLink as parsecGetPathLink,
+  listWorkspaces as parsecListWorkspaces,
+} from '@/parsec';
+import { getCurrentRouteQuery, navigateToWorkspace, watchRoute } from '@/router';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { translate } from '@/services/translation';
+import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
+import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
+import {
+  IonButton,
   IonContent,
   IonFab,
   IonFabButton,
@@ -126,37 +177,8 @@ import {
   modalController,
   popoverController,
 } from '@ionic/vue';
-
-import { writeTextToClipboard } from '@/common/clipboard';
-import { workspaceNameValidator } from '@/common/validators';
-import {
-  DisplayState,
-  MsActionBar,
-  MsActionBarButton,
-  MsGridListToggle,
-  MsOptions,
-  MsSorter,
-  MsSorterChangeEvent,
-  getTextInputFromUser,
-} from '@/components/core';
-import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
-import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
-import {
-  UserProfile,
-  WorkspaceInfo,
-  getClientProfile,
-  createWorkspace as parsecCreateWorkspace,
-  getPathLink as parsecGetPathLink,
-  listWorkspaces as parsecListWorkspaces,
-} from '@/parsec';
-import { navigateToWorkspace } from '@/router';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { translate } from '@/services/translation';
-import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
-import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { addCircle } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const sortBy = ref('name');
 const sortByAsc = ref(true);
@@ -171,6 +193,13 @@ const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 interface WorkspacesPageSavedData {
   displayState?: DisplayState;
 }
+
+const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  if (query.workspaceName) {
+    await createWorkspace(query.workspaceName);
+  }
+});
 
 const msSorterLabels = {
   asc: translate('HomePage.organizationList.sortOrderAsc'),
@@ -187,6 +216,10 @@ onMounted(async (): Promise<void> => {
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
+});
+
+onUnmounted(async () => {
+  routeWatchCancel();
 });
 
 async function onDisplayStateChange(): Promise<void> {
@@ -232,6 +265,30 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortByAsc.value = event.sortByAsc;
 }
 
+async function createWorkspace(name: WorkspaceName): Promise<void> {
+  const result = await parsecCreateWorkspace(name);
+  if (result.ok) {
+    informationManager.present(
+      new Information({
+        message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
+          workspace: name,
+        }),
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    await refreshWorkspacesList();
+  } else {
+    informationManager.present(
+      new Information({
+        message: translate('WorkspacesPage.newWorkspaceError.message'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
 async function openCreateWorkspaceModal(): Promise<void> {
   const workspaceName = await getTextInputFromUser({
     title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
@@ -243,27 +300,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
   });
 
   if (workspaceName) {
-    const result = await parsecCreateWorkspace(workspaceName);
-    if (result.ok) {
-      informationManager.present(
-        new Information({
-          message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
-            workspace: workspaceName,
-          }),
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-      await refreshWorkspacesList();
-    } else {
-      informationManager.present(
-        new Information({
-          message: translate('WorkspacesPage.newWorkspaceError.message'),
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    }
+    await createWorkspace(workspaceName);
   }
 }
 
@@ -344,8 +381,34 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.workspaces-container {
-  background-color: white;
+.no-workspaces {
+  max-width: 30rem;
+  color: var(--parsec-color-light-secondary-grey);
+  display: flex;
+  margin: auto;
+  height: 100%;
+  align-items: center;
+
+  &-content {
+    border-radius: var(--parsec-radius-8);
+    display: flex;
+    height: fit-content;
+    text-align: center;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+    padding: 2rem 1rem;
+
+    #new-workspace {
+      display: flex;
+      align-items: center;
+
+      ion-icon {
+        margin-inline: 0em;
+        margin-right: 0.375rem;
+      }
+    }
+  }
 }
 
 .workspace-list-header {

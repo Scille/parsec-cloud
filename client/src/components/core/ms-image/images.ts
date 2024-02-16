@@ -18,10 +18,15 @@ import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg?raw';
 import LogoRowWhite from '@/assets/images/logo-row-white.svg?raw';
 import Mail from '@/assets/images/mail.svg?raw';
 import Music from '@/assets/images/music.svg?raw';
+import NoActiveUser from '@/assets/images/no-active-user.svg?raw';
 import NoImportDone from '@/assets/images/no-file-done.svg?raw';
 import NoImportError from '@/assets/images/no-file-error.svg?raw';
+import EmptyFolder from '@/assets/images/no-file-imported.svg?raw';
 import NoImportInProgress from '@/assets/images/no-file-in-progress.svg?raw';
+import NoInvitation from '@/assets/images/no-invitation.svg?raw';
 import NoNotification from '@/assets/images/no-notification.svg?raw';
+import NoRevokedUser from '@/assets/images/no-revoked-user.svg?raw';
+import NoWorkspace from '@/assets/images/no-workspace.svg?raw';
 import PasswordLock from '@/assets/images/password-lock.svg?raw';
 import Pdf from '@/assets/images/pdf.svg?raw';
 import Photoshop from '@/assets/images/photoshop.svg?raw';
@@ -65,15 +70,20 @@ const File = {
 export {
   CaretExpand,
   Device,
+  EmptyFolder,
   File,
   FileImport,
   Folder,
   LogoIconGradient,
   LogoRowWhite,
+  NoActiveUser,
   NoImportDone,
   NoImportError,
   NoImportInProgress,
+  NoInvitation,
   NoNotification,
+  NoRevokedUser,
+  NoWorkspace,
   PasswordLock,
   SwapArrows,
   WavyCaretUp,
