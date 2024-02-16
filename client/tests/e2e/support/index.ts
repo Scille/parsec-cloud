@@ -65,6 +65,10 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
     .then(async (windowElem) => {
       // Type cast because Cypress expects `get` to only return JQuery
       const window = windowElem as unknown as Window;
+
+      // Cypress can clear local storage but not indexedDB
+      window.indexedDB.deleteDatabase('_ionicstorage');
+
       const [libparsec, nextStage] = window.nextStageHook();
       const configPath = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
       assert.isDefined(configPath);
