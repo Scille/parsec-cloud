@@ -233,10 +233,12 @@ describe('Check folders page', () => {
     cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
-        expect(text).to.eq(
-          // cspell:disable-next-line
-          'parsec://parsec.cloud/Org?action=file_link&workspace_id=94a350f2f629403db2269c44583f7aa1&path=MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss',
-        );
+        // cspell:disable-next-line
+        const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+        // cspell:disable-next-line
+        const workspaceId = '94a350f2f629403db2269c44583f7aa1';
+        const expected = `parsec://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`;
+        expect(text).to.eq(expected);
       });
     });
   });
