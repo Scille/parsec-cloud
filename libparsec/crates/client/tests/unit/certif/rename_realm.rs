@@ -32,11 +32,10 @@ async fn ok(env: &TestbedEnv) {
         &env.discriminant_dir,
         {
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, Some(1));
+                p_assert_eq!(req.key_index, 1);
                 p_assert_eq!(req.realm_id, realm_id);
 
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle,
                     keys_bundle_access,
                 }
@@ -131,11 +130,10 @@ async fn server_error(
         &env.discriminant_dir,
         {
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, Some(1));
+                p_assert_eq!(req.key_index, 1);
                 p_assert_eq!(req.realm_id, realm_id);
 
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle,
                     keys_bundle_access,
                 }
@@ -177,11 +175,10 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
         &env.discriminant_dir,
         {
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-                p_assert_eq!(req.key_index, Some(1));
+                p_assert_eq!(req.key_index, 1);
                 p_assert_eq!(req.realm_id, realm_id);
 
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle,
                     keys_bundle_access,
                 }
@@ -212,7 +209,6 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 #[case::invalid_key_index(
     |env: &TestbedEnv, realm_id, user_id: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-        key_index: 8,
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
@@ -220,7 +216,6 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
 )]
 #[case::invalid_keys_bundle(
     |env: &TestbedEnv, realm_id, user_id: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-        key_index: 1,
         keys_bundle: Bytes::from_static(b""),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
@@ -228,7 +223,6 @@ async fn server_initial_name_already_exists(env: &TestbedEnv) {
 )]
 #[case::invalid_keys_bundle_access(
     |env: &TestbedEnv, realm_id, _: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-        key_index: 1,
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: Bytes::from_static(b""),
     },
@@ -258,7 +252,7 @@ async fn invalid_keys_bundle(
     let rep = rep(&env, realm_id, &alice.user_id());
     test_register_send_hook(&env.discriminant_dir, {
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            p_assert_eq!(req.key_index, Some(1));
+            p_assert_eq!(req.key_index, 1);
             p_assert_eq!(req.realm_id, realm_id);
 
             rep

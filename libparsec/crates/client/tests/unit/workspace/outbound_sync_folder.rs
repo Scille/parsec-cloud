@@ -94,15 +94,13 @@ async fn base(
         &env.discriminant_dir,
         // 1) Fetch last workspace keys bundle to encrypt the new manifest
         {
-            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
                 env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, Some(1));
+                p_assert_eq!(req.key_index, 1);
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index,
                     keys_bundle,
                     keys_bundle_access,
                 }

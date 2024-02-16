@@ -27,13 +27,11 @@ async fn ok(env: &TestbedEnv) {
         &env.discriminant_dir,
         // 1) Fetch keys bundle (required for rename)
         {
-            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
                 env.get_last_realm_keys_bundle_access_for(wksp1_id, &"alice".parse().unwrap());
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index,
                     keys_bundle,
                     keys_bundle_access,
                 }
@@ -126,13 +124,11 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
         &env.discriminant_dir,
         // 1) Finish the bootstrap: fetch keys bundle (required for initial rename)
         {
-            let key_index = env.get_last_realm_keys_bundle_index(wksp1_id);
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
                 env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index,
                     keys_bundle,
                     keys_bundle_access,
                 }
@@ -267,7 +263,6 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
             let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle: new_realm_initial_keys_bundle
                         .lock()
                         .unwrap()

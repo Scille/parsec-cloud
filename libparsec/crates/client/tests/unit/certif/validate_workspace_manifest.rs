@@ -40,7 +40,6 @@ async fn ok(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }
@@ -113,7 +112,6 @@ async fn non_existent_author(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }
@@ -165,7 +163,6 @@ async fn corrupted(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }
@@ -226,7 +223,6 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             p_assert_eq!(req.realm_id, realm_id);
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }
@@ -289,7 +285,6 @@ async fn revoked(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }
@@ -379,7 +374,6 @@ async fn cannot_write(env: &TestbedEnv) {
         &env.discriminant_dir,
         move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                key_index: 1,
                 keys_bundle,
                 keys_bundle_access,
             }

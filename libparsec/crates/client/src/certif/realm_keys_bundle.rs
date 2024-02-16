@@ -174,20 +174,19 @@ pub(super) async fn load_last_realm_keys_bundle<'a>(
 
     // 2) Fetch the corresponding keys bundle from the server
 
-    let (key_index, keys_bundle, keys_bundle_access) = {
+    let (keys_bundle, keys_bundle_access) = {
         use libparsec_protocol::authenticated_cmds::latest::realm_get_keys_bundle::{Rep, Req};
 
         let req = Req {
             realm_id,
-            key_index: Some(key_rotation_certificate.key_index),
+            key_index: key_rotation_certificate.key_index,
         };
         let rep = ops.cmds.send(req).await?;
         match rep {
             Rep::Ok {
-                key_index,
                 keys_bundle,
                 keys_bundle_access,
-            } => (key_index, keys_bundle, keys_bundle_access),
+            } => (keys_bundle, keys_bundle_access),
             Rep::AccessNotAvailableForAuthor
             | Rep::AuthorNotAllowed => return Err(LoadLastKeysBundleError::NotAllowed),
             // Unexpected errors :(
@@ -203,12 +202,10 @@ pub(super) async fn load_last_realm_keys_bundle<'a>(
     };
 
     // 2) Validate it against the corresponding key rotation certificate
-
     let realm_keys = validate_keys_bundle(
         ops,
         store,
         realm_id,
-        key_index,
         &keys_bundle,
         &keys_bundle_access,
         key_rotation_certificate,
@@ -343,7 +340,7 @@ async fn recover_realm_keys_from_previous_bundles<'a>(
 
             let req = Req {
                 realm_id,
-                key_index: Some(key_rotation_certificate.key_index),
+                key_index: key_rotation_certificate.key_index,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
@@ -384,7 +381,6 @@ async fn recover_realm_keys_from_previous_bundles<'a>(
             ops,
             store,
             realm_id,
-            key_rotation_certificate.key_index,
             &keys_bundle,
             &keys_bundle_access,
             key_rotation_certificate,
@@ -610,11 +606,10 @@ pub enum ValidateKeysBundleError {
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn validate_keys_bundle<'a>(
+async fn validate_keys_bundle(
     ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
+    store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
-    key_index: IndexInt,
     keys_bundle: &[u8],
     keys_bundle_access: &[u8],
     certif: &RealmKeyRotationCertificate,
@@ -631,7 +626,7 @@ async fn validate_keys_bundle<'a>(
                 ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::CorruptedAccess {
                         realm: realm_id,
-                        key_index,
+                        key_index: certif.key_index,
                         key_rotation_author: certif.author.to_owned(),
                         key_rotation_timestamp: certif.timestamp,
                         recipient: ops.device.user_id().to_owned(),
@@ -645,7 +640,7 @@ async fn validate_keys_bundle<'a>(
                 ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::CorruptedAccess {
                         realm: realm_id,
-                        key_index,
+                        key_index: certif.key_index,
                         key_rotation_author: certif.author.to_owned(),
                         key_rotation_timestamp: certif.timestamp,
                         recipient: ops.device.user_id().to_owned(),
@@ -664,7 +659,7 @@ async fn validate_keys_bundle<'a>(
             ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                 InvalidKeysBundleError::Decryption {
                     realm: realm_id,
-                    key_index,
+                    key_index: certif.key_index,
                     key_rotation_author: certif.author.to_owned(),
                     key_rotation_timestamp: certif.timestamp,
                     recipient: ops.device.user_id().to_owned(),
@@ -677,7 +672,7 @@ async fn validate_keys_bundle<'a>(
                 ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::Corrupted {
                         realm: realm_id,
-                        key_index,
+                        key_index: certif.key_index,
                         author: certif.author.to_owned(),
                         timestamp: certif.timestamp,
                         error,
@@ -696,7 +691,7 @@ async fn validate_keys_bundle<'a>(
                     ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                         InvalidKeysBundleError::NonExistentAuthor {
                             realm: realm_id,
-                            key_index,
+                            key_index: certif.key_index,
                             author: certif.author.to_owned(),
                             timestamp: certif.timestamp,
                         },
@@ -710,7 +705,7 @@ async fn validate_keys_bundle<'a>(
                 .map_err(|(_, error)| {
                     Box::new(InvalidKeysBundleError::Corrupted {
                         realm: realm_id,
-                        key_index,
+                        key_index: certif.key_index,
                         author: certif.author.to_owned(),
                         timestamp: certif.timestamp,
                         error,
@@ -729,7 +724,7 @@ async fn validate_keys_bundle<'a>(
             InvalidKeysBundleError::RealmIDMismatch {
                 expected_realm_id: certif.realm_id,
                 bad_realm_id: keys_bundle.realm_id,
-                key_index,
+                key_index: keys_bundle.key_index(),
                 author: certif.author.to_owned(),
                 timestamp: certif.timestamp,
             },
@@ -754,7 +749,7 @@ async fn validate_keys_bundle<'a>(
         return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::AuthorMismatch {
                 realm: realm_id,
-                key_index,
+                key_index: keys_bundle.key_index(),
                 expected_author: certif.author.to_owned(),
                 bad_author: keys_bundle.author.to_owned(),
                 timestamp: certif.timestamp,
@@ -766,7 +761,7 @@ async fn validate_keys_bundle<'a>(
         return Err(ValidateKeysBundleError::InvalidKeysBundle(Box::new(
             InvalidKeysBundleError::TimestampMismatch {
                 realm: realm_id,
-                key_index,
+                key_index: keys_bundle.key_index(),
                 author: certif.author.to_owned(),
                 expected_timestamp: certif.timestamp,
                 bad_timestamp: keys_bundle.timestamp,

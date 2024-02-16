@@ -102,7 +102,6 @@ async fn ok(env: &TestbedEnv) {
             let new_realm_initial_keys_bundle_access = new_realm_initial_keys_bundle_access.clone();
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle: new_realm_initial_keys_bundle
                         .lock()
                         .unwrap()
@@ -259,7 +258,6 @@ async fn legacy_shared_before_bootstrapped(env: &TestbedEnv) {
                     .unwrap()
                     .clone();
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle: new_realm_initial_keys_bundle
                         .lock()
                         .unwrap()
@@ -334,7 +332,6 @@ async fn partially_bootstrapped(
                 env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                    key_index: 1,
                     keys_bundle,
                     keys_bundle_access,
                 }
