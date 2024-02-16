@@ -2,6 +2,7 @@
 
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
 import { IonInput } from '@ionic/vue';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Password Input', () => {
@@ -11,6 +12,9 @@ describe('Password Input', () => {
       props: {
         label: 'A Label',
         modelValue: '',
+      },
+      global: {
+        provide: getDefaultProvideConfig(),
       },
     });
   });

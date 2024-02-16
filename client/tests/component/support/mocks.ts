@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { HotkeyManagerKey } from '@/services/hotkeyManager';
 import { InformationKey } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
@@ -9,11 +10,29 @@ async function mockShowToast(_notif: Notification): Promise<void> {
   // Do nothing
 }
 
+class MockHotKeys {
+  add(_key: string, _modifiers: number, _platforms: number, _callback: () => Promise<void>): void {}
+}
+
+function mockNewHotKeys(_group: number): MockHotKeys {
+  return new MockHotKeys();
+}
+
+function mockUnregister(_hotkeys: MockHotKeys): void {}
+
+function mockGroupEnableDisable(_group: number): void {}
+
 function getDefaultProvideConfig(showToast = mockShowToast): any {
   const provide: any = {};
 
   provide[InformationKey] = {
     showToast: showToast,
+  };
+  provide[HotkeyManagerKey] = {
+    newHotkeys: mockNewHotKeys,
+    unregister: mockUnregister,
+    disableGroup: mockGroupEnableDisable,
+    enableGroup: mockGroupEnableDisable,
   };
 
   return provide;
