@@ -12,56 +12,37 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    let raw_expected = [
-        (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
-            // Content:
-            //   cmd: "realm_get_keys_bundle"
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-            &hex!(
-                "83a3636d64b57265616c6d5f6765745f6b6579735f62756e646c65a87265616c6d5f6964d8"
-                "021d3353157d7d4e95ad2fdea7b3bd19c5a96b65795f696e646578c0"
-            )[..],
-            authenticated_cmds::realm_get_keys_bundle::Req {
-                key_index: None,
-                realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-            },
-        ),
-        (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
-            // Content:
-            //   cmd: "realm_get_keys_bundle"
-            //   key_index: 8
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-            &hex!(
-                "83a3636d64b57265616c6d5f6765745f6b6579735f62756e646c65a87265616c6d5f6964d8"
-                "021d3353157d7d4e95ad2fdea7b3bd19c5a96b65795f696e64657808
-            ")[..],
-            authenticated_cmds::realm_get_keys_bundle::Req {
-                key_index: Some(8),
-                realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-            },
-        ),
-    ];
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   cmd: "realm_get_keys_bundle"
+    //   key_index: 8
+    //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+    let raw = hex!(
+        "83a3636d64b57265616c6d5f6765745f6b6579735f62756e646c65a87265616c6d5f6964d8"
+        "021d3353157d7d4e95ad2fdea7b3bd19c5a96b65795f696e64657808
+    ");
 
-    for (raw, req) in raw_expected {
-        let expected = authenticated_cmds::AnyCmdReq::RealmGetKeysBundle(req);
+    let req = authenticated_cmds::realm_get_keys_bundle::Req {
+        key_index: 8,
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+    };
 
-        let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+    let expected = authenticated_cmds::AnyCmdReq::RealmGetKeysBundle(req);
 
-        p_assert_eq!(data, expected);
+    let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
 
-        // Also test serialization round trip
-        let authenticated_cmds::AnyCmdReq::RealmGetKeysBundle(req2) = data else {
-            unreachable!()
-        };
+    p_assert_eq!(data, expected);
 
-        let raw2 = req2.dump().unwrap();
+    // Also test serialization round trip
+    let authenticated_cmds::AnyCmdReq::RealmGetKeysBundle(req2) = data else {
+        unreachable!()
+    };
 
-        let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
+    let raw2 = req2.dump().unwrap();
 
-        p_assert_eq!(data2, expected);
-    }
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
 }
 
 // Responses
@@ -70,16 +51,14 @@ pub fn rep_ok() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:
     //   status: "ok"
-    //   key_index: 8
     //   keys_bundle: hex!("666f6f626172")
     //   keys_bundle_access: hex!("666f6f626172")
     let raw = hex!(
-        "84a6737461747573a26f6ba96b65795f696e64657808ab6b6579735f62756e646c65c40666"
-        "6f6f626172b26b6579735f62756e646c655f616363657373c406666f6f626172"
+        "83a6737461747573a26f6bab6b6579735f62756e646c65c406666f6f626172b26b6579735f"
+        "62756e646c655f616363657373c406666f6f626172"
     );
 
     let expected = authenticated_cmds::realm_get_keys_bundle::Rep::Ok {
-        key_index: 8,
         keys_bundle: Bytes::from_static(b"foobar"),
         keys_bundle_access: Bytes::from_static(b"foobar"),
     };

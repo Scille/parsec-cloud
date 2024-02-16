@@ -10,9 +10,7 @@
                 },
                 {
                     "name": "key_index",
-                    // `None` to get the last bundle, client only needs to use this
-                    // field for self-heal when the last bundle is corrupted.
-                    "type": "RequiredOption<Index>"
+                    "type": "Index"
                 }
             ]
         },
@@ -20,11 +18,6 @@
             {
                 "status": "ok",
                 "fields": [
-                    {
-                        // Key index
-                        "name": "key_index",
-                        "type": "Index"
-                    },
                     {
                         // `RealmKeysBundleAccess` document encrypted for ourself
                         "name": "keys_bundle_access",
