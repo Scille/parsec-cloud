@@ -10,6 +10,14 @@
           class="content"
           :class="{ 'login-fullscreen': state === HomePageState.Login }"
         >
+          <!-- topbar -->
+          <home-page-header
+            class="header"
+            @settings-click="openSettingsModal"
+            @about-click="openAboutModal"
+            @back-click="backToOrganizations"
+            :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
+          />
           <slide-horizontal
             :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
             :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
@@ -39,14 +47,6 @@
               />
             </template>
           </slide-horizontal>
-          <!-- topbar -->
-          <home-page-header
-            class="header"
-            @settings-click="openSettingsModal"
-            @about-click="openAboutModal"
-            @back-click="backToOrganizations"
-            :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
-          />
         </div>
         <!-- end of organization -->
       </div>

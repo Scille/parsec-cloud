@@ -1,8 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 <template>
-  <transition :name="getName()">
-    <slot />
-  </transition>
+  <div class="slider-container">
+    <transition :name="getName()">
+      <slot />
+    </transition>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -19,6 +21,12 @@ function getName(): string {
 </script>
 
 <style scoped>
+.slider-container {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
 .slide-left-to-left-enter-active,
 .slide-right-to-right-enter-active,
 .slide-left-to-right-enter-active,
