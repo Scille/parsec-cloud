@@ -50,6 +50,7 @@
         <ion-label
           v-show="workspace.sharing.length === 0"
           @click.stop="$emit('shareClick', $event, workspace)"
+          class="body-sm not-shared-label"
         >
           {{ $t('WorkspacesPage.Workspace.notShared') }}
         </ion-label>
@@ -173,6 +174,11 @@ defineEmits<{
   align-items: center;
   color: var(--parsec-color-light-secondary-grey);
   border-top: 1px solid var(--parsec-color-light-secondary-disabled);
+
+  .not-shared-label {
+    text-align: right;
+    padding: 0.375rem 0;
+  }
 }
 
 /* No idea how to change the color of the ion-item */
