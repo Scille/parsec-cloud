@@ -2,13 +2,18 @@
 
 import MsChoosePasswordInput from '@/components/core/ms-input/MsChoosePasswordInput.vue';
 import { IonInput } from '@ionic/vue';
+import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
 
 describe('Choose password', () => {
   let wrapper: VueWrapper<any>;
 
   beforeEach(() => {
-    wrapper = mount(MsChoosePasswordInput, {});
+    wrapper = mount(MsChoosePasswordInput, {
+      global: {
+        provide: getDefaultProvideConfig(),
+      },
+    });
   });
 
   it('Validate the fields', async () => {
