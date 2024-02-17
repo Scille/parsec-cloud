@@ -10,8 +10,8 @@ use libparsec_types::prelude::*;
 use zeroize::Zeroize;
 
 use crate::{
-    LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError, SaveRecoveryDeviceError,
-    DEVICE_FILE_EXT,
+    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
+    SaveRecoveryDeviceError, DEVICE_FILE_EXT,
 };
 
 /*
@@ -297,6 +297,22 @@ pub async fn save_device(
             // TODO
             todo!()
         }
+    }
+
+    Ok(())
+}
+
+pub async fn change_authentification(
+    current_access: &DeviceAccessStrategy,
+    new_access: &DeviceAccessStrategy,
+) -> Result<(), ChangeAuthentificationError> {
+    let device = load_device(current_access).await?;
+
+    save_device(new_access, &device).await?;
+
+    if let DeviceAccessStrategy::Password { key_file, .. } = current_access {
+        std::fs::remove_file(key_file)
+            .map_err(|_| ChangeAuthentificationError::CannotRemoveOldDevice)?;
     }
 
     Ok(())

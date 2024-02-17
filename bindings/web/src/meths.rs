@@ -2341,6 +2341,48 @@ fn variant_client_cancel_invitation_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientChangeAuthentificationError
+
+#[allow(dead_code)]
+fn variant_client_change_authentification_error_rs_to_js(
+    rs_obj: libparsec::ClientChangeAuthentificationError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientChangeAuthentificationError::DecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientChangeAuthentificationErrorDecryptionFailed".into(),
+            )?;
+        }
+        libparsec::ClientChangeAuthentificationError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientChangeAuthentificationErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientChangeAuthentificationError::InvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientChangeAuthentificationErrorInvalidData".into(),
+            )?;
+        }
+        libparsec::ClientChangeAuthentificationError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientChangeAuthentificationErrorInvalidPath".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientCreateWorkspaceError
 
 #[allow(dead_code)]
@@ -5561,6 +5603,40 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_cancel_invitation_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_change_authentification
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientChangeAuthentification(current_auth: Object, new_auth: Object) -> Promise {
+    future_to_promise(async move {
+        let current_auth = current_auth.into();
+        let current_auth = variant_device_access_strategy_js_to_rs(current_auth)?;
+
+        let new_auth = new_auth.into();
+        let new_auth = variant_device_save_strategy_js_to_rs(new_auth)?;
+
+        let ret = libparsec::client_change_authentification(current_auth, new_auth).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_change_authentification_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

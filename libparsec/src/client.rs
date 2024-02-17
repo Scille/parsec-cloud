@@ -9,6 +9,7 @@ pub use libparsec_client::{
     WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
+use libparsec_platform_device_loader::ChangeAuthentificationError;
 use libparsec_types::prelude::*;
 pub use libparsec_types::{DeviceAccessStrategy, RealmRole};
 
@@ -17,7 +18,7 @@ use crate::{
         borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
         FilterCloseHandle, Handle, HandleItem,
     },
-    ClientConfig, ClientEvent, OnEventCallbackPlugged,
+    ClientConfig, ClientEvent, DeviceSaveStrategy, OnEventCallbackPlugged,
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
@@ -236,6 +237,52 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
                 }
             })?,
     })
+}
+
+/*
+ * Change access
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum ClientChangeAuthentificationError {
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("Failed to decrypt file content")]
+    DecryptionFailed,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ChangeAuthentificationError> for ClientChangeAuthentificationError {
+    fn from(value: ChangeAuthentificationError) -> Self {
+        match value {
+            ChangeAuthentificationError::InvalidPath(e) => Self::InvalidPath(e),
+            ChangeAuthentificationError::InvalidData => Self::InvalidData,
+            ChangeAuthentificationError::DecryptionFailed => Self::DecryptionFailed,
+            ChangeAuthentificationError::CannotRemoveOldDevice => {
+                Self::Internal(anyhow::anyhow!(value))
+            }
+        }
+    }
+}
+
+pub async fn client_change_authentification(
+    current_auth: DeviceAccessStrategy,
+    new_auth: DeviceSaveStrategy,
+) -> Result<(), ClientChangeAuthentificationError> {
+    let key_file = match &current_auth {
+        DeviceAccessStrategy::Password { key_file, .. } => key_file.clone(),
+        DeviceAccessStrategy::Smartcard { key_file } => key_file.clone(),
+    };
+
+    libparsec_platform_device_loader::change_authentification(
+        &current_auth,
+        &new_auth.into_access(key_file),
+    )
+    .await?;
+    Ok(())
 }
 
 /*
