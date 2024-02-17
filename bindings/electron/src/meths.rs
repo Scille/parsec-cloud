@@ -2172,6 +2172,41 @@ fn variant_client_cancel_invitation_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientChangeAuthentificationError
+
+#[allow(dead_code)]
+fn variant_client_change_authentification_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientChangeAuthentificationError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientChangeAuthentificationError::DecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorDecryptionFailed")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientChangeAuthentificationError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientChangeAuthentificationErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientChangeAuthentificationError::InvalidData { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorInvalidData")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientChangeAuthentificationError::InvalidPath { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorInvalidPath")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientCreateWorkspaceError
 
 #[allow(dead_code)]
@@ -5730,6 +5765,57 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// client_change_authentification
+fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let current_auth = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let new_auth = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_change_authentification(current_auth, new_auth).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_client_change_authentification_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_create_workspace
 fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let client = {
@@ -8700,6 +8786,10 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         claimer_user_initial_do_wait_peer,
     )?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
+    cx.export_function(
+        "clientChangeAuthentification",
+        client_change_authentification,
+    )?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
     cx.export_function("clientInfo", client_info)?;

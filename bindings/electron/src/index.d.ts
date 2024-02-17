@@ -398,6 +398,30 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorOffline
 
 
+// ClientChangeAuthentificationError
+export interface ClientChangeAuthentificationErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export type ClientChangeAuthentificationError =
+  | ClientChangeAuthentificationErrorDecryptionFailed
+  | ClientChangeAuthentificationErrorInternal
+  | ClientChangeAuthentificationErrorInvalidData
+  | ClientChangeAuthentificationErrorInvalidPath
+
+
 // ClientCreateWorkspaceError
 export interface ClientCreateWorkspaceErrorInternal {
     tag: "Internal"
@@ -1370,6 +1394,10 @@ export function clientCancelInvitation(
     client: number,
     token: string
 ): Promise<Result<null, ClientCancelInvitationError>>
+export function clientChangeAuthentification(
+    current_auth: DeviceAccessStrategy,
+    new_auth: DeviceSaveStrategy
+): Promise<Result<null, ClientChangeAuthentificationError>>
 export function clientCreateWorkspace(
     client: number,
     name: string

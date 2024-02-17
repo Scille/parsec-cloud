@@ -436,6 +436,36 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorNotFound
   | ClientCancelInvitationErrorOffline
 
+// ClientChangeAuthentificationError
+export enum ClientChangeAuthentificationErrorTag {
+    DecryptionFailed = 'ClientChangeAuthentificationErrorDecryptionFailed',
+    Internal = 'ClientChangeAuthentificationErrorInternal',
+    InvalidData = 'ClientChangeAuthentificationErrorInvalidData',
+    InvalidPath = 'ClientChangeAuthentificationErrorInvalidPath',
+}
+
+export interface ClientChangeAuthentificationErrorDecryptionFailed {
+    tag: ClientChangeAuthentificationErrorTag.DecryptionFailed
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInternal {
+    tag: ClientChangeAuthentificationErrorTag.Internal
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInvalidData {
+    tag: ClientChangeAuthentificationErrorTag.InvalidData
+    error: string
+}
+export interface ClientChangeAuthentificationErrorInvalidPath {
+    tag: ClientChangeAuthentificationErrorTag.InvalidPath
+    error: string
+}
+export type ClientChangeAuthentificationError =
+  | ClientChangeAuthentificationErrorDecryptionFailed
+  | ClientChangeAuthentificationErrorInternal
+  | ClientChangeAuthentificationErrorInvalidData
+  | ClientChangeAuthentificationErrorInvalidPath
+
 // ClientCreateWorkspaceError
 export enum ClientCreateWorkspaceErrorTag {
     Internal = 'ClientCreateWorkspaceErrorInternal',
@@ -1615,6 +1645,10 @@ export interface LibParsecPlugin {
         client: Handle,
         token: InvitationToken
     ): Promise<Result<null, ClientCancelInvitationError>>
+    clientChangeAuthentification(
+        current_auth: DeviceAccessStrategy,
+        new_auth: DeviceSaveStrategy
+    ): Promise<Result<null, ClientChangeAuthentificationError>>
     clientCreateWorkspace(
         client: Handle,
         name: EntryName

@@ -91,6 +91,43 @@ pub async fn save_device(
 }
 
 #[derive(Debug, thiserror::Error)]
+pub enum ChangeAuthentificationError {
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("Failed to decrypt file content")]
+    DecryptionFailed,
+    #[error("Cannot remove the old device")]
+    CannotRemoveOldDevice,
+}
+
+impl From<LoadDeviceError> for ChangeAuthentificationError {
+    fn from(value: LoadDeviceError) -> Self {
+        match value {
+            LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
+            LoadDeviceError::InvalidData => Self::InvalidData,
+            LoadDeviceError::InvalidPath(e) => Self::InvalidPath(e),
+        }
+    }
+}
+
+impl From<SaveDeviceError> for ChangeAuthentificationError {
+    fn from(value: SaveDeviceError) -> Self {
+        match value {
+            SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
+        }
+    }
+}
+
+pub async fn change_authentification(
+    current_access: &DeviceAccessStrategy,
+    new_access: &DeviceAccessStrategy,
+) -> Result<(), ChangeAuthentificationError> {
+    platform::change_authentification(current_access, new_access).await
+}
+
+#[derive(Debug, thiserror::Error)]
 pub enum SaveRecoveryDeviceError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),

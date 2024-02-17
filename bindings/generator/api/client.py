@@ -23,6 +23,7 @@ from .common import (
     Variant,
     VlobID,
 )
+from .invite import DeviceSaveStrategy
 from .config import ClientConfig
 from .events import OnClientEventCallback
 
@@ -93,6 +94,27 @@ class ClientInfo(Structure):
 async def client_info(
     client: Handle,
 ) -> Result[ClientInfo, ClientInfoError]:
+    raise NotImplementedError
+
+
+class ClientChangeAuthentificationError(ErrorVariant):
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class DecryptionFailed:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_change_authentification(
+    current_auth: DeviceAccessStrategy,
+    new_auth: DeviceSaveStrategy,
+) -> Result[None, ClientChangeAuthentificationError]:
     raise NotImplementedError
 
 
