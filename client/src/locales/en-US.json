@@ -620,7 +620,8 @@
         }
     },
     "SideMenu": {
-        "allWorkspaces": "All Workspaces",
+        "workspaces": "Workspaces",
+        "noWorkspace": "No workspaces",
         "users": "Users",
         "revokedUsers": "Revoked",
         "activeUsers": "Active",

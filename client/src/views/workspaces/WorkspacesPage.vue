@@ -149,12 +149,13 @@ import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   UserProfile,
   WorkspaceInfo,
+  WorkspaceName,
   getClientProfile,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
-import { navigateToWorkspace } from '@/router';
+import { getCurrentRouteQuery, navigateToWorkspace, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -195,6 +196,13 @@ interface WorkspacesPageSavedData {
   displayState?: DisplayState;
 }
 
+const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  if (query.workspaceName) {
+    await createWorkspace(query.workspaceName);
+  }
+});
+
 const msSorterLabels = {
   asc: translate('HomePage.organizationList.sortOrderAsc'),
   desc: translate('HomePage.organizationList.sortOrderDesc'),
@@ -214,6 +222,7 @@ onMounted(async (): Promise<void> => {
   hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
     displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
   });
+
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
 });
@@ -222,6 +231,7 @@ onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
+  routeWatchCancel();
 });
 
 async function onDisplayStateChange(): Promise<void> {
@@ -267,6 +277,30 @@ function onMsSorterChange(event: MsSorterChangeEvent): void {
   sortByAsc.value = event.sortByAsc;
 }
 
+async function createWorkspace(name: WorkspaceName): Promise<void> {
+  const result = await parsecCreateWorkspace(name);
+  if (result.ok) {
+    informationManager.present(
+      new Information({
+        message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
+          workspace: name,
+        }),
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+    await refreshWorkspacesList();
+  } else {
+    informationManager.present(
+      new Information({
+        message: translate('WorkspacesPage.newWorkspaceError.message'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
 async function openCreateWorkspaceModal(): Promise<void> {
   hotkeyManager.disableGroup(Groups.Workspaces);
   const workspaceName = await getTextInputFromUser({
@@ -277,30 +311,11 @@ async function openCreateWorkspaceModal(): Promise<void> {
     placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
     okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
   });
+
   hotkeyManager.enableGroup(Groups.Workspaces);
 
   if (workspaceName) {
-    const result = await parsecCreateWorkspace(workspaceName);
-    if (result.ok) {
-      informationManager.present(
-        new Information({
-          message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
-            workspace: workspaceName,
-          }),
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-      await refreshWorkspacesList();
-    } else {
-      informationManager.present(
-        new Information({
-          message: translate('WorkspacesPage.newWorkspaceError.message'),
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    }
+    await createWorkspace(workspaceName);
   }
 }
 
