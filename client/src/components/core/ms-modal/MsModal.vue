@@ -185,7 +185,7 @@ async function confirm(): Promise<boolean> {
 
 .ms-modal-content {
   --background: transparent;
-  overflow: auto;
+  overflow: visible;
 
   > :first-child {
     padding-top: 2rem;
