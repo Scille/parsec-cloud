@@ -627,7 +627,8 @@
         }
     },
     "SideMenu": {
-        "allWorkspaces": "Tous les espaces de travail",
+        "workspaces": "Espaces de travail",
+        "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
         "revokedUsers": "Révoqués",
         "activeUsers": "Actifs",

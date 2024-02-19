@@ -11,7 +11,7 @@
         content-id="main"
         class="sidebar"
       >
-        <ion-header class="sidebar__header">
+        <ion-header class="sidebar-header">
           <div v-show="!currentRouteIsOrganizationManagementRoute()">
             <!-- active organization -->
             <ion-card class="organization-card">
@@ -95,12 +95,27 @@
               <ion-header
                 lines="none"
                 button
-                @click="goToWorkspaceList()"
-                class="list-workspaces__header menu-default"
+                class="list-workspaces-header menu-default"
               >
-                {{ $t('SideMenu.allWorkspaces') }}
+                <span
+                  @click="goToWorkspaceList()"
+                  class="list-workspaces-header__title"
+                >
+                  {{ $t('SideMenu.workspaces') }}
+                </span>
+                <ion-icon
+                  class="list-workspaces-header__button"
+                  id="new-workspace"
+                  :icon="addCircle"
+                  @click="createWorkspace"
+                />
               </ion-header>
-
+              <ion-text
+                class="body list-workspaces__no-workspace"
+                v-if="workspaces.length === 0"
+              >
+                {{ $t('SideMenu.noWorkspace') }}
+              </ion-text>
               <ion-item
                 lines="none"
                 button
@@ -212,7 +227,8 @@
 </template>
 
 <script setup lang="ts">
-import { CaretExpand, MsImage } from '@/components/core';
+import { workspaceNameValidator } from '@/common/validators';
+import { CaretExpand, MsImage, getTextInputFromUser } from '@/components/core';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import {
   ClientInfo,
@@ -234,6 +250,7 @@ import {
   watchOrganizationSwitch,
 } from '@/router';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { translate } from '@/services/translation';
 import {
   GestureDetail,
   IonAvatar,
@@ -257,7 +274,7 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
+import { addCircle, business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
 import { Ref, WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
@@ -282,6 +299,21 @@ async function goToWorkspace(workspaceId: string): Promise<void> {
 async function goToWorkspaceList(): Promise<void> {
   await navigateTo(Routes.Workspaces);
   await menuController.close();
+}
+
+async function createWorkspace(): Promise<void> {
+  const workspaceName = await getTextInputFromUser({
+    title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
+    trim: true,
+    validator: workspaceNameValidator,
+    inputLabel: translate('WorkspacesPage.CreateWorkspaceModal.label'),
+    placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
+    okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
+  });
+
+  if (workspaceName) {
+    await navigateTo(Routes.Workspaces, { query: { workspaceName: workspaceName } });
+  }
 }
 
 const organizationWatchCancel = watchOrganizationSwitch(loadAll);
@@ -390,6 +422,8 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 .sidebar,
 .sidebar ion-content {
   --background: var(--parsec-color-light-primary-800);
+  --padding-end: 0;
+  --padding-start: 0;
 }
 
 .sidebar {
@@ -397,7 +431,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   user-select: none;
   border-radius: 0 0.5rem 0.5rem 0;
 
-  &__header {
+  &-header {
     padding: 0.5rem;
   }
 
@@ -412,6 +446,13 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     position: fixed;
     bottom: 16px;
     right: -60px;
+  }
+
+  .workspaces-organization {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1.25rem;
   }
 }
 
@@ -550,25 +591,64 @@ ion-menu {
   flex: 1;
   gap: 0.5rem;
 
-  &__header {
-    opacity: 0.6;
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     color: var(--parsec-color-light-primary-100);
-    margin-bottom: 1rem;
-    width: fit-content;
+    margin-bottom: 0.5rem;
     transition: border 0.2s ease-in-out;
     cursor: pointer;
-    position: relative;
 
-    &:hover::after {
-      content: '';
-      position: absolute;
-      bottom: -0.25rem;
-      left: 0;
-      height: 2px;
-      width: 100%;
-      background: var(--parsec-color-light-primary-100);
-      border-radius: var(--parsec-radius-6);
+    &__title {
+      position: relative;
+      opacity: 0.6;
+
+      &::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        left: 0;
+        background: var(--parsec-color-light-primary-100);
+        border-radius: var(--parsec-radius-6);
+        transition: width 0.2s ease-in-out;
+        transition-delay: 100ms;
+      }
+
+      &:hover::after {
+        content: '';
+        position: absolute;
+        bottom: -0.25rem;
+        left: 0;
+        height: 2px;
+        width: 100%;
+        background: var(--parsec-color-light-primary-100);
+        border-radius: var(--parsec-radius-6);
+      }
     }
+
+    &__button {
+      padding: 0.25rem;
+      margin-right: 0.25rem;
+      font-size: 1.25rem;
+      border-radius: var(--parsec-radius-6);
+      color: var(--parsec-color-light-primary-100);
+      background: var(--parsec-color-light-primary-30-opacity15);
+      cursor: pointer;
+      scale: 1;
+      transition: scale 0.2s ease-in-out;
+      opacity: 0.6;
+
+      &:hover {
+        opacity: 1;
+        scale: 1.1;
+      }
+    }
+  }
+
+  &__no-workspace {
+    color: var(--parsec-color-light-primary-30);
+    opacity: 0.3;
   }
 }
 
