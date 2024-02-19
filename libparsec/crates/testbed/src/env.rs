@@ -203,7 +203,7 @@ impl Clone for TestbedEnv {
 }
 
 impl std::fmt::Debug for TestbedEnv {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut ds = f.debug_struct("TestbedEnv");
 
         ds.field("template", &self.template.id)

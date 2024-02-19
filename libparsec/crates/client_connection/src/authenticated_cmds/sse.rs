@@ -52,7 +52,7 @@ impl<T> Debug for SSEStream<T>
 where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("SSEStream").finish_non_exhaustive()
     }
 }
@@ -106,7 +106,7 @@ where
 
     fn poll_next(
         mut self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context,
     ) -> std::task::Poll<Option<Self::Item>> {
         let event_source = self.event_source.as_mut();
 

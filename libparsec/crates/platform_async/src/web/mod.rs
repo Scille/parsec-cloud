@@ -51,14 +51,14 @@ impl<T> crate::future::Future for JoinHandle<T> {
     #[inline(always)]
     fn poll(
         self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        _cx: &mut std::task::Context,
     ) -> std::task::Poll<Self::Output> {
         todo!()
     }
 }
 
 impl std::fmt::Display for JoinError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         // TODO: handle error message
         f.write_str("task has encountered error")
     }
@@ -97,7 +97,7 @@ impl<F: std::future::Future> std::future::Future for FutureForceSendWrapper<F> {
     #[inline(always)]
     fn poll(
         self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context,
     ) -> std::task::Poll<Self::Output> {
         let this = self.project();
         this.not_send_future.poll(cx)

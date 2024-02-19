@@ -15,7 +15,7 @@ const HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN: &str = "redacted.invalid";
 macro_rules! impl_debug_from_display {
     ($name:ident) => {
         impl std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 let display = self.to_string();
                 f.debug_tuple(stringify!($name)).field(&display).finish()
             }

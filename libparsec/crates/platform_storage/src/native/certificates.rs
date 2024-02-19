@@ -549,7 +549,7 @@ impl PlatformCertificatesStorage {
 
     pub async fn for_update(
         &mut self,
-    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard<'_>> {
+    ) -> anyhow::Result<PlatformCertificatesStorageForUpdateGuard> {
         let transaction = self.conn.begin().await?;
         Ok(PlatformCertificatesStorageForUpdateGuard { transaction })
     }

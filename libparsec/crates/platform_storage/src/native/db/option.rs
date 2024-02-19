@@ -25,7 +25,7 @@ pub enum PragmaSynchronous {
 }
 
 impl Display for PragmaSynchronous {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let s = match self {
             PragmaSynchronous::Extra => "EXTRA",
             PragmaSynchronous::Full => "FULL",
@@ -68,7 +68,7 @@ pub enum PragmaJournalMode {
 }
 
 impl Display for PragmaJournalMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let s = match self {
             PragmaJournalMode::Delete => "DELETE",
             PragmaJournalMode::Truncate => "TRUNCATE",
@@ -112,7 +112,7 @@ pub enum AutoVacuum {
 }
 
 impl Display for AutoVacuum {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let s = match self {
             AutoVacuum::Incremental => "INCREMENTAL",
             AutoVacuum::Full => "FULL",

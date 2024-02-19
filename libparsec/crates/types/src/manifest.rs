@@ -212,7 +212,7 @@ impl std::str::FromStr for RealmRole {
 }
 
 impl std::fmt::Display for RealmRole {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.write_str(match self {
             Self::Owner => "owner",
             Self::Manager => "manager",

@@ -713,7 +713,7 @@ impl CertificatesStorage {
         self.platform.stop().await
     }
 
-    pub async fn for_update(&mut self) -> anyhow::Result<CertificatesStorageUpdater<'_>> {
+    pub async fn for_update(&mut self) -> anyhow::Result<CertificatesStorageUpdater> {
         self.platform
             .for_update()
             .await

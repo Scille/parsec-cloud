@@ -78,7 +78,7 @@ impl From<ApiVersion> for (u32, u32) {
 }
 
 impl Display for ApiVersion {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}.{}", self.version, self.revision)
     }
 }

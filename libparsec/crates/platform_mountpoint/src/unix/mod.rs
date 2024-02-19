@@ -97,7 +97,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
         }
     }
 
-    fn forget(&mut self, _req: &Request<'_>, ino: u64, nlookup: u64) {
+    fn forget(&mut self, _req: &Request, ino: u64, nlookup: u64) {
         // Safety: Current inode should exists (resolved by lookup method) and nlookup should be valid
         unsafe { self.remove_path(Inode::from(ino), nlookup) };
     }
@@ -303,7 +303,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
 
     fn write(
         &mut self,
-        _req: &Request<'_>,
+        _req: &Request,
         _ino: u64,
         fh: u64,
         offset: i64,
@@ -347,7 +347,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
 
     fn mkdir(
         &mut self,
-        _req: &Request<'_>,
+        _req: &Request,
         parent: u64,
         name: &OsStr,
         _mode: u32,
@@ -401,7 +401,7 @@ impl<T: MountpointInterface> Filesystem for FileSystemWrapper<T> {
 
     fn rename(
         &mut self,
-        _req: &Request<'_>,
+        _req: &Request,
         parent: u64,
         name: &OsStr,
         new_parent: u64,

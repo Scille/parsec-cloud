@@ -317,7 +317,7 @@ impl LocalDatabase {
 }
 
 impl std::fmt::Debug for LocalDatabase {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut fmt = f.debug_struct("LocalDatabase");
         fmt.field("path", &self.path)
             .field("vacuum_mode", &self.vacuum_mode);

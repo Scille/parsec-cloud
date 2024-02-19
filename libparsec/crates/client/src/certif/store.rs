@@ -233,7 +233,7 @@ impl CertificatesStore {
     /// dropped when the user switch from/to OUTSIDER).
     ///
     /// Also note the lock is shared with other read operations.
-    pub async fn for_read<'a, T, E, Fut>(
+    pub async fn for_read<T, E, Fut>(
         &self,
         cb: impl FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
     ) -> Result<Result<T, E>, CertifStoreError>
@@ -275,7 +275,7 @@ impl CertificatesStore {
     ///
     /// This is typically useful when validation data received from the server (as
     /// the server provides us with the certificates requirements to do the validation).
-    pub async fn for_read_with_requirements<'a: 'b, 'b: 'c, 'c, T, E, Fut>(
+    pub async fn for_read_with_requirements<T, E, Fut>(
         &self,
         ops: &CertifOps,
         needed_timestamps: &PerTopicLastTimestamps,

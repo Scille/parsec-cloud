@@ -43,7 +43,7 @@ impl<T> crate::future::Future for JoinHandle<T> {
     #[inline(always)]
     fn poll(
         mut self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
+        cx: &mut std::task::Context,
     ) -> std::task::Poll<Self::Output> {
         self.0.poll_unpin(cx)
     }

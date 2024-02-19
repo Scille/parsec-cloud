@@ -144,9 +144,9 @@ impl From<ConnectionError> for LoadLastKeysBundleError {
 /// The idea here is to trust the last keys bundle author of having done his best to
 /// provide us with valid keys (and if something is corrupted, an OWNER should do
 /// a healing key rotation soon enough in theory).
-pub(super) async fn load_last_realm_keys_bundle<'a>(
+pub(super) async fn load_last_realm_keys_bundle(
     ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
+    store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
 ) -> Result<Arc<RealmKeys>, LoadLastKeysBundleError> {
     if let Some(cache) = store.get_realm_keys(realm_id) {
@@ -298,9 +298,9 @@ impl From<ConnectionError> for AttemptRealmKeysBundleHealingError {
 
 // TODO: finish key bundle healing !
 #[allow(dead_code)]
-async fn recover_realm_keys_from_previous_bundles<'a>(
+async fn recover_realm_keys_from_previous_bundles(
     ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
+    store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
 ) -> Result<KeysBundleHealingOutcome, AttemptRealmKeysBundleHealingError> {
     // 1) Retrieve all key rotation certificates, we will need them all given
@@ -478,9 +478,9 @@ pub enum EncryptRealmKeysBundleAccessForUserError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_realm_keys_bundle_access_for_user<'a>(
+pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
     ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
+    store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
     user_id: UserID,
 ) -> Result<(Vec<u8>, IndexInt), EncryptRealmKeysBundleAccessForUserError> {
@@ -822,9 +822,9 @@ pub enum CertifEncryptForRealmError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_for_realm<'a>(
+pub(super) async fn encrypt_for_realm(
     ops: &CertifOps,
-    store: &mut CertificatesStoreReadGuard<'a>,
+    store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
     data: &[u8],
 ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
