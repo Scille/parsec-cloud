@@ -33,8 +33,7 @@ describe('Check organization list', () => {
     cy.get('#ms-password-input').find('input').type('Wr0ngP@ssw0rd.');
     cy.get('.login-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button').click();
-    cy.get('.notification-toast').as('notificationToast').should('exist').should('have.class', 'ms-error');
-    cy.get('@notificationToast').shadow().find('.toast-message').should('contain.text', 'The password is incorrect!');
+    cy.get('#ms-password-input').find('.form-error').should('contain.text', 'The password is incorrect.');
   });
 
   it('Go to login page and enter password', () => {

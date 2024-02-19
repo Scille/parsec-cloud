@@ -98,6 +98,7 @@
             "forgottenPassword": "Mot de passe oublié ?",
             "emailLabel": "E-mail",
             "passwordLabel": "Mot de passe",
+            "passwordError": "Le mot de passe est incorrect.",
             "login": "Se connecter"
         },
         "organizationActionSheet": "Organisation",

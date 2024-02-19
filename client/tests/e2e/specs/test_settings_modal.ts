@@ -12,8 +12,11 @@ describe('Check settings modal', () => {
   });
 
   it('Opens the settings dialog', () => {
+    // Cypress bug without waiting
+    cy.wait(200);
     cy.get('.modal-default').should('exist');
     cy.get('ion-modal').get('ion-title').contains('Settings');
+    cy.wait(200);
   });
 
   it('Check General tab', () => {

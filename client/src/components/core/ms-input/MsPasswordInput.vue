@@ -10,7 +10,7 @@
     </span>
     <ion-item
       class="input-item"
-      :class="errorBoolean ? 'input-invalid' : ''"
+      :class="passwordIsInvalid ? 'input-invalid' : ''"
     >
       <ion-input
         class="form-input input"
@@ -21,6 +21,8 @@
         :value="modelValue"
         id="ms-password-input"
         :clear-on-edit="false"
+        @ion-focus="hasFocus = true"
+        @ion-blur="hasFocus = false"
         @keyup.enter="onEnterPress()"
       />
       <div
@@ -34,7 +36,7 @@
       </div>
     </ion-item>
     <span
-      v-show="errorMessage !== ''"
+      v-show="errorMessage"
       class="form-error caption-caption"
     >
       <ion-icon
@@ -48,14 +50,12 @@
 
 <script setup lang="ts">
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { IonCol, IonGrid, IonIcon, IonInput, IonItem, IonRow, IonText } from '@ionic/vue';
-import { eye, eyeOff } from 'ionicons/icons';
+import { IonIcon, IonInput, IonItem } from '@ionic/vue';
+import { eye, eyeOff, warning } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const inputRef = ref();
-const errorMessage = ref('');
-const validity = ref(Validity.Invalid);
 let hotkeys: Hotkeys | null = null;
 const passwordVisible = ref(false);
 const hasFocus = ref(false);
@@ -63,7 +63,8 @@ const hasFocus = ref(false);
 const props = defineProps<{
   label: string;
   modelValue?: string;
-  validator?: IValidator;
+  errorMessage?: string;
+  passwordIsInvalid?: boolean;
 }>();
 
 const emits = defineEmits<{
