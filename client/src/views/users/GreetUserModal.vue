@@ -83,7 +83,6 @@
           <user-information
             :default-email="''"
             :default-name="''"
-            :default-device="''"
             :email-enabled="false"
             ref="guestInfoPage"
             @on-enter-keyup="nextStep()"
@@ -106,13 +105,13 @@
         >
           <user-avatar-name
             class="avatar"
-            :user-name="guestInfoPage?.fullName"
-            :user-avatar="guestInfoPage?.fullName"
+            :user-name="guestInfoPage.fullName"
+            :user-avatar="guestInfoPage.fullName"
           />
           <div class="user-info">
             <div class="user-info__email">
               <ion-text class="body">{{ $t('UsersPage.success.email') }}</ion-text>
-              <ion-text class="cell">{{ guestInfoPage?.email }}</ion-text>
+              <ion-text class="cell">{{ guestInfoPage.email }}</ion-text>
             </div>
             <div class="user-info__role">
               <ion-text class="body">{{ $t('UsersPage.success.profile') }}</ion-text>
@@ -169,6 +168,7 @@ import {
   modalController,
 } from '@ionic/vue';
 
+import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsDropdown, MsInformativeText, MsModalResult, MsOptions, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -196,7 +196,7 @@ const props = defineProps<{
 }>();
 
 const profile: Ref<UserProfile | null> = ref(null);
-const guestInfoPage: Ref<typeof UserInformation | null> = ref(null);
+const guestInfoPage = ref();
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
@@ -250,7 +250,7 @@ async function updateCanGoForward(): Promise<void> {
   if (pageStep.value === GreetUserStep.WaitForGuest && waitingForGuest.value === true) {
     canGoForward.value = false;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    canGoForward.value = guestInfoPage.value && profile.value && (await guestInfoPage.value.areFieldsCorrect()) && profile.value !== null;
+    canGoForward.value = profile.value !== null && (await guestInfoPage.value.areFieldsCorrect());
   } else {
     canGoForward.value = true;
   }
@@ -381,7 +381,7 @@ async function nextStep(): Promise<void> {
     informationManager.present(
       new Information({
         message: translate('UsersPage.greet.success.message', {
-          user: guestInfoPage.value?.fullName,
+          user: guestInfoPage.value.fullName,
         }),
         level: InformationLevel.Success,
       }),
@@ -389,10 +389,11 @@ async function nextStep(): Promise<void> {
     );
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
-  } else if (pageStep.value === GreetUserStep.CheckGuestInfo && guestInfoPage.value && profile.value) {
+  } else if (pageStep.value === GreetUserStep.CheckGuestInfo && profile.value) {
+    const deviceName = await getDefaultDeviceName();
     const result = await greeter.value.createUser(
       { label: guestInfoPage.value.fullName, email: guestInfoPage.value.email },
-      guestInfoPage.value.deviceName,
+      deviceName,
       profile.value,
     );
     if (!result.ok) {
@@ -418,10 +419,9 @@ async function nextStep(): Promise<void> {
     waitingForGuest.value = true;
     const result = await greeter.value.getClaimRequests();
     waitingForGuest.value = false;
-    if (result.ok && guestInfoPage.value) {
+    if (result.ok) {
       guestInfoPage.value.fullName = greeter.value.requestedHumanHandle?.label;
       guestInfoPage.value.email = greeter.value.requestedHumanHandle?.email;
-      guestInfoPage.value.deviceName = greeter.value.requestedDeviceLabel;
       await nextStep();
     } else {
       await showErrorAndRestart(translate('UsersPage.greet.errors.retrieveUserInfoFailed'));

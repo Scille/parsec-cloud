@@ -64,7 +64,7 @@ describe('Greet user into an organization', () => {
     cy.get('@title').contains('Contact details');
     checkStepper(2);
     cy.get('@footer').find('ion-spinner').should('not.be.visible');
-    cy.get('.greet-organization-modal').find('.user-info-page').find('ion-input').as('inputs').should('have.length', 3);
+    cy.get('.greet-organization-modal').find('.user-info-page').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('@inputs').eq(1).should('have.class', 'input-disabled');
     cy.get('.user-info-page').find('#dropdown-popover-button').as('select');
     cy.get('@select').should('not.have.value');

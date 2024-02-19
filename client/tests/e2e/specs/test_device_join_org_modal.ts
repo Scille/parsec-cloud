@@ -98,14 +98,12 @@ describe('Claim new device', () => {
     cy.get('@modalTitle').contains('Create a password');
     cy.get('@modalSubtitle').contains('Finally, create a password for your new device.');
 
-    cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 3);
+    cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('#next-button').contains('Confirm password');
     cy.get('@inputs').eq(0).find('input').type('Password23;-$aze');
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('@inputs').eq(1).find('input').type('Password23;-$aze');
-    cy.get('#next-button').should('have.attr', 'disabled');
-    cy.get('@inputs').eq(2).find('input').type('my_device');
     cy.get('#next-button').should('not.have.attr', 'disabled');
     cy.get('#next-button').click();
 

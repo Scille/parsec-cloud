@@ -22,23 +22,12 @@
     @on-enter-keyup="$emit('onEnterKeyup', email)"
     :validator="emailValidator"
   />
-  <ms-input
-    :label="$t('CreateOrganization.deviceNameInputLabel')"
-    :placeholder="$t('CreateOrganization.deviceNamePlaceholder')"
-    v-model="deviceName"
-    name="deviceName"
-    :disabled="!$props.deviceEnabled"
-    @change="$emit('fieldUpdate')"
-    @on-enter-keyup="$emit('onEnterKeyup', deviceName)"
-    :validator="deviceNameValidator"
-  />
 </template>
 
 <script setup lang="ts">
-import { getDefaultDeviceName } from '@/common/device';
-import { Validity, deviceNameValidator, emailValidator, userNameValidator } from '@/common/validators';
+import { Validity, emailValidator, userNameValidator } from '@/common/validators';
 import { MsInput } from '@/components/core';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({
   defaultEmail: {
@@ -46,10 +35,6 @@ const props = defineProps({
     default: '',
   },
   defaultName: {
-    type: String,
-    default: '',
-  },
-  defaultDevice: {
     type: String,
     default: '',
   },
@@ -61,13 +46,8 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  deviceEnabled: {
-    type: Boolean,
-    default: true,
-  },
 });
 
-const deviceName = ref(props.defaultDevice);
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
 const firstInputFieldRef = ref();
@@ -79,14 +59,9 @@ defineEmits<{
 
 defineExpose({
   areFieldsCorrect,
-  deviceName,
   email,
   fullName,
   setFocus,
-});
-
-onMounted(async () => {
-  deviceName.value = await getDefaultDeviceName();
 });
 
 async function setFocus(): Promise<void> {
@@ -95,9 +70,7 @@ async function setFocus(): Promise<void> {
 
 async function areFieldsCorrect(): Promise<boolean> {
   return (
-    (await emailValidator(email.value)).validity === Validity.Valid &&
-    (await userNameValidator(fullName.value)).validity === Validity.Valid &&
-    (await deviceNameValidator(deviceName.value)).validity === Validity.Valid
+    (await emailValidator(email.value)).validity === Validity.Valid && (await userNameValidator(fullName.value)).validity === Validity.Valid
   );
 }
 </script>

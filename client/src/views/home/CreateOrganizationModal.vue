@@ -99,7 +99,6 @@
             :organization="orgInfo.orgName"
             :fullname="orgInfo.userName"
             :email="orgInfo.email"
-            :device-name="orgInfo.deviceName"
             :server-mode="orgInfo.serverMode"
             :server-addr="orgInfo.serverAddr"
             @update-request="onUpdateRequested"
@@ -177,6 +176,7 @@
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
 import { asyncComputed } from '@/common/asyncComputed';
+import { getDefaultDeviceName } from '@/common/device';
 import { Validity, organizationValidator } from '@/common/validators';
 import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
@@ -224,7 +224,6 @@ interface OrgInfoValues {
   orgName: string;
   userName: string;
   email: string;
-  deviceName: string;
   serverMode: ServerMode;
   serverAddr: string;
 }
@@ -389,13 +388,15 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
 
+    const deviceName = await getDefaultDeviceName();
+
     const result = await parsecCreateOrganization(
       addr,
       orgName.value,
       userInfo.value.fullName,
       userInfo.value.email,
       passwordChoice.value.password,
-      userInfo.value.deviceName,
+      deviceName,
     );
     if (result.ok) {
       device.value = result.value;
@@ -443,7 +444,6 @@ async function nextStep(): Promise<void> {
       orgName: orgName.value,
       userName: userInfo.value.fullName,
       email: userInfo.value.email,
-      deviceName: userInfo.value.deviceName,
       serverMode: serverChoice.value.mode,
       serverAddr: serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr,
     };

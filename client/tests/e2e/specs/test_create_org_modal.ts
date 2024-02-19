@@ -123,12 +123,11 @@ describe('Create a new organization', () => {
     // Fifth page, summary
     cy.get('@title').contains('Overview of your organization');
     cy.get('@subtitle').contains('Check that the information is correct');
-    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 5);
+    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 4);
     cy.get('@summaryItems').eq(0).find('.summary-item__text').contains('MyOrg');
     cy.get('@summaryItems').eq(1).find('.summary-item__text').contains('Banjo');
     cy.get('@summaryItems').eq(2).find('.summary-item__text').contains('banjo@rare.com');
-    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('Web');
-    cy.get('@summaryItems').eq(4).find('.summary-item__text').contains('parsec://localhost?no_ssl=true');
+    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('parsec://localhost?no_ssl=true');
     cy.get('#next-button').contains('Create organization').click();
 
     // Sixth page, spinner, X button should be hidden
@@ -257,7 +256,7 @@ describe('Create a new organization', () => {
     cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
     cy.get('#next-button').click();
 
-    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 5);
+    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 4);
     // Org name, should take us back to the first page
     cy.get('@summaryItems').eq(0).find('.summary-item__button').click();
     cy.get('@title').contains('Create an organization');
@@ -286,17 +285,8 @@ describe('Create a new organization', () => {
     cy.get('#next-button').click();
     cy.get('#next-button').click();
 
-    // Device name, should take us back to the second page
-    cy.get('@summaryItems').eq(3).find('.summary-item__button').click();
-    cy.get('@title').contains('Enter your personal information');
-
-    // Back to summary
-    cy.get('#next-button').click();
-    cy.get('#next-button').click();
-    cy.get('#next-button').click();
-
     // Server, should take us back to the third page
-    cy.get('@summaryItems').eq(4).find('.summary-item__button').click();
+    cy.get('@summaryItems').eq(3).find('.summary-item__button').click();
     cy.get('@title').contains('Choose the server you need');
 
     // Back to summary
