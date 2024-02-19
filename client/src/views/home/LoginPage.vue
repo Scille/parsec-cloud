@@ -26,6 +26,9 @@
             v-model="password"
             @on-enter-keyup="onLoginClick()"
             id="ms-password-input"
+            @change="onPasswordChange"
+            :error-message="errorMessage"
+            :password-is-invalid="passwordIsInvalid"
           />
           <ion-button
             fill="clear"
@@ -58,7 +61,8 @@
 <script setup lang="ts">
 import { MsInput, MsPasswordInput } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice } from '@/parsec';
+import { AvailableDevice, ClientStartError } from '@/parsec';
+import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
@@ -73,6 +77,9 @@ const emits = defineEmits<{
 }>();
 
 const passwordInputRef = ref();
+const password = ref('');
+const errorMessage = ref('');
+const passwordIsInvalid = ref(false);
 
 onMounted(async () => {
   await passwordInputRef.value.setFocus();
@@ -82,7 +89,21 @@ async function onLoginClick(): Promise<void> {
   emits('loginClick', props.device, password.value);
 }
 
-const password = ref('');
+async function setLoginError(error?: ClientStartError): Promise<void> {
+  errorMessage.value = translate('HomePage.organizationLogin.passwordError');
+  passwordIsInvalid.value = true;
+}
+
+async function onPasswordChange(value: string): Promise<void> {
+  if (value.length === 0) {
+    passwordIsInvalid.value = false;
+  }
+  errorMessage.value = '';
+}
+
+defineExpose({
+  setLoginError,
+});
 </script>
 
 <style lang="scss" scoped>

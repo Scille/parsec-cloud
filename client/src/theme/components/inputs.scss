@@ -30,7 +30,7 @@
   border-radius: var(--parsec-radius-8);
   color: var(--parsec-color-light-primary-800);
   padding-left: 1rem;
-  transition: all 0.2s ease-in-out;
+  transition: outline 0.2s ease-in-out;
   position: relative;
 
   &:focus-within {
@@ -76,7 +76,7 @@
 
     &:not(:focus-within) {
       --background: var(--parsec-color-light-secondary-background);
-      outline: var(--offset) solid var(--parsec-color-light-success-500);
+      outline: 2px solid var(--parsec-color-light-success-500);
       border: 1px solid var(--parsec-color-light-success-500);
     }
   }
@@ -88,7 +88,8 @@
     &:focus-within {
       --background: none;
       background: var(--parsec-color-light-secondary-background);
-      outline: var(--offset) solid var(--parsec-color-light-danger-500);
+      outline: 1px solid var(--parsec-color-light-danger-500);
+      border: 1px solid var(--parsec-color-light-danger-500);
     }
   }
 }
@@ -100,7 +101,6 @@
   align-items: center;
   gap: 0.2rem;
 }
-
 
 /* --- checkbox --- */
 .checkbox {

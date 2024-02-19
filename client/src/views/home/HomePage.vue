@@ -44,6 +44,7 @@
                 @forgotten-password-click="onForgottenPasswordClicked"
                 @back-click="backToOrganizations"
                 @settings-click="openSettingsModal"
+                ref="loginPage"
               />
             </template>
           </slide-horizontal>
@@ -60,7 +61,6 @@ import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import { AvailableDevice, getDeviceHandle, isDeviceLoggedIn, login as parsecLogin, startWorkspace } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
@@ -83,12 +83,12 @@ enum HomePageState {
   ForgottenPassword = 'forgotten-password',
 }
 
-const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
+const loginPage = ref();
 
 let hotkeys: Hotkeys | null = null;
 
@@ -215,11 +215,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     }
     state.value = HomePageState.OrganizationList;
   } else {
-    const notification = new Information({
-      message: translate('HomePage.loginNotification'),
-      level: InformationLevel.Error,
-    });
-    informationManager.present(notification, PresentationMode.Toast);
+    loginPage.value.setLoginError(result.error);
   }
 }
 

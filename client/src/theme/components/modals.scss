@@ -291,6 +291,7 @@ ion-modal.join-by-link-modal::part(content) {
   .ms-modal-content {
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .ms-modal-footer {
