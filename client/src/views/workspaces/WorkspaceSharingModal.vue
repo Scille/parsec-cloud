@@ -201,7 +201,6 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   flex-direction: column;
 
   .inner-content {
-    overflow-y: hidden;
     height: 100%;
   }
 }

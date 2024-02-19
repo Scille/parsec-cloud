@@ -107,30 +107,4 @@ async function onChange(value: string): Promise<void> {
   background: var(--parsec-color-light-secondary-disabled);
   border: var(--parsec-color-light-secondary-disabled);
 }
-
-.input-valid {
-  border: 1px solid var(--parsec-color-light-primary-300);
-
-  &:not(:focus-within) {
-    --background: var(--parsec-color-light-secondary-background);
-    outline: var(--offset) solid var(--parsec-color-light-success-500);
-    border: 1px solid var(--parsec-color-light-success-500);
-  }
-}
-
-.input-invalid {
-  border: 1px solid var(--parsec-color-light-danger-500);
-
-  &:focus-within {
-    --background: var(--parsec-color-light-secondary-background);
-    outline: var(--offset) solid var(--parsec-color-light-danger-500);
-  }
-}
-
-.form-error {
-  color: var(--parsec-color-light-danger-500);
-  display: flex;
-  align-items: center;
-  gap: 0.2rem;
-}
 </style>

@@ -1,42 +1,49 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-grid class="input-grid">
-    <ion-row>
-      <ion-col class="input-container">
-        <ion-text
-          id="passwordLabel"
-          class="form-label"
-        >
-          {{ label }}
-        </ion-text>
-        <ion-item class="input-item ion-no-padding">
-          <ion-input
-            class="form-input input"
-            ref="inputRef"
-            aria-labelledby="passwordLabel"
-            :type="passwordVisible ? 'text' : 'password'"
-            @ion-input="onChange($event.target.value)"
-            :value="modelValue"
-            @keyup.enter="onEnterPress()"
-            id="ms-password-input"
-            :clear-on-edit="false"
-            @ion-focus="hasFocus = true"
-            @ion-blur="hasFocus = false"
-          />
-          <div
-            class="input-icon"
-            @click="passwordVisible = !passwordVisible"
-          >
-            <ion-icon
-              slot="icon-only"
-              :icon="passwordVisible ? eyeOff : eye"
-            />
-          </div>
-        </ion-item>
-      </ion-col>
-    </ion-row>
-  </ion-grid>
+  <div class="input-container">
+    <span
+      id="passwordLabel"
+      class="form-label"
+    >
+      {{ label }}
+    </span>
+    <ion-item
+      class="input-item"
+      :class="errorBoolean ? 'input-invalid' : ''"
+    >
+      <ion-input
+        class="form-input input"
+        ref="inputRef"
+        aria-labelledby="passwordLabel"
+        :type="passwordVisible ? 'text' : 'password'"
+        @ion-input="onChange($event.target.value)"
+        :value="modelValue"
+        id="ms-password-input"
+        :clear-on-edit="false"
+        @keyup.enter="onEnterPress()"
+      />
+      <div
+        class="input-icon"
+        @click="passwordVisible = !passwordVisible"
+      >
+        <ion-icon
+          slot="icon-only"
+          :icon="passwordVisible ? eyeOff : eye"
+        />
+      </div>
+    </ion-item>
+    <span
+      v-show="errorMessage !== ''"
+      class="form-error caption-caption"
+    >
+      <ion-icon
+        class="form-error-icon"
+        :icon="warning"
+      />
+      {{ errorMessage }}
+    </span>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -47,6 +54,8 @@ import { inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const inputRef = ref();
+const errorMessage = ref('');
+const validity = ref(Validity.Invalid);
 let hotkeys: Hotkeys | null = null;
 const passwordVisible = ref(false);
 const hasFocus = ref(false);
@@ -54,6 +63,7 @@ const hasFocus = ref(false);
 const props = defineProps<{
   label: string;
   modelValue?: string;
+  validator?: IValidator;
 }>();
 
 const emits = defineEmits<{
@@ -90,7 +100,7 @@ function setFocus(): void {
   }, 200);
 }
 
-function onChange(value: any): void {
+async function onChange(value: any): Promise<void> {
   emits('update:modelValue', value);
   emits('change', value);
 }
@@ -102,8 +112,4 @@ function onEnterPress(): void {
 }
 </script>
 
-<style lang="scss" scoped>
-.input-grid {
-  width: 100%;
-}
-</style>
+<style lang="scss" scoped></style>

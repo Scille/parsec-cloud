@@ -2,18 +2,25 @@
 
 /* **** Parsec inputs **** */
 
+/* --- input field --- */
 .input-container {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   position: relative;
   z-index: 10;
-  padding: 0.25rem;
+  padding: 0;
 }
 
+// label
+.form-label {
+  color: var(--parsec-color-light-primary-700);
+}
+
+// input
 .input-item {
   display: inline-flex;
-  --background: var(--parsec-color-light-secondary-white);
+  --background: none;
   background: var(--parsec-color-light-secondary-white);
   flex-grow: 1;
   width: auto;
@@ -33,10 +40,6 @@
   }
 }
 
-.form-label {
-  color: var(--parsec-color-light-primary-700);
-}
-
 .input {
   -webkit-margin-start: 0;
   margin-inline-start: 0;
@@ -44,29 +47,60 @@
   min-height: 1rem;
   width: auto;
   flex-grow: 1;
-}
 
-.input-icon,
-.input-clear-icon {
-  padding: 0.25rem;
-  margin-right: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--parsec-color-light-secondary-grey);
-  font-size: 1.2rem;
+  &-icon,
+  &-clear-icon {
+    padding: 0.25rem;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--parsec-color-light-secondary-grey);
+    font-size: 1.2rem;
 
-  &:hover {
-    background: var(--parsec-color-light-secondary-medium);
-    border-radius: var(--parsec-radius-6);
-    color: var(--parsec-color-light-primary-700);
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-6);
+      color: var(--parsec-color-light-primary-700);
+    }
+  }
+
+  &-clear-icon {
+    margin-inline-end: 0.55rem !important;
+    color: var(--parsec-color-light-secondary-grey) !important;
+  }
+
+  // valid input
+  &-valid {
+    border: 1px solid var(--parsec-color-light-primary-300);
+
+    &:not(:focus-within) {
+      --background: var(--parsec-color-light-secondary-background);
+      outline: var(--offset) solid var(--parsec-color-light-success-500);
+      border: 1px solid var(--parsec-color-light-success-500);
+    }
+  }
+
+  // invalid input
+  &-invalid {
+    border: 1px solid var(--parsec-color-light-danger-500);
+
+    &:focus-within {
+      --background: none;
+      background: var(--parsec-color-light-secondary-background);
+      outline: var(--offset) solid var(--parsec-color-light-danger-500);
+    }
   }
 }
 
-.input-clear-icon {
-  margin-inline-end: 0.55rem !important;
-  color: var(--parsec-color-light-secondary-grey) !important;
+// error message
+.form-error {
+  color: var(--parsec-color-light-danger-500);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
 }
+
 
 /* --- checkbox --- */
 .checkbox {
@@ -74,18 +108,18 @@
   --size: 1.25rem;
   --checkbox-background-checked: var(--parsec-color-light-primary-600);
   --checkbox-border-checked: var(--parsec-color-light-primary-600);
-}
 
-.checkbox::part(container) {
-  border: 2px solid var(--parsec-color-light-secondary-light);
-  border-radius: var(--parsec-radius-6);
-  padding: 2px;
-}
+  &::part(container) {
+    border: 2px solid var(--parsec-color-light-secondary-light);
+    border-radius: var(--parsec-radius-6);
+    padding: 2px;
+  }
 
-.checkbox-checked::part(container) {
-  border: 2px solid var(--parsec-color-light-primary-600);
-}
+  &-checked::part(container) {
+    border: 2px solid var(--parsec-color-light-primary-600);
+  }
 
-.checkbox-indeterminate::part(container) {
-  border: 2px solid var(--parsec-color-light-primary-600);
+  &-indeterminate::part(container) {
+    border: 2px solid var(--parsec-color-light-primary-600);
+  }
 }
