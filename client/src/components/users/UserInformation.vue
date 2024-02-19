@@ -35,13 +35,10 @@
 </template>
 
 <script setup lang="ts">
+import { getDefaultDeviceName } from '@/common/device';
 import { Validity, deviceNameValidator, emailValidator, userNameValidator } from '@/common/validators';
 import { MsInput } from '@/components/core';
-import { ref } from 'vue';
-
-function getDefaultDeviceName(): string {
-  return 'my_device';
-}
+import { onMounted, ref } from 'vue';
 
 const props = defineProps({
   defaultEmail: {
@@ -70,7 +67,7 @@ const props = defineProps({
   },
 });
 
-const deviceName = ref(props.defaultDevice || getDefaultDeviceName());
+const deviceName = ref(props.defaultDevice);
 const email = ref(props.defaultEmail);
 const fullName = ref(props.defaultName);
 const firstInputFieldRef = ref();
@@ -88,8 +85,12 @@ defineExpose({
   setFocus,
 });
 
-function setFocus(): void {
-  firstInputFieldRef.value.setFocus();
+onMounted(async () => {
+  deviceName.value = await getDefaultDeviceName();
+});
+
+async function setFocus(): Promise<void> {
+  await firstInputFieldRef.value.setFocus();
 }
 
 async function areFieldsCorrect(): Promise<boolean> {

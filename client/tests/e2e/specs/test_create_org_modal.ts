@@ -127,7 +127,7 @@ describe('Create a new organization', () => {
     cy.get('@summaryItems').eq(0).find('.summary-item__text').contains('MyOrg');
     cy.get('@summaryItems').eq(1).find('.summary-item__text').contains('Banjo');
     cy.get('@summaryItems').eq(2).find('.summary-item__text').contains('banjo@rare.com');
-    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('my_device');
+    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('Web');
     cy.get('@summaryItems').eq(4).find('.summary-item__text').contains('parsec://localhost?no_ssl=true');
     cy.get('#next-button').contains('Create organization').click();
 
