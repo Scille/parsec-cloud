@@ -475,7 +475,7 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
 }
 
 pub fn mount<T: MountpointInterface>(
-    mountpoint: &std::path::Path,
+    mountpoint: std::path::PathBuf,
     interface: T,
 ) -> anyhow::Result<FileSystemMounted<T>> {
     let fs_wrapper = FileSystemWrapper::new(interface);

@@ -7,8 +7,6 @@ use std::{
 
 use libparsec_types::FsPath;
 
-use crate::{FileSystemWrapper, MountpointInterface};
-
 /// `paths_indexed_by_inode` allocator indexed by `inode`
 /// The index of path is the inode number and the free inodes are stored
 /// `Pasteur` must contain his rage when he sees this code
@@ -101,14 +99,10 @@ pub(crate) struct InodeManager {
     opened: Mutex<HashMap<FsPath, (Counter, Inode)>>,
 }
 
-impl<T: MountpointInterface> FileSystemWrapper<T> {
+impl InodeManager {
     pub(super) fn insert_path(&self, path: FsPath) -> Inode {
-        let mut paths_store = self
-            .inode_manager
-            .paths_store
-            .write()
-            .expect("Mutex is poisoned");
-        let mut opened = self.inode_manager.opened.lock().expect("Mutex is poisoned");
+        let mut paths_store = self.paths_store.write().expect("Mutex is poisoned");
+        let mut opened = self.opened.lock().expect("Mutex is poisoned");
 
         if let Some((counter, inode)) = opened.get_mut(&path) {
             counter.increment();
@@ -134,12 +128,8 @@ impl<T: MountpointInterface> FileSystemWrapper<T> {
     /// - `inode` does not exist
     /// - `nlookup` is greater than the `counter` associated to the `inode`
     pub(super) unsafe fn remove_path(&self, inode: Inode, nlookup: u64) {
-        let mut paths_store = self
-            .inode_manager
-            .paths_store
-            .write()
-            .expect("Mutex is poisoned");
-        let mut opened = self.inode_manager.opened.lock().expect("Mutex is poisoned");
+        let mut paths_store = self.paths_store.write().expect("Mutex is poisoned");
+        let mut opened = self.opened.lock().expect("Mutex is poisoned");
         let i: usize = inode.into();
 
         let path = &paths_store.paths_indexed_by_inode[i];
@@ -158,22 +148,14 @@ impl<T: MountpointInterface> FileSystemWrapper<T> {
     /// It will panic if:
     /// - `inode` does not exist
     pub(super) unsafe fn get_path(&self, inode: Inode) -> FsPath {
-        let paths_store = self
-            .inode_manager
-            .paths_store
-            .read()
-            .expect("Mutex is poisoned");
+        let paths_store = self.paths_store.read().expect("Mutex is poisoned");
 
         paths_store.paths_indexed_by_inode[usize::from(inode)].clone()
     }
 
     pub(super) fn rename_path(&self, source: &FsPath, destination: &FsPath) {
-        let mut paths_store = self
-            .inode_manager
-            .paths_store
-            .write()
-            .expect("Mutex is poisoned");
-        let mut opened = self.inode_manager.opened.lock().expect("Mutex is poisoned");
+        let mut paths_store = self.paths_store.write().expect("Mutex is poisoned");
+        let mut opened = self.opened.lock().expect("Mutex is poisoned");
 
         for path in paths_store
             .paths_indexed_by_inode

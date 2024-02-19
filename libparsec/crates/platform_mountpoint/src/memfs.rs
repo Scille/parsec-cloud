@@ -71,15 +71,15 @@ impl MemFS {
 }
 
 impl MountpointInterface for MemFS {
-    fn check_read_rights(&self, _path: &FsPath) -> MountpointResult<()> {
+    async fn check_read_rights(&self, _path: &FsPath) -> MountpointResult<()> {
         Ok(())
     }
 
-    fn check_write_rights(&self, _path: &FsPath) -> MountpointResult<()> {
+    async fn check_write_rights(&self, _path: &FsPath) -> MountpointResult<()> {
         Ok(())
     }
 
-    fn entry_info(&self, path: &FsPath) -> MountpointResult<EntryInfo> {
+    async fn entry_info(&self, path: &FsPath) -> MountpointResult<EntryInfo> {
         self.entries
             .lock()
             .expect("Mutex is poisoned")
@@ -88,7 +88,7 @@ impl MountpointInterface for MemFS {
             .ok_or(MountpointError::NotFound)
     }
 
-    fn entry_rename(
+    async fn entry_rename(
         &self,
         source: &FsPath,
         destination: &FsPath,
@@ -150,7 +150,7 @@ impl MountpointInterface for MemFS {
         Ok(())
     }
 
-    fn file_create(&self, path: &FsPath, _open: bool) -> MountpointResult<FileDescriptor> {
+    async fn file_create(&self, path: &FsPath, _open: bool) -> MountpointResult<FileDescriptor> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         if entries.contains_key(path) {
@@ -185,7 +185,7 @@ impl MountpointInterface for MemFS {
         Ok(fd)
     }
 
-    fn file_open(
+    async fn file_open(
         &self,
         path: &FsPath,
         _write_mode: bool,
@@ -204,7 +204,7 @@ impl MountpointInterface for MemFS {
         }
     }
 
-    fn file_delete(&self, path: &FsPath) -> MountpointResult<()> {
+    async fn file_delete(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         let (parent, _) = entries
@@ -220,11 +220,11 @@ impl MountpointInterface for MemFS {
         Ok(())
     }
 
-    fn fd_close(&self, fd: FileDescriptor) {
+    async fn fd_close(&self, fd: FileDescriptor) {
         self.remove_file_descriptor(&fd);
     }
 
-    fn fd_read(
+    async fn fd_read(
         &self,
         fd: FileDescriptor,
         buffer: &mut [u8],
@@ -248,7 +248,12 @@ impl MountpointInterface for MemFS {
         Ok(data.len())
     }
 
-    fn fd_resize(&self, fd: FileDescriptor, len: u64, truncate_only: bool) -> MountpointResult<()> {
+    async fn fd_resize(
+        &self,
+        fd: FileDescriptor,
+        len: u64,
+        truncate_only: bool,
+    ) -> MountpointResult<()> {
         let len = len as usize;
 
         let mut open_fds = self.open_fds.lock().expect("Mutex is poisoned");
@@ -271,9 +276,9 @@ impl MountpointInterface for MemFS {
         Ok(())
     }
 
-    fn fd_flush(&self, _fd: FileDescriptor) {}
+    async fn fd_flush(&self, _fd: FileDescriptor) {}
 
-    fn fd_write(
+    async fn fd_write(
         &self,
         fd: FileDescriptor,
         data: &[u8],
@@ -321,7 +326,7 @@ impl MountpointInterface for MemFS {
         Ok(transferred_length)
     }
 
-    fn dir_create(&self, path: &FsPath) -> MountpointResult<()> {
+    async fn dir_create(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         if entries.contains_key(path) {
@@ -347,7 +352,7 @@ impl MountpointInterface for MemFS {
         Ok(())
     }
 
-    fn dir_delete(&self, path: &FsPath) -> MountpointResult<()> {
+    async fn dir_delete(&self, path: &FsPath) -> MountpointResult<()> {
         let mut entries = self.entries.lock().expect("Mutex is poisoned");
 
         if entries.keys().any(|entry| &entry.parent() == path) {

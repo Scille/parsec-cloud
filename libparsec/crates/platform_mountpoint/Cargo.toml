@@ -15,10 +15,12 @@ workspace = true
 winfsp_wrs = { workspace = true }
 once_cell = { workspace = true }
 regex = { workspace = true }
+tokio = { workspace = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 fuser = { workspace = true, features = ["libfuse"] }
 libc = { workspace = true }
+tokio = { workspace = true }
 
 [dependencies]
 libparsec_types = { workspace = true }

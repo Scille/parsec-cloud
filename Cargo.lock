@@ -1711,6 +1711,7 @@ dependencies = [
  "once_cell",
  "regex",
  "thiserror",
+ "tokio",
  "winfsp_build",
  "winfsp_wrs",
 ]

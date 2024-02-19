@@ -1,14 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::FsPath;
 
 use super::{Counter, Inode};
 use crate::{FileSystemWrapper, MemFS};
 
-#[test]
-fn init() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn init() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
 
     let paths_store = manager
         .inode_manager
@@ -29,12 +31,12 @@ fn init() {
     assert!(opened.is_empty());
 }
 
-#[test]
-fn insert_path() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn insert_path() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
 
-    let inode = manager.insert_path(path.clone());
+    let inode = manager.inode_manager.insert_path(path.clone());
 
     let paths_store = manager
         .inode_manager
@@ -56,14 +58,14 @@ fn insert_path() {
     p_assert_eq!(opened[&path], (Counter(1), inode));
 }
 
-#[test]
-fn insert_two_paths() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn insert_two_paths() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path0: FsPath = "/foo".parse().unwrap();
     let path1: FsPath = "/bar".parse().unwrap();
 
-    let ino0 = manager.insert_path(path0.clone());
-    let ino1 = manager.insert_path(path1.clone());
+    let ino0 = manager.inode_manager.insert_path(path0.clone());
+    let ino1 = manager.inode_manager.insert_path(path1.clone());
 
     let paths_store = manager
         .inode_manager
@@ -88,13 +90,13 @@ fn insert_two_paths() {
     p_assert_eq!(opened[&path1], (Counter(1), ino1));
 }
 
-#[test]
-fn insert_same_path_increment_counter() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn insert_same_path_increment_counter() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
 
-    let inode = manager.insert_path(path.clone());
-    let same_ino = manager.insert_path(path.clone());
+    let inode = manager.inode_manager.insert_path(path.clone());
+    let same_ino = manager.inode_manager.insert_path(path.clone());
     p_assert_eq!(inode, same_ino);
 
     let paths_store = manager
@@ -123,19 +125,19 @@ fn insert_same_path_increment_counter() {
 #[case(6, 3)]
 #[case(1, 1)]
 #[case(3, 3)]
-fn remove_path(#[case] opened_x_times: u64, #[case] closed_x_times: u64) {
-    let manager = FileSystemWrapper::new(MemFS::default());
+async fn remove_path(#[case] opened_x_times: u64, #[case] closed_x_times: u64) {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
 
-    let inode = manager.insert_path(path.clone());
+    let inode = manager.inode_manager.insert_path(path.clone());
 
     for _ in 1..opened_x_times {
-        manager.insert_path(path.clone());
+        manager.inode_manager.insert_path(path.clone());
     }
 
     // Safety: The inode and nlookup are valid
     unsafe {
-        manager.remove_path(inode, closed_x_times);
+        manager.inode_manager.remove_path(inode, closed_x_times);
     }
 
     let paths_store = manager
@@ -170,33 +172,36 @@ fn remove_path(#[case] opened_x_times: u64, #[case] closed_x_times: u64) {
     }
 }
 
-#[test]
-fn get_path() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn get_path() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
 
     // Safety: The inode exists
     unsafe {
-        assert!(manager.get_path(Inode::from(1usize)).is_root());
+        assert!(manager
+            .inode_manager
+            .get_path(Inode::from(1usize))
+            .is_root());
     }
 
-    let inode = manager.insert_path(path.clone());
+    let inode = manager.inode_manager.insert_path(path.clone());
 
     // Safety: The inode exists
     unsafe {
-        p_assert_eq!(manager.get_path(inode), path);
+        p_assert_eq!(manager.inode_manager.get_path(inode), path);
     }
 }
 
-#[test]
-fn rename_path() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn rename_path() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
     let new_path = "/bar".parse().unwrap();
 
-    let inode = manager.insert_path(path.clone());
+    let inode = manager.inode_manager.insert_path(path.clone());
 
-    manager.rename_path(&path, &new_path);
+    manager.inode_manager.rename_path(&path, &new_path);
 
     let paths_store = manager
         .inode_manager
@@ -219,18 +224,18 @@ fn rename_path() {
     p_assert_eq!(opened[&new_path], (Counter(1), inode));
 }
 
-#[test]
-fn rename_path_non_empty() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn rename_path_non_empty() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path: FsPath = "/foo".parse().unwrap();
     let path_child = "/foo/baz".parse().unwrap();
     let new_path = "/bar".parse().unwrap();
     let new_path_child = "/bar/baz".parse().unwrap();
 
-    let inode = manager.insert_path(path.clone());
-    let ino_child = manager.insert_path(path_child);
+    let inode = manager.inode_manager.insert_path(path.clone());
+    let ino_child = manager.inode_manager.insert_path(path_child);
 
-    manager.rename_path(&path, &new_path);
+    manager.inode_manager.rename_path(&path, &new_path);
 
     let paths_store = manager
         .inode_manager
@@ -255,16 +260,16 @@ fn rename_path_non_empty() {
     p_assert_eq!(opened[&new_path_child], (Counter(1), ino_child));
 }
 
-#[test]
-fn realloc() {
-    let manager = FileSystemWrapper::new(MemFS::default());
+#[parsec_test]
+async fn realloc() {
+    let manager = FileSystemWrapper::new(Arc::new(MemFS::default()));
     let path0: FsPath = "/foo".parse().unwrap();
     let path1: FsPath = "/bar".parse().unwrap();
     let path2: FsPath = "/baz".parse().unwrap();
 
-    let ino0 = manager.insert_path(path0.clone());
-    let ino1 = manager.insert_path(path1.clone());
-    manager.insert_path(path2);
+    let ino0 = manager.inode_manager.insert_path(path0.clone());
+    let ino1 = manager.inode_manager.insert_path(path1.clone());
+    manager.inode_manager.insert_path(path2);
 
     // Check that contains 4 paths_indexed_by_inode
     {
@@ -279,8 +284,8 @@ fn realloc() {
 
     // Safety: inodes and nlookup are correct
     unsafe {
-        manager.remove_path(ino0, 1);
-        manager.remove_path(ino1, 1);
+        manager.inode_manager.remove_path(ino0, 1);
+        manager.inode_manager.remove_path(ino1, 1);
     }
 
     // Now we have unused path
@@ -296,7 +301,7 @@ fn realloc() {
         p_assert_eq!(paths_store.stack_unused_inodes[1], 3);
     }
 
-    manager.insert_path(path0.clone());
+    manager.inode_manager.insert_path(path0.clone());
 
     {
         let paths_store = manager
@@ -314,7 +319,7 @@ fn realloc() {
         p_assert_eq!(paths_store.paths_indexed_by_inode.len(), 5);
     }
 
-    manager.insert_path(path1.clone());
+    manager.inode_manager.insert_path(path1.clone());
 
     {
         let paths_store = manager

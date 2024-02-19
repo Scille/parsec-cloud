@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(clippy::unwrap_used)]
 
-fn main() {
+use std::{path::PathBuf, str::FromStr, sync::Arc};
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
     #[cfg(not(target_os = "macos"))]
     {
-        use std::path::Path;
-
         use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
 
         env_logger::init();
@@ -15,14 +16,20 @@ fn main() {
         winfsp_wrs::init().expect("Can't init WinFSP");
 
         let arg = args.nth(1).expect("Please provide mountpoint path");
-        let path = Path::new(&arg);
+        let path = PathBuf::from_str(&arg).unwrap();
 
-        let fs = FileSystemMounted::mount(path, MemFS::default()).unwrap();
+        let fs = FileSystemMounted::mount(path, Arc::new(MemFS::default()))
+            .await
+            .unwrap();
 
-        let (tx, rx) = std::sync::mpsc::channel();
-        ctrlc::set_handler(move || tx.send(()).unwrap()).unwrap();
-        rx.recv().unwrap();
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<()>(1);
+        // let (tx, rx) = std::sync::mpsc::channel();
+        ctrlc::set_handler(move || {
+            let _ = tx.try_send(());
+        })
+        .unwrap();
+        rx.recv().await.unwrap();
 
-        fs.stop();
+        fs.stop().await.unwrap();
     }
 }

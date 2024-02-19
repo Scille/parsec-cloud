@@ -11,7 +11,7 @@ mod unix;
 mod windows;
 
 use chrono::{DateTime, Utc};
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 #[cfg(target_os = "linux")]
 pub(crate) use unix as platform;
 #[cfg(target_os = "windows")]
@@ -67,101 +67,130 @@ impl EntryInfo {
     }
 }
 
-pub(crate) struct FileSystemWrapper<T: MountpointInterface> {
-    interface: T,
+pub(crate) struct FileSystemWrapper<T: MountpointInterface + Send> {
+    interface: Arc<T>,
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    tokio_handle: tokio::runtime::Handle,
     #[cfg(target_os = "linux")]
-    pub(crate) buffer: std::sync::Mutex<Vec<u8>>,
-    #[cfg(target_os = "linux")]
-    pub(crate) inode_manager: crate::unix::InodeManager,
+    pub(crate) inode_manager: Arc<crate::unix::InodeManager>,
 }
 
-impl<T: MountpointInterface> FileSystemWrapper<T> {
-    fn new(interface: T) -> Self {
+impl<T: MountpointInterface + Send + Sync> FileSystemWrapper<T> {
+    fn new(interface: Arc<T>) -> Self {
         Self {
             interface,
-            #[cfg(target_os = "linux")]
-            buffer: Default::default(),
+            #[cfg(any(target_os = "linux", target_os = "windows"))]
+            tokio_handle: tokio::runtime::Handle::current(),
             #[cfg(target_os = "linux")]
             inode_manager: Default::default(),
         }
     }
 }
 
+#[allow(async_fn_in_trait)]
 pub trait MountpointInterface {
     // Rights check
-    fn check_read_rights(&self, path: &FsPath) -> MountpointResult<()>;
-    fn check_write_rights(&self, path: &FsPath) -> MountpointResult<()>;
+    async fn check_read_rights(&self, path: &FsPath) -> MountpointResult<()>;
+    async fn check_write_rights(&self, path: &FsPath) -> MountpointResult<()>;
 
     // Entry transactions
 
-    fn entry_info(&self, path: &FsPath) -> MountpointResult<EntryInfo>;
+    fn entry_info(
+        &self,
+        path: &FsPath,
+    ) -> impl std::future::Future<Output = MountpointResult<EntryInfo>> + Send;
     fn entry_rename(
         &self,
         source: &FsPath,
         destination: &FsPath,
         overwrite: bool,
-    ) -> MountpointResult<()>;
+    ) -> impl std::future::Future<Output = MountpointResult<()>> + Send;
 
     // Directory transactions
 
-    fn dir_create(&self, path: &FsPath) -> MountpointResult<()>;
-    fn dir_delete(&self, path: &FsPath) -> MountpointResult<()>;
+    fn dir_create(
+        &self,
+        path: &FsPath,
+    ) -> impl std::future::Future<Output = MountpointResult<()>> + Send;
+    fn dir_delete(
+        &self,
+        path: &FsPath,
+    ) -> impl std::future::Future<Output = MountpointResult<()>> + Send;
 
     // File transactions
 
-    fn file_create(&self, path: &FsPath, open: bool) -> MountpointResult<FileDescriptor>;
+    fn file_create(
+        &self,
+        path: &FsPath,
+        open: bool,
+    ) -> impl std::future::Future<Output = MountpointResult<FileDescriptor>> + Send;
     fn file_open(
         &self,
         path: &FsPath,
         write_mode: bool,
-    ) -> MountpointResult<Option<FileDescriptor>>;
-    fn file_delete(&self, path: &FsPath) -> MountpointResult<()>;
+    ) -> impl std::future::Future<Output = MountpointResult<Option<FileDescriptor>>> + Send;
+    fn file_delete(
+        &self,
+        path: &FsPath,
+    ) -> impl std::future::Future<Output = MountpointResult<()>> + Send;
 
     // File descriptor transactions
 
-    fn fd_close(&self, fd: FileDescriptor);
+    async fn fd_close(&self, fd: FileDescriptor);
     fn fd_read(
         &self,
         fd: FileDescriptor,
         buffer: &mut [u8],
         offset: u64,
-    ) -> MountpointResult<usize>;
+    ) -> impl std::future::Future<Output = MountpointResult<usize>> + Send;
     fn fd_write(
         &self,
         fd: FileDescriptor,
         data: &[u8],
         offset: u64,
         mode: WriteMode,
-    ) -> MountpointResult<usize>;
-    fn fd_resize(&self, fd: FileDescriptor, len: u64, truncate_only: bool) -> MountpointResult<()>;
-    fn fd_flush(&self, fd: FileDescriptor);
+    ) -> impl std::future::Future<Output = MountpointResult<usize>> + Send;
+    async fn fd_resize(
+        &self,
+        fd: FileDescriptor,
+        len: u64,
+        truncate_only: bool,
+    ) -> MountpointResult<()>;
+    async fn fd_flush(&self, fd: FileDescriptor);
 }
 
 pub struct FileSystemMounted<T: MountpointInterface> {
     #[cfg(target_os = "windows")]
     fs: winfsp_wrs::FileSystem<FileSystemWrapper<T>>,
     #[cfg(target_os = "linux")]
-    unmounter: fuser::SessionUnmounter,
-    #[cfg(target_os = "linux")]
-    mountpoint: std::path::PathBuf,
+    background_session: fuser::BackgroundSession,
     #[cfg(target_os = "linux")]
     phantom: std::marker::PhantomData<T>,
 }
 
-impl<T: MountpointInterface + Send + 'static> FileSystemMounted<T> {
-    pub fn mount(mountpoint: &Path, interface: T) -> anyhow::Result<Self> {
-        platform::mount(mountpoint, interface)
+impl<T: MountpointInterface + Send + Sync + 'static> FileSystemMounted<T> {
+    pub async fn mount(mountpoint: PathBuf, interface: Arc<T>) -> anyhow::Result<Self> {
+        tokio::task::spawn_blocking(move || platform::mount(mountpoint, interface))
+            .await
+            .map_err(|err| anyhow::anyhow!("Cannot stop the mountpoint: {:?}", err))?
     }
 
-    #[cfg_attr(target_os = "windows", allow(unused_mut))]
-    pub fn stop(mut self) {
+    pub async fn stop(self) -> anyhow::Result<()> {
         #[cfg(target_os = "windows")]
         self.fs.stop();
+
         #[cfg(target_os = "linux")]
         {
-            let _ = self.unmounter.unmount();
-            // We do the same as WinFSP: remove the directory
-            let _ = std::fs::remove_dir(self.mountpoint);
+            tokio::task::spawn_blocking(move || {
+                let mountpoint = self.background_session.mountpoint.clone();
+                self.background_session.join();
+                // We do the same as WinFSP: remove the directory
+                let _ = std::fs::remove_dir(mountpoint);
+            })
+            .await
+            .map_err(|err| anyhow::anyhow!("Cannot stop the mountpoint: {:?}", err))?;
         }
+
+        Ok(())
     }
 }
