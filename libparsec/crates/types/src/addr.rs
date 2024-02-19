@@ -159,7 +159,7 @@ macro_rules! impl_common_stuff {
         }
 
         impl std::fmt::Debug for $name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 f.debug_struct(stringify!($name))
                     .field("url", &self.to_url().as_str())
                     .finish()

@@ -15,7 +15,7 @@ use std::{
 pub(crate) struct PathWrapper(pub std::path::PathBuf);
 
 impl IntoPy<PyObject> for PathWrapper {
-    fn into_py(self, py: pyo3::Python<'_>) -> pyo3::PyObject {
+    fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         // Pathlib is part of the standard library
         let pathlib_module = py
             .import("pathlib")

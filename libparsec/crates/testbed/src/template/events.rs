@@ -44,7 +44,7 @@ type TestbedEventCertificatesCache = TestbedEventCacheEntry<TestbedTemplateEvent
 macro_rules! impl_event_debug {
     ($struct_name:ident, [ $($field_name: ident: $field_type: ty),+ $(,)? ]) => {
         impl std::fmt::Debug for $struct_name {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 f.debug_struct(stringify!($struct_name))
                 $( .field(stringify!($field_name), &self.$field_name) )*
                 .finish()
@@ -454,7 +454,7 @@ pub struct TestbedEventBootstrapOrganization {
 }
 
 impl std::fmt::Debug for TestbedEventBootstrapOrganization {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("TestbedEventBootstrapOrganization")
             .field("timestamp", &self.timestamp)
             .field("first_user", &self.first_user_device_id)
@@ -804,7 +804,7 @@ pub struct TestbedEventNewUser {
 }
 
 impl std::fmt::Debug for TestbedEventNewUser {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("TestbedEventNewUser")
             .field("timestamp", &self.timestamp)
             .field("author", &self.author)

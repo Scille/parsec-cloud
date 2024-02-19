@@ -274,7 +274,7 @@ impl UserCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'_>,
+        expected_author: CertificateSignerRef,
         expected_user_id: Option<&UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
@@ -509,7 +509,7 @@ impl DeviceCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'_>,
+        expected_author: CertificateSignerRef,
         expected_device_id: Option<&DeviceID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
@@ -606,7 +606,7 @@ impl RealmRoleCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef<'_>,
+        expected_author: CertificateSignerRef,
         expected_realm_id: Option<VlobID>,
         expected_user_id: Option<&UserID>,
     ) -> DataResult<Self> {

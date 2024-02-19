@@ -76,7 +76,7 @@ pub struct Client {
 }
 
 impl Debug for Client {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("Client")
             .field("device", &self.device.device_id)
             .finish()
@@ -221,6 +221,10 @@ impl Client {
     /*
      * Public interface
      */
+
+    pub fn config(&self) -> Arc<ClientConfig> {
+        self.config.clone()
+    }
 
     pub fn organization_addr(&self) -> &BackendOrganizationAddr {
         &self.device.organization_addr

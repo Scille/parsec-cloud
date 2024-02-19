@@ -43,7 +43,7 @@ pub struct LocalDevice {
 }
 
 impl std::fmt::Debug for LocalDevice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("LocalDevice")
             .field("organization_addr", &self.organization_addr)
             .field("device_id", &self.device_id)

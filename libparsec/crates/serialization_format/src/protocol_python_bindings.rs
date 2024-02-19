@@ -41,7 +41,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
             #(
             #versioned_cmds_items
             )*
-            pub(super) fn #populate_mod_fn_name(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+            pub(super) fn #populate_mod_fn_name(py: Python, m: &PyModule) -> PyResult<()> {
                 let family_mod = PyModule::new(py, #family_mod_name_as_str)?;
                 m.add_submodule(family_mod)?;
                 #(#versioned_cmds_populates)*

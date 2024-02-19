@@ -80,7 +80,7 @@ impl<F> LowLevelSendHookFnT for F where
 }
 type LowLevelSendHookFn = Box<dyn LowLevelSendHookFnT + Send + Sync>;
 impl std::fmt::Debug for dyn LowLevelSendHookFnT + Send + Sync {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "LowLevelSendHookFn")
     }
 }
@@ -93,7 +93,7 @@ trait HighLevelSendHookFnT: FnOnce(Box<dyn Any>) -> HighLevelSendHookFnCallResul
 impl<F> HighLevelSendHookFnT for F where F: FnOnce(Box<dyn Any>) -> HighLevelSendHookFnCallResult {}
 type HighLevelSendHookFn = Box<dyn HighLevelSendHookFnT + Send + Sync>;
 impl std::fmt::Debug for dyn HighLevelSendHookFnT + Send + Sync {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "HighLevelSendHookFn")
     }
 }

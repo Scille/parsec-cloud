@@ -15,8 +15,8 @@ pub enum CertifEncryptForUserError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_for_user<'a>(
-    store: &mut CertificatesStoreReadGuard<'a>,
+pub(super) async fn encrypt_for_user(
+    store: &mut CertificatesStoreReadGuard<'_>,
     user_id: UserID,
     data: &[u8],
 ) -> Result<Vec<u8>, CertifEncryptForUserError> {
@@ -42,8 +42,8 @@ pub enum CertifEncryptForSequesterServicesError {
     Internal(#[from] anyhow::Error),
 }
 
-pub(super) async fn encrypt_for_sequester_services<'a>(
-    store: &mut CertificatesStoreReadGuard<'a>,
+pub(super) async fn encrypt_for_sequester_services(
+    store: &mut CertificatesStoreReadGuard<'_>,
     data: &[u8],
 ) -> Result<Option<Vec<(SequesterServiceID, Bytes)>>, CertifEncryptForSequesterServicesError> {
     let is_sequestered = store.get_sequester_authority_certificate().await?.is_some();

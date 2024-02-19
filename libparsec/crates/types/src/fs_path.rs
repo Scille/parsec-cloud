@@ -72,7 +72,7 @@ impl std::fmt::Display for EntryName {
 }
 
 impl std::fmt::Debug for EntryName {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let display = self.to_string();
         f.debug_tuple("EntryName").field(&display).finish()
     }
@@ -267,14 +267,14 @@ impl FsPath {
 }
 
 impl std::fmt::Debug for FsPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let display = self.to_string();
         f.debug_tuple("FsPath").field(&display).finish()
     }
 }
 
 impl std::fmt::Display for FsPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if self.is_root() {
             f.write_str("/")?;
         } else {

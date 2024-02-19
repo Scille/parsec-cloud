@@ -18,7 +18,7 @@ enum ClosableInMemoryDB {
 }
 
 impl std::fmt::Debug for ClosableInMemoryDB {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "ClosableInMemoryDB({})",
             match self {

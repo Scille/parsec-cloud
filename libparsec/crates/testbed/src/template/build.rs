@@ -533,10 +533,7 @@ impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
 impl_event_builder!(NewRealm, [first_owner: UserID]);
 
 impl TestbedTemplateBuilder {
-    pub fn new_user_realm(
-        &mut self,
-        user: impl TryInto<UserID>,
-    ) -> TestbedEventNewRealmBuilder<'_> {
+    pub fn new_user_realm(&mut self, user: impl TryInto<UserID>) -> TestbedEventNewRealmBuilder {
         let user: UserID = user
             .try_into()
             .unwrap_or_else(|_| panic!("Invalid value for param user"));

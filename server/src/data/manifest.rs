@@ -837,7 +837,7 @@ impl UserManifest {
 #[pyfunction]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn child_manifest_decrypt_verify_and_load(
-    py: Python<'_>,
+    py: Python,
     encrypted: &[u8],
     key: &SecretKey,
     author_verify_key: &VerifyKey,
@@ -861,7 +861,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
 
 #[pyfunction]
 pub(crate) fn child_manifest_verify_and_load(
-    py: Python<'_>,
+    py: Python,
     signed: &[u8],
     author_verify_key: &VerifyKey,
     expected_author: &DeviceID,

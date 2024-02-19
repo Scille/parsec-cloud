@@ -41,7 +41,7 @@ impl std::str::FromStr for Format {
 }
 
 impl std::fmt::Display for Format {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.write_str(match self {
             Self::Json => "json",
             Self::Csv => "csv",

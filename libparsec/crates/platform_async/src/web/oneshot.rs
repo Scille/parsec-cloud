@@ -35,7 +35,7 @@ impl<T> crate::future::Future for Receiver<T> {
     #[inline(always)]
     fn poll(
         self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
+        _cx: &mut std::task::Context,
     ) -> std::task::Poll<Self::Output> {
         todo!()
     }
@@ -53,7 +53,7 @@ impl<T> Sender<T> {
     pub async fn closed(&mut self) {
         todo!()
     }
-    pub fn poll_closed(&mut self, _cx: &mut core::task::Context<'_>) -> core::task::Poll<()> {
+    pub fn poll_closed(&mut self, _cx: &mut core::task::Context) -> core::task::Poll<()> {
         todo!()
     }
 }

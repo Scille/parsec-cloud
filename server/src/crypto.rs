@@ -520,6 +520,6 @@ impl SequesterVerifyKeyDer {
 }
 
 #[pyfunction]
-pub(crate) fn generate_nonce(py: Python<'_>) -> &PyBytes {
+pub(crate) fn generate_nonce(py: Python) -> &PyBytes {
     PyBytes::new(py, &libparsec_crypto::generate_nonce())
 }

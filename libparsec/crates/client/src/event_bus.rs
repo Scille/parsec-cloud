@@ -32,7 +32,7 @@ macro_rules! impl_event_bus_internal_and_event_bus_debug {
         }
 
         impl std::fmt::Debug for EventBus {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
                 let mut f = f.debug_struct("EventBus");
                 $(
                 let count = self.internal.$field_on_event_cbs

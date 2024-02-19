@@ -70,7 +70,7 @@ python_bindings_parsec_protocol_cmds_family!(
 );
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/anonymous_cmds");
 
-pub(crate) fn add_mod(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
     invited_cmds_populate_mod(py, m)?;
     authenticated_cmds_populate_mod(py, m)?;
     anonymous_cmds_populate_mod(py, m)?;
