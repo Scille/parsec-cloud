@@ -379,10 +379,10 @@ async function nextStep(): Promise<void> {
     pageStep.value = pageStep.value + 1;
     switch (pageStep.value) {
       case CreateOrganizationStep.UserInfoStep:
-        userInfo.value.setFocus(50);
+        userInfo.value.setFocus();
         break;
       case CreateOrganizationStep.PasswordStep:
-        passwordChoice.value.setFocus(50);
+        passwordChoice.value.setFocus();
         break;
     }
   }

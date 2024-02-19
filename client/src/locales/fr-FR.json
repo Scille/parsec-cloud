@@ -617,6 +617,13 @@
             "megabytes": "Mo",
             "gigabytes": "Go",
             "terabytes": "To"
+        },
+        "deviceTypes": {
+            "web": "Web",
+            "windows": "Windows",
+            "macos": "MacOS",
+            "linux": "Linux",
+            "android": "Android"
         }
     },
     "SideMenu": {
