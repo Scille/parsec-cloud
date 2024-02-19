@@ -53,23 +53,6 @@
       </ion-button>
     </ion-item>
 
-    <!-- deviceName -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.deviceName') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{ deviceName }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.UserInfo)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
-    </ion-item>
-
     <!-- serverMode -->
     <ion-item class="summary-item">
       <ion-label class="summary-item__label subtitles-sm">
@@ -113,7 +96,6 @@ defineProps<{
   organization: string;
   fullname: string;
   email: string;
-  deviceName: string;
   serverMode: ServerMode;
   serverAddr: string;
 }>();

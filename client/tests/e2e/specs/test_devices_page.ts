@@ -17,7 +17,7 @@ describe('Display client devices', () => {
     cy.get('.devices-container').find('h2').contains('Your devices');
     cy.get('.devices-container').find('ion-button').contains('Add');
     cy.get('.devices-container').find('ion-item').as('devices').should('have.length', 3);
-    cy.get('@devices').first().find('ion-text').contains('My First Device');
+    cy.get('@devices').first().find('ion-text').contains('Web');
     cy.get('@devices').first().find('ion-text').contains('Current');
   });
 

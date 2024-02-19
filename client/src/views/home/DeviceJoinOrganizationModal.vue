@@ -84,14 +84,6 @@
             ref="passwordPage"
             @on-enter-keyup="nextStep()"
           />
-          <ms-input
-            :label="$t('CreateOrganization.deviceNameInputLabel')"
-            :placeholder="$t('CreateOrganization.deviceNamePlaceholder')"
-            v-model="deviceName"
-            name="deviceName"
-            @on-enter-keyup="nextStep()"
-            :validator="deviceNameValidator"
-          />
         </div>
         <!-- part 5 (finish the process)-->
         <div
@@ -155,8 +147,8 @@ import {
 } from '@ionic/vue';
 
 import { asyncComputed } from '@/common/asyncComputed';
-import { Validity, deviceNameValidator } from '@/common/validators';
-import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import { getDefaultDeviceName } from '@/common/device';
+import { Answer, MsChoosePasswordInput, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
@@ -177,7 +169,6 @@ enum DeviceJoinOrganizationStep {
 }
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-const deviceName = ref('');
 const passwordPage = ref();
 let backendAddr: ParsedBackendAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
@@ -278,8 +269,7 @@ const nextButtonIsVisible = computed(() => {
 
 const canGoForward = asyncComputed(async () => {
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
-    const validDeviceName = await deviceNameValidator(deviceName.value);
-    return (await passwordPage.value.areFieldsCorrect()) && validDeviceName.validity === Validity.Valid;
+    return await passwordPage.value.areFieldsCorrect();
   }
   return true;
 });
@@ -304,8 +294,9 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === DeviceJoinOrganizationStep.Password) {
+    const deviceName = await getDefaultDeviceName();
     waitingForHost.value = true;
-    const doClaimResult = await claimer.value.doClaim(deviceName.value);
+    const doClaimResult = await claimer.value.doClaim(deviceName);
     if (doClaimResult.ok) {
       waitingForHost.value = false;
       const result = await claimer.value.finalize(passwordPage.value.password);
@@ -349,7 +340,6 @@ async function nextStep(): Promise<void> {
 
 async function startProcess(): Promise<void> {
   pageStep.value = DeviceJoinOrganizationStep.Information;
-  deviceName.value = '';
   waitingForHost.value = true;
 
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);

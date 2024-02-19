@@ -104,11 +104,10 @@ describe('User join an organization', () => {
     cy.get('@modalTitle').contains('Your contact details');
     cy.get('@modalSubtitle').contains('Please enter your contact details to access the organization');
 
-    cy.get('#get-user-info').find('ion-input').as('inputs').should('have.length', 3);
+    cy.get('#get-user-info').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('#next-button').should('have.attr', 'disabled');
     cy.get('#next-button').contains('Validate my information');
     cy.get('@inputs').eq(1).find('input').should('have.value', 'shadowheart@swordcoast.faerun');
-    cy.get('@inputs').eq(2).find('input').should('have.value', 'Web');
     // cspell:disable-next-line
     cy.get('@inputs').eq(0).find('input').type('Shadowheart');
     cy.get('#next-button').should('not.have.attr', 'disabled');

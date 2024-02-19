@@ -185,6 +185,7 @@ import {
 } from '@ionic/vue';
 
 import { asyncComputed } from '@/common/asyncComputed';
+import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsChoosePasswordInput, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -367,13 +368,14 @@ async function nextStep(): Promise<void> {
     }
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
-    const result = await claimer.value.doClaim(userInfoPage.value.deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
+    const deviceName = await getDefaultDeviceName();
+    const result = await claimer.value.doClaim(deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
     if (!result.ok) {
       await showErrorAndRestart(translate('JoinOrganization.errors.sendUserInfoFailed'));
       return;
     }
     waitingForHost.value = false;
-    passwordPage.value.setFocus(50);
+    passwordPage.value.setFocus();
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Information({
       message: translate('JoinOrganization.successMessage.message'),
@@ -392,7 +394,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       waitingForHost.value = false;
       pageStep.value += 1;
-      userInfoPage.value.setFocus(50);
+      userInfoPage.value.setFocus();
     } else {
       await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
     }

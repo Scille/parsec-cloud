@@ -178,21 +178,21 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
       value: [
         {
           id: 'device1',
-          deviceLabel: 'My First Device',
+          deviceLabel: 'Web',
           createdOn: DateTime.now(),
           createdBy: 'some_device',
           isCurrent: true,
         },
         {
           id: 'device2',
-          deviceLabel: 'My Second Device',
+          deviceLabel: 'Web',
           createdOn: DateTime.now(),
           createdBy: 'device1',
           isCurrent: false,
         },
         {
-          id: `${RECOVERY_DEVICE_PREFIX}_device1`,
-          deviceLabel: 'Recovery First Device',
+          id: `${RECOVERY_DEVICE_PREFIX}_device`,
+          deviceLabel: 'Recovery Device',
           createdOn: DateTime.now(),
           createdBy: 'device1',
           isCurrent: false,
