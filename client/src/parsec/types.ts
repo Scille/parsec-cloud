@@ -91,6 +91,7 @@ export type {
   ParsedBackendAddrServer,
   Result,
   SASCode,
+  SizeInt,
   UserClaimFinalizeInfo,
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,

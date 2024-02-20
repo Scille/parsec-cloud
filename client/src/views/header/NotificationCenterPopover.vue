@@ -42,8 +42,7 @@
 
 <script setup lang="ts">
 import { MsImage, NoNotification } from '@/components/core/ms-image';
-import DefaultNotification from '@/components/notifications/DefaultNotification.vue';
-import WorkspaceRoleChangedNotification from '@/components/notifications/WorkspaceRoleChangedNotification.vue';
+import { Notifications } from '@/components/notifications/index';
 import { WorkspaceRole } from '@/parsec';
 import {
   Information,
@@ -73,7 +72,7 @@ onMounted(() => {
     setTimeout(() => {
       const info = new Information({
         message: `Notification ${i}`,
-        level: InformationLevel.Error,
+        level: InformationLevel.Info,
         data: {
           type: InformationDataType.WorkspaceRoleChanged,
           workspaceId: '1337',
@@ -82,19 +81,117 @@ onMounted(() => {
         },
       });
       informationManager.present(info, PresentationMode.Notification);
-    }, i * 5000);
+
+      const info1 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Info,
+        data: {
+          type: InformationDataType.NewWorkspaceAccess,
+          workspaceId: '1337',
+          role: WorkspaceRole.Manager,
+        },
+      });
+      informationManager.present(info1, PresentationMode.Notification);
+
+      const info2 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Info,
+        data: {
+          type: InformationDataType.NewWorkspaceAccess,
+          workspaceId: '1337',
+          role: WorkspaceRole.Manager,
+        },
+      });
+      informationManager.present(info2, PresentationMode.Notification);
+
+      const info3 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Info,
+        data: {
+          type: InformationDataType.UserJoinWorkspace,
+          workspaceId: '1337',
+          role: WorkspaceRole.Manager,
+          userId: 'id1',
+        },
+      });
+      informationManager.present(info3, PresentationMode.Notification);
+
+      const info4 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Info,
+        data: {
+          type: InformationDataType.MultipleUsersJoinWorkspace,
+          workspaceId: '1337',
+          roles: [
+            {
+              userId: 'id1',
+              role: WorkspaceRole.Manager,
+            },
+            {
+              userId: 'id1',
+              role: WorkspaceRole.Contributor,
+            },
+          ],
+        },
+      });
+      informationManager.present(info4, PresentationMode.Notification);
+
+      const info5 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Info,
+        data: {
+          type: InformationDataType.UserSharedDocument,
+          workspaceId: '1337',
+          userId: 'id1',
+          fileName: 'Encrypted-file.txt',
+          filePath: '',
+          fileSize: 1024,
+        },
+      });
+      informationManager.present(info5, PresentationMode.Notification);
+
+      const info6 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Success,
+        data: {
+          type: InformationDataType.AllImportedElements,
+        },
+      });
+      informationManager.present(info6, PresentationMode.Notification);
+
+      const info7 = new Information({
+        message: `Notification ${i}`,
+        level: InformationLevel.Success,
+        data: {
+          type: InformationDataType.NewDevice,
+        },
+      });
+      informationManager.present(info7, PresentationMode.Notification);
+    }, i * 2000);
   }
 });
 
 function getComponentType(notification: Notification): Component {
   if (!notification.information.data) {
-    return DefaultNotification;
+    return Notifications.DefaultNotification;
   }
   switch (notification.information.data.type) {
     case InformationDataType.WorkspaceRoleChanged:
-      return WorkspaceRoleChangedNotification;
+      return Notifications.WorkspaceRoleChangedNotification;
+    case InformationDataType.NewWorkspaceAccess:
+      return Notifications.WorkspaceAccessNotification;
+    case InformationDataType.UserJoinWorkspace:
+      return Notifications.UserJoinWorkspaceNotification;
+    case InformationDataType.MultipleUsersJoinWorkspace:
+      return Notifications.MultipleUsersJoinWorkspaceNotification;
+    case InformationDataType.UserSharedDocument:
+      return Notifications.UserSharedDocumentNotification;
+    case InformationDataType.AllImportedElements:
+      return Notifications.AllImportedElementsNotification;
+    case InformationDataType.NewDevice:
+      return Notifications.NewDeviceNotification;
     default:
-      return DefaultNotification;
+      return Notifications.DefaultNotification;
   }
 }
 

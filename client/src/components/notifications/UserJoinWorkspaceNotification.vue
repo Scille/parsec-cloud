@@ -2,21 +2,18 @@
 
 <template>
   <notification-item :notification="notification">
-    <div class="notification-icon">
-      <!-- This icon is only a default placeholder, replace/add notification specific icons -->
-      <ms-image
-        :image="LogoIconGradient"
-        class="file-icon"
-      />
-    </div>
+    <user-avatar-name
+      class="notification-avatar"
+      :user-avatar="userInfo ? userInfo.humanHandle.label : ''"
+    />
     <div class="notification-details">
       <ion-text class="notification-details__message body">
         <i18n-t
-          keypath="notification.changeRole"
+          keypath="notification.userJoinWorkspace"
           scope="global"
         >
-          <template #role>
-            <strong>{{ translateWorkspaceRole(notificationData.newRole).label }}</strong>
+          <template #name>
+            <strong>{{ userInfo ? userInfo.humanHandle.label : '' }}</strong>
           </template>
           <template #workspace>
             <strong>{{ workspaceName }}</strong>
@@ -32,32 +29,34 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceName } from '@/parsec';
-import { WorkspaceRoleChangedData } from '@/services/informationManager';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { UserInfo, getUserInfo, getWorkspaceName } from '@/parsec';
+import { UserJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
-import { translateWorkspaceRole } from '@/services/translation';
 import { IonText } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
+const userInfo: Ref<UserInfo | null> = ref(null);
 const workspaceName = ref('');
 const props = defineProps<{
   notification: Notification;
 }>();
 
 onMounted(async () => {
-  const result = await getWorkspaceName(notificationData.workspaceId);
-  if (result.ok) {
-    workspaceName.value = result.value;
+  const resultWorkspace = await getWorkspaceName(notificationData.workspaceId);
+  const resultUser = await getUserInfo(notificationData.userId);
+
+  if (resultWorkspace.ok) {
+    workspaceName.value = resultWorkspace.value;
+  }
+
+  if (resultUser.ok) {
+    userInfo.value = resultUser.value;
   }
 });
 
-const notificationData = props.notification.getData<WorkspaceRoleChangedData>();
+const notificationData = props.notification.getData<UserJoinWorkspaceData>();
 </script>
 
-<style scoped lang="scss">
-.notification-icon {
-  background: var(--background-icon-info);
-}
-</style>
+<style scoped lang="scss"></style>

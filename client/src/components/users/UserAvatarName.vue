@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="container">
+  <div class="avatar-container">
     <ion-avatar class="avatar person-avatar body-sm">
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
@@ -24,21 +24,23 @@ defineProps<{
 </script>
 
 <style lang="scss" scoped>
-.container {
+.avatar-container {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
-  width: 100%;
+
+  --width: 2rem;
+  --height: 2rem;
 
   .avatar {
     display: flex;
     align-items: center;
     justify-content: center;
     text-transform: uppercase;
-    height: 2rem;
-    min-width: 2rem;
-    max-width: 2rem;
+    height: var(--height);
+    min-width: var(--width);
+    max-width: var(--width);
     border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
 
     &:first-of-type {

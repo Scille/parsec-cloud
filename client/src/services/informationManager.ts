@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/core';
-import { WorkspaceID, WorkspaceRole } from '@/parsec';
+import { EntryName, FsPath, SizeInt, UserID, WorkspaceID, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
@@ -11,14 +11,18 @@ export const InformationKey = 'information';
 
 export enum InformationDataType {
   WorkspaceRoleChanged,
-  // Add specific events here
+  NewWorkspaceAccess,
+  UserJoinWorkspace,
+  MultipleUsersJoinWorkspace,
+  UserSharedDocument,
+  AllImportedElements,
+  NewDevice,
 }
 
 export interface AbstractInformationData {
   type: InformationDataType;
 }
 
-// Left as an example of how to add additional information type
 export interface WorkspaceRoleChangedData extends AbstractInformationData {
   type: InformationDataType.WorkspaceRoleChanged;
   workspaceId: WorkspaceID;
@@ -26,7 +30,59 @@ export interface WorkspaceRoleChangedData extends AbstractInformationData {
   newRole: WorkspaceRole;
 }
 
-export type InformationData = WorkspaceRoleChangedData;
+// The account owner has been granted access to a workspace
+export interface NewWorkspaceAccessData extends AbstractInformationData {
+  type: InformationDataType.NewWorkspaceAccess;
+  workspaceId: WorkspaceID;
+  role: WorkspaceRole;
+}
+
+// A user has been granted access to a workspace
+export interface UserJoinWorkspaceData extends AbstractInformationData {
+  type: InformationDataType.UserJoinWorkspace;
+  workspaceId: WorkspaceID;
+  role: WorkspaceRole;
+  userId: UserID;
+}
+
+// Multiple users have been granted access to a workspace
+export interface MultipleUsersJoinWorkspaceData extends AbstractInformationData {
+  type: InformationDataType.MultipleUsersJoinWorkspace;
+  workspaceId: WorkspaceID;
+  roles: {
+    userId: UserID;
+    role: WorkspaceRole;
+  }[];
+}
+
+// A user has shared a document in a workspace
+export interface UserSharedDocumentData extends AbstractInformationData {
+  type: InformationDataType.UserSharedDocument;
+  workspaceId: WorkspaceID;
+  userId: UserID;
+  fileName: EntryName;
+  filePath: FsPath;
+  fileSize: SizeInt;
+}
+
+// All elements the owner's account has been imported is done
+export interface AllImportedElementsData extends AbstractInformationData {
+  type: InformationDataType.AllImportedElements;
+}
+
+// A new device has been added to the account
+export interface NewDeviceData extends AbstractInformationData {
+  type: InformationDataType.NewDevice;
+}
+
+export type InformationData =
+  | NewWorkspaceAccessData
+  | WorkspaceRoleChangedData
+  | UserJoinWorkspaceData
+  | MultipleUsersJoinWorkspaceData
+  | UserSharedDocumentData
+  | AllImportedElementsData
+  | NewDeviceData;
 
 export enum InformationLevel {
   Info = 'INFO',
