@@ -281,7 +281,7 @@ async function refreshUserList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.listRevokedUsersFailed.message'),
+        message: translate('UsersPage.listRevokedUsersFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

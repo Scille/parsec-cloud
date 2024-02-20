@@ -162,7 +162,7 @@ async function setupApp(): Promise<void> {
     window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
       informationManager.present(
         new Information({
-          message: t('openFile.failedSubtitle', { path: path }),
+          message: t('openFile.failed', { path: path }),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,

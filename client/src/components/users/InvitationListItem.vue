@@ -81,7 +81,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   if (result) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.linkCopiedToClipboard.message'),
+        message: translate('UsersPage.invitation.linkCopiedToClipboard'),
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
@@ -89,7 +89,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.linkNotCopiedToClipboard.message'),
+        message: translate('UsersPage.invitation.linkNotCopiedToClipboard'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

@@ -136,7 +136,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (role === null) {
       informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.listFailure.alreadyNotShared.message', { user: user.humanHandle.label }),
+          message: translate('WorkspaceSharing.listFailure.alreadyNotShared', { user: user.humanHandle.label }),
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -144,7 +144,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     } else {
       informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.listFailure.alreadyHasRole.message', {
+          message: translate('WorkspaceSharing.listFailure.alreadyHasRole', {
             user: user.humanHandle.label,
             role: translateWorkspaceRole(role).label,
           }),
@@ -160,7 +160,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (!role) {
       informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.unshareSuccess.message', {
+          message: translate('WorkspaceSharing.unshareSuccess', {
             user: user.humanHandle.label,
           }),
           level: InformationLevel.Success,
@@ -170,7 +170,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     } else {
       informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.updateRoleSuccess.message', {
+          message: translate('WorkspaceSharing.updateRoleSuccess', {
             user: user.humanHandle.label,
             role: translateWorkspaceRole(role).label,
           }),
@@ -182,7 +182,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspaceSharing.updateRoleFailure.message', {
+        message: translate('WorkspaceSharing.updateRoleFailure', {
           user: user.humanHandle.label,
         }),
         level: InformationLevel.Error,

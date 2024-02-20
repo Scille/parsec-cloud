@@ -80,7 +80,7 @@ async function openPopover(event: Event): Promise<void> {
         if (!result.ok) {
           informationManager.present(
             new Information({
-              message: translate('HomePage.topbar.logoutFailed.message'),
+              message: translate('HomePage.topbar.logoutFailed'),
               level: InformationLevel.Error,
             }),
             PresentationMode.Toast,

@@ -111,7 +111,7 @@ async function changePassword(): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('ContactDetailsPage.passwordUpdated.message'),
+        message: translate('ContactDetailsPage.passwordUpdated'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -124,7 +124,7 @@ async function changePassword(): Promise<void> {
       case ChangeAuthErrorTag.DecryptionFailed: {
         informationManager.present(
           new Information({
-            message: translate('ContactDetailsPage.errors.wrongPassword.message'),
+            message: translate('ContactDetailsPage.errors.wrongPassword'),
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -134,7 +134,7 @@ async function changePassword(): Promise<void> {
       default:
         informationManager.present(
           new Information({
-            message: translate('ContactDetailsPage.errors.cannotChangePassword.message'),
+            message: translate('ContactDetailsPage.errors.cannotChangePassword'),
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -150,7 +150,7 @@ onMounted(async () => {
   if (!result.ok || !deviceResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('ContactDetailsPage.errors.failedToRetrieveInformation.message'),
+        message: translate('ContactDetailsPage.errors.failedToRetrieveInformation'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

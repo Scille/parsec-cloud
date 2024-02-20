@@ -296,7 +296,7 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.errors.startFailed.message'),
+        message: translate('UsersPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -308,7 +308,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.errors.startFailed.message'),
+        message: translate('UsersPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -380,7 +380,7 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.success.message', {
+        message: translate('UsersPage.greet.success', {
           user: guestInfoPage.value.fullName,
         }),
         level: InformationLevel.Success,

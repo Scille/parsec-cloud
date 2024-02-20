@@ -230,7 +230,7 @@ describe('Check folders page', () => {
   it('Tests get file link', () => {
     cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
-    cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
@@ -280,7 +280,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', '1 element moved', 'The element have been moved the choosen folder.');
+    cy.checkToastMessage('success', 'The element have been moved the choosen folder.');
   });
 
   it('Tests move files', () => {
@@ -304,7 +304,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', /^\d+ elements moved$/, 'All the elements have been moved to the chosen folder.');
+    cy.checkToastMessage('success', 'All the elements have been moved to the chosen folder.');
   });
 
   it('Tests copy one file', () => {
@@ -326,7 +326,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', '1 element copied', 'The element have been copied to the choosen folder.');
+    cy.checkToastMessage('success', 'The element have been copied to the choosen folder.');
   });
 
   it('Tests copy files', () => {
@@ -350,7 +350,7 @@ describe('Check folders page', () => {
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@okButton').click();
     cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', /^\d+ elements copied$/, 'All the elements have been copied to the chosen folder.');
+    cy.checkToastMessage('success', 'All the elements have been copied to the chosen folder.');
   });
 
   it('Test move file back/forward', () => {

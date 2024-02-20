@@ -359,7 +359,7 @@ async function nextStep(): Promise<void> {
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
       informationManager.present(
         new Information({
-          message: translate('JoinOrganization.errors.saveDeviceFailed.message'),
+          message: translate('JoinOrganization.errors.saveDeviceFailed'),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -378,7 +378,7 @@ async function nextStep(): Promise<void> {
     passwordPage.value.setFocus();
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     const notification = new Information({
-      message: translate('JoinOrganization.successMessage.message'),
+      message: translate('JoinOrganization.successMessage'),
       level: InformationLevel.Success,
     });
     informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
@@ -409,7 +409,7 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await informationManager.present(
       new Information({
-        message: translate('JoinOrganization.errors.startFailed.message'),
+        message: translate('JoinOrganization.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

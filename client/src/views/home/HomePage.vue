@@ -216,7 +216,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     state.value = HomePageState.OrganizationList;
   } else {
     const notification = new Information({
-      message: translate('HomePage.loginNotification.message'),
+      message: translate('HomePage.loginNotification'),
       level: InformationLevel.Error,
     });
     informationManager.present(notification, PresentationMode.Toast);
