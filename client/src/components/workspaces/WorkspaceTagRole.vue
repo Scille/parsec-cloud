@@ -4,7 +4,7 @@
   <ion-label class="label-role">
     <ion-chip
       class="caption-caption tag"
-      :class="getClassForProfile(role)"
+      :class="role !== null ? getClassForProfile(role) : ''"
     >
       {{ translateWorkspaceRole(role).label }}
     </ion-chip>
@@ -17,7 +17,7 @@ import { translateWorkspaceRole } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 
 defineProps<{
-  role: WorkspaceRole;
+  role: WorkspaceRole | null;
 }>();
 
 function getClassForProfile(role: WorkspaceRole): string {

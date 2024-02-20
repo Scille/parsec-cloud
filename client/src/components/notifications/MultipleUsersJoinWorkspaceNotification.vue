@@ -3,20 +3,19 @@
 <template>
   <notification-item :notification="notification">
     <div class="notification-icon">
-      <!-- This icon is only a default placeholder, replace/add notification specific icons -->
-      <ms-image
-        :image="LogoIconGradient"
+      <ion-icon
         class="file-icon"
+        :icon="people"
       />
     </div>
     <div class="notification-details">
       <ion-text class="notification-details__message body">
         <i18n-t
-          keypath="notification.changeRole"
+          keypath="notification.multipleUsersJoinWorkspace"
           scope="global"
         >
-          <template #role>
-            <strong>{{ translateWorkspaceRole(notificationData.newRole).label }}</strong>
+          <template #count>
+            <strong> {{ notificationData.roles.length }} {{ $t('notification.users') }} </strong>
           </template>
           <template #workspace>
             <strong>{{ workspaceName }}</strong>
@@ -24,7 +23,13 @@
         </i18n-t>
       </ion-text>
       <ion-text class="notification-details__time body-sm">
-        <span>{{ formatTimeSince(notification.time, '', 'short') }}</span>
+        <span
+          class="hover-state"
+          @click="openPopover($event)"
+        >
+          {{ $t('notificationCenter.viewJoinedUsers') }}
+        </span>
+        <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
       </ion-text>
     </div>
   </notification-item>
@@ -32,13 +37,13 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
+import MultipleUsersJoinPopover from '@/components/notifications/MultipleUsersJoinPopover.vue';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { getWorkspaceName } from '@/parsec';
-import { WorkspaceRoleChangedData } from '@/services/informationManager';
+import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
-import { translateWorkspaceRole } from '@/services/translation';
-import { IonText } from '@ionic/vue';
+import { IonIcon, IonText, popoverController } from '@ionic/vue';
+import { people } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 
 const workspaceName = ref('');
@@ -53,11 +58,26 @@ onMounted(async () => {
   }
 });
 
-const notificationData = props.notification.getData<WorkspaceRoleChangedData>();
+const notificationData = props.notification.getData<MultipleUsersJoinWorkspaceData>();
+
+async function openPopover(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: MultipleUsersJoinPopover,
+    cssClass: 'multiple-users-join-popover',
+    componentProps: {
+      notification: props.notification,
+    },
+    event: event,
+    alignment: 'center',
+    showBackdrop: false,
+  });
+  await popover.present();
+}
 </script>
 
 <style scoped lang="scss">
 .notification-icon {
   background: var(--background-icon-info);
+  color: var(--color-icon-info);
 }
 </style>

@@ -53,10 +53,23 @@
         "title": "Notifications",
         "readOnly": "Non lues uniquement",
         "browse": "Aller à l'emplacement",
+        "goToWorkspace": "Accéder à l'espace de travail",
+        "openImportedMenu": "Ouvrir le menu d'importations",
+        "viewJoinedUsers": "Voir les utilisateurs",
+        "goToDevices": "Accéder à mes appareils",
+        "openEnclosingFolder": "Ouvrir le dossier",
         "noNotification": "Vous êtes à jour !"
     },
     "notification": {
-        "changeRole": "Votre role a été modifié en tant que {role} on the workspace {workspace}"
+        "changeRole": "Votre role a été modifié en tant que {role} dans l'espace de travail {workspace}",
+        "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
+        "userJoinWorkspace": "{name} vient de rejoindre l'espace de travail {workspace}",
+        "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
+        "users": "utilisateurs",
+        "userSharedDocument": "{name} a partagé un nouveau document",
+        "revokedOrganizationAccess": "Vous n'avez plus accès à l'organisation {organization}",
+        "allImportedElements": "Tous vos fichiers ont été importés",
+        "newDeviceAdded": "Un nouvel appareil a été ajouté"
     },
     "HomePage": {
         "topbar": {

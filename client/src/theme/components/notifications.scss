@@ -6,6 +6,7 @@
   transition: background 0.2s ease-in-out;
   position: relative;
   flex-shrink: 0;
+  --inner-padding-end: 0;
 
   &:not(:last-child) {
     border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
@@ -50,6 +51,7 @@
   padding: 1rem 1rem 1rem 1.75rem;
   display: flex;
   align-items: center;
+  width: 100%;
 
   // This will allow to change background and color of the icon
   --background-icon-info: var(--parsec-color-light-primary-50);
@@ -57,9 +59,9 @@
   --background-icon-danger: var(--parsec-color-light-danger-100);
   --background-icon-warning: var(--parsec-color-light-warning-100);
   --color-icon-info: var(--parsec-color-light-primary-700);
-  --color-icon-success: var(--parsec-color-light-success-700);
-  --color-icon-danger: var(--parsec-color-light-danger-700);
-  --color-icon-warning: var(--parsec-color-light-warning-700);
+  --color-icon-success: var(--parsec-color-light-success-500);
+  --color-icon-danger: var(--parsec-color-light-danger-500);
+  --color-icon-warning: var(--parsec-color-light-warning-500);
 
   &-icon {
     display: flex;
@@ -68,13 +70,17 @@
     width: 2.5rem;
     height: 2.5rem;
     padding: 0.5rem;
-    background: var(--background-icon-info);
     border-radius: var(--parsec-radius-12);
 
     .file-icon {
       width: 1.5rem;
       height: 1.5rem;
     }
+  }
+
+  &-avatar .avatar {
+    --width: 2.5rem;
+    --height: 2.5rem;
   }
 
   &-details {
@@ -89,6 +95,36 @@
 
     &__time {
       color: var(--parsec-color-light-secondary-grey);
+      display: flex;
+      align-items: center;
+      width: fit-content;
+      gap: 0.5rem;
     }
+  }
+
+  &:hover {
+    .notification-details__time .hover-state {
+      color: var(--parsec-color-light-primary-600);
+    }
+    .hover-state {
+      display: flex;
+    }
+
+    .default-state {
+      display: none;
+    }
+  }
+}
+
+// Specific styles for user shared document notification
+#user-shared-document-notification {
+  &.unread::before {
+    content: '';
+    top: 34%;
+    transform: translateY(-80%);
+  }
+  .notification {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

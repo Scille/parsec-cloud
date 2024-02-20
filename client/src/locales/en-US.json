@@ -53,10 +53,23 @@
         "title": "Notifications",
         "readOnly": "Only no read",
         "browse": "Go to location",
+        "goToWorkspace": "Go to this workspace",
+        "openImportedMenu": "Open imported files menu",
+        "viewJoinedUsers": "View users",
+        "goToDevices": "Go to my devices",
+        "openEnclosingFolder": "Open enclosing folder",
         "noNotification": "You are up to date!"
     },
     "notification": {
-        "changeRole": "Your role a been changed to {role} on the workspace {workspace}"
+        "changeRole": "Your role a been changed to {role} on the workspace {workspace}",
+        "workspaceAccess": "You have access to the workspace {workspace}",
+        "userJoinWorkspace": "{name} has joined the workspace {workspace}",
+        "multipleUsersJoinWorkspace": "{count} have joined the workspace {workspace}",
+        "users": "users",
+        "userSharedDocument": "{name} shared a new document",
+        "revokedOrganizationAccess": "You no longer have access to organization {organization}",
+        "allImportedElements": "All your elements have been imported",
+        "newDeviceAdded": "A new device has been added to the organization"
     },
     "HomePage": {
         "topbar": {
