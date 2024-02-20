@@ -26,7 +26,7 @@
                   </ion-avatar>
                   <div class="orga-text">
                     <ion-card-subtitle class="caption-info">
-                      {{ $t('HomePage.organizationActionSheet.header') }}
+                      {{ $t('HomePage.organizationActionSheet') }}
                     </ion-card-subtitle>
                     <ion-card-title class="title-h4">
                       {{ userInfo?.organizationId }}

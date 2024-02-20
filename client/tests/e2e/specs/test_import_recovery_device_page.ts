@@ -37,11 +37,11 @@ describe('Display import recovery device page', () => {
     cy.get('@key-input').type('{backspace}O');
     cy.get('@key').find('#checkmark-icon').should('be.visible');
     cy.get('.recovery-content').find('#to-password-change-btn').as('toPassword').should('not.have.class', 'button-disabled').click();
-    cy.checkToastMessage('error', 'Invalid secret key', 'The given secret key does not match the recovery file.');
+    cy.checkToastMessage('error', 'The given secret key does not match the recovery file.');
     // Input valid and expected secret key
     cy.get('@key-input').type('{backspace}P');
     cy.get('@toPassword').click();
-    cy.checkToastMessage('error', 'Invalid recovery file', 'The recovery file is invalid.');
+    cy.checkToastMessage('error', 'The recovery file is invalid.');
     // Replace uploaded file with valid one
     cy.get('@file').find('#browse-button').click();
     cy.get('input[type="file"]').attachFile('recoveryfile.psrk');

@@ -108,7 +108,7 @@ onMounted(async () => {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.UserDetailsModal.failedToListWorkspaces.message'),
+        message: translate('UsersPage.UserDetailsModal.failedToListWorkspaces'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

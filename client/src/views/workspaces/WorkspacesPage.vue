@@ -245,7 +245,7 @@ async function refreshWorkspacesList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.listError.message'),
+        message: translate('WorkspacesPage.listError'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -282,7 +282,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.newWorkspaceSuccess.message', {
+        message: translate('WorkspacesPage.newWorkspaceSuccess', {
           workspace: name,
         }),
         level: InformationLevel.Success,
@@ -293,7 +293,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.newWorkspaceError.message'),
+        message: translate('WorkspacesPage.newWorkspaceError'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -369,7 +369,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
         new Information({
-          message: translate('WorkspacesPage.linkNotCopiedToClipboard.message'),
+          message: translate('WorkspacesPage.linkNotCopiedToClipboard'),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -377,7 +377,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('WorkspacesPage.linkCopiedToClipboard.message'),
+          message: translate('WorkspacesPage.linkCopiedToClipboard'),
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -386,7 +386,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.getLinkError.message', { reason: result.error.tag }),
+        message: translate('WorkspacesPage.getLinkError'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

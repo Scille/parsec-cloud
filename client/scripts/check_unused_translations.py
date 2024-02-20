@@ -56,6 +56,14 @@ if __name__ == "__main__":
             print(f"`{key}` not in en")
 
     print("Looking for unused translations...")
+    missing = 0
     for key in translation_keys["en"]:
         if not is_present_in_sources(key, args.src):
             print(f"`{key}` not found in sources")
+            missing += 1
+    if missing > 0:
+        print(
+            f"Missing {missing} / {len(translation_keys['en'])} (~{int(missing / len(translation_keys['en']) * 100)}%)"
+        )
+    else:
+        print("Nothing to report, congratulations!")

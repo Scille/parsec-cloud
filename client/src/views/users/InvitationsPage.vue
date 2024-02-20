@@ -143,7 +143,7 @@ async function refreshInvitationsList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.invitationsListFailed.message'),
+        message: translate('UsersPage.invitation.invitationsListFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -172,7 +172,7 @@ async function inviteUser(): Promise<void> {
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.inviteSuccessMailSent.message', {
+          message: translate('UsersPage.invitation.inviteSuccessMailSent', {
             email: email,
           }),
           level: InformationLevel.Success,
@@ -182,7 +182,7 @@ async function inviteUser(): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.inviteSuccessNoMail.message', {
+          message: translate('UsersPage.invitation.inviteSuccessNoMail', {
             email: email,
           }),
           level: InformationLevel.Success,
@@ -244,7 +244,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.cancelSuccess.message'),
+        message: translate('UsersPage.invitation.cancelSuccess'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -261,7 +261,7 @@ async function rejectUser(invitation: UserInvitation): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.cancelFailed.message'),
+          message: translate('UsersPage.invitation.cancelFailed'),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,

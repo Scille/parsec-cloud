@@ -3,7 +3,6 @@
         "name": "Parsec Cloud",
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud",
-        "projectLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "license": "BUSL-1.1",
         "licenseLink": "https://github.com/Scille/parsec-cloud/blob/master/LICENSE",
@@ -16,8 +15,7 @@
         "no": "Annuler"
     },
     "openFile": {
-        "failedTitle": "Impossible d'ouvrir l'élément",
-        "failedSubtitle": "L'élément `{path}` m'a pas pu être ouvert."
+        "failed": "L'élément `{path}` n'a pas pu être ouvert."
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -53,9 +51,7 @@
     },
     "notificationCenter": {
         "title": "Notifications",
-        "unread": "non lues ({count})",
         "readOnly": "Non lues uniquement",
-        "empty": "Aucune notification",
         "browse": "Aller à l'emplacement",
         "noNotification": "Vous êtes à jour !"
     },
@@ -74,10 +70,7 @@
             "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté",
-            "logoutFailed": {
-                "title": "Impossible de se déconnecter",
-                "message": "Une erreur est survenue lors de la déconnexion."
-            }
+            "logoutFailed": "Une erreur est survenue lors de la déconnexion."
         },
         "organizationList": {
             "title": "Vos organisations",
@@ -92,7 +85,6 @@
             "loggedIn": "Connecté"
         },
         "noExistingOrganization": {
-            "title": "Besoin de créer ou rejoindre une organisation ?",
             "createOrJoin": "Créer ou rejoindre",
             "createOrganization": "Créer une organisation",
             "createOrganizationTitle": "Créer",
@@ -108,25 +100,10 @@
             "passwordLabel": "Mot de passe",
             "login": "Se connecter"
         },
-        "mainMenu": {
-            "changelog": "Journal des modifications"
-        },
-        "organizationActionSheet": {
-            "header": "Organisation",
-            "create": "Créer",
-            "joinByLink": "Rejoindre par lien",
-            "joinByQRcode": "Rejoindre par QR code"
-        },
-        "loginNotification": {
-            "title": "Impossible de se connecter",
-            "message": "Le mot de passe est incorrect !"
-        },
+        "organizationActionSheet": "Organisation",
+        "loginNotification": "Le mot de passe est incorrect !",
         "noDevices": "Vous n'avez pas d'organisation sur cet appareil.",
-        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
-        "pleaseConnectToAnOrganization": "Bienvenue. Veuillez ajouter une organisation pour commencer à utiliser Parsec.",
-        "createOrganization": "Créer une organisation",
-        "joinByLink": "Rejoindre par lien",
-        "joinByQRcode": "Rejoindre par QR code"
+        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante."
     },
     "CreateOrganization": {
         "fullname": "Nom complet",
@@ -149,10 +126,6 @@
             "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/"
         },
         "parsecServerUrl": "URL de votre serveur PARSEC",
-        "parsecServerUrlPlaceholder": "parsec://hote:port",
-        "registeringDevice": "Enregistrement de votre appareil",
-        "deviceNameInputLabel": "Nom de l'appareil",
-        "deviceNamePlaceholder": "Desktop123",
         "loading": "Un instant, nous mettons en place votre organisation",
         "organizationCreated": "Vous pouvez accéder à votre nouvelle organisation",
         "title": {
@@ -168,17 +141,13 @@
             "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
             "password": "Pour finir, créez votre mot de passe.",
-            "overview": "Vérifiez que les informations sont correctes.",
-            "Waiting": "Un instant, nous mettons en place votre organisation.",
-            "Done": "Vous pouvez accéder à votre nouvelle organisation."
+            "overview": "Vérifiez que les informations sont correctes."
         },
         "overview": {
             "organization": "Organisation",
             "fullname": "Nom complet",
             "email": "E-mail",
-            "deviceName": "Nom de l'appareil",
-            "server": "Choix du serveur",
-            "password": "Mot de passe"
+            "server": "Choix du serveur"
         },
         "button": {
             "next": "Suivant",
@@ -188,7 +157,6 @@
             "modify": "Modifier"
         },
         "errors": {
-            "title": "Impossible de créer l'organisation",
             "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
             "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
@@ -202,8 +170,6 @@
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
         "pleaseEnterUrl": "Veuillez entrer l'URL de l'organisation",
-        "urlInputLabel": "URL de l'organisation",
-        "urlPlaceholder": "parsec://hote:port/organisation?action=action&...",
         "join": "Rejoindre"
     },
     "QuestionModal": {
@@ -215,17 +181,10 @@
         "cancel": "Annuler"
     },
     "MenuPage": {
-        "documents": "Documents",
-        "myOrganization": "Mon organisation",
-        "settings": "Paramètres",
         "about": "À propos",
-        "support": "Aide et commentaires",
         "helpLink": "https://my.parsec.cloud/help"
     },
     "HeaderPage": {
-        "about": "À propos",
-        "support": "Aide et commentaires",
-        "loggedIn": "Connecté",
         "titles": {
             "workspaces": "Mes espaces",
             "settings": "Paramètres",
@@ -249,32 +208,14 @@
         "title": "Partager cet espace de travail",
         "searchLabel": "Nom ou e-mail",
         "searchPlaceholder": "ex : Jean Martin",
-        "valid": "Valider",
-        "cancel": "Annuler",
         "currentUserLabel": "Moi",
-        "unshareSuccess": {
-            "title": "Accès révoqué",
-            "message": "L'espace de travail n'est plus partagé avec {user}."
-        },
-        "updateRoleSuccess": {
-            "title": "Rôle modifié",
-            "message": "Le rôle de {user} est désormais {role}."
-        },
-        "updateRoleFailure": {
-            "title": "Impossible de modifier le rôle de {user}",
-            "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-        },
+        "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
+        "updateRoleSuccess": "Le rôle de {user} est désormais {role}.",
+        "updateRoleFailure": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
         "listFailure": {
-            "title": "Une erreur est survenue",
             "message": "Impossible de récupérer les informations de partage de cet espace de travail.",
-            "alreadyNotShared": {
-                "title": "Espace de travail non partagé",
-                "message": "Cet espace de travail n'est pas partagé avec {user}."
-            },
-            "alreadyHasRole": {
-                "title": "Rôle déjà attribué",
-                "message": "{user} est déjà {role} sur cet espace de travail."
-            }
+            "alreadyNotShared": "Cet espace de travail n'est pas partagé avec {user}.",
+            "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         }
     },
     "SettingsPage": {
@@ -317,22 +258,11 @@
     },
     "WorkspacesPage": {
         "createWorkspace": "Nouvel espace de travail",
-        "documents": "Documents",
-        "user": "utilisateur",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
-        "listError": {
-            "title": "Impossible de lister les espaces de travail",
-            "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-        },
-        "newWorkspaceError": {
-            "title": "Impossible de créer l'espace de travail",
-            "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-        },
-        "newWorkspaceSuccess": {
-            "title": "Espace de travail créé",
-            "message": "L'espace de travail '{workspace}' a été créé !"
-        },
+        "listError": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
+        "newWorkspaceError": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
+        "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -349,11 +279,9 @@
             "pageTitle": "Créer un nouvel espace de travail",
             "label": "Nom de l'espace de travail",
             "placeholder": "Mon espace",
-            "cancel": "Annuler",
             "create": "Créer"
         },
         "Workspace": {
-            "sharedWith": "Non partagé | Une personne | {count} personnes",
             "lastUpdate": "Dernière modification :",
             "notShared": "Non partagé"
         },
@@ -369,24 +297,9 @@
             "sortBySize": "Taille",
             "sortByLastUpdated": "Dernière modification"
         },
-        "role": {
-            "owner": "Propriétaire",
-            "manager": "Gérant",
-            "contributor": "Contributeur",
-            "reader": "Lecteur"
-        },
-        "getLinkError": {
-            "title": "Impossible de récupérer un lien vers l'espace de travail",
-            "message": "{reason}"
-        },
-        "linkCopiedToClipboard": {
-            "title": "Lien copié",
-            "message": "Le lien a été copié dans le presse-papier."
-        },
-        "linkNotCopiedToClipboard": {
-            "title": "Impossible de copier le lien",
-            "message": "Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
-        }
+        "getLinkError": "Impossible de récupérer un lien vers l'espace de travail",
+        "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
+        "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
     },
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
@@ -431,37 +344,16 @@
             "browse": "Parcourir"
         },
         "errors": {
-            "deleteFailed": {
-                "title": "Impossible de supprimer le fichier",
-                "message": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer."
-            },
-            "renameFailed": {
-                "title": "Impossible de renommer le fichier",
-                "message": "Le fichier `{name}` n'a pas pu être renommé, veuillez réessayer."
-            },
-            "createFolderFailed": {
-                "title": "Impossible de créer le dossier",
-                "message": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer."
-            },
-            "listFailed": {
-                "title": "Impossible d'afficher le contenu du dossier",
-                "message": "Le dossier `{path}` n'a pas pu être listé."
-            },
-            "deleteMultipleFailed": "Echec de suppression",
+            "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",
+            "renameFailed": "Le fichier `{name}` n'a pas pu être renommé, veuillez réessayer.",
+            "createFolderFailed": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer.",
+            "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
             "deleteMultipleAllFailed": "Les éléments n'ont pas pu être supprimés.",
             "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
-            "moveOneFailed": {
-                "title": "Impossible de déplacer le fichier",
-                "message": "Le fichier `{name}` n'a pas pu être déplacé."
-            },
-            "moveMultipleFailed": "Echec de déplacement des éléments",
+            "moveOneFailed": "Le fichier `{name}` n'a pas pu être déplacé.",
             "moveMultipleAllFailed": "Les éléments n'ont pas pu être déplacés.",
             "moveMultipleSomeFailed": "Certains éléments n'ont pas py être déplacés.",
-            "copyOneFailed": {
-                "title": "Impossible de copier le fichier",
-                "message": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer."
-            },
-            "copyMultipleFailed": "Echec de copie des éléments",
+            "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
             "copyMultipleAllFailed": "Les éléments n'ont pas pu être copiés.",
             "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés."
         },
@@ -495,37 +387,16 @@
         "copySelectFolderTitle": "Copier un élément | Copier {count} elements",
         "copySelectFolderSubtitle": "Emplacement actuel : {location}",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
-        "moveSelectFolderSubtitle": "Emplacement actuel : {location}",
-        "moveSuccess": {
-            "title": "1 élément déplacé | {count} éléments déplacés",
-            "message": "L'élément a été déplacé dans le dossier choisi. | Tous les éléments ont été déplacés dans le dossier choisi."
-        },
-        "copySuccess": {
-            "title": "1 élément copié | {count} éléments copiés",
-            "message": "L'élément a été copié dans le dossier choisi. | Tous les éléments ont été copiés dans le dossier choisi."
-        },
+        "moveSuccess": "L'élément a été déplacé dans le dossier choisi. | Tous les éléments ont été déplacés dans le dossier choisi.",
+        "copySuccess": "L'élément a été copié dans le dossier choisi. | Tous les éléments ont été copiés dans le dossier choisi.",
         "open": {
-            "fileFailedTitle": "Impossible d'ouvrir le fichier",
-            "fileFailedSubtitle": "Le fichier `{name}` n'a pas pu être ouvert.",
-            "folderFailedTitle": "Impossible d'ouvrir le dossier",
-            "folderFailedSubtitle": "Le dossier `{name}` n'a pas pu être ouvert.",
-            "unavailableOnWeb": {
-                "title": "Non disponible en mode web",
-                "message": "Cette fonctionnalité n'est pas encore disponible en mode web."
-            }
+            "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",
+            "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
+            "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web."
         },
-        "linkNotCopiedToClipboard": {
-            "title": "Impossible de copier le lien",
-            "message": "Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
-        },
-        "linkCopiedToClipboard": {
-            "title": "Lien copié",
-            "message": "Le lien a été copié dans le presse-papier."
-        },
-        "getLinkError": {
-            "title": "Impossible de récupérer un lien vers le fichier",
-            "message": "Raison: {reason}"
-        },
+        "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller.",
+        "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
+        "getLinkError": "Impossible de récupérer un lien vers le fichier",
         "ImportFile": {
             "title": "Importation",
             "waiting": "en attente",
@@ -561,22 +432,6 @@
         }
     },
     "OrganizationPage": {
-        "pageTitle": "Mon organisation",
-        "users": "Utilisateurs",
-        "workspaces": "Espaces de travail",
-        "storage": "Stockage",
-        "OrganizationPageUsers": {
-            "inviteUser": "Inviter un utilisateur",
-            "pendingInvitations": "invitation(s) en cours",
-            "OrganizationPendingUserContextMenu": {
-                "greetUser": "Accueillir l'utilisateur",
-                "cancelInvitation": "Annuler l'invitation"
-            },
-            "OrganizationUserContextMenu": {
-                "details": "Voir détails",
-                "revoke": "Révoquer"
-            }
-        },
         "infoPage": {
             "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
             "title": "Informations sur {organizationName}",
@@ -679,33 +534,19 @@
                 "scanOrShare1": "Scanner le QR Code ",
                 "scanOrShare2": "ou ",
                 "scanOrShare3": "partager le lien",
-                "emailSentTo": "Envoyé à :",
                 "cancelGreet": "Êtes-vous sûr(e) de vouloir annuler le processus d'ajout d'appareil ?",
                 "copiedToClipboard": "Copié dans le presse-papier"
             },
             "errors": {
-                "retrieveDeviceInfoFailed": {
-                    "title": "Impossible de récupérer les informations.",
-                    "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-                },
-                "unexpected": {
-                    "title": "Une erreur imprévue est survenue",
-                    "message": "{reason}"
-                },
+                "retrieveDeviceInfoFailed": "Impossible de récupérer les informations.",
+                "unexpected": "Une erreur imprévue est survenue",
                 "createDeviceFailed": "Impossible de créer l'appareil.",
-                "startFailed": {
-                    "title": "Impossible de démarrer le processus",
-                    "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-                },
+                "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
-                "emailFailed": {
-                    "title": "L'envoi d'email a échoué",
-                    "subtitle": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet."
-                }
+                "emailFailed": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet."
             },
             "actions": {
-                "approve": "Approuver",
                 "finish": "Terminer",
                 "start": "Démarrer",
                 "sendEmail": "Envoyer le lien par mail",
@@ -715,15 +556,8 @@
                     "no": "Continuer"
                 }
             },
-            "success": {
-                "title": "{label} a été ajouté !",
-                "message": "Vous pouvez vous connecter à cette organisation depuis votre nouvel appareil."
-            },
-            "linkCopiedToClipboard": {
-                "title": "Lien copié",
-                "message": "Le lien a été copié dans le presse-papier."
-            },
-            "copyLink": "Copier le lien",
+            "success": "Vous pouvez vous connecter à cette organisation depuis votre nouvel appareil.",
+            "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "emailSent": "L'email a été envoyé !"
         }
     },
@@ -757,30 +591,21 @@
         },
         "subtitles": {
             "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre mot de passe.",
-            "passwordAdvice": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail.",
             "password": "Mot de passe",
-            "confirmPassword": "Confirmation du mot de passe",
             "passwordModified": "Vous pouvez vous connecter avec votre nouveau mot de passe.",
-            "passwordRules": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
             "noFileSelected": "Aucun fichier sélectionné"
         },
         "actions": {
             "browse": "Parcourir",
             "next": "Suivant",
             "validatePassword": "Valider mon mot de passe",
-            "backToLogin": "Retour à la connexion",
             "goBackToLogin": "Revenir à la connexion"
         },
         "errors": {
-            "fileErrorTitle": "Fichier de récupération invalide",
             "fileErrorMessage": "Le fichier de récupération est invalide.",
-            "keyErrorTitle": "Clé secrète invalide",
             "keyErrorMessage": "La clé secrète ne correspond pas au fichier de récupération.",
-            "passwordErrorTitle": "Mot de passe invalide",
             "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
-            "saveDeviceErrorTitle": "Impossible de récupérer l'appareil",
             "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
-            "internalErrorTitle": "Une erreur est survenue",
             "internalErrorMessage": "Une erreur est survenue"
         }
     },
@@ -804,14 +629,8 @@
             "backToDevices": "Retourner à mes appareils"
         },
         "toasts": {
-            "fileDownloadOk": {
-                "title": "Fichier téléchargé",
-                "message": "Le fichier de récupération a bien été téléchargé"
-            },
-            "keyDownloadOk": {
-                "title": "Fichier téléchargé",
-                "message": "La clé secrète a bien été téléchargée"
-            }
+            "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",
+            "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
             "recoveryFile": "Parsec_Fichier_Récupération_{org}.data",
@@ -826,14 +645,10 @@
         "createDevice": "Rejoindre l'organisation",
         "validateUserInfo": "Valider mes informations",
         "understand": "J'ai compris !",
-        "start": "Démarrer",
         "waitingForHost": "(En attente de l'hôte)",
         "linkFormLabel": "Lien d'invitation",
         "linkFormPlaceholder": "parsec://exemple.com/Org?...",
-        "successMessage": {
-            "title": "Organisation rejointe",
-            "message": "Vous avez rejoint l'organisation avec succès."
-        },
+        "successMessage": "Vous avez rejoint l'organisation avec succès.",
         "stepTitles": {
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
@@ -853,7 +668,6 @@
             }
         },
         "titles": {
-            "joinOrga": "Rejoindre {org}",
             "waitForHost": "Bienvenue sur Parsec !",
             "getHostCode": "Réception du code de l'hôte",
             "provideGuestCode": "Partage de votre code",
@@ -862,7 +676,6 @@
             "finish": "Vous avez rejoint l'organisation {org} !"
         },
         "subtitles": {
-            "joinOrga": "Saisissez le lien que vous avez reçu par mail.",
             "waitForHost": "",
             "getHostCode": "Sélectionnez le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
@@ -871,19 +684,12 @@
             "finish": ""
         },
         "errors": {
-            "saveDeviceFailed": {
-                "title": "Impossible de sauvegarder les informations",
-                "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-            },
-            "title": "Une erreur est survenue",
+            "saveDeviceFailed": "Impossible de sauvegarder les informations",
             "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "startFailed": {
-                "title": "Impossible de démarrer le processus",
-                "message": "Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
-            }
+            "startFailed": "Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
@@ -918,22 +724,15 @@
             "profile": "Choix du profile :"
         },
         "emptyList": "Aucun utilisateur à afficher.",
-        "listUsersFailed": {
-            "title": "Impossible d'obtenir la liste des utilisateurs",
-            "message": "Veuillez vérifier votre connexion internet."
-        },
+        "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
         "revokedEmptyList": "Aucun utilisateur révoqué",
-        "listRevokedUsersFailed": {
-            "title": "Impossible d'obtenir la liste des utilisateurs révoqués",
-            "message": "Veuillez vérifier votre connexion internet."
-        },
+        "listRevokedUsersFailed": "Impossible d'obtenir la liste des utilisateurs révoqués. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
             "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
-            "actionDetails": "Voir le détail",
-            "actionSeeCommonWorkspaces": "Voir les espaces de travail communs"
+            "actionDetails": "Voir le détail"
         },
         "greet": {
             "titles": {
@@ -949,8 +748,7 @@
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
-                "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil.",
-                "summary": "{name} a été ajouté(e) à l'organisation."
+                "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil."
             },
             "steps": {
                 "hostCode": "Code hôte",
@@ -965,31 +763,19 @@
             "profileDropdownPlaceholder": "Choisissez un profil",
             "profileDropdownTitle": "Profil",
             "errors": {
-                "title": "Une erreur est survenue",
                 "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
-                "startFailed": {
-                    "title": "Impossible de démarrer le processus",
-                    "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-                },
-                "createUserFailed": {
-                    "title": "Impossible de créer l'utilisateur",
-                    "message": "Veuillez redémarrer le processus."
-                },
+                "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
                 "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus."
             },
-            "success": {
-                "title": "L'utilisateur {user} a été ajouté(e) !",
-                "message": "{user} peut maintenant se connecter à l'organisation."
-            },
+            "success": "{user} peut maintenant se connecter à l'organisation.",
             "cancelConfirm": "Annulation",
             "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
             "cancelYes": "Annuler le processus",
             "cancelNo": "Continuer"
         },
         "invitation": {
-            "title": "Une erreur est survenue",
             "greetUser": "Accueillir",
             "rejectUser": "Refuser",
             "emailTitle": "Email",
@@ -997,39 +783,17 @@
             "statusTitle": "Statut",
             "noInvitations": "Aucune invitation en cours",
             "invitationCount": "Aucune invitation en attente | Une invitation en attente | {count} invitations en attente",
-            "invitationsListFailed": {
-                "title": "Impossible de lister les invitations",
-                "message": "Veuillez vérifier votre connexion internet."
-            },
-            "inviteSuccessMailSent": {
-                "title": "Invitation envoyée",
-                "message": "Une invitation a été envoyée à {email}."
-            },
-            "inviteSuccessNoMail": {
-                "title": "Lien d'invitation créé",
-                "message": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement."
-            },
+            "invitationsListFailed": "Impossible de lister les invitations. Veuillez vérifier votre connexion internet.",
+            "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
+            "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "Cet email est déjà utilisé par un membre de cette organisation.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
-            "cancelSuccess": {
-                "title": "Invitation annulée",
-                "message": "Le lien d'invitation n'est plus valide."
-            },
-            "cancelFailed": {
-                "title": "Impossible d'annuler l'invitation",
-                "message": "Veuillez vérifier votre connexion internet."
-            },
-            "orgInfoFailed": "Impossible de récupérer le lien. Veuillez vérifier votre connexion internet.",
-            "linkCopiedToClipboard": {
-                "title": "Lien copié",
-                "message": "Le lien a été copié dans le presse-papier."
-            },
-            "linkNotCopiedToClipboard": {
-                "title": "Impossible de copier le lien",
-                "message": "Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
-            },
+            "cancelSuccess": "Le lien d'invitation n'est plus valide.",
+            "cancelFailed": "Impossible d'annuler l'invitation",
+            "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
+            "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller.",
             "copyLink": "Copier le lien",
             "status": {
                 "ready": "Prête",
@@ -1042,7 +806,6 @@
             "pageTitle": "Inviter un nouvel utilisateur",
             "label": "E-mail de l'utilisateur",
             "placeholder": "jean.martin{'@'}exemple.com",
-            "cancel": "Annuler",
             "create": "Inviter"
         },
         "UserDetailsModal": {
@@ -1057,28 +820,16 @@
                 "close": "Fermer"
             },
             "noSharedWorkspaces": "Vous n'avez pas d'espaces de travail en commun avec cet utilisateur.",
-            "failedToListWorkspaces": {
-                "title": "Erreur",
-                "message": "Impossible de lister les espaces de travail."
-            }
+            "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
             "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
             "revokeYes": "Révoquer",
             "revokeNo": "Annuler",
-            "revokeFailed": {
-                "title": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
-                "message": "Veuillez réessayer"
-            },
-            "revokeSuccess": {
-                "title": "L'utilisateur a été révoqué(e) | {count} utilisateurs révoqués",
-                "message": "{user} n'a plus accès à l'organisation. | Les utilisateurs n'ont plus accès à l'organisation."
-            },
-            "revokeSomeFailed": {
-                "title": "Certains utilisateurs n'ont pas pu être révoqués.",
-                "message": "Veuillez réessayer"
-            }
+            "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
+            "revokeSuccess": "L'utilisateur {user} a été révoqué(e), il ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
+            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
         }
     },
     "AboutPage": {
@@ -1089,8 +840,6 @@
             "project": "Projet"
         },
         "update": {
-            "title": "Mise à jour",
-            "upToDate": "Votre logiciel est à jour.",
             "notUpToDate": "Une nouvelle version est disponible.",
             "update": "Mettre à jour",
             "showChangelog": "Voir l'historique des versions"
@@ -1100,12 +849,10 @@
         "stepper": {
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
-            "password": "Mot de passe",
-            "done": "Validation"
+            "password": "Mot de passe"
         },
         "titles": {
             "claimDevice": "Ajouter un nouvel appareil",
-            "invitationLink": "Lien d'invitation",
             "getCode": "Réception du code de l'hôte",
             "provideCode": "Partage du code invité",
             "password": "Création du mot de passe",
@@ -1113,7 +860,6 @@
         },
         "subtitles": {
             "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l’inscription.",
-            "invitationLink": "Veuillez saisir le lien d'invitation affiché sur l'appareil hôte.",
             "getCode": "Sélectionnez le code que vous apercevez sur l’appareil principal.",
             "provideCode": "Sur l’appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
             "password": "Pour terminer, créez un mot de passe pour votre nouvel appareil.",
@@ -1121,30 +867,21 @@
         },
         "buttons": {
             "understand": "J'ai compris !",
-            "start": "Commencer",
             "password": "Valider mon mot de passe",
             "login": "Se connecter"
         },
         "currentDevice": "Cet appareil",
         "newDevice": "Votre nouvel appareil",
         "connected": "Connecté",
-        "deviceName": "Nom de l'appareil",
         "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
         "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "cancelYes": "Annuler le processus",
         "cancelNo": "Continuer",
-        "successMessage": {
-            "title": "L'appareil a bien été créé !",
-            "message": "Vous pouvez maintenant vous connecter à cette organisation depuis votre nouvel appareil."
-        },
+        "successMessage": "Vous pouvez maintenant vous connecter à cette organisation depuis votre nouvel appareil.",
         "errors": {
-            "title": "Impossible d'ajouter l'appareil",
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet.",
             "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
-            "saveDeviceFailed": {
-                "title": "Impossible de sauvegarder les informations.",
-                "message": "Veuillez réessayer"
-            },
+            "saveDeviceFailed": "Impossible de sauvegarder les informations.Veuillez réessayer",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus."
@@ -1162,23 +899,11 @@
     "ContactDetailsPage": {
         "title": "Mettre à jour mon mot de passe",
         "changePasswordButton": "Changer mon mot de passe",
-        "passwordUpdated": {
-            "title": "Mot de passe mis à jour",
-            "message": "Vous pouvez vous connecter avec votre nouveau mot de passe."
-        },
+        "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
         "errors": {
-            "wrongPassword": {
-                "title": "Mot de passe incorrect",
-                "message": "Veuillez réessayer."
-            },
-            "cannotChangePassword": {
-                "title": "Impossible de changer le mot de passe",
-                "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-            },
-            "failedToRetrieveInformation": {
-                "title": "Impossible de récupérer les informations",
-                "message": "Veuillez vérifier que vous êtes bien connecté(e) à Internet."
-            }
+            "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
+            "cannotChangePassword": "Impossible de changer le mot de passe",
+            "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
         }
     },
     "validators": {

@@ -216,7 +216,7 @@ async function downloadRecoveryKey(): Promise<void> {
     recoveryKeyDownloaded.value = true;
     informationManager.present(
       new Information({
-        message: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk.message'),
+        message: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -230,7 +230,7 @@ async function downloadRecoveryFile(): Promise<void> {
     recoveryFileDownloaded.value = true;
     informationManager.present(
       new Information({
-        message: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk.message'),
+        message: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,

@@ -363,7 +363,7 @@ async function listFolder(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.listFailed.message', {
+        message: translate('FoldersPage.errors.listFailed', {
           path: currentPath.value,
         }),
         level: InformationLevel.Error,
@@ -403,7 +403,7 @@ async function createFolder(): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.createFolderFailed.message', {
+        message: translate('FoldersPage.errors.createFolderFailed', {
           name: folderName,
         }),
         level: InformationLevel.Error,
@@ -467,7 +467,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (!result.ok) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.deleteFailed.message', { name: entry.name }),
+          message: translate('FoldersPage.errors.deleteFailed', { name: entry.name }),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -547,7 +547,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.renameFailed.message', { name: entry.name }),
+        message: translate('FoldersPage.errors.renameFailed', { name: entry.name }),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -569,7 +569,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.linkNotCopiedToClipboard.message'),
+          message: translate('FoldersPage.linkNotCopiedToClipboard'),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -577,7 +577,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.linkCopiedToClipboard.message'),
+          message: translate('FoldersPage.linkCopiedToClipboard'),
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -586,7 +586,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.getLinkError.message', { reason: result.error.tag }),
+        message: translate('FoldersPage.getLinkError', { reason: result.error.tag }),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -619,7 +619,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.moveOneFailed.message', { name: entries[0].name }),
+          message: translate('FoldersPage.errors.moveOneFailed', { name: entries[0].name }),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -639,7 +639,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.moveSuccess.message', { count: entries.length }, entries.length),
+        message: translate('FoldersPage.moveSuccess', { count: entries.length }, entries.length),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -693,7 +693,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.copyOneFailed.message', { name: entries[0].name }),
+          message: translate('FoldersPage.errors.copyOneFailed', { name: entries[0].name }),
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -713,7 +713,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.copySuccess.message', {}, entries.length),
+        message: translate('FoldersPage.copySuccess', {}, entries.length),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -743,7 +743,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     hotkeyManager.disableGroup(Groups.Documents);
     await informationManager.present(
       new Information({
-        message: translate('FoldersPage.open.unavailableOnWeb.message'),
+        message: translate('FoldersPage.open.unavailableOnWeb'),
         level: InformationLevel.Warning,
       }),
       PresentationMode.Modal,
@@ -758,8 +758,8 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     await informationManager.present(
       new Information({
         message: entry.isFile()
-          ? translate('FoldersPage.open.fileFailedSubtitle', { name: entry.name })
-          : translate('FoldersPage.open.folderFailedSubtitle', { name: entry.name }),
+          ? translate('FoldersPage.open.fileFailed', { name: entry.name })
+          : translate('FoldersPage.open.folderFailed', { name: entry.name }),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

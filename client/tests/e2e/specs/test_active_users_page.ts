@@ -128,11 +128,7 @@ describe('Check active users page', () => {
     cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
     cy.get('@inviteButton').should('not.have.attr', 'disabled');
     cy.get('@inviteButton').click();
-    cy.checkToastMessage(
-      'success',
-      'Invitation sent',
-      'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.',
-    );
+    cy.checkToastMessage('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
   });
 
   it('Tests revoke one user', () => {
@@ -142,7 +138,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', 'User revoked', 'Cernd can no longer access this organization.');
+    cy.checkToastMessage('success', 'Cernd has been revoked. They can no longer access this organization.');
   });
 
   it('Tests revoke one selected user', () => {
@@ -157,7 +153,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', 'User revoked', 'Cernd can no longer access this organization.');
+    cy.checkToastMessage('success', 'Cernd has been revoked. They can no longer access this organization.');
     // Ultimately, they probably should not appear anymore
     cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
   });
@@ -171,7 +167,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke these users?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', '2 users revoked', 'They can no longer access this organization.');
+    cy.checkToastMessage('success', '2 users have been revoked, they can no longer access this organization.');
     // Ultimately, they probably should not appear anymore
     cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('@userItems').eq(2).find('ion-checkbox').should('not.have.class', 'checkbox-checked');

@@ -39,7 +39,7 @@ describe('Greet a new device', () => {
           });
         });
       });
-    cy.checkToastMessage('info', 'Link copied', 'The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
   });
 
   it('Go through the greet process', () => {
@@ -95,7 +95,7 @@ describe('Greet a new device', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage('error', 'An unexpected error occured', "You didn't select the correct code. Please restart the process.");
+    cy.checkToastMessage('error', "You didn't select the correct code. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');
@@ -113,11 +113,7 @@ describe('Greet a new device', () => {
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None shown').click();
-    cy.checkToastMessage(
-      'error',
-      'An unexpected error occured',
-      "If you didn't see the correct code, it could be a security concern. Please restart the process.",
-    );
+    cy.checkToastMessage('error', "If you didn't see the correct code, it could be a security concern. Please restart the process.");
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');
     cy.get('@nextButton').contains('Start');

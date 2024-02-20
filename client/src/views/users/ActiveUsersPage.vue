@@ -274,7 +274,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeFailed.message', {}, 1),
+        message: translate('UsersPage.revocation.revokeFailed', {}, 1),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -282,7 +282,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSuccess.message', { user: user.humanHandle.label }, 1),
+        message: translate('UsersPage.revocation.revokeSuccess', { user: user.humanHandle.label }, 1),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -321,7 +321,7 @@ async function revokeSelectedUsers(): Promise<void> {
   if (errorCount === 0) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSuccess.message', { count: selectedUsers.length }, selectedUsers.length),
+        message: translate('UsersPage.revocation.revokeSuccess', { count: selectedUsers.length }, selectedUsers.length),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -329,7 +329,7 @@ async function revokeSelectedUsers(): Promise<void> {
   } else if (errorCount < selectedUsers.length) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSomeFailed.message'),
+        message: translate('UsersPage.revocation.revokeSomeFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -337,7 +337,7 @@ async function revokeSelectedUsers(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeFailed.message', {}, selectedUsers.length),
+        message: translate('UsersPage.revocation.revokeFailed', {}, selectedUsers.length),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -421,7 +421,7 @@ async function refreshUserList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.listUsersFailed.message'),
+        message: translate('UsersPage.listUsersFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

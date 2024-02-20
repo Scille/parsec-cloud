@@ -333,7 +333,7 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.startFailed.message'),
+        message: translate('DevicesPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -345,7 +345,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.startFailed.message'),
+        message: translate('DevicesPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -418,7 +418,7 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetDeviceStep.Summary) {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.success.message'),
+        message: translate('DevicesPage.greet.success'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -438,7 +438,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected.message', { reason: result.error.tag }));
+      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -465,7 +465,7 @@ async function copyLink(): Promise<void> {
   }, 5000);
   informationManager.present(
     new Information({
-      message: translate('DevicesPage.greet.linkCopiedToClipboard.message'),
+      message: translate('DevicesPage.greet.linkCopiedToClipboard'),
       level: InformationLevel.Info,
     }),
     PresentationMode.Toast,
@@ -478,7 +478,7 @@ async function sendEmail(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.emailFailed.subtitle'),
+        message: translate('DevicesPage.greet.errors.emailFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

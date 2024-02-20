@@ -303,7 +303,7 @@ async function nextStep(): Promise<void> {
       if (!result.ok) {
         informationManager.present(
           new Information({
-            message: translate('ClaimDeviceModal.errors.saveDeviceFailed.message'),
+            message: translate('ClaimDeviceModal.errors.saveDeviceFailed'),
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
