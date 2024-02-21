@@ -38,6 +38,8 @@ class Storage(dict):
         self.pop(chunk_id)
 
     def read_chunk(self, chunk: Chunk) -> bytes:
+        if chunk.is_all_zeroes():
+            return b"\x00" * (chunk.stop - chunk.start)
         data = self.read_chunk_data(chunk.id)
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
@@ -163,8 +165,8 @@ def test_complete_scenario():
         assert storage.read(manifest, 40, 0) == expected
 
     (_, _, _, chunk7), (chunk8,) = manifest.blocks[1:]
-    assert storage[chunk7.id] == b"\x00" * 5
-    assert storage[chunk8.id] == b"\x00" * 8
+    assert chunk7.is_all_zeroes()
+    assert chunk8.is_all_zeroes()
     assert manifest == base.evolve(
         size=40,
         blocks=((chunk0, chunk1, chunk2), (chunk4, chunk5, chunk6, chunk7), (chunk8,)),
@@ -216,7 +218,12 @@ def test_file_operations(hypothesis_settings, tmpdir, alice):
 
         @invariant()
         def leaks(self) -> None:
-            all_ids = {chunk.id for chunks in self.manifest.blocks for chunk in chunks}
+            all_ids = {
+                chunk.id
+                for chunks in self.manifest.blocks
+                for chunk in chunks
+                if not chunk.is_all_zeroes()
+            }
             assert set(self.storage) == all_ids
 
         @rule(size=size, offset=size)

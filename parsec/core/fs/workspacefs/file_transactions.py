@@ -108,10 +108,13 @@ class FileTransactions:
     # Helper
 
     async def _read_chunk(self, chunk: Chunk) -> bytes:
+        if chunk.is_all_zeroes():
+            return b"\x00" * (chunk.stop - chunk.start)
         data = await self.local_storage.get_chunk(chunk.id)
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> int:
+        assert not chunk.is_all_zeroes()
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)

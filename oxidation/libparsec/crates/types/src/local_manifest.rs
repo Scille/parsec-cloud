@@ -1,13 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
     num::NonZeroU64,
 };
-
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 
 use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_serialization_format::parsec_data;
@@ -45,6 +44,10 @@ macro_rules! impl_local_manifest_dump_load {
  * Chunk
  */
 
+fn is_false(b: &bool) -> bool {
+    !b
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Chunk {
     // Represents a chunk of a data in file manifest.
@@ -66,6 +69,8 @@ pub struct Chunk {
     pub raw_offset: u64,
     pub raw_size: NonZeroU64,
     pub access: Option<BlockAccess>,
+    #[serde(skip_serializing_if = "is_false", default)]
+    pub all_zeroes: bool,
 }
 
 impl PartialEq<u64> for Chunk {
@@ -90,6 +95,7 @@ impl Chunk {
             // TODO: what to do with overflow
             raw_size: NonZeroU64::try_from(stop.get() - start).unwrap_or_else(|_| unreachable!()),
             access: None,
+            all_zeroes: false,
         }
     }
     pub fn from_block_access(block_access: BlockAccess) -> Result<Self, &'static str> {
@@ -103,6 +109,7 @@ impl Chunk {
                 .try_into()
                 .unwrap_or_else(|_| unreachable!()),
             access: Some(block_access),
+            all_zeroes: false,
         })
     }
 
@@ -132,6 +139,9 @@ impl Chunk {
     }
 
     pub fn is_block(&self) -> bool {
+        if self.all_zeroes && self.is_pseudo_block() {
+            return true;
+        }
         // Requires an access
         if let Some(access) = &self.access {
             // Pseudo block
@@ -275,19 +285,40 @@ impl LocalFileManifest {
             .blocks
             .into_iter()
             .map(Chunk::from_block_access)
-            .collect::<Result<Vec<_>, _>>()?
-            .into_iter()
-            .map(|b| vec![b])
-            .collect();
+            .collect::<Result<Vec<_>, _>>()?;
+        let mut current_stop = 0;
+        let mut contiguous_blocks = vec![];
+        for block in blocks {
+            while current_stop < block.start {
+                let size = base.blocksize.min(block.start - current_stop);
+                let mut zero_block =
+                    Chunk::new(current_stop, (current_stop + size).try_into().unwrap());
+                zero_block.all_zeroes = true;
+                contiguous_blocks.push(vec![zero_block]);
+                current_stop += size;
+            }
+            current_stop = block.stop.get();
+            contiguous_blocks.push(vec![block]);
+        }
+        while current_stop < base.size {
+            let size = base.blocksize.min(base.size - current_stop);
+            let mut zero_block =
+                Chunk::new(current_stop, (current_stop + size).try_into().unwrap());
+            zero_block.all_zeroes = true;
+            contiguous_blocks.push(vec![zero_block]);
+            current_stop += size;
+        }
 
-        Ok(Self {
+        let manifest = Self {
             base,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
             blocksize: remote.blocksize,
-            blocks,
-        })
+            blocks: contiguous_blocks,
+        };
+        manifest.assert_integrity();
+        Ok(manifest)
     }
 
     pub fn to_remote(
@@ -300,6 +331,7 @@ impl LocalFileManifest {
         let blocks = self
             .blocks
             .iter()
+            .filter(|chunks| !(chunks[0].is_block() && chunks[0].all_zeroes))
             .map(|chunks| chunks[0].get_block_access())
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| "Need reshape")?

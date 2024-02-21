@@ -66,6 +66,7 @@ impl Chunk {
                 Some(access) => Some(access.0),
                 None => None,
             },
+            all_zeroes: false,
         }))
     }
 
@@ -156,6 +157,10 @@ impl Chunk {
 
     fn is_block(&self) -> bool {
         self.0.is_block()
+    }
+
+    pub fn is_all_zeroes(&self) -> bool {
+        self.0.all_zeroes
     }
 
     fn is_pseudo_block(&self) -> bool {
