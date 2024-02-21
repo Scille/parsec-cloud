@@ -2,9 +2,9 @@
 
 <template>
   <div
-    v-if="shouldBeVisible || isImportManagerActive"
+    v-if="menu.isVisible() || isImportManagerActive"
     class="upload-menu"
-    :class="menuMinimized ? 'minimize' : ''"
+    :class="menu.isMinimized() ? 'minimize' : ''"
   >
     <div class="upload-menu-header">
       <ion-text class="title-h4">{{ $t('FoldersPage.ImportFile.title') }}</ion-text>
@@ -18,7 +18,7 @@
           v-if="!isImportManagerActive"
           class="menu-header-icons__item"
           :icon="close"
-          @click="shouldBeVisible = false"
+          @click="menu.hide()"
         />
       </div>
     </div>
@@ -124,6 +124,7 @@
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from '@/components/core/ms-image';
 import { FileUploadItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
+import useUploadMenu from '@/services/fileUploadMenu';
 import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
@@ -135,12 +136,12 @@ interface ImportItem {
   progress: number;
 }
 
+const menu = useUploadMenu();
+
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const imports: Ref<Array<ImportItem>> = ref([]);
 let dbId: string;
-const menuMinimized = ref(false);
 const isImportManagerActive = ref(false);
-const shouldBeVisible = ref(false);
 const uploadMenuList = ref();
 
 enum Tabs {
@@ -164,7 +165,11 @@ const errorItems = computed(() => {
 });
 
 function toggleMenu(): void {
-  menuMinimized.value = !menuMinimized.value;
+  if (menu.isMinimized()) {
+    menu.expand();
+  } else {
+    menu.minimize();
+  }
 }
 
 onMounted(async () => {
@@ -190,7 +195,7 @@ async function onImportFinishedClick(importData: ImportData, state: ImportState)
     return;
   }
   await navigateToWorkspace(importData.workspaceId, importData.path);
-  menuMinimized.value = true;
+  menu.minimize();
 }
 
 async function cancelImport(importId: string): Promise<void> {
@@ -201,7 +206,8 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
   switch (state) {
     case ImportState.ImportAllStarted:
       isImportManagerActive.value = true;
-      shouldBeVisible.value = true;
+      menu.show();
+      menu.expand();
       break;
     case ImportState.ImportAllFinished:
       isImportManagerActive.value = false;
