@@ -743,7 +743,6 @@ class BaseRealmComponent:
         match outcome:
             case KeysBundle() as keys_bundle:
                 return authenticated_cmds.latest.realm_get_keys_bundle.RepOk(
-                    key_index=keys_bundle.key_index,
                     keys_bundle_access=keys_bundle.keys_bundle_access,
                     keys_bundle=keys_bundle.keys_bundle,
                 )

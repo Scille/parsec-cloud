@@ -118,7 +118,7 @@ class BaseAuthenticatedRpcClient:
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
     async def realm_get_keys_bundle(
-        self, realm_id: VlobID, key_index: int | None
+        self, realm_id: VlobID, key_index: int
     ) -> authenticated_cmds.latest.realm_get_keys_bundle.Rep:
         req = authenticated_cmds.latest.realm_get_keys_bundle.Req(
             realm_id=realm_id, key_index=key_index
