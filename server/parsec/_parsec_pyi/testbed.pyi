@@ -201,10 +201,11 @@ class TestbedEventRotateKeyRealm:
     timestamp: DateTime
     author: DeviceID
     realm: VlobID
+    key_index: int
     per_participant_keys_bundle_access: dict[UserID, bytes]
     keys_bundle: bytes
 
-    realm_key_rotation_certificate: RealmKeyRotationCertificate
+    certificate: RealmKeyRotationCertificate
     raw_certificate: bytes
 
 class TestbedEventArchiveRealm:
