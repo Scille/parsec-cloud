@@ -245,6 +245,35 @@ class CoolorgRpcClients:
     def root_verify_key(self) -> VerifyKey:
         return self.root_signing_key.verify_key
 
+    def key_bundle(self, realm_id: VlobID, key_index: int) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    return event.keys_bundle
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
+    def key_bundle_access(self, realm_id: VlobID, key_index: int, user_id: UserID) -> bytes:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventShareRealm):
+                if (
+                    event.realm == realm_id
+                    and event.key_index == key_index
+                    and event.user == user_id
+                    and event.recipient_keys_bundle_access
+                ):
+                    return event.recipient_keys_bundle_access
+            elif isinstance(event, tb.TestbedEventRotateKeyRealm):
+                if event.realm == realm_id and event.key_index == key_index:
+                    try:
+                        return event.per_participant_keys_bundle_access[user_id]
+                    except KeyError:
+                        pass
+        raise RuntimeError(
+            f"Key bundle for realm `{realm_id}` and key index `{key_index}` not found !"
+        )
+
     def _init_for(self, user: str) -> AuthenticatedRpcClient:
         for event in self.testbed_template.events:
             if (
