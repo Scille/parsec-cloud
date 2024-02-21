@@ -5,6 +5,46 @@ History
 .. towncrier release notes start
 
 
+Parsec v2.17.0 (2024-02-13)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Add new administration routes to freeze users and prevent them from connecting
+  to the server.
+  (`#5811 <https://github.com/Scille/parsec-cloud/issues/5811>`__)
+
+* Added bulk reassignment of workspace roles
+  (`#5938 <https://github.com/Scille/parsec-cloud/issues/5938>`__)
+
+* Added a `Reencrypt all` action on workspace page
+  (`#5939 <https://github.com/Scille/parsec-cloud/issues/5939>`__)
+
+* Added a small message to encourage users to promote additional owners on their
+  workspaces
+  (`#5940 <https://github.com/Scille/parsec-cloud/issues/5940>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Make write access to the Windows registry more robust.
+  (`#6142 <https://github.com/Scille/parsec-cloud/issues/6142>`__)
+
+* Fix the filter list when filtering user profiles.
+  (`#6369 <https://github.com/Scille/parsec-cloud/issues/6369>`__)
+
+* Add missing translation for offline availability dialog.
+  (`#6224 <https://github.com/Scille/parsec-cloud/issues/6224>`__)
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add documentation for the ``recovery device`` feature. This feature was
+  introduced in v2.6.0 and it was not documented until now.
+  (`#5630 <https://github.com/Scille/parsec-cloud/issues/5630>`__)
+
+
 Parsec v2.16.3 (2023-12-01)
 ---------------------------
 

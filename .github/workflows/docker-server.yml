@@ -62,7 +62,7 @@ jobs:
             latest=${{ github.event_name == 'push' && github.ref_type == 'tag' }}
 
       - name: Image to be published
-        run: echo ${{ steps.metadata.outputs.tags }}
+        run: echo '${{ steps.metadata.outputs.tags }}'
 
       - name: Build and publish
         uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0

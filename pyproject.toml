@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "parsec-cloud"
-version = "v2.16.3+dev"
+version = "v2.17.0+dev"
 description = "Secure cloud framework"
 authors = ["Scille SAS <contact@scille.fr>"]
 readme = "README.rst"
@@ -158,7 +158,7 @@ setuptools = ">=63.1,<68.0"
 maturin = "0.15.1"
 patchelf = { version = "^0.17.2.0", markers = "platform_system=='Linux'" }
 
-cibuildwheel = "v2.12.3"
+cibuildwheel = "v2.16.5"
 editorconfig-checker = "2.4.0"
 types-requests = "^2.28"
 boto3-stubs = "^1.26"
