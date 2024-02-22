@@ -5,7 +5,7 @@ use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
 use crate::{
-    workspace::{EntryStat, WorkspaceFsOperationError},
+    workspace::{EntryStat, WorkspaceCreateFolderError},
     EventWorkspaceOpsOutboundSyncNeeded,
 };
 
@@ -51,7 +51,7 @@ async fn create_in_root(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     let new_folder_id = ops
-        .create_folder_all(&"/new_folder".parse().unwrap())
+        .create_folder_all("/new_folder".parse().unwrap())
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -82,7 +82,7 @@ async fn create_in_child(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     let new_folder_id = ops
-        .create_folder_all(&"/foo/new_folder".parse().unwrap())
+        .create_folder_all("/foo/new_folder".parse().unwrap())
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -113,10 +113,10 @@ async fn already_exists_in_root(env: &TestbedEnv) {
     let spy = ops.event_bus.spy.start_expecting();
 
     let err = ops
-        .create_folder_all(&"/foo".parse().unwrap())
+        .create_folder_all("/foo".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == wksp1_foo_id);
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == wksp1_foo_id);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
@@ -138,10 +138,10 @@ async fn already_exists_in_child(env: &TestbedEnv) {
     let spy = ops.event_bus.spy.start_expecting();
 
     let err = ops
-        .create_folder_all(&"/foo/spam".parse().unwrap())
+        .create_folder_all("/foo/spam".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == wksp1_foo_spam_id);
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == wksp1_foo_spam_id);
     spy.assert_no_events();
 
     assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
@@ -158,10 +158,10 @@ async fn recreate_root(env: &TestbedEnv) {
     let spy = ops.event_bus.spy.start_expecting();
 
     let err = ops
-        .create_folder_all(&"/".parse().unwrap())
+        .create_folder_all("/".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::EntryExists { entry_id } if entry_id == wksp1_id);
+    p_assert_matches!(err, WorkspaceCreateFolderError::EntryExists { entry_id } if entry_id == wksp1_id);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
@@ -178,7 +178,7 @@ async fn create_missing_parents(env: &TestbedEnv) {
     let mut spy = ops.event_bus.spy.start_expecting();
 
     let foo_a_b_c_id = ops
-        .create_folder_all(&"/foo/a/b/c".parse().unwrap())
+        .create_folder_all("/foo/a/b/c".parse().unwrap())
         .await
         .unwrap();
     let mut foo_a_id = None;
@@ -227,10 +227,10 @@ async fn file_in_the_path(env: &TestbedEnv) {
     let spy = ops.event_bus.spy.start_expecting();
 
     let err = ops
-        .create_folder_all(&"/bar.txt/new_folder".parse().unwrap())
+        .create_folder_all("/bar.txt/new_folder".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceFsOperationError::NotAFolder);
+    p_assert_matches!(err, WorkspaceCreateFolderError::ParentIsFile);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;

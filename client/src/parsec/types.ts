@@ -28,7 +28,12 @@ export {
   ParsedBackendAddrTag,
   Platform,
   UserProfile,
-  WorkspaceFsOperationErrorTag,
+  WorkspaceCreateFileErrorTag,
+  WorkspaceCreateFolderErrorTag,
+  WorkspaceRemoveEntryErrorTag,
+  WorkspaceRenameEntryErrorTag,
+  WorkspaceStatEntryErrorTag,
+  WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
   AvailableDevice,
@@ -98,8 +103,13 @@ export type {
   InviteListItemUser as UserInvitation,
   UserOrDeviceClaimInitialInfoDevice,
   UserOrDeviceClaimInitialInfoUser,
-  WorkspaceFsOperationError,
+  WorkspaceCreateFileError,
+  WorkspaceCreateFolderError,
   VlobID as WorkspaceID,
+  WorkspaceRemoveEntryError,
+  WorkspaceRenameEntryError,
+  WorkspaceStatEntryError,
+  WorkspaceStopError,
 } from '@/plugins/libparsec';
 
 import type {

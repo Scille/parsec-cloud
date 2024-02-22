@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 // This module provide helpers that are used for testing purpose.
-// To simplify the writing of those helpers, we use the same rule for when writing tests.
+// To simplify the writing of those helpers, we use the same rule than when writing tests.
 #![allow(clippy::unwrap_used)]
 
 use std::{any::Any, ops::Deref, path::Path, sync::Arc};
@@ -15,19 +15,15 @@ use libparsec_types::prelude::*;
 use crate::{
     certificates::CertificatesStorage,
     user::UserStorage,
-    workspace::{WorkspaceCacheStorage, WorkspaceDataStorage},
+    workspace::{UpdateManifestData, WorkspaceStorage},
 };
 
 const STORE_ENTRY_KEY: &str = "platform_storage";
 
 enum StorageKind {
     Certificates,
-    #[allow(dead_code)]
     User,
-    #[allow(dead_code)]
-    WorkspaceData(VlobID),
-    #[allow(dead_code)]
-    WorkspaceCache(VlobID),
+    Workspace(VlobID),
 }
 
 struct ComponentStore {
@@ -246,9 +242,9 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
 }
 
 #[allow(unused)]
-pub(crate) async fn maybe_populate_workspace_data_storage(
+pub(crate) async fn maybe_populate_workspace_storage(
     data_base_dir: &Path,
-    device: Arc<LocalDevice>,
+    device: &LocalDevice,
     realm_id: VlobID,
 ) {
     if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
@@ -258,122 +254,142 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
     ) {
         let mut guard = store.populated.lock().await;
         let already_populated = guard.iter().any(|(candidate, kind)| {
-            matches!(kind, StorageKind::WorkspaceData(candidate_realm_id) if *candidate_realm_id == realm_id) && *candidate == device.device_id
+            matches!(kind, StorageKind::Workspace(candidate_realm_id) if *candidate_realm_id == realm_id) && *candidate == device.device_id
         });
 
         if !already_populated {
             let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
 
-            let mut lazy_storage: Option<WorkspaceDataStorage> = None;
+            // Only start the storage if we need to do some initialization work
+            let mut lazy_storage: Option<WorkspaceStorage> = None;
+            macro_rules! lazy_storage {
+                () => {
+                    match &mut lazy_storage {
+                        Some(storage) => storage,
+                        None => {
+                            lazy_storage = Some(
+                                WorkspaceStorage::no_populate_start(
+                                    data_base_dir,
+                                    device,
+                                    realm_id,
+                                )
+                                .await
+                                .unwrap(),
+                            );
+                            lazy_storage.as_mut().unwrap()
+                        }
+                    }
+                };
+            }
 
             for event in &env.template.events {
-                let (
-                    maybe_workspace_manifest,
-                    maybe_folder_manifest,
-                    maybe_file_manifest,
-                    maybe_checkpoint,
-                ) = match event {
+                match event {
                     TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
+                        if x.realm == realm_id && x.device == device.device_id =>
                     {
-                        (Some(x.local_manifest.clone()), None, None, None)
-                    }
-                    TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
-                    {
-                        (None, Some(x.local_manifest.clone()), None, None)
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
                     }
                     TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
+                        if x.realm == realm_id && x.device == device.device_id =>
                     {
-                        (None, None, Some(x.local_manifest.clone()), None)
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
                     }
-                    TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
+                    TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
                     {
-                        (Some(x.local_manifest.clone()), None, None, None)
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
                     }
-                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
+                    TestbedEvent::WorkspaceCacheStorageFetchBlock(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
                     {
-                        (None, Some(x.local_manifest.clone()), None, None)
-                    }
-                    TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
-                    {
-                        (None, None, Some(x.local_manifest.clone()), None)
+                        let encrypted = device.local_symkey.encrypt(&x.cleartext);
+                        lazy_storage!()
+                            .set_block(x.block_id, &encrypted)
+                            .await
+                            .unwrap();
                     }
                     TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
+                        if x.realm == realm_id && x.device == device.device_id =>
                     {
-                        (
-                            None,
-                            None,
-                            None,
-                            Some((x.checkpoint, x.changed_vlobs.clone())),
-                        )
+                        lazy_storage!()
+                            .update_realm_checkpoint(x.checkpoint, &x.changed_vlobs)
+                            .await
+                            .unwrap();
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
+                    {
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
+                    {
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
+                    {
+                        lazy_storage!()
+                            .update_manifest(&UpdateManifestData {
+                                entry_id: x.local_manifest.base.id,
+                                need_sync: x.local_manifest.need_sync,
+                                base_version: x.local_manifest.base.version,
+                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                            })
+                            .await
+                            .unwrap();
+                    }
+                    TestbedEvent::WorkspaceDataStorageChunkCreate(x)
+                        if x.realm == realm_id && x.device == device.device_id =>
+                    {
+                        let encrypted = device.local_symkey.encrypt(&x.chunk);
+                        lazy_storage!()
+                            .set_chunk(x.chunk_id, &encrypted)
+                            .await
+                            .unwrap();
                     }
                     _ => continue,
                 };
-
-                if lazy_storage.is_none() {
-                    lazy_storage = Some(
-                        WorkspaceDataStorage::no_populate_start(
-                            data_base_dir,
-                            device.clone(),
-                            realm_id,
-                        )
-                        .await
-                        .unwrap(),
-                    );
-                }
-
-                if let Some((checkpoint, changed_vlobs)) = maybe_checkpoint {
-                    lazy_storage
-                        .as_ref()
-                        .unwrap()
-                        .update_realm_checkpoint(checkpoint, changed_vlobs)
-                        .await
-                        .unwrap();
-                }
-
-                if let Some(manifest) = maybe_workspace_manifest {
-                    lazy_storage
-                        .as_ref()
-                        .unwrap()
-                        .for_update_workspace_manifest()
-                        .await
-                        .0
-                        .update_workspace_manifest(manifest)
-                        .await
-                        .unwrap();
-                }
-
-                if let Some(manifest) = maybe_folder_manifest {
-                    lazy_storage
-                        .as_ref()
-                        .unwrap()
-                        .for_update_child_manifest(manifest.base.id)
-                        .await
-                        .unwrap()
-                        .0
-                        .update_as_folder_manifest(manifest)
-                        .await
-                        .unwrap();
-                }
-
-                if let Some(manifest) = maybe_file_manifest {
-                    lazy_storage
-                        .as_ref()
-                        .unwrap()
-                        .for_update_child_manifest(manifest.base.id)
-                        .await
-                        .unwrap()
-                        .0
-                        .update_as_file_manifest(manifest, false, [].into_iter())
-                        .await
-                        .unwrap();
-                }
             }
 
             if let Some(storage) = lazy_storage {
@@ -381,76 +397,7 @@ pub(crate) async fn maybe_populate_workspace_data_storage(
             }
 
             // Mark as populated
-            guard.push((
-                device.device_id.clone(),
-                StorageKind::WorkspaceData(realm_id),
-            ));
-        }
-    }
-}
-
-#[allow(unused)]
-pub(crate) async fn maybe_populate_workspace_cache_storage(
-    data_base_dir: &Path,
-    device: Arc<LocalDevice>,
-    realm_id: VlobID,
-) {
-    if let Some(store) = test_get_testbed_component_store::<ComponentStore>(
-        data_base_dir,
-        STORE_ENTRY_KEY,
-        store_factory,
-    ) {
-        let mut guard = store.populated.lock().await;
-        let already_populated = guard.iter().any(|(candidate, kind)| {
-            matches!(kind, StorageKind::WorkspaceCache(candidate_realm_id) if *candidate_realm_id == realm_id) && *candidate == device.device_id
-        });
-
-        if !already_populated {
-            let env = test_get_testbed(data_base_dir).expect("Testbed existence already checked");
-
-            let mut lazy_storage: Option<WorkspaceCacheStorage> = None;
-
-            for event in &env.template.events {
-                let (block_id, cleartext_block) = match event {
-                    TestbedEvent::WorkspaceCacheStorageFetchBlock(x)
-                        if x.device == device.device_id && x.realm == realm_id =>
-                    {
-                        (x.block_id, &x.cleartext)
-                    }
-                    _ => continue,
-                };
-
-                if lazy_storage.is_none() {
-                    lazy_storage = Some(
-                        // Set cache_size to max to disable any garbage collection
-                        WorkspaceCacheStorage::no_populate_start(
-                            data_base_dir,
-                            u64::MAX,
-                            device.clone(),
-                            realm_id,
-                        )
-                        .await
-                        .unwrap(),
-                    );
-                }
-
-                lazy_storage
-                    .as_ref()
-                    .unwrap()
-                    .set_block(block_id, cleartext_block)
-                    .await
-                    .unwrap();
-            }
-
-            if let Some(storage) = lazy_storage {
-                storage.stop().await;
-            }
-
-            // Mark as populated
-            guard.push((
-                device.device_id.clone(),
-                StorageKind::WorkspaceCache(realm_id),
-            ));
+            guard.push((device.device_id.clone(), StorageKind::Workspace(realm_id)));
         }
     }
 }

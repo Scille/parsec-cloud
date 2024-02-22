@@ -1124,10 +1124,14 @@ fn chunk_new() {
 }
 
 #[rstest]
-fn chunk_evolve_as_block() {
+fn chunk_promote_as_block() {
     let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
     let id = chunk.id;
-    let block = chunk.evolve_as_block(&[]).unwrap();
+    let block = {
+        let mut block = chunk.clone();
+        block.promote_as_block(b"<data>").unwrap();
+        block
+    };
 
     p_assert_eq!(block.id, id);
     p_assert_eq!(block.start, 1);
@@ -1142,7 +1146,7 @@ fn chunk_evolve_as_block() {
     );
     p_assert_eq!(
         block.access.as_ref().unwrap().digest,
-        HashDigest::from_data(&[])
+        HashDigest::from_data(b"<data>")
     );
 
     let block_access = BlockAccess {
@@ -1150,14 +1154,14 @@ fn chunk_evolve_as_block() {
         key: SecretKey::generate(),
         offset: 1,
         size: NonZeroU64::try_from(4).unwrap(),
-        digest: HashDigest::from_data(&[]),
+        digest: HashDigest::from_data(b"<data>"),
     };
 
-    let chunk = Chunk::from_block_access(block_access);
-    let block = chunk.clone().evolve_as_block(&[]).unwrap();
-    p_assert_eq!(chunk, block);
+    let mut block = Chunk::from_block_access(block_access);
+    let err = block.promote_as_block(b"<data>").unwrap_err();
+    p_assert_eq!(err, "already a block");
 
-    let chunk = Chunk {
+    let mut chunk = Chunk {
         id,
         start: 0,
         stop: NonZeroU64::try_from(1).unwrap(),
@@ -1166,8 +1170,8 @@ fn chunk_evolve_as_block() {
         access: None,
     };
 
-    let err = chunk.evolve_as_block(&[]).unwrap_err();
-    p_assert_eq!(err, "This chunk is not aligned");
+    let err = chunk.promote_as_block(b"<data>").unwrap_err();
+    p_assert_eq!(err, "not aligned");
 }
 
 #[rstest]
@@ -1184,7 +1188,11 @@ fn chunk_is_block() {
     assert!(chunk.is_pseudo_block());
     assert!(!chunk.is_block());
 
-    let mut block = chunk.evolve_as_block(&[]).unwrap();
+    let mut block = {
+        let mut block = chunk.clone();
+        block.promote_as_block(b"<data>").unwrap();
+        block
+    };
 
     assert!(block.is_pseudo_block());
     assert!(block.is_block());
@@ -1255,16 +1263,18 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
 
     assert!(lfm.is_reshaped());
 
-    let block = Chunk {
-        id: ChunkID::default(),
-        start: 0,
-        stop: NonZeroU64::try_from(1).unwrap(),
-        raw_offset: 0,
-        raw_size: NonZeroU64::try_from(1).unwrap(),
-        access: None,
-    }
-    .evolve_as_block(&[])
-    .unwrap();
+    let block = {
+        let mut block = Chunk {
+            id: ChunkID::default(),
+            start: 0,
+            stop: NonZeroU64::try_from(1).unwrap(),
+            raw_offset: 0,
+            raw_size: NonZeroU64::try_from(1).unwrap(),
+            access: None,
+        };
+        block.promote_as_block(b"<data>").unwrap();
+        block
+    };
 
     lfm.blocks.push(vec![block.clone()]);
 
@@ -1338,16 +1348,18 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     let parent = VlobID::default();
     let mut lfm = LocalFileManifest::new(author, parent, t1);
 
-    let block = Chunk {
-        id: ChunkID::default(),
-        start: 0,
-        stop: NonZeroU64::try_from(1).unwrap(),
-        raw_offset: 0,
-        raw_size: NonZeroU64::try_from(1).unwrap(),
-        access: None,
-    }
-    .evolve_as_block(&[])
-    .unwrap();
+    let block = {
+        let mut block = Chunk {
+            id: ChunkID::default(),
+            start: 0,
+            stop: NonZeroU64::try_from(1).unwrap(),
+            raw_offset: 0,
+            raw_size: NonZeroU64::try_from(1).unwrap(),
+            access: None,
+        };
+        block.promote_as_block(b"<data>").unwrap();
+        block
+    };
 
     let block_access = block.access.clone().unwrap();
     lfm.blocks.push(vec![block]);

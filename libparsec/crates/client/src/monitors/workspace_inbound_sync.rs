@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 use super::Monitor;
 use crate::{
     event_bus::{EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
-    workspace::{WorkspaceOps, WorkspaceSyncError},
+    workspace::{InboundSyncOutcome, WorkspaceOps, WorkspaceSyncError},
     EventMonitorCrashed,
 };
 
@@ -91,7 +91,7 @@ fn task_future_factory(
                         .await
                         .expect("TODO: not expected at all !");
                     workspace_ops
-                        .get_need_inbound_sync()
+                        .get_need_inbound_sync(u32::MAX)
                         .await
                         .expect("TODO: not expected at all !")
                 }
@@ -107,12 +107,18 @@ fn task_future_factory(
             // - the events keep piling up during the sync
             // - no detection of an already synced entry
             // - no parallelism in sync
+            // - no exponential backoff when retrying sync on busy entry
             for entry_id in to_sync {
                 // Need a loop here to retry the operation in case the server is not available
                 loop {
                     let outcome = workspace_ops.inbound_sync(entry_id).await;
                     match outcome {
-                        Ok(_) => break,
+                        Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
+                        Ok(InboundSyncOutcome::EntryIsBusy) => {
+                            // Re-enqueue to retry later
+                            let _ = tx.send(Action::RemoteChange { entry_id });
+                            break;
+                        }
                         Err(err) => match err {
                             WorkspaceSyncError::Stopped => {
                                 // Shouldn't occur in practice given the monitors are expected

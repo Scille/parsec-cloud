@@ -7,9 +7,7 @@ use super::utils::workspace_ops_factory;
 use crate::workspace::EntryStat;
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
-#[case::with_local_cache(true)]
-#[case::without_local_cache(false)]
-async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
+async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) {
     let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: &VlobID = env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: &VlobID = env.template.get_stuff("wksp1_bar_txt_id");
@@ -46,14 +44,17 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
             need_sync,
             children,
         }
-        if confinement_point.is_none() &&
-        id == *wksp1_id &&
-        created == "2000-01-11T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-11T00:00:00Z".parse().unwrap() &&
-        base_version == 1 &&
-        !is_placeholder &&
-        !need_sync &&
-        children == ["bar.txt".parse().unwrap(), "foo".parse().unwrap()]
+        if {
+            p_assert_eq!(confinement_point, None);
+            p_assert_eq!(id, *wksp1_id);
+            p_assert_eq!(created, "2000-01-11T00:00:00Z".parse().unwrap());
+            p_assert_eq!(updated, "2000-01-11T00:00:00Z".parse().unwrap());
+            p_assert_eq!(base_version, 1);
+            p_assert_eq!(is_placeholder, false);
+            p_assert_eq!(need_sync, false);
+            p_assert_eq!(children, ["bar.txt".parse().unwrap(), "foo".parse().unwrap()]);
+            true
+        }
     );
 
     // Folder
@@ -71,14 +72,17 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
             need_sync,
             children,
         }
-        if confinement_point.is_none() &&
-        id == *wksp1_foo_id &&
-        created == "2000-01-10T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-10T00:00:00Z".parse().unwrap() &&
-        base_version == 1 &&
-        !is_placeholder &&
-        !need_sync &&
-        children == ["egg.txt".parse().unwrap(), "spam".parse().unwrap()]
+        if {
+            p_assert_eq!(confinement_point, None);
+            p_assert_eq!(id, *wksp1_foo_id);
+            p_assert_eq!(created, "2000-01-10T00:00:00Z".parse().unwrap());
+            p_assert_eq!(updated, "2000-01-10T00:00:00Z".parse().unwrap());
+            p_assert_eq!(base_version, 1);
+            p_assert_eq!(is_placeholder, false);
+            p_assert_eq!(need_sync, false);
+            p_assert_eq!(children, ["egg.txt".parse().unwrap(), "spam".parse().unwrap()]);
+            true
+        }
     );
 
     // File
@@ -96,15 +100,17 @@ async fn stat_entry(#[case] local_cache: bool, env: &TestbedEnv) {
             need_sync,
             size,
         }
-        if confinement_point.is_none() &&
-        id == *wksp1_bar_txt_id &&
-        created == "2000-01-07T00:00:00Z".parse().unwrap() &&
-        updated == "2000-01-07T00:00:00Z".parse().unwrap() &&
-        base_version == 1 &&
-        !is_placeholder &&
-        !need_sync &&
-        size == 11  // Contains "hello world"
-
+        if {
+            p_assert_eq!(confinement_point, None);
+            p_assert_eq!(id, *wksp1_bar_txt_id);
+            p_assert_eq!(created, "2000-01-07T00:00:00Z".parse().unwrap());
+            p_assert_eq!(updated, "2000-01-07T00:00:00Z".parse().unwrap());
+            p_assert_eq!(base_version, 1);
+            p_assert_eq!(is_placeholder, false);
+            p_assert_eq!(need_sync, false);
+            p_assert_eq!(size, 11);  // Contains "hello world"
+            true
+        }
     );
 }
 
@@ -129,6 +135,7 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let info = ops.stat_entry(&"/".parse().unwrap()).await.unwrap();
+
     p_assert_matches!(
         info,
         EntryStat::Folder{
@@ -140,14 +147,16 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
             is_placeholder,
             need_sync,
             children,
+        } if {
+            p_assert_eq!(confinement_point, None);
+            p_assert_eq!(id, *wksp1_id);
+            p_assert_eq!(created, now);
+            p_assert_eq!(updated, now);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            p_assert_eq!(children, []);
+            true
         }
-        if confinement_point.is_none() &&
-        id == *wksp1_id &&
-        created == now &&
-        updated == now &&
-        base_version == 0 &&
-        is_placeholder &&
-        need_sync &&
-        children.is_empty()
     );
 }

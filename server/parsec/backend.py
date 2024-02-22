@@ -281,6 +281,16 @@ class Backend:
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
                 # TODO: Shamir not implemented yet !
                 raise NotImplementedError
+            elif isinstance(event, testbed.TestbedEventCreateBlock):
+                outcome = await self.block.create(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    author=event.author,
+                    realm_id=event.realm,
+                    block_id=event.block_id,
+                    block=event.encrypted,
+                )
+                assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventCreateOpaqueBlock):
                 outcome = await self.block.create(
                     now=event.timestamp,

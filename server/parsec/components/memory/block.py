@@ -127,7 +127,7 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
         self, organization_id: OrganizationID, block_id: BlockID
     ) -> bytes | BlockStoreReadBadOutcome:
         try:
-            return self._data.block_store[(organization_id, block_id)]
+            return self._data.organizations[organization_id].block_store[block_id]
         except KeyError:
             return BlockStoreReadBadOutcome.BLOCK_NOT_FOUND
 
@@ -135,5 +135,12 @@ class MemoryBlockStoreComponent(BaseBlockStoreComponent):
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
     ) -> None | BlockStoreCreateBadOutcome:
-        key = (organization_id, block_id)
-        self._data.block_store[key] = block
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            # In theory the blockstore should happily store blocks of unknown
+            # organizations, but it is not something that's expected to happen
+            # so we cheat a bit here and just pretend we have stored the data.
+            return
+
+        org.block_store[block_id] = block

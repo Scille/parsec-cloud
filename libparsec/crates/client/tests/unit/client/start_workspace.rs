@@ -30,7 +30,7 @@ async fn ok(env: &TestbedEnv) {
 
     assert_is_started!(true).await;
     p_assert_eq!(workspace.realm_id(), wksp1_id);
-    p_assert_matches!(workspace.create_file(&"/1".parse().unwrap()).await, Ok(_));
+    p_assert_matches!(workspace.create_file("/1".parse().unwrap()).await, Ok(_));
 
     client.stop_workspace(wksp1_id).await;
 

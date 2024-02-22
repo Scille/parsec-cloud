@@ -104,6 +104,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         tm.add_class::<TestbedEventArchiveRealm>()?;
         tm.add_class::<TestbedEventNewShamirRecovery>()?;
         tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
+        tm.add_class::<TestbedEventCreateBlock>()?;
         tm.add_class::<TestbedEventCreateOpaqueBlock>()?;
     }
 

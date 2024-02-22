@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_client_connection::{protocol::authenticated_cmds, ConnectionError};
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, AuthenticatedCmds, ConnectionError,
+};
 use libparsec_types::prelude::*;
 
-use super::WorkspaceOps;
 use crate::certif::{
-    CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
+    CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
     InvalidManifestError,
 };
 
@@ -20,7 +21,7 @@ pub enum FetchRemoteManifestError {
     #[error("This manifest doesn't exist on the server")]
     VlobNotFound,
     #[error("Not allowed to access this realm")]
-    NotAllowed,
+    NoRealmAccess,
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
@@ -41,16 +42,18 @@ impl From<ConnectionError> for FetchRemoteManifestError {
 }
 
 pub(super) async fn fetch_remote_child_manifest(
-    ops: &WorkspaceOps,
+    cmds: &AuthenticatedCmds,
+    certificates_ops: &CertifOps,
+    realm_id: VlobID,
     vlob_id: VlobID,
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
-    let data = fetch_vlob(ops, vlob_id).await?;
+    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
 
-    ops.certificates_ops
+    certificates_ops
         .validate_child_manifest(
             data.needed_realm_certificate_timestamp,
             data.needed_common_certificate_timestamp,
-            ops.realm_id,
+            realm_id,
             data.key_index,
             vlob_id,
             &data.expected_author,
@@ -62,7 +65,7 @@ pub(super) async fn fetch_remote_child_manifest(
         .map_err(|err| match err {
             CertifValidateManifestError::Offline => FetchRemoteManifestError::Offline,
             CertifValidateManifestError::Stopped => FetchRemoteManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NotAllowed,
+            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
                 FetchRemoteManifestError::InvalidManifest(err)
             }
@@ -80,16 +83,18 @@ pub(super) async fn fetch_remote_child_manifest(
 
 #[allow(unused)]
 pub(super) async fn fetch_remote_workspace_manifest(
-    ops: &WorkspaceOps,
+    cmds: &AuthenticatedCmds,
+    certificates_ops: &CertifOps,
+    realm_id: VlobID,
 ) -> Result<WorkspaceManifest, FetchRemoteManifestError> {
-    let vlob_id = ops.realm_id;
-    let data = fetch_vlob(ops, vlob_id).await?;
+    let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
+    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
 
-    ops.certificates_ops
+    certificates_ops
         .validate_workspace_manifest(
             data.needed_realm_certificate_timestamp,
             data.needed_common_certificate_timestamp,
-            ops.realm_id,
+            realm_id,
             data.key_index,
             &data.expected_author,
             data.expected_version,
@@ -100,7 +105,7 @@ pub(super) async fn fetch_remote_workspace_manifest(
         .map_err(|err| match err {
             CertifValidateManifestError::Offline => FetchRemoteManifestError::Offline,
             CertifValidateManifestError::Stopped => FetchRemoteManifestError::Stopped,
-            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NotAllowed,
+            CertifValidateManifestError::NotAllowed => FetchRemoteManifestError::NoRealmAccess,
             CertifValidateManifestError::InvalidManifest(err) => {
                 FetchRemoteManifestError::InvalidManifest(err)
             }
@@ -127,18 +132,19 @@ struct VlobData {
 }
 
 async fn fetch_vlob(
-    ops: &WorkspaceOps,
+    cmds: &AuthenticatedCmds,
+    realm_id: VlobID,
     vlob_id: VlobID,
 ) -> Result<VlobData, FetchRemoteManifestError> {
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {
-        realm_id: ops.realm_id,
+        realm_id,
         vlobs: vec![vlob_id],
         at: None,
     };
 
-    let rep = ops.cmds.send(req).await?;
+    let rep = cmds.send(req).await?;
 
     match rep {
         Rep::Ok { mut items, needed_common_certificate_timestamp, needed_realm_certificate_timestamp } => {
@@ -154,7 +160,7 @@ async fn fetch_vlob(
             })
         },
         // Expected errors
-        Rep::AuthorNotAllowed => Err(FetchRemoteManifestError::NotAllowed),
+        Rep::AuthorNotAllowed => Err(FetchRemoteManifestError::NoRealmAccess),
         Rep::RealmNotFound => Err(FetchRemoteManifestError::RealmNotFound),
         // Unexpected errors :(
         rep @ (
@@ -166,4 +172,56 @@ async fn fetch_vlob(
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         },
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FetchRemoteBlockError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("The block doesn't exist on the server")]
+    BlockNotFound,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("Block access is temporary unavailable on the server")]
+    StoreUnavailable,
+    #[error("Block cannot be decrypted")]
+    BadDecryption,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for FetchRemoteBlockError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub(super) async fn fetch_block(
+    cmds: &AuthenticatedCmds,
+    block_id: BlockID,
+    key: &SecretKey,
+) -> Result<Vec<u8>, FetchRemoteBlockError> {
+    use authenticated_cmds::latest::block_read::{Rep, Req};
+
+    let req = Req { block_id };
+
+    let rep = cmds.send(req).await?;
+
+    let block = match rep {
+        Rep::Ok { block } => Ok(block),
+        // Expected errors
+        Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
+        Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
+        Rep::BlockNotFound => Err(FetchRemoteBlockError::BlockNotFound),
+        // Unexpected errors :(
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }?;
+
+    key.decrypt(&block)
+        .map_err(|_| FetchRemoteBlockError::BadDecryption)
 }

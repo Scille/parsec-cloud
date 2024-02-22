@@ -2,10 +2,20 @@
 
 use std::sync::Arc;
 
+use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use super::{super::WorkspaceOps, check_write_access, resolve_path, FsOperationError};
-use crate::EventWorkspaceOpsOutboundSyncNeeded;
+use crate::{
+    certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
+    workspace::{
+        store::{
+            FolderishManifestAndUpdater, GetEntryError, GetFolderishEntryError,
+            UpdateFolderManifestError, UpdateWorkspaceManifestError,
+        },
+        WorkspaceOps,
+    },
+    EventWorkspaceOpsOutboundSyncNeeded,
+};
 
 pub(crate) enum RemoveEntryExpect {
     Anything,
@@ -14,44 +24,97 @@ pub(crate) enum RemoveEntryExpect {
     EmptyFolder,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum RemoveEntryError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Only have read access on this workspace")]
+    ReadOnlyRealm,
+    #[error("Root path cannot be removed")]
+    CannotRemoveRoot,
+    #[error("Path doesn't exist")]
+    EntryNotFound,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error("Path points to a file")]
+    EntryIsFile,
+    #[error("Path points to a folder")]
+    EntryIsFolder,
+    #[error("Path points to a non-empty folder")]
+    EntryIsNonEmptyFolder,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for RemoveEntryError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
 pub(crate) async fn remove_entry(
     ops: &WorkspaceOps,
-    path: &FsPath,
+    path: FsPath,
     expect: RemoveEntryExpect,
-) -> Result<(), FsOperationError> {
-    check_write_access(ops)?;
+) -> Result<(), RemoveEntryError> {
+    if !ops
+        .workspace_entry
+        .lock()
+        .expect("Mutex is poisoned")
+        .role
+        .can_write()
+    {
+        return Err(RemoveEntryError::ReadOnlyRealm);
+    }
 
-    let parent_path = path.parent();
-    // Root already exists and is a folder !
-    let child_name = match path.name() {
-        None => return Err(FsOperationError::IsAFolder),
+    let (parent_path, child_name) = path.into_parent();
+    let child_name = match child_name {
+        None => {
+            return Err(RemoveEntryError::CannotRemoveRoot);
+        }
         Some(name) => name,
     };
 
-    // Special case for /
-    let parent_id = if parent_path.is_root() {
-        let (updater, mut parent) = ops.data_storage.for_update_workspace_manifest().await;
-        let parent_id = parent.base.id;
-        let mut_parent = Arc::make_mut(&mut parent);
+    let resolution = ops
+        .store
+        .resolve_path_for_update_folderish_manifest(&parent_path)
+        .await
+        .map_err(|err| match err {
+            GetFolderishEntryError::Offline => RemoveEntryError::Offline,
+            GetFolderishEntryError::Stopped => RemoveEntryError::Stopped,
+            GetFolderishEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
+            GetFolderishEntryError::EntryIsFile => RemoveEntryError::EntryNotFound,
+            GetFolderishEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+            GetFolderishEntryError::InvalidKeysBundle(err) => {
+                RemoveEntryError::InvalidKeysBundle(err)
+            }
+            GetFolderishEntryError::InvalidCertificate(err) => {
+                RemoveEntryError::InvalidCertificate(err)
+            }
+            GetFolderishEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+            GetFolderishEntryError::Internal(err) => {
+                err.context("cannot resolve parent path").into()
+            }
+        })?;
 
-        mut_parent.updated = ops.device.time_provider.now();
-        mut_parent.need_sync = true;
-        let child_id = match mut_parent.children.remove(child_name) {
-            None => return Err(FsOperationError::EntryNotFound),
-            Some(child_id) => child_id,
-        };
-
-        // Ensure there is no concurrent write operations on the child by taking the write
-        // lock (even if we are not actually going to modify the child manifest !)
-        let (_child_updater, child) = ops.data_storage.for_update_child_manifest(child_id).await?;
+    let check_child_expect = |child| {
         match (expect, child) {
-            (_, None) => return Err(FsOperationError::EntryNotFound),
+            (RemoveEntryExpect::Anything, _) => (),
 
-            (RemoveEntryExpect::Anything, Some(_)) => (),
-
-            (RemoveEntryExpect::File, Some(ArcLocalChildManifest::File(_))) => (),
-            (RemoveEntryExpect::File, Some(ArcLocalChildManifest::Folder(_))) => {
-                return Err(FsOperationError::IsAFolder)
+            (RemoveEntryExpect::File, ArcLocalChildManifest::File(_)) => (),
+            (RemoveEntryExpect::File, ArcLocalChildManifest::Folder(_)) => {
+                return Err(RemoveEntryError::EntryIsFolder)
             }
 
             // A word about removing non-empty folder:
@@ -71,72 +134,119 @@ pub(crate) async fn remove_entry(
             //
             // On the other hand, Parsec's filesystem architecture makes trivial to
             // remove a non-empty folder, hence here we are ;-)
-            (RemoveEntryExpect::Folder, Some(ArcLocalChildManifest::Folder(_))) => (),
-            (RemoveEntryExpect::EmptyFolder, Some(ArcLocalChildManifest::Folder(child))) => {
+            (RemoveEntryExpect::Folder, ArcLocalChildManifest::Folder(_)) => (),
+            (RemoveEntryExpect::EmptyFolder, ArcLocalChildManifest::Folder(child)) => {
                 if !child.children.is_empty() {
-                    return Err(FsOperationError::FolderNotEmpty);
+                    return Err(RemoveEntryError::EntryIsNonEmptyFolder);
                 }
             }
             (
                 RemoveEntryExpect::Folder | RemoveEntryExpect::EmptyFolder,
-                Some(ArcLocalChildManifest::File(_)),
-            ) => return Err(FsOperationError::NotAFolder),
+                ArcLocalChildManifest::File(_),
+            ) => return Err(RemoveEntryError::EntryIsFile),
+        }
+        Ok(())
+    };
+
+    let parent_id = match resolution {
+        FolderishManifestAndUpdater::Folder {
+            manifest: mut parent,
+            updater,
+            ..
+        } => {
+            let parent_id = parent.base.id;
+            let mut_parent = Arc::make_mut(&mut parent);
+
+            let child_id = match mut_parent.children.remove(&child_name) {
+                None => return Err(RemoveEntryError::EntryNotFound),
+                Some(child_id) => child_id,
+            };
+
+            let child = ops
+                .store
+                .get_child_manifest(child_id)
+                .await
+                .map_err(|err| match err {
+                    GetEntryError::Offline => RemoveEntryError::Offline,
+                    GetEntryError::Stopped => RemoveEntryError::Stopped,
+                    GetEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
+                    GetEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+                    GetEntryError::InvalidKeysBundle(err) => {
+                        RemoveEntryError::InvalidKeysBundle(err)
+                    }
+                    GetEntryError::InvalidCertificate(err) => {
+                        RemoveEntryError::InvalidCertificate(err)
+                    }
+                    GetEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+                    GetEntryError::Internal(err) => err.context("cannot get entry manifest").into(),
+                })?;
+
+            check_child_expect(child)?;
+
+            mut_parent.updated = ops.device.time_provider.now();
+            mut_parent.need_sync = true;
+
+            updater
+                .update_folder_manifest(parent, None)
+                .await
+                .map_err(|err| match err {
+                    UpdateFolderManifestError::Stopped => RemoveEntryError::Stopped,
+                    UpdateFolderManifestError::Internal(err) => {
+                        err.context("cannot update manifest").into()
+                    }
+                })?;
+
+            parent_id
         }
 
-        updater.update_workspace_manifest(parent).await?;
+        FolderishManifestAndUpdater::Root {
+            manifest: mut parent,
+            updater,
+        } => {
+            let parent_id = parent.base.id;
+            let mut_parent = Arc::make_mut(&mut parent);
 
-        parent_id
-    } else {
-        let resolution = resolve_path(ops, &parent_path).await?;
+            let child_id = match mut_parent.children.remove(&child_name) {
+                None => return Err(RemoveEntryError::EntryNotFound),
+                Some(child_id) => child_id,
+            };
 
-        let (updater, parent) = ops
-            .data_storage
-            .for_update_child_manifest(resolution.entry_id)
-            .await?;
-        let mut parent = match parent {
-            Some(ArcLocalChildManifest::Folder(parent)) => parent,
-            None | Some(ArcLocalChildManifest::File(_)) => {
-                return Err(FsOperationError::EntryNotFound)
-            }
-        };
-        let parent_id = parent.base.id;
-        let mut_parent = Arc::make_mut(&mut parent);
+            let child = ops
+                .store
+                .get_child_manifest(child_id)
+                .await
+                .map_err(|err| match err {
+                    GetEntryError::Offline => RemoveEntryError::Offline,
+                    GetEntryError::Stopped => RemoveEntryError::Stopped,
+                    GetEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
+                    GetEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+                    GetEntryError::InvalidKeysBundle(err) => {
+                        RemoveEntryError::InvalidKeysBundle(err)
+                    }
+                    GetEntryError::InvalidCertificate(err) => {
+                        RemoveEntryError::InvalidCertificate(err)
+                    }
+                    GetEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+                    GetEntryError::Internal(err) => err.context("cannot get entry manifest").into(),
+                })?;
 
-        mut_parent.updated = ops.device.time_provider.now();
-        mut_parent.need_sync = true;
-        let child_id = match mut_parent.children.remove(child_name) {
-            None => return Err(FsOperationError::EntryNotFound),
-            Some(child_id) => child_id,
-        };
+            check_child_expect(child)?;
 
-        // Ensure there is no concurrent write operations on the child by taking the write
-        // lock (even if we are not actually going to modify the child manifest !)
-        let (_child_updater, child) = ops.data_storage.for_update_child_manifest(child_id).await?;
-        match (expect, child) {
-            (_, None) => return Err(FsOperationError::EntryNotFound),
+            mut_parent.updated = ops.device.time_provider.now();
+            mut_parent.need_sync = true;
 
-            (RemoveEntryExpect::Anything, Some(_)) => (),
+            updater
+                .update_workspace_manifest(parent, None)
+                .await
+                .map_err(|err| match err {
+                    UpdateWorkspaceManifestError::Stopped => RemoveEntryError::Stopped,
+                    UpdateWorkspaceManifestError::Internal(err) => {
+                        err.context("cannot update manifest").into()
+                    }
+                })?;
 
-            (RemoveEntryExpect::File, Some(ArcLocalChildManifest::File(_))) => (),
-            (RemoveEntryExpect::File, Some(ArcLocalChildManifest::Folder(_))) => {
-                return Err(FsOperationError::IsAFolder)
-            }
-
-            (RemoveEntryExpect::Folder, Some(ArcLocalChildManifest::Folder(_))) => (),
-            (RemoveEntryExpect::EmptyFolder, Some(ArcLocalChildManifest::Folder(child))) => {
-                if !child.children.is_empty() {
-                    return Err(FsOperationError::FolderNotEmpty);
-                }
-            }
-            (
-                RemoveEntryExpect::Folder | RemoveEntryExpect::EmptyFolder,
-                Some(ArcLocalChildManifest::File(_)),
-            ) => return Err(FsOperationError::NotAFolder),
+            parent_id
         }
-
-        updater.update_as_folder_manifest(parent).await?;
-
-        parent_id
     };
 
     let event = EventWorkspaceOpsOutboundSyncNeeded {

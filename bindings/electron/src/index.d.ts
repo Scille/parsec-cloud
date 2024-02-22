@@ -987,87 +987,294 @@ export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoUser
 
 
-// WorkspaceFsOperationError
-export interface WorkspaceFsOperationErrorCannotRenameRoot {
-    tag: "CannotRenameRoot"
-    error: string
-}
-export interface WorkspaceFsOperationErrorEntryExists {
+// WorkspaceCreateFileError
+export interface WorkspaceCreateFileErrorEntryExists {
     tag: "EntryExists"
     error: string
 }
-export interface WorkspaceFsOperationErrorEntryNotFound {
-    tag: "EntryNotFound"
-    error: string
-}
-export interface WorkspaceFsOperationErrorFolderNotEmpty {
-    tag: "FolderNotEmpty"
-    error: string
-}
-export interface WorkspaceFsOperationErrorInternal {
+export interface WorkspaceCreateFileErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceFsOperationErrorInvalidCertificate {
+export interface WorkspaceCreateFileErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceFsOperationErrorInvalidKeysBundle {
+export interface WorkspaceCreateFileErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceFsOperationErrorInvalidManifest {
+export interface WorkspaceCreateFileErrorInvalidManifest {
     tag: "InvalidManifest"
     error: string
 }
-export interface WorkspaceFsOperationErrorIsAFolder {
-    tag: "IsAFolder"
-    error: string
-}
-export interface WorkspaceFsOperationErrorNoRealmAccess {
+export interface WorkspaceCreateFileErrorNoRealmAccess {
     tag: "NoRealmAccess"
     error: string
 }
-export interface WorkspaceFsOperationErrorNotAFolder {
-    tag: "NotAFolder"
-    error: string
-}
-export interface WorkspaceFsOperationErrorOffline {
+export interface WorkspaceCreateFileErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceFsOperationErrorReadOnlyRealm {
+export interface WorkspaceCreateFileErrorParentIsFile {
+    tag: "ParentIsFile"
+    error: string
+}
+export interface WorkspaceCreateFileErrorParentNotFound {
+    tag: "ParentNotFound"
+    error: string
+}
+export interface WorkspaceCreateFileErrorReadOnlyRealm {
     tag: "ReadOnlyRealm"
     error: string
 }
-export interface WorkspaceFsOperationErrorStopped {
+export interface WorkspaceCreateFileErrorStopped {
     tag: "Stopped"
     error: string
 }
-export interface WorkspaceFsOperationErrorTimestampOutOfBallpark {
-    tag: "TimestampOutOfBallpark"
+export type WorkspaceCreateFileError =
+  | WorkspaceCreateFileErrorEntryExists
+  | WorkspaceCreateFileErrorInternal
+  | WorkspaceCreateFileErrorInvalidCertificate
+  | WorkspaceCreateFileErrorInvalidKeysBundle
+  | WorkspaceCreateFileErrorInvalidManifest
+  | WorkspaceCreateFileErrorNoRealmAccess
+  | WorkspaceCreateFileErrorOffline
+  | WorkspaceCreateFileErrorParentIsFile
+  | WorkspaceCreateFileErrorParentNotFound
+  | WorkspaceCreateFileErrorReadOnlyRealm
+  | WorkspaceCreateFileErrorStopped
+
+
+// WorkspaceCreateFolderError
+export interface WorkspaceCreateFolderErrorEntryExists {
+    tag: "EntryExists"
     error: string
-    server_timestamp: number
-    client_timestamp: number
-    ballpark_client_early_offset: number
-    ballpark_client_late_offset: number
 }
-export type WorkspaceFsOperationError =
-  | WorkspaceFsOperationErrorCannotRenameRoot
-  | WorkspaceFsOperationErrorEntryExists
-  | WorkspaceFsOperationErrorEntryNotFound
-  | WorkspaceFsOperationErrorFolderNotEmpty
-  | WorkspaceFsOperationErrorInternal
-  | WorkspaceFsOperationErrorInvalidCertificate
-  | WorkspaceFsOperationErrorInvalidKeysBundle
-  | WorkspaceFsOperationErrorInvalidManifest
-  | WorkspaceFsOperationErrorIsAFolder
-  | WorkspaceFsOperationErrorNoRealmAccess
-  | WorkspaceFsOperationErrorNotAFolder
-  | WorkspaceFsOperationErrorOffline
-  | WorkspaceFsOperationErrorReadOnlyRealm
-  | WorkspaceFsOperationErrorStopped
-  | WorkspaceFsOperationErrorTimestampOutOfBallpark
+export interface WorkspaceCreateFolderErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorParentIsFile {
+    tag: "ParentIsFile"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorParentNotFound {
+    tag: "ParentNotFound"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceCreateFolderErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceCreateFolderError =
+  | WorkspaceCreateFolderErrorEntryExists
+  | WorkspaceCreateFolderErrorInternal
+  | WorkspaceCreateFolderErrorInvalidCertificate
+  | WorkspaceCreateFolderErrorInvalidKeysBundle
+  | WorkspaceCreateFolderErrorInvalidManifest
+  | WorkspaceCreateFolderErrorNoRealmAccess
+  | WorkspaceCreateFolderErrorOffline
+  | WorkspaceCreateFolderErrorParentIsFile
+  | WorkspaceCreateFolderErrorParentNotFound
+  | WorkspaceCreateFolderErrorReadOnlyRealm
+  | WorkspaceCreateFolderErrorStopped
+
+
+// WorkspaceRemoveEntryError
+export interface WorkspaceRemoveEntryErrorCannotRemoveRoot {
+    tag: "CannotRemoveRoot"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorEntryIsFile {
+    tag: "EntryIsFile"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorEntryIsFolder {
+    tag: "EntryIsFolder"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder {
+    tag: "EntryIsNonEmptyFolder"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceRemoveEntryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceRemoveEntryError =
+  | WorkspaceRemoveEntryErrorCannotRemoveRoot
+  | WorkspaceRemoveEntryErrorEntryIsFile
+  | WorkspaceRemoveEntryErrorEntryIsFolder
+  | WorkspaceRemoveEntryErrorEntryIsNonEmptyFolder
+  | WorkspaceRemoveEntryErrorEntryNotFound
+  | WorkspaceRemoveEntryErrorInternal
+  | WorkspaceRemoveEntryErrorInvalidCertificate
+  | WorkspaceRemoveEntryErrorInvalidKeysBundle
+  | WorkspaceRemoveEntryErrorInvalidManifest
+  | WorkspaceRemoveEntryErrorNoRealmAccess
+  | WorkspaceRemoveEntryErrorOffline
+  | WorkspaceRemoveEntryErrorReadOnlyRealm
+  | WorkspaceRemoveEntryErrorStopped
+
+
+// WorkspaceRenameEntryError
+export interface WorkspaceRenameEntryErrorCannotRenameRoot {
+    tag: "CannotRenameRoot"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorDestinationExists {
+    tag: "DestinationExists"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceRenameEntryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceRenameEntryError =
+  | WorkspaceRenameEntryErrorCannotRenameRoot
+  | WorkspaceRenameEntryErrorDestinationExists
+  | WorkspaceRenameEntryErrorEntryNotFound
+  | WorkspaceRenameEntryErrorInternal
+  | WorkspaceRenameEntryErrorInvalidCertificate
+  | WorkspaceRenameEntryErrorInvalidKeysBundle
+  | WorkspaceRenameEntryErrorInvalidManifest
+  | WorkspaceRenameEntryErrorNoRealmAccess
+  | WorkspaceRenameEntryErrorOffline
+  | WorkspaceRenameEntryErrorReadOnlyRealm
+  | WorkspaceRenameEntryErrorStopped
+
+
+// WorkspaceStatEntryError
+export interface WorkspaceStatEntryErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceStatEntryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceStatEntryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceStatEntryErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceStatEntryErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceStatEntryErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceStatEntryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceStatEntryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceStatEntryError =
+  | WorkspaceStatEntryErrorEntryNotFound
+  | WorkspaceStatEntryErrorInternal
+  | WorkspaceStatEntryErrorInvalidCertificate
+  | WorkspaceStatEntryErrorInvalidKeysBundle
+  | WorkspaceStatEntryErrorInvalidManifest
+  | WorkspaceStatEntryErrorNoRealmAccess
+  | WorkspaceStatEntryErrorOffline
+  | WorkspaceStatEntryErrorStopped
 
 
 // WorkspaceStopError
@@ -1345,41 +1552,41 @@ export function validatePath(
 export function workspaceCreateFile(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceFsOperationError>>
+): Promise<Result<string, WorkspaceCreateFileError>>
 export function workspaceCreateFolder(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceFsOperationError>>
+): Promise<Result<string, WorkspaceCreateFolderError>>
 export function workspaceCreateFolderAll(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceFsOperationError>>
+): Promise<Result<string, WorkspaceCreateFolderError>>
 export function workspaceRemoveEntry(
     workspace: number,
     path: string
-): Promise<Result<null, WorkspaceFsOperationError>>
+): Promise<Result<null, WorkspaceRemoveEntryError>>
 export function workspaceRemoveFile(
     workspace: number,
     path: string
-): Promise<Result<null, WorkspaceFsOperationError>>
+): Promise<Result<null, WorkspaceRemoveEntryError>>
 export function workspaceRemoveFolder(
     workspace: number,
     path: string
-): Promise<Result<null, WorkspaceFsOperationError>>
+): Promise<Result<null, WorkspaceRemoveEntryError>>
 export function workspaceRemoveFolderAll(
     workspace: number,
     path: string
-): Promise<Result<null, WorkspaceFsOperationError>>
+): Promise<Result<null, WorkspaceRemoveEntryError>>
 export function workspaceRenameEntry(
     workspace: number,
     path: string,
     new_name: string,
     overwrite: boolean
-): Promise<Result<null, WorkspaceFsOperationError>>
+): Promise<Result<null, WorkspaceRenameEntryError>>
 export function workspaceStatEntry(
     workspace: number,
     path: string
-): Promise<Result<EntryStat, WorkspaceFsOperationError>>
+): Promise<Result<EntryStat, WorkspaceStatEntryError>>
 export function workspaceStop(
     workspace: number
 ): Promise<Result<null, WorkspaceStopError>>

@@ -9,8 +9,8 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventWorkspaceOpsOutboundSyncNeeded},
-    workspace::WorkspaceOps,
+    event_bus::{EventBus, EventMonitorCrashed, EventWorkspaceOpsOutboundSyncNeeded},
+    workspace::{InboundSyncOutcome, OutboundSyncOutcome, WorkspaceOps, WorkspaceSyncError},
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";
@@ -66,14 +66,75 @@ fn task_future_factory(
         let (syncer_tx, syncer_rx) = channel::unbounded::<VlobID>();
         let syncer = spawn({
             let workspace_ops = workspace_ops.clone();
+            let tx = tx.clone();
             async move {
+                macro_rules! handle_workspace_sync_error {
+                    ($err:expr) => {
+                        match $err {
+                                WorkspaceSyncError::Offline | WorkspaceSyncError::Stopped => {
+                                    return;
+                                }
+
+                            err @ (
+                                // We have lost read access to the workspace, the certificates
+                                // ops should soon be notified and work accordingly (typically
+                                // by stopping the workspace and its monitors).
+                                WorkspaceSyncError::NotAllowed
+                                // Other errors are unexpected ones
+                                | WorkspaceSyncError::NoKey
+                                | WorkspaceSyncError::NoRealm
+                                | WorkspaceSyncError::InvalidKeysBundle(_)
+                                | WorkspaceSyncError::InvalidCertificate(_)
+                                | WorkspaceSyncError::TimestampOutOfBallpark { .. }
+                            )
+                            => {
+                                log::warn!("Stopping outbound sync monitor due to unexpected outcome: {}", err);
+                                return;
+                            }
+
+                            WorkspaceSyncError::Internal(err) => {
+                                // Unexpected error occured, better stop the monitor
+                                log::warn!("Certificate monitor has crashed: {}", err);
+                                let event = EventMonitorCrashed {
+                                    monitor: WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME,
+                                    workspace_id: Some(workspace_ops.realm_id()),
+                                    error: Arc::new(err),
+                                };
+                                event_bus.send(&event);
+                                return;
+                            }
+                        }
+                    };
+                }
                 loop {
                     let entry_id = match syncer_rx.recv_async().await {
                         Ok(entry_id) => entry_id,
                         Err(_) => return,
                     };
                     // TODO: handle errors ?
-                    let _ = workspace_ops.outbound_sync(entry_id).await;
+                    loop {
+                        let outcome = workspace_ops.outbound_sync(entry_id).await;
+                        match outcome {
+                            Ok(OutboundSyncOutcome::Done) => break,
+                            Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
+                            Ok(OutboundSyncOutcome::EntryIsBusy) => {
+                                // Re-enqueue to retry later
+                                let _ = tx.send(entry_id);
+                                break;
+                            }
+                            Err(err) => handle_workspace_sync_error!(err),
+                        }
+
+                        match workspace_ops.inbound_sync(entry_id).await {
+                            Ok(InboundSyncOutcome::EntryIsBusy) => {
+                                // Re-enqueue to retry later
+                                let _ = tx.send(entry_id);
+                                break;
+                            }
+                            Ok(InboundSyncOutcome::Updated | InboundSyncOutcome::NoChange) => (),
+                            Err(err) => handle_workspace_sync_error!(err),
+                        }
+                    }
                 }
             }
         });
@@ -87,7 +148,7 @@ fn task_future_factory(
             let due_time = since + MIN_SYNC_WAIT;
             // TODO: error handling
             let to_sync = workspace_ops
-                .get_need_outbound_sync()
+                .get_need_outbound_sync(u32::MAX)
                 .await
                 .expect("TODO: not expected at all !")
                 .into_iter()

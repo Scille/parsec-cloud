@@ -1112,6 +1112,15 @@ impl_event_builder!(
 );
 
 /*
+ * TestbedEventWorkspaceDataStorageChunkCreateBuilder
+ */
+
+impl_event_builder!(
+    WorkspaceDataStorageChunkCreate,
+    [device: DeviceID, realm: VlobID, chunk: Bytes]
+);
+
+/*
  * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestCreateOrUpdateBuilder
  */
 

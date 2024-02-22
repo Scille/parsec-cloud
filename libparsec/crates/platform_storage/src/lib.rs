@@ -12,7 +12,7 @@ pub(crate) use web as platform;
 
 pub mod certificates;
 pub mod user;
-pub use platform::workspace;
+pub mod workspace;
 
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
 #[cfg(feature = "test-with-testbed")]

@@ -15,15 +15,19 @@ import {
   GetAbsolutePathErrorTag,
   OrganizationID,
   Result,
-  WorkspaceFsOperationError,
+  WorkspaceCreateFileError,
+  WorkspaceCreateFolderError,
   WorkspaceHandle,
   WorkspaceID,
+  WorkspaceRemoveEntryError,
+  WorkspaceRenameEntryError,
+  WorkspaceStatEntryError,
 } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
-export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
+export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -34,7 +38,7 @@ export async function createFile(path: FsPath): Promise<Result<FileID, Workspace
   }
 }
 
-export async function createFolder(path: FsPath): Promise<Result<FileID, WorkspaceFsOperationError>> {
+export async function createFolder(path: FsPath): Promise<Result<FileID, WorkspaceCreateFolderError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -45,7 +49,7 @@ export async function createFolder(path: FsPath): Promise<Result<FileID, Workspa
   }
 }
 
-export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceFsOperationError>> {
+export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -56,7 +60,7 @@ export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceFs
   }
 }
 
-export async function deleteFolder(path: FsPath): Promise<Result<null, WorkspaceFsOperationError>> {
+export async function deleteFolder(path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -67,7 +71,7 @@ export async function deleteFolder(path: FsPath): Promise<Result<null, Workspace
   }
 }
 
-export async function rename(path: FsPath, newName: EntryName): Promise<Result<null, WorkspaceFsOperationError>> {
+export async function rename(path: FsPath, newName: EntryName): Promise<Result<null, WorkspaceRenameEntryError>> {
   const clientHandle = getParsecHandle();
   const workspaceHandle = getWorkspaceHandle();
 
@@ -80,7 +84,7 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
 
 let MOCK_FILE_ID = 1;
 
-export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceFsOperationError>> {
+export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceStatEntryError>> {
   function generateEntryName(prefix: string = '', addExtension = false): string {
     const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
     const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
@@ -125,7 +129,7 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
         (result.value as EntryStatFolder).name = fileName;
       }
     }
-    return result as Result<EntryStat, WorkspaceFsOperationError>;
+    return result as Result<EntryStat, WorkspaceStatEntryError>;
   } else {
     MOCK_FILE_ID += 1;
     const createdDate = generateDate();
