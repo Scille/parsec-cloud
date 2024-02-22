@@ -117,6 +117,16 @@ LIBPARSEC_FORCE_VENDORED_OPENSSL = "true"
 line-length = 100
 target-version = "py312"
 
+extend-exclude = [
+    "../misc/bench.py",
+    # TODO: PostgreSQL is currently broken
+    "tests/cli/common.py",
+    "parsec/components/postgresql/*",
+    "parsec/cli/sequester.py",
+    "tests/cli/test_sequester.py",
+]
+
+[tool.ruff.lint]
 select = [
     "RUF",
     "ASYNC",
@@ -135,16 +145,7 @@ select = [
 # E402 Module level import not at top of file
 ignore = ["E501", "E402"]
 
-extend-exclude = [
-    "../misc/bench.py",
-    # TODO: PostgreSQL is currently broken
-    "tests/cli/common.py",
-    "parsec/components/postgresql/*",
-    "parsec/cli/sequester.py",
-    "tests/cli/test_sequester.py",
-]
-
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["parsec", "tests"]
 
 [tool.maturin]
