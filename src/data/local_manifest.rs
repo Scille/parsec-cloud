@@ -317,6 +317,10 @@ impl LocalFileManifest {
         self.0.is_reshaped()
     }
 
+    fn is_reshaped_and_compatible(&self) -> bool {
+        self.0.is_reshaped_and_compatible()
+    }
+
     fn assert_integrity(&self) -> PyResult<()> {
         let result = panic::catch_unwind(|| self.0.assert_integrity());
         match result {

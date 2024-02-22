@@ -95,8 +95,12 @@ pub(crate) fn prepare_resize(
 }
 
 #[pyfunction]
-pub(crate) fn prepare_reshape(py: Python, manifest: LocalFileManifest) -> PyResult<&PyList> {
-    let iterator = file_operations::prepare_reshape(&manifest.0);
+pub(crate) fn prepare_reshape(
+    py: Python,
+    manifest: LocalFileManifest,
+    compatibility: bool,
+) -> PyResult<&PyList> {
+    let iterator = file_operations::prepare_reshape(&manifest.0, compatibility);
     let collected: Vec<_> = iterator
         .map(|(block, old_chunks, new_chunk, write_back, to_remove)| {
             Ok(PyTuple::new(

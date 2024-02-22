@@ -325,7 +325,7 @@ class FileTransactions:
         )
 
     async def _manifest_reshape(
-        self, manifest: LocalFileManifest, cache_only: bool = False
+        self, manifest: LocalFileManifest, cache_only: bool = False, compatibility: bool = False
     ) -> list[BlockAccess]:
         """This internal helper does not perform any locking."""
 
@@ -333,7 +333,9 @@ class FileTransactions:
         missing = []
 
         # Perform operations
-        for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
+        for block, source, destination, write_back, removed_ids in prepare_reshape(
+            manifest, compatibility=compatibility
+        ):
             # Build data block
             data, extra_missing = await self._build_data(source)
 

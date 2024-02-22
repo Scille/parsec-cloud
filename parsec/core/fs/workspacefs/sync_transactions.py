@@ -374,10 +374,10 @@ class SyncTransactions(EntryTransactions):
             if (
                 not final
                 and isinstance(local_manifest, LocalFileManifest)
-                and not local_manifest.is_reshaped()
+                and not local_manifest.is_reshaped_and_compatible()
             ):
                 # Try a quick reshape (without downloading any block)
-                missing = await self._manifest_reshape(local_manifest)
+                missing = await self._manifest_reshape(local_manifest, compatibility=True)
 
                 # Downloading block is necessary for this reshape
                 if missing:
@@ -386,7 +386,7 @@ class SyncTransactions(EntryTransactions):
                 # The manifest should be reshaped by now
                 local_manifest = await self.local_storage.get_manifest(entry_id)
                 assert isinstance(local_manifest, LocalFileManifest)
-                assert local_manifest.is_reshaped()
+                assert local_manifest.is_reshaped_and_compatible()
 
             # Merge manifests
             timestamp = self.device.timestamp()
@@ -459,7 +459,7 @@ class SyncTransactions(EntryTransactions):
                     raise FSIsADirectoryError(entry_id)
 
                 # Normalize
-                missing = await self._manifest_reshape(manifest)
+                missing = await self._manifest_reshape(manifest, compatibility=True)
 
             # Done
             if not missing:

@@ -371,16 +371,28 @@ pub fn prepare_resize(
 /// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
+    compatibility: bool,
 ) -> impl Iterator<Item = (u64, Vec<Chunk>, Chunk, bool, HashSet<ChunkID>)> + '_ {
     // Loop over blocks
     manifest
         .blocks
         .iter()
         .enumerate()
-        .filter_map(|(block, chunks)| {
+        .filter_map(move |(block, chunks)| {
             let block = block as u64;
+            // Compatibility: all-zeroes block
+            if compatibility
+                && chunks.len() == 1
+                && chunks[0].is_pseudo_block()
+                && chunks[0].all_zeroes
+            {
+                let mut new_chunk = chunks[0].clone();
+                new_chunk.all_zeroes = false;
+                let to_remove = HashSet::new();
+                let write_back = true;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             // Already a valid block
-            if chunks.len() == 1 && chunks[0].is_block() {
+            } else if chunks.len() == 1 && chunks[0].is_block() {
                 None
             // Already a pseudo-block, we can keep the chunk as it is
             } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
@@ -528,7 +540,7 @@ mod tests {
         }
 
         fn reshape(&mut self, manifest: &mut LocalFileManifest) {
-            let collected: Vec<_> = prepare_reshape(manifest).collect();
+            let collected: Vec<_> = prepare_reshape(manifest, false).collect();
             for (block, source, destination, write_back, removed_ids) in collected {
                 let data = self.build_data(&source);
                 let new_chunk = destination.evolve_as_block(&data).unwrap();

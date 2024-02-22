@@ -263,6 +263,15 @@ impl LocalFileManifest {
         true
     }
 
+    pub fn is_reshaped_and_compatible(&self) -> bool {
+        for chunks in self.blocks.iter() {
+            if chunks.len() != 1 || !chunks[0].is_block() || chunks[0].all_zeroes {
+                return false;
+            }
+        }
+        true
+    }
+
     pub fn assert_integrity(&self) {
         let mut current = 0;
         for (i, chunks) in self.blocks.iter().enumerate() {
