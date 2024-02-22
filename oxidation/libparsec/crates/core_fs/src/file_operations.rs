@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
 use std::cmp::{max, min};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 
 use libparsec_types::prelude::*;
@@ -204,6 +204,10 @@ pub fn prepare_write(
     let start_block = offset / blocksize;
     let stop_block = (offset + size + blocksize - 1) / blocksize;
 
+    // Special case: write all zeroes
+    let mut write_back_for_all_zeroes = true;
+    let chunk_id_for_all_zeroes = ChunkID::default();
+
     // Loop over blocks
     for block in start_block..stop_block {
         // Get sub_start, sub_stop and sub_size
@@ -216,12 +220,24 @@ pub fn prepare_write(
         let content_offset = sub_start - offset;
 
         // Prepare new chunk
-        let new_chunk = Chunk::new(
+        let mut new_chunk = Chunk::new(
             sub_start,
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
         );
-        write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
+
+        // Special case: write all zeroes
+        let mut do_write = true;
+        let all_zeroes = padding > 0 && sub_stop <= manifest.size + padding;
+        if all_zeroes && sub_size == blocksize {
+            new_chunk.id = chunk_id_for_all_zeroes;
+            do_write = write_back_for_all_zeroes;
+            write_back_for_all_zeroes = false;
+        }
+
+        if do_write {
+            write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
+        }
 
         // Get the corresponding chunks
         let new_chunks = match manifest.get_chunks(block as usize) {
@@ -249,6 +265,13 @@ pub fn prepare_write(
     manifest.need_sync = true;
     manifest.updated = timestamp;
     manifest.size = new_size;
+
+    // Special checks for all-zeroes blocks
+    for blocks in &manifest.blocks {
+        for chunk in blocks {
+            removed_ids.remove(&chunk.id);
+        }
+    }
 
     (write_operations, removed_ids)
 }
@@ -324,6 +347,13 @@ fn prepare_truncate(
     manifest.size = size;
     manifest.updated = timestamp;
 
+    // Special checks for all-zeroes blocks
+    for blocks in &manifest.blocks {
+        for chunk in blocks {
+            removed_ids.remove(&chunk.id);
+        }
+    }
+
     removed_ids
 }
 
@@ -364,12 +394,20 @@ pub fn prepare_resize(
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
 ) -> impl Iterator<Item = (u64, Vec<Chunk>, Chunk, bool, HashSet<ChunkID>)> + '_ {
+    // Count IDs for all zeroes blocks
+    let mut chunk_id_counts: HashMap<ChunkID, u64> = HashMap::new();
+    for blocks in &manifest.blocks {
+        for chunk in blocks {
+            *chunk_id_counts.entry(chunk.id).or_default() += 1;
+        }
+    }
+
     // Loop over blocks
     manifest
         .blocks
         .iter()
         .enumerate()
-        .filter_map(|(block, chunks)| {
+        .filter_map(move |(block, chunks)| {
             let block = block as u64;
             // Already a valid block
             if chunks.len() == 1 && chunks[0].is_block() {
@@ -386,7 +424,18 @@ pub fn prepare_reshape(
                 let start = chunks[0].start;
                 let stop = chunks.last().expect("A block cannot be empty").stop;
                 let new_chunk = Chunk::new(start, stop);
-                let to_remove = chunks.iter().map(|x| x.id).collect();
+                let to_remove = chunks
+                    .iter()
+                    .filter_map(|x| {
+                        let value = chunk_id_counts.entry(x.id).or_insert(0);
+                        *value = value.saturating_sub(1);
+                        if *value == 0 {
+                            Some(x.id)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
                 let write_back = true;
                 Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             }
