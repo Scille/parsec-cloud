@@ -341,9 +341,9 @@ const fileImportsCurrentDir = computed(() => {
 async function listFolder(): Promise<void> {
   const result = await parsec.entryStat(currentPath.value);
   if (result.ok) {
+    const newFolders: FolderModel[] = [];
+    const newFiles: FileModel[] = [];
     folderInfo.value = result.value as parsec.EntryStatFolder;
-    folders.value.clear();
-    files.value.clear();
     for (const childName of (result.value as parsec.EntryStatFolder).children) {
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
@@ -352,13 +352,15 @@ async function listFolder(): Promise<void> {
         if (fileResult.ok) {
           if (fileResult.value.isFile()) {
             (fileResult.value as FileModel).isSelected = false;
-            files.value.append(fileResult.value as FileModel);
+            newFiles.push(fileResult.value as FileModel);
           } else {
             (fileResult.value as FolderModel).isSelected = false;
-            folders.value.append(fileResult.value as FolderModel);
+            newFolders.push(fileResult.value as FolderModel);
           }
         }
       }
+      folders.value.replace(newFolders);
+      files.value.replace(newFiles);
     }
   } else {
     informationManager.present(

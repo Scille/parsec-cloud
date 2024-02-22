@@ -86,4 +86,9 @@ export class EntryCollection<Model extends EntryModel> {
   append(entry: Model): void {
     this.entries.push(entry);
   }
+
+  replace(entries: Model[]): void {
+    this.clear();
+    this.entries = entries;
+  }
 }
