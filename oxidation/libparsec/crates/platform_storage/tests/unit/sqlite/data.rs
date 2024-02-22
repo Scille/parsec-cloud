@@ -176,6 +176,7 @@ async fn set_manifest(timestamp: DateTime, env: &TestbedEnv) {
             raw_offset: 0,
             raw_size: std::num::NonZeroU64::try_from(8).unwrap(),
             access: None,
+            all_zeroes: false,
         }]],
     });
 

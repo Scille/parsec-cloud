@@ -166,6 +166,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     raw_size: NonZeroU64::new(512).unwrap(),
                     start: 0,
                     stop: NonZeroU64::new(250).unwrap(),
+                    all_zeroes: false,
                 },
                 Chunk {
                     id: ChunkID::from_hex("2f99258022a94555b3109e81d34bdf97").unwrap(),
@@ -174,6 +175,7 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
                     raw_size: NonZeroU64::new(250).unwrap(),
                     start: 0,
                     stop: NonZeroU64::new(250).unwrap(),
+                    all_zeroes: false,
                 }
             ]],
             blocksize: Blocksize::try_from(512).unwrap(),
@@ -975,6 +977,7 @@ fn chunk_evolve_as_block() {
         raw_offset: 1,
         raw_size: NonZeroU64::try_from(1).unwrap(),
         access: None,
+        all_zeroes: false,
     };
 
     let err = chunk.evolve_as_block(&[]).unwrap_err();
@@ -990,6 +993,7 @@ fn chunk_is_block() {
         raw_offset: 0,
         raw_size: NonZeroU64::try_from(1).unwrap(),
         access: None,
+        all_zeroes: false,
     };
 
     assert!(chunk.is_pseudo_block());
@@ -1075,6 +1079,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
         raw_offset: 0,
         raw_size: NonZeroU64::try_from(1).unwrap(),
         access: None,
+        all_zeroes: false,
     }
     .evolve_as_block(&[])
     .unwrap();
@@ -1095,19 +1100,19 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
 
 #[rstest]
 #[case::empty((0, vec![]))]
-#[case::blocks((2, vec![
+#[case::blocks((1024, vec![
     BlockAccess {
         id: BlockID::default(),
         key: SecretKey::generate(),
-        offset: 1,
-        size: NonZeroU64::try_from(4).unwrap(),
+        offset: 0,
+        size: NonZeroU64::try_from(512).unwrap(),
         digest: HashDigest::from_data(&[]),
     },
     BlockAccess {
         id: BlockID::default(),
         key: SecretKey::generate(),
-        offset: 1,
-        size: NonZeroU64::try_from(4).unwrap(),
+        offset: 512,
+        size: NonZeroU64::try_from(512).unwrap(),
         digest: HashDigest::from_data(&[]),
     }
 ]))]
@@ -1159,6 +1164,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
         raw_offset: 0,
         raw_size: NonZeroU64::try_from(1).unwrap(),
         access: None,
+        all_zeroes: false,
     }
     .evolve_as_block(&[])
     .unwrap();
@@ -1217,6 +1223,7 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
             raw_offset: 0,
             raw_size: NonZeroU64::try_from(1).unwrap(),
             access: Some(fm.blocks[0].clone()),
+            all_zeroes: false,
         }]],
     };
 

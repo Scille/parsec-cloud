@@ -113,6 +113,7 @@ fn block_write(
         .get(start_index..stop_index)
         .unwrap_or_default()
         .iter()
+        .filter(|x| !x.all_zeroes)
         .map(|x| x.id)
         .collect();
 
@@ -216,12 +217,16 @@ pub fn prepare_write(
         let content_offset = sub_start - offset;
 
         // Prepare new chunk
-        let new_chunk = Chunk::new(
+        let mut new_chunk = Chunk::new(
             sub_start,
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
         );
-        write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
+        if padding > 0 && sub_stop <= manifest.size + padding {
+            new_chunk.all_zeroes = true;
+        } else {
+            write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
+        }
 
         // Get the corresponding chunks
         let new_chunks = match manifest.get_chunks(block as usize) {
@@ -277,6 +282,7 @@ fn prepare_truncate(
         .unwrap_or_default()
         .iter()
         .flatten()
+        .filter(|x| !x.all_zeroes)
         .map(|x| x.id)
         .collect();
 
@@ -311,7 +317,9 @@ fn prepare_truncate(
 
         // Those new chunks should not be removed
         for chunk in &new_chunks {
-            removed_ids.remove(&chunk.id);
+            if !chunk.all_zeroes {
+                removed_ids.remove(&chunk.id);
+            }
         }
 
         // Truncate and add the new chunks
@@ -363,16 +371,28 @@ pub fn prepare_resize(
 /// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &LocalFileManifest,
+    compatibility: bool,
 ) -> impl Iterator<Item = (u64, Vec<Chunk>, Chunk, bool, HashSet<ChunkID>)> + '_ {
     // Loop over blocks
     manifest
         .blocks
         .iter()
         .enumerate()
-        .filter_map(|(block, chunks)| {
+        .filter_map(move |(block, chunks)| {
             let block = block as u64;
+            // Compatibility: all-zeroes block
+            if compatibility
+                && chunks.len() == 1
+                && chunks[0].is_pseudo_block()
+                && chunks[0].all_zeroes
+            {
+                let mut new_chunk = chunks[0].clone();
+                new_chunk.all_zeroes = false;
+                let to_remove = HashSet::new();
+                let write_back = true;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             // Already a valid block
-            if chunks.len() == 1 && chunks[0].is_block() {
+            } else if chunks.len() == 1 && chunks[0].is_block() {
                 None
             // Already a pseudo-block, we can keep the chunk as it is
             } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
@@ -386,7 +406,11 @@ pub fn prepare_reshape(
                 let start = chunks[0].start;
                 let stop = chunks.last().expect("A block cannot be empty").stop;
                 let new_chunk = Chunk::new(start, stop);
-                let to_remove = chunks.iter().map(|x| x.id).collect();
+                let to_remove = chunks
+                    .iter()
+                    .filter(|x| !x.all_zeroes)
+                    .map(|x| x.id)
+                    .collect();
                 let write_back = true;
                 Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             }
@@ -457,7 +481,13 @@ mod tests {
             let stop = chunks.last().unwrap().stop.get() as usize;
             let mut result: Vec<u8> = vec![0; stop - start];
             for chunk in chunks {
-                let data = self.read_chunk(chunk);
+                let zeroes;
+                let data = if chunk.all_zeroes {
+                    zeroes = vec![0; (chunk.stop.get() - chunk.start) as usize];
+                    &zeroes
+                } else {
+                    self.read_chunk(chunk)
+                };
                 result[chunk.start as usize - start..chunk.stop.get() as usize - start]
                     .copy_from_slice(data);
             }
@@ -510,7 +540,7 @@ mod tests {
         }
 
         fn reshape(&mut self, manifest: &mut LocalFileManifest) {
-            let collected: Vec<_> = prepare_reshape(manifest).collect();
+            let collected: Vec<_> = prepare_reshape(manifest, false).collect();
             for (block, source, destination, write_back, removed_ids) in collected {
                 let data = self.build_data(&source);
                 let new_chunk = destination.evolve_as_block(&data).unwrap();
@@ -673,8 +703,8 @@ mod tests {
         );
 
         // Check chunks
-        assert_eq!(storage.read_chunk_data(chunk7.id), [0; 5]);
-        assert_eq!(storage.read_chunk_data(chunk8.id), [0; 8]);
+        assert!(chunk7.all_zeroes);
+        assert!(chunk8.all_zeroes);
 
         // Extend file and read everything back
         let t7 = DateTime::from_str("2000-01-01 07:00:00 UTC").unwrap();

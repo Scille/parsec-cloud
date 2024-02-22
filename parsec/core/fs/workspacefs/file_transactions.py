@@ -108,10 +108,13 @@ class FileTransactions:
     # Helper
 
     async def _read_chunk(self, chunk: Chunk) -> bytes:
+        if chunk.is_all_zeroes():
+            return b"\x00" * (chunk.stop - chunk.start)
         data = await self.local_storage.get_chunk(chunk.id)
         return data[chunk.start - chunk.raw_offset : chunk.stop - chunk.raw_offset]
 
     async def _write_chunk(self, chunk: Chunk, content: bytes, offset: int = 0) -> int:
+        assert not chunk.is_all_zeroes()
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
@@ -322,7 +325,7 @@ class FileTransactions:
         )
 
     async def _manifest_reshape(
-        self, manifest: LocalFileManifest, cache_only: bool = False
+        self, manifest: LocalFileManifest, cache_only: bool = False, compatibility: bool = False
     ) -> list[BlockAccess]:
         """This internal helper does not perform any locking."""
 
@@ -330,7 +333,9 @@ class FileTransactions:
         missing = []
 
         # Perform operations
-        for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
+        for block, source, destination, write_back, removed_ids in prepare_reshape(
+            manifest, compatibility=compatibility
+        ):
             # Build data block
             data, extra_missing = await self._build_data(source)
 

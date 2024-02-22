@@ -327,7 +327,7 @@ def test_merge_file_manifests(alice, bob):
     assert m6 == m5.evolve(base=v3)
 
     # The remote has changed
-    v4 = v3.evolve(version=4, size=0, author=other_device)
+    v4 = v3.evolve(version=4, size=0, author=other_device, blocks=[])
     with pytest.raises(FSFileConflictError):
         merge_manifests(my_device, timestamp, empty_pattern, m6, v4)
 
