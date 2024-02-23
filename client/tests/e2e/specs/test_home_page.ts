@@ -29,11 +29,21 @@ describe('Check organization list', () => {
   it('Go to login page and enter wrong password', () => {
     cy.contains('Boby McBobFace').click();
     cy.get('.login-button').should('have.class', 'button-disabled');
-    cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('#ms-password-input').find('input').type('Wr0ngP@ssw0rd.');
+    cy.get('#password-input').find('.input-item').as('inputItem').should('not.have.class', 'input-invalid');
+    cy.get('#password-input').find('input').as('input').invoke('attr', 'type').should('eq', 'password');
+    cy.get('@input').type('Wr0ngP@ssw0rd.');
     cy.get('.login-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button').click();
-    cy.get('#ms-password-input').find('.form-error').should('contain.text', 'The password is incorrect.');
+    cy.get('#password-input').find('.form-error').as('formError').should('contain.text', 'The password is incorrect.');
+    cy.get('@inputItem').should('have.class', 'input-invalid');
+
+    cy.get('@input').type('{backspace}');
+    cy.get('@formError').should('not.contain.text', 'The password is incorrect.');
+    cy.get('@inputItem').should('have.class', 'input-invalid');
+
+    cy.get('@input').clear();
+    cy.get('@formError').should('not.contain.text', 'The password is incorrect.');
+    cy.get('@inputItem').should('not.have.class', 'input-invalid');
   });
 
   it('Go to login page and enter password', () => {
