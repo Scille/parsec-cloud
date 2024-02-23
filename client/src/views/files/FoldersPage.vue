@@ -224,10 +224,7 @@ const routeWatchCancel = watchRoute(async () => {
     return;
   }
   if (newPath !== currentPath.value) {
-    currentPath.value = newPath;
-  }
-  if (currentPath.value) {
-    await listFolder();
+    await setCurrentPath(newPath);
   }
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
 });
@@ -282,10 +279,7 @@ onMounted(async () => {
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
   const path = getDocumentPath();
-  if (path !== '') {
-    currentPath.value = path;
-  }
-  await listFolder();
+  await setCurrentPath(path);
 });
 
 onUnmounted(async () => {
@@ -297,6 +291,23 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+async function setCurrentPath(path: parsec.FsPath): Promise<void> {
+  if (path === '') {
+    return;
+  }
+  let selectFile: parsec.EntryName | null = null;
+  const result = await parsec.entryStat(currentPath.value);
+  if (result.ok) {
+    if (result.value.isFile()) {
+      currentPath.value = await parsec.Path.parent(path);
+      selectFile = await parsec.Path.filename(path);
+    } else {
+      currentPath.value = path;
+    }
+  }
+  await listFolder(selectFile);
+}
 
 async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, { displayState: displayView.value });
@@ -338,7 +349,7 @@ const fileImportsCurrentDir = computed(() => {
   return fileImports.value.filter((item) => parsec.Path.areSame(item.data.path, currentPath.value));
 });
 
-async function listFolder(): Promise<void> {
+async function listFolder(selectFile: parsec.EntryName | null = null): Promise<void> {
   const result = await parsec.entryStat(currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
@@ -351,7 +362,7 @@ async function listFolder(): Promise<void> {
         const fileResult = await parsec.entryStat(childPath);
         if (fileResult.ok) {
           if (fileResult.value.isFile()) {
-            (fileResult.value as FileModel).isSelected = false;
+            (fileResult.value as FileModel).isSelected = selectFile && selectFile === fileResult.value.name ? true : false;
             newFiles.push(fileResult.value as FileModel);
           } else {
             (fileResult.value as FolderModel).isSelected = false;
