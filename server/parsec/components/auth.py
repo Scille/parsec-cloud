@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
 from enum import Enum
 
@@ -10,14 +11,13 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
+    SigningKey,
     VerifyKey,
 )
+from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
-
-CACHE_TIME = 60  # seconds
-
 
 AuthAnonymousAuthBadOutcome = Enum(
     "AuthAnonymousAuthBadOutcome",
@@ -44,6 +44,7 @@ AuthAuthenticatedAuthBadOutcome = Enum(
         "USER_FROZEN",
         "DEVICE_NOT_FOUND",
         "INVALID_SIGNATURE",
+        "TOKEN_TOO_OLD",
     ),
 )
 
@@ -72,13 +73,68 @@ class AuthenticatedAuthInfo:
     device_internal_id: int
 
 
+@dataclass
+class AuthenticatedToken:
+    """
+    token format: `PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>.<b64_signature>`
+    with:
+        <b64_device_id> = base64(<device_id>)
+        <timestamp> = str(<seconds since UNIX epoch>)
+        <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>`))
+        base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
+    """
+
+    device_id: DeviceID
+    timestamp: DateTime
+    header_and_payload: bytes
+    signature: bytes
+
+    HEADER: bytes = b"PARSEC-SIGN-ED25519"
+
+    # Only used for tests, but coherent to have it here
+    @staticmethod
+    def generate_raw(device_id: DeviceID, timestamp: DateTime, key: SigningKey) -> bytes:
+        raw_device_id = urlsafe_b64encode(device_id.str.encode("utf8"))
+        raw_timestamp = str(int(timestamp.timestamp())).encode("utf8")
+        header_and_payload = b"%s.%s.%s" % (AuthenticatedToken.HEADER, raw_device_id, raw_timestamp)
+        signature = key.sign_only_signature(header_and_payload)
+        raw_signature = urlsafe_b64encode(signature)
+        return b"%s.%s" % (header_and_payload, raw_signature)
+
+    @classmethod
+    def from_raw(cls, raw: bytes) -> "AuthenticatedToken":
+        try:
+            header_and_payload, raw_signature = raw.rsplit(b".", 1)
+            header, raw_device_id, raw_timestamp = header_and_payload.split(b".")
+            if header != cls.HEADER:
+                raise ValueError
+            signature = urlsafe_b64decode(raw_signature)
+            device_id = DeviceID(urlsafe_b64decode(raw_device_id).decode("utf8"))
+            timestamp = DateTime.from_timestamp(int(raw_timestamp))
+        except ValueError:
+            raise ValueError("Invalid token format")
+
+        return cls(
+            device_id=device_id,
+            timestamp=timestamp,
+            header_and_payload=header_and_payload,
+            signature=signature,
+        )
+
+    def verify_signature(self, verify_key: VerifyKey) -> bool:
+        try:
+            verify_key.verify_with_signature(
+                signature=self.signature, message=self.header_and_payload
+            )
+            return True
+        except CryptoError:
+            return False
+
+
 class BaseAuthComponent:
     def __init__(self, event_bus: EventBus, config: BackendConfig):
         self._config = config
-        self._device_cache: dict[
-            tuple[OrganizationID, DeviceID],
-            tuple[DateTime, AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome],
-        ] = {}
+        self._device_cache: dict[tuple[OrganizationID, DeviceID], AuthenticatedAuthInfo] = {}
         event_bus.connect(self._on_event)
 
     def _on_event(self, event: Event) -> None:
@@ -110,42 +166,33 @@ class BaseAuthComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        device_id: DeviceID,
-        signature: bytes,
-        body: bytes,
+        token: AuthenticatedToken,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         try:
-            cache_timestamp, auth_or_bad_outcome = self._device_cache[(organization_id, device_id)]
-            if now - cache_timestamp > CACHE_TIME:
-                del self._device_cache[(organization_id, device_id)]
-                raise KeyError
-
-            match auth_or_bad_outcome:
-                case AuthenticatedAuthInfo() as client_ctx:
-                    pass
-                case bad_outcome:
-                    return bad_outcome
+            # The cache is only available if the authentication already succeeded,
+            # and if no revocation or freezing occurred since then.
+            auth_info = self._device_cache[(organization_id, token.device_id)]
 
         except KeyError:
-            outcome = await self._get_authenticated_info(organization_id, device_id)
+            outcome = await self._get_authenticated_info(organization_id, token.device_id)
             match outcome:
-                case AuthenticatedAuthInfo() as client_ctx:
-                    self._device_cache[(organization_id, device_id)] = (now, client_ctx)
+                case AuthenticatedAuthInfo() as auth_info:
+                    self._device_cache[(organization_id, token.device_id)] = auth_info
 
                 case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
                     # Cannot store cache as the organization might be created at anytime !
                     return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
                 case bad_outcome:
-                    self._device_cache[(organization_id, device_id)] = (now, bad_outcome)
                     return bad_outcome
 
-        try:
-            client_ctx.device_verify_key.verify_with_signature(signature=signature, message=body)
-        except CryptoError:
+        if not token.verify_signature(auth_info.device_verify_key):
             return AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
 
-        return client_ctx
+        if timestamps_in_the_ballpark(token.timestamp, now) is not None:
+            return AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD
+
+        return auth_info
 
     async def _get_authenticated_info(
         self, organization_id: OrganizationID, device_id: DeviceID

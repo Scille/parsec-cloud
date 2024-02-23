@@ -37,7 +37,7 @@ class RequireGreaterTimestamp:
 # cause being setting the clock manually, which can easily cause drift
 # of 1 or 2 minutes. Since it's impossible to predict such behavior,
 # the offset has been changed from 50/70 to 300/320 seconds, which
-# seems good enough to prevent such cases and is windows' standard
+# seems good enough to prevent such cases and is Windows' standard
 # tolerance for clock drifting.
 #
 # Note that those values also have to take into account the fact
@@ -64,15 +64,9 @@ class RequireGreaterTimestamp:
 # reduce the previous 50/70 seconds time window by a factor of 4.
 # This however seems unrealistic as the 50/70 window turned out
 # too narrow.
-#
-# The ballpark client tolerance is the ratio applied to the offsets
-# while performing the ballpark checks. We use an arbitrary value of
-# 80% in order to make sure that a clock shift is caught during the
-# handshake instead of being caught by another API call later on.
 
 BALLPARK_CLIENT_EARLY_OFFSET = 300  # seconds
 BALLPARK_CLIENT_LATE_OFFSET = 320  # seconds
-BALLPARK_CLIENT_TOLERANCE = 0.8  # 80%
 BALLPARK_ALWAYS_OK = False  # Useful for disabling ballpark checks in the tests
 
 
