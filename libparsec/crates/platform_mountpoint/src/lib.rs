@@ -159,7 +159,7 @@ pub trait MountpointInterface {
     async fn fd_flush(&self, fd: FileDescriptor);
 }
 
-pub struct FileSystemMounted<T: MountpointInterface> {
+pub struct FileSystemMounted<T: MountpointInterface + Send + Sync + 'static> {
     #[cfg(target_os = "windows")]
     fs: winfsp_wrs::FileSystem<FileSystemWrapper<T>>,
     #[cfg(target_os = "linux")]
@@ -167,6 +167,12 @@ pub struct FileSystemMounted<T: MountpointInterface> {
     #[cfg(target_os = "linux")]
     phantom: std::marker::PhantomData<T>,
 }
+#[cfg(target_os = "windows")]
+// Safety: The `winfsp_wrs::FileSystem`` is read only
+unsafe impl<T: MountpointInterface + Send + Sync> Send for FileSystemMounted<T> {}
+#[cfg(target_os = "windows")]
+// Safety: The `winfsp_wrs::FileSystem`` is read only
+unsafe impl<T: MountpointInterface + Send + Sync> Sync for FileSystemMounted<T> {}
 
 impl<T: MountpointInterface + Send + Sync + 'static> FileSystemMounted<T> {
     pub async fn mount(mountpoint: PathBuf, interface: Arc<T>) -> anyhow::Result<Self> {

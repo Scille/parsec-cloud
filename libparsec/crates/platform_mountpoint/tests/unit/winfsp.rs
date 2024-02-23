@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use chrono::Utc;
+use std::sync::Arc;
 
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::{p_assert_eq, parsec_test};
@@ -9,7 +10,7 @@ use libparsec_types::{EntryName, FsPath, VlobID};
 use crate::{EntryInfo, EntryInfoType, FileSystemMounted, MemFS};
 
 #[parsec_test]
-fn winify_applied_for_read_dir(tmp_path: TmpPath) {
+async fn winify_applied_for_read_dir(tmp_path: TmpPath) {
     winfsp_wrs::init().expect("Can't init WinFSP");
 
     // Windows can't mount on existing directory
@@ -32,7 +33,9 @@ fn winify_applied_for_read_dir(tmp_path: TmpPath) {
         }
     }
 
-    let fs = FileSystemMounted::mount(&path, memfs).unwrap();
+    let fs = FileSystemMounted::mount(path.clone(), Arc::new(memfs))
+        .await
+        .unwrap();
 
     let mut entries = std::fs::read_dir(path)
         .unwrap()
@@ -45,5 +48,5 @@ fn winify_applied_for_read_dir(tmp_path: TmpPath) {
         p_assert_eq!(entry, format!("COM~{:02x}", b'0' + i as u8 + 1).as_str())
     }
 
-    fs.stop();
+    fs.stop().await.unwrap();
 }

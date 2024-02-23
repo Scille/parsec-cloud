@@ -160,7 +160,7 @@ impl From<WinWriteMode> for WriteMode {
     }
 }
 
-impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
+impl<T: MountpointInterface + Send> FileSystemContext for FileSystemWrapper<T> {
     // In WinFSP, both file and directory are called `FileContext`.
     type FileContext = Arc<Mutex<Context>>;
 
@@ -182,14 +182,16 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         file_name: &U16CStr,
         _find_reparse_point: impl Fn() -> Option<FileAttributes>,
     ) -> Result<(FileAttributes, PSecurityDescriptor, bool), NTSTATUS> {
-        let path = os_path_to_fs_path(file_name)?;
+        self.tokio_handle.block_on(async move {
+            let path = os_path_to_fs_path(file_name)?;
+            let entry_info = self.interface.entry_info(&path).await?;
 
-        let entry_info = self.interface.entry_info(&path)?;
-        Ok((
-            FileAttributes::from(&entry_info),
-            SECURITY_DESCRIPTOR.as_ptr(),
-            false,
-        ))
+            Ok((
+                FileAttributes::from(&entry_info),
+                SECURITY_DESCRIPTOR.as_ptr(),
+                false,
+            ))
+        })
     }
 
     fn open(
@@ -198,30 +200,35 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         _create_options: CreateOptions,
         granted_access: FileAccessRights,
     ) -> Result<Self::FileContext, NTSTATUS> {
-        let write_mode = granted_access.is(FileAccessRights::file_write_data());
-        let path = os_path_to_fs_path(file_name)?;
+        self.tokio_handle.block_on(async move {
+            let write_mode = granted_access.is(FileAccessRights::file_write_data());
+            let path = os_path_to_fs_path(file_name)?;
 
-        let fd = self.interface.file_open(&path, write_mode)?;
+            let fd = self.interface.file_open(&path, write_mode).await?;
 
-        if !write_mode && is_entry_info_path(&path) {
-            let need_sync = self.interface.entry_info(&path)?.need_sync;
-            return Ok(Arc::new(Mutex::new(Context::Info(ParsecEntryInfo {
-                path,
-                encoded: format!("{{\"need_sync\":{need_sync}}}"),
-            }))));
-        }
+            if !write_mode && is_entry_info_path(&path) {
+                let need_sync = self.interface.entry_info(&path).await?.need_sync;
+                return Ok(Arc::new(Mutex::new(Context::Info(ParsecEntryInfo {
+                    path,
+                    encoded: format!("{{\"need_sync\":{need_sync}}}"),
+                }))));
+            }
 
-        if let Some(fd) = fd {
-            Ok(Arc::new(Mutex::new(Context::File(File { path, fd }))))
-        } else {
-            Ok(Arc::new(Mutex::new(Context::Dir(Dir { path }))))
-        }
+            if let Some(fd) = fd {
+                Ok(Arc::new(Mutex::new(Context::File(File { path, fd }))))
+            } else {
+                Ok(Arc::new(Mutex::new(Context::Dir(Dir { path }))))
+            }
+        })
     }
 
     fn get_file_info(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        let entry_info = self.interface.entry_info(fc.path())?;
-        Ok(FileInfo::from(&entry_info))
+
+        self.tokio_handle.block_on(async move {
+            let entry_info = self.interface.entry_info(fc.path()).await?;
+            Ok(FileInfo::from(&entry_info))
+        })
     }
 
     fn read_directory(
@@ -230,53 +237,56 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         marker: Option<&U16CStr>,
     ) -> Result<Vec<(U16CString, FileInfo)>, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        let mut entries = vec![];
-        let path = fc.path();
-        let stat = self.interface.entry_info(path)?;
 
-        // NOTE: The "." and ".." directories should ONLY be included
-        // if the queried directory is not root
+        self.tokio_handle.block_on(async move {
+            let mut entries = vec![];
+            let path = fc.path();
+            let stat = self.interface.entry_info(path).await?;
 
-        if !fc.path().is_root() && marker.is_none() {
-            entries.push((u16cstr!(".").into(), FileInfo::from(&stat)));
-            let parent_path = fc.path().parent();
-            let parent_stat = self.interface.entry_info(&parent_path)?;
-            entries.push((u16cstr!("..").into(), FileInfo::from(&parent_stat)));
-        }
+            // NOTE: The "." and ".." directories should ONLY be included
+            // if the queried directory is not root
 
-        // NOTE: we *do not* rely on alphabetically sorting to compare the
-        // marker given `..` is always the first element event if we could
-        // have children name before it (`.-foo` for instance)
-        // All remaining children are located after the marker
-
-        if let Some(marker) = marker {
-            for child_name in stat
-                .children
-                .keys()
-                .skip_while(|name| name.as_ref() != marker.to_string_lossy())
-                .skip(1)
-            {
-                let child_path = fc.path().join(child_name.clone());
-                let child_stat = self.interface.entry_info(&child_path)?;
-                entries.push((
-                    U16CString::from_str(winify_entry_name(child_name))
-                        .expect("Contains a nul value"),
-                    FileInfo::from(&child_stat),
-                ));
+            if !fc.path().is_root() && marker.is_none() {
+                entries.push((u16cstr!(".").into(), FileInfo::from(&stat)));
+                let parent_path = fc.path().parent();
+                let parent_stat = self.interface.entry_info(&parent_path).await?;
+                entries.push((u16cstr!("..").into(), FileInfo::from(&parent_stat)));
             }
-        } else {
-            for child_name in stat.children.keys() {
-                let child_path = fc.path().join(child_name.clone());
-                let child_stat = self.interface.entry_info(&child_path)?;
-                entries.push((
-                    U16CString::from_str(winify_entry_name(child_name))
-                        .expect("Contains a nul value"),
-                    FileInfo::from(&child_stat),
-                ));
-            }
-        }
 
-        Ok(entries)
+            // NOTE: we *do not* rely on alphabetically sorting to compare the
+            // marker given `..` is always the first element event if we could
+            // have children name before it (`.-foo` for instance)
+            // All remaining children are located after the marker
+
+            if let Some(marker) = marker {
+                for child_name in stat
+                    .children
+                    .keys()
+                    .skip_while(|name| name.as_ref() != marker.to_string_lossy())
+                    .skip(1)
+                {
+                    let child_path = fc.path().join(child_name.clone());
+                    let child_stat = self.interface.entry_info(&child_path).await?;
+                    entries.push((
+                        U16CString::from_str(winify_entry_name(child_name))
+                            .expect("Contains a nul value"),
+                        FileInfo::from(&child_stat),
+                    ));
+                }
+            } else {
+                for child_name in stat.children.keys() {
+                    let child_path = fc.path().join(child_name.clone());
+                    let child_stat = self.interface.entry_info(&child_path).await?;
+                    entries.push((
+                        U16CString::from_str(winify_entry_name(child_name))
+                            .expect("Contains a nul value"),
+                        FileInfo::from(&child_stat),
+                    ));
+                }
+            }
+
+            Ok(entries)
+        })
     }
 
     fn set_volume_label(&self, volume_label: &U16CStr) -> Result<(), NTSTATUS> {
@@ -305,20 +315,22 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     ) -> Result<Self::FileContext, NTSTATUS> {
         // `security_descriptor` is not supported yet
         // `reparse_point` is not supported yet
-        let path = os_path_to_fs_path(file_name)?;
+        self.tokio_handle.block_on(async move {
+            let path = os_path_to_fs_path(file_name)?;
 
-        Ok(Arc::new(Mutex::new(
-            if create_file_info
-                .create_options
-                .is(CreateOptions::file_directory_file())
-            {
-                self.interface.dir_create(&path)?;
-                Context::Dir(Dir { path })
-            } else {
-                let fd = self.interface.file_create(&path, true)?;
-                Context::File(File { path, fd })
-            },
-        )))
+            Ok(Arc::new(Mutex::new(
+                if create_file_info
+                    .create_options
+                    .is(CreateOptions::file_directory_file())
+                {
+                    self.interface.dir_create(&path).await?;
+                    Context::Dir(Dir { path })
+                } else {
+                    let fd = self.interface.file_create(&path, true).await?;
+                    Context::File(File { path, fd })
+                },
+            )))
+        })
     }
 
     fn overwrite(
@@ -331,11 +343,15 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
-        if let Context::File(file) = fc.deref() {
-            self.interface.fd_resize(file.fd, allocation_size, true)?;
-        }
+        self.tokio_handle.block_on(async move {
+            if let Context::File(file) = fc.deref() {
+                self.interface
+                    .fd_resize(file.fd, allocation_size, true)
+                    .await?;
+            }
 
-        Ok(())
+            Ok(())
+        })
     }
 
     fn cleanup(
@@ -345,22 +361,28 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         flags: CleanupFlags,
     ) {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        match (fc.deref(), flags.is(CleanupFlags::delete())) {
-            (Context::File(file), true) => {
-                let _ = self.interface.file_delete(&file.path);
+
+        self.tokio_handle.block_on(async move {
+            match (fc.deref(), flags.is(CleanupFlags::delete())) {
+                (Context::File(file), true) => {
+                    let _ = self.interface.file_delete(&file.path).await;
+                }
+                (Context::Dir(dir), true) => {
+                    let _ = self.interface.dir_delete(&dir.path).await;
+                }
+                _ => (),
             }
-            (Context::Dir(dir), true) => {
-                let _ = self.interface.dir_delete(&dir.path);
-            }
-            _ => (),
-        }
+        })
     }
 
     fn close(&self, file_context: Self::FileContext) {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        if let Context::File(file) = fc.deref() {
-            self.interface.fd_close(file.fd)
-        }
+
+        self.tokio_handle.block_on(async move {
+            if let Context::File(file) = fc.deref() {
+                self.interface.fd_close(file.fd).await
+            }
+        })
     }
 
     fn read(
@@ -371,10 +393,12 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     ) -> Result<usize, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
-        Ok(match fc.deref() {
-            Context::File(file) => self.interface.fd_read(file.fd, buffer, offset)?,
-            Context::Info(info) => info.read(buffer, offset as usize),
-            Context::Dir(_) => unreachable!(),
+        self.tokio_handle.block_on(async move {
+            Ok(match fc.deref() {
+                Context::File(file) => self.interface.fd_read(file.fd, buffer, offset).await?,
+                Context::Info(info) => info.read(buffer, offset as usize),
+                Context::Dir(_) => unreachable!(),
+            })
         })
     }
 
@@ -387,23 +411,30 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
     ) -> Result<usize, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
-        let mode = WriteMode::from(mode);
+        self.tokio_handle.block_on(async move {
+            let mode = WriteMode::from(mode);
 
-        if let Context::File(file) = fc.deref() {
-            Ok(self.interface.fd_write(file.fd, buffer, offset, mode)?)
-        } else {
-            Err(STATUS_NOT_IMPLEMENTED)
-        }
+            if let Context::File(file) = fc.deref() {
+                Ok(self
+                    .interface
+                    .fd_write(file.fd, buffer, offset, mode)
+                    .await?)
+            } else {
+                Err(STATUS_NOT_IMPLEMENTED)
+            }
+        })
     }
 
     fn flush(&self, file_context: Self::FileContext) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
 
-        if let Context::File(file) = fc.deref() {
-            self.interface.fd_flush(file.fd);
-        }
+        self.tokio_handle.block_on(async move {
+            if let Context::File(file) = fc.deref() {
+                self.interface.fd_flush(file.fd).await;
+            }
 
-        Ok(())
+            Ok(())
+        })
     }
 
     fn set_basic_info(
@@ -425,13 +456,15 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         set_allocation_size: bool,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
+        self.tokio_handle.block_on(async move {
+            if let Context::File(file) = fc.deref() {
+                self.interface
+                    .fd_resize(file.fd, new_size, set_allocation_size)
+                    .await?;
+            }
 
-        if let Context::File(file) = fc.deref() {
-            self.interface
-                .fd_resize(file.fd, new_size, set_allocation_size)?;
-        }
-
-        Ok(())
+            Ok(())
+        })
     }
 
     fn rename(
@@ -441,11 +474,14 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         new_file_name: &U16CStr,
         replace_if_exists: bool,
     ) -> Result<(), NTSTATUS> {
-        let path = os_path_to_fs_path(file_name)?;
-        let new_path = os_path_to_fs_path(new_file_name)?;
-        self.interface
-            .entry_rename(&path, &new_path, replace_if_exists)?;
-        Ok(())
+        self.tokio_handle.block_on(async move {
+            let path = os_path_to_fs_path(file_name)?;
+            let new_path = os_path_to_fs_path(new_file_name)?;
+            self.interface
+                .entry_rename(&path, &new_path, replace_if_exists)
+                .await?;
+            Ok(())
+        })
     }
 
     fn get_security(
@@ -461,22 +497,26 @@ impl<T: MountpointInterface> FileSystemContext for FileSystemWrapper<T> {
         file_name: &U16CStr,
         _delete_file: bool,
     ) -> Result<(), NTSTATUS> {
-        let path = os_path_to_fs_path(file_name)?;
-        let stat = self.interface.entry_info(&path)?;
+        self.tokio_handle.block_on(async move {
+            let path = os_path_to_fs_path(file_name)?;
+            let stat = self.interface.entry_info(&path).await?;
 
-        if path.is_root() {
-            return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
-        } else if !stat.children.is_empty() {
-            return Err(STATUS_DIRECTORY_NOT_EMPTY);
-        }
+            if path.is_root() {
+                return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
+            }
 
-        Ok(())
+            if !stat.children.is_empty() {
+                return Err(STATUS_DIRECTORY_NOT_EMPTY);
+            }
+
+            Ok(())
+        })
     }
 }
 
-pub fn mount<T: MountpointInterface>(
+pub fn mount<T: MountpointInterface + Send + Sync + 'static>(
     mountpoint: std::path::PathBuf,
-    interface: T,
+    interface: Arc<T>,
 ) -> anyhow::Result<FileSystemMounted<T>> {
     let fs_wrapper = FileSystemWrapper::new(interface);
     let name = U16CString::from_os_str(mountpoint.file_name().unwrap_or_default())
