@@ -25,7 +25,7 @@
             ref="passwordInputRef"
             v-model="password"
             @on-enter-keyup="onLoginClick()"
-            id="ms-password-input"
+            id="password-input"
             @change="onPasswordChange"
             :error-message="errorMessage"
             :password-is-invalid="passwordIsInvalid"
@@ -164,7 +164,7 @@ defineExpose({
         margin: 0;
       }
 
-      #ms-password-input {
+      #password-input {
         margin: 0;
       }
 
