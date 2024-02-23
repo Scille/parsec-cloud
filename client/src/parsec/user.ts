@@ -105,3 +105,32 @@ export async function revokeUser(_userId: UserID): Promise<Result<null, RevokeUs
     return { ok: true, value: null };
   }
 }
+
+export enum UserInfoErrorTag {
+  NotFound = 'NotFound',
+  Internal = 'Internal',
+}
+
+interface UserInfoNotFoundError {
+  tag: UserInfoErrorTag.NotFound;
+}
+
+interface UserInfoInternalError {
+  tag: UserInfoErrorTag.Internal;
+}
+
+export type UserInfoError = UserInfoInternalError | UserInfoNotFoundError;
+
+export async function getUserInfo(userId: UserID): Promise<Result<UserInfo, UserInfoError>> {
+  const listResult = await listUsers(false);
+
+  if (!listResult.ok) {
+    return { ok: false, error: { tag: UserInfoErrorTag.Internal } };
+  }
+
+  const userInfo = listResult.value.find((item) => item.id === userId);
+  if (!userInfo) {
+    return { ok: false, error: { tag: UserInfoErrorTag.NotFound } };
+  }
+  return { ok: true, value: userInfo };
+}
