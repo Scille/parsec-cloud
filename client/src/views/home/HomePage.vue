@@ -44,7 +44,7 @@
                 @forgotten-password-click="onForgottenPasswordClicked"
                 @back-click="backToOrganizations"
                 @settings-click="openSettingsModal"
-                ref="loginPage"
+                ref="loginPageRef"
               />
             </template>
           </slide-horizontal>
@@ -88,7 +88,7 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
-const loginPage = ref();
+const loginPageRef = ref();
 
 let hotkeys: Hotkeys | null = null;
 
@@ -215,7 +215,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     }
     state.value = HomePageState.OrganizationList;
   } else {
-    loginPage.value.setLoginError(result.error);
+    loginPageRef.value.setLoginError(result.error);
   }
 }
 

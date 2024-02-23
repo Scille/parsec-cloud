@@ -89,7 +89,7 @@ async function onLoginClick(): Promise<void> {
   emits('loginClick', props.device, password.value);
 }
 
-async function setLoginError(error?: ClientStartError): Promise<void> {
+async function setLoginError(_error?: ClientStartError): Promise<void> {
   errorMessage.value = translate('HomePage.organizationLogin.passwordError');
   passwordIsInvalid.value = true;
 }

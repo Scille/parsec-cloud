@@ -8,7 +8,7 @@
         "postinstall": "cd electron && npm install",
         "dev": "vite",
         "preview": "vite preview",
-        "lint": "eslint . && vue-tsc --noEmit",
+        "lint": "eslint . --max-warnings=0 && vue-tsc --noEmit",
         "test:unit": "vitest run --dom",
         "cy:e2e:headless": "cypress run --e2e",
         "cy:e2e": "cypress run --e2e --headed",
