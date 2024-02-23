@@ -45,17 +45,11 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
             );
             // Cannot check `User-Agent` here given reqwest adds it in a later step
             // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
-            p_assert_eq!(
-                headers.get("Authorization"),
-                Some(&HeaderValue::from_static("PARSEC-SIGN-ED25519"))
-            );
-            // Base64 of "alice@dev1"
-            p_assert_eq!(
-                headers.get("Author"),
-                // cspell:disable-next-line
-                Some(&HeaderValue::from_static("YWxpY2VAZGV2MQ=="))
-            );
-            assert!(headers.get("Signature").is_some());
+            assert!(headers
+                .get("Authorization")
+                .unwrap()
+                .as_bytes()
+                .starts_with(b"Bearer PARSEC-SIGN-ED25519."));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = authenticated_cmds::AnyCmdReq::load(body).unwrap();
@@ -91,35 +85,19 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
 
 #[parsec_test(testbed = "minimal")]
 async fn rpc_unauthorized_mocked(env: &TestbedEnv) {
-    rpc_unauthorized(env, true).await
-}
-
-#[parsec_test(testbed = "minimal", with_server)]
-async fn rpc_unauthorized_with_server(env: &TestbedEnv) {
-    rpc_unauthorized(env, false).await
-}
-
-async fn rpc_unauthorized(env: &TestbedEnv, mocked: bool) {
     let alice = env.local_device("alice@dev1");
-    let bad_alice = {
-        let mut bad_alice = (*alice).clone();
-        bad_alice.signing_key = SigningKey::generate();
-        Arc::new(bad_alice)
-    };
     let cmds =
-        AuthenticatedCmds::new(&env.discriminant_dir, bad_alice, ProxyConfig::default()).unwrap();
+        AuthenticatedCmds::new(&env.discriminant_dir, alice, ProxyConfig::default()).unwrap();
 
-    // Bad request: invalid signature
+    // The request is valid, but the server complains nevertheless
 
-    if mocked {
-        test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
-            Ok(ResponseMock::Mocked((
-                StatusCode::UNAUTHORIZED,
-                HeaderMap::new(),
-                Bytes::new(),
-            )))
-        });
-    }
+    test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+        Ok(ResponseMock::Mocked((
+            StatusCode::UNAUTHORIZED,
+            HeaderMap::new(),
+            Bytes::new(),
+        )))
+    });
 
     let rep = cmds
         .send(authenticated_cmds::ping::Req {
@@ -137,8 +115,115 @@ async fn rpc_unauthorized(env: &TestbedEnv, mocked: bool) {
     );
 }
 
+#[parsec_test(testbed = "minimal")]
+async fn rpc_forbidden_mocked(env: &TestbedEnv) {
+    rpc_forbidden(env, true).await
+}
+
+#[parsec_test(testbed = "minimal", with_server)]
+async fn rpc_forbidden_with_server(env: &TestbedEnv) {
+    rpc_forbidden(env, false).await
+}
+
+async fn rpc_forbidden(env: &TestbedEnv, mocked: bool) {
+    let alice = env.local_device("alice@dev1");
+    let bad_alice = {
+        let mut bad_alice = (*alice).clone();
+        bad_alice.signing_key = SigningKey::generate();
+        Arc::new(bad_alice)
+    };
+    let cmds =
+        AuthenticatedCmds::new(&env.discriminant_dir, bad_alice, ProxyConfig::default()).unwrap();
+
+    // Bad request: invalid signature
+
+    if mocked {
+        test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+            Ok(ResponseMock::Mocked((
+                StatusCode::FORBIDDEN,
+                HeaderMap::new(),
+                Bytes::new(),
+            )))
+        });
+    }
+
+    let rep = cmds
+        .send(authenticated_cmds::ping::Req {
+            ping: "foo".to_owned(),
+        })
+        .await;
+    assert!(
+        matches!(
+            rep,
+            Err(ConnectionError::InvalidResponseStatus(
+                reqwest::StatusCode::FORBIDDEN
+            ))
+        ),
+        r#"expected `InvalidResponseStatus` with code 403, but got {rep:?}"#
+    );
+}
+
 // TODO: SSE not implemented in web yet
-// TODO: testbed send hook doesn't support SSE yet
+#[cfg(not(target_arch = "wasm32"))]
+#[parsec_test(testbed = "minimal")]
+async fn sse_ok_mocked(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
+        .unwrap();
+
+    test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "Content-Type",
+            HeaderValue::from_static("text/event-stream"),
+        );
+        Ok(ResponseMock::Mocked((
+            StatusCode::OK,
+            headers,
+            "\
+            :keepalive\n\n\
+            data:hKZzdGF0dXOib2ulZXZlbnStU0VSVkVSX0NPTkZJR7JhY3RpdmVfdXNlcnNfbGltaXTAvXVzZXJfcHJvZmlsZV9vdXRzaWRlcl9hbGxvd2Vkww==\nid:832ea0c75e0d4ca8aedf123a89b3fcc7\n\n\
+            event:missed_events\n\n\
+            data:g6ZzdGF0dXOib2ulZXZlbnSmUElOR0VEpHBpbmemZ29vZCAx\nid:4fe5b6ddf29f4c159e6002da2132d80f\n\n\
+            :keepalive\n\n\
+            ".into(),
+        )))
+    });
+
+    let mut sse = cmds
+        .start_sse::<authenticated_cmds::events_listen::Req>(None)
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        sse.next().await.unwrap().unwrap().message,
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                active_users_limit: ActiveUsersLimit::NoLimit,
+                user_profile_outsider_allowed: true
+            }
+        ))
+    );
+
+    // TODO: handling of `event` seems broken !
+    // p_assert_eq!(
+    //     sse.next().await.unwrap().unwrap().message,
+    //     SSEResponseOrMissedEvents::MissedEvents
+    // );
+
+    p_assert_eq!(
+        sse.next().await.unwrap().unwrap().message,
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::Pinged {
+                ping: "good 1".to_owned()
+            }
+        ))
+    );
+
+    // Finally the connection is closed
+    p_assert_matches!(sse.next().await, None);
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn sse_ok_with_server(env: &TestbedEnv) {
@@ -229,8 +314,19 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
 // TODO: SSE not implemented in web yet
 // TODO: testbed send hook doesn't support SSE yet
 #[cfg(not(target_arch = "wasm32"))]
+#[parsec_test(testbed = "minimal")]
+async fn sse_forbidden_mocked(env: &TestbedEnv) {
+    sse_forbidden(env, true).await
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 #[parsec_test(testbed = "minimal", with_server)]
-async fn sse_unauthorized_with_server(env: &TestbedEnv) {
+async fn sse_forbidden_with_server(env: &TestbedEnv) {
+    sse_forbidden(env, false).await
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+async fn sse_forbidden(env: &TestbedEnv, mocked: bool) {
     let alice = env.local_device("alice@dev1");
     let bad_alice = {
         let mut bad_alice = (*alice).clone();
@@ -240,18 +336,60 @@ async fn sse_unauthorized_with_server(env: &TestbedEnv) {
     let cmds_bad_alice =
         AuthenticatedCmds::new(&env.discriminant_dir, bad_alice, ProxyConfig::default()).unwrap();
 
+    if mocked {
+        test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+            Ok(ResponseMock::Mocked((
+                StatusCode::FORBIDDEN,
+                HeaderMap::new(),
+                Bytes::new(),
+            )))
+        });
+    }
+
     // Bad request: invalid signature
 
-    let res = cmds_bad_alice
+    let rep = cmds_bad_alice
         .start_sse::<authenticated_cmds::events_listen::Req>(None)
         .await;
     assert!(
         matches!(
-            res,
+            rep,
+            Err(SSEConnectionError::InvalidStatusCode(
+                reqwest::StatusCode::FORBIDDEN
+            ))
+        ),
+        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn sse_unauthorized_mocked(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let cmds =
+        AuthenticatedCmds::new(&env.discriminant_dir, alice, ProxyConfig::default()).unwrap();
+
+    // The request is valid, but the server complains nevertheless
+
+    test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
+        Ok(ResponseMock::Mocked((
+            StatusCode::UNAUTHORIZED,
+            HeaderMap::new(),
+            Bytes::new(),
+        )))
+    });
+
+    let rep = cmds
+        .start_sse::<authenticated_cmds::events_listen::Req>(None)
+        .await;
+    assert!(
+        matches!(
+            rep,
             Err(SSEConnectionError::InvalidStatusCode(
                 reqwest::StatusCode::UNAUTHORIZED
             ))
         ),
-        r#"expected `InvalidResponseStatus` with code 401, but got {res:?}"#
+        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
     );
 }
+
+// TODO: test `id`&`retry` param passed in SSE (can be done with test_register_low_level_send_hook)

@@ -2,7 +2,7 @@
 
 use bytes::Bytes;
 use reqwest::{
-    header::{HeaderMap, HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
+    header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
     Client, RequestBuilder, Url,
 };
 use std::fmt::Debug;
@@ -20,7 +20,6 @@ use crate::{
 };
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
-const INVITATION_TOKEN_HEADER_NAME: &str = "Invitation-Token";
 
 /// Factory that send commands in a invited context.
 #[derive(Debug)]
@@ -144,9 +143,10 @@ fn prepare_request(
         CONTENT_LENGTH,
         HeaderValue::from_str(&body.len().to_string()).expect("numeric value are valid char"),
     );
+    let authorization_value = format!("Bearer {}", token.hex());
     content_headers.insert(
-        INVITATION_TOKEN_HEADER_NAME,
-        HeaderValue::from_str(&token.hex())
+        AUTHORIZATION,
+        HeaderValue::from_str(&authorization_value)
             .expect("Invitation Token is UUID, so made of ASCII characters"),
     );
 
