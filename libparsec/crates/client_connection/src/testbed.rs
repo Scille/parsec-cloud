@@ -56,6 +56,16 @@ impl ResponseMock {
             ResponseMock::Real(response) => response.bytes().await,
         }
     }
+
+    pub fn bytes_stream(self) -> futures::stream::BoxStream<'static, reqwest::Result<Bytes>> {
+        match self {
+            ResponseMock::Mocked((_, _, bytes)) => {
+                let bytes = bytes.clone();
+                Box::pin(futures::stream::once(async move { Ok(bytes) }))
+            }
+            ResponseMock::Real(response) => Box::pin(response.bytes_stream()),
+        }
+    }
 }
 
 // We want the testbed to return an async function pointer to mock client requests.

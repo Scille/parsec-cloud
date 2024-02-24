@@ -41,7 +41,7 @@ class AnonymousClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+            CustomHttpStatus.OrganizationNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -81,7 +81,7 @@ class InvitedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+            CustomHttpStatus.OrganizationNotFound,
             api_version=self.settled_api_version,
         )
 
@@ -97,7 +97,7 @@ class InvitedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+            CustomHttpStatus.BadAuthenticationInfo,
             api_version=self.settled_api_version,
         )
 
@@ -136,7 +136,7 @@ class AuthenticatedClientContext:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+            CustomHttpStatus.OrganizationNotFound,
             api_version=self.settled_api_version,
         )
 

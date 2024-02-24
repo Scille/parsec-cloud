@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from base64 import b64decode
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
@@ -28,7 +27,6 @@ from pydantic_core import core_schema
 from parsec._parsec import (
     ApiVersion,
     DateTime,
-    DeviceID,
     InvitationToken,
     OrganizationID,
     anonymous_cmds,
@@ -46,6 +44,7 @@ from parsec.components.auth import (
     AuthAnonymousAuthBadOutcome,
     AuthAuthenticatedAuthBadOutcome,
     AuthenticatedAuthInfo,
+    AuthenticatedToken,
     AuthInvitedAuthBadOutcome,
     InvitedAuthInfo,
 )
@@ -56,7 +55,6 @@ logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 ACCEPT_TYPE_SSE = "text/event-stream"
-AUTHORIZATION_PARSEC_ED25519 = "PARSEC-SIGN-ED25519"
 SUPPORTED_API_VERSIONS = (ApiVersion.API_V4_VERSION,)
 # Max size for HTTP body, 1Mo seems plenty given our API never upload big chunk of data
 # (biggest request should be the `block_create` command with typically ~512Ko of data)
@@ -196,9 +194,9 @@ def settle_compatible_versions(
 # we are not settled on what should be used yet (who knows ! maybe in the future
 # we will use another serialization format for the command processing).
 # Instead we rely on the following HTTP status code:
-# - 401: Missing authentication info (no Authorization/Author/Signature headers)
-# - 403: Bad authentication info (bad Authorization/Author/Signature headers)
-# - 404: Organization / Invitation not found or invalid organization ID
+# - 401: Missing authentication info (no or invalid `Authorization` header)
+# - 403: Bad authentication info (user/invitation not found, or invalid auth token)
+# - 404: Organization not found or invalid organization ID
 # - 406: Bad accept type (for the SSE events route)
 # - 410: Invitation already deleted / used
 # - 415: Bad content-type, body is not a valid message or unknown command
@@ -206,12 +204,13 @@ def settle_compatible_versions(
 # - 460: Organization is expired
 # - 461: User is revoked
 # - 462: User is frozen
+# - 498: Authentication token expired
 
 
 class CustomHttpStatus(Enum):
     MissingAuthenticationInfo = 401
     BadAuthenticationInfo = 403
-    OrganizationOrInvitationInvalidOrNotFound = 404
+    OrganizationNotFound = 404
     BadAcceptType = 406
     InvitationAlreadyUsedOrDeleted = 410
     BadContentTypeOrInvalidBodyOrUnknownCommand = 415
@@ -219,6 +218,7 @@ class CustomHttpStatus(Enum):
     OrganizationExpired = 460
     UserRevoked = 461
     UserFrozen = 462
+    TokenExpired = 498
 
 
 # e.g. `InvitationAlreadyUsedOrDeleted` -> `Invitation already used or deleted`
@@ -249,8 +249,7 @@ class ParsedAuthHeaders:
     settled_api_version: ApiVersion
     client_api_version: ApiVersion
     user_agent: str
-    authenticated_device_id: DeviceID | None
-    authenticated_signature: bytes | None
+    authenticated_token: AuthenticatedToken | None
     invited_token: InvitationToken | None
     last_event_id: str | None
 
@@ -292,7 +291,7 @@ def _parse_auth_headers_or_abort(
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         _handshake_abort(
-            CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+            CustomHttpStatus.OrganizationNotFound,
             api_version=settled_api_version,
         )
 
@@ -305,36 +304,25 @@ def _parse_auth_headers_or_abort(
 
     # 4) Check authenticated headers
     if not with_authenticated_headers:
-        authenticated_device_id = None
-        authenticated_signature = None
+        authenticated_token = None
 
     else:
         try:
-            authorization_method = headers["Authorization"]
-        except KeyError:
-            _handshake_abort(
-                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
-            )
-
-        if authorization_method != AUTHORIZATION_PARSEC_ED25519:
-            _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo, api_version=settled_api_version
-            )
-
-        try:
-            raw_device_id = headers["Author"]
-            raw_signature_b64 = headers["Signature"]
+            raw_authorization = headers["Authorization"]
         except KeyError:
             _handshake_abort(
                 CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
         try:
-            authenticated_signature = b64decode(raw_signature_b64)
-            authenticated_device_id = DeviceID(b64decode(raw_device_id).decode("utf8"))
+            expected_bearer, raw_authenticated_token = raw_authorization.split()
+            if expected_bearer.lower() != "bearer":
+                raise ValueError
+
+            authenticated_token = AuthenticatedToken.from_raw(raw_authenticated_token.encode())
         except ValueError:
             _handshake_abort(
-                CustomHttpStatus.BadAuthenticationInfo, api_version=settled_api_version
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
             )
 
     # 5) Check invited headers
@@ -342,12 +330,22 @@ def _parse_auth_headers_or_abort(
         invited_token = None
 
     else:
-        raw_invitation_token = headers.get("Invitation-Token", "")
+        try:
+            raw_authorization = headers["Authorization"]
+        except KeyError:
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
 
         try:
+            expected_bearer, raw_invitation_token = raw_authorization.split()
             invited_token = InvitationToken.from_hex(raw_invitation_token)
+            if expected_bearer.lower() != "bearer":
+                raise ValueError
         except ValueError:
-            _handshake_abort_bad_content(api_version=settled_api_version)
+            _handshake_abort(
+                CustomHttpStatus.MissingAuthenticationInfo, api_version=settled_api_version
+            )
 
     if not with_sse_headers:
         last_event_id = None
@@ -360,8 +358,7 @@ def _parse_auth_headers_or_abort(
         client_api_version=client_api_version,
         user_agent=user_agent,
         last_event_id=last_event_id,
-        authenticated_device_id=authenticated_device_id,
-        authenticated_signature=authenticated_signature,
+        authenticated_token=authenticated_token,
         invited_token=invited_token,
     )
 
@@ -397,7 +394,7 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
             )
         case AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+                CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
         case unknown:
@@ -459,12 +456,14 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
             _handshake_abort(
                 CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
             )
-        case (
-            AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
-            | AuthInvitedAuthBadOutcome.INVITATION_NOT_FOUND
-        ):
+        case AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+                CustomHttpStatus.OrganizationNotFound,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthInvitedAuthBadOutcome.INVITATION_NOT_FOUND:
+            _handshake_abort(
+                CustomHttpStatus.BadAuthenticationInfo,
                 api_version=parsed.settled_api_version,
             )
         case AuthInvitedAuthBadOutcome.INVITATION_ALREADY_USED:
@@ -512,16 +511,13 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
         expected_accept_type=None,
         expected_content_type=CONTENT_TYPE_MSGPACK,
     )
-    assert parsed.authenticated_device_id is not None
-    assert parsed.authenticated_signature is not None
+    assert parsed.authenticated_token is not None
 
     body: bytes = await _rpc_get_body_with_limit_check(request)
     outcome = await backend.auth.authenticated_auth(
         now=DateTime.now(),
         organization_id=parsed.organization_id,
-        device_id=parsed.authenticated_device_id,
-        signature=parsed.authenticated_signature,
-        body=body,
+        token=parsed.authenticated_token,
     )
     match outcome:
         case AuthenticatedAuthInfo() as auth_info:
@@ -532,7 +528,12 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
             )
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+                CustomHttpStatus.OrganizationNotFound,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+            _handshake_abort(
+                CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
             )
         case (
@@ -592,15 +593,12 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         # We don't care of Content-Type given the request has no body
         expected_content_type=None,
     )
-    assert parsed.authenticated_device_id is not None
-    assert parsed.authenticated_signature is not None
+    assert parsed.authenticated_token is not None
 
     outcome = await backend.auth.authenticated_auth(
         now=DateTime.now(),
         organization_id=parsed.organization_id,
-        device_id=parsed.authenticated_device_id,
-        signature=parsed.authenticated_signature,
-        body=b"",  # Body is empty for a get !
+        token=parsed.authenticated_token,
     )
     match outcome:
         case AuthenticatedAuthInfo() as auth_info:
@@ -611,7 +609,12 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
             )
         case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
             _handshake_abort(
-                CustomHttpStatus.OrganizationOrInvitationInvalidOrNotFound,
+                CustomHttpStatus.OrganizationNotFound,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+            _handshake_abort(
+                CustomHttpStatus.TokenExpired,
                 api_version=parsed.settled_api_version,
             )
         case (

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from base64 import b64decode, b64encode
+from base64 import b64decode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import AsyncGenerator, AsyncIterator, assert_never
@@ -25,6 +25,7 @@ from parsec._parsec import (
     testbed as tb,
 )
 from parsec.asgi import AsgiApp
+from parsec.components.auth import AuthenticatedToken
 from tests.common.backend import SERVER_DOMAIN, TestbedBackend
 from tests.common.rpc import (
     BaseAnonymousRpcClient,
@@ -94,9 +95,9 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": "4.0",
-            "Authorization": "PARSEC-SIGN-ED25519",
-            "Author": b64encode(device_id.str.encode("utf8")).decode(),
         }
+        # Useful to mock the current time
+        self.now_factory = DateTime.now
 
     @property
     def user_id(self) -> UserID:
@@ -114,8 +115,15 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
                 assert_never(unknown)
 
     async def _do_request(self, req: bytes) -> bytes:
-        signature = b64encode(self.signing_key.sign_only_signature(req)).decode()
-        headers = {**self.headers, "Signature": signature}
+        token = AuthenticatedToken.generate_raw(
+            self.device_id,
+            self.now_factory(),
+            self.signing_key,
+        )
+        headers = {
+            "Authorization": f"Bearer {token.decode()}",
+            **self.headers,
+        }
         rep = await self.raw_client.post(self.url, headers=headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
@@ -123,13 +131,18 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
 
     @asynccontextmanager
     async def events_listen(
-        self, last_event_id: str | None = None
+        self, last_event_id: str | None = None, now: DateTime | None = None
     ) -> AsyncIterator[EventsListenSSE]:
-        signature = b64encode(self.signing_key.sign_only_signature(b"")).decode()
+        now = now or DateTime.now()
+        token = AuthenticatedToken.generate_raw(
+            self.device_id,
+            now,
+            self.signing_key,
+        )
         headers = {
-            **self.headers,
-            "Signature": signature,
+            "Authorization": f"Bearer {token.decode()}",
             "Accept": "text/event-stream",
+            **self.headers,
         }
         if last_event_id is not None:
             headers["Last-Event-ID"] = last_event_id
@@ -138,14 +151,19 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         ) as event_source:
             yield EventsListenSSE(event_source)
 
-    async def raw_sse_connection(self) -> Response:
-        signature = b64encode(self.signing_key.sign_only_signature(b"")).decode()
+    async def raw_sse_connection(self, now: DateTime | None = None) -> Response:
+        now = now or DateTime.now()
+        token = AuthenticatedToken.generate_raw(
+            self.device_id,
+            now,
+            self.signing_key,
+        )
         return await self.raw_client.get(
             f"{self.url}/events",
             headers={
-                **self.headers,
-                "Signature": signature,
+                "Authorization": f"Bearer {token.decode()}",
                 "Accept": "text/event-stream",
+                **self.headers,
             },
         )
 
@@ -164,7 +182,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         self.headers = {
             "Content-Type": "application/msgpack",
             "Api-Version": "4.0",
-            "Invitation-Token": self.token.hex,
+            "Authorization": f"Bearer {self.token.hex}",
         }
 
     @property

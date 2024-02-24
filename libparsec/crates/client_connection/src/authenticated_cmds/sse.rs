@@ -4,37 +4,15 @@ use std::{fmt::Debug, marker::PhantomData, str::FromStr, task::Poll, time::Durat
 
 use data_encoding::BASE64;
 use eventsource_stream::{Event, EventStreamError};
-use libparsec_platform_async::stream::Stream;
-use reqwest::{header::HeaderValue, StatusCode};
+use reqwest::header::HeaderValue;
 
-use libparsec_platform_async::BoxStream;
+use libparsec_platform_async::{stream::Stream, BoxStream};
 use libparsec_protocol::API_LATEST_MAJOR_VERSION;
 use libparsec_types::ProtocolRequest;
 
 use crate::error::ConnectionError;
 
 pub(crate) const EVENT_STREAM_CONTENT_TYPE: &str = "text/event-stream";
-
-pub(crate) fn check_response(response: &reqwest::Response) -> Result<(), SSEConnectionError> {
-    match response.status() {
-        StatusCode::OK => {}
-        status => return Err(SSEConnectionError::InvalidStatusCode(status)),
-    }
-
-    let content_type = response
-        .headers()
-        .get(reqwest::header::CONTENT_TYPE)
-        .ok_or_else(|| SSEConnectionError::InvalidContentType(HeaderValue::from_static("")))?;
-    let mime_type = content_type
-        .to_str()
-        .map_err(|_| SSEConnectionError::InvalidContentType(content_type.clone()))
-        .map(|e| e.split(';').next().expect("first item always exists"))?;
-
-    if mime_type != EVENT_STREAM_CONTENT_TYPE {
-        return Err(SSEConnectionError::InvalidContentType(content_type.clone()));
-    }
-    Ok(())
-}
 
 pub struct SSEStream<T>
 where
@@ -126,6 +104,7 @@ where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     T::Response: Debug + PartialEq,
 {
+    println!("event: {:?}", event);
     let message = match event.event.as_ref() {
         "missed_events" => Ok(SSEResponseOrMissedEvents::MissedEvents),
         "message" => BASE64

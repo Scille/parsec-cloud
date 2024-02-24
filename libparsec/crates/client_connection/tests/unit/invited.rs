@@ -68,7 +68,11 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
             );
             // Cannot check `User-Agent` here given reqwest adds it in a later step
             // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
-            assert!(headers.get("Invitation-Token").is_some());
+            assert!(headers
+                .get("Authorization")
+                .unwrap()
+                .as_bytes()
+                .starts_with(b"Bearer "));
 
             let body = request.body().unwrap().as_bytes().unwrap();
             let request = invited_cmds::AnyCmdReq::load(body).unwrap();
@@ -124,7 +128,7 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     if mocked {
         test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
             Ok(ResponseMock::Mocked((
-                StatusCode::NOT_FOUND,
+                StatusCode::FORBIDDEN,
                 HeaderMap::new(),
                 Bytes::new(),
             )))
@@ -137,7 +141,12 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
         })
         .await;
     assert!(
-        matches!(rep, Err(ConnectionError::InvitationNotFound)),
+        matches!(
+            rep,
+            Err(ConnectionError::InvalidResponseStatus(
+                StatusCode::FORBIDDEN
+            ))
+        ),
         r#"expected `InvitationNotFound`, but got {rep:?}"#
     );
 }
