@@ -51,8 +51,15 @@ pub(crate) fn prepare_read(
     size: u64,
     offset: u64,
 ) -> PyResult<&PyTuple> {
-    let result = file_operations::prepare_read(&manifest.0, size, offset);
-    Ok(to_py_chunks(py, result))
+    let (chunks, size, offset) = file_operations::prepare_read(&manifest.0, size, offset);
+    Ok(PyTuple::new(
+        py,
+        vec![
+            to_py_chunks(py, chunks).into_py(py),
+            size.into_py(py),
+            offset.into_py(py),
+        ],
+    ))
 }
 
 #[pyfunction]
@@ -82,13 +89,11 @@ pub(crate) fn prepare_resize(
     size: u64,
     timestamp: DateTime,
 ) -> PyResult<&PyTuple> {
-    let (write_operations, to_remove) =
-        file_operations::prepare_resize(&mut manifest.0, size, timestamp.0);
+    let to_remove = file_operations::prepare_resize(&mut manifest.0, size, timestamp.0);
     Ok(PyTuple::new(
         py,
         vec![
             LocalFileManifest(manifest.0).into_py(py),
-            to_py_write_operations(py, write_operations).into_py(py),
             to_py_removed_ids(py, to_remove)?.into_py(py),
         ],
     ))

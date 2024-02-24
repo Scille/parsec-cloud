@@ -116,14 +116,12 @@ class FileTransactions:
         await self.local_storage.set_chunk(chunk.id, data)
         return len(data)
 
-    async def _build_data(self, chunks: tuple[Chunk, ...]) -> tuple[bytes, list[BlockAccess]]:
-        # Empty array
-        if not chunks:
-            return bytearray(), []
-
+    async def _build_data(
+        self, chunks: tuple[Chunk, ...], size: int, offset: int
+    ) -> tuple[bytes, list[BlockAccess]]:
         # Build byte array
         missing = []
-        start, stop = chunks[0].start, chunks[-1].stop
+        start, stop = offset, offset + size
         result = bytearray(stop - start)
         for chunk in chunks:
             try:
@@ -286,8 +284,8 @@ class FileTransactions:
                     return b""
 
                 # Prepare
-                chunks = prepare_read(manifest, size, offset)
-                data, missing = await self._build_data(chunks)
+                chunks, size, offset = prepare_read(manifest, size, offset)
+                data, missing = await self._build_data(chunks, size, offset)
 
                 # Return the data
                 if not missing:
@@ -310,11 +308,7 @@ class FileTransactions:
 
         # Prepare
         updated = self.device.timestamp()
-        manifest, write_operations, removed_ids = prepare_resize(manifest, length, updated)
-
-        # Writing
-        for chunk, offset in write_operations:
-            await self._write_chunk(chunk, b"", offset)
+        manifest, removed_ids = prepare_resize(manifest, length, updated)
 
         # Atomic change
         await self.local_storage.set_manifest(
@@ -332,7 +326,9 @@ class FileTransactions:
         # Perform operations
         for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
             # Build data block
-            data, extra_missing = await self._build_data(source)
+            data, extra_missing = await self._build_data(
+                source, destination.stop - destination.start, destination.start
+            )
 
             # Missing data
             if extra_missing:
