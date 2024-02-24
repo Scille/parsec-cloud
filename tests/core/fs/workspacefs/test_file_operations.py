@@ -45,13 +45,9 @@ class Storage(dict):
         data = padded_data(content, offset, offset + chunk.stop - chunk.start)
         self.write_chunk_data(chunk.id, data)
 
-    def build_data(self, chunks: Tuple[Chunk]) -> bytearray:
-        # Empty array
-        if not chunks:
-            return bytearray()
-
+    def build_data(self, chunks: Tuple[Chunk], size: int, offset: int) -> bytearray:
         # Build byte array
-        start, stop = chunks[0].start, chunks[-1].stop
+        start, stop = offset, offset + size
         result = bytearray(stop - start)
         for chunk in chunks:
             result[chunk.start - start : chunk.stop - start] = self.read_chunk(chunk)
@@ -62,8 +58,8 @@ class Storage(dict):
     # File operations
 
     def read(self, manifest: LocalFileManifest, size: int, offset: int) -> bytearray:
-        chunks = prepare_read(manifest, size, offset)
-        return self.build_data(chunks)
+        chunks, size, offset = prepare_read(manifest, size, offset)
+        return self.build_data(chunks, size, offset)
 
     def write(
         self, manifest: LocalFileManifest, content: bytes, offset: int, timestamp: DateTime
@@ -88,16 +84,14 @@ class Storage(dict):
         if size == manifest.size:
             return manifest
         # Resize
-        new_manifest, write_operations, removed_ids = prepare_resize(manifest, size, timestamp)
-        for chunk, offset in write_operations:
-            self.write_chunk(chunk, b"", offset)
+        new_manifest, removed_ids = prepare_resize(manifest, size, timestamp)
         for removed_id in removed_ids:
             self.clear_chunk_data(removed_id)
         return new_manifest
 
     def reshape(self, manifest: LocalFileManifest) -> LocalFileManifest:
         for block, source, destination, write_back, removed_ids in prepare_reshape(manifest):
-            data = self.build_data(source)
+            data = self.build_data(source, destination.stop - destination.start, destination.start)
             new_chunk = destination.evolve_as_block(data)
             if write_back:
                 self.write_chunk(new_chunk, data)
@@ -162,12 +156,9 @@ def test_complete_scenario():
         expected = b"Hello world !\n More content" + b"\x00" * 13
         assert storage.read(manifest, 40, 0) == expected
 
-    (_, _, _, chunk7), (chunk8,) = manifest.blocks[1:]
-    assert storage[chunk7.id] == b"\x00" * 5
-    assert storage[chunk8.id] == b"\x00" * 8
     assert manifest == base.evolve(
         size=40,
-        blocks=((chunk0, chunk1, chunk2), (chunk4, chunk5, chunk6, chunk7), (chunk8,)),
+        blocks=((chunk0, chunk1, chunk2), (chunk4, chunk5, chunk6)),
         updated=t6,
     )
 
@@ -213,6 +204,14 @@ def test_file_operations(hypothesis_settings, tmpdir, alice):
         @invariant()
         def integrity(self) -> None:
             self.manifest.assert_integrity()
+
+        @invariant()
+        def remote_conversion(self) -> None:
+            if not self.manifest.is_reshaped():
+                return
+            LocalFileManifest.from_remote(
+                self.manifest.to_remote(alice.device_id, alice.timestamp())
+            ).assert_integrity()
 
         @invariant()
         def leaks(self) -> None:

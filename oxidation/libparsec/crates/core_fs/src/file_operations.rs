@@ -3,6 +3,7 @@
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::num::NonZeroU64;
+use std::vec;
 
 use libparsec_types::prelude::*;
 
@@ -16,9 +17,7 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
     // Bisect
     let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
         Ok(found_index) => found_index,
-        Err(insert_index) => insert_index
-            .checked_sub(1)
-            .expect("First chunk always exists and start at 0"),
+        Err(insert_index) => insert_index.saturating_sub(1),
     };
     let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
         Ok(found_index) => found_index,
@@ -30,6 +29,7 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
         .get(start_index..stop_index)
         .unwrap_or_default()
         .iter()
+        .filter(move |chunk| chunk.start < stop && chunk.stop.get() > start)
         .map(move |chunk| {
             let mut new_chunk = chunk.clone();
             new_chunk.start = max(chunk.start, start);
@@ -45,7 +45,11 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
 /// Prepare a read operation on a provided manifest.
 ///
 /// Return a contiguous `Vec` of chunks that must be read and concatenated.
-pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
+pub fn prepare_read(
+    manifest: &LocalFileManifest,
+    size: u64,
+    offset: u64,
+) -> (Vec<Chunk>, u64, u64) {
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
     let size = min(
@@ -62,8 +66,8 @@ pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec
     let stop_block = (offset + size + blocksize - 1) / blocksize;
 
     // Loop over blocks
-    (start_block..stop_block)
-        .flat_map(move |block| {
+    let chunks = (start_block..stop_block)
+        .filter_map(move |block| {
             // Get sub_start, sub_stop and sub_size
             let block_start = block * blocksize;
             let sub_start = max(offset, block_start);
@@ -72,13 +76,16 @@ pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec
                 .checked_sub(sub_start)
                 .expect("Sub-stop is always greater than sub-start");
             // Get the corresponding chunks
-            let block_chunks = manifest
+            manifest
                 .get_chunks(block as usize)
-                .expect("A valid manifest must have enough blocks to cover its full range.");
-            block_read(block_chunks, sub_size, sub_start)
+                .filter(|block_chunks| !block_chunks.is_empty())
+                .map(|block_chunks| block_read(block_chunks, sub_size, sub_start))
         })
+        .flatten()
         // Collect as a flatten vec of Chunks
-        .collect()
+        .collect();
+
+    (chunks, size, offset)
 }
 
 // Prepare write
@@ -99,9 +106,7 @@ fn block_write(
     // Bisect
     let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
         Ok(found_index) => found_index,
-        Err(insert_index) => insert_index
-            .checked_sub(1)
-            .expect("First chunk always exists and start at 0"),
+        Err(insert_index) => insert_index.saturating_sub(1),
     };
     let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
         Ok(found_index) => found_index,
@@ -137,8 +142,10 @@ fn block_write(
         .expect("Indexes are found using binary search and hence always valid");
     if start_chunk.start < start {
         let mut new_start_chunk = start_chunk.clone();
-        new_start_chunk.stop = NonZeroU64::new(start)
-            .expect("Cannot be zero since it's strictly greater than start_chunk.start");
+        new_start_chunk.stop = start_chunk.stop.min(
+            NonZeroU64::new(start)
+                .expect("Cannot be zero since it's strictly greater than start_chunk.start"),
+        );
         new_chunks.push(new_start_chunk);
         removed_ids.remove(&start_chunk.id);
     }
@@ -147,14 +154,16 @@ fn block_write(
     new_chunks.push(new_chunk);
 
     // Test stop_chunk
-    let stop_chunk = chunks
-        .get(stop_index - 1)
-        .expect("Indexes are found using binary search and hence always valid");
-    if stop_chunk.stop.get() > stop {
-        let mut new_stop_chunk = stop_chunk.clone();
-        new_stop_chunk.start = stop;
-        new_chunks.push(new_stop_chunk);
-        removed_ids.remove(&stop_chunk.id);
+    if stop_index > 0 {
+        let stop_chunk = chunks
+            .get(stop_index - 1)
+            .expect("Indexes are found using binary search and hence always valid");
+        if stop_chunk.stop.get() > stop {
+            let mut new_stop_chunk = stop_chunk.clone();
+            new_stop_chunk.start = stop;
+            new_chunks.push(new_stop_chunk);
+            removed_ids.remove(&stop_chunk.id);
+        }
     }
 
     // Chunks after start chunk
@@ -184,20 +193,12 @@ fn block_write(
 /// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
 pub fn prepare_write(
     manifest: &mut LocalFileManifest,
-    mut size: u64,
-    mut offset: u64,
+    size: u64,
+    offset: u64,
     timestamp: DateTime,
 ) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
-    let mut padding = 0;
     let mut removed_ids = HashSet::new();
     let mut write_operations = vec![];
-
-    // Padding
-    if offset > manifest.size {
-        padding = offset - manifest.size;
-        size += padding;
-        offset = manifest.size;
-    }
 
     // Find proper block indexes
     let blocksize = u64::from(manifest.blocksize);
@@ -221,7 +222,7 @@ pub fn prepare_write(
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
         );
-        write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
+        write_operations.push((new_chunk.clone(), content_offset as i64));
 
         // Get the corresponding chunks
         let new_chunks = match manifest.get_chunks(block as usize) {
@@ -235,11 +236,10 @@ pub fn prepare_write(
         };
 
         // Update data structures
-        if manifest.blocks.len() as u64 == block {
-            manifest.blocks.push(new_chunks);
-        } else {
-            manifest.blocks[block as usize] = new_chunks;
+        while manifest.blocks.len() as u64 <= block {
+            manifest.blocks.push(vec![]);
         }
+        manifest.blocks[block as usize] = new_chunks;
     }
 
     // Evolve manifest
@@ -280,30 +280,35 @@ fn prepare_truncate(
         .map(|x| x.id)
         .collect();
 
-    // No block to split
-    if remainder == 0 {
-        // Simply truncate to the correct amount of blocks
-        manifest.blocks.truncate(block);
+    let empty = vec![];
+    let chunks = manifest.get_chunks(block).unwrap_or(&empty);
 
-    // Last block needs to be split
+    // Find the index of the first chunk to exclude
+    let chunk_index = match chunks.binary_search_by_key(&size, |chunk| chunk.start) {
+        Ok(found_index) => found_index,
+        Err(insert_index) => insert_index,
+    };
+
+    if chunk_index == 0 {
+        // No need to split the last block
+        manifest.blocks.truncate(block);
+        while manifest.blocks.last().map_or(false, |x| x.is_empty()) {
+            manifest.blocks.pop();
+        }
     } else {
-        let chunks = manifest
-            .get_chunks(block)
-            .expect("Block is expected to be part of the manifest");
+        assert!(remainder != 0, "The remainder cannot be zero");
 
         // Find the index of the last chunk to include
-        let chunk_index = match chunks.binary_search_by_key(&size, |chunk| chunk.start) {
-            Ok(found_index) => found_index - 1,
-            Err(insert_index) => insert_index - 1,
-        };
+        let chunk_index = chunk_index - 1;
 
         // Create the new last chunk
         let last_chunk = chunks
             .get(chunk_index)
             .expect("The index is found using binary search and hence always valid");
         let mut new_chunk = last_chunk.clone();
-        new_chunk.stop =
-            NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero");
+        new_chunk.stop = new_chunk
+            .stop
+            .min(NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero"));
 
         // Create the new chunks for the last block
         let mut new_chunks = chunks.get(..chunk_index).unwrap_or_default().to_vec();
@@ -337,14 +342,16 @@ pub fn prepare_resize(
     manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
-) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
+) -> HashSet<ChunkID> {
     if size >= manifest.size {
         // Extend
-        prepare_write(manifest, 0, size, timestamp)
+        manifest.need_sync = true;
+        manifest.size = size;
+        manifest.updated = timestamp;
+        HashSet::new()
     } else {
         // Truncate
-        let removed_ids = prepare_truncate(manifest, size, timestamp);
-        (vec![], removed_ids)
+        prepare_truncate(manifest, size, timestamp)
     }
 }
 
@@ -371,8 +378,8 @@ pub fn prepare_reshape(
         .enumerate()
         .filter_map(|(block, chunks)| {
             let block = block as u64;
-            // Already a valid block
-            if chunks.len() == 1 && chunks[0].is_block() {
+            // All zeroes or already a valid block
+            if chunks.is_empty() || chunks.len() == 1 && chunks[0].is_block() {
                 None
             // Already a pseudo-block, we can keep the chunk as it is
             } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
@@ -449,12 +456,9 @@ mod tests {
             self.write_chunk_data(chunk.id, data)
         }
 
-        fn build_data(&self, chunks: &[Chunk]) -> Vec<u8> {
-            if chunks.is_empty() {
-                return vec![];
-            }
-            let start = chunks.first().unwrap().start as usize;
-            let stop = chunks.last().unwrap().stop.get() as usize;
+        fn build_data(&self, chunks: &[Chunk], size: u64, offset: u64) -> Vec<u8> {
+            let start = offset as usize;
+            let stop = (offset + size) as usize;
             let mut result: Vec<u8> = vec![0; stop - start];
             for chunk in chunks {
                 let data = self.read_chunk(chunk);
@@ -467,8 +471,8 @@ mod tests {
         // File operations
 
         fn read(&self, manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<u8> {
-            let chunks = prepare_read(manifest, size, offset);
-            self.build_data(&chunks)
+            let (chunks, size, offset) = prepare_read(manifest, size, offset);
+            self.build_data(&chunks, size, offset)
         }
 
         fn write(
@@ -499,11 +503,7 @@ mod tests {
                 return;
             }
             // Resize
-            let empty = vec![];
-            let (write_operations, removed_ids) = prepare_resize(manifest, size, timestamp);
-            for (chunk, offset) in write_operations {
-                self.write_chunk(&chunk, &empty, offset);
-            }
+            let removed_ids = prepare_resize(manifest, size, timestamp);
             for removed_id in removed_ids {
                 self.clear_chunk_data(removed_id);
             }
@@ -512,7 +512,11 @@ mod tests {
         fn reshape(&mut self, manifest: &mut LocalFileManifest) {
             let collected: Vec<_> = prepare_reshape(manifest).collect();
             for (block, source, destination, write_back, removed_ids) in collected {
-                let data = self.build_data(&source);
+                let data = self.build_data(
+                    &source,
+                    destination.stop.get() - destination.start,
+                    destination.start,
+                );
                 let new_chunk = destination.evolve_as_block(&data).unwrap();
                 if write_back {
                     self.write_chunk(&new_chunk, &data, 0);
@@ -652,29 +656,16 @@ mod tests {
         // Check manifest
         assert_eq!(manifest.size, 40);
         assert_eq!(manifest.updated, t6);
-        assert_eq!(manifest.blocks.len(), 3);
+        assert_eq!(manifest.blocks.len(), 2);
         assert_eq!(manifest.blocks[0].len(), 3);
-        assert_eq!(manifest.blocks[1].len(), 4);
-        assert_eq!(manifest.blocks[2].len(), 1);
-        let chunk7 = manifest.blocks[1][3].clone();
-        let chunk8 = manifest.blocks[2][0].clone();
+        assert_eq!(manifest.blocks[1].len(), 3);
         assert_eq!(
             manifest.blocks,
             vec![
                 vec![chunk0.clone(), chunk1.clone(), chunk2.clone()],
-                vec![
-                    chunk4.clone(),
-                    chunk5.clone(),
-                    chunk6.clone(),
-                    chunk7.clone()
-                ],
-                vec![chunk8.clone()],
+                vec![chunk4.clone(), chunk5.clone(), chunk6.clone(),],
             ]
         );
-
-        // Check chunks
-        assert_eq!(storage.read_chunk_data(chunk7.id), [0; 5]);
-        assert_eq!(storage.read_chunk_data(chunk8.id), [0; 8]);
 
         // Extend file and read everything back
         let t7 = DateTime::from_str("2000-01-01 07:00:00 UTC").unwrap();
