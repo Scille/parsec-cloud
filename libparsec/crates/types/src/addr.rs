@@ -7,7 +7,7 @@ use std::str::FromStr;
 use data_encoding::BASE32;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
-use url::Url;
+pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
