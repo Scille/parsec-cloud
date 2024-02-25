@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import AsyncIterator, Callable, Iterator, Sequence, Type, assert_never
 from unittest.mock import ANY
+from uuid import UUID
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
@@ -312,7 +313,7 @@ class BaseEventsComponent:
     async def _register_client(
         self,
         client_ctx: AuthenticatedClientContext,
-        last_event_id: str | None,
+        last_event_id: UUID | None,
         cancel_scope: anyio.CancelScope,
     ) -> (
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
@@ -396,7 +397,7 @@ class BaseEventsComponent:
                     # Found the last event !
                     # Now we can populate the channel with all the missed event.
                     for event in missed_events:
-                        channel_sender.send_nowait(event)
+                        channel_sender.send_nowait((event, None))
                     break
                 if event.is_event_for_client(registered):
                     if len(missed_events) >= PER_CLIENT_MAX_BUFFER_EVENTS:
@@ -417,7 +418,7 @@ class BaseEventsComponent:
 
     @asynccontextmanager
     async def sse_api_events_listen(
-        self, client_ctx: AuthenticatedClientContext, last_event_id: str | None
+        self, client_ctx: AuthenticatedClientContext, last_event_id: UUID | None
     ) -> AsyncIterator[
         tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
         | SseAPiEventsListenBadOutcome
