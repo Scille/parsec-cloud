@@ -87,7 +87,6 @@ where
     T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     T::Response: Debug + PartialEq,
 {
-    println!("event: {:?}", event);
     let message = match event.event.as_ref() {
         "missed_events" => SSEResponseOrMissedEvents::MissedEvents,
         "message" if event.data.is_empty() => SSEResponseOrMissedEvents::Empty,
