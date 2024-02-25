@@ -579,8 +579,9 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     let alice_disconnect_proxy = disconnect_proxy::spawn(env.server_addr.clone())
         .await
         .unwrap();
-    let alice = {
-        let mut alice = env.local_device("alice@dev1");
+    let alice = env.local_device("alice@dev1");
+    let alice_through_disconnect_proxy = {
+        let mut alice = alice.clone();
         Arc::make_mut(&mut alice).organization_addr = BackendOrganizationAddr::new(
             alice_disconnect_proxy.to_backend_addr(),
             alice.organization_id().clone(),
@@ -590,9 +591,12 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     };
     let bob = env.local_device("bob@dev1");
 
-    let cmds_alice =
-        AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
-            .unwrap();
+    let cmds_alice = AuthenticatedCmds::new(
+        &env.discriminant_dir,
+        alice_through_disconnect_proxy.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
     let cmds_bob =
         AuthenticatedCmds::new(&env.discriminant_dir, bob.clone(), ProxyConfig::default()).unwrap();
 
@@ -659,9 +663,12 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
 
     // 4) Alice reconnects and should retrieve the missed events
 
-    let cmds_alice =
-        AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
-            .unwrap();
+    let cmds_alice = AuthenticatedCmds::new(
+        &env.discriminant_dir,
+        alice_through_disconnect_proxy.clone(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
     let mut sse_alice = cmds_alice
         .start_sse::<authenticated_cmds::events_listen::Req>(last_alice_event_id)
         .await
@@ -679,7 +686,6 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
 
     p_assert_eq!(
         sse_alice.next().await.unwrap().unwrap().message,
-        // sse_alice.next().await.unwrap().unwrap().message,
         SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
             authenticated_cmds::events_listen::APIEvent::Pinged {
                 ping: "missed 2".to_owned()
@@ -697,4 +703,30 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     );
 
     alice_disconnect_proxy.close().await.unwrap();
+
+    // 5) Alice reconnects, this time providing a last event ID unknown to the server
+
+    let unknown_or_too_old_event_id = "062bcb4c74b64431a3967087f9875536".to_string();
+
+    let cmds_alice =
+        AuthenticatedCmds::new(&env.discriminant_dir, alice, ProxyConfig::default()).unwrap();
+    let mut sse_alice = cmds_alice
+        .start_sse::<authenticated_cmds::events_listen::Req>(Some(unknown_or_too_old_event_id))
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        sse_alice.next().await.unwrap().unwrap().message,
+        SSEResponseOrMissedEvents::Response(authenticated_cmds::events_listen::Rep::Ok(
+            authenticated_cmds::events_listen::APIEvent::ServerConfig {
+                active_users_limit: ActiveUsersLimit::NoLimit,
+                user_profile_outsider_allowed: true
+            }
+        ))
+    );
+
+    p_assert_eq!(
+        sse_alice.next().await.unwrap().unwrap().message,
+        SSEResponseOrMissedEvents::MissedEvents
+    );
 }
