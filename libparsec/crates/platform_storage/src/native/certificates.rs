@@ -277,8 +277,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         let mut items = Vec::with_capacity(rows.len());
         for row in rows {
-            let raw_timestamp = row.get::<f64, _>(0);
-            let certificate = row.get::<Vec<u8>, _>(1);
+            let raw_timestamp = row.try_get::<f64, _>(0)?;
+            let certificate = row.try_get::<Vec<u8>, _>(1)?;
             let timestamp = DateTime::from_f64_with_us_precision(raw_timestamp);
             items.push((timestamp, certificate))
         }

@@ -20,6 +20,7 @@ use super::model::{
 
 #[derive(Debug)]
 pub(crate) struct PlatformWorkspaceStorage {
+    cache_max_blocks: u64,
     conn: SqliteConnection,
     #[cfg(feature = "test-with-testbed")]
     path_info: super::testbed::DBPathInfo,
@@ -34,6 +35,7 @@ impl PlatformWorkspaceStorage {
         data_base_dir: &Path,
         device: &LocalDevice,
         realm_id: VlobID,
+        cache_max_blocks: u64,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
@@ -115,6 +117,7 @@ impl PlatformWorkspaceStorage {
         // 3) All done !
 
         let storage = Self {
+            cache_max_blocks,
             conn,
             #[cfg(feature = "test-with-testbed")]
             path_info,
@@ -192,15 +195,15 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
-        match db_get_chunk(&mut self.conn, chunk_id).await? {
-            Some(data) => Ok(Some(data)),
-            None => db_get_chunk(&mut self.cache_conn, chunk_id).await,
-        }
+        db_get_chunk(&mut self.conn, chunk_id).await
     }
 
-    pub async fn get_block(&mut self, block_id: BlockID) -> anyhow::Result<Option<Vec<u8>>> {
-        let chunk_id = ChunkID::from(block_id);
-        db_get_chunk(&mut self.cache_conn, chunk_id).await
+    pub async fn get_block(
+        &mut self,
+        block_id: BlockID,
+        now: DateTime,
+    ) -> anyhow::Result<Option<Vec<u8>>> {
+        db_get_block_and_update_accessed_on(&mut self.cache_conn, block_id, now).await
     }
 
     pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
@@ -247,9 +250,28 @@ impl PlatformWorkspaceStorage {
         db_insert_chunk(&mut self.conn, chunk_id, encrypted).await
     }
 
-    pub async fn set_block(&mut self, block_id: BlockID, encrypted: &[u8]) -> anyhow::Result<()> {
-        let chunk_id = ChunkID::from(block_id);
-        db_insert_chunk(&mut self.cache_conn, chunk_id, encrypted).await
+    pub async fn set_block(
+        &mut self,
+        block_id: BlockID,
+        encrypted: &[u8],
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        let mut transaction = self.cache_conn.begin().await?;
+
+        db_insert_block(&mut *transaction, block_id, encrypted, now).await?;
+        let nb_blocks = db_get_blocks_count(&mut *transaction).await?;
+
+        let extra_blocks = nb_blocks.saturating_sub(self.cache_max_blocks);
+
+        // Cleanup is needed
+        if extra_blocks > 0 {
+            // Remove the extra block plus 10% of the cache size, i.e 100 blocks
+            let to_remove = extra_blocks + self.cache_max_blocks / 10;
+            db_cleanup_blocks(&mut *transaction, to_remove).await?;
+        }
+
+        transaction.commit().await?;
+        Ok(())
     }
 
     /// Only used for debugging tests
@@ -319,6 +341,39 @@ impl PlatformWorkspaceStorage {
         }
         output += "]\n";
 
+        // Blocks
+
+        let rows = sqlx::query(
+            "SELECT \
+                chunk_id, \
+                size, \
+                offline, \
+                accessed_on
+            FROM chunks \
+            ",
+        )
+        .fetch_all(&mut self.cache_conn)
+        .await?;
+
+        output += "blocks: [\n";
+        for row in rows {
+            let block_id =
+                BlockID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e))?;
+            let size = row.try_get::<u32, _>(1)?;
+            let offline = row.try_get::<bool, _>(2)?;
+            let accessed_on =
+                DateTime::from_f64_with_us_precision(row.try_get::<f64, _>(3)?).to_rfc3339();
+            output += &format!(
+                "{{\n\
+                \tblock_id: {block_id}\n\
+                \tsize: {size}\n\
+                \toffline: {offline}\n\
+                \taccessed_on: {accessed_on}\n\
+            }},\n",
+            );
+        }
+        output += "]\n";
+
         Ok(output)
     }
 }
@@ -330,9 +385,10 @@ pub async fn workspace_storage_non_speculative_init(
 ) -> anyhow::Result<()> {
     // 1) Open & initialize the database
 
-    let mut storage = PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id)
-        .await
-        .map_err(|err| err.context("cannot initialize database"))?;
+    let mut storage =
+        PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id, u64::MAX)
+            .await
+            .map_err(|err| err.context("cannot initialize database"))?;
 
     // 2) Populate the database with the workspace manifest
 
@@ -438,7 +494,7 @@ async fn db_get_manifest(
 
 pub async fn db_get_chunk(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
-    id: ChunkID,
+    chunk_id: ChunkID,
 ) -> anyhow::Result<Option<Vec<u8>>> {
     let row = sqlx::query(
         "SELECT data \
@@ -446,7 +502,33 @@ pub async fn db_get_chunk(
         WHERE chunk_id = ?1 \
         ",
     )
-    .bind(id.as_bytes())
+    .bind(chunk_id.as_bytes())
+    .fetch_optional(executor)
+    .await?;
+
+    match row {
+        Some(row) => {
+            let blob = row.try_get::<Vec<u8>, _>(0)?;
+            Ok(Some(blob))
+        }
+        None => Ok(None),
+    }
+}
+
+pub async fn db_get_block_and_update_accessed_on(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+    block_id: BlockID,
+    timestamp: DateTime,
+) -> anyhow::Result<Option<Vec<u8>>> {
+    let row = sqlx::query(
+        "UPDATE chunks \
+        SET accessed_on = ?1 \
+        WHERE chunk_id = ?2 \
+        RETURNING data \
+        ",
+    )
+    .bind(timestamp.get_f64_with_us_precision())
+    .bind(block_id.as_bytes())
     .fetch_optional(executor)
     .await?;
 
@@ -516,6 +598,82 @@ async fn db_insert_chunk(
     // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
     .bind(encrypted.len() as i64)
     .bind(false)
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+async fn db_insert_block(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+    block_id: BlockID,
+    encrypted: &[u8],
+    accessed_on: DateTime,
+) -> anyhow::Result<()> {
+    sqlx::query(
+        " \
+        INSERT INTO chunks(chunk_id, data, size, offline, accessed_on) \
+        VALUES ( \
+            ?1, \
+            ?2, \
+            ?3, \
+            ?4, \
+            ?5 \
+        ) \
+        ON CONFLICT DO UPDATE SET \
+            size = excluded.size, \
+            offline = excluded.offline, \
+            data = excluded.data, \
+            accessed_on = excluded.accessed_on \
+        ",
+    )
+    .bind(block_id.as_bytes())
+    .bind(encrypted)
+    // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
+    .bind(encrypted.len() as i64)
+    .bind(false)
+    .bind(accessed_on.get_f64_with_us_precision())
+    .execute(executor)
+    .await?;
+
+    Ok(())
+}
+
+async fn db_get_blocks_count(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<u64> {
+    let row = sqlx::query(
+        " \
+        SELECT COUNT(*) \
+        FROM chunks \
+        ",
+    )
+    .fetch_one(executor)
+    .await?;
+
+    // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
+    let nb_blocks = row.try_get::<i64, _>(0)?;
+
+    Ok(nb_blocks as u64)
+}
+
+async fn db_cleanup_blocks(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+    to_remove: u64,
+) -> anyhow::Result<()> {
+    sqlx::query(
+        " \
+        DELETE FROM chunks \
+        WHERE chunk_id IN ( \
+            SELECT chunk_id \
+            FROM chunks \
+            ORDER BY accessed_on ASC \
+            LIMIT ?1 \
+        ) \
+        ",
+    )
+    // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
+    .bind(to_remove as i64)
     .execute(executor)
     .await?;
 

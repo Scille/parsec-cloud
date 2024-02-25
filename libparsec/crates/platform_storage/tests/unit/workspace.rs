@@ -121,9 +121,10 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 
     let alice = env.local_device("alice@dev1");
 
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     // Checkpoint
 
@@ -134,7 +135,10 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 
     // Block
 
-    let maybe_block_encrypted = workspace_storage.get_block(block_id).await.unwrap();
+    let maybe_block_encrypted = workspace_storage
+        .get_block(block_id, alice.now())
+        .await
+        .unwrap();
     if matches!(fetch_strategy, FetchStrategy::No) {
         p_assert_eq!(maybe_block_encrypted, None);
     } else {
@@ -213,9 +217,10 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
     let entry_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
     let alice = env.local_device("alice@dev1");
 
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     // 1) Storage starts empty
 
@@ -227,6 +232,8 @@ checkpoint: 0
 vlobs: [
 ]
 chunks: [
+]
+blocks: [
 ]
 "
     );
@@ -258,9 +265,10 @@ chunks: [
     // 3) Re-starting the database and check data are still there
 
     workspace_storage.stop().await.unwrap();
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     p_assert_eq!(
         workspace_storage
@@ -285,6 +293,8 @@ vlobs: [
 },
 ]
 chunks: [
+]
+blocks: [
 ]
 "
     );
@@ -324,6 +334,8 @@ vlobs: [
 ]
 chunks: [
 ]
+blocks: [
+]
 "
     );
 }
@@ -335,9 +347,10 @@ async fn update_manifests(env: &TestbedEnv) {
     let entry2_id = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
     let alice = env.local_device("alice@dev1");
 
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     workspace_storage
         .update_manifests(
@@ -398,6 +411,8 @@ vlobs: [
 ]
 chunks: [
 ]
+blocks: [
+]
 "
     );
 }
@@ -408,9 +423,10 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
     let entry_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
     let alice = env.local_device("alice@dev1");
 
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     let chunk1_id = ChunkID::from_hex("aa0000000000000000000000000000c1").unwrap();
     let chunk2_id = ChunkID::from_hex("aa0000000000000000000000000000c2").unwrap();
@@ -485,6 +501,8 @@ chunks: [
 	offline: false
 },
 ]
+blocks: [
+]
 "
     );
 }
@@ -495,30 +513,49 @@ async fn get_and_set_chunk(env: &TestbedEnv) {
     let chunk_id = ChunkID::from_hex("aa0000000000000000000000000000f1").unwrap();
     let alice = env.local_device("alice@dev1");
 
-    let mut workspace_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    // 1) Insert chunk
 
     workspace_storage
         .set_chunk(chunk_id, b"<chunk1>".as_ref())
         .await
         .unwrap();
 
+    // 2) Get back chunk
+
     p_assert_eq!(
         workspace_storage
             .get_chunk(chunk_id)
             .await
             .unwrap()
-            .unwrap(),
-        b"<chunk1>"
+            .as_deref(),
+        Some(b"<chunk1>".as_ref())
     );
 
-    // TODO !
-    // // Make sure chunk and blocks don't get mixed !
-    // p_assert_eq!(
-    //     workspace_storage.get_block(BlockID::from(*chunk_id)).await.unwrap(),
-    //     None
-    // );
+    // 3) Test chunk or block access
+
+    p_assert_eq!(
+        workspace_storage
+            .get_chunk_or_block(chunk_id, "2000-01-03T00:00:00Z".parse().unwrap())
+            .await
+            .unwrap()
+            .as_deref(),
+        Some(b"<chunk1>".as_ref())
+    );
+
+    // 4) Make sure chunk and blocks don't get mixed !
+
+    p_assert_eq!(
+        workspace_storage
+            .get_block(BlockID::from(*chunk_id), alice.now())
+            .await
+            .unwrap(),
+        None
+    );
 
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
@@ -534,6 +571,234 @@ chunks: [
 	offline: false
 },
 ]
+blocks: [
+]
+"
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn get_and_set_block(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let block_id = BlockID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    // 1) Insert block
+
+    workspace_storage
+        .set_block(
+            block_id,
+            b"<block1>".as_ref(),
+            "2000-01-01T00:00:00Z".parse().unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let dump = workspace_storage.debug_dump().await.unwrap();
+    p_assert_eq!(
+        dump,
+        "\
+checkpoint: 0
+vlobs: [
+]
+chunks: [
+]
+blocks: [
+{
+	block_id: aa000000-0000-0000-0000-0000000000f1
+	size: 8
+	offline: false
+	accessed_on: 2000-01-01T00:00:00Z
+},
+]
+"
+    );
+
+    // 2) Get back block
+
+    p_assert_eq!(
+        workspace_storage
+            .get_block(block_id, "2000-01-02T00:00:00Z".parse().unwrap())
+            .await
+            .unwrap()
+            .as_deref(),
+        Some(b"<block1>".as_ref())
+    );
+
+    let dump = workspace_storage.debug_dump().await.unwrap();
+    p_assert_eq!(
+        dump,
+        "\
+checkpoint: 0
+vlobs: [
+]
+chunks: [
+]
+blocks: [
+{
+	block_id: aa000000-0000-0000-0000-0000000000f1
+	size: 8
+	offline: false
+	accessed_on: 2000-01-02T00:00:00Z
+},
+]
+"
+    );
+
+    // 3) Test chunk or block access
+
+    p_assert_eq!(
+        workspace_storage
+            .get_chunk_or_block(
+                ChunkID::from(*block_id),
+                "2000-01-03T00:00:00Z".parse().unwrap()
+            )
+            .await
+            .unwrap()
+            .as_deref(),
+        Some(b"<block1>".as_ref())
+    );
+
+    // 4) Make sure block and blocks don't get mixed !
+
+    p_assert_eq!(
+        workspace_storage
+            .get_chunk(ChunkID::from(*block_id))
+            .await
+            .unwrap(),
+        None
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn block_cache_cleanup(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let alice = env.local_device("alice@dev1");
+    let block_size = 512 * 1024; // 512Ko
+    let cache_size = 2_000_000; // ~2Mo
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, cache_size)
+            .await
+            .unwrap();
+
+    macro_rules! insert_block {
+        ($block_id:expr, $size:expr, $timestamp:expr) => {{
+            let block_id = BlockID::from_hex($block_id).unwrap();
+            let data = vec![0; $size];
+            workspace_storage
+                .set_block(block_id, &data, $timestamp.parse().unwrap())
+                .await
+                .unwrap();
+            block_id
+        }};
+    }
+
+    // 1) Insert block to reach the cache limit
+
+    insert_block!(
+        "aa0000000000000000000000000000f1",
+        block_size,
+        "2000-01-01T00:00:00Z"
+    );
+    let block2_id = insert_block!(
+        "aa0000000000000000000000000000f2",
+        block_size,
+        "2000-01-02T00:00:00Z"
+    );
+    insert_block!(
+        "aa0000000000000000000000000000f3",
+        block_size,
+        "2000-01-03T00:00:00Z"
+    );
+
+    // 2) Add one more block that should trigger the cleanup and remove block 1
+
+    insert_block!(
+        "aa0000000000000000000000000000f4",
+        block_size,
+        "2000-01-04T00:00:00Z"
+    );
+
+    let dump = workspace_storage.debug_dump().await.unwrap();
+    p_assert_eq!(
+        dump,
+        "\
+checkpoint: 0
+vlobs: [
+]
+chunks: [
+]
+blocks: [
+{
+	block_id: aa000000-0000-0000-0000-0000000000f2
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-02T00:00:00Z
+},
+{
+	block_id: aa000000-0000-0000-0000-0000000000f3
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-03T00:00:00Z
+},
+{
+	block_id: aa000000-0000-0000-0000-0000000000f4
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-04T00:00:00Z
+},
+]
+"
+    );
+
+    // 3) Accessing a block should prevent it from being the one to be removed
+
+    workspace_storage
+        .get_block(block2_id, "2000-01-05T00:00:00Z".parse().unwrap())
+        .await
+        .unwrap();
+
+    insert_block!(
+        "aa0000000000000000000000000000f5",
+        block_size,
+        "2000-01-06T00:00:00Z"
+    );
+
+    let dump = workspace_storage.debug_dump().await.unwrap();
+    p_assert_eq!(
+        dump,
+        "\
+checkpoint: 0
+vlobs: [
+]
+chunks: [
+]
+blocks: [
+{
+	block_id: aa000000-0000-0000-0000-0000000000f2
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-05T00:00:00Z
+},
+{
+	block_id: aa000000-0000-0000-0000-0000000000f4
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-04T00:00:00Z
+},
+{
+	block_id: aa000000-0000-0000-0000-0000000000f5
+	size: 524288
+	offline: false
+	accessed_on: 2000-01-06T00:00:00Z
+},
+]
 "
     );
 }
@@ -543,9 +808,10 @@ async fn checkpoint(env: &TestbedEnv) {
     let realm_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
     let alice = env.local_device("alice@dev1");
 
-    let mut user_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut user_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     // 1) Initial value
 
@@ -559,9 +825,10 @@ async fn checkpoint(env: &TestbedEnv) {
     // 3) Re-starting the database and check data are still there
 
     user_storage.stop().await.unwrap();
-    let mut user_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut user_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 1);
 }
@@ -579,9 +846,10 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     // 2) Check the database content
 
-    let mut user_storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id)
-        .await
-        .unwrap();
+    let mut user_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
 
     p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 0);
 
@@ -620,7 +888,7 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     std::fs::File::create(&not_a_dir_path).unwrap();
 
     p_assert_matches!(
-        WorkspaceStorage::start(&not_a_dir_path, &alice.local_device(), realm_id).await,
+        WorkspaceStorage::start(&not_a_dir_path, &alice.local_device(), realm_id, u64::MAX).await,
         Err(_)
     );
 

@@ -471,7 +471,8 @@ impl WorkspaceStore {
     ) -> Result<Self, anyhow::Error> {
         // 1) Open the database
 
-        let mut storage = WorkspaceStorage::start(data_base_dir, &device, realm_id).await?;
+        let mut storage =
+            WorkspaceStorage::start(data_base_dir, &device, realm_id, cache_size).await?;
 
         // 2) Load the workspace manifest (as it must always be synchronously available)
 
