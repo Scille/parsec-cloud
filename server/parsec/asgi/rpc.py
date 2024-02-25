@@ -12,6 +12,7 @@ from typing import (
     Sequence,
     assert_never,
 )
+from uuid import UUID
 
 import anyio
 import structlog
@@ -251,7 +252,7 @@ class ParsedAuthHeaders:
     user_agent: str
     authenticated_token: AuthenticatedToken | None
     invited_token: InvitationToken | None
-    last_event_id: str | None
+    last_event_id: UUID | None
 
 
 def _parse_auth_headers_or_abort(
@@ -351,6 +352,11 @@ def _parse_auth_headers_or_abort(
         last_event_id = None
     else:
         last_event_id = headers.get("Last-Event-Id")
+        if last_event_id is not None:
+            try:
+                last_event_id = UUID(last_event_id)
+            except ValueError:
+                last_event_id = None
 
     return ParsedAuthHeaders(
         organization_id=organization_id,
@@ -692,7 +698,11 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
                         # We have missed some events, most likely because the last event id
                         # provided by the client is too old. In this case we have to
                         # notify the client with a special `missed_events` message
-                        yield b"event:missed_events\n\n"
+                        #
+                        # Event if it is empty, `data` field must be provided or SSE
+                        # client will silently ignore the event.
+                        # (cf. https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage)
+                        yield b"event:missed_events\ndata:\n\n"
 
                     else:
                         (event, apiv4_sse_payload) = next_event

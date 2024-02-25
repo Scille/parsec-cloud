@@ -106,7 +106,7 @@ class ClientBroadcastableEvent(ABC):
     ) -> bytes:
         data = authenticated_cmds.latest.events_listen.RepOk(unit=unit).dump()
         if event_id is None:
-            return b"data:%b\n\n" % data
+            return b"data:%b\n\n" % b64encode(data)
         else:
             return b"data:%b\nid:%b\n\n" % (b64encode(data), event_id.hex.encode("ascii"))
 
@@ -299,26 +299,25 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
         )
 
 
-class EventOrganizationConfig(BaseModel, ClientBroadcastableEvent):
+# Not a `ClientBroadcastableEvent` given organization config event is a fake one generated
+# on demand and always provided as the first event when a client connects to the SSE endpoint.
+class EventOrganizationConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_CONFIG"] = "ORGANIZATION_CONFIG"
-    event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimitField
 
-    @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
         return self.organization_id == client.organization_id
 
-    @override
     def dump_as_apiv4_sse_payload(self) -> bytes:
-        return self._dump_as_apiv4_sse_payload(
+        return ClientBroadcastableEvent._dump_as_apiv4_sse_payload(
             authenticated_cmds.latest.events_listen.APIEventServerConfig(
                 user_profile_outsider_allowed=self.user_profile_outsider_allowed,
                 active_users_limit=self.active_users_limit,
             ),
-            self.event_id,
+            None,
         )
 
 

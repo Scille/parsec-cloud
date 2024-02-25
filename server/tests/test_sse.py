@@ -28,6 +28,7 @@ async def test_events_listen_auth_then_not_allowed(
 # TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:
 # TODO: - test keepalive (must be done by starting an actual uvicorn server)
 # TODO: - test `Last-Event-ID`
+# TODO: - test sending empty `Last-Event-ID` is different from not sending it (should trigger `event:missed_events`)
 # TODO: - test close on user revoked
 # TODO: - test close on backpressure (too many events pilling up)
 # TODO: - test bad accept type
