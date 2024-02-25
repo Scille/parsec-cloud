@@ -272,6 +272,7 @@ pub(crate) async fn maybe_populate_workspace_storage(
                                     data_base_dir,
                                     device,
                                     realm_id,
+                                    u64::MAX,
                                 )
                                 .await
                                 .unwrap(),
@@ -328,7 +329,7 @@ pub(crate) async fn maybe_populate_workspace_storage(
                     {
                         let encrypted = device.local_symkey.encrypt(&x.cleartext);
                         lazy_storage!()
-                            .set_block(x.block_id, &encrypted)
+                            .set_block(x.block_id, &encrypted, device.now())
                             .await
                             .unwrap();
                     }

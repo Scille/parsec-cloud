@@ -18,6 +18,7 @@ impl PlatformWorkspaceStorage {
         _data_base_dir: &Path,
         _device: &LocalDevice,
         _realm_id: VlobID,
+        _cache_max_blocks: u64,
     ) -> anyhow::Result<Self> {
         todo!()
     }
@@ -54,7 +55,11 @@ impl PlatformWorkspaceStorage {
         todo!()
     }
 
-    pub async fn get_block(&mut self, _block_id: BlockID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_block(
+        &mut self,
+        _block_id: BlockID,
+        _now: DateTime,
+    ) -> anyhow::Result<Option<Vec<u8>>> {
         todo!()
     }
 
@@ -82,7 +87,12 @@ impl PlatformWorkspaceStorage {
         todo!()
     }
 
-    pub async fn set_block(&mut self, _block_id: BlockID, _encrypted: &[u8]) -> anyhow::Result<()> {
+    pub async fn set_block(
+        &mut self,
+        _block_id: BlockID,
+        _encrypted: &[u8],
+        _now: DateTime,
+    ) -> anyhow::Result<()> {
         todo!()
     }
 

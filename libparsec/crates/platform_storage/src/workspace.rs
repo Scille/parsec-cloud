@@ -15,6 +15,8 @@ use crate::platform::workspace::PlatformWorkspaceStorage;
 // Re-expose `workspace_storage_non_speculative_init`
 pub use crate::platform::workspace::workspace_storage_non_speculative_init;
 
+pub const TYPICAL_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
+
 #[derive(Debug)]
 pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
@@ -32,6 +34,7 @@ impl WorkspaceStorage {
         data_base_dir: &Path,
         device: &LocalDevice,
         realm_id: VlobID,
+        cache_size: u64,
     ) -> anyhow::Result<Self> {
         // `maybe_populate_certificate_storage` needs to start a `WorkspaceStorage`,
         // leading to a recursive call which is not supported for async functions.
@@ -44,16 +47,23 @@ impl WorkspaceStorage {
         #[cfg(feature = "test-with-testbed")]
         crate::testbed::maybe_populate_workspace_storage(data_base_dir, device, realm_id).await;
 
-        Self::no_populate_start(data_base_dir, device, realm_id).await
+        Self::no_populate_start(data_base_dir, device, realm_id, cache_size).await
     }
 
     pub(crate) async fn no_populate_start(
         data_base_dir: &Path,
         device: &LocalDevice,
         realm_id: VlobID,
+        cache_size: u64,
     ) -> anyhow::Result<Self> {
-        let platform =
-            PlatformWorkspaceStorage::no_populate_start(data_base_dir, device, realm_id).await?;
+        let cache_max_blocks = cache_size / TYPICAL_BLOCK_SIZE;
+        let platform = PlatformWorkspaceStorage::no_populate_start(
+            data_base_dir,
+            device,
+            realm_id,
+            cache_max_blocks,
+        )
+        .await?;
         Ok(Self { platform })
     }
 
@@ -109,20 +119,40 @@ impl WorkspaceStorage {
             .await
     }
 
-    pub async fn get_chunk(&mut self, id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
-        self.platform.get_chunk(id).await
+    pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
+        self.platform.get_chunk(chunk_id).await
     }
 
-    pub async fn set_chunk(&mut self, id: ChunkID, encrypted: &[u8]) -> anyhow::Result<()> {
-        self.platform.set_chunk(id, encrypted).await
+    pub async fn get_chunk_or_block(
+        &mut self,
+        chunk_id: ChunkID,
+        now: DateTime,
+    ) -> anyhow::Result<Option<Vec<u8>>> {
+        match self.platform.get_chunk(chunk_id).await? {
+            Some(data) => Ok(Some(data)),
+            None => self.platform.get_block(chunk_id.into(), now).await,
+        }
     }
 
-    pub async fn get_block(&mut self, block_id: BlockID) -> anyhow::Result<Option<Vec<u8>>> {
-        self.platform.get_block(block_id).await
+    pub async fn set_chunk(&mut self, chunk_id: ChunkID, encrypted: &[u8]) -> anyhow::Result<()> {
+        self.platform.set_chunk(chunk_id, encrypted).await
     }
 
-    pub async fn set_block(&mut self, block_id: BlockID, encrypted: &[u8]) -> anyhow::Result<()> {
-        self.platform.set_block(block_id, encrypted).await
+    pub async fn get_block(
+        &mut self,
+        block_id: BlockID,
+        now: DateTime,
+    ) -> anyhow::Result<Option<Vec<u8>>> {
+        self.platform.get_block(block_id, now).await
+    }
+
+    pub async fn set_block(
+        &mut self,
+        block_id: BlockID,
+        encrypted: &[u8],
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        self.platform.set_block(block_id, encrypted, now).await
     }
 
     /// Only used for debugging tests
