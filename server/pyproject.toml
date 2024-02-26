@@ -36,9 +36,9 @@ click = "^8.0"
 sentry-sdk = "^1.5"
 structlog = ">=21.5,<25.0"
 # colorama = "^0.4.4  # structlog colored output"
-httpx = ">=0.25,<0.27"
+httpx = ">=0.25,<0.28"
 # ASGI server
-fastapi = ">=0.104.1,<0.110.0"
+fastapi = ">=0.104.1,<0.111.0"
 uvicorn = ">=0.24,<0.28"
 jinja2 = { version = "^3.0" }
 # PostgreSQL
