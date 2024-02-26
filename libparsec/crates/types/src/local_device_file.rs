@@ -3,7 +3,7 @@
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use libparsec_crypto::Password;
 use libparsec_serialization_format::parsec_data;
@@ -175,6 +175,15 @@ pub enum DeviceAccessStrategy {
     //     email: String,
     //     password: Password,
     // }
+}
+
+impl DeviceAccessStrategy {
+    pub fn key_file(&self) -> &Path {
+        match self {
+            Self::Password { key_file, .. } => key_file,
+            Self::Smartcard { key_file } => key_file,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]

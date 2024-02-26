@@ -5767,13 +5767,21 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_change_authentification
 fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise> {
-    let current_auth = {
+    let client_config = {
         let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
+    let current_auth = {
+        let js_val = cx.argument::<JsObject>(1)?;
         variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
     let new_auth = {
-        let js_val = cx.argument::<JsObject>(1)?;
+        let js_val = cx.argument::<JsObject>(2)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let with_testbed_template = {
+        let js_val = cx.argument::<JsBoolean>(3)?;
+        js_val.value(&mut cx)
     };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
@@ -5783,7 +5791,13 @@ fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_change_authentification(current_auth, new_auth).await;
+            let ret = libparsec::client_change_authentification(
+                client_config,
+                current_auth,
+                new_auth,
+                with_testbed_template,
+            )
+            .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6635,6 +6649,10 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(2)?;
         variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
+    let with_testbed_template = {
+        let js_val = cx.argument::<JsBoolean>(3)?;
+        js_val.value(&mut cx)
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -6643,7 +6661,9 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_start(config, on_event_callback, access).await;
+            let ret =
+                libparsec::client_start(config, on_event_callback, access, with_testbed_template)
+                    .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {

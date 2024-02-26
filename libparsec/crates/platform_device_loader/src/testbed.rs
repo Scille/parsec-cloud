@@ -11,7 +11,7 @@ use libparsec_testbed::{
 };
 use libparsec_types::prelude::*;
 
-use crate::{LoadDeviceError, SaveDeviceError};
+use crate::{ChangeAuthentificationError, LoadDeviceError, SaveDeviceError};
 
 const STORE_ENTRY_KEY: &str = "platform_device_loader";
 const KEY_FILE_PASSWORD: &str = "P@ssw0rd."; // Use the same password for all simulated key files
@@ -183,6 +183,7 @@ pub(crate) fn maybe_list_available_devices(config_dir: &Path) -> Option<Vec<Avai
 pub(crate) fn maybe_load_device(
     config_dir: &Path,
     access: &DeviceAccessStrategy,
+    with_testbed_template: bool,
 ) -> Option<Result<Arc<LocalDevice>, LoadDeviceError>> {
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .and_then(|store| {
@@ -219,29 +220,33 @@ pub(crate) fn maybe_load_device(
                 return found;
             }
 
-            // 2) Try to load from the template
+            if with_testbed_template {
+                // 2) Try to load from the template
 
-            let (key_file, decryption_success) = match access {
-                DeviceAccessStrategy::Password { key_file, password } => {
-                    let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
-                    (key_file, decryption_success)
+                let (key_file, decryption_success) = match access {
+                    DeviceAccessStrategy::Password { key_file, password } => {
+                        let decryption_success = password.as_str() == KEY_FILE_PASSWORD;
+                        (key_file, decryption_success)
+                    }
+                    DeviceAccessStrategy::Smartcard { key_file } => {
+                        let decryption_success = true;
+                        (key_file, decryption_success)
+                    }
+                };
+                // We don't try to resolve the path of `key_file` into an absolute one here !
+                // This is because in practice the path is always provided absolute given it
+                // is obtained in the first place by `list_available_devices`.
+                let env = test_get_testbed(config_dir).expect("Must exist");
+                let device = load_local_device(key_file, &env)?; // Short circuit if not found
+                if !decryption_success {
+                    return Some(Err(LoadDeviceError::DecryptionFailed));
                 }
-                DeviceAccessStrategy::Smartcard { key_file } => {
-                    let decryption_success = true;
-                    (key_file, decryption_success)
-                }
-            };
-            // We don't try to resolve the path of `key_file` into an absolute one here !
-            // This is because in practice the path is always provided absolute given it
-            // is obtained in the first place by `list_available_devices`.
-            let env = test_get_testbed(config_dir).expect("Must exist");
-            let device = load_local_device(key_file, &env)?; // Short circuit if not found
-            if !decryption_success {
-                return Some(Err(LoadDeviceError::DecryptionFailed));
+                cache.push((access.to_owned(), device.to_owned()));
+
+                Some(Ok(device))
+            } else {
+                None
             }
-            cache.push((access.to_owned(), device.to_owned()));
-
-            Some(Ok(device))
         })
 }
 
@@ -252,23 +257,60 @@ pub(crate) fn maybe_save_device(
 ) -> Option<Result<(), SaveDeviceError>> {
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .map(|store| {
-            let key_file = match access {
-                DeviceAccessStrategy::Password { key_file, .. } => key_file,
-                DeviceAccessStrategy::Smartcard { key_file } => key_file,
-            };
+            let key_file = access.key_file();
             // We don't try to resolve the path of `key_file` into an absolute one here !
             // This is because in practice the path is always provided absolute given it
             // is obtained in the first place by `list_available_devices`.
 
             let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
             cache.retain(|(c_access, _)| {
-                let c_key_file = match c_access {
-                    DeviceAccessStrategy::Password { key_file, .. } => key_file,
-                    DeviceAccessStrategy::Smartcard { key_file } => key_file,
-                };
+                let c_key_file = c_access.key_file();
                 c_key_file != key_file
             });
             cache.push((access.to_owned(), Arc::new(device.to_owned())));
             Ok(())
         })
+}
+
+pub(crate) fn maybe_change_authentification(
+    config_dir: &Path,
+    current_access: &DeviceAccessStrategy,
+    new_access: &DeviceAccessStrategy,
+    with_testbed_template: bool,
+) -> Option<Result<(), ChangeAuthentificationError>> {
+    if let Some(result) = maybe_load_device(config_dir, current_access, with_testbed_template) {
+        let device = match result {
+            Ok(device) => device,
+            Err(e) => return Some(Err(ChangeAuthentificationError::from(e))),
+        };
+
+        match maybe_save_device(config_dir, new_access, &device) {
+            Some(Ok(())) => (),
+            Some(Err(e)) => return Some(Err(ChangeAuthentificationError::from(e))),
+            None => return None,
+        }
+
+        let key_file = current_access.key_file();
+        let new_key_file = new_access.key_file();
+
+        if key_file != new_key_file {
+            return test_get_testbed_component_store::<ComponentStore>(
+                config_dir,
+                STORE_ENTRY_KEY,
+                store_factory,
+            )
+            .map(|store| {
+                let mut cache = store.key_files_cache.lock().expect("Mutex is poisoned");
+                cache.retain(|(c_access, _)| {
+                    let c_key_file = c_access.key_file();
+                    c_key_file != key_file
+                });
+                Ok(())
+            });
+        }
+
+        return Some(Ok(()));
+    }
+
+    None
 }

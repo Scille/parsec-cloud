@@ -68,12 +68,18 @@ pub async fn client_start(
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
     access: DeviceAccessStrategy,
+    with_testbed_template: bool,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     // 1) Load the device
 
-    let device = libparsec_platform_device_loader::load_device(&config.config_dir, &access).await?;
+    let device = libparsec_platform_device_loader::load_device(
+        &config.config_dir,
+        &access,
+        with_testbed_template,
+    )
+    .await?;
 
     // 2) Make sure another client is not running this device
 
@@ -269,8 +275,10 @@ impl From<ChangeAuthentificationError> for ClientChangeAuthentificationError {
 }
 
 pub async fn client_change_authentification(
+    config: ClientConfig,
     current_auth: DeviceAccessStrategy,
     new_auth: DeviceSaveStrategy,
+    with_testbed_template: bool,
 ) -> Result<(), ClientChangeAuthentificationError> {
     let key_file = match &current_auth {
         DeviceAccessStrategy::Password { key_file, .. } => key_file.clone(),
@@ -278,8 +286,10 @@ pub async fn client_change_authentification(
     };
 
     libparsec_platform_device_loader::change_authentification(
+        &config.config_dir,
         &current_auth,
         &new_auth.into_access(key_file),
+        with_testbed_template,
     )
     .await?;
     Ok(())

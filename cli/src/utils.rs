@@ -94,14 +94,14 @@ where
                 };
 
                 // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-                load_device(&config_dir, &access).await?
+                load_device(&config_dir, &access, false).await?
             }
             DeviceFileType::Smartcard => {
                 let access = DeviceAccessStrategy::Smartcard {
                     key_file: device.key_file_path.clone(),
                 };
 
-                load_device(&config_dir, &access).await?
+                load_device(&config_dir, &access, false).await?
             }
             DeviceFileType::Recovery => {
                 return Err(anyhow::anyhow!(
