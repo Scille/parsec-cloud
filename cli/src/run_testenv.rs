@@ -235,7 +235,7 @@ pub async fn initialize_test_organization(
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
-    let alice_device = load_device(&client_config.config_dir, &access).await?;
+    let alice_device = load_device(&client_config.config_dir, &access, false).await?;
 
     let cmds = AuthenticatedCmds::new(
         &client_config.config_dir,

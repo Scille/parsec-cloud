@@ -310,15 +310,8 @@ pub async fn change_authentification(
 
     save_device(new_access, &device).await?;
 
-    let (DeviceAccessStrategy::Password { key_file, .. }
-    | DeviceAccessStrategy::Smartcard { key_file }) = current_access;
-    let (DeviceAccessStrategy::Password {
-        key_file: new_key_file,
-        ..
-    }
-    | DeviceAccessStrategy::Smartcard {
-        key_file: new_key_file,
-    }) = new_access;
+    let key_file = current_access.key_file();
+    let new_key_file = new_access.key_file();
 
     if key_file != new_key_file {
         std::fs::remove_file(key_file)

@@ -1646,8 +1646,10 @@ export interface LibParsecPlugin {
         token: InvitationToken
     ): Promise<Result<null, ClientCancelInvitationError>>
     clientChangeAuthentification(
+        client_config: ClientConfig,
         current_auth: DeviceAccessStrategy,
-        new_auth: DeviceSaveStrategy
+        new_auth: DeviceSaveStrategy,
+        with_testbed_template: boolean
     ): Promise<Result<null, ClientChangeAuthentificationError>>
     clientCreateWorkspace(
         client: Handle,
@@ -1701,7 +1703,8 @@ export interface LibParsecPlugin {
     clientStart(
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
-        access: DeviceAccessStrategy
+        access: DeviceAccessStrategy,
+        with_testbed_template: boolean
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
         client: Handle,

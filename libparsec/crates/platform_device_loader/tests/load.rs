@@ -40,7 +40,7 @@ async fn bad_path(tmp_path: TmpPath, #[case] kind: BadPathKind) {
         key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let outcome = load_device(&tmp_path, &access).await;
+    let outcome = load_device(&tmp_path, &access, true).await;
     p_assert_matches!(outcome, Err(LoadDeviceError::InvalidPath(_)));
 }
 
@@ -54,7 +54,7 @@ async fn bad_file_content(tmp_path: TmpPath) {
         key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let outcome = load_device(&tmp_path, &access).await;
+    let outcome = load_device(&tmp_path, &access, true).await;
     p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData));
 }
 
@@ -104,7 +104,7 @@ async fn invalid_salt_size(tmp_path: TmpPath, #[case] content: &[u8]) {
         key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let outcome = load_device(&tmp_path, &access).await;
+    let outcome = load_device(&tmp_path, &access, true).await;
     p_assert_matches!(outcome, Err(LoadDeviceError::InvalidData));
 }
 
@@ -118,6 +118,8 @@ async fn testbed(env: &TestbedEnv) {
         key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    let device = load_device(&env.discriminant_dir, &access, true)
+        .await
+        .unwrap();
     p_assert_eq!(device.device_id, "alice@dev1".parse().unwrap());
 }

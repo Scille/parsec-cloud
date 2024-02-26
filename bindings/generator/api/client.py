@@ -59,7 +59,10 @@ class ClientStartError(ErrorVariant):
 
 
 async def client_start(
-    config: ClientConfig, on_event_callback: OnClientEventCallback, access: DeviceAccessStrategy
+    config: ClientConfig,
+    on_event_callback: OnClientEventCallback,
+    access: DeviceAccessStrategy,
+    with_testbed_template: bool,
 ) -> Result[Handle, ClientStartError]:
     raise NotImplementedError
 
@@ -112,8 +115,10 @@ class ClientChangeAuthentificationError(ErrorVariant):
 
 
 async def client_change_authentification(
+    client_config: ClientConfig,
     current_auth: DeviceAccessStrategy,
     new_auth: DeviceSaveStrategy,
+    with_testbed_template: bool,
 ) -> Result[None, ClientChangeAuthentificationError]:
     raise NotImplementedError
 

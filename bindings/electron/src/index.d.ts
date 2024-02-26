@@ -1395,8 +1395,10 @@ export function clientCancelInvitation(
     token: string
 ): Promise<Result<null, ClientCancelInvitationError>>
 export function clientChangeAuthentification(
+    client_config: ClientConfig,
     current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy
+    new_auth: DeviceSaveStrategy,
+    with_testbed_template: boolean
 ): Promise<Result<null, ClientChangeAuthentificationError>>
 export function clientCreateWorkspace(
     client: number,
@@ -1450,7 +1452,8 @@ export function clientShareWorkspace(
 export function clientStart(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void,
-    access: DeviceAccessStrategy
+    access: DeviceAccessStrategy,
+    with_testbed_template: boolean
 ): Promise<Result<number, ClientStartError>>
 export function clientStartDeviceInvitationGreet(
     client: number,

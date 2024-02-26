@@ -74,7 +74,7 @@ export async function login(device: AvailableDevice, password: string): Promise<
       password: password,
       keyFile: device.keyFilePath,
     };
-    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, strategy);
+    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, strategy, false);
     if (result.ok) {
       loggedInDevices.push({ handle: result.value, device: device });
     }

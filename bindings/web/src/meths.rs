@@ -5902,15 +5902,29 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
 // client_change_authentification
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientChangeAuthentification(current_auth: Object, new_auth: Object) -> Promise {
+pub fn clientChangeAuthentification(
+    client_config: Object,
+    current_auth: Object,
+    new_auth: Object,
+    with_testbed_template: bool,
+) -> Promise {
     future_to_promise(async move {
+        let client_config = client_config.into();
+        let client_config = struct_client_config_js_to_rs(client_config)?;
+
         let current_auth = current_auth.into();
         let current_auth = variant_device_access_strategy_js_to_rs(current_auth)?;
 
         let new_auth = new_auth.into();
         let new_auth = variant_device_save_strategy_js_to_rs(new_auth)?;
 
-        let ret = libparsec::client_change_authentification(current_auth, new_auth).await;
+        let ret = libparsec::client_change_authentification(
+            client_config,
+            current_auth,
+            new_auth,
+            with_testbed_template,
+        )
+        .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -6356,7 +6370,12 @@ pub fn clientShareWorkspace(
 // client_start
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
+pub fn clientStart(
+    config: Object,
+    on_event_callback: Function,
+    access: Object,
+    with_testbed_template: bool,
+) -> Promise {
     future_to_promise(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -6373,7 +6392,8 @@ pub fn clientStart(config: Object, on_event_callback: Function, access: Object) 
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;
 
-        let ret = libparsec::client_start(config, on_event_callback, access).await;
+        let ret =
+            libparsec::client_start(config, on_event_callback, access, with_testbed_template).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
