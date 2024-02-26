@@ -147,6 +147,8 @@ pin-project-lite = { version = "0.2.13", default-features = false }
 percent-encoding = { version = "2.3.1", default-features = false }
 predicates = { version = "3.1.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
+proptest = { version = "1.4.0", default-features = false }
+proptest-state-machine = { version = "0.1.0", default-features = false }
 proc-macro2 = { version = "1.0.78", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
 quote = { version = "1.0.35", default-features = false }

@@ -25,3 +25,5 @@ log = { workspace = true }
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
+proptest = { workspace = true, features = ["default"] }
+proptest-state-machine = { workspace = true }
