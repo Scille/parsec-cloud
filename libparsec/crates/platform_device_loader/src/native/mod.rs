@@ -310,7 +310,17 @@ pub async fn change_authentification(
 
     save_device(new_access, &device).await?;
 
-    if let DeviceAccessStrategy::Password { key_file, .. } = current_access {
+    let (DeviceAccessStrategy::Password { key_file, .. }
+    | DeviceAccessStrategy::Smartcard { key_file }) = current_access;
+    let (DeviceAccessStrategy::Password {
+        key_file: new_key_file,
+        ..
+    }
+    | DeviceAccessStrategy::Smartcard {
+        key_file: new_key_file,
+    }) = new_access;
+
+    if key_file != new_key_file {
         std::fs::remove_file(key_file)
             .map_err(|_| ChangeAuthentificationError::CannotRemoveOldDevice)?;
     }
