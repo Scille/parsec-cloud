@@ -63,7 +63,7 @@
           </div>
         </template>
         <template v-else>
-          {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation.title') }}
+          {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation') }}
         </template>
       </div>
     </ion-content>
@@ -77,7 +77,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 // import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
   AvailableDevice,
-  ChangeAuthErrorTag,
+  ClientChangeAuthentificationErrorTag,
   ClientInfo,
   getClientInfo,
   getCurrentAvailableDevice,
@@ -121,7 +121,7 @@ async function changePassword(): Promise<void> {
     fieldsUpdated.value = !fieldsUpdated.value;
   } else {
     switch (result.error.tag) {
-      case ChangeAuthErrorTag.DecryptionFailed: {
+      case ClientChangeAuthentificationErrorTag.DecryptionFailed: {
         informationManager.present(
           new Information({
             message: translate('ContactDetailsPage.errors.wrongPassword'),

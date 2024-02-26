@@ -1,26 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import {
-  ClientStartErrorTag,
-  DeviceAccessStrategy,
-  DeviceAccessStrategyTag,
-  DeviceSaveStrategy,
-  DeviceSaveStrategyTag,
-  libparsec,
-} from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
+  ClientChangeAuthentificationError,
+  ClientChangeAuthentificationErrorTag,
   ClientEvent,
   ClientInfo,
   ClientInfoError,
   ClientStartError,
+  ClientStartErrorTag,
   ClientStopError,
   ConnectionHandle,
   DeviceAccessStrategyPassword,
+  DeviceAccessStrategyTag,
+  DeviceSaveStrategyTag,
   OrganizationID,
   Result,
   UserProfile,
@@ -179,55 +177,28 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   return { ok: false, error: { tag: 'NotFound' } };
 }
 
-// Temporary, delete this when the bindings are available
-export enum ChangeAuthErrorTag {
-  DecryptionFailed = 'DecryptionFailed',
-  Internal = 'Internal',
-}
-
-interface ChangeAuthInternalError {
-  tag: ChangeAuthErrorTag.Internal;
-}
-
-interface ChangeAuthDecryptionFailedError {
-  tag: ChangeAuthErrorTag.DecryptionFailed;
-}
-
-export type ChangeAuthError = ChangeAuthInternalError | ChangeAuthDecryptionFailedError;
-
-// Trying to guess what the API will look like
-export async function libParsecChangeAuthentication(
-  _oldAuth: DeviceAccessStrategy,
-  _newAuth: DeviceSaveStrategy,
-): Promise<Result<null, ChangeAuthError>> {
-  const handle = getParsecHandle();
-
-  if (handle !== null && !needsMocks()) {
-    return { ok: true, value: null };
-  } else {
-    return { ok: true, value: null };
-  }
-}
-
 export async function changePassword(
   device: AvailableDevice,
   oldPassword: string,
   newPassword: string,
-): Promise<Result<null, ChangeAuthError>> {
-  // Fake an error
-  if (oldPassword !== 'P@ssw0rd.') {
-    return { ok: false, error: { tag: ChangeAuthErrorTag.DecryptionFailed } };
+): Promise<Result<null, ClientChangeAuthentificationError>> {
+  if (!needsMocks()) {
+    return await libparsec.clientChangeAuthentification(
+      {
+        tag: DeviceAccessStrategyTag.Password,
+        password: oldPassword,
+        keyFile: device.keyFilePath,
+      },
+      {
+        tag: DeviceSaveStrategyTag.Password,
+        password: newPassword,
+      },
+    );
+  } else {
+    // Fake an error
+    if (oldPassword !== 'P@ssw0rd.') {
+      return { ok: false, error: { tag: ClientChangeAuthentificationErrorTag.DecryptionFailed, error: 'Invalid password' } };
+    }
+    return { ok: true, value: null };
   }
-
-  return await libParsecChangeAuthentication(
-    {
-      tag: DeviceAccessStrategyTag.Password,
-      password: oldPassword,
-      keyFile: device.keyFilePath,
-    },
-    {
-      tag: DeviceSaveStrategyTag.Password,
-      password: newPassword,
-    },
-  );
 }
