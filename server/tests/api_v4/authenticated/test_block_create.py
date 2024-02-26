@@ -42,6 +42,9 @@ async def test_authenticated_block_create_realm_not_found(
     assert rep == authenticated_cmds.v4.block_create.RepRealmNotFound()
 
     # Block should not exist
+    # This check is not strictly needed since the block existence
+    # is already checked below with the test_dump_blocks call.
+    # Anyway, let's leave it as an extra cheap check.
     content = await backend.block.read_as_user(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id.user_id,
@@ -109,6 +112,9 @@ async def test_authenticated_block_create_store_unavailable(
     assert rep == authenticated_cmds.v4.block_create.RepStoreUnavailable()
 
     # Block should not exist
+    # This check is not strictly needed since the block existence
+    # is already checked below with the test_dump_blocks call.
+    # Anyway, let's leave it as an extra cheap check.
     content = await backend.block.read_as_user(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id.user_id,
