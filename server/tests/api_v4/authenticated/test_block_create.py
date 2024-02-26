@@ -47,7 +47,7 @@ async def test_authenticated_block_create_realm_not_found(
         author=coolorg.alice.device_id.user_id,
         block_id=block_id,
     )
-    assert content != BlockReadBadOutcome.BLOCK_NOT_FOUND.value
+    assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert not dump  # No changes!
@@ -114,7 +114,7 @@ async def test_authenticated_block_create_store_unavailable(
         author=coolorg.alice.device_id.user_id,
         block_id=block_id,
     )
-    assert content != BlockReadBadOutcome.BLOCK_NOT_FOUND.value
+    assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert not dump  # No changes!
