@@ -8,21 +8,15 @@ from typing import Any, AsyncGenerator
 
 import httpx
 
-# from parsec.components.postgresql.pki import PGPkiEnrollmentComponent
-# from parsec.components.postgresql.realm import PGRealmComponent
-# from parsec.components.postgresql.sequester import PGSequesterComponent
-# from parsec.components.postgresql.user import PGUserComponent
-# from parsec.components.postgresql.vlob import PGVlobComponent
 from parsec.components.postgresql.auth import PGAuthComponent
 from parsec.components.postgresql.events import PGEventsComponent, event_bus_factory
-
-# from parsec.components.postgresql.block import PGBlockComponent
 from parsec.components.postgresql.handler import asyncpg_pool_factory
-
-# from parsec.components.postgresql.invite import PGInviteComponent
-# from parsec.components.postgresql.message import PGMessageComponent
+from parsec.components.postgresql.invite import PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
+from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.user import PGUserComponent
+from parsec.components.postgresql.vlob import PGVlobComponent
 from parsec.config import BackendConfig
 from parsec.webhooks import WebhooksComponent
 
@@ -47,24 +41,19 @@ async def components_factory(
                 ping = PGPingComponent(pool=pool)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
                 auth = PGAuthComponent(pool=pool, config=config)
+                invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
+                user = PGUserComponent(pool=pool, event_bus=event_bus)
+                vlob = PGVlobComponent(pool=pool)
+                realm = PGRealmComponent(pool=pool)
 
-                # user = PGUserComponent(pool=pool, event_bus=event_bus)
-                # invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 # message = PGMessageComponent(pool=pool)
-                # realm = PGRealmComponent(pool=pool)
-                # vlob = PGVlobComponent(pool=pool)
                 # blockstore = blockstore_factory(
                 #     config=config.blockstore_config, postgresql_pool=pool
                 # )
                 # block = PGBlockComponent(pool=pool, blockstore_component=blockstore)
                 # pki = PGPkiEnrollmentComponent(pool=pool)
                 # sequester = PGSequesterComponent(pool=pool)
-
-                user = None
-                invite = None
                 message = None
-                realm = None
-                vlob = None
                 block = None
                 pki = None
                 sequester = None

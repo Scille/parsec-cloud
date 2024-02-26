@@ -6,6 +6,7 @@ from parsec.components.postgresql.utils import (
     q_human,
     q_human_internal_id,
     q_organization_internal_id,
+    q_user,
     q_user_internal_id,
 )
 
@@ -40,6 +41,13 @@ WHERE organization = { q_organization_internal_id("$organization_id") }
 q_test_drop_organization_from_device_table = Q(
     f"""
 DELETE FROM device
+WHERE organization = { q_organization_internal_id("$organization_id") }
+"""
+)
+
+q_test_drop_organization_from_invitation_table = Q(
+    f"""
+DELETE FROM invitation
 WHERE organization = { q_organization_internal_id("$organization_id") }
 """
 )
@@ -138,7 +146,7 @@ INSERT INTO device (
 )
 SELECT
     { q_organization_internal_id("$target_id") },
-    { q_user_internal_id(organization_id="$target_id", user_id="user_id") },
+    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="device.user_", select="user_id")) },
     device_id,
     device_certificate,
     device_certifier,
@@ -149,3 +157,36 @@ FROM device
 WHERE organization = { q_organization_internal_id("$source_id") }
 """
 )  # TODO: The certifier is wrong here. It should be the new organization's certifier, not the old one.
+
+
+q_test_duplicate_organization_from_invitation_table = Q(
+    f"""
+INSERT INTO invitation (
+    organization,
+    token,
+    type,
+    greeter,
+    claimer_email,
+    created_on,
+    deleted_on,
+    deleted_reason,
+    conduit_state,
+    conduit_greeter_payload,
+    conduit_claimer_payload
+)
+SELECT
+    { q_organization_internal_id("$target_id") },
+    token,
+    type,
+    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="invitation.greeter", select="user_id")) },
+    claimer_email,
+    created_on,
+    deleted_on,
+    deleted_reason,
+    conduit_state,
+    conduit_greeter_payload,
+    conduit_claimer_payload
+FROM invitation
+WHERE organization = { q_organization_internal_id("$source_id") }
+"""
+)

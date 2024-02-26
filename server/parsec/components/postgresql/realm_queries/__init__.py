@@ -10,10 +10,6 @@ from parsec.components.postgresql.realm_queries.get import (
     query_get_stats,
     query_get_status,
 )
-from parsec.components.postgresql.realm_queries.maintenance import (
-    query_finish_reencryption_maintenance,
-    query_start_reencryption_maintenance,
-)
 from parsec.components.postgresql.realm_queries.update_roles import query_update_roles
 
 __all__ = (
@@ -25,6 +21,4 @@ __all__ = (
     "query_get_realms_for_user",
     "query_dump_realms_granted_roles",
     "query_update_roles",
-    "query_start_reencryption_maintenance",
-    "query_finish_reencryption_maintenance",
 )

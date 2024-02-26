@@ -12,6 +12,7 @@ from parsec._parsec import (
     RealmRoleCertificate,
     UserID,
     UserProfile,
+    VerifyKey,
     VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
@@ -66,6 +67,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
@@ -90,10 +92,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author_user.is_revoked:
             return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
 
+        assert author_verify_key == author_device.cooked.verify_key
         match realm_create_validate(
             now=now,
             expected_author=author,
-            author_verify_key=author_device.cooked.verify_key,
+            author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
             case RealmRoleCertificate() as certif:
@@ -150,6 +153,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
         recipient_keys_bundle_access: bytes,
         key_index: int,
@@ -177,10 +181,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author_user.is_revoked:
             return RealmShareStoreBadOutcome.AUTHOR_REVOKED
 
+        assert author_verify_key == author_device.cooked.verify_key
         match realm_share_validate(
             now=now,
             expected_author=author,
-            author_verify_key=author_device.cooked.verify_key,
+            author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
             case RealmRoleCertificate() as certif:
@@ -387,6 +392,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_name_certificate: bytes,
         initial_name_or_fail: bool,
     ) -> (
@@ -413,10 +419,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author_user.is_revoked:
             return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
 
+        assert author_verify_key == author_device.cooked.verify_key
         match realm_rename_validate(
             now=now,
             expected_author=author,
-            author_verify_key=author_device.cooked.verify_key,
+            author_verify_key=author_verify_key,
             realm_name_certificate=realm_name_certificate,
         ):
             case RealmNameCertificate() as certif:
@@ -468,6 +475,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
@@ -494,10 +502,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author_user.is_revoked:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
 
+        assert author_verify_key == author_device.cooked.verify_key
         match realm_rotate_key_validate(
             now=now,
             expected_author=author,
-            author_verify_key=author_device.cooked.verify_key,
+            author_verify_key=author_verify_key,
             realm_key_rotation_certificate=realm_key_rotation_certificate,
         ):
             case RealmKeyRotationCertificate() as certif:

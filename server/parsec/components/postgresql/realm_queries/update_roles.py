@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import asyncpg
 
-from parsec._parsec import BackendEventRealmRolesUpdated, OrganizationID, RealmRole, UserProfile
+from parsec._parsec import OrganizationID, RealmRole, UserProfile
 from parsec.components.postgresql.handler import send_signal
-from parsec.components.postgresql.message import send_message
 from parsec.components.postgresql.utils import (
     Q,
     q_device_internal_id,
@@ -16,15 +15,8 @@ from parsec.components.postgresql.utils import (
     query,
 )
 from parsec.components.realm import (
-    RealmAccessError,
     RealmGrantedRole,
-    RealmIncompatibleProfileError,
-    RealmInMaintenanceError,
-    RealmNotFoundError,
-    RealmRoleAlreadyGranted,
-    RealmRoleRequireGreaterTimestampError,
 )
-from parsec.components.user import UserAlreadyRevokedError
 
 _q_get_user_profile = Q(
     q_user(organization_id="$organization_id", user_id="$user_id", select="profile, revoked_on")

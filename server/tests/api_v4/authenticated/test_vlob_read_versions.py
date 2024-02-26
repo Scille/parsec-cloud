@@ -52,6 +52,7 @@ async def test_authenticated_vlob_read_versions_ok(
         now=dt2,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"",
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: b"",

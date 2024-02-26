@@ -19,6 +19,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     query,
 )
+from parsec.components.user import CheckUserWithDeviceBadOutcome
 
 _q_get_organization_users = Q(
     f"""
@@ -378,6 +379,27 @@ async def query_get_user_with_devices_and_trustchain(
         trustchain_user_certificates=tuple(trustchain.users),
         trustchain_revoked_user_certificates=tuple(trustchain.revoked_users),
     )
+
+
+@query(in_transaction=True)
+async def query_check_user_with_device(
+    conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
+) -> UserProfile | CheckUserWithDeviceBadOutcome:
+    d_row = await conn.fetchrow(
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+    )
+    if not d_row:
+        return CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND
+    u_row = await conn.fetchrow(
+        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
+    )
+    if not u_row:
+        return CheckUserWithDeviceBadOutcome.USER_NOT_FOUND
+    if u_row["revoked_on"] is not None:
+        return CheckUserWithDeviceBadOutcome.USER_REVOKED
+    initial_profile = UserProfile.from_str(u_row["profile"])
+    # TODO: return the actual profile
+    return initial_profile
 
 
 @query(in_transaction=True)

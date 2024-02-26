@@ -37,6 +37,7 @@ async def test_authenticated_realm_rotate_key_ok(
             now=t0,
             organization_id=coolorg.organization_id,
             author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         )
         initial_key_index = 0
@@ -178,6 +179,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
             now=t0,
             organization_id=coolorg.organization_id,
             author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         )
         initial_key_index = 0

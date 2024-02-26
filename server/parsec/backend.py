@@ -226,6 +226,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
+                    author_verify_key=verify_key_per_device[event.author],
                     realm_role_certificate=event.raw_certificate,
                 )
                 assert isinstance(outcome, RealmRoleCertificate), outcome
@@ -240,11 +241,11 @@ class Backend:
                 else:
                     assert event.key_index is not None
                     assert event.recipient_keys_bundle_access is not None
-
                     outcome = await self.realm.share(
                         now=event.timestamp,
                         organization_id=org_id,
                         author=event.author,
+                        author_verify_key=verify_key_per_device[event.author],
                         realm_role_certificate=event.raw_certificate,
                         key_index=event.key_index,
                         recipient_keys_bundle_access=event.recipient_keys_bundle_access,
@@ -255,6 +256,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
+                    author_verify_key=verify_key_per_device[event.author],
                     realm_name_certificate=event.raw_certificate,
                     initial_name_or_fail=False,
                 )
@@ -264,6 +266,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
+                    author_verify_key=verify_key_per_device[event.author],
                     realm_key_rotation_certificate=event.raw_certificate,
                     per_participant_keys_bundle_access=event.per_participant_keys_bundle_access,
                     keys_bundle=event.keys_bundle,

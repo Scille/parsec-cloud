@@ -19,6 +19,7 @@ from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
 
+
 class AuthAnonymousAuthBadOutcome(Enum):
     ORGANIZATION_EXPIRED = auto()
     ORGANIZATION_NOT_FOUND = auto()
