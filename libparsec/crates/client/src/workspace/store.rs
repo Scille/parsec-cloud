@@ -447,9 +447,6 @@ pub(super) struct WorkspaceStore {
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
     certificates_ops: Arc<CertifOps>,
-    // TODO: support cache size
-    #[allow(unused)]
-    cache_size: u64,
 
     // A lock that will be used to prevent concurrent update on the workspace manifest.
     // This is needed to ensure the manifest in cache stays in sync with the content of the database.
@@ -510,7 +507,6 @@ impl WorkspaceStore {
             device,
             cmds,
             certificates_ops,
-            cache_size,
             lock_update_workspace_manifest: AsyncMutex::new(()),
             current_view_cache: Mutex::new(CurrentViewCache {
                 workspace_manifest: Arc::new(workspace_manifest),
