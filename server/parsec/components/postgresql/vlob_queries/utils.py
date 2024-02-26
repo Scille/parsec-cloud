@@ -4,10 +4,6 @@ from __future__ import annotations
 import asyncpg
 
 from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID
-from parsec.components.postgresql.realm_queries.maintenance import (
-    RealmNotFoundError,
-    get_realm_status,
-)
 from parsec.components.postgresql.utils import (
     Q,
     q_organization_internal_id,
@@ -15,16 +11,6 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
 )
 from parsec.components.realm import RealmRole
-from parsec.components.vlob import (
-    VlobAccessError,
-    VlobEncryptionRevisionError,
-    VlobInMaintenanceError,
-    VlobNotFoundError,
-    VlobNotInMaintenanceError,
-    VlobRealmNotFoundError,
-    VlobRequireGreaterTimestampError,
-)
-from parsec.types import OperationKind
 
 
 async def _check_realm(

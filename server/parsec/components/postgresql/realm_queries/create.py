@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncpg
 
-from parsec._parsec import BackendEventRealmRolesUpdated, OrganizationID, RealmRole
+from parsec._parsec import OrganizationID, RealmRole
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.utils import (
     Q,
@@ -12,7 +12,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     query,
 )
-from parsec.components.realm import RealmAlreadyExistsError, RealmGrantedRole
+from parsec.components.realm import RealmGrantedRole
 
 _q_insert_realm = Q(
     f"""

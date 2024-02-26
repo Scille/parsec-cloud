@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import itertools
+from typing import assert_never
 
 import asyncpg
 from asyncpg import UniqueViolationError
@@ -242,7 +243,7 @@ async def _do_create_user(
         or not_revoked_users[0]["user_id"] != user_certificate_cooked.user_id.str
     ):
         # Exception cancels the transaction so the user insertion is automatically cancelled
-        return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
+        return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
 
 async def q_create_user(
@@ -259,11 +260,17 @@ async def q_create_user(
     if not lock_already_held:
         await q_take_user_device_write_lock(conn, organization_id)
 
+    # TODO: Ensure certificate consistency: our certificate must be the newest thing on the server.
+    # if org.last_certificate_or_vlob_timestamp >= u_certif.timestamp:
+    #     return RequireGreaterTimestamp(
+    #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+    #     )
+
     record = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
     # Note with the user/device write lock held we have the guarantee the active users
     # limit won't change in our back.
-    if not record["allowed"]:
-        raise UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+    if record is not None and not record["allowed"]:
+        return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
     if not user_certificate_cooked.human_handle:
         assert False, "User creation without human handle is not supported anymore"
@@ -291,8 +298,8 @@ async def query_create_user(
     organization_id: OrganizationID,
     user: User,
     first_device: Device,
-) -> None:
-    await q_create_user(conn, organization_id, user, first_device)
+) -> UserCreateUserStoreBadOutcome | UserCreateDeviceStoreBadOutcome | None:
+    return await q_create_user(conn, organization_id, user, first_device)
 
 
 async def _create_device(
@@ -306,7 +313,8 @@ async def _create_device(
     if not first_device:
         existing_devices = await conn.fetch(
             *_q_get_user_devices(
-                organization_id=organization_id.str, user_id=device_certificate_cooked.user_id.str
+                organization_id=organization_id.str,
+                user_id=device_certificate_cooked.device_id.user_id.str,
             )
         )
         if not existing_devices:
@@ -340,12 +348,31 @@ async def _create_device(
         assert False, f"Insertion error: {result}"
 
 
-@query(in_transaction=True)
-async def query_create_device(
+async def q_create_device(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    device: Device,
-    encrypted_answer: bytes = b"",
-) -> None:
+    device_certificate_cooked: DeviceCertificate,
+    device_certificate: bytes,
+    device_certificate_redacted: bytes,
+) -> None | UserCreateDeviceStoreBadOutcome:
     await q_take_user_device_write_lock(conn, organization_id)
-    await _create_device(conn, organization_id, device, bool(encrypted_answer))
+    # TODO: Ensure certificate consistency
+    # Our certificate must be the newest thing on the server.
+    # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+    #     return RequireGreaterTimestamp(
+    #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+    #     )
+    match await _create_device(
+        conn,
+        organization_id,
+        device_certificate_cooked,
+        device_certificate,
+        device_certificate_redacted,
+        first_device=False,
+    ):
+        case UserCreateDeviceStoreBadOutcome() as bad_outcome:
+            return bad_outcome
+        case None:
+            return None
+        case unknown:
+            assert_never(unknown)

@@ -35,10 +35,12 @@ from parsec.components.organization import (
 from parsec.components.postgresql.test_queries import (
     q_test_drop_organization_from_device_table,
     q_test_drop_organization_from_human_table,
+    q_test_drop_organization_from_invitation_table,
     q_test_drop_organization_from_organization_table,
     q_test_drop_organization_from_user_table,
     q_test_duplicate_organization_from_device_table,
     q_test_duplicate_organization_from_human_table,
+    q_test_duplicate_organization_from_invitation_table,
     q_test_duplicate_organization_from_organization_table,
     q_test_duplicate_organization_from_user_table,
 )
@@ -541,6 +543,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def test_drop_organization(self, id: OrganizationID) -> None:
         async with self.pool.acquire() as conn:
+            await conn.execute(
+                *q_test_drop_organization_from_invitation_table(organization_id=id.str)
+            )
             await conn.execute(*q_test_drop_organization_from_device_table(organization_id=id.str))
             await conn.execute(*q_test_drop_organization_from_user_table(organization_id=id.str))
             await conn.execute(*q_test_drop_organization_from_human_table(organization_id=id.str))
@@ -569,6 +574,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             await conn.execute(
                 *q_test_duplicate_organization_from_device_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
+                *q_test_duplicate_organization_from_invitation_table(
                     source_id=source_id.str, target_id=target_id.str
                 )
             )

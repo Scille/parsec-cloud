@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import auto
 from typing import assert_never
 
 from parsec._parsec import (
@@ -29,6 +29,7 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.types import BadOutcomeEnum
 
 
 @dataclass(slots=True)
@@ -54,16 +55,12 @@ class UserInfo:
     frozen: bool
 
 
-UserCreateUserValidateBadOutcome = Enum(
-    "UserCreateUserValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "USER_ID_MISMATCH",
-        "INVALID_REDACTED",
-        "REDACTED_MISMATCH",
-    ),
-)
+class UserCreateUserValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    USER_ID_MISMATCH = auto()
+    INVALID_REDACTED = auto()
+    REDACTED_MISMATCH = auto()
 
 
 def user_create_user_validate(
@@ -129,15 +126,11 @@ def user_create_user_validate(
     return u_data, d_data
 
 
-UserCreateDeviceValidateBadOutcome = Enum(
-    "UserCreateDeviceValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "USER_ID_MISMATCH",
-        "INVALID_REDACTED",
-        "REDACTED_MISMATCH",
-    ),
-)
+class UserCreateDeviceValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    USER_ID_MISMATCH = auto()
+    INVALID_REDACTED = auto()
+    REDACTED_MISMATCH = auto()
 
 
 def user_create_device_validate(
@@ -179,14 +172,10 @@ def user_create_device_validate(
     return data
 
 
-UserRevokeUserValidateBadOutcome = Enum(
-    "UserRevokeUserValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "INVALID_USER_PROFILE",
-        "CANNOT_SELF_REVOKE",
-    ),
-)
+class UserRevokeUserValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    INVALID_USER_PROFILE = auto()
+    CANNOT_SELF_REVOKE = auto()
 
 
 def user_revoke_user_validate(
@@ -215,14 +204,10 @@ def user_revoke_user_validate(
     return data
 
 
-UserUpdateUserValidateBadOutcome = Enum(
-    "UserUpdateUserValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "INVALID_USER_PROFILE",
-        "CANNOT_SELF_REVOKE",
-    ),
-)
+class UserUpdateUserValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    INVALID_USER_PROFILE = auto()
+    CANNOT_SELF_REVOKE = auto()
 
 
 def user_update_user_validate(
@@ -251,86 +236,79 @@ def user_update_user_validate(
     return data
 
 
-UserCreateUserStoreBadOutcome = Enum(
-    "UserCreateUserStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "ACTIVE_USERS_LIMIT_REACHED",
-        "USER_ALREADY_EXISTS",
-        "HUMAN_HANDLE_ALREADY_TAKEN",
-    ),
-)
-UserCreateDeviceStoreBadOutcome = Enum(
-    "UserCreateDeviceStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "DEVICE_ALREADY_EXISTS",
-    ),
-)
-UserRevokeUserStoreBadOutcome = Enum(
-    "UserRevokeUserStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "USER_NOT_FOUND",
-        "USER_ALREADY_REVOKED",
-    ),
-)
-UserUpdateUserStoreBadOutcome = Enum(
-    "UserUpdateUserStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "USER_NOT_FOUND",
-        "USER_REVOKED",
-        "USER_NO_CHANGES",
-    ),
-)
-UserGetCertificatesAsUserBadOutcome = Enum(
-    "UserGetCertificatesBadOutcome",
-    ("ORGANIZATION_NOT_FOUND", "ORGANIZATION_EXPIRED", "AUTHOR_NOT_FOUND", "AUTHOR_REVOKED"),
-)
-UserGetActiveDeviceVerifyKeyBadOutcome = Enum(
-    "UserGetActiveDeviceVerifyKeyBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "DEVICE_NOT_FOUND",
-        "USER_REVOKED",
-    ),
-)
-UserListUsersBadOutcome = Enum(
-    "UserListUsersBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        # Note we don't care the organization is expired here, this is because this
-        # command is used by the administration.
-    ),
-)
-UserFreezeUserBadOutcome = Enum(
-    "UserFreezeUserBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        # Note we don't care the organization is expired here, this is because this
-        # command is used by the administration.
-        "USER_NOT_FOUND",
-        "BOTH_USER_ID_AND_EMAIL",
-        "NO_USER_ID_NOR_EMAIL",
-    ),
-)
+class UserCreateUserStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ACTIVE_USERS_LIMIT_REACHED = auto()
+    USER_ALREADY_EXISTS = auto()
+    HUMAN_HANDLE_ALREADY_TAKEN = auto()
+
+
+class UserCreateDeviceStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    DEVICE_ALREADY_EXISTS = auto()
+
+
+class UserRevokeUserStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    USER_NOT_FOUND = auto()
+    USER_ALREADY_REVOKED = auto()
+
+
+class UserUpdateUserStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    USER_NOT_FOUND = auto()
+    USER_REVOKED = auto()
+    USER_NO_CHANGES = auto()
+
+
+class UserGetCertificatesAsUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+
+
+class UserGetActiveDeviceVerifyKeyBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    DEVICE_NOT_FOUND = auto()
+    USER_REVOKED = auto()
+
+
+class CheckUserWithDeviceBadOutcome(BadOutcomeEnum):
+    USER_REVOKED = auto()
+    USER_NOT_FOUND = auto()
+    DEVICE_NOT_FOUND = auto()
+
+
+class UserListUsersBadOutcome(BadOutcomeEnum):
+    # Note we don't care the organization is expired here, this is because this
+    # command is used by the administration.
+    ORGANIZATION_NOT_FOUND = auto()
+
+
+class UserFreezeUserBadOutcome(BadOutcomeEnum):
+    # Note we don't care the organization is expired here, this is because this
+    # command is used by the administration.
+    ORGANIZATION_NOT_FOUND = auto()
+    USER_NOT_FOUND = auto()
+    BOTH_USER_ID_AND_EMAIL = auto()
+    NO_USER_ID_NOR_EMAIL = auto()
 
 
 class BaseUserComponent:

@@ -11,7 +11,7 @@ from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from enum import Enum
+from enum import Enum, auto
 from typing import assert_never
 
 import anyio
@@ -42,6 +42,7 @@ from parsec.events import (
     InvitationStatusField,
 )
 from parsec.templates import get_template
+from parsec.types import BadOutcomeEnum
 
 logger = get_logger()
 
@@ -226,67 +227,53 @@ async def send_email(
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)
 
 
-InviteConduitExchangeBadOutcome = Enum(
-    "InviteConduitExchangeBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "ENROLLMENT_WRONG_STATE",
-        "INVITATION_NOT_FOUND",
-        "INVITATION_DELETED",
-    ),
-)
-InviteNewForUserBadOutcome = Enum(
-    "InviteNewForUserBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "CLAIMER_EMAIL_ALREADY_ENROLLED",
-    ),
-)
-InviteNewForDeviceBadOutcome = Enum(
-    "InviteNewForDeviceBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-    ),
-)
-InviteCancelBadOutcome = Enum(
-    "InviteCancelBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "INVITATION_NOT_FOUND",
-        "INVITATION_ALREADY_DELETED",
-    ),
-)
-InviteListBadOutcome = Enum(
-    "InviteListBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-    ),
-)
-InviteAsInvitedInfoBadOutcome = Enum(
-    "InviteInfoBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "INVITATION_NOT_FOUND",
-        "INVITATION_DELETED",
-    ),
-)
+class InviteConduitExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    ENROLLMENT_WRONG_STATE = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+
+
+class InviteNewForUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    CLAIMER_EMAIL_ALREADY_ENROLLED = auto()
+
+
+class InviteNewForDeviceBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+
+
+class InviteCancelBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_ALREADY_DELETED = auto()
+
+
+class InviteListBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+
+
+class InviteAsInvitedInfoBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
 
 
 class BaseInviteComponent:

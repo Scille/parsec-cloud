@@ -1,26 +1,28 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
+from typing import override
 
 import asyncpg
 
 from parsec._parsec import DateTime, DeviceID, OrganizationID, SequesterServiceID, VlobID
-from parsec.components.organization import SequesterAuthority
-from parsec.components.postgresql.handler import PGHandler, retry_on_unique_violation
+from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
+from parsec.components.postgresql.handler import retry_on_unique_violation
 from parsec.components.postgresql.sequester import get_sequester_authority, get_sequester_services
+from parsec.components.postgresql.utils import transaction
 from parsec.components.postgresql.vlob_queries import (
     query_create,
     query_list_versions,
-    query_maintenance_get_reencryption_batch,
-    query_maintenance_save_reencryption_batch,
     query_poll_changes,
     query_update,
 )
-from parsec.components.sequester import BaseSequesterService, SequesterDisabledError
+from parsec.components.realm import BadKeyIndex
+from parsec.components.sequester import BaseSequesterService
 from parsec.components.vlob import (
     BaseVlobComponent,
-    VlobSequesterDisabledError,
-    VlobSequesterServiceInconsistencyError,
-    extract_sequestered_data_and_proceed_webhook,
+    RejectedBySequesterService,
+    SequesterInconsistency,
+    SequesterServiceNotAvailable,
+    VlobCreateBadOutcome,
 )
 
 
@@ -57,8 +59,8 @@ async def _check_sequestered_organization(
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, dbh: PGHandler):
-        self.dbh = dbh
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
         self._sequester_organization_authority_cache: dict[
             OrganizationID, SequesterAuthority | None
         ] = {}
@@ -114,18 +116,33 @@ class PGVlobComponent(BaseVlobComponent):
 
         return sequestered_data
 
-    @retry_on_unique_violation
+    @override
+    @transaction
+    # @retry_on_unique_violation: TODO: Should we retry on unique violation?
     async def create(
         self,
+        conn: asyncpg.Connection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
-        encryption_revision: int,
         vlob_id: VlobID,
+        key_index: int,
         timestamp: DateTime,
         blob: bytes,
         sequester_blob: dict[SequesterServiceID, bytes] | None = None,
-    ) -> None:
+    ) -> (
+        None
+        | BadKeyIndex
+        | VlobCreateBadOutcome
+        | TimestampOutOfBallpark
+        | RequireGreaterTimestamp
+        | RejectedBySequesterService
+        | SequesterServiceNotAvailable
+        | SequesterInconsistency
+    ):
+        # TODO: we return None to use the CoolOrg template
+        return None
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
                 conn,

@@ -205,6 +205,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
                 now=t0,
                 organization_id=coolorg.organization_id,
                 author=coolorg.alice.device_id,
+                author_verify_key=coolorg.alice.signing_key.verify_key,
                 keys_bundle=b"<keys bundle>",
                 per_participant_keys_bundle_access={
                     coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
@@ -242,6 +243,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
                 now=t0,
                 organization_id=coolorg.organization_id,
                 author=coolorg.alice.device_id,
+                author_verify_key=coolorg.alice.signing_key.verify_key,
                 realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             )
             assert isinstance(outcome, RealmRoleCertificate)
@@ -461,6 +463,7 @@ async def test_authenticated_realm_share_timestamp_out_of_ballpark(
         now=t1,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         key_index=1,
         realm_role_certificate=certif,
         recipient_keys_bundle_access=b"<mallory keys bundle access>",

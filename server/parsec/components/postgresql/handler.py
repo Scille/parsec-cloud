@@ -226,7 +226,8 @@ async def asyncpg_pool_factory(
 async def send_signal(conn: asyncpg.Connection, event: Event) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
-    raw_event = b64encode(event.model_dump_json().encode("utf-8")).decode("ascii")
+    any_event = AnyEvent(event=event)
+    raw_event = b64encode(any_event.model_dump_json().encode("utf-8")).decode("ascii")
     # Add UUID to ensure the payload is unique given it seems Postgresql can
     # drop duplicated NOTIFY (same channel/payload)
     # see: https://github.com/Scille/parsec-cloud/issues/199

@@ -440,7 +440,6 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
 @rpc_router.post("/invited/{raw_organization_id}")
 async def invited_api(raw_organization_id: str, request: Request) -> Response:
     backend: Backend = request.app.state.backend
-
     parsed = _parse_auth_headers_or_abort(
         headers=request.headers,
         raw_organization_id=raw_organization_id,

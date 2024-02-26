@@ -17,7 +17,6 @@ from parsec.components.postgresql.vlob_queries.utils import (
     _get_last_role_granted_on,
     _get_realm_id_from_vlob_id,
 )
-from parsec.components.vlob import VlobNotFoundError, VlobVersionError
 
 _q_read_data_without_timestamp = Q(
     f"""

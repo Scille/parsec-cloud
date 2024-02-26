@@ -359,6 +359,7 @@ class BaseRealmComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
@@ -375,6 +376,7 @@ class BaseRealmComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
         recipient_keys_bundle_access: bytes,
         key_index: int,
@@ -410,6 +412,7 @@ class BaseRealmComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_name_certificate: bytes,
         initial_name_or_fail: bool,
     ) -> (
@@ -428,6 +431,7 @@ class BaseRealmComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
@@ -484,6 +488,7 @@ class BaseRealmComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             realm_role_certificate=req.realm_role_certificate,
         )
         match outcome:
@@ -527,6 +532,7 @@ class BaseRealmComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             realm_role_certificate=req.realm_role_certificate,
             recipient_keys_bundle_access=req.recipient_keys_bundle_access,
             key_index=req.key_index,
@@ -635,6 +641,7 @@ class BaseRealmComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             realm_name_certificate=req.realm_name_certificate,
             initial_name_or_fail=req.initial_name_or_fail,
         )
@@ -687,6 +694,7 @@ class BaseRealmComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             realm_key_rotation_certificate=req.realm_key_rotation_certificate,
             per_participant_keys_bundle_access=req.per_participant_keys_bundle_access,
             keys_bundle=req.keys_bundle,

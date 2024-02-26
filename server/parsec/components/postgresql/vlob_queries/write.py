@@ -5,7 +5,6 @@ import asyncpg
 from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
-    BackendEventRealmVlobsUpdated,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -26,12 +25,7 @@ from parsec.components.postgresql.vlob_queries.utils import (
     _check_realm_and_write_access,
     _get_realm_id_from_vlob_id,
 )
-from parsec.components.vlob import (
-    VlobAlreadyExistsError,
-    VlobNotFoundError,
-    VlobRequireGreaterTimestampError,
-    VlobVersionError,
-)
+
 
 _q_vlob_updated = Q(
     f"""

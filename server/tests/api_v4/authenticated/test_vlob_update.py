@@ -151,6 +151,7 @@ async def test_authenticated_vlob_update_bad_key_index(
                 now=t1,
                 organization_id=coolorg.organization_id,
                 author=coolorg.alice.device_id,
+                author_verify_key=coolorg.alice.signing_key.verify_key,
                 realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
                 keys_bundle=b"<dummy keys bundle>",
                 per_participant_keys_bundle_access={

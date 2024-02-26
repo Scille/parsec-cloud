@@ -75,7 +75,7 @@ VlobIDField = Annotated[
 DateTimeField = Annotated[
     DateTime,
     PlainValidator(lambda x: x if isinstance(x, DateTime) else DateTime.from_rfc3339(x)),
-    PlainSerializer(lambda x: x.to_rfc3339, return_type=str),
+    PlainSerializer(lambda x: x.to_rfc3339(), return_type=str),
 ]
 UserProfileField = Annotated[
     UserProfile,
@@ -180,12 +180,12 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     organization_id: OrganizationIDField
     author: DeviceIDField
     realm_id: VlobIDField
-    timestamp: DateTime
+    timestamp: DateTimeField
     vlob_id: VlobIDField
     version: int
     blob: bytes | None
-    last_common_certificate_timestamp: DateTime
-    last_realm_certificate_timestamp: DateTime
+    last_common_certificate_timestamp: DateTimeField
+    last_realm_certificate_timestamp: DateTimeField
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -209,11 +209,11 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
 
 
 class EventCommonCertificate(BaseModel, ClientBroadcastableEvent):
-    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    model_config = ConfigDict(strict=True)
     type: Literal["COMMON_CERTIFICATE"] = "COMMON_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    timestamp: DateTime
+    timestamp: DateTimeField
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -234,7 +234,7 @@ class EventSequesterCertificate(BaseModel, ClientBroadcastableEvent):
     type: Literal["SEQUESTER_CERTIFICATE"] = "SEQUESTER_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    timestamp: DateTime
+    timestamp: DateTimeField
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -255,7 +255,7 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
     type: Literal["SHAMIR_RECOVERY_CERTIFICATE"] = "SHAMIR_RECOVERY_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    timestamp: DateTime
+    timestamp: DateTimeField
     participants: tuple[UserID]
 
     @override
@@ -279,7 +279,7 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     type: Literal["REALM_CERTIFICATE"] = "REALM_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    timestamp: DateTime
+    timestamp: DateTimeField
     realm_id: VlobID
     user_id: UserID
     role_removed: bool

@@ -362,6 +362,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
     )
     assert isinstance(outcome, RealmRoleCertificate)
@@ -383,6 +384,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
     )
     assert isinstance(outcome, RealmRoleCertificate)
@@ -406,6 +408,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"<dummy key bundle>",
         per_participant_keys_bundle_access={coolorg.alice.user_id: b"<dummy key bundle access>"},
         realm_key_rotation_certificate=certif,
@@ -429,6 +432,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_name_certificate=certif,
         initial_name_or_fail=False,
     )
@@ -451,6 +455,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
         key_index=1,
         recipient_keys_bundle_access=b"<dummy key bundle access>",
@@ -557,6 +562,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
         key_index=1,
         recipient_keys_bundle_access=b"<dummy key bundle access>",
@@ -582,6 +588,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"<dummy key bundle>",
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: b"<dummy key bundle access>",
@@ -632,6 +639,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"<dummy key bundle>",
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: b"<dummy key bundle access>",
@@ -686,6 +694,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
         key_index=3,
         recipient_keys_bundle_access=b"<dummy key bundle access>",
