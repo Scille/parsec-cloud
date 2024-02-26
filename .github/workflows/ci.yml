@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd  # pin v3.0.0
+      - uses: dorny/paths-filter@ebc4d7e9ebcb0b1eb21480bb8f43113e996ac77a  # pin v3.0.1
         id: changes
         with:
           list-files: shell
@@ -132,7 +132,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
 
-      - uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd  # pin v3.0.0
+      - uses: dorny/paths-filter@ebc4d7e9ebcb0b1eb21480bb8f43113e996ac77a  # pin v3.0.1
         id: newsfragment-have-changed
         with:
           filters: |
