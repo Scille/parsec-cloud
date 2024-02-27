@@ -55,6 +55,11 @@
         "browse": "Go to location",
         "noNotification": "You are up to date!"
     },
+    "invitationList": {
+        "title": "Invitations",
+        "invite": "Invite a new user",
+        "noInvitations": "No invitations"
+    },
     "notification": {
         "changeRole": "Your role a been changed to {role} on the workspace {workspace}"
     },
@@ -203,7 +208,10 @@
             "myContactDetails": "My contact details",
             "recoveryExport": "Recovery files"
         },
-        "previous": "Go back"
+        "previous": "Go back",
+        "invitations": {
+            "title": "No invitations | One invitation | {count} invitations"
+        }
     },
     "WorkspaceSharing": {
         "title": "Share this workspace",
@@ -791,11 +799,17 @@
             "inviteFailedOffline": "Could not reach the server. Please make sure you're connected to the internet.",
             "inviteFailedNotAllowed": "Only administrators can invite new people into the organization.",
             "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
-            "cancelSuccess": "The invitation link is no longer valid.",
+            "cancelSuccess": "The invitation has been cancelled.",
             "cancelFailed": "Could not cancel the invitation",
             "linkCopiedToClipboard": "The link has been copied to the clipboard.",
             "linkNotCopiedToClipboard": "Could not copy the link. Please check that your browser or device allows copy/paste.",
             "copyLink": "Copy the link",
+            "cancelInvitation": {
+                "title": "Cancel the invitation",
+                "message": "The invitation sent to {email} and the invitation link will no longer be valid. Are you sure you want to continue?",
+                "yes": "Cancel the invitation",
+                "no": "Keep the invitation"
+            },
             "status": {
                 "ready": "Ready",
                 "idle": "Idle",
