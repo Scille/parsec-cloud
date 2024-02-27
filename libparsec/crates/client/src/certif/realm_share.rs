@@ -158,7 +158,7 @@ async fn unshare_do_server_command(
     // 1) Build role certificate
 
     let signed_certificate = RealmRoleCertificate {
-        author: CertificateSignerOwned::User(ops.device.device_id.clone()),
+        author: ops.device.device_id.clone(),
         timestamp,
         realm_id,
         user_id: recipient,
@@ -276,7 +276,7 @@ async fn share_do_server_command(
     // 2) Build role certificate
 
     let signed_certificate = RealmRoleCertificate {
-        author: CertificateSignerOwned::User(ops.device.device_id.clone()),
+        author: ops.device.device_id.clone(),
         timestamp,
         realm_id,
         user_id: recipient,

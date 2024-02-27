@@ -578,7 +578,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
-    pub author: CertificateSignerOwned,
+    pub author: DeviceID,
     pub timestamp: DateTime,
 
     pub realm_id: VlobID,
@@ -587,7 +587,7 @@ pub struct RealmRoleCertificate {
     pub role: Option<RealmRole>, // TODO: use a custom type instead
 }
 
-impl_unsecure_load!(RealmRoleCertificate -> CertificateSignerOwned);
+impl_unsecure_load!(RealmRoleCertificate -> DeviceID);
 impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
@@ -595,7 +595,7 @@ impl RealmRoleCertificate {
     pub fn new_root(author: DeviceID, timestamp: DateTime, realm_id: VlobID) -> Self {
         let user_id = author.user_id().to_owned();
         Self {
-            author: CertificateSignerOwned::User(author),
+            author,
             timestamp,
             realm_id,
             user_id,
@@ -606,12 +606,18 @@ impl RealmRoleCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: CertificateSignerRef,
+        expected_author: &DeviceID,
         expected_realm_id: Option<VlobID>,
         expected_user_id: Option<&UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
-        check_author_allow_root(&r.author, expected_author)?;
+
+        if &r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: Box::new(expected_author.clone()),
+                got: Some(Box::new(r.author)),
+            });
+        }
 
         if let Some(expected_realm_id) = expected_realm_id {
             if r.realm_id != expected_realm_id {

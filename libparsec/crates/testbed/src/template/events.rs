@@ -1175,7 +1175,7 @@ single_certificate_event!(
     |e: &TestbedEventNewRealm, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
         let certif = RealmRoleCertificate {
-            author: CertificateSignerOwned::User(e.author.clone()),
+            author: e.author.clone(),
             timestamp: e.timestamp,
             user_id: e.author.user_id().to_owned(),
             realm_id: e.realm_id,
@@ -1328,7 +1328,7 @@ impl TestbedEventShareRealm {
         let populate = || {
             let author_signkey = template.device_signing_key(&self.author);
             let certif = RealmRoleCertificate {
-                author: CertificateSignerOwned::User(self.author.clone()),
+                author: self.author.clone(),
                 timestamp: self.timestamp,
                 user_id: self.user.clone(),
                 realm_id: self.realm,

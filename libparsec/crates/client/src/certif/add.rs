@@ -453,7 +453,7 @@ async fn validate_realm_certificate(
 
     match unsecure {
         UnsecureRealmTopicCertificate::RealmRole(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure, ops, store)?;
+            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
@@ -1300,21 +1300,7 @@ async fn check_realm_role_certificate_consistency(
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
-    let author = match &cooked.author {
-        CertificateSignerOwned::User(author) => author,
-        // TODO: Currently realm role certificate allow root as author, but there is
-        // no reason for that, this is most likely a mistake and should be removed !
-        // So for the moment we handle this with a hacky workaround by pretending
-        // the serialization format doesn't allow root as author.
-        CertificateSignerOwned::Root => {
-            let hint = mk_hint();
-            let what = Box::new(InvalidCertificateError::Corrupted {
-                hint,
-                error: DataError::Serialization,
-            });
-            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
-        }
-    };
+    let author = &cooked.author;
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always

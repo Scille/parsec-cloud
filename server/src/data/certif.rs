@@ -457,7 +457,7 @@ impl RealmRoleCertificate {
     #[new]
     #[pyo3(signature = (author, timestamp, realm_id, user_id, role))]
     fn new(
-        author: Option<DeviceID>,
+        author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
         user_id: UserID,
@@ -465,10 +465,7 @@ impl RealmRoleCertificate {
     ) -> PyResult<Self> {
         Ok(Self(Arc::new(libparsec_types::RealmRoleCertificate {
             timestamp: timestamp.0,
-            author: match author {
-                Some(device_id) => CertificateSignerOwned::User(device_id.0),
-                None => CertificateSignerOwned::Root,
-            },
+            author: author.0,
             realm_id: realm_id.0,
             user_id: user_id.0,
             role: role.map(|x| x.0),
@@ -480,17 +477,14 @@ impl RealmRoleCertificate {
         _cls: &PyType,
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: Option<&DeviceID>,
+        expected_author: &DeviceID,
         expected_realm: Option<VlobID>,
         expected_user: Option<&UserID>,
     ) -> PyResult<Self> {
         libparsec_types::RealmRoleCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            match &expected_author {
-                Some(device_id) => CertificateSignerRef::User(&device_id.0),
-                None => CertificateSignerRef::Root,
-            },
+            &expected_author.0,
             expected_realm.map(|x| x.0),
             expected_user.map(|x| &x.0),
         )
@@ -519,7 +513,7 @@ impl RealmRoleCertificate {
     ) -> Self {
         Self(Arc::new(libparsec_types::RealmRoleCertificate {
             user_id: author.0.user_id().clone(),
-            author: CertificateSignerOwned::User(author.0),
+            author: author.0,
             timestamp: timestamp.0,
             realm_id: realm_id.0,
             role: Some(libparsec_types::RealmRole::Owner),
@@ -527,11 +521,8 @@ impl RealmRoleCertificate {
     }
 
     #[getter]
-    fn author(&self) -> Option<DeviceID> {
-        match &self.0.author {
-            CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
-        }
+    fn author(&self) -> DeviceID {
+        self.0.author.clone().into()
     }
 
     #[getter]
