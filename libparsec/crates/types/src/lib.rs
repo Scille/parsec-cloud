@@ -53,7 +53,6 @@ mod protocol;
 mod realm;
 mod regex;
 mod time;
-mod user;
 
 pub use crate::regex::*;
 pub use addr::*;
@@ -72,7 +71,6 @@ pub use pki::*;
 pub use protocol::*;
 pub use realm::*;
 pub use time::*;
-pub use user::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ClientType {
