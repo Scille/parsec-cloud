@@ -57,6 +57,15 @@ ion-popover {
   --offset-x: -5%;
 }
 
+/* --- invitations list popover --- */
+.invitations-list-popover {
+  --background: none;
+  --box-shadow: var(--parsec-shadow-strong);
+  --width: var(--popover-notification-center-width);
+  --offset-y: 0.5rem;
+  --offset-x: -5%;
+}
+
 /* --- sorter, dropdown popover --- */
 .sorter-popover,
 .dropdown-popover {

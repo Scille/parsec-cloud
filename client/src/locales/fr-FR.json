@@ -60,6 +60,11 @@
         "openEnclosingFolder": "Ouvrir le dossier",
         "noNotification": "Vous êtes à jour !"
     },
+    "invitationList": {
+        "title": "Invitations",
+        "invite": "Inviter un nouvel utilisateur",
+        "noInvitations": "Aucune invitation"
+    },
     "notification": {
         "changeRole": "Votre role a été modifié en tant que {role} dans l'espace de travail {workspace}",
         "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
@@ -216,7 +221,10 @@
             "myContactDetails": "Mes coordonnées",
             "recoveryExport": "Fichiers de récupération"
         },
-        "previous": "Précédent"
+        "previous": "Précédent",
+        "invitations": {
+            "title": "Aucune invitation | Une invitation | {count} invitations"
+        }
     },
     "WorkspaceSharing": {
         "title": "Partager cet espace de travail",
@@ -809,6 +817,12 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller.",
             "copyLink": "Copier le lien",
+            "cancelInvitation": {
+                "title": "Annuler l'invitation",
+                "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valide. Êtes-vous sûr(e) de vouloir continuer ?",
+                "yes": "Annuler l'invitation",
+                "no": "Conserver l'invitation"
+            },
             "status": {
                 "ready": "Prête",
                 "idle": "Inactive",

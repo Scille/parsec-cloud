@@ -60,6 +60,8 @@
           class="topbar-right"
         >
           <div class="topbar-right-button">
+            <invitations-button />
+
             <ion-button
               v-show="false"
               v-if="!isMobile()"
@@ -107,6 +109,7 @@
 <script setup lang="ts">
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
+import InvitationsButton from '@/components/header/InvitationsButton.vue';
 import { ClientInfo, Path, WorkspaceName, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
 import {
   Routes,
