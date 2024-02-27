@@ -6,8 +6,7 @@ describe('Greet user into an organization', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
-    cy.get('.organization-card-manageBtn').click();
-    cy.get('.user-menu__item').eq(2).click();
+    cy.get('#invitations-button').contains('2 invitations').click();
   });
 
   afterEach(() => {
@@ -15,9 +14,11 @@ describe('Greet user into an organization', () => {
   });
 
   it('Open greet user modal', () => {
+    cy.get('.invitations-list-popover').should('exist');
     cy.get('.greet-organization-modal').should('not.exist');
-    cy.get('.invitation-list').find('.invitation-list-item').should('have.length', 2);
-    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').last().contains('Greet').click();
+    cy.get('.invitations-list-popover').should('not.exist');
     cy.get('.greet-organization-modal').should('exist');
     cy.get('.greet-organization-modal').find('.modal-header__title').contains('Onboard a new user');
     cy.get('.greet-organization-modal').find('#next-button').should('have.attr', 'disabled');
@@ -41,7 +42,8 @@ describe('Greet user into an organization', () => {
       }
     }
 
-    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').last().contains('Greet').click();
     cy.get('.greet-organization-modal').should('exist');
     cy.wait(WAIT_TIME);
     cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
@@ -91,7 +93,8 @@ describe('Greet user into an organization', () => {
   });
 
   it('Select wrong code', () => {
-    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').last().contains('Greet').click();
     cy.get('.greet-organization-modal').should('exist');
     cy.wait(WAIT_TIME);
     cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
@@ -110,7 +113,8 @@ describe('Greet user into an organization', () => {
   });
 
   it('Select none code', () => {
-    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').last().contains('Greet').click();
     cy.get('.greet-organization-modal').should('exist');
     cy.wait(WAIT_TIME);
     cy.get('.greet-organization-modal').find('#next-button').as('nextButton').click();
@@ -128,7 +132,8 @@ describe('Greet user into an organization', () => {
   });
 
   it('Close with X button', () => {
-    cy.get('.invitation-list').find('.invitation-list-item').find('.button-default').eq(0).click();
+    cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
+    cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').last().contains('Greet').click();
     cy.get('.greet-organization-modal').should('exist');
     cy.get('.greet-organization-modal').find('#next-button').click();
     cy.get('.greet-organization-modal').find('.closeBtn').should('be.visible');

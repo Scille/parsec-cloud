@@ -50,8 +50,8 @@
 
 <script setup lang="ts">
 import { writeTextToClipboard } from '@/common/clipboard';
-import { UserInvitation } from '@/parsec';
 import { formatTimeSince } from '@/common/date';
+import { UserInvitation } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
@@ -92,7 +92,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 
 <style scoped lang="scss">
 .invitation-list-item-container {
-  --inner-padding-end:0;
+  --inner-padding-end: 0;
 }
 .invitation-list-item {
   padding: 1rem 1rem 1rem 1.75rem;

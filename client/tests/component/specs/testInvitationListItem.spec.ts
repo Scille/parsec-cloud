@@ -32,7 +32,7 @@ describe('User Invitation List Item', () => {
     expect(wrapper.get('.invitation-email').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
     expect(buttons.at(0)?.text()).to.equal('Copy the link');
-    expect(buttons.at(1)?.text()).to.equal('Reject');
+    expect(buttons.at(1)?.text()).to.equal('Cancel');
     expect(buttons.at(2)?.text()).to.equal('Greet');
 
     buttons.at(1)?.trigger('click');
