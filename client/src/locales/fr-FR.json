@@ -799,7 +799,7 @@
         },
         "invitation": {
             "greetUser": "Accueillir",
-            "rejectUser": "Refuser",
+            "rejectUser": "Annuler",
             "emailTitle": "Email",
             "dateTitle": "Date d'invitation",
             "statusTitle": "Statut",

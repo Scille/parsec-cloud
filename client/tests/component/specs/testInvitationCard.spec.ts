@@ -30,7 +30,7 @@ describe('User Invitation Card', () => {
     expect(wrapper.get('.caption-caption').text()).to.equal('Ready');
     expect(wrapper.get('.invitation-card-item__label').text()).to.equal('dung.eater@lands-between');
     const buttons = wrapper.findAll('ion-button');
-    expect(buttons.at(0)?.text()).to.equal('Reject');
+    expect(buttons.at(0)?.text()).to.equal('Cancel');
     expect(buttons.at(1)?.text()).to.equal('Greet');
 
     buttons.at(0)?.trigger('click');

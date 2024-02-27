@@ -799,7 +799,7 @@
         },
         "invitation": {
             "greetUser": "Greet",
-            "rejectUser": "Reject",
+            "rejectUser": "Cancel",
             "emailTitle": "Email",
             "dateTitle": "Invitation date",
             "statusTitle": "Status",
