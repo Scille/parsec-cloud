@@ -71,8 +71,8 @@ JsString
 (
 {%- for value in type.values -%}
     {
-        let js_item: Handle<{{ ts_type(value) }}> = {{ js_val }}.get({{ mut_cx_ref }}, {{ loop.index }})?;
-        {{ render_downcasted_js_to_rs("js_val", value, mut_cx_ref) }}
+        let js_item: Handle<{{ ts_type(value) }}> = {{ js_val }}.get({{ mut_cx_ref }}, {{ loop.index0 }})?;
+        {{ render_downcasted_js_to_rs("js_item", value, mut_cx_ref) }}
     }
     {{ ", " if not loop.last else "" -}}
 {%- endfor -%}
@@ -109,7 +109,16 @@ JsString
     if v < (i32::MIN as f64) || (i32::MAX as f64) < v {
         cx.throw_type_error("Not an i32 number")?
     }
-    v as i32
+    let v = v as i32;
+    {% if type.custom_from_rs_i32 -%}
+    let custom_from_rs_i32 = {{ type.custom_from_rs_i32 }};
+    match custom_from_rs_i32(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
 }
 {%- elif type.kind == "u32_based" -%}
 {
@@ -117,7 +126,16 @@ JsString
     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
         cx.throw_type_error("Not an u32 number")?
     }
-    v as u32
+    let v = v as u32;
+    {% if type.custom_from_rs_u32 -%}
+    let custom_from_rs_u32 = {{ type.custom_from_rs_u32 }};
+    match custom_from_rs_u32(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
 }
 {%- elif type.kind == "i64_based" -%}
 {
@@ -125,7 +143,16 @@ JsString
     if v < (i64::MIN as f64) || (i64::MAX as f64) < v {
         cx.throw_type_error("Not an i64 number")?
     }
-    v as i64
+    let v = v as i64;
+    {% if type.custom_from_rs_i64 -%}
+    let custom_from_rs_i64 = {{ type.custom_from_rs_i64 }};
+    match custom_from_rs_i64(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
 }
 {%- elif type.kind == "u64_based" -%}
 {
@@ -133,7 +160,16 @@ JsString
     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
         cx.throw_type_error("Not an u64 number")?
     }
-    v as u64
+    let v = v as u64;
+    {% if type.custom_from_rs_u64 -%}
+    let custom_from_rs_u64 = {{ type.custom_from_rs_u64 }};
+    match custom_from_rs_u64(v) {
+        Ok(val) => val,
+        Err(err) => return cx.throw_type_error(err),
+    }
+    {%- else -%}
+    v
+    {%- endif %}
 }
 {%- elif type.kind == "f64_based" -%}
 {
@@ -144,10 +180,10 @@ JsString
         Ok(val) => val,
         Err(err) => return cx.throw_type_error(err),
     }
+    {%- else -%}
+    v
+    {%- endif %}
 }
-{%- else -%}
-{{ js_val }}.value({{ mut_cx_ref }})
-{%- endif %}
 {%- elif type.kind == "str" -%}
 {{ js_val }}.value({{ mut_cx_ref }})
 {%- elif type.kind == "str_based" -%}
@@ -259,15 +295,15 @@ std::sync::Arc::new(
 {
     let (
     {%- for value in type.values -%}
-        {% set value_var_name = "x" ~ loop.index %}
+        {% set value_var_name = "x" ~ loop.index0 %}
         {{- value_var_name }}{{ ", " if not loop.last else "" -}}
     {%- endfor -%}
     ) = {{ rs_value }};
     let js_array = JsArray::new({{ mut_cx_ref }}, {{ type.values | length }});
 {% for value in type.values -%}
-    {% set value_var_name = "x" ~ loop.index %}
+    {% set value_var_name = "x" ~ loop.index0 %}
     let js_value = {{ render_rs_to_js(value_var_name, value, mut_cx_ref) }};
-    js_array.set({{ mut_cx_ref }}, {{ loop.index }}, js_value)?;
+    js_array.set({{ mut_cx_ref }}, {{ loop.index0 }}, js_value)?;
 {% endfor %}
     js_array
 }
@@ -305,11 +341,69 @@ match {{ rs_value }} {
 }
 {%- elif type.kind == "bool" -%}
 JsBoolean::new({{ mut_cx_ref }}, {{ rs_value }})
-{%- elif type.kind in ("i32_based", "u32_based", "u64_based", "i64_based") -%}
-JsNumber::new({{ mut_cx_ref }}, {{ rs_value }} as f64)
-{%- elif type.kind == "f64_based" -%}
-{%- if type.custom_to_rs_f64 -%}
+{%- elif type.kind == "i32_based" -%}
 JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_i32 -%}
+{
+    let custom_to_rs_i32 = {{ type.custom_to_rs_i32 }};
+    match custom_to_rs_i32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+ as f64
+)
+{%- elif type.kind == "u32_based" -%}
+JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_u32 -%}
+{
+    let custom_to_rs_u32 = {{ type.custom_to_rs_u32 }};
+    match custom_to_rs_u32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+ as f64
+)
+{%- elif type.kind == "u64_based" -%}
+JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_u64 -%}
+{
+    let custom_to_rs_u64 = {{ type.custom_to_rs_u64 }};
+    match custom_to_rs_u64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+ as f64
+)
+{%- elif type.kind == "i64_based" -%}
+JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_i64 -%}
+{
+    let custom_to_rs_i64 = {{ type.custom_to_rs_i64 }};
+    match custom_to_rs_i64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+ as f64
+)
+{%- elif type.kind == "f64_based" -%}
+JsNumber::new({{ mut_cx_ref }},
+{%- if type.custom_to_rs_f64 -%}
 {
     let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
     match custom_to_rs_f64({{ rs_value }}) {
@@ -470,14 +564,14 @@ fn {{ variant_js_to_rs_function_name(variant) }}<'a>(
             })
 {% elif value.is_tuple %}
 {% for attr_type in value.tuple %}
-            let x{{ loop.index }} = {
-                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index }}")?;
+            let x{{ loop.index0 }} = {
+                let js_val: Handle<{{ ts_type(attr_type) }}> = obj.get(cx, "x{{ loop.index0 }}")?;
                 {{ render_downcasted_js_to_rs("js_val", attr_type, mut_cx_ref="cx") }}
             };
 {% endfor %}
             Ok(libparsec::{{ variant.name }}::{{ value.name }} (
 {% for _ in value.tuple %}
-                x{{ loop.index }},
+                x{{ loop.index0 }},
 {% endfor %}
             ))
 {% else %}
@@ -514,12 +608,12 @@ fn {{ variant_rs_to_js_function_name(variant) }}<'a>(
 {% endfor %}
         }
 {% elif value.is_tuple %}
-        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index }},{% endfor %} .. ) => {
+        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index0 }},{% endfor %} .. ) => {
             let js_tag = JsString::try_new(cx, "{{ value.name }}").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
 {% for attr_type in value.tuple %}
-            let js_x{{ loop.index }} = {{ render_rs_to_js("x%s" % loop.index, attr_type, mut_cx_ref="cx") }};
-            js_obj.set(cx, "x{{ loop.index }}", js_x{{ loop.index }})?;
+            let js_x{{ loop.index0 }} = {{ render_rs_to_js("x%s" % loop.index0, attr_type, mut_cx_ref="cx") }};
+            js_obj.set(cx, "x{{ loop.index0 }}", js_x{{ loop.index0 }})?;
 {% endfor %}
         }
 {% else %}
