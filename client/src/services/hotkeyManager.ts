@@ -148,6 +148,9 @@ export class HotkeyManager {
   }
 
   private async onKeyPress(event: KeyboardEvent, groups: HotkeyGroup[], uniqueGroup: Hotkeys[]): Promise<void> {
+    if (!event.key || ['control', 'shift', 'alt'].includes(event.key.toLowerCase())) {
+      return;
+    }
     if (['control', 'shift', 'alt'].includes(event.key.toLowerCase())) {
       return;
     }

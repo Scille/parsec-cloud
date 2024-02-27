@@ -5,6 +5,7 @@
     <span
       id="passwordLabel"
       class="form-label"
+      v-show="label"
     >
       {{ label }}
     </span>
@@ -61,7 +62,7 @@ const passwordVisible = ref(false);
 const hasFocus = ref(false);
 
 const props = defineProps<{
-  label: string;
+  label?: string;
   modelValue?: string;
   errorMessage?: string;
   passwordIsInvalid?: boolean;

@@ -927,10 +927,17 @@
         "nextButton": "fermer"
     },
     "ContactDetailsPage": {
-        "title": "Mettre à jour mon mot de passe",
-        "changePasswordButton": "Changer mon mot de passe",
+        "titleActualPassword": "Saisissez votre mot de passe",
+        "titleNewPassword": "Choisissez un nouveau mot de passe",
+        "validNewPassword": "Mettre à jour mon mot de passe",
+        "email": "Courriel",
+        "password": "Mot de passe",
+        "cancelButton": "Annuler",
+        "nextButton": "Continuer",
+        "changePasswordButton": "Modifier",
         "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
         "errors": {
+            "emptyPasswordError": "Merci de saisir votre mot de passe.",
             "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
             "cannotChangePassword": "Impossible de changer le mot de passe",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."

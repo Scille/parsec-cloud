@@ -48,25 +48,25 @@ describe('Display import recovery device page', () => {
     cy.get('@file').contains('recoveryfile.psrk');
     cy.get('@toPassword').click();
     // Second state: password input
-    cy.get('.info-password').contains(
+    cy.get('.info__text').contains(
       'Your password must be secure and you must remember it. \
 We advise you to create several devices if possible and to share workspaces.',
     );
-    cy.get('.password-level-container').contains(
+    cy.get('.password-criteria').contains(
       'Make sure it corresponds to a strong level: avoid repetitions, overly common words and sequences.',
     );
-    cy.get('.ms-password-inputs').find('.ms-password-inputs-container').as('password-containers').should('have.length', 2);
+    cy.get('.choose-password').find('.inputs-container-item').as('password-containers').should('have.length', 2);
     cy.get('@password-containers').eq(0).should('contain', 'Choose a new password').find('ion-input').as('first-password-input');
     // Input password first characters to test weak password recognition
     cy.get('@first-password-input').find('input').type('A583n.');
     cy.get('@password-containers').eq(1).should('contain', 'Confirm password').find('ion-input').find('input').type('A583n.x@f3.');
     cy.get('@password-containers').eq(1).contains('Does not match');
-    cy.get('.password-level-container').find('.password-level').should('have.class', 'password-level-low');
+    cy.get('.password-level').find('.password-level-container').should('have.class', 'password-level-low');
     cy.get('#validate-password-btn').should('have.class', 'button-disabled');
     // Have same strong password in both input fields
     cy.get('@first-password-input').find('input').type('x@f3.');
     cy.get('@password-containers').eq(1).should('not.contain', 'Does not match');
-    cy.get('.password-level-container').find('.password-level').should('have.class', 'password-level-high');
+    cy.get('.password-level').find('.password-level-container').should('have.class', 'password-level-high');
     cy.get('#validate-password-btn').should('not.have.class', 'button-disabled').click();
     // Third state: validation
     cy.get('#success-step')

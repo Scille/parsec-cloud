@@ -1,58 +1,60 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="info-password">
-    <ms-image
-      :image="PasswordLock"
-      class="info-password__img"
-    />
-    <ion-text class="subtitles-sm info-password__text">
-      {{ $t('Password.passwordInfo') }}
-    </ion-text>
-  </div>
-  <div class="ms-password-inputs">
-    <div class="ms-password-inputs-container">
-      <ms-password-input
-        :label="passwordLabel || $t('Password.password')"
-        v-model="password"
-        name="password"
-        ref="firstInputFieldRef"
-        @change="onPasswordChange()"
-        @on-enter-keyup="$emit('onEnterKeyup', password)"
+  <div class="choose-password">
+    <div class="info">
+      <ms-image
+        :image="PasswordLock"
+        class="info__img"
       />
-    </div>
-    <div class="ms-password-inputs-container">
-      <ms-password-input
-        :label="$t('Password.confirmPassword')"
-        v-model="passwordConfirm"
-        name="confirmPassword"
-        @on-enter-keyup="$emit('onEnterKeyup', passwordConfirm)"
-      />
-      <span
-        class="form-helperText"
-        v-if="password !== passwordConfirm"
-      >
-        {{ $t('Password.noMatch') }}
-      </span>
-    </div>
-  </div>
-  <div class="password-level-container">
-    <div
-      class="password-level"
-      :class="getPasswordLevelClass()"
-    >
-      <div class="password-level-bar">
-        <div class="bar-item" />
-        <div class="bar-item" />
-        <div class="bar-item" />
-      </div>
-      <ion-text class="subtitles-sm password-level__text">
-        {{ getPasswordStrengthText(passwordStrength) }}
+      <ion-text class="info__text subtitles-sm">
+        {{ $t('Password.passwordInfo') }}
       </ion-text>
     </div>
-    <ion-text class="subtitles-sm password-criteria">
-      {{ $t('Password.passwordCriteria') }}
-    </ion-text>
+    <div class="inputs-container">
+      <div class="inputs-container-item">
+        <ms-password-input
+          :label="passwordLabel || $t('Password.password')"
+          v-model="password"
+          name="password"
+          ref="firstInputFieldRef"
+          @change="onPasswordChange()"
+          @on-enter-keyup="$emit('onEnterKeyup', password)"
+        />
+      </div>
+      <div class="inputs-container-item">
+        <ms-password-input
+          :label="$t('Password.confirmPassword')"
+          v-model="passwordConfirm"
+          name="confirmPassword"
+          @on-enter-keyup="$emit('onEnterKeyup', passwordConfirm)"
+        />
+        <span
+          class="form-helperText"
+          v-if="password !== passwordConfirm && passwordConfirm.length > 0"
+        >
+          {{ $t('Password.noMatch') }}
+        </span>
+      </div>
+    </div>
+    <div class="password-level">
+      <div
+        class="password-level-container"
+        :class="getPasswordLevelClass()"
+      >
+        <div class="password-level-bar">
+          <div class="bar-item" />
+          <div class="bar-item" />
+          <div class="bar-item" />
+        </div>
+        <ion-text class="subtitles-sm password-level__text">
+          {{ getPasswordStrengthText(passwordStrength) }}
+        </ion-text>
+      </div>
+      <ion-text class="subtitles-sm password-criteria">
+        {{ $t('Password.passwordCriteria') }}
+      </ion-text>
+    </div>
   </div>
 </template>
 
@@ -116,7 +118,13 @@ function getPasswordLevelClass(): string {
 </script>
 
 <style scoped lang="scss">
-.info-password {
+.choose-password {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info {
   background: var(--parsec-color-light-primary-30);
   display: flex;
   align-items: center;
@@ -137,11 +145,11 @@ function getPasswordLevelClass(): string {
   }
 }
 
-.ms-password-inputs {
+.inputs-container {
   display: flex;
   gap: 1.5rem;
 
-  &-container {
+  &-item {
     width: 100%;
   }
 
@@ -153,33 +161,16 @@ function getPasswordLevelClass(): string {
   }
 }
 
-.password-level-container {
+.password-level {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   max-width: 35rem;
 
-  .password-level {
+  .password-level-container {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-
-    &__text {
-      color: var(--parsec-color-light-secondary-text);
-    }
-
-    &-bar {
-      display: flex;
-      gap: 0.5rem;
-
-      .bar-item {
-        width: 3rem;
-        height: 0.375rem;
-        border-radius: var(--parsec-radius-6);
-        background: var(--parsec-color-light-primary-50);
-        position: relative;
-      }
-    }
 
     &.password-level-low {
       .password-level__text {
@@ -209,6 +200,23 @@ function getPasswordLevelClass(): string {
       .bar-item:nth-child(-n + 3) {
         background: var(--parsec-color-light-success-500);
       }
+    }
+  }
+
+  &__text {
+    color: var(--parsec-color-light-secondary-text);
+  }
+
+  &-bar {
+    display: flex;
+    gap: 0.5rem;
+
+    .bar-item {
+      width: 3rem;
+      height: 0.375rem;
+      border-radius: var(--parsec-radius-6);
+      background: var(--parsec-color-light-primary-50);
+      position: relative;
     }
   }
 

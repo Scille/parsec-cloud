@@ -102,18 +102,17 @@ describe('Create a new organization', () => {
     cy.get('#previous-button').should('be.visible');
 
     cy.get('.org-password').find('ion-input').first().find('input').type('AVery');
-    cy.get('.org-password').find('.form-helperText').contains('Does not match');
-    cy.get('.org-password').find('.password-level').should('have.class', 'password-level-low');
+    cy.get('.org-password').find('.password-level-container').should('have.class', 'password-level-low');
     cy.get('.org-password').find('.password-level__text').contains('Low');
     cy.get('#next-button').should('have.class', 'button-disabled');
 
     cy.get('.org-password').find('ion-input').first().find('input').type('L0ng');
     cy.get('.org-password').find('.password-level__text').contains('Moderate');
-    cy.get('.org-password').find('.password-level').should('have.class', 'password-level-medium');
+    cy.get('.org-password').find('.password-level-container').should('have.class', 'password-level-medium');
 
     cy.get('.org-password').find('ion-input').first().find('input').type('P@ssw0rd');
     cy.get('.org-password').find('.password-level__text').contains('Strong');
-    cy.get('.org-password').find('.password-level').should('have.class', 'password-level-high');
+    cy.get('.org-password').find('.password-level-container').should('have.class', 'password-level-high');
 
     cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
     cy.get('.org-password').find('.form-helperText').should('not.exist');

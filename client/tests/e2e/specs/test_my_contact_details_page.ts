@@ -13,44 +13,31 @@ describe('Display client info', () => {
   });
 
   it('Check initial state', () => {
-    cy.get('.page').find('h2').contains('Gordon Freeman');
+    cy.get('.page').find('.title-h2').contains('Gordon Freeman');
     cy.get('.page').find('.label-profile').contains('Administrator');
-    cy.get('.page').find('ion-text').contains('user@host.com');
+  });
+
+  it('Open change password modal', () => {
+    cy.get('.user-info').find('ion-input').eq(0).find('input').should('have.attr', 'disabled');
+    cy.get('.user-info').find('#change-password-button').contains('Update').click();
+    cy.get('.change-password-modal').should('exist');
+    cy.get('.change-password-modal').find('.modal-header__title').contains('Enter your current password');
   });
 
   it('Changes the password', () => {
-    cy.get('.page').find('.password-change').as('passwordChange').find('h3').contains('Change your password');
-    cy.get('@passwordChange').find('.password-change-button').as('changeButton').should('have.class', 'button-disabled');
-    cy.get('@passwordChange').find('ion-input').eq(0).find('input').type('P@ssw0rd.');
-    cy.get('@changeButton').should('have.class', 'button-disabled');
-    cy.get('@passwordChange').find('ion-input').eq(1).find('input').type('N3w-P@ssw0rd.1337');
-    cy.get('@changeButton').should('have.class', 'button-disabled');
-    cy.get('@passwordChange').find('ion-input').eq(2).find('input').type('N3w-P@ssw0rd.1337');
-    cy.get('@changeButton').should('not.have.class', 'button-disabled');
-    cy.get('@changeButton').click();
-    cy.checkToastMessage('success', 'You can log in with your new password.');
-    // Clear inputs on success
-    cy.get('@passwordChange').find('ion-input').eq(0).find('input').should('have.value', '');
-    cy.get('@passwordChange').find('ion-input').eq(1).find('input').should('have.value', '');
-    cy.get('@passwordChange').find('ion-input').eq(2).find('input').should('have.value', '');
-  });
+    cy.get('.page').find('.user-info').as('user-info');
+    cy.get('@user-info').find('ion-input').eq(1).find('input').should('have.attr', 'disabled');
+    cy.get('@user-info').find('#change-password-button').contains('Update').click();
 
-  it('Changes the password, invalid password', () => {
-    cy.get('.page').find('.password-change').as('passwordChange').find('h3').contains('Change your password');
-    cy.get('@passwordChange').find('.password-change-button').as('changeButton').should('have.class', 'button-disabled');
-    // cspell:disable-next-line
-    cy.get('@passwordChange').find('ion-input').eq(0).find('input').type('1nval1dP@ssw0rd.');
-    cy.get('@changeButton').should('have.class', 'button-disabled');
-    cy.get('@passwordChange').find('ion-input').eq(1).find('input').type('N3w-P@ssw0rd.1337');
-    cy.get('@changeButton').should('have.class', 'button-disabled');
-    cy.get('@passwordChange').find('ion-input').eq(2).find('input').type('N3w-P@ssw0rd.1337');
-    cy.get('@changeButton').should('not.have.class', 'button-disabled');
-    cy.get('@changeButton').click();
-    cy.checkToastMessage('error', 'Please try again.');
-    // Don't clear inputs on failure
-    // cspell:disable-next-line
-    cy.get('@passwordChange').find('ion-input').eq(0).find('input').should('have.value', '1nval1dP@ssw0rd.');
-    cy.get('@passwordChange').find('ion-input').eq(1).find('input').should('have.value', 'N3w-P@ssw0rd.1337');
-    cy.get('@passwordChange').find('ion-input').eq(2).find('input').should('have.value', 'N3w-P@ssw0rd.1337');
+    cy.get('.change-password-modal').as('changePasswordModal').find('.modal-header__title').contains('Enter your current password');
+    cy.get('@changePasswordModal').find('ion-input').eq(0).find('input').type('P@ssw0rd.');
+    cy.get('@changePasswordModal').find('#next-button').click();
+
+    cy.get('@changePasswordModal').find('.modal-header__title').contains('Choose a new password');
+    cy.get('@changePasswordModal').find('#next-button').should('have.class', 'button-disabled');
+    cy.get('@changePasswordModal').find('ion-input').eq(1).find('input').type('New-P@ssw0rd.6786?6786');
+    cy.get('@changePasswordModal').find('ion-input').eq(2).find('input').type('New-P@ssw0rd.6786?6786');
+    cy.get('@changePasswordModal').find('#next-button').click();
+    cy.checkToastMessage('success', 'You can log in with your new password.');
   });
 });
