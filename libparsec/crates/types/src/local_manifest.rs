@@ -105,6 +105,16 @@ impl Chunk {
         self.stop.get() - self.start
     }
 
+    pub fn copy_between_start_and_stop(
+        &self,
+        chunk_data: &[u8],
+        dst: &mut impl std::io::Write,
+    ) -> std::io::Result<()> {
+        let start = self.start as usize;
+        let stop = self.stop.get() as usize;
+        dst.write_all(&chunk_data[start..stop])
+    }
+
     pub fn from_block_access(block_access: BlockAccess) -> Self {
         Self {
             id: ChunkID::from(*block_access.id),
