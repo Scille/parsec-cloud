@@ -379,6 +379,7 @@ napi
 newsfragment
 newsfragments
 nextest
+nigthly
 Niño
 nlookup
 nmspc
