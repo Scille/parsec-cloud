@@ -172,16 +172,6 @@
                 >
                   <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
                 </ion-item>
-                <ion-item
-                  v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
-                  lines="none"
-                  button
-                  class="user-menu__item body"
-                  :class="currentRouteIs(Routes.Invitations) ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="navigateTo(Routes.Invitations)"
-                >
-                  <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
-                </ion-item>
               </ion-list>
             </ion-list>
             <!-- storage -->

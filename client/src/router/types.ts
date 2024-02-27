@@ -13,7 +13,6 @@ export enum Routes {
   Devices = 'devices',
   ActiveUsers = 'activeUsers',
   RevokedUsers = 'revokedUsers',
-  Invitations = 'invitations',
   Storage = 'storage',
   Organization = 'organization',
   About = 'about',
@@ -78,11 +77,6 @@ const routes: Array<RouteRecordRaw> = [
             path: `/:handle(\\d+)/${Routes.RevokedUsers}`,
             name: Routes.RevokedUsers,
             component: () => import('@/views/users/RevokedUsersPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Invitations}`,
-            name: Routes.Invitations,
-            component: () => import('@/views/users/InvitationsPage.vue'),
           },
           {
             path: `/:handle(\\d+)/${Routes.Storage}`,

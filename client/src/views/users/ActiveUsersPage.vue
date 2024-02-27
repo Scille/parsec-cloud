@@ -157,7 +157,7 @@ import {
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { Routes, navigateTo, watchRoute } from '@/router';
+import { watchRoute } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
@@ -225,7 +225,7 @@ function getSelectedUsers(): UserInfo[] {
 }
 
 async function inviteUser(): Promise<void> {
-  await navigateTo(Routes.Invitations, { query: { openInvite: true } });
+  console.log('Do nothing');
 }
 
 function onUserSelect(_user: UserInfo, _selected: boolean): void {
