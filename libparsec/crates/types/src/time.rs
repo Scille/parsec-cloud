@@ -181,6 +181,12 @@ impl From<chrono::DateTime<chrono::Utc>> for DateTime {
     }
 }
 
+impl From<DateTime> for chrono::DateTime<chrono::Utc> {
+    fn from(dt: DateTime) -> Self {
+        dt.0
+    }
+}
+
 impl From<LocalDateTime> for DateTime {
     fn from(ldt: LocalDateTime) -> Self {
         Self(ldt.0.into())
