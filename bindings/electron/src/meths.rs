@@ -543,7 +543,8 @@ fn struct_device_claim_finalize_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceClaimFinalizeInfo { handle })
@@ -574,7 +575,8 @@ fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -647,7 +649,8 @@ fn struct_device_claim_in_progress2_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -692,7 +695,8 @@ fn struct_device_claim_in_progress3_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceClaimInProgress3Info { handle })
@@ -723,7 +727,8 @@ fn struct_device_greet_in_progress1_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -768,7 +773,8 @@ fn struct_device_greet_in_progress2_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -841,7 +847,8 @@ fn struct_device_greet_in_progress3_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceGreetInProgress3Info { handle })
@@ -872,7 +879,8 @@ fn struct_device_greet_in_progress4_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_device_label = {
@@ -918,7 +926,8 @@ fn struct_device_greet_initial_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::DeviceGreetInitialInfo { handle })
@@ -1184,6 +1193,68 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// OpenOptions
+
+#[allow(dead_code)]
+fn struct_open_options_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::OpenOptions> {
+    let read = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "read")?;
+        js_val.value(cx)
+    };
+    let write = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "write")?;
+        js_val.value(cx)
+    };
+    let append = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "append")?;
+        js_val.value(cx)
+    };
+    let truncate = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "truncate")?;
+        js_val.value(cx)
+    };
+    let create = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "create")?;
+        js_val.value(cx)
+    };
+    let create_new = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "createNew")?;
+        js_val.value(cx)
+    };
+    Ok(libparsec::OpenOptions {
+        read,
+        write,
+        append,
+        truncate,
+        create,
+        create_new,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_open_options_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::OpenOptions,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_read = JsBoolean::new(cx, rs_obj.read);
+    js_obj.set(cx, "read", js_read)?;
+    let js_write = JsBoolean::new(cx, rs_obj.write);
+    js_obj.set(cx, "write", js_write)?;
+    let js_append = JsBoolean::new(cx, rs_obj.append);
+    js_obj.set(cx, "append", js_append)?;
+    let js_truncate = JsBoolean::new(cx, rs_obj.truncate);
+    js_obj.set(cx, "truncate", js_truncate)?;
+    let js_create = JsBoolean::new(cx, rs_obj.create);
+    js_obj.set(cx, "create", js_create)?;
+    let js_create_new = JsBoolean::new(cx, rs_obj.create_new);
+    js_obj.set(cx, "createNew", js_create_new)?;
+    Ok(js_obj)
+}
+
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
@@ -1198,7 +1269,8 @@ fn struct_user_claim_finalize_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserClaimFinalizeInfo { handle })
@@ -1229,7 +1301,8 @@ fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -1302,7 +1375,8 @@ fn struct_user_claim_in_progress2_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -1347,7 +1421,8 @@ fn struct_user_claim_in_progress3_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserClaimInProgress3Info { handle })
@@ -1378,7 +1453,8 @@ fn struct_user_greet_in_progress1_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let greeter_sas = {
@@ -1423,7 +1499,8 @@ fn struct_user_greet_in_progress2_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_sas = {
@@ -1496,7 +1573,8 @@ fn struct_user_greet_in_progress3_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserGreetInProgress3Info { handle })
@@ -1527,7 +1605,8 @@ fn struct_user_greet_in_progress4_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_human_handle = {
@@ -1581,7 +1660,8 @@ fn struct_user_greet_initial_info_js_to_rs<'a>(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     Ok(libparsec::UserGreetInitialInfo { handle })
@@ -3003,7 +3083,8 @@ fn variant_entry_stat_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let is_placeholder = {
@@ -3021,7 +3102,8 @@ fn variant_entry_stat_js_to_rs<'a>(
                     if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
                         cx.throw_type_error("Not an u64 number")?
                     }
-                    v as u64
+                    let v = v as u64;
+                    v
                 }
             };
             Ok(libparsec::EntryStat::File {
@@ -3102,7 +3184,8 @@ fn variant_entry_stat_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let is_placeholder = {
@@ -3119,16 +3202,35 @@ fn variant_entry_stat_js_to_rs<'a>(
                     let size = js_val.len(cx);
                     let mut v = Vec::with_capacity(size as usize);
                     for i in 0..size {
-                        let js_item: Handle<JsString> = js_val.get(cx, i)?;
-                        v.push({
-                            let custom_from_rs_string = |s: String| -> Result<_, _> {
-                                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
-                            };
-                            match custom_from_rs_string(js_item.value(cx)) {
-                                Ok(val) => val,
-                                Err(err) => return cx.throw_type_error(err),
-                            }
-                        });
+                        let js_item: Handle<JsArray> = js_val.get(cx, i)?;
+                        v.push((
+                            {
+                                let js_item: Handle<JsString> = js_item.get(cx, 0)?;
+                                {
+                                    let custom_from_rs_string = |s: String| -> Result<_, _> {
+                                        s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                                    };
+                                    match custom_from_rs_string(js_item.value(cx)) {
+                                        Ok(val) => val,
+                                        Err(err) => return cx.throw_type_error(err),
+                                    }
+                                }
+                            },
+                            {
+                                let js_item: Handle<JsString> = js_item.get(cx, 1)?;
+                                {
+                                    let custom_from_rs_string =
+                                        |s: String| -> Result<libparsec::VlobID, _> {
+                                            libparsec::VlobID::from_hex(s.as_str())
+                                                .map_err(|e| e.to_string())
+                                        };
+                                    match custom_from_rs_string(js_item.value(cx)) {
+                                        Ok(val) => val,
+                                        Err(err) => return cx.throw_type_error(err),
+                                    }
+                                }
+                            },
+                        ));
                     }
                     v
                 }
@@ -3288,7 +3390,25 @@ fn variant_entry_stat_rs_to_js<'a>(
                 // JsArray::new allocates with `undefined` value, that's why we `set` value
                 let js_array = JsArray::new(cx, children.len() as u32);
                 for (i, elem) in children.into_iter().enumerate() {
-                    let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
+                    let js_elem = {
+                        let (x0, x1) = elem;
+                        let js_array = JsArray::new(cx, 2);
+                        let js_value = JsString::try_new(cx, x0).or_throw(cx)?;
+                        js_array.set(cx, 0, js_value)?;
+                        let js_value = JsString::try_new(cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(x1) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(cx)?;
+                        js_array.set(cx, 1, js_value)?;
+                        js_array
+                    };
                     js_array.set(cx, i as u32, js_elem)?;
                 }
                 js_array
@@ -3709,7 +3829,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3759,7 +3880,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3809,7 +3931,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3844,7 +3967,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3891,7 +4015,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3956,7 +4081,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -3991,7 +4117,8 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let use_ssl = {
@@ -4224,7 +4351,8 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let greeter_user_id = {
@@ -4254,7 +4382,8 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             let claimer_email = {
@@ -4459,6 +4588,228 @@ fn variant_workspace_create_folder_error_rs_to_js<'a>(
         }
         libparsec::WorkspaceCreateFolderError::Stopped { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceCreateFolderErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceFdCloseError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_close_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceFdCloseError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceFdCloseError::BadFileDescriptor { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdCloseErrorBadFileDescriptor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdCloseError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdCloseErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdCloseError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdCloseErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceFdFlushError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_flush_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceFdFlushError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceFdFlushError::BadFileDescriptor { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdFlushErrorBadFileDescriptor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdFlushError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdFlushErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdFlushError::NotInWriteMode { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdFlushErrorNotInWriteMode").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdFlushError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdFlushErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceFdReadError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_read_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceFdReadError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceFdReadError::BadFileDescriptor { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdReadErrorBadFileDescriptor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::NotInReadMode { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorNotInReadMode").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceFdResizeError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_resize_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceFdResizeError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceFdResizeError::BadFileDescriptor { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdResizeErrorBadFileDescriptor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdResizeError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdResizeErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdResizeError::NotInWriteMode { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdResizeErrorNotInWriteMode").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceFdWriteError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_write_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceFdWriteError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceFdWriteError::BadFileDescriptor { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdWriteErrorBadFileDescriptor").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdWriteError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdWriteErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdWriteError::NotInWriteMode { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdWriteErrorNotInWriteMode").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceOpenFileError
+
+#[allow(dead_code)]
+fn variant_workspace_open_file_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceOpenFileError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceOpenFileErrorEntryExistsInCreateNewMode")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::EntryNotAFile { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorEntryNotAFile").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::EntryNotFound { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorEntryNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceOpenFileErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::InvalidCertificate { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorInvalidCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::InvalidKeysBundle { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorInvalidKeysBundle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::InvalidManifest { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorInvalidManifest").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::NoRealmAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceOpenFileErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::ReadOnlyRealm { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceOpenFileErrorReadOnlyRealm").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceOpenFileError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceOpenFileErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -4697,7 +5048,8 @@ fn variant_workspace_storage_cache_size_js_to_rs<'a>(
                     if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                         cx.throw_type_error("Not an u32 number")?
                     }
-                    v as u32
+                    let v = v as u32;
+                    v
                 }
             };
             Ok(libparsec::WorkspaceStorageCacheSize::Custom { size })
@@ -4922,7 +5274,8 @@ fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let ret = libparsec::cancel(canceller);
@@ -4962,7 +5315,8 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let save_strategy = {
@@ -5015,7 +5369,8 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5025,7 +5380,8 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5074,7 +5430,8 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5084,7 +5441,8 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5133,7 +5491,8 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5143,7 +5502,8 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_device_label = {
@@ -5205,7 +5565,8 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5215,7 +5576,8 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5263,7 +5625,8 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let ret = libparsec::claimer_greeter_abort_operation(handle);
@@ -5404,7 +5767,8 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let save_strategy = {
@@ -5457,7 +5821,8 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5467,7 +5832,8 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5516,7 +5882,8 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5526,7 +5893,8 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5575,7 +5943,8 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5585,7 +5954,8 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let requested_device_label = {
@@ -5652,7 +6022,8 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -5662,7 +6033,8 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -5710,7 +6082,8 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let token = {
@@ -5839,7 +6212,8 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let name = {
@@ -5909,7 +6283,8 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let device = {
@@ -5941,12 +6316,12 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let (x1, x2) = ok;
+                            let (x0, x1) = ok;
                             let js_array = JsArray::new(&mut cx, 2);
-                            let js_value = struct_user_info_rs_to_js(&mut cx, x1)?;
+                            let js_value = struct_user_info_rs_to_js(&mut cx, x0)?;
+                            js_array.set(&mut cx, 0, js_value)?;
+                            let js_value = struct_device_info_rs_to_js(&mut cx, x1)?;
                             js_array.set(&mut cx, 1, js_value)?;
-                            let js_value = struct_device_info_rs_to_js(&mut cx, x2)?;
-                            js_array.set(&mut cx, 2, js_value)?;
                             js_array
                         };
                         js_obj.set(&mut cx, "value", js_value)?;
@@ -5977,7 +6352,8 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -6025,7 +6401,8 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -6081,7 +6458,8 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let user = {
@@ -6146,7 +6524,8 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let skip_revoked = {
@@ -6206,7 +6585,8 @@ fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let realm_id = {
@@ -6276,7 +6656,8 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -6332,7 +6713,8 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let send_email = {
@@ -6385,7 +6767,8 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let claimer_email = {
@@ -6443,7 +6826,8 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let realm_id = {
@@ -6519,7 +6903,8 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let realm_id = {
@@ -6700,7 +7085,8 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let token = {
@@ -6761,7 +7147,8 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let token = {
@@ -6822,7 +7209,8 @@ fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let realm_id = {
@@ -6882,7 +7270,8 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -6914,6 +7303,482 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_stop_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_close
+fn fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_close(workspace, fd).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_close_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_flush
+fn fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_flush(workspace, fd).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_flush_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_read
+fn fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let offset = {
+        let js_val = cx.argument::<JsNumber>(2)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                cx.throw_type_error("Not an u64 number")?
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    let size = {
+        let js_val = cx.argument::<JsNumber>(3)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                cx.throw_type_error("Not an u64 number")?
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_read(workspace, fd, offset, size).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let mut js_buff = JsArrayBuffer::new(&mut cx, ok.len())?;
+                            let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                            for (i, c) in ok.iter().enumerate() {
+                                js_buff_slice[i] = *c;
+                            }
+                            js_buff
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_read_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_resize
+fn fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let length = {
+        let js_val = cx.argument::<JsNumber>(2)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                cx.throw_type_error("Not an u64 number")?
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    let truncate_only = {
+        let js_val = cx.argument::<JsBoolean>(3)?;
+        js_val.value(&mut cx)
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_resize(workspace, fd, length, truncate_only).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_resize_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_write
+fn fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let offset = {
+        let js_val = cx.argument::<JsNumber>(2)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                cx.throw_type_error("Not an u64 number")?
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    let data = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(3)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_write(workspace, fd, offset, data).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_write_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_write_with_constrained_io
+fn fd_write_with_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let offset = {
+        let js_val = cx.argument::<JsNumber>(2)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                cx.throw_type_error("Not an u64 number")?
+            }
+            let v = v as u64;
+            v
+        }
+    };
+    let data = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(3)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_write_with_constrained_io(workspace, fd, offset, data).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_write_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -7003,7 +7868,8 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7013,7 +7879,8 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7062,7 +7929,8 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7072,7 +7940,8 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7123,7 +7992,8 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7133,7 +8003,8 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7183,7 +8054,8 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7193,7 +8065,8 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let device_label = {
@@ -7256,7 +8129,8 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7266,7 +8140,8 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7314,7 +8189,8 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7324,7 +8200,8 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7373,7 +8250,8 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7383,7 +8261,8 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7434,7 +8313,8 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7444,7 +8324,8 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -7494,7 +8375,8 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7504,7 +8386,8 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let human_handle = {
@@ -7583,7 +8466,8 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let handle = {
@@ -7593,7 +8477,8 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -8104,7 +8989,8 @@ fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8174,7 +9060,8 @@ fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8244,7 +9131,8 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8305,6 +9193,80 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_open_file
+fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let mode = {
+        let js_val = cx.argument::<JsObject>(2)?;
+        struct_open_options_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_open_file(workspace, path, mode).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, {
+                            let custom_to_rs_u32 =
+                                |fd: libparsec::FileDescriptor| -> Result<_, &'static str> {
+                                    Ok(fd.0)
+                                };
+                            match custom_to_rs_u32(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        } as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_open_file_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_remove_entry
 fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
@@ -8314,7 +9276,8 @@ fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8378,7 +9341,8 @@ fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8442,7 +9406,8 @@ fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8506,7 +9471,8 @@ fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8570,7 +9536,8 @@ fn workspace_rename_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8650,7 +9617,8 @@ fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let path = {
@@ -8710,7 +9678,8 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
             if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
                 cx.throw_type_error("Not an u32 number")?
             }
-            v as u32
+            let v = v as u32;
+            v
         }
     };
     let channel = cx.channel();
@@ -8833,6 +9802,12 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientStartWorkspace", client_start_workspace)?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("fdClose", fd_close)?;
+    cx.export_function("fdFlush", fd_flush)?;
+    cx.export_function("fdRead", fd_read)?;
+    cx.export_function("fdResize", fd_resize)?;
+    cx.export_function("fdWrite", fd_write)?;
+    cx.export_function("fdWriteWithConstrainedIo", fd_write_with_constrained_io)?;
     cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
     cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
     cx.export_function(
@@ -8908,6 +9883,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceCreateFile", workspace_create_file)?;
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
     cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
+    cx.export_function("workspaceOpenFile", workspace_open_file)?;
     cx.export_function("workspaceRemoveEntry", workspace_remove_entry)?;
     cx.export_function("workspaceRemoveFile", workspace_remove_file)?;
     cx.export_function("workspaceRemoveFolder", workspace_remove_folder)?;
