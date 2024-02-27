@@ -10,10 +10,15 @@
         <span class="invitations-list-header__counter body-sm">
           {{ invitations.length }}
         </span>
-        <ion-button @click="onInviteClick">
+        <ion-button
+          @click="onInviteClick"
+          class="invitations-list-header__button"
+          size="small"
+        >
           <ion-icon
             slot="start"
             :icon="personAdd"
+            class="button-icon"
           />
           {{ $t('invitationList.invite') }}
         </ion-button>
@@ -87,8 +92,9 @@ async function onInviteClick(): Promise<void> {
   &-header {
     background: var(--parsec-color-light-primary-800);
     color: var(--parsec-color-light-primary-30);
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 1.5rem;
     display: flex;
+    align-items: center;
     gap: 0.5rem;
 
     &__title {
@@ -103,7 +109,18 @@ async function onInviteClick(): Promise<void> {
       background: var(--parsec-color-light-primary-30-opacity15);
       border-radius: var(--parsec-radius-12);
       display: flex;
+      height: fit-content;
       align-items: center;
+    }
+
+    &__button {
+      --background: none !important;
+      --background-hover: var(--parsec-color-light-primary-30-opacity15) !important;
+
+      .button-icon {
+        font-size: 0.875rem;
+        margin-right: 0.5rem;
+      }
     }
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector

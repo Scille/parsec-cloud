@@ -17,7 +17,7 @@
         />
         <div class="right-side">
           <div class="counter">
-            <ion-text class="body-lg">
+            <ion-text class="body">
               {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
             </ion-text>
           </div>

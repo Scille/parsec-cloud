@@ -4,9 +4,14 @@
   <ion-button
     v-show="invitations.length > 0"
     @click="openInvitationsPopover($event)"
+    id="invitations-button"
+    class="button-medium"
+    :class="{
+      unread: invitations,
+    }"
   >
     {{ $t('HeaderPage.invitations.title', { count: invitations.length }, invitations.length) }}
-    <ion-icon :icon="mailUnread" />
+    <ion-icon :icon="mail" />
   </ion-button>
 </template>
 
@@ -27,7 +32,7 @@ import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationsListPopover from '@/views/users/InvitationsListPopover.vue';
 import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
-import { mailUnread } from 'ionicons/icons';
+import { mail } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationKey)!;
@@ -198,4 +203,42 @@ async function inviteUser(): Promise<void> {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+#invitations-button {
+  overflow: visible;
+
+  &::part(native) {
+    background: var(--parsec-color-light-warning-100);
+    --background-hover: none;
+    color: var(--parsec-color-light-warning-500);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--parsec-color-light-warning-100);
+    transition: all 150ms ease-in-out;
+
+    &:hover {
+      color: var(--parsec-color-light-warning-700);
+    }
+  }
+
+  ion-icon {
+    font-size: 1.375rem;
+    margin-left: 0.5rem;
+  }
+
+  &.unread {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      right: 6px;
+      top: 5px;
+      width: 0.625rem;
+      height: 0.625rem;
+      background: var(--parsec-color-light-danger-500);
+      border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+      border-radius: var(--parsec-radius-12);
+    }
+  }
+}
+</style>
