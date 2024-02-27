@@ -4,7 +4,7 @@ from typing import assert_never, override
 
 import asyncpg
 
-from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID
+from parsec._parsec import DateTime, DeviceCertificate, DeviceID, InvitationToken, OrganizationID
 from parsec.components.auth import (
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
@@ -18,7 +18,9 @@ from parsec.components.invite import DeviceInvitation, UserInvitation
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql.invite import InviteAsInvitedInfoBadOutcome, PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.user_queries.get import query_check_user_for_authentication
 from parsec.components.postgresql.utils import transaction
+from parsec.components.user import CheckUserWithDeviceBadOutcome
 from parsec.config import BackendConfig
 
 
@@ -92,30 +94,41 @@ class PGAuthComponent(BaseAuthComponent):
             invitation_internal_id=0,  # Only used by PostgreSQL implementation
         )
 
+    @override
+    @transaction
     async def _get_authenticated_info(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
-        raise NotImplementedError
-        # try:
-        #     org = self._data.organizations[organization_id]
-        # except KeyError:
-        #     return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
+        match await self._organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unknown:
+                assert_never(unknown)
 
-        # if org.is_expired:
-        #     return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
+        if organization.is_expired:
+            return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
 
-        # try:
-        #     device = org.devices[device_id]
-        # except KeyError:
-        #     return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-        # user = org.users[device_id.user_id]
-        # if user.is_revoked:
-        #     return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
+        match await query_check_user_for_authentication(conn, organization_id, device_id):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
+            case DeviceCertificate() as certificate:
+                pass
+            case unknown:
+                assert_never(unknown)
 
-        # return AuthenticatedAuthInfo(
-        #     organization_id=organization_id,
-        #     device_id=device_id,
-        #     device_verify_key=device.cooked.verify_key,
-        #     organization_internal_id=0,  # Only used by PostgreSQL implementation
-        #     device_internal_id=0,  # Only used by PostgreSQL implementation
-        # )
+        return AuthenticatedAuthInfo(
+            organization_id=organization_id,
+            device_id=device_id,
+            device_verify_key=certificate.verify_key,
+            organization_internal_id=0,  # Only used by PostgreSQL implementation
+            device_internal_id=0,  # Only used by PostgreSQL implementation
+        )

@@ -163,7 +163,7 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="poetry install --with=testbed-server",
             extra_env={"POETRY_LIBPARSEC_BUILD_STRATEGY": "no_build"},
         ),
-        Cmd(f"maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
+        Cmd(f"poetry run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}"),
     ),
     ("python-dev-rebuild", "r"): (
         Cwd(SERVER_DIR),
