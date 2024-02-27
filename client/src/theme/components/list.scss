@@ -4,8 +4,7 @@
 
 ion-item:has(.workspace-list-item),
 ion-item:has(.file-list-item),
-.user-list-item,
-.invitation-list-item {
+.user-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
   width: 100%;
@@ -77,8 +76,7 @@ ion-item:has(.file-list-item),
 
 .workspace-list-item > [class^='workspace-'],
 .file-list-item > [class^='file-'],
-.user-list-item > [class^='user-'],
-.invitation-list-item > [class^='invitation-'] {
+.user-list-item > [class^='user-'] {
   padding: 0 1rem;
   display: flex;
   align-items: center;
