@@ -4,19 +4,54 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div class="page">
-        <template v-if="clientInfo && currentDevice">
+        <template v-if="clientInfo">
           <!-- user info -->
           <div class="user-info">
-            <h2 class="title-h2 user-info-name">
-              {{ clientInfo.humanHandle.label }}
-            </h2>
-            <tag-profile :profile="clientInfo.currentProfile" />
-            <ion-text class="form-input user-info-email">
-              {{ clientInfo.humanHandle.email }}
-            </ion-text>
+            <div class="user-info-header">
+              <h2 class="title-h2 user-info-header__name">
+                {{ clientInfo.humanHandle.label }}
+              </h2>
+              <tag-profile :profile="clientInfo.currentProfile" />
+            </div>
+
+            <!-- inputs fields -->
+            <div class="user-info-inputs">
+              <div class="user-info-inputs-item">
+                <ion-text class="user-info-inputs-item__label form-input">
+                  {{ $t('ContactDetailsPage.email') }}
+                </ion-text>
+                <ms-input
+                  :placeholder="clientInfo.humanHandle.email"
+                  name="fullname"
+                  :disabled="true"
+                  class="user-info-inputs-item__input"
+                />
+              </div>
+              <div class="user-info-inputs-item">
+                <ion-text class="user-info-inputs-item__label form-input">
+                  {{ $t('ContactDetailsPage.password') }}
+                </ion-text>
+                <div class="user-info-inputs-item__password">
+                  <ms-input
+                    :placeholder="'••••••••••'"
+                    name="fullname"
+                    :disabled="true"
+                    class="user-info-inputs-item__input"
+                  />
+                  <ion-button
+                    id="change-password-button"
+                    @click="openChangePassword()"
+                    fill="clear"
+                    size="small"
+                  >
+                    {{ $t('ContactDetailsPage.changePasswordButton') }}
+                  </ion-button>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <!-- change avatar -->
+          <!-- when the add avatar feature will be implemented -->
           <!--
           <div
             class="avatar"
@@ -33,37 +68,17 @@
             </ion-chip>
           </div>
           -->
-
-          <!-- change password -->
-          <div class="password-change">
-            <h3 class="title-h3 password-change-title">
-              {{ $t('ContactDetailsPage.title') }}
-            </h3>
-            <div class="ms-password-inputs">
-              <div class="ms-password-inputs-container">
-                <ms-password-input
-                  :label="$t('Password.currentPassword')"
-                  v-model="oldPassword"
-                  @change="fieldsUpdated = !fieldsUpdated"
-                />
-              </div>
-
-              <ms-choose-password-input
-                :password-label="$t('Password.newPassword')"
-                ref="choosePasswordInput"
-              />
-            </div>
-            <ion-button
-              class="password-change-button"
-              @click="changePassword()"
-              :disabled="!changeButtonIsEnabled"
-            >
-              {{ $t('ContactDetailsPage.changePasswordButton') }}
-            </ion-button>
-          </div>
         </template>
         <template v-else>
-          {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation') }}
+          <div class="device-not-found">
+            <ion-icon
+              :icon="warning"
+              size="large"
+            />
+            <ion-text class="body">
+              {{ $t('ContactDetailsPage.errors.failedToRetrieveInformation') }}
+            </ion-text>
+          </div>
         </template>
       </div>
     </ion-content>
@@ -71,83 +86,33 @@
 </template>
 
 <script setup lang="ts">
-import { asyncComputed } from '@/common/asyncComputed';
-import { MsChoosePasswordInput, MsPasswordInput } from '@/components/core';
+import { MsInput } from '@/components/core';
 import TagProfile from '@/components/users/TagProfile.vue';
-// import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import {
-  AvailableDevice,
-  ClientChangeAuthenticationErrorTag,
-  ClientInfo,
-  getClientInfo,
-  getCurrentAvailableDevice,
-  changePassword as parsecChangePassword,
-} from '@/parsec';
+import { ClientInfo, getClientInfo } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
-import { IonButton, IonContent, IonPage, IonText } from '@ionic/vue';
+import UpdatePasswordModal from '@/views/users/UpdatePasswordModal.vue';
+import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
+import { warning } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const oldPassword = ref('');
-const choosePasswordInput: Ref<typeof MsChoosePasswordInput | null> = ref(null);
-const fieldsUpdated = ref(false);
-const informationManager = inject(InformationKey) as InformationManager;
+const informationManager: InformationManager = inject(InformationKey)!;
 
-const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
-  // forces the update
-  fieldsUpdated.value;
-  return choosePasswordInput.value && (await choosePasswordInput.value.areFieldsCorrect()) && oldPassword.value.length > 0;
-});
-
-async function changePassword(): Promise<void> {
-  if (!currentDevice.value || !choosePasswordInput.value) {
-    return;
-  }
-
-  const result = await parsecChangePassword(currentDevice.value, oldPassword.value, choosePasswordInput.value?.password);
-
-  if (result.ok) {
-    informationManager.present(
-      new Information({
-        message: translate('ContactDetailsPage.passwordUpdated'),
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-    oldPassword.value = '';
-    choosePasswordInput.value.clear();
-    fieldsUpdated.value = !fieldsUpdated.value;
-  } else {
-    switch (result.error.tag) {
-      case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
-        informationManager.present(
-          new Information({
-            message: translate('ContactDetailsPage.errors.wrongPassword'),
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
-        break;
-      }
-      default:
-        informationManager.present(
-          new Information({
-            message: translate('ContactDetailsPage.errors.cannotChangePassword'),
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
-    }
-  }
+async function openChangePassword(): Promise<void> {
+  const modal = await modalController.create({
+    component: UpdatePasswordModal,
+    cssClass: 'change-password-modal',
+  });
+  await modal.present();
+  await modal.onWillDismiss();
+  await modal.dismiss();
 }
 
 onMounted(async () => {
   const result = await getClientInfo();
-  const deviceResult = await getCurrentAvailableDevice();
 
-  if (!result.ok || !deviceResult.ok) {
+  if (!result.ok) {
     informationManager.present(
       new Information({
         message: translate('ContactDetailsPage.errors.failedToRetrieveInformation'),
@@ -155,43 +120,79 @@ onMounted(async () => {
       }),
       PresentationMode.Toast,
     );
-    return;
+  } else {
+    clientInfo.value = result.value;
   }
-
-  clientInfo.value = result.value;
-  currentDevice.value = deviceResult.value;
 });
 </script>
 
 <style scoped lang="scss">
 .page {
-  width: 50em;
+  width: 40em;
   margin: 2em;
 }
 
 .user-info {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-bottom: 3em;
-  align-items: center;
+  flex-direction: column;
+  gap: 2.5rem;
 
-  &-name {
+  &-header {
+    display: flex;
     color: var(--parsec-color-light-primary-800);
-    margin: 0;
+    gap: 1.5rem;
+
+    &__name {
+      margin: 0;
+    }
   }
 
-  &-email {
-    flex-basis: 100%;
-    border-left: 2px solid var(--parsec-color-light-secondary-grey);
-    padding-left: 1rem;
-    color: var(--parsec-color-light-secondary-text);
+  &-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &__label {
+        min-width: 12rem;
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__input {
+        width: 100%;
+        max-width: 20rem;
+      }
+
+      &__password {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: 100%;
+      }
+    }
   }
 }
 
+.device-not-found {
+  background: var(--parsec-color-light-danger-100);
+  color: var(--parsec-color-light-danger-700);
+  padding: 1rem;
+  display: flex;
+  gap: 0.75rem;
+  border-left: 0.25rem solid var(--parsec-color-light-danger-500);
+
+  ion-text {
+    padding: 0.25rem 0;
+  }
+}
+
+// when the add avatar feature is implemented
 // .avatar {
-//   // display: flex;
-//   display: none;
+//   display: flex;
 //   flex-wrap: wrap;
 //   margin-bottom: 1.5rem;
 //   justify-content: space-between;
@@ -213,26 +214,4 @@ onMounted(async () => {
 //     right: 5%;
 //   }
 // }
-
-.password-change {
-  // .avatar {
-  background-color: var(--parsec-color-light-secondary-background);
-  border-radius: var(--parsec-radius-8);
-  padding: 1.5em;
-
-  &-title {
-    margin: 0 0 1.5rem;
-    color: var(--parsec-color-light-primary-700);
-  }
-}
-
-.ms-password-inputs-container {
-  margin-bottom: 1em;
-}
-
-.password-change-button {
-  display: flex;
-  margin-left: auto;
-  width: fit-content;
-}
 </style>

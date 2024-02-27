@@ -169,12 +169,16 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   const availableDevices = await listAvailableDevices();
   // clientInfo are not real on web right now
   // const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
-  const currentAvailableDevice = availableDevices[0];
 
-  if (currentAvailableDevice) {
+  if (!needsMocks) {
+    const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
+    if (!currentAvailableDevice) {
+      return { ok: false, error: { tag: 'NotFound' } };
+    }
     return { ok: true, value: currentAvailableDevice };
+  } else {
+    return { ok: true, value: availableDevices[0] };
   }
-  return { ok: false, error: { tag: 'NotFound' } };
 }
 
 export async function changePassword(

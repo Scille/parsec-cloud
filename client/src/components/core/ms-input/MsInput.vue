@@ -5,6 +5,7 @@
     <span
       id="label"
       class="form-label"
+      v-show="label"
     >
       {{ label }}
     </span>

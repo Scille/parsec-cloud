@@ -927,10 +927,17 @@
         "nextButton": "close"
     },
     "ContactDetailsPage": {
-        "title": "Change your password",
-        "changePasswordButton": "Update password",
+        "titleActualPassword": "Enter your current password",
+        "titleNewPassword": "Choose a new password",
+        "validNewPassword": "Change your password",
+        "email": "Email",
+        "password": "Password",
+        "cancelButton": "Cancel",
+        "nextButton": "Confirm",
+        "changePasswordButton": "Update",
         "passwordUpdated": "The password has been updated. You can log in with your new password.",
         "errors": {
+            "emptyPasswordError": "Please fill your password.",
             "wrongPassword": "Wrong password. Please try again.",
             "cannotChangePassword": "Could not update the password",
             "failedToRetrieveInformation": "Could not retrieve the information. Please make sure you're connected to the internet."
