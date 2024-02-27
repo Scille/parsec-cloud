@@ -67,7 +67,10 @@ describe('File List Item', () => {
       needSync: false,
       name: 'A Folder',
       isFile: (): boolean => false,
-      children: ['A File.txt', 'Another File.png'],
+      children: [
+        ['A File.txt', '671'],
+        ['Another File.png', '672'],
+      ],
       isSelected: false,
     };
 

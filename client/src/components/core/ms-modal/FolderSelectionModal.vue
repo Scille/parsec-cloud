@@ -106,7 +106,7 @@ async function update(): Promise<void> {
   const result = await entryStat(selectedPath.value);
   if (result.ok) {
     currentEntries.value = [];
-    for (const childName of (result.value as EntryStatFolder).children) {
+    for (const [childName] of (result.value as EntryStatFolder).children) {
       const childPath = await Path.join(selectedPath.value, childName);
       const entryResult = await entryStat(childPath);
       if (entryResult.ok) {
