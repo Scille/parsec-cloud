@@ -3,7 +3,9 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    EntryStat, WorkspaceCreateFileError, WorkspaceCreateFolderError, WorkspaceRemoveEntryError,
+    EntryStat, OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
+    WorkspaceFdWriteError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
     WorkspaceRenameEntryError, WorkspaceStatEntryError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
@@ -233,4 +235,74 @@ pub async fn workspace_remove_folder_all(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.remove_folder_all(path).await
+}
+
+pub async fn workspace_open_file(
+    workspace: Handle,
+    path: FsPath,
+    mode: OpenOptions,
+) -> Result<FileDescriptor, WorkspaceOpenFileError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.open_file(path, mode).await
+}
+
+pub async fn fd_close(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdCloseError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_close(fd).await
+}
+
+pub async fn fd_flush(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdFlushError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_flush(fd).await
+}
+
+pub async fn fd_read(
+    workspace: Handle,
+    fd: FileDescriptor,
+    offset: u64,
+    size: u64,
+) -> Result<Vec<u8>, WorkspaceFdReadError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    let mut buf = Vec::with_capacity(size as usize);
+    workspace.fd_read(fd, offset, size, &mut buf).await?;
+    Ok(buf)
+}
+
+pub async fn fd_resize(
+    workspace: Handle,
+    fd: FileDescriptor,
+    length: u64,
+    truncate_only: bool,
+) -> Result<(), WorkspaceFdResizeError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_resize(fd, length, truncate_only).await
+}
+
+pub async fn fd_write(
+    workspace: Handle,
+    fd: FileDescriptor,
+    offset: u64,
+    data: Vec<u8>,
+) -> Result<u64, WorkspaceFdWriteError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_write(fd, offset, &data).await
+}
+
+pub async fn fd_write_with_constrained_io(
+    workspace: Handle,
+    fd: FileDescriptor,
+    offset: u64,
+    data: Vec<u8>,
+) -> Result<u64, WorkspaceFdWriteError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .fd_write_with_constrained_io(fd, offset, &data)
+        .await
 }
