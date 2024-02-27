@@ -97,7 +97,7 @@ macro_rules! ls {
             };
             children
                 .iter()
-                .map(|entry_name| entry_name.to_string())
+                .map(|(entry_name, _)| entry_name.to_string())
                 .collect::<Vec<_>>()
         }
     };

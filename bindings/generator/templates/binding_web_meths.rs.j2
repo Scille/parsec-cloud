@@ -76,6 +76,10 @@ let {{ param_name }} =
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
 {% endif %}
+{% elif type.kind == "bytes" %}
+let {{ param_name }} = {{ param_name }}.to_vec().as_slice().try_into().map_err(|_| {
+    JsValue::from(TypeError::new("Not a valid bytes buffer"))
+})?;
 {% elif type.kind == "bytes_based" %}
 let {{ param_name }} =
 {% if type.custom_from_rs_bytes -%}
@@ -89,17 +93,36 @@ let {{ param_name }} =
     JsValue::from(TypeError::new("Not a valid {{ type.name }}"))
 })?;
 {% endif %}
-{% elif type.kind == "f64_based" %}
-let {{ param_name }} =
-{% if type.custom_from_rs_f64 -%}
-{
-    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
-    custom_from_rs_f64(&{{ param_name }}.to_vec())
+{% elif type.kind == "u32_based" and type.custom_from_rs_u32 %}
+let {{ param_name }} = {
+    let custom_from_rs_u32 = {{ type.custom_from_rs_u32 }};
+    custom_from_rs_u32({{ param_name }})
         .map_err(|e| TypeError::new(e.as_ref()))
 }?;
-{%- else -%}
-{{ param_name }}
-{% endif %}
+{% elif type.kind == "i32_based" and type.custom_from_rs_i32 %}
+let {{ param_name }} = {
+    let custom_from_rs_i32 = {{ type.custom_from_rs_i32 }};
+    custom_from_rs_i32({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{% elif type.kind == "u64_based" and type.custom_from_rs_u64 %}
+let {{ param_name }} = {
+    let custom_from_rs_u64 = {{ type.custom_from_rs_u64 }};
+    custom_from_rs_u64({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{% elif type.kind == "i64_based" and type.custom_from_rs_i64 %}
+let {{ param_name }} = {
+    let custom_from_rs_i64 = {{ type.custom_from_rs_i64 }};
+    custom_from_rs_i64({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
+{% elif type.kind == "f64_based" and type.custom_from_rs_f64 %}
+let {{ param_name }} = {
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    custom_from_rs_f64({{ param_name }})
+        .map_err(|e| TypeError::new(e.as_ref()))
+}?;
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
@@ -290,8 +313,58 @@ match {{ rs_value }} {
     let _ = {{ rs_value }};
     JsValue::null()
 }
-{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
+{%- elif type.kind == "i32_based" -%}
+{%- if type.custom_to_rs_i32 %}
+{
+    let custom_to_rs_i32 = {{ type.custom_to_rs_i32 }};
+    let v = match custom_to_rs_i32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
 JsValue::from({{ rs_value }})
+{%- endif -%}
+{%- elif type.kind == "u32_based" -%}
+{%- if type.custom_to_rs_u32 %}
+{
+    let custom_to_rs_u32 = {{ type.custom_to_rs_u32 }};
+    let v = match custom_to_rs_u32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
+{%- elif type.kind == "i64_based" -%}
+{%- if type.custom_to_rs_i64 %}
+{
+    let custom_to_rs_i64 = {{ type.custom_to_rs_i32 }};
+    let v = match custom_to_rs_i64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
+{%- elif type.kind == "u64_based" -%}
+{%- if type.custom_to_rs_u64 %}
+{
+    let custom_to_rs_u64 = {{ type.custom_to_rs_i32 }};
+    let v = match custom_to_rs_u64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+    };
+    JsValue::from(v)
+}
+{% else -%}
+JsValue::from({{ rs_value }})
+{%- endif -%}
 {%- elif type.kind == "f64_based" -%}
 {%- if type.custom_to_rs_f64 %}
 {

@@ -3,6 +3,7 @@
 from typing import Optional
 
 from .common import (
+    U64,
     DateTime,
     EntryName,
     ErrorVariant,
@@ -14,6 +15,8 @@ from .common import (
     Variant,
     VersionInt,
     VlobID,
+    Structure,
+    U32BasedType,
 )
 
 
@@ -231,7 +234,7 @@ class EntryStat(Variant):
         base_version: VersionInt
         is_placeholder: bool
         need_sync: bool
-        children: list[EntryName]
+        children: list[tuple[EntryName, VlobID]]
 
 
 async def workspace_stat_entry(
@@ -289,4 +292,155 @@ async def workspace_remove_folder(
 async def workspace_remove_folder_all(
     workspace: Handle, path: FsPath
 ) -> Result[None, WorkspaceRemoveEntryError]:
+    raise NotImplementedError
+
+
+class OpenOptions(Structure):
+    read: bool
+    write: bool
+    append: bool
+    truncate: bool
+    create: bool
+    create_new: bool
+
+
+class FileDescriptor(U32BasedType):
+    custom_from_rs_u32 = "|raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) }"
+    custom_to_rs_u32 = "|fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) }"
+
+
+class WorkspaceOpenFileError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class ReadOnlyRealm:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class EntryNotAFile:
+        pass
+
+    class EntryExistsInCreateNewMode:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_open_file(
+    workspace: Handle, path: FsPath, mode: OpenOptions
+) -> Result[FileDescriptor, WorkspaceOpenFileError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdCloseError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class BadFileDescriptor:
+        pass
+
+    class Internal:
+        pass
+
+
+async def fd_close(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdCloseError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdFlushError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class BadFileDescriptor:
+        pass
+
+    class NotInWriteMode:
+        pass
+
+    class Internal:
+        pass
+
+
+async def fd_flush(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdFlushError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdReadError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class BadFileDescriptor:
+        pass
+
+    class NotInReadMode:
+        pass
+
+    class Internal:
+        pass
+
+
+async def fd_read(
+    workspace: Handle, fd: FileDescriptor, offset: U64, size: U64
+) -> Result[bytes, WorkspaceFdReadError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdResizeError(ErrorVariant):
+    class BadFileDescriptor:
+        pass
+
+    class NotInWriteMode:
+        pass
+
+    class Internal:
+        pass
+
+
+async def fd_resize(
+    workspace: Handle, fd: FileDescriptor, length: U64, truncate_only: bool
+) -> Result[None, WorkspaceFdResizeError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdWriteError(ErrorVariant):
+    class BadFileDescriptor:
+        pass
+
+    class NotInWriteMode:
+        pass
+
+    class Internal:
+        pass
+
+
+async def fd_write(
+    workspace: Handle, fd: FileDescriptor, offset: U64, data: bytes
+) -> Result[U64, WorkspaceFdWriteError]:
+    raise NotImplementedError
+
+
+async def fd_write_with_constrained_io(
+    workspace: Handle, fd: FileDescriptor, offset: U64, data: bytes
+) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError

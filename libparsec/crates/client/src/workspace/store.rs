@@ -402,7 +402,7 @@ use super::fetch::FetchRemoteBlockError;
 /// To approximate that, we just keep the last 16 chunks read in memory.
 #[derive(Debug)]
 struct ChunksCache {
-    items: [Option<(ChunkID, Vec<u8>)>; 16],
+    items: [Option<(ChunkID, Bytes)>; 16],
     round_robin: usize,
 }
 
@@ -413,15 +413,15 @@ impl ChunksCache {
             round_robin: 0,
         }
     }
-    fn push(&mut self, id: ChunkID, data: Vec<u8>) {
+    fn push(&mut self, id: ChunkID, data: Bytes) {
         self.items[self.round_robin] = Some((id, data));
         self.round_robin = (self.round_robin + 1) % self.items.len();
     }
-    fn get(&self, id: &ChunkID) -> Option<&[u8]> {
+    fn get(&self, id: &ChunkID) -> Option<Bytes> {
         self.items
             .iter()
             .find_map(|item| item.as_ref().filter(|(chunk_id, _)| chunk_id == id))
-            .map(|(_, data)| data.as_ref())
+            .map(|(_, data)| data.to_owned())
     }
 }
 
@@ -1218,17 +1218,15 @@ impl WorkspaceStore {
         Ok((updater, manifest))
     }
 
-    pub(crate) async fn read_chunk_local_only(
+    pub(crate) async fn get_chunk_local_only(
         &self,
         chunk: &Chunk,
-        buf: &mut Vec<u8>,
-    ) -> Result<(), ReadChunkLocalOnlyError> {
+    ) -> Result<Bytes, ReadChunkLocalOnlyError> {
         {
             let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
             let found = cache.chunks.get(&chunk.id);
             if let Some(data) = found {
-                buf.extend_from_slice(data);
-                return Ok(());
+                return Ok(data);
             }
         }
 
@@ -1242,35 +1240,28 @@ impl WorkspaceStore {
 
         let maybe_encrypted = storage.get_chunk(chunk.id).await?;
         if let Some(encrypted) = maybe_encrypted {
-            let data = self
+            let data: Bytes = self
                 .device
                 .local_symkey
                 .decrypt(&encrypted)
-                .map_err(|err| {
-                    anyhow::anyhow!("Cannot decrypt block from local storage: {}", err)
-                })?;
-
-            buf.extend_from_slice(&data);
+                .map_err(|err| anyhow::anyhow!("Cannot decrypt block from local storage: {}", err))?
+                .into();
 
             // Don't forget to update the cache !
 
             let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            cache.chunks.push(chunk.id, data);
+            cache.chunks.push(chunk.id, data.clone());
 
-            return Ok(());
+            return Ok(data);
         }
 
         Err(ReadChunkLocalOnlyError::ChunkNotFound)
     }
 
-    pub(crate) async fn read_chunk(
-        &self,
-        chunk: &Chunk,
-        buf: &mut Vec<u8>,
-    ) -> Result<(), ReadChunkError> {
-        let outcome = self.read_chunk_local_only(chunk, buf).await;
+    pub(crate) async fn get_chunk(&self, chunk: &Chunk) -> Result<Bytes, ReadChunkError> {
+        let outcome = self.get_chunk_local_only(chunk).await;
         match outcome {
-            Ok(()) => return Ok(()),
+            Ok(chunk_data) => return Ok(chunk_data),
             Err(err) => match err {
                 ReadChunkLocalOnlyError::ChunkNotFound => (),
                 ReadChunkLocalOnlyError::Stopped => return Err(ReadChunkError::Stopped),
@@ -1280,7 +1271,7 @@ impl WorkspaceStore {
 
         // Chunk not in local, time to ask the server
 
-        let data = match &chunk.access {
+        let data: Bytes = match &chunk.access {
             None => return Err(ReadChunkError::ChunkNotFound),
             Some(access) => super::fetch::fetch_block(&self.cmds, access.id, &access.key)
                 .await
@@ -1294,9 +1285,8 @@ impl WorkspaceStore {
                         err.context("cannot fetch block from server").into()
                     }
                 })?,
-        };
-
-        buf.extend_from_slice(&data);
+        }
+        .into();
 
         // Should both store the data in local storage...
 
@@ -1310,9 +1300,9 @@ impl WorkspaceStore {
         // ...and update the cache !
 
         let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-        cache.chunks.push(chunk.id, data);
+        cache.chunks.push(chunk.id, data.clone());
 
-        Ok(())
+        Ok(data)
     }
 
     pub(crate) async fn get_inbound_need_sync_entries(

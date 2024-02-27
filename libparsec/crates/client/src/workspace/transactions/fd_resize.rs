@@ -9,7 +9,7 @@ use crate::workspace::{WorkspaceOps, WriteMode};
 use super::{ReshapeAndFlushError, WriteOperation};
 
 #[derive(Debug, thiserror::Error)]
-pub enum FdResizeError {
+pub enum WorkspaceFdResizeError {
     #[error("File descriptor not found")]
     BadFileDescriptor,
     #[error("File is not opened in write mode")]
@@ -23,7 +23,7 @@ pub async fn fd_resize(
     fd: FileDescriptor,
     length: u64,
     truncate_only: bool,
-) -> Result<(), FdResizeError> {
+) -> Result<(), WorkspaceFdResizeError> {
     // Retrieve the opened file & cursor from the file descriptor
 
     let opened_file = {
@@ -31,7 +31,7 @@ pub async fn fd_resize(
 
         let file_id = match guard.file_descriptors.get(&fd) {
             Some(file_id) => file_id,
-            None => return Err(FdResizeError::BadFileDescriptor),
+            None => return Err(WorkspaceFdResizeError::BadFileDescriptor),
         };
 
         let opened_file = guard
@@ -48,10 +48,10 @@ pub async fn fd_resize(
         .iter()
         .find(|c| c.file_descriptor == fd)
         // The cursor might have been closed while we were waiting for opened_file's lock
-        .ok_or(FdResizeError::BadFileDescriptor)?;
+        .ok_or(WorkspaceFdResizeError::BadFileDescriptor)?;
 
     if matches!(cursor.write_mode, WriteMode::Denied) {
-        return Err(FdResizeError::NotInWriteMode);
+        return Err(WorkspaceFdResizeError::NotInWriteMode);
     }
 
     // No-op
@@ -95,9 +95,9 @@ pub async fn fd_resize(
         .or_else(|err| match err {
             // Given flush is not mandatory here, just ignore if we cannot do it
             ReshapeAndFlushError::Stopped => Ok(()),
-            ReshapeAndFlushError::Internal(err) => {
-                Err(FdResizeError::Internal(err.context("cannot flush file")))
-            }
+            ReshapeAndFlushError::Internal(err) => Err(WorkspaceFdResizeError::Internal(
+                err.context("cannot flush file"),
+            )),
         })?;
 
     Ok(())

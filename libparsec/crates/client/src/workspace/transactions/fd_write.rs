@@ -11,7 +11,7 @@ use crate::workspace::{OpenedFile, WorkspaceOps, WriteMode};
 use super::ReshapeAndFlushError;
 
 #[derive(Debug, thiserror::Error)]
-pub enum FdWriteError {
+pub enum WorkspaceFdWriteError {
     #[error("File descriptor not found")]
     BadFileDescriptor,
     #[error("File is not opened in write mode")]
@@ -23,9 +23,10 @@ pub enum FdWriteError {
 pub async fn fd_write(
     ops: &WorkspaceOps,
     fd: FileDescriptor,
-    buf: &[u8],
+    offset: u64,
+    data: &[u8],
     constrained_io: bool,
-) -> Result<u64, FdWriteError> {
+) -> Result<u64, WorkspaceFdWriteError> {
     // Retrieve the opened file & cursor from the file descriptor
 
     let opened_file = {
@@ -33,7 +34,7 @@ pub async fn fd_write(
 
         let file_id = match guard.file_descriptors.get(&fd) {
             Some(file_id) => file_id,
-            None => return Err(FdWriteError::BadFileDescriptor),
+            None => return Err(WorkspaceFdWriteError::BadFileDescriptor),
         };
 
         let opened_file = guard
@@ -52,32 +53,28 @@ pub async fn fd_write(
         .iter()
         .find(|c| c.file_descriptor == fd)
         // The cursor might have been closed while we were waiting for opened_file's lock
-        .ok_or(FdWriteError::BadFileDescriptor)?;
+        .ok_or(WorkspaceFdWriteError::BadFileDescriptor)?;
 
     if matches!(cursor.write_mode, WriteMode::Denied) {
-        return Err(FdWriteError::NotInWriteMode);
+        return Err(WorkspaceFdWriteError::NotInWriteMode);
     }
 
-    let buf = if constrained_io && cursor.position + buf.len() as u64 > manifest.size {
-        let end = match manifest.size.checked_sub(cursor.position) {
+    let data = if constrained_io && offset + data.len() as u64 > manifest.size {
+        let end = match manifest.size.checked_sub(offset) {
             Some(end) => end,
             // Cursor is past the end of the file, we should not write anything
             None => return Ok(0),
         };
-        &buf[..end as usize]
+        &data[..end as usize]
     } else {
-        // No early exit if buf is empty: if cursor is past the end of the file a
+        // No early exit if data is empty: if offset is past the end of the file a
         // zero-length write means we extend the file !
-        buf
+        data
     };
 
     let manifest: &mut LocalFileManifest = Arc::make_mut(manifest);
-    let (write_operations, removed_chunks) = super::prepare_write(
-        manifest,
-        buf.len() as u64,
-        cursor.position,
-        ops.device.now(),
-    );
+    let (write_operations, removed_chunks) =
+        super::prepare_write(manifest, data.len() as u64, offset, ops.device.now());
 
     for to_remove_id in removed_chunks {
         let found = opened_file
@@ -111,7 +108,7 @@ pub async fn fd_write(
         let chunk_data = match (chunk_data_start, chunk_data_stop) {
             // 1) This chunk is entirely composed of data from the buffer
             (chunk_data_start, _) if chunk_data_start >= 0 => {
-                buf[chunk_data_start as usize..chunk_data_stop as usize].to_vec()
+                data[chunk_data_start as usize..chunk_data_stop as usize].to_vec()
             }
             // 2) This chunk is entirely composed of zeroes filler data
             (_, chunk_data_stop) if chunk_data_stop <= 0 => {
@@ -127,7 +124,7 @@ pub async fn fd_write(
                 let from_buffer_size = chunk_data_stop as usize;
                 let chunk_data_size = zeroes_filler_size + from_buffer_size;
                 let mut chunk_data = vec![0; chunk_data_size];
-                chunk_data[zeroes_filler_size..].copy_from_slice(&buf[0..from_buffer_size]);
+                chunk_data[zeroes_filler_size..].copy_from_slice(&data[0..from_buffer_size]);
                 chunk_data
             }
         };
@@ -137,7 +134,7 @@ pub async fn fd_write(
             .push((write_operation.chunk.id, chunk_data));
     }
 
-    opened_file.bytes_written_since_last_flush += buf.len() as u64;
+    opened_file.bytes_written_since_last_flush += data.len() as u64;
     opened_file.flush_needed = true;
 
     super::maybe_early_reshape_and_flush(ops, &mut opened_file)
@@ -145,10 +142,10 @@ pub async fn fd_write(
         .or_else(|err| match err {
             // Given flush is not mandatory here, just ignore if we cannot do it
             ReshapeAndFlushError::Stopped => Ok(()),
-            ReshapeAndFlushError::Internal(err) => {
-                Err(FdWriteError::Internal(err.context("cannot flush file")))
-            }
+            ReshapeAndFlushError::Internal(err) => Err(WorkspaceFdWriteError::Internal(
+                err.context("cannot flush file"),
+            )),
         })?;
 
-    Ok(buf.len() as u64)
+    Ok(data.len() as u64)
 }

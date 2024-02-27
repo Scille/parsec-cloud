@@ -73,8 +73,10 @@ impl Storage {
     // File operations
 
     fn read(&self, manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<u8> {
-        let chunks = prepare_read(manifest, size, offset);
-        self.build_data(&chunks.collect::<Vec<_>>())
+        let (written_size, chunks) = prepare_read(manifest, size, offset);
+        let data = self.build_data(&chunks.collect::<Vec<_>>());
+        p_assert_eq!(data.len() as u64, written_size);
+        data
     }
 
     fn write(

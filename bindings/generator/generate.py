@@ -253,16 +253,32 @@ class BaseTypeInUse:
             )
 
         elif isinstance(param, type) and issubclass(param, I32BasedType):
-            return I32BasedTypeInUse(name=param.__name__)
+            return I32BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_i32=getattr(param, "custom_from_rs_i32", None),
+                custom_to_rs_i32=getattr(param, "custom_to_rs_i32", None),
+            )
 
         elif isinstance(param, type) and issubclass(param, U32BasedType):
-            return U32BasedTypeInUse(name=param.__name__)
+            return U32BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_u32=getattr(param, "custom_from_rs_u32", None),
+                custom_to_rs_u32=getattr(param, "custom_to_rs_u32", None),
+            )
 
         elif isinstance(param, type) and issubclass(param, I64BasedType):
-            return I64BasedTypeInUse(name=param.__name__)
+            return I64BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_i64=getattr(param, "custom_from_rs_i64", None),
+                custom_to_rs_i64=getattr(param, "custom_to_rs_i64", None),
+            )
 
         elif isinstance(param, type) and issubclass(param, U64BasedType):
-            return U64BasedTypeInUse(name=param.__name__)
+            return U64BasedTypeInUse(
+                name=param.__name__,
+                custom_from_rs_u64=getattr(param, "custom_from_rs_u64", None),
+                custom_to_rs_u64=getattr(param, "custom_to_rs_u64", None),
+            )
 
         else:
             typespec = TYPES_DB.get(param)
@@ -371,9 +387,9 @@ class F64BasedTypeInUse(BaseTypeInUse):
     kind = "f64_based"
     name: str
     # If set, custom_from_rs_f64/custom_to_rs_f64 contains a Rust closure snippet
-    # `fn (&[u8]) -> Result<X, AsRef<str>>`
+    # `fn (f64) -> Result<X, AsRef<str>>`
     custom_from_rs_f64: str | None = None
-    # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
+    # `fn (&X) -> Result<f64, AsRef<str>>`
     custom_to_rs_f64: str | None = None
 
 
@@ -381,24 +397,44 @@ class F64BasedTypeInUse(BaseTypeInUse):
 class I32BasedTypeInUse(BaseTypeInUse):
     kind = "i32_based"
     name: str
+    # If set, custom_from_rs_i32/custom_to_rs_i32 contains a Rust closure snippet
+    # `fn (&[u8]) -> Result<X, AsRef<str>>`
+    custom_from_rs_i32: str | None = None
+    # `fn (&X) -> Result<Vec<u8>, AsRef<str>>`
+    custom_to_rs_i32: str | None = None
 
 
 @dataclass
 class U32BasedTypeInUse(BaseTypeInUse):
     kind = "u32_based"
     name: str
+    # If set, custom_from_rs_u32/custom_to_rs_u32 contains a Rust closure snippet
+    # `fn (u32) -> Result<X, AsRef<str>>`
+    custom_from_rs_u32: str | None = None
+    # `fn (&X) -> Result<u32, AsRef<str>>`
+    custom_to_rs_u32: str | None = None
 
 
 @dataclass
 class I64BasedTypeInUse(BaseTypeInUse):
     kind = "i64_based"
     name: str
+    # If set, custom_from_rs_i64/custom_to_rs_i64 contains a Rust closure snippet
+    # `fn (i64) -> Result<X, AsRef<str>>`
+    custom_from_rs_i64: str | None = None
+    # `fn (&X) -> Result<i64, AsRef<str>>`
+    custom_to_rs_i64: str | None = None
 
 
 @dataclass
 class U64BasedTypeInUse(BaseTypeInUse):
     kind = "u64_based"
     name: str
+    # If set, custom_from_rs_u64/custom_to_rs_u64 contains a Rust closure snippet
+    # `fn (u64) -> Result<X, AsRef<str>>`
+    custom_from_rs_u64: str | None = None
+    # `fn (&X) -> Result<u64, AsRef<str>>`
+    custom_to_rs_u64: str | None = None
 
 
 @dataclass

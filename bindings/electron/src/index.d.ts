@@ -154,6 +154,16 @@ export interface NewInvitationInfo {
 }
 
 
+export interface OpenOptions {
+    read: boolean
+    write: boolean
+    append: boolean
+    truncate: boolean
+    create: boolean
+    createNew: boolean
+}
+
+
 export interface UserClaimFinalizeInfo {
     handle: number
 }
@@ -798,7 +808,7 @@ export interface EntryStatFolder {
     base_version: number
     is_placeholder: boolean
     need_sync: boolean
-    children: Array<string>
+    children: Array<[string, string]>
 }
 export type EntryStat =
   | EntryStatFile
@@ -1127,6 +1137,175 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorParentNotFound
   | WorkspaceCreateFolderErrorReadOnlyRealm
   | WorkspaceCreateFolderErrorStopped
+
+
+// WorkspaceFdCloseError
+export interface WorkspaceFdCloseErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdCloseErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceFdCloseErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceFdCloseError =
+  | WorkspaceFdCloseErrorBadFileDescriptor
+  | WorkspaceFdCloseErrorInternal
+  | WorkspaceFdCloseErrorStopped
+
+
+// WorkspaceFdFlushError
+export interface WorkspaceFdFlushErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdFlushErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceFdFlushErrorNotInWriteMode {
+    tag: "NotInWriteMode"
+    error: string
+}
+export interface WorkspaceFdFlushErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceFdFlushError =
+  | WorkspaceFdFlushErrorBadFileDescriptor
+  | WorkspaceFdFlushErrorInternal
+  | WorkspaceFdFlushErrorNotInWriteMode
+  | WorkspaceFdFlushErrorStopped
+
+
+// WorkspaceFdReadError
+export interface WorkspaceFdReadErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdReadErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceFdReadErrorNotInReadMode {
+    tag: "NotInReadMode"
+    error: string
+}
+export interface WorkspaceFdReadErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceFdReadErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceFdReadError =
+  | WorkspaceFdReadErrorBadFileDescriptor
+  | WorkspaceFdReadErrorInternal
+  | WorkspaceFdReadErrorNotInReadMode
+  | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorStopped
+
+
+// WorkspaceFdResizeError
+export interface WorkspaceFdResizeErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdResizeErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceFdResizeErrorNotInWriteMode {
+    tag: "NotInWriteMode"
+    error: string
+}
+export type WorkspaceFdResizeError =
+  | WorkspaceFdResizeErrorBadFileDescriptor
+  | WorkspaceFdResizeErrorInternal
+  | WorkspaceFdResizeErrorNotInWriteMode
+
+
+// WorkspaceFdWriteError
+export interface WorkspaceFdWriteErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdWriteErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceFdWriteErrorNotInWriteMode {
+    tag: "NotInWriteMode"
+    error: string
+}
+export type WorkspaceFdWriteError =
+  | WorkspaceFdWriteErrorBadFileDescriptor
+  | WorkspaceFdWriteErrorInternal
+  | WorkspaceFdWriteErrorNotInWriteMode
+
+
+// WorkspaceOpenFileError
+export interface WorkspaceOpenFileErrorEntryExistsInCreateNewMode {
+    tag: "EntryExistsInCreateNewMode"
+    error: string
+}
+export interface WorkspaceOpenFileErrorEntryNotAFile {
+    tag: "EntryNotAFile"
+    error: string
+}
+export interface WorkspaceOpenFileErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceOpenFileErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceOpenFileErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceOpenFileErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceOpenFileErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceOpenFileErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceOpenFileError =
+  | WorkspaceOpenFileErrorEntryExistsInCreateNewMode
+  | WorkspaceOpenFileErrorEntryNotAFile
+  | WorkspaceOpenFileErrorEntryNotFound
+  | WorkspaceOpenFileErrorInternal
+  | WorkspaceOpenFileErrorInvalidCertificate
+  | WorkspaceOpenFileErrorInvalidKeysBundle
+  | WorkspaceOpenFileErrorInvalidManifest
+  | WorkspaceOpenFileErrorNoRealmAccess
+  | WorkspaceOpenFileErrorOffline
+  | WorkspaceOpenFileErrorReadOnlyRealm
+  | WorkspaceOpenFileErrorStopped
 
 
 // WorkspaceRemoveEntryError
@@ -1470,6 +1649,38 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function fdClose(
+    workspace: number,
+    fd: number
+): Promise<Result<null, WorkspaceFdCloseError>>
+export function fdFlush(
+    workspace: number,
+    fd: number
+): Promise<Result<null, WorkspaceFdFlushError>>
+export function fdRead(
+    workspace: number,
+    fd: number,
+    offset: number,
+    size: number
+): Promise<Result<Uint8Array, WorkspaceFdReadError>>
+export function fdResize(
+    workspace: number,
+    fd: number,
+    length: number,
+    truncate_only: boolean
+): Promise<Result<null, WorkspaceFdResizeError>>
+export function fdWrite(
+    workspace: number,
+    fd: number,
+    offset: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
+export function fdWriteWithConstrainedIo(
+    workspace: number,
+    fd: number,
+    offset: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
 export function getDefaultConfigDir(
 ): Promise<string>
 export function getDefaultDataBaseDir(
@@ -1592,6 +1803,11 @@ export function workspaceCreateFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceCreateFolderError>>
+export function workspaceOpenFile(
+    workspace: number,
+    path: string,
+    mode: OpenOptions
+): Promise<Result<number, WorkspaceOpenFileError>>
 export function workspaceRemoveEntry(
     workspace: number,
     path: string

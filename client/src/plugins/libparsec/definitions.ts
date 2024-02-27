@@ -67,6 +67,7 @@ export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
 export type I32 = number
 export type CacheSize = number
+export type FileDescriptor = number
 export type Handle = number
 export type U32 = number
 export type VersionInt = number
@@ -163,6 +164,15 @@ export interface NewInvitationInfo {
     addr: BackendInvitationAddr
     token: InvitationToken
     emailSentStatus: InvitationEmailSentStatus
+}
+
+export interface OpenOptions {
+    read: boolean
+    write: boolean
+    append: boolean
+    truncate: boolean
+    create: boolean
+    createNew: boolean
 }
 
 export interface UserClaimFinalizeInfo {
@@ -938,7 +948,7 @@ export interface EntryStatFolder {
     baseVersion: VersionInt
     isPlaceholder: boolean
     needSync: boolean
-    children: Array<EntryName>
+    children: Array<[EntryName, VlobID]>
 }
 export type EntryStat =
   | EntryStatFile
@@ -1334,6 +1344,216 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorReadOnlyRealm
   | WorkspaceCreateFolderErrorStopped
 
+// WorkspaceFdCloseError
+export enum WorkspaceFdCloseErrorTag {
+    BadFileDescriptor = 'WorkspaceFdCloseErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdCloseErrorInternal',
+    Stopped = 'WorkspaceFdCloseErrorStopped',
+}
+
+export interface WorkspaceFdCloseErrorBadFileDescriptor {
+    tag: WorkspaceFdCloseErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdCloseErrorInternal {
+    tag: WorkspaceFdCloseErrorTag.Internal
+    error: string
+}
+export interface WorkspaceFdCloseErrorStopped {
+    tag: WorkspaceFdCloseErrorTag.Stopped
+    error: string
+}
+export type WorkspaceFdCloseError =
+  | WorkspaceFdCloseErrorBadFileDescriptor
+  | WorkspaceFdCloseErrorInternal
+  | WorkspaceFdCloseErrorStopped
+
+// WorkspaceFdFlushError
+export enum WorkspaceFdFlushErrorTag {
+    BadFileDescriptor = 'WorkspaceFdFlushErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdFlushErrorInternal',
+    NotInWriteMode = 'WorkspaceFdFlushErrorNotInWriteMode',
+    Stopped = 'WorkspaceFdFlushErrorStopped',
+}
+
+export interface WorkspaceFdFlushErrorBadFileDescriptor {
+    tag: WorkspaceFdFlushErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdFlushErrorInternal {
+    tag: WorkspaceFdFlushErrorTag.Internal
+    error: string
+}
+export interface WorkspaceFdFlushErrorNotInWriteMode {
+    tag: WorkspaceFdFlushErrorTag.NotInWriteMode
+    error: string
+}
+export interface WorkspaceFdFlushErrorStopped {
+    tag: WorkspaceFdFlushErrorTag.Stopped
+    error: string
+}
+export type WorkspaceFdFlushError =
+  | WorkspaceFdFlushErrorBadFileDescriptor
+  | WorkspaceFdFlushErrorInternal
+  | WorkspaceFdFlushErrorNotInWriteMode
+  | WorkspaceFdFlushErrorStopped
+
+// WorkspaceFdReadError
+export enum WorkspaceFdReadErrorTag {
+    BadFileDescriptor = 'WorkspaceFdReadErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdReadErrorInternal',
+    NotInReadMode = 'WorkspaceFdReadErrorNotInReadMode',
+    Offline = 'WorkspaceFdReadErrorOffline',
+    Stopped = 'WorkspaceFdReadErrorStopped',
+}
+
+export interface WorkspaceFdReadErrorBadFileDescriptor {
+    tag: WorkspaceFdReadErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdReadErrorInternal {
+    tag: WorkspaceFdReadErrorTag.Internal
+    error: string
+}
+export interface WorkspaceFdReadErrorNotInReadMode {
+    tag: WorkspaceFdReadErrorTag.NotInReadMode
+    error: string
+}
+export interface WorkspaceFdReadErrorOffline {
+    tag: WorkspaceFdReadErrorTag.Offline
+    error: string
+}
+export interface WorkspaceFdReadErrorStopped {
+    tag: WorkspaceFdReadErrorTag.Stopped
+    error: string
+}
+export type WorkspaceFdReadError =
+  | WorkspaceFdReadErrorBadFileDescriptor
+  | WorkspaceFdReadErrorInternal
+  | WorkspaceFdReadErrorNotInReadMode
+  | WorkspaceFdReadErrorOffline
+  | WorkspaceFdReadErrorStopped
+
+// WorkspaceFdResizeError
+export enum WorkspaceFdResizeErrorTag {
+    BadFileDescriptor = 'WorkspaceFdResizeErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdResizeErrorInternal',
+    NotInWriteMode = 'WorkspaceFdResizeErrorNotInWriteMode',
+}
+
+export interface WorkspaceFdResizeErrorBadFileDescriptor {
+    tag: WorkspaceFdResizeErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdResizeErrorInternal {
+    tag: WorkspaceFdResizeErrorTag.Internal
+    error: string
+}
+export interface WorkspaceFdResizeErrorNotInWriteMode {
+    tag: WorkspaceFdResizeErrorTag.NotInWriteMode
+    error: string
+}
+export type WorkspaceFdResizeError =
+  | WorkspaceFdResizeErrorBadFileDescriptor
+  | WorkspaceFdResizeErrorInternal
+  | WorkspaceFdResizeErrorNotInWriteMode
+
+// WorkspaceFdWriteError
+export enum WorkspaceFdWriteErrorTag {
+    BadFileDescriptor = 'WorkspaceFdWriteErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdWriteErrorInternal',
+    NotInWriteMode = 'WorkspaceFdWriteErrorNotInWriteMode',
+}
+
+export interface WorkspaceFdWriteErrorBadFileDescriptor {
+    tag: WorkspaceFdWriteErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdWriteErrorInternal {
+    tag: WorkspaceFdWriteErrorTag.Internal
+    error: string
+}
+export interface WorkspaceFdWriteErrorNotInWriteMode {
+    tag: WorkspaceFdWriteErrorTag.NotInWriteMode
+    error: string
+}
+export type WorkspaceFdWriteError =
+  | WorkspaceFdWriteErrorBadFileDescriptor
+  | WorkspaceFdWriteErrorInternal
+  | WorkspaceFdWriteErrorNotInWriteMode
+
+// WorkspaceOpenFileError
+export enum WorkspaceOpenFileErrorTag {
+    EntryExistsInCreateNewMode = 'WorkspaceOpenFileErrorEntryExistsInCreateNewMode',
+    EntryNotAFile = 'WorkspaceOpenFileErrorEntryNotAFile',
+    EntryNotFound = 'WorkspaceOpenFileErrorEntryNotFound',
+    Internal = 'WorkspaceOpenFileErrorInternal',
+    InvalidCertificate = 'WorkspaceOpenFileErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceOpenFileErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceOpenFileErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceOpenFileErrorNoRealmAccess',
+    Offline = 'WorkspaceOpenFileErrorOffline',
+    ReadOnlyRealm = 'WorkspaceOpenFileErrorReadOnlyRealm',
+    Stopped = 'WorkspaceOpenFileErrorStopped',
+}
+
+export interface WorkspaceOpenFileErrorEntryExistsInCreateNewMode {
+    tag: WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode
+    error: string
+}
+export interface WorkspaceOpenFileErrorEntryNotAFile {
+    tag: WorkspaceOpenFileErrorTag.EntryNotAFile
+    error: string
+}
+export interface WorkspaceOpenFileErrorEntryNotFound {
+    tag: WorkspaceOpenFileErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceOpenFileErrorInternal {
+    tag: WorkspaceOpenFileErrorTag.Internal
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidCertificate {
+    tag: WorkspaceOpenFileErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidKeysBundle {
+    tag: WorkspaceOpenFileErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceOpenFileErrorInvalidManifest {
+    tag: WorkspaceOpenFileErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceOpenFileErrorNoRealmAccess {
+    tag: WorkspaceOpenFileErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceOpenFileErrorOffline {
+    tag: WorkspaceOpenFileErrorTag.Offline
+    error: string
+}
+export interface WorkspaceOpenFileErrorReadOnlyRealm {
+    tag: WorkspaceOpenFileErrorTag.ReadOnlyRealm
+    error: string
+}
+export interface WorkspaceOpenFileErrorStopped {
+    tag: WorkspaceOpenFileErrorTag.Stopped
+    error: string
+}
+export type WorkspaceOpenFileError =
+  | WorkspaceOpenFileErrorEntryExistsInCreateNewMode
+  | WorkspaceOpenFileErrorEntryNotAFile
+  | WorkspaceOpenFileErrorEntryNotFound
+  | WorkspaceOpenFileErrorInternal
+  | WorkspaceOpenFileErrorInvalidCertificate
+  | WorkspaceOpenFileErrorInvalidKeysBundle
+  | WorkspaceOpenFileErrorInvalidManifest
+  | WorkspaceOpenFileErrorNoRealmAccess
+  | WorkspaceOpenFileErrorOffline
+  | WorkspaceOpenFileErrorReadOnlyRealm
+  | WorkspaceOpenFileErrorStopped
+
 // WorkspaceRemoveEntryError
 export enum WorkspaceRemoveEntryErrorTag {
     CannotRemoveRoot = 'WorkspaceRemoveEntryErrorCannotRemoveRoot',
@@ -1721,6 +1941,38 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    fdClose(
+        workspace: Handle,
+        fd: FileDescriptor
+    ): Promise<Result<null, WorkspaceFdCloseError>>
+    fdFlush(
+        workspace: Handle,
+        fd: FileDescriptor
+    ): Promise<Result<null, WorkspaceFdFlushError>>
+    fdRead(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        size: U64
+    ): Promise<Result<Uint8Array, WorkspaceFdReadError>>
+    fdResize(
+        workspace: Handle,
+        fd: FileDescriptor,
+        length: U64,
+        truncate_only: boolean
+    ): Promise<Result<null, WorkspaceFdResizeError>>
+    fdWrite(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
+    fdWriteWithConstrainedIo(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
     getDefaultConfigDir(
     ): Promise<Path>
     getDefaultDataBaseDir(
@@ -1843,6 +2095,11 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<VlobID, WorkspaceCreateFolderError>>
+    workspaceOpenFile(
+        workspace: Handle,
+        path: FsPath,
+        mode: OpenOptions
+    ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>>
     workspaceRemoveEntry(
         workspace: Handle,
         path: FsPath

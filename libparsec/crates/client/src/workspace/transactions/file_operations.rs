@@ -54,7 +54,7 @@ pub(crate) fn prepare_read(
     manifest: &LocalFileManifest,
     size: u64,
     offset: u64,
-) -> impl Iterator<Item = Chunk> + '_ {
+) -> (u64, impl Iterator<Item = Chunk> + '_) {
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
     let size = min(
@@ -71,7 +71,7 @@ pub(crate) fn prepare_read(
     let stop_block = (offset + size + blocksize - 1) / blocksize;
 
     // Loop over blocks
-    (start_block..stop_block).flat_map(move |block| {
+    let operations = (start_block..stop_block).flat_map(move |block| {
         // Get sub_start, sub_stop and sub_size
         let block_start = block * blocksize;
         let sub_start = max(offset, block_start);
@@ -85,7 +85,9 @@ pub(crate) fn prepare_read(
             // TODO: handle invalid manifest !
             .expect("A valid manifest must have enough blocks to cover its full range.");
         block_read(block_chunks, sub_size, sub_start)
-    })
+    });
+
+    (size, operations)
 }
 
 // Prepare write

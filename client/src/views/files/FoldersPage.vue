@@ -355,7 +355,7 @@ async function listFolder(selectFile: parsec.EntryName | null = null): Promise<v
     const newFolders: FolderModel[] = [];
     const newFiles: FileModel[] = [];
     folderInfo.value = result.value as parsec.EntryStatFolder;
-    for (const childName of (result.value as parsec.EntryStatFolder).children) {
+    for (const [childName] of (result.value as parsec.EntryStatFolder).children) {
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
         const childPath = await parsec.Path.join(currentPath.value, childName);

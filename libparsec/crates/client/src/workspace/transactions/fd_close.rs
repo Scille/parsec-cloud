@@ -9,7 +9,7 @@ use crate::workspace::WorkspaceOps;
 use super::ReshapeAndFlushError;
 
 #[derive(Debug, thiserror::Error)]
-pub enum FdCloseError {
+pub enum WorkspaceFdCloseError {
     #[error("Component has stopped")]
     Stopped,
     #[error("File descriptor not found")]
@@ -18,7 +18,7 @@ pub enum FdCloseError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdCloseError> {
+pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), WorkspaceFdCloseError> {
     // 1) Retrieve the opened file from the file descriptor
 
     let (opened_file, still_opened) = {
@@ -26,7 +26,7 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdCl
 
         let file_id = match guard.file_descriptors.remove(&fd) {
             Some(file_id) => file_id,
-            None => return Err(FdCloseError::BadFileDescriptor),
+            None => return Err(WorkspaceFdCloseError::BadFileDescriptor),
         };
 
         // Check is the file is opened by another file descriptor.
@@ -82,14 +82,14 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdCl
             .iter()
             .position(|c| c.file_descriptor == fd)
             // The cursor might have been closed while we were waiting for opened_file's lock
-            .ok_or(FdCloseError::BadFileDescriptor)?;
+            .ok_or(WorkspaceFdCloseError::BadFileDescriptor)?;
         opened_file.cursors.swap_remove(cursor_index);
 
         // Flush the changes
         super::force_reshape_and_flush(ops, &mut opened_file)
             .await
             .map_err(|err| match err {
-                ReshapeAndFlushError::Stopped => FdCloseError::Stopped,
+                ReshapeAndFlushError::Stopped => WorkspaceFdCloseError::Stopped,
                 ReshapeAndFlushError::Internal(err) => err.context("cannot flush file").into(),
             }) // No ? here: we want to first finish the close before returning the error !
     };

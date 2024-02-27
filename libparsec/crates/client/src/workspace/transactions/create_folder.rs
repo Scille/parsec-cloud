@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum CreateFolderError {
+pub enum WorkspaceCreateFolderError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -43,7 +43,7 @@ pub enum CreateFolderError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for CreateFolderError {
+impl From<ConnectionError> for WorkspaceCreateFolderError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -55,7 +55,7 @@ impl From<ConnectionError> for CreateFolderError {
 pub(crate) async fn create_folder(
     ops: &WorkspaceOps,
     path: FsPath,
-) -> Result<VlobID, CreateFolderError> {
+) -> Result<VlobID, WorkspaceCreateFolderError> {
     if !ops
         .workspace_entry
         .lock()
@@ -63,14 +63,14 @@ pub(crate) async fn create_folder(
         .role
         .can_write()
     {
-        return Err(CreateFolderError::ReadOnlyRealm);
+        return Err(WorkspaceCreateFolderError::ReadOnlyRealm);
     }
 
     let (parent_path, child_name) = path.into_parent();
     // Root already exists, cannot re-create it !
     let child_name = match child_name {
         None => {
-            return Err(CreateFolderError::EntryExists {
+            return Err(WorkspaceCreateFolderError::EntryExists {
                 entry_id: ops.realm_id,
             })
         }
@@ -82,18 +82,20 @@ pub(crate) async fn create_folder(
         .resolve_path_for_update_folderish_manifest(&parent_path)
         .await
         .map_err(|err| match err {
-            GetFolderishEntryError::Offline => CreateFolderError::Offline,
-            GetFolderishEntryError::Stopped => CreateFolderError::Stopped,
-            GetFolderishEntryError::EntryNotFound => CreateFolderError::ParentNotFound,
-            GetFolderishEntryError::EntryIsFile => CreateFolderError::ParentIsFile,
-            GetFolderishEntryError::NoRealmAccess => CreateFolderError::NoRealmAccess,
+            GetFolderishEntryError::Offline => WorkspaceCreateFolderError::Offline,
+            GetFolderishEntryError::Stopped => WorkspaceCreateFolderError::Stopped,
+            GetFolderishEntryError::EntryNotFound => WorkspaceCreateFolderError::ParentNotFound,
+            GetFolderishEntryError::EntryIsFile => WorkspaceCreateFolderError::ParentIsFile,
+            GetFolderishEntryError::NoRealmAccess => WorkspaceCreateFolderError::NoRealmAccess,
             GetFolderishEntryError::InvalidKeysBundle(err) => {
-                CreateFolderError::InvalidKeysBundle(err)
+                WorkspaceCreateFolderError::InvalidKeysBundle(err)
             }
             GetFolderishEntryError::InvalidCertificate(err) => {
-                CreateFolderError::InvalidCertificate(err)
+                WorkspaceCreateFolderError::InvalidCertificate(err)
             }
-            GetFolderishEntryError::InvalidManifest(err) => CreateFolderError::InvalidManifest(err),
+            GetFolderishEntryError::InvalidManifest(err) => {
+                WorkspaceCreateFolderError::InvalidManifest(err)
+            }
             GetFolderishEntryError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
@@ -104,7 +106,7 @@ pub(crate) async fn create_folder(
             ..
         } => {
             if let Some(entry) = parent.children.get(&child_name) {
-                return Err(CreateFolderError::EntryExists { entry_id: *entry });
+                return Err(WorkspaceCreateFolderError::EntryExists { entry_id: *entry });
             }
             let parent_id = parent.base.id;
 
@@ -125,7 +127,7 @@ pub(crate) async fn create_folder(
                 .update_folder_manifest(parent, Some(ArcLocalChildManifest::Folder(new_child)))
                 .await
                 .map_err(|err| match err {
-                    UpdateFolderManifestError::Stopped => CreateFolderError::Stopped,
+                    UpdateFolderManifestError::Stopped => WorkspaceCreateFolderError::Stopped,
                     UpdateFolderManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }
@@ -139,7 +141,7 @@ pub(crate) async fn create_folder(
             updater,
         } => {
             if let Some(entry) = parent.children.get(&child_name) {
-                return Err(CreateFolderError::EntryExists { entry_id: *entry });
+                return Err(WorkspaceCreateFolderError::EntryExists { entry_id: *entry });
             }
             let parent_id = parent.base.id;
 
@@ -160,7 +162,7 @@ pub(crate) async fn create_folder(
                 .update_workspace_manifest(parent, Some(ArcLocalChildManifest::Folder(new_child)))
                 .await
                 .map_err(|err| match err {
-                    UpdateWorkspaceManifestError::Stopped => CreateFolderError::Stopped,
+                    UpdateWorkspaceManifestError::Stopped => WorkspaceCreateFolderError::Stopped,
                     UpdateWorkspaceManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }

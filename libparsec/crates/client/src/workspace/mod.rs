@@ -19,16 +19,11 @@ use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    CreateFileError as WorkspaceCreateFileError, CreateFolderError as WorkspaceCreateFolderError,
-    EntryStat, FdCloseError as WorkspaceFdCloseError, FdFlushError as WorkspaceFdFlushError,
-    FdReadToEndError as WorkspaceFdReadToEndError, FdResizeError as WorkspaceFdResizeError,
-    FdSeekError as WorkspaceFdSeekError, FdWriteError as WorkspaceFdWriteError,
-    FsOperationError as WorkspaceFsOperationError,
-    GetNeedInboundSyncEntriesError as WorkspaceGetNeedInboundSyncEntriesError,
-    GetNeedOutboundSyncEntriesError as WorkspaceGetNeedOutboundSyncEntriesError,
-    InboundSyncOutcome, OpenFileError as WorkspaceOpenFileError, OpenOptions, OutboundSyncOutcome,
-    RemoveEntryError as WorkspaceRemoveEntryError, RenameEntryError as WorkspaceRenameEntryError,
-    SeekFrom, StatEntryError as WorkspaceStatEntryError, WorkspaceSyncError,
+    EntryStat, InboundSyncOutcome, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
+    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
+    WorkspaceFdResizeError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
+    WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceSyncError,
 };
 
 use self::store::FileUpdater;
@@ -48,7 +43,6 @@ struct OpenedFileCursor {
     file_descriptor: FileDescriptor,
     read_mode: ReadMode,
     write_mode: WriteMode,
-    position: u64,
 }
 
 struct OpenedFile {
@@ -330,25 +324,15 @@ impl WorkspaceOps {
         transactions::fd_flush(self, fd).await
     }
 
-    pub async fn fd_seek(
+    pub async fn fd_read(
         &self,
         fd: FileDescriptor,
-        pos: SeekFrom,
-    ) -> Result<u64, WorkspaceFdSeekError> {
-        transactions::fd_seek(self, fd, pos).await
+        offset: u64,
+        size: u64,
+        buf: &mut impl std::io::Write,
+    ) -> Result<u64, WorkspaceFdReadError> {
+        transactions::fd_read(self, fd, offset, size, buf).await
     }
-
-    pub async fn fd_read_to_end(
-        &self,
-        fd: FileDescriptor,
-        buf: &mut Vec<u8>,
-    ) -> Result<usize, WorkspaceFdReadToEndError> {
-        transactions::fd_read_to_end(self, fd, buf).await
-    }
-
-    // pub async fn fd_read_exact(&self, fd: FileDescriptor, buf: &mut [u8]) -> Result<(), WorkspaceFsOperationError> {
-    //     transactions::fd_read_exact(self, fd, buf).await
-    // }
 
     pub async fn fd_resize(
         &self,
@@ -362,27 +346,19 @@ impl WorkspaceOps {
     pub async fn fd_write(
         &self,
         fd: FileDescriptor,
-        buf: &[u8],
+        offset: u64,
+        data: &[u8],
     ) -> Result<u64, WorkspaceFdWriteError> {
-        transactions::fd_write(self, fd, buf, false).await
+        transactions::fd_write(self, fd, offset, data, false).await
     }
 
     pub async fn fd_write_with_constrained_io(
         &self,
         fd: FileDescriptor,
-        buf: &[u8],
+        offset: u64,
+        data: &[u8],
     ) -> Result<u64, WorkspaceFdWriteError> {
-        transactions::fd_write(self, fd, buf, true).await
-    }
-
-    pub async fn mount(&self) {
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            todo!()
-        }
-
-        #[cfg(target_arch = "wasm32")]
-        panic!("Mountpoint not supported on Web")
+        transactions::fd_write(self, fd, offset, data, true).await
     }
 }
 

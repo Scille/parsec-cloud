@@ -91,12 +91,15 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
     return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
   }
 
-  function generateChildren(): Array<string> {
+  function generateChildren(): Array<[string, string]> {
     const fileCount = Math.floor(Math.random() * 15) + 1;
     const folderCount = Math.floor(Math.random() * 15) + 1;
-    const result = [];
+
+    const result: Array<[string, string]> = [];
     for (let i = 0; i < fileCount + folderCount; i++) {
-      result.push(generateEntryName(i < fileCount ? FILE_PREFIX : FOLDER_PREFIX, i < fileCount));
+      const id = crypto.randomUUID().toString();
+      const name = generateEntryName(i < fileCount ? FILE_PREFIX : FOLDER_PREFIX, i < fileCount);
+      result.push([name, id]);
     }
     return result;
   }

@@ -38,12 +38,12 @@ pub enum EntryStat {
         base_version: VersionInt,
         is_placeholder: bool,
         need_sync: bool,
-        children: Vec<EntryName>,
+        children: Vec<(EntryName, VlobID)>,
     },
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum StatEntryError {
+pub enum WorkspaceStatEntryError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -62,7 +62,7 @@ pub enum StatEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for StatEntryError {
+impl From<ConnectionError> for WorkspaceStatEntryError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -74,19 +74,23 @@ impl From<ConnectionError> for StatEntryError {
 pub(crate) async fn stat_entry(
     ops: &WorkspaceOps,
     path: &FsPath,
-) -> Result<EntryStat, StatEntryError> {
+) -> Result<EntryStat, WorkspaceStatEntryError> {
     let manifest = ops
         .store
         .resolve_path_and_get_manifest(path)
         .await
         .map_err(|err| match err {
-            GetEntryError::Offline => StatEntryError::Offline,
-            GetEntryError::Stopped => StatEntryError::Stopped,
-            GetEntryError::EntryNotFound => StatEntryError::EntryNotFound,
-            GetEntryError::NoRealmAccess => StatEntryError::NoRealmAccess,
-            GetEntryError::InvalidKeysBundle(err) => StatEntryError::InvalidKeysBundle(err),
-            GetEntryError::InvalidCertificate(err) => StatEntryError::InvalidCertificate(err),
-            GetEntryError::InvalidManifest(err) => StatEntryError::InvalidManifest(err),
+            GetEntryError::Offline => WorkspaceStatEntryError::Offline,
+            GetEntryError::Stopped => WorkspaceStatEntryError::Stopped,
+            GetEntryError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+            GetEntryError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+            GetEntryError::InvalidKeysBundle(err) => {
+                WorkspaceStatEntryError::InvalidKeysBundle(err)
+            }
+            GetEntryError::InvalidCertificate(err) => {
+                WorkspaceStatEntryError::InvalidCertificate(err)
+            }
+            GetEntryError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
             GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
@@ -96,10 +100,10 @@ pub(crate) async fn stat_entry(
             let children = {
                 let mut children: Vec<_> = manifest
                     .children
-                    .keys()
-                    .map(|name| name.to_owned())
+                    .iter()
+                    .map(|(name, id)| (name.to_owned(), *id))
                     .collect();
-                children.sort_unstable_by(|a, b| a.as_ref().cmp(b.as_ref()));
+                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
                 children
             };
 
@@ -124,10 +128,10 @@ pub(crate) async fn stat_entry(
             let children = {
                 let mut children: Vec<_> = manifest
                     .children
-                    .keys()
-                    .map(|name| name.to_owned())
+                    .iter()
+                    .map(|(name, id)| (name.to_owned(), *id))
                     .collect();
-                children.sort_unstable_by(|a, b| a.as_ref().cmp(b.as_ref()));
+                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
                 children
             };
 

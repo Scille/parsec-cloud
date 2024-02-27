@@ -4,7 +4,7 @@ mod base;
 mod create_file;
 mod create_folder;
 mod create_folder_all;
-mod fd_read_to_end;
+mod fd_read;
 mod files_operations;
 mod folder_transactions;
 mod inbound_sync_folder;

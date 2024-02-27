@@ -3,39 +3,11 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_ops_factory;
+use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
-    workspace::{tests::utils::restart_workspace_ops, EntryStat, WorkspaceCreateFileError},
+    workspace::{tests::utils::restart_workspace_ops, WorkspaceCreateFileError},
     EventWorkspaceOpsOutboundSyncNeeded,
 };
-
-macro_rules! ls {
-    ($ops:expr, $path:expr) => {
-        async {
-            let path = $path.parse().unwrap();
-            let info = $ops.stat_entry(&path).await.unwrap();
-            let children = match info {
-                EntryStat::Folder { children, .. } => children,
-                x => panic!("Bad info type: {:?}", x),
-            };
-            children
-                .iter()
-                .map(|entry_name| entry_name.to_string())
-                .collect::<Vec<_>>()
-        }
-    };
-}
-
-macro_rules! assert_ls {
-    ($ops:expr, $path:expr, $expected:expr) => {
-        async {
-            let children = ls!($ops, $path).await;
-            // Must specify `$expected` type to handle empty array
-            let expected: &[&str] = &$expected;
-            p_assert_eq!(children, expected);
-        }
-    };
-}
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn create_in_root(env: &TestbedEnv) {
