@@ -14,7 +14,7 @@ use crate::workspace::{
 use super::prepare_reshape;
 
 #[derive(Debug, thiserror::Error)]
-pub enum FdFlushError {
+pub enum WorkspaceFdFlushError {
     #[error("Component has stopped")]
     Stopped,
     #[error("File descriptor not found")]
@@ -25,7 +25,7 @@ pub enum FdFlushError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn fd_flush(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdFlushError> {
+pub async fn fd_flush(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), WorkspaceFdFlushError> {
     // Retrieve the opened file & cursor from the file descriptor
 
     let opened_file = {
@@ -33,7 +33,7 @@ pub async fn fd_flush(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdFl
 
         let file_id = match guard.file_descriptors.get(&fd) {
             Some(file_id) => file_id,
-            None => return Err(FdFlushError::BadFileDescriptor),
+            None => return Err(WorkspaceFdFlushError::BadFileDescriptor),
         };
 
         let opened_file = guard
@@ -50,16 +50,16 @@ pub async fn fd_flush(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), FdFl
         .iter()
         .find(|c| c.file_descriptor == fd)
         // The cursor might have been closed while we were waiting for opened_file's lock
-        .ok_or(FdFlushError::BadFileDescriptor)?;
+        .ok_or(WorkspaceFdFlushError::BadFileDescriptor)?;
 
     if matches!(cursor.write_mode, WriteMode::Denied) {
-        return Err(FdFlushError::NotInWriteMode);
+        return Err(WorkspaceFdFlushError::NotInWriteMode);
     }
 
     force_reshape_and_flush(ops, &mut opened_file)
         .await
         .map_err(|err| match err {
-            ReshapeAndFlushError::Stopped => FdFlushError::Stopped,
+            ReshapeAndFlushError::Stopped => WorkspaceFdFlushError::Stopped,
             ReshapeAndFlushError::Internal(err) => err.into(),
         })?;
 
@@ -129,9 +129,13 @@ async fn reshape(
         let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
         let mut reshape_ok = true;
         for chunk in reshape.source().iter() {
-            let outcome = ops.store.read_chunk_local_only(chunk, &mut buf).await;
+            let outcome = ops.store.get_chunk_local_only(chunk).await;
             match outcome {
-                Ok(_) => (),
+                Ok(chunk_data) => {
+                    chunk
+                        .copy_between_start_and_stop(&chunk_data, &mut buf)
+                        .expect("write on vec cannot fail");
+                }
                 Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
                     // ...if some data are missing in local, this reshape operation is not possible
                     // so we simply ignore it by rollback its corresponding changes in the manifest.

@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum RenameEntryError {
+pub enum WorkspaceRenameEntryError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -43,7 +43,7 @@ pub enum RenameEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for RenameEntryError {
+impl From<ConnectionError> for WorkspaceRenameEntryError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -57,7 +57,7 @@ pub(crate) async fn rename_entry(
     path: FsPath,
     new_name: EntryName,
     overwrite: bool,
-) -> Result<(), RenameEntryError> {
+) -> Result<(), WorkspaceRenameEntryError> {
     // TODO: Renaming a placeholder into a non-placeholder entry of similar type
     //       should copy the content of the placeholder into the non-placeholder
     //       in order to keep the entry ID.
@@ -71,13 +71,13 @@ pub(crate) async fn rename_entry(
         .role
         .can_write()
     {
-        return Err(RenameEntryError::ReadOnlyRealm);
+        return Err(WorkspaceRenameEntryError::ReadOnlyRealm);
     }
 
     let (parent_path, old_name) = path.into_parent();
     // Cannot rename root !
     let old_name = match old_name {
-        None => return Err(RenameEntryError::CannotRenameRoot),
+        None => return Err(WorkspaceRenameEntryError::CannotRenameRoot),
         Some(name) => name,
     };
 
@@ -91,18 +91,20 @@ pub(crate) async fn rename_entry(
         .resolve_path_for_update_folderish_manifest(&parent_path)
         .await
         .map_err(|err| match err {
-            GetFolderishEntryError::Offline => RenameEntryError::Offline,
-            GetFolderishEntryError::Stopped => RenameEntryError::Stopped,
-            GetFolderishEntryError::EntryNotFound => RenameEntryError::EntryNotFound,
-            GetFolderishEntryError::EntryIsFile => RenameEntryError::EntryNotFound,
-            GetFolderishEntryError::NoRealmAccess => RenameEntryError::NoRealmAccess,
+            GetFolderishEntryError::Offline => WorkspaceRenameEntryError::Offline,
+            GetFolderishEntryError::Stopped => WorkspaceRenameEntryError::Stopped,
+            GetFolderishEntryError::EntryNotFound => WorkspaceRenameEntryError::EntryNotFound,
+            GetFolderishEntryError::EntryIsFile => WorkspaceRenameEntryError::EntryNotFound,
+            GetFolderishEntryError::NoRealmAccess => WorkspaceRenameEntryError::NoRealmAccess,
             GetFolderishEntryError::InvalidKeysBundle(err) => {
-                RenameEntryError::InvalidKeysBundle(err)
+                WorkspaceRenameEntryError::InvalidKeysBundle(err)
             }
             GetFolderishEntryError::InvalidCertificate(err) => {
-                RenameEntryError::InvalidCertificate(err)
+                WorkspaceRenameEntryError::InvalidCertificate(err)
             }
-            GetFolderishEntryError::InvalidManifest(err) => RenameEntryError::InvalidManifest(err),
+            GetFolderishEntryError::InvalidManifest(err) => {
+                WorkspaceRenameEntryError::InvalidManifest(err)
+            }
             GetFolderishEntryError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
@@ -115,14 +117,14 @@ pub(crate) async fn rename_entry(
             let mut_parent = Arc::make_mut(&mut parent);
 
             let child_id = match mut_parent.children.remove(&old_name) {
-                None => return Err(RenameEntryError::EntryNotFound),
+                None => return Err(WorkspaceRenameEntryError::EntryNotFound),
                 Some(child_id) => child_id,
             };
 
             match mut_parent.children.entry(new_name) {
                 std::collections::hash_map::Entry::Occupied(mut entry) => {
                     if !overwrite {
-                        return Err(RenameEntryError::DestinationExists {
+                        return Err(WorkspaceRenameEntryError::DestinationExists {
                             entry_id: *entry.get(),
                         });
                     }
@@ -141,7 +143,7 @@ pub(crate) async fn rename_entry(
                 .update_folder_manifest(parent, None)
                 .await
                 .map_err(|err| match err {
-                    UpdateFolderManifestError::Stopped => RenameEntryError::Stopped,
+                    UpdateFolderManifestError::Stopped => WorkspaceRenameEntryError::Stopped,
                     UpdateFolderManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }
@@ -157,14 +159,14 @@ pub(crate) async fn rename_entry(
             let mut_parent = Arc::make_mut(&mut parent);
 
             let child_id = match mut_parent.children.remove(&old_name) {
-                None => return Err(RenameEntryError::EntryNotFound),
+                None => return Err(WorkspaceRenameEntryError::EntryNotFound),
                 Some(child_id) => child_id,
             };
 
             match mut_parent.children.entry(new_name) {
                 std::collections::hash_map::Entry::Occupied(mut entry) => {
                     if !overwrite {
-                        return Err(RenameEntryError::DestinationExists {
+                        return Err(WorkspaceRenameEntryError::DestinationExists {
                             entry_id: *entry.get(),
                         });
                     }
@@ -183,7 +185,7 @@ pub(crate) async fn rename_entry(
                 .update_workspace_manifest(parent, None)
                 .await
                 .map_err(|err| match err {
-                    UpdateWorkspaceManifestError::Stopped => RenameEntryError::Stopped,
+                    UpdateWorkspaceManifestError::Stopped => WorkspaceRenameEntryError::Stopped,
                     UpdateWorkspaceManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }

@@ -5,8 +5,8 @@ use std::sync::Arc;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::workspace_ops_factory;
-use crate::{workspace::EntryStat, EventWorkspaceOpsOutboundSyncNeeded};
+use super::utils::{ls, workspace_ops_factory};
+use crate::EventWorkspaceOpsOutboundSyncNeeded;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
@@ -49,23 +49,16 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         "/foo".parse().unwrap()
     };
 
-    macro_rules! ls {
-        ($path:expr) => {
-            async {
-                let info = ops.stat_entry(&$path).await.unwrap();
-                match info {
-                    EntryStat::Folder { children, .. } => children,
-                    x => panic!("Bad info type: {:?}", x),
-                }
-            }
-        };
-    }
-
     // Now let's add folders !
 
     let dir1 = base_path.join("dir1".parse().unwrap());
     let dir2 = base_path.join("dir2".parse().unwrap());
     let dir3 = base_path.join("dir3".parse().unwrap());
+
+    let base_path_str = base_path.to_string();
+    let dir1_str = dir1.to_string();
+    let dir2_str = dir2.to_string();
+    let dir3_str = dir3.to_string();
 
     macro_rules! create_folder {
         ($path:expr, $parent_id: ident) => {
@@ -92,17 +85,10 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     create_folder!(dir1.join("subdir1".parse().unwrap(),), dir1_id).await;
     create_folder!(dir3.join("subdir3".parse().unwrap(),), dir3_id).await;
 
-    p_assert_eq!(
-        ls!(&base_path).await,
-        [
-            "dir1".parse().unwrap(),
-            "dir2".parse().unwrap(),
-            "dir3".parse().unwrap()
-        ]
-    );
-    p_assert_eq!(ls!(&dir1).await, ["subdir1".parse().unwrap()]);
-    p_assert_eq!(ls!(&dir2).await, []);
-    p_assert_eq!(ls!(&dir3).await, ["subdir3".parse().unwrap()]);
+    p_assert_eq!(ls!(ops, &base_path_str).await, ["dir1", "dir2", "dir3",]);
+    p_assert_eq!(ls!(ops, &dir1_str).await, ["subdir1"]);
+    p_assert_eq!(ls!(ops, &dir2_str).await, Vec::<String>::new());
+    p_assert_eq!(ls!(ops, &dir3_str).await, ["subdir3"]);
 
     // Remove folder
 
@@ -112,12 +98,9 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         p_assert_eq!(e.entry_id, parent_id);
     });
 
-    p_assert_eq!(
-        ls!(&base_path).await,
-        ["dir1".parse().unwrap(), "dir3".parse().unwrap()]
-    );
-    p_assert_eq!(ls!(&dir1).await, ["subdir1".parse().unwrap()]);
-    p_assert_eq!(ls!(&dir3).await, ["subdir3".parse().unwrap()]);
+    p_assert_eq!(ls!(ops, &base_path_str).await, ["dir1", "dir3"]);
+    p_assert_eq!(ls!(ops, &dir1_str).await, ["subdir1"]);
+    p_assert_eq!(ls!(ops, &dir3_str).await, ["subdir3"]);
 
     // Rename folder
 
@@ -129,12 +112,9 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         p_assert_eq!(e.entry_id, parent_id);
     });
 
-    p_assert_eq!(
-        ls!(&base_path).await,
-        ["dir2".parse().unwrap(), "dir3".parse().unwrap()]
-    );
-    p_assert_eq!(ls!(&dir2).await, ["subdir1".parse().unwrap()]);
-    p_assert_eq!(ls!(&dir3).await, ["subdir3".parse().unwrap()]);
+    p_assert_eq!(ls!(ops, &base_path_str).await, ["dir2", "dir3"]);
+    p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir1"]);
+    p_assert_eq!(ls!(ops, &dir3_str).await, ["subdir3"]);
 
     // Overwrite by rename folder
 
@@ -146,6 +126,6 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
         p_assert_eq!(e.entry_id, parent_id);
     });
 
-    p_assert_eq!(ls!(&base_path).await, ["dir2".parse().unwrap()]);
-    p_assert_eq!(ls!(&dir2).await, ["subdir3".parse().unwrap()]);
+    p_assert_eq!(ls!(ops, &base_path_str).await, ["dir2"]);
+    p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir3"]);
 }

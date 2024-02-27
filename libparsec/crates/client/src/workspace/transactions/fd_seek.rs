@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 use crate::workspace::{OpenedFile, WorkspaceOps};
 
 #[derive(Debug, thiserror::Error)]
-pub enum FdSeekError {
+pub enum WorkspaceFdSeekError {
     #[error("File descriptor not found")]
     BadFileDescriptor,
     #[error("Seek to a negative offset")]
@@ -19,7 +19,7 @@ pub async fn fd_seek(
     ops: &WorkspaceOps,
     fd: FileDescriptor,
     pos: SeekFrom,
-) -> Result<u64, FdSeekError> {
+) -> Result<u64, WorkspaceFdSeekError> {
     // Retrieve the opened file & cursor from the file descriptor
 
     let opened_file = {
@@ -27,7 +27,7 @@ pub async fn fd_seek(
 
         let file_id = match guard.file_descriptors.get(&fd) {
             Some(file_id) => file_id,
-            None => return Err(FdSeekError::BadFileDescriptor),
+            None => return Err(WorkspaceFdSeekError::BadFileDescriptor),
         };
 
         let opened_file = guard
@@ -47,7 +47,7 @@ pub async fn fd_seek(
         .iter_mut()
         .find(|c| c.file_descriptor == fd)
         // The cursor might have been closed while we were waiting for opened_file's lock
-        .ok_or(FdSeekError::BadFileDescriptor)?;
+        .ok_or(WorkspaceFdSeekError::BadFileDescriptor)?;
 
     match pos {
         SeekFrom::Start(pos) => {
@@ -55,11 +55,11 @@ pub async fn fd_seek(
         }
         SeekFrom::End(pos) => match manifest.size.checked_add_signed(pos) {
             Some(new_position) => cursor.position = new_position,
-            None => return Err(FdSeekError::NegativeOffset),
+            None => return Err(WorkspaceFdSeekError::NegativeOffset),
         },
         SeekFrom::Current(pos) => match cursor.position.checked_add_signed(pos) {
             Some(new_position) => cursor.position = new_position,
-            None => return Err(FdSeekError::NegativeOffset),
+            None => return Err(WorkspaceFdSeekError::NegativeOffset),
         },
     }
 

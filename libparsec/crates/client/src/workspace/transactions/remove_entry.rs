@@ -25,7 +25,7 @@ pub(crate) enum RemoveEntryExpect {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum RemoveEntryError {
+pub enum WorkspaceRemoveEntryError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -54,7 +54,7 @@ pub enum RemoveEntryError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for RemoveEntryError {
+impl From<ConnectionError> for WorkspaceRemoveEntryError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -67,7 +67,7 @@ pub(crate) async fn remove_entry(
     ops: &WorkspaceOps,
     path: FsPath,
     expect: RemoveEntryExpect,
-) -> Result<(), RemoveEntryError> {
+) -> Result<(), WorkspaceRemoveEntryError> {
     if !ops
         .workspace_entry
         .lock()
@@ -75,13 +75,13 @@ pub(crate) async fn remove_entry(
         .role
         .can_write()
     {
-        return Err(RemoveEntryError::ReadOnlyRealm);
+        return Err(WorkspaceRemoveEntryError::ReadOnlyRealm);
     }
 
     let (parent_path, child_name) = path.into_parent();
     let child_name = match child_name {
         None => {
-            return Err(RemoveEntryError::CannotRemoveRoot);
+            return Err(WorkspaceRemoveEntryError::CannotRemoveRoot);
         }
         Some(name) => name,
     };
@@ -91,18 +91,20 @@ pub(crate) async fn remove_entry(
         .resolve_path_for_update_folderish_manifest(&parent_path)
         .await
         .map_err(|err| match err {
-            GetFolderishEntryError::Offline => RemoveEntryError::Offline,
-            GetFolderishEntryError::Stopped => RemoveEntryError::Stopped,
-            GetFolderishEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
-            GetFolderishEntryError::EntryIsFile => RemoveEntryError::EntryNotFound,
-            GetFolderishEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+            GetFolderishEntryError::Offline => WorkspaceRemoveEntryError::Offline,
+            GetFolderishEntryError::Stopped => WorkspaceRemoveEntryError::Stopped,
+            GetFolderishEntryError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
+            GetFolderishEntryError::EntryIsFile => WorkspaceRemoveEntryError::EntryNotFound,
+            GetFolderishEntryError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
             GetFolderishEntryError::InvalidKeysBundle(err) => {
-                RemoveEntryError::InvalidKeysBundle(err)
+                WorkspaceRemoveEntryError::InvalidKeysBundle(err)
             }
             GetFolderishEntryError::InvalidCertificate(err) => {
-                RemoveEntryError::InvalidCertificate(err)
+                WorkspaceRemoveEntryError::InvalidCertificate(err)
             }
-            GetFolderishEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+            GetFolderishEntryError::InvalidManifest(err) => {
+                WorkspaceRemoveEntryError::InvalidManifest(err)
+            }
             GetFolderishEntryError::Internal(err) => {
                 err.context("cannot resolve parent path").into()
             }
@@ -114,7 +116,7 @@ pub(crate) async fn remove_entry(
 
             (RemoveEntryExpect::File, ArcLocalChildManifest::File(_)) => (),
             (RemoveEntryExpect::File, ArcLocalChildManifest::Folder(_)) => {
-                return Err(RemoveEntryError::EntryIsFolder)
+                return Err(WorkspaceRemoveEntryError::EntryIsFolder)
             }
 
             // A word about removing non-empty folder:
@@ -137,13 +139,13 @@ pub(crate) async fn remove_entry(
             (RemoveEntryExpect::Folder, ArcLocalChildManifest::Folder(_)) => (),
             (RemoveEntryExpect::EmptyFolder, ArcLocalChildManifest::Folder(child)) => {
                 if !child.children.is_empty() {
-                    return Err(RemoveEntryError::EntryIsNonEmptyFolder);
+                    return Err(WorkspaceRemoveEntryError::EntryIsNonEmptyFolder);
                 }
             }
             (
                 RemoveEntryExpect::Folder | RemoveEntryExpect::EmptyFolder,
                 ArcLocalChildManifest::File(_),
-            ) => return Err(RemoveEntryError::EntryIsFile),
+            ) => return Err(WorkspaceRemoveEntryError::EntryIsFile),
         }
         Ok(())
     };
@@ -158,7 +160,7 @@ pub(crate) async fn remove_entry(
             let mut_parent = Arc::make_mut(&mut parent);
 
             let child_id = match mut_parent.children.remove(&child_name) {
-                None => return Err(RemoveEntryError::EntryNotFound),
+                None => return Err(WorkspaceRemoveEntryError::EntryNotFound),
                 Some(child_id) => child_id,
             };
 
@@ -167,17 +169,19 @@ pub(crate) async fn remove_entry(
                 .get_child_manifest(child_id)
                 .await
                 .map_err(|err| match err {
-                    GetEntryError::Offline => RemoveEntryError::Offline,
-                    GetEntryError::Stopped => RemoveEntryError::Stopped,
-                    GetEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
-                    GetEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+                    GetEntryError::Offline => WorkspaceRemoveEntryError::Offline,
+                    GetEntryError::Stopped => WorkspaceRemoveEntryError::Stopped,
+                    GetEntryError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
+                    GetEntryError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
                     GetEntryError::InvalidKeysBundle(err) => {
-                        RemoveEntryError::InvalidKeysBundle(err)
+                        WorkspaceRemoveEntryError::InvalidKeysBundle(err)
                     }
                     GetEntryError::InvalidCertificate(err) => {
-                        RemoveEntryError::InvalidCertificate(err)
+                        WorkspaceRemoveEntryError::InvalidCertificate(err)
                     }
-                    GetEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+                    GetEntryError::InvalidManifest(err) => {
+                        WorkspaceRemoveEntryError::InvalidManifest(err)
+                    }
                     GetEntryError::Internal(err) => err.context("cannot get entry manifest").into(),
                 })?;
 
@@ -190,7 +194,7 @@ pub(crate) async fn remove_entry(
                 .update_folder_manifest(parent, None)
                 .await
                 .map_err(|err| match err {
-                    UpdateFolderManifestError::Stopped => RemoveEntryError::Stopped,
+                    UpdateFolderManifestError::Stopped => WorkspaceRemoveEntryError::Stopped,
                     UpdateFolderManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }
@@ -207,7 +211,7 @@ pub(crate) async fn remove_entry(
             let mut_parent = Arc::make_mut(&mut parent);
 
             let child_id = match mut_parent.children.remove(&child_name) {
-                None => return Err(RemoveEntryError::EntryNotFound),
+                None => return Err(WorkspaceRemoveEntryError::EntryNotFound),
                 Some(child_id) => child_id,
             };
 
@@ -216,17 +220,19 @@ pub(crate) async fn remove_entry(
                 .get_child_manifest(child_id)
                 .await
                 .map_err(|err| match err {
-                    GetEntryError::Offline => RemoveEntryError::Offline,
-                    GetEntryError::Stopped => RemoveEntryError::Stopped,
-                    GetEntryError::EntryNotFound => RemoveEntryError::EntryNotFound,
-                    GetEntryError::NoRealmAccess => RemoveEntryError::NoRealmAccess,
+                    GetEntryError::Offline => WorkspaceRemoveEntryError::Offline,
+                    GetEntryError::Stopped => WorkspaceRemoveEntryError::Stopped,
+                    GetEntryError::EntryNotFound => WorkspaceRemoveEntryError::EntryNotFound,
+                    GetEntryError::NoRealmAccess => WorkspaceRemoveEntryError::NoRealmAccess,
                     GetEntryError::InvalidKeysBundle(err) => {
-                        RemoveEntryError::InvalidKeysBundle(err)
+                        WorkspaceRemoveEntryError::InvalidKeysBundle(err)
                     }
                     GetEntryError::InvalidCertificate(err) => {
-                        RemoveEntryError::InvalidCertificate(err)
+                        WorkspaceRemoveEntryError::InvalidCertificate(err)
                     }
-                    GetEntryError::InvalidManifest(err) => RemoveEntryError::InvalidManifest(err),
+                    GetEntryError::InvalidManifest(err) => {
+                        WorkspaceRemoveEntryError::InvalidManifest(err)
+                    }
                     GetEntryError::Internal(err) => err.context("cannot get entry manifest").into(),
                 })?;
 
@@ -239,7 +245,7 @@ pub(crate) async fn remove_entry(
                 .update_workspace_manifest(parent, None)
                 .await
                 .map_err(|err| match err {
-                    UpdateWorkspaceManifestError::Stopped => RemoveEntryError::Stopped,
+                    UpdateWorkspaceManifestError::Stopped => WorkspaceRemoveEntryError::Stopped,
                     UpdateWorkspaceManifestError::Internal(err) => {
                         err.context("cannot update manifest").into()
                     }

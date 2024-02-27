@@ -16,7 +16,7 @@ use crate::{
     },
 };
 
-pub type GetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
+pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceSyncError {
@@ -107,7 +107,7 @@ pub async fn refresh_realm_checkpoint(ops: &WorkspaceOps) -> Result<(), Workspac
 pub async fn get_need_inbound_sync(
     ops: &WorkspaceOps,
     limit: u32,
-) -> Result<Vec<VlobID>, GetNeedInboundSyncEntriesError> {
+) -> Result<Vec<VlobID>, WorkspaceGetNeedInboundSyncEntriesError> {
     ops.store.get_inbound_need_sync_entries(limit).await
 }
 

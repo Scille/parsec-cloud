@@ -4,7 +4,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{OpenOptions, WorkspaceFdReadToEndError};
+use crate::workspace::{OpenOptions, WorkspaceFdReadError};
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn ok(env: &TestbedEnv) {
@@ -27,13 +27,60 @@ async fn ok(env: &TestbedEnv) {
     let fd = ops.open_file(path, options).await.unwrap();
     p_assert_eq!(fd.0, 1);
 
-    let mut buf = vec![];
+    // 1) Read the whole file with good size
 
-    let read_bytes = ops.fd_read_to_end(fd, &mut buf).await.unwrap();
+    let mut buf = vec![];
+    let expected_buf = b"hello world";
+
+    let read_bytes = ops
+        .fd_read(fd, 0, expected_buf.len() as u64, &mut buf)
+        .await
+        .unwrap();
     spy.assert_no_events();
 
+    p_assert_eq!(read_bytes, expected_buf.len() as u64);
+    p_assert_eq!(buf, expected_buf);
+
+    // 2) Read the whole file with too big size
+
+    let mut buf = vec![];
     let expected_buf = b"hello world";
-    p_assert_eq!(read_bytes, expected_buf.len());
+
+    let read_bytes = ops
+        .fd_read(fd, 0, expected_buf.len() as u64 + 1, &mut buf)
+        .await
+        .unwrap();
+    spy.assert_no_events();
+
+    p_assert_eq!(read_bytes, expected_buf.len() as u64);
+    p_assert_eq!(buf, expected_buf);
+
+    // 3) Read a subset of the file
+
+    let mut buf = vec![];
+    let expected_buf = b"hello";
+
+    let read_bytes = ops
+        .fd_read(fd, 0, expected_buf.len() as u64, &mut buf)
+        .await
+        .unwrap();
+    spy.assert_no_events();
+
+    p_assert_eq!(read_bytes, expected_buf.len() as u64);
+    p_assert_eq!(buf, expected_buf);
+
+    // 4) Read a subset of the file with offset
+
+    let mut buf = vec![];
+    let expected_buf = b"wor";
+
+    let read_bytes = ops
+        .fd_read(fd, 6, expected_buf.len() as u64, &mut buf)
+        .await
+        .unwrap();
+    spy.assert_no_events();
+
+    p_assert_eq!(read_bytes, expected_buf.len() as u64);
     p_assert_eq!(buf, expected_buf);
 
     ops.fd_close(fd).await.unwrap();
@@ -62,10 +109,10 @@ async fn cursor_not_in_read_mode(env: &TestbedEnv) {
 
     let mut buf = vec![];
 
-    let err = ops.fd_read_to_end(fd, &mut buf).await.unwrap_err();
+    let err = ops.fd_read(fd, 0, 1, &mut buf).await.unwrap_err();
     spy.assert_no_events();
     // TODO: bad error type
-    p_assert_matches!(err, WorkspaceFdReadToEndError::NotInReadMode);
+    p_assert_matches!(err, WorkspaceFdReadError::NotInReadMode);
 
     ops.fd_close(fd).await.unwrap();
 }

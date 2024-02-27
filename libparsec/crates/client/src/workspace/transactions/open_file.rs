@@ -6,7 +6,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
-use super::CreateFileError;
+use super::WorkspaceCreateFileError;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
@@ -25,7 +25,7 @@ pub struct OpenOptions {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum OpenFileError {
+pub enum WorkspaceOpenFileError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -50,7 +50,7 @@ pub enum OpenFileError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ConnectionError> for OpenFileError {
+impl From<ConnectionError> for WorkspaceOpenFileError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -63,11 +63,11 @@ pub async fn open_file(
     ops: &WorkspaceOps,
     path: FsPath,
     options: OpenOptions,
-) -> Result<FileDescriptor, OpenFileError> {
+) -> Result<FileDescriptor, WorkspaceOpenFileError> {
     // 0) Handle root early as it is a special case (cannot use `get_child_manifest` for it)
 
     if path.is_root() {
-        return Err(OpenFileError::EntryNotAFile);
+        return Err(WorkspaceOpenFileError::EntryNotAFile);
     }
 
     // 1) Resolve the file path (and create the file if needed)
@@ -77,7 +77,7 @@ pub async fn open_file(
         match outcome {
             Ok(resolution) => {
                 if options.create_new {
-                    return Err(OpenFileError::EntryExistsInCreateNewMode {
+                    return Err(WorkspaceOpenFileError::EntryExistsInCreateNewMode {
                         entry_id: resolution.entry_id,
                     });
                 }
@@ -88,40 +88,52 @@ pub async fn open_file(
                 let outcome = super::create_file(ops, path).await;
                 outcome.or_else(|err| match err {
                     // Concurrent operation has created the file in the meantime
-                    CreateFileError::EntryExists { entry_id } => Ok(entry_id),
+                    WorkspaceCreateFileError::EntryExists { entry_id } => Ok(entry_id),
                     // Actual errors, republishing
-                    CreateFileError::Offline => Err(OpenFileError::Offline),
-                    CreateFileError::Stopped => Err(OpenFileError::Stopped),
-                    CreateFileError::ReadOnlyRealm => Err(OpenFileError::ReadOnlyRealm),
-                    CreateFileError::NoRealmAccess => Err(OpenFileError::NoRealmAccess),
-                    CreateFileError::ParentNotFound => Err(OpenFileError::EntryNotFound),
-                    CreateFileError::ParentIsFile => Err(OpenFileError::EntryNotFound),
-                    CreateFileError::InvalidKeysBundle(err) => {
-                        Err(OpenFileError::InvalidKeysBundle(err))
+                    WorkspaceCreateFileError::Offline => Err(WorkspaceOpenFileError::Offline),
+                    WorkspaceCreateFileError::Stopped => Err(WorkspaceOpenFileError::Stopped),
+                    WorkspaceCreateFileError::ReadOnlyRealm => {
+                        Err(WorkspaceOpenFileError::ReadOnlyRealm)
                     }
-                    CreateFileError::InvalidCertificate(err) => {
-                        Err(OpenFileError::InvalidCertificate(err))
+                    WorkspaceCreateFileError::NoRealmAccess => {
+                        Err(WorkspaceOpenFileError::NoRealmAccess)
                     }
-                    CreateFileError::InvalidManifest(err) => {
-                        Err(OpenFileError::InvalidManifest(err))
+                    WorkspaceCreateFileError::ParentNotFound => {
+                        Err(WorkspaceOpenFileError::EntryNotFound)
                     }
-                    CreateFileError::Internal(err) => Err(err.context("cannot create file").into()),
+                    WorkspaceCreateFileError::ParentIsFile => {
+                        Err(WorkspaceOpenFileError::EntryNotFound)
+                    }
+                    WorkspaceCreateFileError::InvalidKeysBundle(err) => {
+                        Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
+                    }
+                    WorkspaceCreateFileError::InvalidCertificate(err) => {
+                        Err(WorkspaceOpenFileError::InvalidCertificate(err))
+                    }
+                    WorkspaceCreateFileError::InvalidManifest(err) => {
+                        Err(WorkspaceOpenFileError::InvalidManifest(err))
+                    }
+                    WorkspaceCreateFileError::Internal(err) => {
+                        Err(err.context("cannot create file").into())
+                    }
                 })?
             }
             // Actual errors, republishing
             Err(err) => {
                 return match err {
-                    GetEntryError::Offline => Err(OpenFileError::Offline),
-                    GetEntryError::Stopped => Err(OpenFileError::Stopped),
-                    GetEntryError::EntryNotFound => Err(OpenFileError::EntryNotFound),
-                    GetEntryError::NoRealmAccess => Err(OpenFileError::NoRealmAccess),
+                    GetEntryError::Offline => Err(WorkspaceOpenFileError::Offline),
+                    GetEntryError::Stopped => Err(WorkspaceOpenFileError::Stopped),
+                    GetEntryError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
+                    GetEntryError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
                     GetEntryError::InvalidKeysBundle(err) => {
-                        Err(OpenFileError::InvalidKeysBundle(err))
+                        Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
                     }
                     GetEntryError::InvalidCertificate(err) => {
-                        Err(OpenFileError::InvalidCertificate(err))
+                        Err(WorkspaceOpenFileError::InvalidCertificate(err))
                     }
-                    GetEntryError::InvalidManifest(err) => Err(OpenFileError::InvalidManifest(err)),
+                    GetEntryError::InvalidManifest(err) => {
+                        Err(WorkspaceOpenFileError::InvalidManifest(err))
+                    }
                     GetEntryError::Internal(err) => Err(err.context("cannot resolve path").into()),
                 }
             }
@@ -171,7 +183,6 @@ pub async fn open_file(
             } else {
                 WriteMode::Denied
             },
-            position: 0,
         };
 
         let cursor_insertion_outcome = match outcome {
@@ -217,19 +228,25 @@ pub async fn open_file(
                 }
 
                 // Actual errors, republishing
-                ForUpdateFileError::Offline => return Err(OpenFileError::Offline),
-                ForUpdateFileError::Stopped => return Err(OpenFileError::Stopped),
-                ForUpdateFileError::EntryNotFound => return Err(OpenFileError::EntryNotFound),
-                ForUpdateFileError::EntryNotAFile => return Err(OpenFileError::EntryNotAFile),
-                ForUpdateFileError::NoRealmAccess => return Err(OpenFileError::NoRealmAccess),
+                ForUpdateFileError::Offline => return Err(WorkspaceOpenFileError::Offline),
+                ForUpdateFileError::Stopped => return Err(WorkspaceOpenFileError::Stopped),
+                ForUpdateFileError::EntryNotFound => {
+                    return Err(WorkspaceOpenFileError::EntryNotFound)
+                }
+                ForUpdateFileError::EntryNotAFile => {
+                    return Err(WorkspaceOpenFileError::EntryNotAFile)
+                }
+                ForUpdateFileError::NoRealmAccess => {
+                    return Err(WorkspaceOpenFileError::NoRealmAccess)
+                }
                 ForUpdateFileError::InvalidKeysBundle(err) => {
-                    return Err(OpenFileError::InvalidKeysBundle(err))
+                    return Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
                 }
                 ForUpdateFileError::InvalidCertificate(err) => {
-                    return Err(OpenFileError::InvalidCertificate(err))
+                    return Err(WorkspaceOpenFileError::InvalidCertificate(err))
                 }
                 ForUpdateFileError::InvalidManifest(err) => {
-                    return Err(OpenFileError::InvalidManifest(err))
+                    return Err(WorkspaceOpenFileError::InvalidManifest(err))
                 }
                 ForUpdateFileError::Internal(err) => {
                     return Err(err.context("cannot resolve path").into())

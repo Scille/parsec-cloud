@@ -16,12 +16,12 @@ use crate::certif::{
 };
 use crate::workspace::store::{ForUpdateChildLocalOnlyError, WorkspaceStoreOperationError};
 
-pub type GetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
+pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
 
 pub async fn get_need_outbound_sync(
     ops: &WorkspaceOps,
     limit: u32,
-) -> Result<Vec<VlobID>, GetNeedOutboundSyncEntriesError> {
+) -> Result<Vec<VlobID>, WorkspaceGetNeedOutboundSyncEntriesError> {
     ops.store.get_outbound_need_sync_entries(limit).await
 }
 

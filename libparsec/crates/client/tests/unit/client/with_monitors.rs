@@ -70,7 +70,7 @@ async fn multi_devices(env: &TestbedEnv) {
     // 3a) Alice1 creates a new folder in the workspace...
 
     let alice1_workspace = alice1_client.start_workspace(wid).await.unwrap();
-    alice1_workspace
+    let foo_id = alice1_workspace
         .create_folder("/foo".parse().unwrap())
         .await
         .unwrap();
@@ -86,7 +86,7 @@ async fn multi_devices(env: &TestbedEnv) {
         match stat {
             EntryStat::File { .. } => unreachable!(),
             EntryStat::Folder { children, .. } => {
-                if children == ["foo".parse().unwrap()] {
+                if children == [("foo".parse().unwrap(), foo_id)] {
                     break;
                 }
             }
