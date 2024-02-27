@@ -10,6 +10,7 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
     UserProfile,
+    DeviceCertificate,
 )
 from parsec.components.postgresql.utils import (
     Q,
@@ -381,7 +382,6 @@ async def query_get_user_with_devices_and_trustchain(
     )
 
 
-@query(in_transaction=True)
 async def query_check_user_with_device(
     conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
 ) -> UserProfile | CheckUserWithDeviceBadOutcome:
@@ -400,6 +400,24 @@ async def query_check_user_with_device(
     initial_profile = UserProfile.from_str(u_row["profile"])
     # TODO: return the actual profile
     return initial_profile
+
+
+async def query_check_user_for_authentication(
+    conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
+) -> DeviceCertificate | CheckUserWithDeviceBadOutcome:
+    d_row = await conn.fetchrow(
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+    )
+    if not d_row:
+        return CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND
+    u_row = await conn.fetchrow(
+        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
+    )
+    if not u_row:
+        return CheckUserWithDeviceBadOutcome.USER_NOT_FOUND
+    if u_row["revoked_on"] is not None:
+        return CheckUserWithDeviceBadOutcome.USER_REVOKED
+    return DeviceCertificate.unsecure_load(d_row["device_certificate"])
 
 
 @query(in_transaction=True)
