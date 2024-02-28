@@ -132,7 +132,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-status {
-  min-width: 3rem;
+  min-width: 6rem;
   width: auto;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);

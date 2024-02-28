@@ -3,7 +3,7 @@
 <template>
   <ion-label class="label-status status">
     <ion-chip
-      class="caption-caption tag"
+      class="button-small tag-status"
       :class="{ revoked: revoked, active: !revoked }"
     >
       {{ revoked ? $t('UsersPage.status.revoked') : $t('UsersPage.status.active') }}
@@ -20,11 +20,24 @@ defineProps<{
 </script>
 
 <style scoped lang="scss">
+.tag-status {
+  padding: 0.125rem 0.5rem;
+  margin: 0;
+  height: fit-content;
+  border-radius: var(--parsec-radius-6);
+  min-height: 0;
+  width: 5.5rem;
+  display: flex;
+  justify-content: center;
+}
+
 .revoked {
-  background-color: red;
+  background-color: var(--parsec-color-light-danger-100);
+  color: var(--parsec-color-light-danger-500);
 }
 
 .active {
-  background-color: blue;
+  background-color: var(--parsec-color-light-info-100);
+  color: var(--parsec-color-light-info-500);
 }
 </style>
