@@ -14,6 +14,7 @@ from parsec.components.auth import (
     BaseAuthComponent,
     InvitedAuthInfo,
 )
+from parsec.components.events import EventBus
 from parsec.components.invite import DeviceInvitation, UserInvitation
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql.invite import InviteAsInvitedInfoBadOutcome, PGInviteComponent
@@ -25,8 +26,8 @@ from parsec.config import BackendConfig
 
 
 class PGAuthComponent(BaseAuthComponent):
-    def __init__(self, pool: asyncpg.Pool, config: BackendConfig) -> None:
-        super().__init__(config)
+    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus, config: BackendConfig) -> None:
+        super().__init__(event_bus, config)
         self.pool = pool
         self._organization: PGOrganizationComponent
         self._invite: PGInviteComponent

@@ -40,7 +40,7 @@ async def components_factory(
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 ping = PGPingComponent(pool=pool)
                 organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
-                auth = PGAuthComponent(pool=pool, config=config)
+                auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 user = PGUserComponent(pool=pool, event_bus=event_bus)
                 vlob = PGVlobComponent(pool=pool)
