@@ -5,8 +5,8 @@ use std::sync::Arc;
 pub use libparsec_client::{
     ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError, ClientGetUserDeviceError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientRenameWorkspaceError, ClientShareWorkspaceError, DeviceInfo, UserInfo, WorkspaceInfo,
-    WorkspaceUserAccessInfo,
+    ClientRenameWorkspaceError, ClientRevokeUserError, ClientShareWorkspaceError, DeviceInfo,
+    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
@@ -287,6 +287,16 @@ pub async fn client_change_authentication(
     )
     .await?;
     Ok(())
+}
+
+/*
+ * Revoke user
+ */
+
+pub async fn client_revoke_user(client: Handle, user: UserID) -> Result<(), ClientRevokeUserError> {
+    let client = borrow_client(client)?;
+
+    client.revoke_user(user).await
 }
 
 /*

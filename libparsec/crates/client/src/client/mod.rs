@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod user_revoke;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
@@ -44,8 +45,8 @@ pub use crate::certif::{
     CertifGetUserDeviceError as ClientGetUserDeviceError,
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
-    CertifListWorkspaceUsersError as ClientListWorkspaceUsersError, DeviceInfo, UserInfo,
-    WorkspaceUserAccessInfo,
+    CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
+    CertifRevokeUserError as ClientRevokeUserError, DeviceInfo, UserInfo, WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
     CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
@@ -258,6 +259,10 @@ impl Client {
         &self,
     ) -> Result<UserProfile, ClientGetCurrentSelfProfileError> {
         self.certificates_ops.get_current_self_profile().await
+    }
+
+    pub async fn revoke_user(&self, user: UserID) -> Result<(), ClientRevokeUserError> {
+        user_revoke::revoke_user(self, user).await
     }
 
     /// List all users.
