@@ -819,7 +819,7 @@
             "copyLink": "Copier le lien",
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
-                "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valide. Êtes-vous sûr(e) de vouloir continuer ?",
+                "message": "L'invitation envoyée à {email} et le lien d'invitation ne seront plus valides. Êtes-vous sûr(e) de vouloir continuer ?",
                 "yes": "Annuler l'invitation",
                 "no": "Conserver l'invitation"
             },
