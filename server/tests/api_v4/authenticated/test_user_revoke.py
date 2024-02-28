@@ -75,3 +75,37 @@ async def test_disconnect_sse(
 
     rep = await coolorg.bob.raw_sse_connection()
     assert rep.status_code == 461
+
+
+async def test_authenticated_user_revoke_user_already_revoked(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    t1 = DateTime.now()
+    certif1 = RevokedUserCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t1,
+        user_id=coolorg.bob.device_id.user_id,
+    )
+
+    outcome = await backend.user.revoke_user(
+        now=t1,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        revoked_user_certificate=certif1.dump_and_sign(coolorg.alice.signing_key),
+    )
+    assert isinstance(outcome, RevokedUserCertificate)
+
+    t2 = DateTime.now()
+    certif2 = RevokedUserCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t2,
+        user_id=coolorg.bob.device_id.user_id,
+    )
+
+    rep = await coolorg.alice.user_revoke(
+        revoked_user_certificate=certif2.dump_and_sign(coolorg.alice.signing_key)
+    )
+    assert rep == authenticated_cmds.v4.user_revoke.RepUserAlreadyRevoked(
+        last_common_certificate_timestamp=t1
+    )

@@ -29,6 +29,7 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.types import BadOutcomeEnum
 
 
@@ -262,7 +263,6 @@ class UserRevokeUserStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
     USER_NOT_FOUND = auto()
-    USER_ALREADY_REVOKED = auto()
 
 
 class UserUpdateUserStoreBadOutcome(BadOutcomeEnum):
@@ -361,6 +361,7 @@ class BaseUserComponent:
         revoked_user_certificate: bytes,
     ) -> (
         RevokedUserCertificate
+        | CertificateBasedActionIdempotentOutcome
         | UserRevokeUserValidateBadOutcome
         | UserRevokeUserStoreBadOutcome
         | TimestampOutOfBallpark
@@ -608,10 +609,12 @@ class BaseUserComponent:
         match outcome:
             case RevokedUserCertificate():
                 return authenticated_cmds.latest.user_revoke.RepOk()
+            case CertificateBasedActionIdempotentOutcome() as error:
+                return authenticated_cmds.latest.user_revoke.RepUserAlreadyRevoked(
+                    last_common_certificate_timestamp=error.certificate_timestamp
+                )
             case UserRevokeUserStoreBadOutcome.USER_NOT_FOUND:
-                return authenticated_cmds.latest.user_revoke.RepUserAlreadyRevoked()
-            case UserRevokeUserStoreBadOutcome.USER_ALREADY_REVOKED:
-                return authenticated_cmds.latest.user_revoke.RepUserAlreadyRevoked()
+                return authenticated_cmds.latest.user_revoke.RepUserNotFound()
             case UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.user_revoke.RepAuthorNotAllowed()
             case UserRevokeUserValidateBadOutcome():
