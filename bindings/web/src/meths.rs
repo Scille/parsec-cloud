@@ -2876,6 +2876,86 @@ fn variant_client_rename_workspace_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientRevokeUserError
+
+#[allow(dead_code)]
+fn variant_client_revoke_user_error_rs_to_js(
+    rs_obj: libparsec::ClientRevokeUserError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientRevokeUserError::AuthorNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorAuthorNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::NoKey { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientRevokeUserErrorNoKey".into())?;
+        }
+        libparsec::ClientRevokeUserError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorStopped".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::TimestampOutOfBallpark { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorTimestampOutOfBallpark".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::UserIsSelf { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorUserIsSelf".into(),
+            )?;
+        }
+        libparsec::ClientRevokeUserError::UserNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientRevokeUserErrorUserNotFound".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientShareWorkspaceError
 
 #[allow(dead_code)]
@@ -6709,6 +6789,38 @@ pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) ->
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_rename_workspace_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_revoke_user
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientRevokeUser(client: u32, user: String) -> Promise {
+    future_to_promise(async move {
+        let user = user
+            .parse()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
+
+        let ret = libparsec::client_revoke_user(client, user).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_revoke_user_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

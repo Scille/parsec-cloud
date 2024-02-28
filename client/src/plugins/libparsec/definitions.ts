@@ -732,6 +732,72 @@ export type ClientRenameWorkspaceError =
   | ClientRenameWorkspaceErrorTimestampOutOfBallpark
   | ClientRenameWorkspaceErrorWorkspaceNotFound
 
+// ClientRevokeUserError
+export enum ClientRevokeUserErrorTag {
+    AuthorNotAllowed = 'ClientRevokeUserErrorAuthorNotAllowed',
+    Internal = 'ClientRevokeUserErrorInternal',
+    InvalidCertificate = 'ClientRevokeUserErrorInvalidCertificate',
+    InvalidKeysBundle = 'ClientRevokeUserErrorInvalidKeysBundle',
+    NoKey = 'ClientRevokeUserErrorNoKey',
+    Offline = 'ClientRevokeUserErrorOffline',
+    Stopped = 'ClientRevokeUserErrorStopped',
+    TimestampOutOfBallpark = 'ClientRevokeUserErrorTimestampOutOfBallpark',
+    UserIsSelf = 'ClientRevokeUserErrorUserIsSelf',
+    UserNotFound = 'ClientRevokeUserErrorUserNotFound',
+}
+
+export interface ClientRevokeUserErrorAuthorNotAllowed {
+    tag: ClientRevokeUserErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientRevokeUserErrorInternal {
+    tag: ClientRevokeUserErrorTag.Internal
+    error: string
+}
+export interface ClientRevokeUserErrorInvalidCertificate {
+    tag: ClientRevokeUserErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientRevokeUserErrorInvalidKeysBundle {
+    tag: ClientRevokeUserErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface ClientRevokeUserErrorNoKey {
+    tag: ClientRevokeUserErrorTag.NoKey
+    error: string
+}
+export interface ClientRevokeUserErrorOffline {
+    tag: ClientRevokeUserErrorTag.Offline
+    error: string
+}
+export interface ClientRevokeUserErrorStopped {
+    tag: ClientRevokeUserErrorTag.Stopped
+    error: string
+}
+export interface ClientRevokeUserErrorTimestampOutOfBallpark {
+    tag: ClientRevokeUserErrorTag.TimestampOutOfBallpark
+    error: string
+}
+export interface ClientRevokeUserErrorUserIsSelf {
+    tag: ClientRevokeUserErrorTag.UserIsSelf
+    error: string
+}
+export interface ClientRevokeUserErrorUserNotFound {
+    tag: ClientRevokeUserErrorTag.UserNotFound
+    error: string
+}
+export type ClientRevokeUserError =
+  | ClientRevokeUserErrorAuthorNotAllowed
+  | ClientRevokeUserErrorInternal
+  | ClientRevokeUserErrorInvalidCertificate
+  | ClientRevokeUserErrorInvalidKeysBundle
+  | ClientRevokeUserErrorNoKey
+  | ClientRevokeUserErrorOffline
+  | ClientRevokeUserErrorStopped
+  | ClientRevokeUserErrorTimestampOutOfBallpark
+  | ClientRevokeUserErrorUserIsSelf
+  | ClientRevokeUserErrorUserNotFound
+
 // ClientShareWorkspaceError
 export enum ClientShareWorkspaceErrorTag {
     AuthorNotAllowed = 'ClientShareWorkspaceErrorAuthorNotAllowed',
@@ -1913,6 +1979,10 @@ export interface LibParsecPlugin {
         realm_id: VlobID,
         new_name: EntryName
     ): Promise<Result<null, ClientRenameWorkspaceError>>
+    clientRevokeUser(
+        client: Handle,
+        user: UserID
+    ): Promise<Result<null, ClientRevokeUserError>>
     clientShareWorkspace(
         client: Handle,
         realm_id: VlobID,
