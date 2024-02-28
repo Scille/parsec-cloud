@@ -446,35 +446,35 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorNotFound
   | ClientCancelInvitationErrorOffline
 
-// ClientChangeAuthentificationError
-export enum ClientChangeAuthentificationErrorTag {
-    DecryptionFailed = 'ClientChangeAuthentificationErrorDecryptionFailed',
-    Internal = 'ClientChangeAuthentificationErrorInternal',
-    InvalidData = 'ClientChangeAuthentificationErrorInvalidData',
-    InvalidPath = 'ClientChangeAuthentificationErrorInvalidPath',
+// ClientChangeAuthenticationError
+export enum ClientChangeAuthenticationErrorTag {
+    DecryptionFailed = 'ClientChangeAuthenticationErrorDecryptionFailed',
+    Internal = 'ClientChangeAuthenticationErrorInternal',
+    InvalidData = 'ClientChangeAuthenticationErrorInvalidData',
+    InvalidPath = 'ClientChangeAuthenticationErrorInvalidPath',
 }
 
-export interface ClientChangeAuthentificationErrorDecryptionFailed {
-    tag: ClientChangeAuthentificationErrorTag.DecryptionFailed
+export interface ClientChangeAuthenticationErrorDecryptionFailed {
+    tag: ClientChangeAuthenticationErrorTag.DecryptionFailed
     error: string
 }
-export interface ClientChangeAuthentificationErrorInternal {
-    tag: ClientChangeAuthentificationErrorTag.Internal
+export interface ClientChangeAuthenticationErrorInternal {
+    tag: ClientChangeAuthenticationErrorTag.Internal
     error: string
 }
-export interface ClientChangeAuthentificationErrorInvalidData {
-    tag: ClientChangeAuthentificationErrorTag.InvalidData
+export interface ClientChangeAuthenticationErrorInvalidData {
+    tag: ClientChangeAuthenticationErrorTag.InvalidData
     error: string
 }
-export interface ClientChangeAuthentificationErrorInvalidPath {
-    tag: ClientChangeAuthentificationErrorTag.InvalidPath
+export interface ClientChangeAuthenticationErrorInvalidPath {
+    tag: ClientChangeAuthenticationErrorTag.InvalidPath
     error: string
 }
-export type ClientChangeAuthentificationError =
-  | ClientChangeAuthentificationErrorDecryptionFailed
-  | ClientChangeAuthentificationErrorInternal
-  | ClientChangeAuthentificationErrorInvalidData
-  | ClientChangeAuthentificationErrorInvalidPath
+export type ClientChangeAuthenticationError =
+  | ClientChangeAuthenticationErrorDecryptionFailed
+  | ClientChangeAuthenticationErrorInternal
+  | ClientChangeAuthenticationErrorInvalidData
+  | ClientChangeAuthenticationErrorInvalidPath
 
 // ClientCreateWorkspaceError
 export enum ClientCreateWorkspaceErrorTag {
@@ -1865,12 +1865,11 @@ export interface LibParsecPlugin {
         client: Handle,
         token: InvitationToken
     ): Promise<Result<null, ClientCancelInvitationError>>
-    clientChangeAuthentification(
+    clientChangeAuthentication(
         client_config: ClientConfig,
         current_auth: DeviceAccessStrategy,
-        new_auth: DeviceSaveStrategy,
-        with_testbed_template: boolean
-    ): Promise<Result<null, ClientChangeAuthentificationError>>
+        new_auth: DeviceSaveStrategy
+    ): Promise<Result<null, ClientChangeAuthenticationError>>
     clientCreateWorkspace(
         client: Handle,
         name: EntryName
@@ -1923,8 +1922,7 @@ export interface LibParsecPlugin {
     clientStart(
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
-        access: DeviceAccessStrategy,
-        with_testbed_template: boolean
+        access: DeviceAccessStrategy
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(
         client: Handle,

@@ -408,28 +408,28 @@ export type ClientCancelInvitationError =
   | ClientCancelInvitationErrorOffline
 
 
-// ClientChangeAuthentificationError
-export interface ClientChangeAuthentificationErrorDecryptionFailed {
+// ClientChangeAuthenticationError
+export interface ClientChangeAuthenticationErrorDecryptionFailed {
     tag: "DecryptionFailed"
     error: string
 }
-export interface ClientChangeAuthentificationErrorInternal {
+export interface ClientChangeAuthenticationErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface ClientChangeAuthentificationErrorInvalidData {
+export interface ClientChangeAuthenticationErrorInvalidData {
     tag: "InvalidData"
     error: string
 }
-export interface ClientChangeAuthentificationErrorInvalidPath {
+export interface ClientChangeAuthenticationErrorInvalidPath {
     tag: "InvalidPath"
     error: string
 }
-export type ClientChangeAuthentificationError =
-  | ClientChangeAuthentificationErrorDecryptionFailed
-  | ClientChangeAuthentificationErrorInternal
-  | ClientChangeAuthentificationErrorInvalidData
-  | ClientChangeAuthentificationErrorInvalidPath
+export type ClientChangeAuthenticationError =
+  | ClientChangeAuthenticationErrorDecryptionFailed
+  | ClientChangeAuthenticationErrorInternal
+  | ClientChangeAuthenticationErrorInvalidData
+  | ClientChangeAuthenticationErrorInvalidPath
 
 
 // ClientCreateWorkspaceError
@@ -1573,12 +1573,11 @@ export function clientCancelInvitation(
     client: number,
     token: string
 ): Promise<Result<null, ClientCancelInvitationError>>
-export function clientChangeAuthentification(
+export function clientChangeAuthentication(
     client_config: ClientConfig,
     current_auth: DeviceAccessStrategy,
-    new_auth: DeviceSaveStrategy,
-    with_testbed_template: boolean
-): Promise<Result<null, ClientChangeAuthentificationError>>
+    new_auth: DeviceSaveStrategy
+): Promise<Result<null, ClientChangeAuthenticationError>>
 export function clientCreateWorkspace(
     client: number,
     name: string
@@ -1631,8 +1630,7 @@ export function clientShareWorkspace(
 export function clientStart(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void,
-    access: DeviceAccessStrategy,
-    with_testbed_template: boolean
+    access: DeviceAccessStrategy
 ): Promise<Result<number, ClientStartError>>
 export function clientStartDeviceInvitationGreet(
     client: number,
