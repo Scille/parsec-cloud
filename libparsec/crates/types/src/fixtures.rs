@@ -10,15 +10,15 @@ use rstest::fixture;
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
-    BackendOrganizationAddr, CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel,
-    Duration, HumanHandle, LocalDevice, MaybeRedacted, OrganizationID, TimeProvider,
+    CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, Duration, HumanHandle,
+    LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr, TimeProvider,
     UserCertificate, UserID, UserProfile, VlobID,
 };
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
 
 pub struct Device {
-    pub organization_addr: BackendOrganizationAddr,
+    pub organization_addr: ParsecOrganizationAddr,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
@@ -70,14 +70,14 @@ impl Device {
 }
 
 pub struct Organization {
-    pub addr: BackendOrganizationAddr,
+    pub addr: ParsecOrganizationAddr,
     pub signing_key: SigningKey,
 }
 
 impl Organization {
     /// Convert `parsec://example.com:9999/...` -> `parsec://alice_dev1.example.com:9999/...`
     /// (useful to filter connections so that some devices end up offline)
-    pub fn addr_with_prefixed_host(&self, prefix: &str) -> BackendOrganizationAddr {
+    pub fn addr_with_prefixed_host(&self, prefix: &str) -> ParsecOrganizationAddr {
         let mut url = self.addr.to_url();
         let custom_host = format!("{}.{}", prefix, url.host().unwrap());
         url.set_host(Some(&custom_host)).unwrap();

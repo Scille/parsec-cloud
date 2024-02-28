@@ -10,7 +10,7 @@ use libparsec::{
         UserClaimFinalizeCtx, UserClaimInProgress1Ctx, UserClaimInProgress2Ctx,
         UserClaimInProgress3Ctx, UserClaimInitialCtx, UserOrDeviceClaimInitialCtx,
     },
-    BackendInvitationAddr, ClientConfig, DeviceAccessStrategy,
+    ClientConfig, DeviceAccessStrategy, ParsecInvitationAddr,
 };
 
 use crate::utils::*;
@@ -19,7 +19,7 @@ use crate::utils::*;
 pub struct ClaimInvitation {
     /// Server invitation address (e.g.: parsec://127.0.0.1:41905/Org?no_ssl=true&action=claim_user&token=4e45cc21e7604af196173ff6c9184a1f)
     #[arg(short, long)]
-    addr: BackendInvitationAddr,
+    addr: ParsecInvitationAddr,
 }
 
 pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Result<()> {
@@ -44,7 +44,7 @@ pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Resu
 }
 
 /// Step 0: retrieve info
-async fn step0(addr: BackendInvitationAddr) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
+async fn step0(addr: ParsecInvitationAddr) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
     let ctx = claimer_retrieve_info(Arc::new(ClientConfig::default().into()), addr).await?;

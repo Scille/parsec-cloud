@@ -26,7 +26,7 @@ async fn ok_with_server(env: &TestbedEnv) {
 }
 
 async fn ok(env: &TestbedEnv, mocked: bool) {
-    let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
+    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
         env.server_addr.clone(),
         env.organization_id.to_owned(),
     ));

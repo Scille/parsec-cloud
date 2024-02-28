@@ -13,9 +13,9 @@ use libparsec::{
         device_create::{self, DeviceCreateRep},
         user_create::{self, UserCreateRep},
     },
-    load_device, AuthenticatedCmds, BackendAddr, BackendOrganizationBootstrapAddr, Bytes,
-    CertificateSignerOwned, ClientConfig, DateTime, DeviceAccessStrategy, DeviceCertificate,
-    DeviceLabel, DeviceName, HumanHandle, LocalDevice, MaybeRedacted, OrganizationID, ProxyConfig,
+    load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
+    DeviceAccessStrategy, DeviceCertificate, DeviceLabel, DeviceName, HumanHandle, LocalDevice,
+    MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr, ProxyConfig,
     SigningKey, UserCertificate, UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
@@ -208,7 +208,7 @@ async fn register_new_user(
 
 pub async fn initialize_test_organization(
     client_config: ClientConfig,
-    addr: BackendAddr,
+    addr: ParsecAddr,
     organization_id: OrganizationID,
 ) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
     // Create organization
@@ -216,7 +216,7 @@ pub async fn initialize_test_organization(
         create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
 
     let organization_addr =
-        BackendOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
+        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
     // Bootstrap organization and Alice user and create device "laptop" for Alice
     let alice_device = bootstrap_organization_req(
@@ -278,7 +278,7 @@ pub async fn initialize_test_organization(
 }
 
 pub enum TestenvConfig {
-    ConnectToServer(BackendAddr),
+    ConnectToServer(ParsecAddr),
     StartNewServer { stop_after_process: u32 },
 }
 
@@ -289,7 +289,7 @@ pub async fn new_environment(
     source_file: Option<PathBuf>,
     config: TestenvConfig,
     empty: bool,
-) -> anyhow::Result<Option<BackendAddr>> {
+) -> anyhow::Result<Option<ParsecAddr>> {
     let _ = std::fs::create_dir_all(tmp_dir);
 
     let (export_keyword, mut env) = get_env_variables(tmp_dir);
@@ -317,10 +317,10 @@ pub async fn new_environment(
                 "Running server with the process id {YELLOW}{id}{RESET} on port {YELLOW}{port_from_pid}{RESET}"
             );
 
-            let backend_addr = BackendAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
-            env.push((TESTBED_SERVER_URL, backend_addr.to_url().to_string()));
+            let server_addr = ParsecAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
+            env.push((TESTBED_SERVER_URL, server_addr.to_url().to_string()));
             env.push((LAST_SERVER_PID, id.to_string()));
-            Some(backend_addr)
+            Some(server_addr)
         }
         _ => None,
     };
@@ -495,7 +495,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn backend_addr_from_http_url(url: &str) -> BackendAddr {
+pub fn backend_addr_from_http_url(url: &str) -> ParsecAddr {
     let url = if url.starts_with("http://") {
         url.replacen("http", "parsec", 1) + "?no_ssl=true"
     } else if url.starts_with("https://") {
@@ -505,5 +505,5 @@ pub fn backend_addr_from_http_url(url: &str) -> BackendAddr {
     } else {
         url.to_string()
     };
-    BackendAddr::from_any(&url).expect("Invalid testbed url")
+    ParsecAddr::from_any(&url).expect("Invalid testbed url")
 }

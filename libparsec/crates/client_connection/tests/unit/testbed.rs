@@ -23,7 +23,7 @@ async fn low_level_send_hook(env: &TestbedEnv) {
         )))
     });
 
-    let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
+    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
         env.server_addr.clone(),
         env.organization_id.to_owned(),
     ));
@@ -106,7 +106,7 @@ async fn high_level_send_hook(env: &TestbedEnv) {
         },
     );
 
-    let addr = BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr::new(
+    let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
         env.server_addr.clone(),
         env.organization_id.to_owned(),
     ));

@@ -1,35 +1,35 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# Make backend responsible for timestamp
+# Make server responsible for timestamp
 
 From [ISSUE-908](https://github.com/Scille/parsec-cloud/issues/908)
 
 ## Intro
 
 First a bit of definition: a timestamps in Parsec is a datetime that mark a
-signed document sent to the backend. Currently there is three kind of documents
+signed document sent to the server. Currently there is three kind of documents
 that contains a timestamp:
 
-- manifests: which are send encrypted to the backend and stored as vlob
+- manifests: which are send encrypted to the server and stored as vlob
 - messages: which are also send encrypted and destined to a specific user
-- certificates: which are provided in cleartext to the backend
+- certificates: which are provided in cleartext to the server
 
 ## Current situation
 
 Currently those timestamps are controlled by the client generating the document.
 This is the obvious way to go given the timestamp is part of the signed document
-so it cannot be modified by the backend !
+so it cannot be modified by the server !
 
 So there is two different scenarios when uploading a new document:
 
-1) For certificates: given the document is in cleartext, the backend can extract
+1) For certificates: given the document is in cleartext, the server can extract
    the timestamp and verify it is in range with the current timestamp
 2) For manifests&messages: the document is encrypted, so the client must also
-   provide to the backend the timestamp along with the document.
-   This way backend can do the range check. Later when another client retrieve
-   the data from the backend, it will receive both the document and the clear
+   provide to the server the timestamp along with the document.
+   This way server can do the range check. Later when another client retrieve
+   the data from the server, it will receive both the document and the clear
    timestamp so it can verify the client provided signed the document with the
-   same timestamp he provided to the backend.
+   same timestamp he provided to the server.
 
 However this approach is not a perfect solution:
 
@@ -39,10 +39,10 @@ However this approach is not a perfect solution:
 
 Those two points mix together to create something insolvable: solving the
 bad clock issue would require to reduce the shift allowed between client
-timestamp and backend current time, but this would rule out client with slow
+timestamp and server current time, but this would rule out client with slow
 connections (e.g. 4G mobile).
 
-In order to mitigate this issue, a check has been added in the backend to refuse
+In order to mitigate this issue, a check has been added in the server to refuse
 update vlob update with timestamp set prior to previous modification's one (see PR-758).
 
 In the end this timestamp can be seen as a window time within it the action
@@ -52,8 +52,8 @@ took place:
 timestamp - TIMESTAMP_MAX_DT < real_timestamp < timestamp + TIMESTAMP_MAX_DT
 ```
 
-Here `real_timestamp` designates the timestamp when the backend registered
-the change in it database. So we could also simply called it `backend_timestamp`.
+Here `real_timestamp` designates the timestamp when the server registered
+the change in it database. So we could also simply called it `server_timestamp`.
 
 ## Why it's a trouble
 
@@ -64,8 +64,8 @@ As said above, the timestamp cannot strictly be relied on.
 Considering the following scenario:
 
 T1: `Alice` gives access to `Bob` to workspace by sending a certif to the
-backend with a timestamp Tx
-T2: `Bob` modify data in the workspace by sending a manifest to the backend
+server with a timestamp Tx
+T2: `Bob` modify data in the workspace by sending a manifest to the server
 with a timestamp Ty
 
 With T1 and T2 roughly within TIMESTAMP_MAX_DT (which is possible given currently
@@ -90,7 +90,7 @@ was first removed from the workspace, then added...)
 
 ### More checks
 
-We could generalize what has been done for vlobs in PR-758 by enforcing checks in the backend:
+We could generalize what has been done for vlobs in PR-758 by enforcing checks in the server:
 
 1) new role certif timestamp > previous role certif timestamp of the same user/workspace
 2) vlob timestamp > user role certif timestamp of the modified workspace
@@ -164,26 +164,26 @@ I guess we should explore more those kind of solutions
 ## Improvement: the hard way
 
 The starting point is simple: we lack a single, centralized clock.
-So everything would be solved if the backend would be in charge of the timestamp.
+So everything would be solved if the server would be in charge of the timestamp.
 
 Strictly speaking, it's not a 100% perfect solution given we can still have
-concurrency when running multiple instances of the backend, but I guess this
+concurrency when running multiple instances of the server, but I guess this
 can be neglected.
-Same thing with timing lag between the timestamp generated in the backend code
+Same thing with timing lag between the timestamp generated in the server code
 and the actual time the data are stored in the database.
 
 Beside, this doesn't totally save us from the messy history problem given the
-backend being in charge of the timestamps, once compromised it can specifically
+server being in charge of the timestamps, once compromised it can specifically
 choose bad timestamps to blur the history.
 
 Given how currently works the encrypted data, the implementation on them is not
-really complex (just store in the backend it own timestamp instead of the one
+really complex (just store in the server it own timestamp instead of the one
 provide by the client which is now just check once before database insertion).
 
 However the impact is much bigger on the certificates:
 
 - each api involving certificate create/read has to be changed to return the
-  backend timestamp. This must be done in a way that keep compatibility with
+  server timestamp. This must be done in a way that keep compatibility with
   older version so we must add plenty of new fields.
 - trustchain handling code in core has to be changed to pass new fields around
 - local storage (see below)
@@ -208,8 +208,8 @@ obj = MySignedData(
     data="whatever"
 )
 serialized = obj.dump_and_sign(author_priv_key)
-# Now we must provide backend timestamp during deserialization
-obj2 = MyCertif.verify_and_load(serialized, author_pub_key, backend_timestamp)
+# Now we must provide server timestamp during deserialization
+obj2 = MyCertif.verify_and_load(serialized, author_pub_key, server_timestamp)
 # But once deserialized, we want to serialize it again (typically to store it into local storage)
 serialized2 = obj2.dump_and_encrypt(local_storage_key)
 ```
@@ -219,16 +219,16 @@ of the certificate. After the change this is no longer the case :'-(
 
 In fact we may even divide the after `MySignedData` class into two kinds (or maybe
 add a flag into it) to mark the difference between object with client timestamp
-or backend timestamp. Typically `MySignedData` and `LocalMySignedData`, `MySignedData`
+or server timestamp. Typically `MySignedData` and `LocalMySignedData`, `MySignedData`
 being the object equivalent to the deserialized data (with client timestamp)
-and local the one with backend timestamp that aims at being stored into the
+and local the one with server timestamp that aims at being stored into the
 local storage.
 
 I guess this would complexify the code base, especially the tests (given how
-we mix core and backend data in the fixtures...)
+we mix core and server data in the fixtures...)
 
 For instance:
-<https://github.com/Scille/parsec-cloud/blob/cf831083182b65b670ff9ea51a18e998d1230ef4/tests/backend/user/test_device_get_invitation_creator.py#L106-L108>
+<https://github.com/Scille/parsec-cloud/blob/cf831083182b65b670ff9ea51a18e998d1230ef4/tests/server/user/test_device_get_invitation_creator.py#L106-L108>
 
 Here we should add new fields `devices_trustchain`, `users_trustchain` and
 `revoked_users_trustchain` (each being a list of timestamps). However we must

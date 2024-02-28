@@ -13,9 +13,9 @@ use libparsec::{
         invite_new_device::{self, InviteNewDeviceRep},
         invite_new_user::{self, InviteNewUserRep},
     },
-    get_default_config_dir, tmp_path, AuthenticatedCmds, BackendAddr, BackendInvitationAddr,
-    BackendOrganizationBootstrapAddr, ClientConfig, HumanHandle, InvitationType, LocalDevice,
-    OrganizationID, ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    get_default_config_dir, tmp_path, AuthenticatedCmds, ClientConfig, HumanHandle, InvitationType,
+    LocalDevice, OrganizationID, ParsecAddr, ParsecInvitationAddr, ParsecOrganizationBootstrapAddr,
+    ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
@@ -37,7 +37,7 @@ fn get_testenv_config() -> TestenvConfig {
     }
 }
 
-fn set_env(tmp_dir: &str, url: &BackendAddr) {
+fn set_env(tmp_dir: &str, url: &ParsecAddr) {
     std::env::set_var(TESTBED_SERVER_URL, url.to_url().to_string());
     std::env::set_var(PARSEC_HOME_DIR, format!("{tmp_dir}/cache"));
     std::env::set_var(PARSEC_DATA_DIR, format!("{tmp_dir}/share"));
@@ -55,7 +55,7 @@ async fn run_local_organization(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
-) -> anyhow::Result<(BackendAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
+) -> anyhow::Result<(ParsecAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
     let url = new_environment(tmp_dir, source_file, config, false)
         .await?
         .unwrap();
@@ -153,7 +153,7 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
         .await
         .unwrap();
     let organization_addr =
-        BackendOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
+        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -236,7 +236,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -485,7 +485,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -641,7 +641,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewDeviceRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,
@@ -745,7 +745,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         .unwrap();
 
     let invitation_addr = match rep {
-        InviteNewUserRep::Ok { token, .. } => BackendInvitationAddr::new(
+        InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().clone(),
             InvitationType::Device,

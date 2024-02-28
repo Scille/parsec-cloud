@@ -171,7 +171,7 @@ pub enum DeviceAccessStrategy {
     },
     // Future API that will be use for parsec-web
     // ServerSide{
-    //     url: BackendOrganizationAddr,
+    //     url: ParsecOrganizationAddr,
     //     email: String,
     //     password: Password,
     // }

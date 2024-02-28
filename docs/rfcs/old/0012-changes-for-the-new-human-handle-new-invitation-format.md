@@ -42,7 +42,7 @@ See [RFC-0009](0009-use-email-as-main-human-identifier.md)
 > parsec://parsec.example.com/my_org?action=claim_user&user_id=John&rvk=P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss
 
 RVK, `user_id` and `organization_id` are no longer needed in the invitation
-URL (can be retrieved once connected to the backend).
+URL (can be retrieved once connected to the server).
 
 ### New url format
 
@@ -56,26 +56,26 @@ action fields also help for readability, useful for debugging & user support).
 - `user_id` field is not really useful given it's only a technical id now
 - we shouldn't add the email as field in the url given 1) it makes the url longer
   2) email are complex to encode 3) this information can be retrieved from the
-  backend if we need to display it to the user
+  server if we need to display it to the user
 
 **Q2: should we add a version field in the url ?**
 
 ## Anonymous login abuse
 
-Currently there is nothing to prevent anybody from doing an anonymous connection to the backend.
+Currently there is nothing to prevent anybody from doing an anonymous connection to the server.
 Of course anonymous connection allows very few things so it should be fine *in theory*.
 However it's always better to avoid this kind of behaviour (attacker could try to slow
 the service with many idle connections, internals are more exposed etc.)
 
 So it would be better to require the organization/token informations during handshake.
-This would allow the backend to close the connection right away in case of bad
+This would allow the server to close the connection right away in case of bad
 organization/token.
 On top of that the couple organization/token should be considered random enough to prevent
 from brute force attack (even considering an attacker knowing a valid organization name,
 a 8 characters token represent 4 billions possibilities, of which only a couple are
 valid invitation at a given time).
 
-Note the backend already enforce a 3 seconds timeout for the client to initiate
+Note the server already enforce a 3 seconds timeout for the client to initiate
 the handshake (this has initially be added to prevent stall when both client and
 server think it's up to the other peer to speak first, typically occurring when
 messing with parsec-over-ssl).
@@ -128,18 +128,18 @@ Given token is provided as part of the handshake, no need to provide it
 in the organization_bootstrap command.
 As well, given operation is specified during the handshake, anonymous connection
 can only do a single operation.
-Backend could close connection as soon as the organization_bootstrap command succeed
+Server could close connection as soon as the organization_bootstrap command succeed
 or if the client try to do any unauthorized command.
 
 ```python
-#  Backend to client
+#  Server to client
 {
     "handshake": "challenge",
     "challenge": "123ABC",
     "supported_api_versions": [[2, 0], [1, 2]]
 }
 
-# Client to backend
+# Client to server
 {
     "handshake": "answer",
     "type": "anonymous",
@@ -149,13 +149,13 @@ or if the client try to do any unauthorized command.
     "token": "abcd9064"
 }
 
-# Backend to client
+# Server to client
 {
     "handshake": "result",
     "result": "ok"
 }
 
-# Client to backend
+# Client to server
 {
     "cmd": "organization_bootstrap",
     "user_certificate": "...",
@@ -163,7 +163,7 @@ or if the client try to do any unauthorized command.
     "root_verify_key": "..."
 }
 
-# Backend to client
+# Server to client
 {
     "status": "ok"
 }
@@ -192,7 +192,7 @@ compatibility, and potentially interesting for SGX applications).
 ### API format
 
 ```python
-# Client to backend
+# Client to server
 {
     "cmd": "invite_new",
     "type": "user",
@@ -200,7 +200,7 @@ compatibility, and potentially interesting for SGX applications).
     "send_email": true
 }
 
-# Backend to client
+# Server to client
 {
     "result": "ok",
     "token": "abcd9064"
@@ -209,7 +209,7 @@ compatibility, and potentially interesting for SGX applications).
 
 - invitation is really similar between device and client, the api is designed to
   share as much as possible (hence the `type` field)
-- `send_email` option allow to prevent backend from sending an invitation mail
+- `send_email` option allow to prevent server from sending an invitation mail
   to the invitee (useful for testing, maybe useful for advanced use cases)
 - in case `send_email=false`, the `url` field returned can be used to display
   the url to the inviter.
@@ -218,21 +218,21 @@ compatibility, and potentially interesting for SGX applications).
 
 Invitation url used to be considered as core-only (i.e. not part of the api
 module given it was only used to be passed between clients and not to
-communicate with the backend). This is no longer true given the backend should
+communicate with the server). This is no longer true given the server should
 be able to send a mail containing the url to the invitee.
 
 So we should move the url parsing code into the api module (hence considering the
 url format as part of the API).
 This is a good idea anyway to pave the way for very different clients like the mobile version.
 
-Note we could have the backend returns an `url` field instead of the `token` field.
+Note we could have the server returns an `url` field instead of the `token` field.
 However this has multiple cons:
 
 - it makes parsing harder
-- backend must always be configured with it own domain information (versus
+- server must always be configured with it own domain information (versus
   only needing to known it own domain in case we want to send emails with url)
 - it's very common in test to use the token just after sending an invitation
-- it's fairly easy to generate the url client side from the token and backend address
+- it's fairly easy to generate the url client side from the token and server address
 
 ## New device invitation
 
@@ -247,7 +247,7 @@ The less worst solution I see is to have a unified system between human and devi
 - Inviter go to the invitation tab in the GUI, there is two buttons "New user" and "New device"
 - Clicking on "New user" open a field to fill the email and a "send" button to proceed
 - Clicking on the "New device" directly proceed given the user's email is already known
-- Proceed means a human_user_invite/device_invite command is send to the backend.
+- Proceed means a human_user_invite/device_invite command is send to the server.
   The client GUI then displays "An invitation mail has been sent to xxx@example.com"
 - The list of pending invitations is updated with the last one first.
   There is two buttons on each invitation line: "show invitation url" (in grey)
@@ -262,14 +262,14 @@ process always involving human, hence enforcing the need for a human_handle
 even when not sending mail.
 
 ```python
-# Client to backend
+# Client to server
 {
     "cmd": "invite_new",
     "type": "device",
     "send_email": true
 }
 
-# Backend to client
+# Server to client
 {
     "result": "ok",
     "token": "abcd9064"
@@ -283,14 +283,14 @@ allow the invitation creator to cancel the invitation whenever he wants (the
 GUI should display a "cancel" button in the invitations list).
 
 ```python
-# Client to backend
+# Client to server
 {
     "cmd": "invite_delete",
     "reason": "cancelled",
     "token": "abcd9064"
 }
 
-# Backend to client
+# Server to client
 {
     "result": "ok",
 }
@@ -306,23 +306,23 @@ user manifests. This shave of a bit of complexity ;-)
 
 To be listed, the invitations has to be stored somewhere:
 1 - in the user manifest
-2 - in the backend
-3 - in the backend as signed data
+2 - in the server
+3 - in the server as signed data
 
 Solution 1) is the most secure, but it increase complexity (atomicity with the
-backend, sync concern with poor connection etc.).
+server, sync concern with poor connection etc.).
 
-Solution 2) is the most simple but it means trusting the backend with list of invitations.
-The downside is of course the backend can lie about this (showing us invitations
+Solution 2) is the most simple but it means trusting the server with list of invitations.
+The downside is of course the server can lie about this (showing us invitations
 we didn't create in order to trick us into accepting a new illegitimate user).
 
 Solution 3) is a trade-of, but I'm not sure it worth the added complexity compared
 to solution 2).
-Backend can still recycle an already existing invitation, hide the user/device
+Server can still recycle an already existing invitation, hide the user/device
 certificate corresponding to the invited person etc.
 
 In theory this is no big deal because the real security lays in the token exchange
-step that is done during claim, but letting the backend the possibility to cheat
+step that is done during claim, but letting the server the possibility to cheat
 on the invitation list doesn't seem right to me...
 
 **Q4: should we use solution 2) or 3) ?**
@@ -330,12 +330,12 @@ on the invitation list doesn't seem right to me...
 ### API format (using solution 2)
 
 ```python
-# Client to backend
+# Client to server
 {
     "cmd": "invite_list"
 }
 
-# Backend to client
+# Server to client
 {
     "result": "ok",
     "invitations": [
@@ -357,7 +357,7 @@ on the invitation list doesn't seem right to me...
 ```
 
 - `status` field is here to show if the invitee client is ready to
-proceed to claim (i.e. the invitee has an anonymous connection to the backend
+proceed to claim (i.e. the invitee has an anonymous connection to the server
 and has started the claim operation).
 - `token` field allow to retrieve and display to the user the invitation url
 - `created` is not strictly mandatory, but seems easy enough to provide and
@@ -461,7 +461,7 @@ URL: `parsec://parsec.example.com/my_org?action=claim_user&token=1234ABCD`
     "inviter_public_key": "..."
 }
 
-# Backend waits for both command
+# Server waits for both command
 {
     "result": "ok",
     "inviter_public_key": "..."
@@ -588,7 +588,7 @@ URL: `parsec://parsec.example.com/my_org?action=claim_user&token=1234ABCD`
     "payload": null
 }
 
-# Backend waits for both command
+# Server waits for both command
 
 # Invitee answer
 {

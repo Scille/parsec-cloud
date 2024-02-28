@@ -68,8 +68,8 @@ class VlobCreateReqSchema(BaseReqSchema):
     encryption_revision = fields.Integer(required=True)
     vlob_id = VlobIDField(required=True)
     # If blob contains a signed message, it timestamp cannot be directly enforced
-    # by the backend (given the message is probably also encrypted).
-    # Hence the timestamp is passed in clear so backend can reject the message
+    # by the server (given the message is probably also encrypted).
+    # Hence the timestamp is passed in clear so server can reject the message
     # if it considers the timestamp invalid. On top of that each client asking
     # for the message will receive the declared timestamp to check against
     # the actual timestamp within the message.

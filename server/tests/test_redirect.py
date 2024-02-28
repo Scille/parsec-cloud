@@ -4,17 +4,17 @@ import httpx
 import pytest
 
 from parsec._parsec import (
-    BackendAddr,
-    BackendInvitationAddr,
     InvitationToken,
     InvitationType,
     OrganizationID,
+    ParsecAddr,
+    ParsecInvitationAddr,
 )
 from tests.common import Backend
 
 
 async def test_get_redirect(client: httpx.AsyncClient, backend: Backend):
-    backend.config.backend_addr = BackendAddr(hostname="parsec.invalid", port=None, use_ssl=False)
+    backend.config.server_addr = ParsecAddr(hostname="parsec.invalid", port=None, use_ssl=False)
 
     rep = await client.get("http://parsec.invalid/redirect/foo/bar?a=1&b=2")
     assert rep.status_code == 302
@@ -22,7 +22,7 @@ async def test_get_redirect(client: httpx.AsyncClient, backend: Backend):
 
 
 async def test_get_redirect_over_ssl(client: httpx.AsyncClient, backend: Backend):
-    backend.config.backend_addr = BackendAddr(hostname="parsec.invalid", port=None, use_ssl=True)
+    backend.config.server_addr = ParsecAddr(hostname="parsec.invalid", port=None, use_ssl=True)
 
     rep = await client.get("https://parsec.invalid/redirect/foo/bar?a=1&b=2")
     assert rep.status_code == 302
@@ -30,7 +30,7 @@ async def test_get_redirect_over_ssl(client: httpx.AsyncClient, backend: Backend
 
 
 async def test_get_redirect_no_ssl_param_overwritten(client: httpx.AsyncClient, backend: Backend):
-    backend.config.backend_addr = BackendAddr(hostname="parsec.invalid", port=None, use_ssl=False)
+    backend.config.server_addr = ParsecAddr(hostname="parsec.invalid", port=None, use_ssl=False)
 
     rep = await client.get("http://parsec.invalid/redirect/spam?no_ssl=false&a=1&b=2")
     assert rep.status_code == 302
@@ -40,7 +40,7 @@ async def test_get_redirect_no_ssl_param_overwritten(client: httpx.AsyncClient, 
 async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
     client: httpx.AsyncClient, backend: Backend
 ):
-    backend.config.backend_addr = BackendAddr(hostname="parsec.invalid", port=None, use_ssl=True)
+    backend.config.server_addr = ParsecAddr(hostname="parsec.invalid", port=None, use_ssl=True)
 
     rep = await client.get("https://parsec.invalid/redirect/spam?a=1&b=2&no_ssl=true")
     assert rep.status_code == 302
@@ -49,10 +49,10 @@ async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
 
 @pytest.mark.parametrize("use_ssl", (False, True))
 async def test_get_redirect_invitation(use_ssl: bool, client: httpx.AsyncClient, backend: Backend):
-    backend.config.backend_addr = BackendAddr(hostname="parsec.invalid", port=None, use_ssl=use_ssl)
+    backend.config.server_addr = ParsecAddr(hostname="parsec.invalid", port=None, use_ssl=use_ssl)
 
-    invitation_addr = BackendInvitationAddr.build(
-        backend_addr=backend.config.backend_addr,
+    invitation_addr = ParsecInvitationAddr.build(
+        server_addr=backend.config.server_addr,
         organization_id=OrganizationID("Org"),
         invitation_type=InvitationType.USER,
         token=InvitationToken.new(),
@@ -61,5 +61,5 @@ async def test_get_redirect_invitation(use_ssl: bool, client: httpx.AsyncClient,
     *_, target = invitation_addr.to_url().split("/")
     rep = await client.get(f"http{'s' if use_ssl else ''}://parsec.invalid/redirect/{target}")
     assert rep.status_code == 302
-    location_addr = BackendInvitationAddr.from_url(rep.headers["location"])
+    location_addr = ParsecInvitationAddr.from_url(rep.headers["location"])
     assert location_addr == invitation_addr

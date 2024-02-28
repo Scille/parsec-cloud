@@ -48,18 +48,18 @@ def test_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     # Cannot use `click.CliRunner` in this test given it doesn't support
     # concurrent run of commands :'(
 
-    print("######## START BACKEND #########")
+    print("######## START SERVER #########")
     with cli_running(
         (
             f"run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port=0"
-            f" --backend-addr=parsec://127.0.0.1:{unused_tcp_port}"
+            f" --server-addr=parsec://127.0.0.1:{unused_tcp_port}"
             f" --email-host=MOCKED"
             f" --log-level=INFO"
             f" {ssl_conf.backend_opts}"
         ),
-        wait_for="Starting Parsec Backend",
+        wait_for="Starting Parsec server",
     ):
         # TODO: send a request to ensure the server is correctly listening
         pass

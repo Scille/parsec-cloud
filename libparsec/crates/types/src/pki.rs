@@ -14,8 +14,8 @@ use libparsec_crypto::{PublicKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, BackendPkiEnrollmentAddr,
-    DataError, DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle,
+    self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
+    DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecPkiEnrollmentAddr,
     PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult, UserProfile,
 };
 
@@ -158,7 +158,7 @@ impl_transparent_data_format_conversion!(
 )]
 pub struct LocalPendingEnrollment {
     pub x509_certificate: X509Certificate,
-    pub addr: BackendPkiEnrollmentAddr,
+    pub addr: ParsecPkiEnrollmentAddr,
     pub submitted_on: DateTime,
     pub enrollment_id: EnrollmentID,
     pub submit_payload: PkiEnrollmentSubmitPayload,

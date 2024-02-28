@@ -12,7 +12,7 @@ But websocket is still more complex than regular http:
 
 - company firewalls often block websocket by default
 - http is stateless, so reconnection (and reuse of already opened connection) is transparente
-- http2 handles head of line blocking which remove entirely the need for multiple connections to the backend
+- http2 handles head of line blocking which remove entirely the need for multiple connections to the server
 
 So it would be good if we can expose the authenticated api as http+sse (hence we could use [reqwest](https://github.com/seanmonstar/reqwest) in Rust than handle http2 and wasm32 out of the box \o/)
 
@@ -31,7 +31,7 @@ pros/cons:
 
 - stateful is a bit faster than stateless given cryptographic operations are only done once when obtaining the token.
 - stateless should be simpler given less route to implement
-- to obtain the token in stateful, the client has to sign something. This might be a timestamp or a something random provided by the server (in which case we have yet another round trip to handle, the backend must keep track of the random info, or sign it)
+- to obtain the token in stateful, the client has to sign something. This might be a timestamp or a something random provided by the server (in which case we have yet another round trip to handle, the server must keep track of the random info, or sign it)
 
 interesting stuff:
 

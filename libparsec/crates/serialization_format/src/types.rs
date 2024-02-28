@@ -247,9 +247,9 @@ generate_field_type_enum!(
     UserManifest => libparsec_types::UserManifest,
     ActiveUsersLimit => libparsec_types::ActiveUsersLimit,
     Chunk => libparsec_types::Chunk,
-    BackendOrganizationAddr => libparsec_types::BackendOrganizationAddr,
+    ParsecOrganizationAddr => libparsec_types::ParsecOrganizationAddr,
     UsersPerProfileDetailItem => libparsec_types::UsersPerProfileDetailItem,
-    BackendPkiEnrollmentAddr => libparsec_types::BackendPkiEnrollmentAddr,
+    ParsecPkiEnrollmentAddr => libparsec_types::ParsecPkiEnrollmentAddr,
     PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
     X509Certificate => libparsec_types::X509Certificate,
     // Used only in protocol

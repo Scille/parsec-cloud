@@ -68,7 +68,7 @@ class CreateOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     organization_id: OrganizationIDField
     # /!\ Missing field and field set to `None` does not mean the same thing:
-    # - missing field: ask the backend to use it default value for this field
+    # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[Unset] = Unset
@@ -164,7 +164,7 @@ class PatchOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     is_expired: bool | Literal[Unset] = Unset
     # /!\ Missing field and field set to `None` does not mean the same thing:
-    # - missing field: ask the backend to use it default value for this field
+    # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[Unset] = Unset

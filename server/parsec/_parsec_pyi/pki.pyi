@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from parsec._parsec_pyi.addrs import BackendPkiEnrollmentAddr
+from parsec._parsec_pyi.addrs import ParsecPkiEnrollmentAddr
 from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
 from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EnrollmentID, HumanHandle
@@ -78,7 +78,7 @@ class LocalPendingEnrollment:
     def __init__(
         self,
         x509_certificate: X509Certificate,
-        addr: BackendPkiEnrollmentAddr,
+        addr: ParsecPkiEnrollmentAddr,
         submitted_on: DateTime,
         enrollment_id: EnrollmentID,
         submit_payload: PkiEnrollmentSubmitPayload,
@@ -108,7 +108,7 @@ class LocalPendingEnrollment:
     @property
     def x509_certificate(self) -> X509Certificate: ...
     @property
-    def addr(self) -> BackendPkiEnrollmentAddr: ...
+    def addr(self) -> ParsecPkiEnrollmentAddr: ...
     @property
     def submitted_on(self) -> DateTime: ...
     @property

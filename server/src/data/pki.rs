@@ -9,7 +9,7 @@ use pyo3::{
 use std::{collections::HashMap, path::Path};
 
 use crate::{
-    addrs::BackendPkiEnrollmentAddr,
+    addrs::ParsecPkiEnrollmentAddr,
     binding_utils::BytesWrapper,
     crypto::{PublicKey, VerifyKey},
     enumerate::UserProfile,
@@ -254,7 +254,7 @@ impl LocalPendingEnrollment {
     #[new]
     fn new(
         x509_certificate: X509Certificate,
-        addr: BackendPkiEnrollmentAddr,
+        addr: ParsecPkiEnrollmentAddr,
         submitted_on: DateTime,
         enrollment_id: EnrollmentID,
         submit_payload: PkiEnrollmentSubmitPayload,
@@ -373,8 +373,8 @@ impl LocalPendingEnrollment {
     }
 
     #[getter]
-    fn addr(&self) -> BackendPkiEnrollmentAddr {
-        BackendPkiEnrollmentAddr(self.0.addr.clone())
+    fn addr(&self) -> ParsecPkiEnrollmentAddr {
+        ParsecPkiEnrollmentAddr(self.0.addr.clone())
     }
 
     #[getter]

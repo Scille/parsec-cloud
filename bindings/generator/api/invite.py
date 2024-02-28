@@ -3,8 +3,8 @@
 from typing import Optional
 
 from .addr import (
-    BackendInvitationAddr,
-    BackendOrganizationBootstrapAddr,
+    ParsecInvitationAddr,
+    ParsecOrganizationBootstrapAddr,
 )
 from .common import (
     DateTime,
@@ -105,7 +105,7 @@ class BootstrapOrganizationError(ErrorVariant):
 async def bootstrap_organization(
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
-    bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
+    bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
@@ -178,7 +178,7 @@ class UserOrDeviceClaimInitialInfo(Variant):
 async def claimer_retrieve_info(
     config: ClientConfig,
     on_event_callback: OnClientEventCallback,
-    addr: BackendInvitationAddr,
+    addr: ParsecInvitationAddr,
 ) -> Result[UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError]:
     raise NotImplementedError
 
@@ -327,7 +327,7 @@ class ClientNewUserInvitationError(ErrorVariant):
 
 
 class NewInvitationInfo(Structure):
-    addr: BackendInvitationAddr
+    addr: ParsecInvitationAddr
     token: InvitationToken
     email_sent_status: InvitationEmailSentStatus
 
@@ -384,14 +384,14 @@ async def client_cancel_invitation(
 
 class InviteListItem(Variant):
     class User:
-        addr: BackendInvitationAddr
+        addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
         claimer_email: str
         status: InvitationStatus
 
     class Device:
-        addr: BackendInvitationAddr
+        addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
         status: InvitationStatus

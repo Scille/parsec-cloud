@@ -7,7 +7,6 @@ import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  BackendAddr,
   BootstrapOrganizationError,
   ClientConfig,
   ClientEventPing,
@@ -16,13 +15,14 @@ import {
   OrganizationInfo,
   OrganizationInfoError,
   ParseBackendAddrError,
-  ParsedBackendAddr,
+  ParsecAddr,
+  ParsedParsecAddr,
   Result,
 } from '@/parsec/types';
 import { DateTime } from 'luxon';
 
 export async function createOrganization(
-  backendAddr: BackendAddr,
+  backendAddr: ParsecAddr,
   orgName: OrganizationID,
   userName: string,
   email: string,
@@ -77,7 +77,7 @@ export async function createOrganization(
   }
 }
 
-export async function parseBackendAddr(addr: string): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>> {
+export async function parseBackendAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>> {
   return await libparsec.parseBackendAddr(addr);
 }
 

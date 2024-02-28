@@ -10,7 +10,7 @@ from typing import Any
 import click
 from structlog import get_logger
 
-from parsec._parsec import ActiveUsersLimit, BackendAddr
+from parsec._parsec import ActiveUsersLimit, ParsecAddr
 from parsec.asgi import app as parsec_app
 from parsec.asgi import serve_parsec_asgi_app
 from parsec.backend import backend_factory
@@ -58,13 +58,13 @@ class DevOption(click.Option):
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
             if "port" in opts:
-                backend_addr = "parsec://localhost:" + str(opts["port"])
+                server_addr = "parsec://localhost:" + str(opts["port"])
             else:
-                backend_addr = "parsec://localhost:" + str(DEFAULT_PORT)
+                server_addr = "parsec://localhost:" + str(DEFAULT_PORT)
             for key, value in (
                 ("debug", True),
                 ("db", "MOCKED"),
-                ("backend_addr", backend_addr),
+                ("server_addr", server_addr),
                 ("email_sender", "no-reply@parsec.com"),
                 ("email_host", "MOCKED"),
                 ("blockstore", ("MOCKED",)),
@@ -87,7 +87,7 @@ Parameters can also be specified by using the special environment variable `PARS
 All available command line arguments can be used and environ variables within it will be expanded.
 For instance:
 
-    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec backend run
+    $ DB_URL=postgres:///parsec PARSEC_CMD_ARGS='--db=$DB_URL --host=0.0.0.0' parsec run
 """,
 )
 @click.option(
@@ -180,12 +180,12 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     type=bool,
 )
 @click.option(
-    "--backend-addr",
-    envvar="PARSEC_BACKEND_ADDR",
+    "--server-addr",
+    envvar="PARSEC_SERVER_ADDR",
     show_envvar=True,
     required=True,
     metavar="URL",
-    type=BackendAddr.from_url,
+    type=ParsecAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
@@ -291,7 +291,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         "Equivalent to `--debug --db=MOCKED"
         " --blockstore=MOCKED --administration-token=s3cr3t"
         " --email-sender=no-reply@parsec.com --email-host=MOCKED"
-        " --backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
+        " --server-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
 @click.option(
@@ -321,7 +321,7 @@ def run_cmd(
     organization_bootstrap_webhook: str,
     organization_initial_active_users_limit: int,
     organization_initial_user_profile_outsider_allowed: bool,
-    backend_addr: BackendAddr,
+    server_addr: ParsecAddr,
     email_host: str,
     email_port: int,
     email_host_user: str | None,
@@ -340,7 +340,7 @@ def run_cmd(
     debug: bool,
     dev: bool,
 ) -> None:
-    # Start a local backend
+    # Start a local server
 
     with cli_exception_handler(debug):
         email_config: EmailConfig
@@ -372,7 +372,7 @@ def run_cmd(
             blockstore_config=blockstore,
             email_config=email_config,
             forward_proto_enforce_https=forward_proto_enforce_https,
-            backend_addr=backend_addr,
+            server_addr=server_addr,
             debug=debug,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
@@ -385,12 +385,12 @@ def run_cmd(
         )
 
         click.echo(
-            f"Starting Parsec Backend on {host}:{port}"
+            f"Starting Parsec server on {host}:{port}"
             f" (db={app_config.db_type}"
             f" blockstore={app_config.blockstore_config.type}"
             f" email={email_config.type}"
             f" telemetry={'on' if sentry_dsn else 'off'}"
-            f" backend_addr={app_config.backend_addr.to_url() if app_config.backend_addr else ''}"
+            f" server_addr={app_config.server_addr.to_url() if app_config.server_addr else ''}"
             ")"
         )
         try:

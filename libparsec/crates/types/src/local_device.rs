@@ -7,8 +7,8 @@ use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, BackendOrganizationAddr, DateTime, DeviceID, DeviceLabel, DeviceName,
-    HumanHandle, Maybe, OrganizationID, TimeProvider, UserID, UserProfile, VlobID,
+    self as libparsec_types, DateTime, DeviceID, DeviceLabel, DeviceName, HumanHandle, Maybe,
+    OrganizationID, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
 
 pub fn local_device_slug(
@@ -16,7 +16,7 @@ pub fn local_device_slug(
     device_id: &DeviceID,
     root_verify_key: &VerifyKey,
 ) -> String {
-    // Add a hash to avoid clash when the backend is reseted and we recreate
+    // Add a hash to avoid clash when the server is reseted and we recreate
     // a device with same OrganizationID/DeviceID than a previous one
     let mut hasher = sha2::Sha256::new();
     hasher.update(root_verify_key.as_ref());
@@ -27,7 +27,7 @@ pub fn local_device_slug(
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
-    pub organization_addr: BackendOrganizationAddr,
+    pub organization_addr: ParsecOrganizationAddr,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
@@ -53,7 +53,7 @@ impl std::fmt::Debug for LocalDevice {
 
 impl LocalDevice {
     pub fn generate_new_device(
-        organization_addr: BackendOrganizationAddr,
+        organization_addr: ParsecOrganizationAddr,
         initial_profile: UserProfile,
         human_handle: HumanHandle,
         device_label: DeviceLabel,

@@ -4,13 +4,13 @@ use clap::Args;
 use reqwest::{Client, Response};
 use serde_json::Value;
 
-use libparsec::{BackendAddr, DateTime};
+use libparsec::{DateTime, ParsecAddr};
 
 #[derive(Args)]
 pub struct StatsServer {
     /// Server address (e.g: parsec://127.0.0.1:6770?no_ssl=true)
     #[arg(short, long)]
-    addr: BackendAddr,
+    addr: ParsecAddr,
     /// Administration token
     #[arg(short, long)]
     token: String,
@@ -50,7 +50,7 @@ impl std::fmt::Display for Format {
 }
 
 pub async fn stats_server_req(
-    addr: &BackendAddr,
+    addr: &ParsecAddr,
     administration_token: &str,
     format: Format,
     end_date: Option<DateTime>,

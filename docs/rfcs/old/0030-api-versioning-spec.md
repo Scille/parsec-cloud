@@ -123,6 +123,6 @@ We would have:
 With:
 
 - ✅ Perfect version match, nothing to do
-- ✔️ API revision provided by the backend is more recent, almost nothing to do: the client don't use the new feature it doesn't know about, and unknown error types returned by the server are considered valid by the client and handled in a generic way.
-- ❔ API revision provided by the backend older recent, the client must be careful not to use too recent commands or parameters (in our example `user_get`'s `page` parameter and/or `user_create`)
+- ✔️ API revision provided by the server is more recent, almost nothing to do: the client don't use the new feature it doesn't know about, and unknown error types returned by the server are considered valid by the client and handled in a generic way.
+- ❔ API revision provided by the server older recent, the client must be careful not to use too recent commands or parameters (in our example `user_get`'s `page` parameter and/or `user_create`)
 - ❌ Incompatible API

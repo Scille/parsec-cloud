@@ -8,7 +8,7 @@
         },
         {
             "name": "addr",
-            "type": "BackendPkiEnrollmentAddr"
+            "type": "ParsecPkiEnrollmentAddr"
         },
         {
             "name": "submitted_on",

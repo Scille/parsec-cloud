@@ -50,7 +50,7 @@ pub(super) async fn create_workspace(
     // so we would fallback to a local speculative workspace manifest.
     // However a speculative manifest means the workspace has been
     // created by somebody else, and hence we shouldn't try to create
-    // its corresponding realm in the backend !
+    // its corresponding realm in the server !
     workspace_storage_non_speculative_init(
         &client_ops.config.data_base_dir,
         &client_ops.device,

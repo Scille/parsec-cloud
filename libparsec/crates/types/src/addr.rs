@@ -110,18 +110,18 @@ impl FromStr for ParsecUrlAsHTTPScheme {
 }
 
 macro_rules! impl_common_stuff {
-    (BackendAddr) => {
-        impl_common_stuff!(BackendAddr, _internal_);
+    (ParsecAddr) => {
+        impl_common_stuff!(ParsecAddr, _internal_);
     };
     ($name:ty) => {
-        impl From<$name> for BackendAddr {
+        impl From<$name> for ParsecAddr {
             fn from(value: $name) -> Self {
-                BackendAddr { base: value.base }
+                ParsecAddr { base: value.base }
             }
         }
-        impl From<&$name> for BackendAddr {
+        impl From<&$name> for ParsecAddr {
             fn from(value: &$name) -> Self {
-                BackendAddr {
+                ParsecAddr {
                     base: value.base.to_owned(),
                 }
             }
@@ -250,13 +250,13 @@ pub enum AddrError {
 }
 
 #[derive(Clone, PartialEq, Eq, Hash)]
-struct BaseBackendAddr {
+struct BaseParsecAddr {
     hostname: String,
     port: Option<u16>,
     use_ssl: bool,
 }
 
-impl BaseBackendAddr {
+impl BaseParsecAddr {
     fn from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
         let hostname = parsed
             .0
@@ -311,7 +311,7 @@ impl BaseBackendAddr {
     }
 }
 
-macro_rules! expose_BaseBackendAddr_fields {
+macro_rules! expose_base_parsec_addr_fields {
     () => {
         pub fn hostname(&self) -> &str {
             &self.base.hostname
@@ -372,25 +372,25 @@ fn extract_organization_id(parsed: &ParsecUrlAsHTTPScheme) -> Result<Organizatio
 }
 
 /*
- * BackendAddr
+ * ParsecAddr
  */
 
-/// Represent the URL to reach a backend (e.g. ``parsec://parsec.example.com/``)
+/// Represent the URL to reach a server (e.g. ``parsec://parsec.example.com/``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendAddr {
-    base: BaseBackendAddr,
+pub struct ParsecAddr {
+    base: BaseParsecAddr,
 }
 
-impl_common_stuff!(BackendAddr);
+impl_common_stuff!(ParsecAddr);
 
-impl BackendAddr {
+impl ParsecAddr {
     pub fn new(hostname: String, port: Option<u16>, use_ssl: bool) -> Self {
         // TODO: handle correctly the errors
         if hostname.is_empty() {
             panic!("Hostname cannot be empty !")
         }
         Self {
-            base: BaseBackendAddr {
+            base: BaseParsecAddr {
                 hostname,
                 port,
                 use_ssl,
@@ -403,7 +403,7 @@ impl BackendAddr {
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
 
         if parsed.0.path() != "" && parsed.0.path() != "/" {
             return Err(AddrError::ShouldNotHaveAPath(parsed.0.clone()));
@@ -412,7 +412,7 @@ impl BackendAddr {
         Ok(Self { base })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, url: Url) -> Url {
         url
@@ -420,35 +420,35 @@ impl BackendAddr {
 }
 
 /*
- * BackendOrganizationAddr
+ * ParsecOrganizationAddr
  */
 
-/// Represent the URL to access an organization within a backend
+/// Represent the URL to access an organization within a server
 /// (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendOrganizationAddr {
-    base: BaseBackendAddr,
+pub struct ParsecOrganizationAddr {
+    base: BaseParsecAddr,
     organization_id: OrganizationID,
     root_verify_key: VerifyKey,
 }
 
-impl_common_stuff!(BackendOrganizationAddr);
+impl_common_stuff!(ParsecOrganizationAddr);
 
-impl BackendOrganizationAddr {
+impl ParsecOrganizationAddr {
     pub fn new(
-        backend_addr: impl Into<BackendAddr>,
+        server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
     ) -> Self {
         Self {
-            base: backend_addr.into().base,
+            base: server_addr.into().base,
             organization_id,
             root_verify_key,
         }
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
 
         let pairs = parsed.0.query_pairs();
@@ -474,7 +474,7 @@ impl BackendOrganizationAddr {
         })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
@@ -507,93 +507,93 @@ impl BackendOrganizationAddr {
 }
 
 /*
- * BackendActionAddr
+ * ParsecActionAddr
  */
 
-pub enum BackendActionAddr {
-    OrganizationBootstrap(BackendOrganizationBootstrapAddr),
-    OrganizationFileLink(BackendOrganizationFileLinkAddr),
-    Invitation(BackendInvitationAddr),
-    PkiEnrollment(BackendPkiEnrollmentAddr),
+pub enum ParsecActionAddr {
+    OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
+    OrganizationFileLink(ParsecOrganizationFileLinkAddr),
+    Invitation(ParsecInvitationAddr),
+    PkiEnrollment(ParsecPkiEnrollmentAddr),
 }
 
-impl BackendActionAddr {
+impl ParsecActionAddr {
     pub fn from_any(url: &str) -> Result<Self, AddrError> {
-        if let Ok(addr) = BackendOrganizationBootstrapAddr::from_any(url) {
-            Ok(BackendActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::from_any(url) {
-            Ok(BackendActionAddr::OrganizationFileLink(addr))
-        } else if let Ok(addr) = BackendInvitationAddr::from_any(url) {
-            Ok(BackendActionAddr::Invitation(addr))
+        if let Ok(addr) = ParsecOrganizationBootstrapAddr::from_any(url) {
+            Ok(ParsecActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::from_any(url) {
+            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecInvitationAddr::from_any(url) {
+            Ok(ParsecActionAddr::Invitation(addr))
         } else {
-            BackendPkiEnrollmentAddr::from_any(url).map(BackendActionAddr::PkiEnrollment)
+            ParsecPkiEnrollmentAddr::from_any(url).map(ParsecActionAddr::PkiEnrollment)
         }
     }
 
     pub fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
         let parsed = ParsecUrlAsHTTPScheme::from_http_redirection(url)?;
 
-        if let Ok(addr) = BackendOrganizationBootstrapAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::OrganizationFileLink(addr))
-        } else if let Ok(addr) = BackendInvitationAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::Invitation(addr))
+        if let Ok(addr) = ParsecOrganizationBootstrapAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::Invitation(addr))
         } else {
-            BackendPkiEnrollmentAddr::_from_url(&parsed).map(BackendActionAddr::PkiEnrollment)
+            ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
         }
     }
 }
 
-impl std::str::FromStr for BackendActionAddr {
+impl std::str::FromStr for ParsecActionAddr {
     type Err = AddrError;
 
     #[inline]
     fn from_str(url: &str) -> Result<Self, Self::Err> {
         let parsed = url.parse()?;
 
-        if let Ok(addr) = BackendOrganizationBootstrapAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = BackendOrganizationFileLinkAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::OrganizationFileLink(addr))
-        } else if let Ok(addr) = BackendInvitationAddr::_from_url(&parsed) {
-            Ok(BackendActionAddr::Invitation(addr))
+        if let Ok(addr) = ParsecOrganizationBootstrapAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::OrganizationBootstrap(addr))
+        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::Invitation(addr))
         } else {
-            BackendPkiEnrollmentAddr::_from_url(&parsed).map(BackendActionAddr::PkiEnrollment)
+            ParsecPkiEnrollmentAddr::_from_url(&parsed).map(ParsecActionAddr::PkiEnrollment)
         }
     }
 }
 
 /*
- * BackendOrganizationBootstrapAddr
+ * ParsecOrganizationBootstrapAddr
  */
 
-// Represent the URL to bootstrap an organization within a backend
+// Represent the URL to bootstrap an organization within a server
 // (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendOrganizationBootstrapAddr {
-    base: BaseBackendAddr,
+pub struct ParsecOrganizationBootstrapAddr {
+    base: BaseParsecAddr,
     organization_id: OrganizationID,
     token: Option<BootstrapToken>,
 }
 
-impl_common_stuff!(BackendOrganizationBootstrapAddr);
+impl_common_stuff!(ParsecOrganizationBootstrapAddr);
 
-impl BackendOrganizationBootstrapAddr {
+impl ParsecOrganizationBootstrapAddr {
     pub fn new(
-        backend_addr: impl Into<BackendAddr>,
+        server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         token: Option<BootstrapToken>,
     ) -> Self {
         Self {
-            base: backend_addr.into().base,
+            base: server_addr.into().base,
             organization_id,
             token,
         }
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
@@ -632,7 +632,7 @@ impl BackendOrganizationBootstrapAddr {
         })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
@@ -658,12 +658,9 @@ impl BackendOrganizationBootstrapAddr {
         self.base.to_http_url(path)
     }
 
-    pub fn generate_organization_addr(
-        &self,
-        root_verify_key: VerifyKey,
-    ) -> BackendOrganizationAddr {
-        BackendOrganizationAddr::new(
-            BackendAddr::new(
+    pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr::new(
+            ParsecAddr::new(
                 self.hostname().into(),
                 if !self.is_default_port() {
                     Some(self.port())
@@ -679,32 +676,32 @@ impl BackendOrganizationBootstrapAddr {
 }
 
 /*
- * BackendOrganizationFileLinkAddr
+ * ParsecOrganizationFileLinkAddr
  */
 
 /// Represent the URL to share a file link
 /// (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendOrganizationFileLinkAddr {
-    base: BaseBackendAddr,
+pub struct ParsecOrganizationFileLinkAddr {
+    base: BaseParsecAddr,
     organization_id: OrganizationID,
     workspace_id: VlobID,
     encrypted_path: Vec<u8>,
     encrypted_timestamp: Option<Vec<u8>>,
 }
 
-impl_common_stuff!(BackendOrganizationFileLinkAddr);
+impl_common_stuff!(ParsecOrganizationFileLinkAddr);
 
-impl BackendOrganizationFileLinkAddr {
+impl ParsecOrganizationFileLinkAddr {
     pub fn new(
-        backend_addr: impl Into<BackendAddr>,
+        server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         workspace_id: VlobID,
         encrypted_path: Vec<u8>,
         encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
-            base: backend_addr.into().base,
+            base: server_addr.into().base,
             organization_id,
             workspace_id,
             encrypted_path,
@@ -713,7 +710,7 @@ impl BackendOrganizationFileLinkAddr {
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
@@ -770,7 +767,7 @@ impl BackendOrganizationFileLinkAddr {
         })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
@@ -806,30 +803,30 @@ impl BackendOrganizationFileLinkAddr {
 }
 
 /*
- * BackendInvitationAddr
+ * ParsecInvitationAddr
  */
 
 /// Represent the URL to invite a user or a device
 /// (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendInvitationAddr {
-    base: BaseBackendAddr,
+pub struct ParsecInvitationAddr {
+    base: BaseParsecAddr,
     organization_id: OrganizationID,
     invitation_type: InvitationType,
     token: InvitationToken,
 }
 
-impl_common_stuff!(BackendInvitationAddr);
+impl_common_stuff!(ParsecInvitationAddr);
 
-impl BackendInvitationAddr {
+impl ParsecInvitationAddr {
     pub fn new(
-        backend_addr: impl Into<BackendAddr>,
+        server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
         token: InvitationToken,
     ) -> Self {
         Self {
-            base: backend_addr.into().base,
+            base: server_addr.into().base,
             organization_id,
             invitation_type,
             token,
@@ -837,7 +834,7 @@ impl BackendInvitationAddr {
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let invitation_type = match extract_action(&pairs)? {
@@ -875,7 +872,7 @@ impl BackendInvitationAddr {
         })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
@@ -905,12 +902,9 @@ impl BackendInvitationAddr {
         self.token
     }
 
-    pub fn generate_organization_addr(
-        &self,
-        root_verify_key: VerifyKey,
-    ) -> BackendOrganizationAddr {
-        BackendOrganizationAddr::new(
-            BackendAddr::new(
+    pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr::new(
+            ParsecAddr::new(
                 self.hostname().into(),
                 if !self.is_default_port() {
                     Some(self.port())
@@ -931,29 +925,29 @@ impl BackendInvitationAddr {
 }
 
 /*
- * BackendPkiEnrollmentAddr
+ * ParsecPkiEnrollmentAddr
  */
 
 /// Represent the URL to invite a user using PKI
 /// (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct BackendPkiEnrollmentAddr {
-    base: BaseBackendAddr,
+pub struct ParsecPkiEnrollmentAddr {
+    base: BaseParsecAddr,
     organization_id: OrganizationID,
 }
 
-impl_common_stuff!(BackendPkiEnrollmentAddr);
+impl_common_stuff!(ParsecPkiEnrollmentAddr);
 
-impl BackendPkiEnrollmentAddr {
-    pub fn new(backend_addr: impl Into<BackendAddr>, organization_id: OrganizationID) -> Self {
+impl ParsecPkiEnrollmentAddr {
+    pub fn new(server_addr: impl Into<ParsecAddr>, organization_id: OrganizationID) -> Self {
         Self {
-            base: backend_addr.into().base,
+            base: server_addr.into().base,
             organization_id,
         }
     }
 
     fn _from_url(parsed: &ParsecUrlAsHTTPScheme) -> Result<Self, AddrError> {
-        let base = BaseBackendAddr::from_url(parsed)?;
+        let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_action(&pairs)?;
@@ -971,7 +965,7 @@ impl BackendPkiEnrollmentAddr {
         })
     }
 
-    expose_BaseBackendAddr_fields!();
+    expose_base_parsec_addr_fields!();
 
     fn _to_url(&self, mut url: Url) -> Url {
         url.path_segments_mut()
@@ -990,12 +984,9 @@ impl BackendPkiEnrollmentAddr {
         &self.organization_id
     }
 
-    pub fn generate_organization_addr(
-        &self,
-        root_verify_key: VerifyKey,
-    ) -> BackendOrganizationAddr {
-        BackendOrganizationAddr::new(
-            BackendAddr::new(
+    pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
+        ParsecOrganizationAddr::new(
+            ParsecAddr::new(
                 self.hostname().into(),
                 if !self.is_default_port() {
                     Some(self.port())
@@ -1011,22 +1002,22 @@ impl BackendPkiEnrollmentAddr {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum BackendAnonymousAddr {
-    BackendOrganizationBootstrapAddr(BackendOrganizationBootstrapAddr),
-    BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr),
+pub enum ParsecAnonymousAddr {
+    ParsecOrganizationBootstrapAddr(ParsecOrganizationBootstrapAddr),
+    ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr),
 }
 
-impl BackendAnonymousAddr {
+impl ParsecAnonymousAddr {
     /// Return an [Url] that points to the server endpoint for anonymous commands.
     pub fn to_anonymous_http_url(&self) -> Url {
-        let (BackendAnonymousAddr::BackendOrganizationBootstrapAddr(
-            BackendOrganizationBootstrapAddr {
+        let (ParsecAnonymousAddr::ParsecOrganizationBootstrapAddr(
+            ParsecOrganizationBootstrapAddr {
                 base,
                 organization_id,
                 ..
             },
         )
-        | BackendAnonymousAddr::BackendPkiEnrollmentAddr(BackendPkiEnrollmentAddr {
+        | ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr {
             base,
             organization_id,
         })) = self;

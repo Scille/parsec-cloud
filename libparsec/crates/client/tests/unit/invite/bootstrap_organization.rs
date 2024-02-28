@@ -34,7 +34,7 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
         None
     };
 
-    let bootstrap_addr = BackendOrganizationBootstrapAddr::new(
+    let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
         None,
@@ -149,7 +149,7 @@ async fn bad_finalize(tmp_path: TmpPath, #[case] kind: BadFinalizeKind, env: &Te
 
 #[parsec_test(testbed = "empty")]
 async fn offline(env: &TestbedEnv) {
-    let bootstrap_addr = BackendOrganizationBootstrapAddr::new(
+    let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
         None,
@@ -173,7 +173,7 @@ async fn offline(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty", with_server)]
 async fn bad_token(env: &TestbedEnv) {
-    let bootstrap_addr = BackendOrganizationBootstrapAddr::new(
+    let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
         Some("<invalid token>".to_owned()),

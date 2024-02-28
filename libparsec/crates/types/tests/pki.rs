@@ -134,7 +134,7 @@ fn serde_pki_enrollment_submit_payload(
                 certificate_sha1: b"foo".as_ref().into(),
                 certificate_id: Some("foo".into()),
             },
-            addr: BackendPkiEnrollmentAddr::from_str(
+            addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec://parsec.example.com/my_org?action=pki_enrollment",
             )
             .unwrap(),
@@ -199,7 +199,7 @@ fn serde_pki_enrollment_submit_payload(
                 certificate_sha1: b"foo".as_ref().into(),
                 certificate_id: None,
             },
-            addr: BackendPkiEnrollmentAddr::from_str(
+            addr: ParsecPkiEnrollmentAddr::from_str(
                 "parsec://parsec.example.com/my_org?action=pki_enrollment",
             )
             .unwrap(),

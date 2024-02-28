@@ -41,7 +41,7 @@ impl From<ConnectionError> for BootstrapOrganizationError {
 pub async fn bootstrap_organization(
     config: Arc<ClientConfig>,
     event_bus: EventBus,
-    addr: BackendOrganizationBootstrapAddr,
+    addr: ParsecOrganizationBootstrapAddr,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
     sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
@@ -54,7 +54,7 @@ pub async fn bootstrap_organization(
     let organization_id = addr.organization_id().clone();
 
     let organization_addr =
-        BackendOrganizationAddr::new(&addr, organization_id, root_verify_key.clone());
+        ParsecOrganizationAddr::new(&addr, organization_id, root_verify_key.clone());
 
     let device = Arc::new(LocalDevice::generate_new_device(
         organization_addr,
@@ -119,7 +119,7 @@ pub async fn bootstrap_organization(
 
     let cmds = AnonymousCmds::new(
         &config.config_dir,
-        BackendAnonymousAddr::BackendOrganizationBootstrapAddr(addr),
+        ParsecAnonymousAddr::ParsecOrganizationBootstrapAddr(addr),
         config.proxy.clone(),
     )?;
 

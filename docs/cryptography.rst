@@ -13,16 +13,16 @@ The Parsec solution involves many cryptographic concepts in order to allow, for 
 
 A user can own one or more devices that can be used transparently, and it is able to add new devices from already registered devices anytime.
 
-An organization can be bootstrapped without the backend administrator knowing the root key of the organization.
+An organization can be bootstrapped without the server administrator knowing the root key of the organization.
 
-In this section, the mechanisms allowing Parsec to reach this Zero-Trust level of confidentiality will be briefly explained (in this context, Zero-Trust means that no trust has to be placed in the back-end for the solution to be secure).
+In this section, the mechanisms allowing Parsec to reach this Zero-Trust level of confidentiality will be briefly explained (in this context, Zero-Trust means that no trust has to be placed in the server for the solution to be secure).
 
 
 Creating an Organization
 ========================
 
 1. The administrator of the metadata server registers the name of the organization and obtain an **initialization token** to be transmitted to the person selected to be the first administrator of the organization.
-2. The application creates on the administrator's device **an organization key** (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), **a user key** (USER_ENC_S_KEY, USER_ENC_P_KEY), and a **device key** (DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY). The application certifies user and device public keys with the organization's signature key and upload them on the back-end. Only the public part of the organization root key (ORG_ROOT_SIG_P_KEY) is uploaded to the metadata server, the secret part of the key is intentionally discarded, which makes it nonrecoverable.
+2. The application creates on the administrator's device **an organization key** (ORG_ROOT_SIG_S_KEY, ORG_ROOT_SIG_P_KEY), **a user key** (USER_ENC_S_KEY, USER_ENC_P_KEY), and a **device key** (DEVICE_SIG_S_KEY, DEVICE_SIG_P_KEY). The application certifies user and device public keys with the organization's signature key and upload them on the server. Only the public part of the organization root key (ORG_ROOT_SIG_P_KEY) is uploaded to the metadata server, the secret part of the key is intentionally discarded, which makes it nonrecoverable.
 
 
 Adding a new User
@@ -30,7 +30,7 @@ Adding a new User
 
 The creation of a new user can only be done by an existing user, already registered in the organization and having the Administrator profile. Let's consider the case where Alice is Administrator and wants to register Bob:
 
-1. Alice signals to the back-end that Bob is invited to the organization and transmits his email address.
+1. Alice signals to the server that Bob is invited to the organization and transmits his email address.
 
 2. The metadata server sends an email to Bob with an invitation URL containing the organization ID and an unique identifier for the invitation canal.
 

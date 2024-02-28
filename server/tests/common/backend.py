@@ -5,7 +5,7 @@ from typing import AsyncGenerator, Iterator
 
 import pytest
 
-from parsec._parsec import BackendAddr
+from parsec._parsec import ParsecAddr
 from parsec.asgi import AsgiApp
 from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
@@ -26,7 +26,7 @@ def backend_config(
         db_max_connections=1,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
-        backend_addr=BackendAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
+        server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",

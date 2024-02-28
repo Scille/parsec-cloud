@@ -417,7 +417,7 @@ fn struct_client_info_js_to_rs<'a>(
         let js_val: Handle<JsString> = obj.get(cx, "organizationAddr")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -494,7 +494,7 @@ fn struct_client_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_organization_addr = JsString::try_new(cx, {
         let custom_to_rs_string =
-            |addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> {
+            |addr: libparsec::ParsecOrganizationAddr| -> Result<String, &'static str> {
                 Ok(addr.to_url().into())
             };
         match custom_to_rs_string(rs_obj.organization_addr) {
@@ -1122,7 +1122,7 @@ fn struct_new_invitation_info_js_to_rs<'a>(
         let js_val: Handle<JsString> = obj.get(cx, "addr")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -1164,7 +1164,7 @@ fn struct_new_invitation_info_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_addr = JsString::try_new(cx, {
         let custom_to_rs_string =
-            |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+            |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
                 Ok(addr.to_url().into())
             };
         match custom_to_rs_string(rs_obj.addr) {
@@ -3550,7 +3550,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "addr")?;
                 {
                     let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -3604,7 +3604,7 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 let js_val: Handle<JsString> = obj.get(cx, "addr")?;
                 {
                     let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -3680,7 +3680,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_addr = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
                         Ok(addr.to_url().into())
                     };
                 match custom_to_rs_string(addr) {
@@ -3726,7 +3726,7 @@ fn variant_invite_list_item_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_addr = JsString::try_new(cx, {
                 let custom_to_rs_string =
-                    |addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> {
+                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
                         Ok(addr.to_url().into())
                     };
                 match custom_to_rs_string(addr) {
@@ -3808,16 +3808,16 @@ fn variant_parse_backend_addr_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ParsedBackendAddr
+// ParsedParsecAddr
 
 #[allow(dead_code)]
-fn variant_parsed_backend_addr_js_to_rs<'a>(
+fn variant_parsed_parsec_addr_js_to_rs<'a>(
     cx: &mut impl Context<'a>,
     obj: Handle<'a, JsObject>,
-) -> NeonResult<libparsec::ParsedBackendAddr> {
+) -> NeonResult<libparsec::ParsedParsecAddr> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
-        "ParsedBackendAddrInvitationDevice" => {
+        "ParsedParsecAddrInvitationDevice" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3860,7 +3860,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::InvitationDevice {
+            Ok(libparsec::ParsedParsecAddr::InvitationDevice {
                 hostname,
                 port,
                 use_ssl,
@@ -3868,7 +3868,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "ParsedBackendAddrInvitationUser" => {
+        "ParsedParsecAddrInvitationUser" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3911,7 +3911,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::InvitationUser {
+            Ok(libparsec::ParsedParsecAddr::InvitationUser {
                 hostname,
                 port,
                 use_ssl,
@@ -3919,7 +3919,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "ParsedBackendAddrOrganization" => {
+        "ParsedParsecAddrOrganization" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3948,14 +3948,14 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::Organization {
+            Ok(libparsec::ParsedParsecAddr::Organization {
                 hostname,
                 port,
                 use_ssl,
                 organization_id,
             })
         }
-        "ParsedBackendAddrOrganizationBootstrap" => {
+        "ParsedParsecAddrOrganizationBootstrap" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -3995,7 +3995,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::OrganizationBootstrap {
+            Ok(libparsec::ParsedParsecAddr::OrganizationBootstrap {
                 hostname,
                 port,
                 use_ssl,
@@ -4003,7 +4003,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "ParsedBackendAddrOrganizationFileLink" => {
+        "ParsedParsecAddrOrganizationFileLink" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -4059,7 +4059,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::OrganizationFileLink {
+            Ok(libparsec::ParsedParsecAddr::OrganizationFileLink {
                 hostname,
                 port,
                 use_ssl,
@@ -4069,7 +4069,7 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 encrypted_timestamp,
             })
         }
-        "ParsedBackendAddrPkiEnrollment" => {
+        "ParsedParsecAddrPkiEnrollment" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -4098,14 +4098,14 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                     }
                 }
             };
-            Ok(libparsec::ParsedBackendAddr::PkiEnrollment {
+            Ok(libparsec::ParsedParsecAddr::PkiEnrollment {
                 hostname,
                 port,
                 use_ssl,
                 organization_id,
             })
         }
-        "ParsedBackendAddrServer" => {
+        "ParsedParsecAddrServer" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
                 js_val.value(cx)
@@ -4125,24 +4125,24 @@ fn variant_parsed_backend_addr_js_to_rs<'a>(
                 let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
                 js_val.value(cx)
             };
-            Ok(libparsec::ParsedBackendAddr::Server {
+            Ok(libparsec::ParsedParsecAddr::Server {
                 hostname,
                 port,
                 use_ssl,
             })
         }
-        _ => cx.throw_type_error("Object is not a ParsedBackendAddr"),
+        _ => cx.throw_type_error("Object is not a ParsedParsecAddr"),
     }
 }
 
 #[allow(dead_code)]
-fn variant_parsed_backend_addr_rs_to_js<'a>(
+fn variant_parsed_parsec_addr_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ParsedBackendAddr,
+    rs_obj: libparsec::ParsedParsecAddr,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
-        libparsec::ParsedBackendAddr::InvitationDevice {
+        libparsec::ParsedParsecAddr::InvitationDevice {
             hostname,
             port,
             use_ssl,
@@ -4150,7 +4150,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             token,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "ParsedBackendAddrInvitationDevice").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrInvitationDevice").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4171,7 +4171,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
         }
-        libparsec::ParsedBackendAddr::InvitationUser {
+        libparsec::ParsedParsecAddr::InvitationUser {
             hostname,
             port,
             use_ssl,
@@ -4179,7 +4179,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             token,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "ParsedBackendAddrInvitationUser").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrInvitationUser").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4200,14 +4200,14 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             .or_throw(cx)?;
             js_obj.set(cx, "token", js_token)?;
         }
-        libparsec::ParsedBackendAddr::Organization {
+        libparsec::ParsedParsecAddr::Organization {
             hostname,
             port,
             use_ssl,
             organization_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "ParsedBackendAddrOrganization").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrOrganization").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4218,7 +4218,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
             js_obj.set(cx, "organizationId", js_organization_id)?;
         }
-        libparsec::ParsedBackendAddr::OrganizationBootstrap {
+        libparsec::ParsedParsecAddr::OrganizationBootstrap {
             hostname,
             port,
             use_ssl,
@@ -4227,7 +4227,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             ..
         } => {
             let js_tag =
-                JsString::try_new(cx, "ParsedBackendAddrOrganizationBootstrap").or_throw(cx)?;
+                JsString::try_new(cx, "ParsedParsecAddrOrganizationBootstrap").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4243,7 +4243,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             };
             js_obj.set(cx, "token", js_token)?;
         }
-        libparsec::ParsedBackendAddr::OrganizationFileLink {
+        libparsec::ParsedParsecAddr::OrganizationFileLink {
             hostname,
             port,
             use_ssl,
@@ -4254,7 +4254,7 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             ..
         } => {
             let js_tag =
-                JsString::try_new(cx, "ParsedBackendAddrOrganizationFileLink").or_throw(cx)?;
+                JsString::try_new(cx, "ParsedParsecAddrOrganizationFileLink").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4297,14 +4297,14 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             };
             js_obj.set(cx, "encryptedTimestamp", js_encrypted_timestamp)?;
         }
-        libparsec::ParsedBackendAddr::PkiEnrollment {
+        libparsec::ParsedParsecAddr::PkiEnrollment {
             hostname,
             port,
             use_ssl,
             organization_id,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "ParsedBackendAddrPkiEnrollment").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrPkiEnrollment").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -4315,13 +4315,13 @@ fn variant_parsed_backend_addr_rs_to_js<'a>(
             let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
             js_obj.set(cx, "organizationId", js_organization_id)?;
         }
-        libparsec::ParsedBackendAddr::Server {
+        libparsec::ParsedParsecAddr::Server {
             hostname,
             port,
             use_ssl,
             ..
         } => {
-            let js_tag = JsString::try_new(cx, "ParsedBackendAddrServer").or_throw(cx)?;
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrServer").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;
@@ -5136,7 +5136,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsString>(2)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -5231,7 +5231,7 @@ fn build_backend_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResul
         let js_val = cx.argument::<JsString>(0)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -5251,7 +5251,7 @@ fn build_backend_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResul
     let ret = libparsec::build_backend_organization_bootstrap_addr(addr, organization_id);
     let js_ret = JsString::try_new(&mut cx, {
         let custom_to_rs_string =
-            |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> {
+            |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
                 Ok(addr.to_url().into())
             };
         match custom_to_rs_string(ret) {
@@ -5713,7 +5713,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsString>(2)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -8578,7 +8578,7 @@ fn parse_backend_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let js_obj = JsObject::new(&mut cx);
             let js_tag = JsBoolean::new(&mut cx, true);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = variant_parsed_backend_addr_rs_to_js(&mut cx, ok)?;
+            let js_value = variant_parsed_parsec_addr_rs_to_js(&mut cx, ok)?;
             js_obj.set(&mut cx, "value", js_value)?;
             js_obj
         }
@@ -8797,17 +8797,20 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     };
     let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
     let js_ret = match ret {
-    Some(elem) => {
-        JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-    match custom_to_rs_string(elem) {
-        Ok(ok) => ok,
-        Err(err) => return cx.throw_type_error(err),
-    }
-}).or_throw(&mut cx)?.as_value(&mut cx)
-    }
-    None => JsNull::new(&mut cx).as_value(&mut cx),
-};
+        Some(elem) => JsString::try_new(&mut cx, {
+            let custom_to_rs_string =
+                |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
+                    Ok(addr.to_url().into())
+                };
+            match custom_to_rs_string(elem) {
+                Ok(ok) => ok,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        })
+        .or_throw(&mut cx)?
+        .as_value(&mut cx),
+        None => JsNull::new(&mut cx).as_value(&mut cx),
+    };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
     Ok(promise)
@@ -8848,7 +8851,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         Some(v) => match v.downcast::<JsString, _>(&mut cx) {
             Ok(js_val) => Some({
                 let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string())
+                    libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string())
                 };
                 match custom_from_rs_string(js_val.value(&mut cx)) {
                     Ok(val) => val,

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use libparsec::{
     authenticated_cmds::latest::invite_new_user::{self, InviteNewUserRep},
-    get_default_config_dir, BackendInvitationAddr, InvitationType,
+    get_default_config_dir, InvitationType, ParsecInvitationAddr,
 };
 
 use crate::utils::*;
@@ -45,7 +45,7 @@ pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
             .await?;
 
         let url = match rep {
-            InviteNewUserRep::Ok { token, .. } => BackendInvitationAddr::new(
+            InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
                 device.organization_addr.clone(),
                 device.organization_id().clone(),
                 InvitationType::Device,

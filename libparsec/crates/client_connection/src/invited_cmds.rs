@@ -26,7 +26,7 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 pub struct InvitedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: BackendInvitationAddr,
+    addr: ParsecInvitationAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
@@ -35,7 +35,7 @@ pub struct InvitedCmds {
 impl InvitedCmds {
     pub fn new(
         config_dir: &Path,
-        addr: BackendInvitationAddr,
+        addr: ParsecInvitationAddr,
         proxy: ProxyConfig,
     ) -> anyhow::Result<Self> {
         let client = {
@@ -46,7 +46,7 @@ impl InvitedCmds {
         Ok(Self::from_client(client, config_dir, addr))
     }
 
-    pub fn from_client(client: Client, _config_dir: &Path, addr: BackendInvitationAddr) -> Self {
+    pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecInvitationAddr) -> Self {
         let url = addr.to_invited_url();
 
         #[cfg(feature = "test-with-testbed")]
@@ -61,7 +61,7 @@ impl InvitedCmds {
         }
     }
 
-    pub fn addr(&self) -> &BackendInvitationAddr {
+    pub fn addr(&self) -> &ParsecInvitationAddr {
         &self.addr
     }
 

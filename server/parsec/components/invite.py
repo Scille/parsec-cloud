@@ -18,7 +18,6 @@ import anyio
 from structlog.stdlib import get_logger
 
 from parsec._parsec import (
-    BackendInvitationAddr,
     DateTime,
     HashDigest,
     HumanHandle,
@@ -26,6 +25,7 @@ from parsec._parsec import (
     InvitationToken,
     InvitationType,
     OrganizationID,
+    ParsecInvitationAddr,
     PublicKey,
     UserID,
     authenticated_cmds,
@@ -332,11 +332,11 @@ class BaseInviteComponent:
         claimer_email: str,
         greeter_human_handle: HumanHandle,
     ) -> None | SendEmailBadOutcome:
-        if not self._config.backend_addr:
+        if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        invitation_url = BackendInvitationAddr.build(
-            backend_addr=self._config.backend_addr,
+        invitation_url = ParsecInvitationAddr.build(
+            server_addr=self._config.server_addr,
             organization_id=organization_id,
             invitation_type=InvitationType.USER,
             token=token,
@@ -349,7 +349,7 @@ class BaseInviteComponent:
             reply_to=greeter_human_handle.email,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            backend_url=self._config.backend_addr.to_http_domain_url(),
+            backend_url=self._config.server_addr.to_http_domain_url(),
         )
 
         await send_email(
@@ -365,11 +365,11 @@ class BaseInviteComponent:
         token: InvitationToken,
         email: str,
     ) -> None | SendEmailBadOutcome:
-        if not self._config.backend_addr:
+        if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        invitation_url = BackendInvitationAddr.build(
-            backend_addr=self._config.backend_addr,
+        invitation_url = ParsecInvitationAddr.build(
+            server_addr=self._config.server_addr,
             organization_id=organization_id,
             invitation_type=InvitationType.DEVICE,
             token=token,
@@ -382,7 +382,7 @@ class BaseInviteComponent:
             reply_to=None,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            backend_url=self._config.backend_addr.to_http_domain_url(),
+            backend_url=self._config.server_addr.to_http_domain_url(),
         )
 
         await send_email(

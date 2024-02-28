@@ -19,8 +19,8 @@ pub struct DisconnectProxyHandle {
 }
 
 impl DisconnectProxyHandle {
-    pub fn to_backend_addr(&self) -> BackendAddr {
-        BackendAddr::new("localhost".into(), Some(self.port), false)
+    pub fn to_backend_addr(&self) -> ParsecAddr {
+        ParsecAddr::new("localhost".into(), Some(self.port), false)
     }
 
     pub async fn disconnect(&self) {
@@ -41,14 +41,14 @@ enum Event {
     Disconnect,
 }
 
-pub async fn spawn(backend_addr: BackendAddr) -> io::Result<DisconnectProxyHandle> {
+pub async fn spawn(server_addr: ParsecAddr) -> io::Result<DisconnectProxyHandle> {
     let listener = TcpListener::bind(("localhost", 0)).await?;
     let port = listener.local_addr()?.port();
     let (tx_server_ready, rx_server_ready) = oneshot::channel();
     let (tx_disconnect, rx_disconnect) = mpsc::channel(1);
     let server = DisconnectProxyServer {
         listener,
-        backend_addr,
+        server_addr,
         notify_disconnect: rx_disconnect,
     };
     let handle = tokio::task::spawn(server.run(tx_server_ready));
@@ -71,13 +71,13 @@ pub async fn spawn(backend_addr: BackendAddr) -> io::Result<DisconnectProxyHandl
 
 struct DisconnectProxyServer {
     listener: TcpListener,
-    backend_addr: BackendAddr,
+    server_addr: ParsecAddr,
     notify_disconnect: mpsc::Receiver<Event>,
 }
 
 impl DisconnectProxyServer {
     async fn run(mut self, ready: oneshot::Sender<()>) -> io::Result<()> {
-        let url = self.backend_addr.to_http_url(None);
+        let url = self.server_addr.to_http_url(None);
         let server_addr = extract_url_domain_and_port(&url).ok_or_else(|| {
             io::Error::new(
                 io::ErrorKind::InvalidData,
@@ -106,11 +106,11 @@ impl DisconnectProxyServer {
                 }
             }?;
 
-            // We connect to the actual backend.
+            // We connect to the actual server.
             let mut server_socket = match TcpStream::connect(server_addr).await {
                 Ok(v) => v,
                 Err(e) => {
-                    eprintln!("Failed to connect to the backend: {e}");
+                    eprintln!("Failed to connect to the server: {e}");
                     drop(client_socket);
                     continue;
                 }

@@ -4,7 +4,7 @@ use clap::Args;
 use reqwest::Client;
 use serde_json::Value;
 
-use libparsec::{BackendAddr, BackendOrganizationBootstrapAddr, BootstrapToken, OrganizationID};
+use libparsec::{BootstrapToken, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
 
 use crate::utils::*;
 
@@ -15,7 +15,7 @@ pub struct CreateOrganization {
     organization_id: OrganizationID,
     /// Server address (e.g: parsec://127.0.0.1:6770?no_ssl=true)
     #[arg(short, long)]
-    addr: BackendAddr,
+    addr: ParsecAddr,
     /// Administration token
     #[arg(short, long)]
     token: String,
@@ -23,7 +23,7 @@ pub struct CreateOrganization {
 
 pub async fn create_organization_req(
     organization_id: &OrganizationID,
-    addr: &BackendAddr,
+    addr: &ParsecAddr,
     administration_token: &str,
 ) -> anyhow::Result<BootstrapToken> {
     let url = addr.to_http_url(Some("/administration/organizations"));
@@ -61,7 +61,7 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
     let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await?;
 
     let organization_addr =
-        BackendOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
+        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
     handle.stop_with_message(format!(
         "Organization bootstrap url: {YELLOW}{organization_addr}{RESET}"

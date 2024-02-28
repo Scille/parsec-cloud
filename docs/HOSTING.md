@@ -202,8 +202,8 @@ The log file to write to.
 
 ### Email
 
-- ``--backend-addr``
-- Environ: ``PARSEC_BACKEND_ADDR``
+- ``--server-addr``
+- Environ: ``PARSEC_SERVER_ADDR``
 
 URL to reach this server (typically used in invitation emails).
 
@@ -320,5 +320,5 @@ Equivalent to:
 ```txt
 --debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t
 --email-sender=no-reply@parsec.com --email-host=MOCKED
---backend-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)
+--server-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)
 ```

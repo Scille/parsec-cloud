@@ -13,7 +13,7 @@ import click
 from fastapi import BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from parsec._parsec import BackendAddr, OrganizationID
+from parsec._parsec import OrganizationID, ParsecAddr
 
 try:
     from parsec._parsec import testbed
@@ -163,7 +163,7 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 
 
 @asynccontextmanager
-async def testbed_backend_factory(backend_addr: BackendAddr) -> AsyncIterator[TestbedBackend]:
+async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[TestbedBackend]:
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
@@ -173,7 +173,7 @@ async def testbed_backend_factory(backend_addr: BackendAddr) -> AsyncIterator[Te
         db_max_connections=1,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
-        backend_addr=backend_addr,
+        server_addr=server_addr,
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=MockedBlockStoreConfig(),
         administration_token="s3cr3t",
@@ -213,12 +213,12 @@ async def testbed_backend_factory(backend_addr: BackendAddr) -> AsyncIterator[Te
     help="How long before the organization gets automatically removed",
 )
 @click.option(
-    "--backend-addr",
-    envvar="PARSEC_BACKEND_ADDR",
+    "--server-addr",
+    envvar="PARSEC_SERVER_ADDR",
     default="parsec://saas.parsec.invalid",
     show_default=True,
     metavar="URL",
-    type=BackendAddr.from_url,
+    type=ParsecAddr.from_url,
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
@@ -235,7 +235,7 @@ def testbed_cmd(
     host: str,
     port: int,
     orga_life_limit: float,
-    backend_addr: BackendAddr,
+    server_addr: ParsecAddr,
     stop_after_process: int | None,
     debug: bool,
 ) -> None:
@@ -260,7 +260,7 @@ def testbed_cmd(
 
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
-            async with testbed_backend_factory(backend_addr=backend_addr) as testbed:
+            async with testbed_backend_factory(server_addr=server_addr) as testbed:
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
                 click.secho(
