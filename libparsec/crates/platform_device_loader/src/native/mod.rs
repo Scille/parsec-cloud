@@ -302,7 +302,7 @@ pub async fn save_device(
     Ok(())
 }
 
-pub async fn change_authentification(
+pub async fn change_authentication(
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
 ) -> Result<(), ChangeAuthentificationError> {

@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use libparsec_platform_device_loader::{change_authentification, load_device, save_device};
+use libparsec_platform_device_loader::{change_authentication, load_device, save_device};
 use libparsec_testbed::TestbedEnv;
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
 use libparsec_tests_lite::prelude::*;
@@ -37,7 +37,7 @@ async fn same_key_file(tmp_path: TmpPath) {
         key_file: key_file.clone(),
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentification(Path::new(""), &access, &new_access, false)
+    change_authentication(Path::new(""), &access, &new_access, false)
         .await
         .unwrap();
 
@@ -87,7 +87,7 @@ async fn different_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    change_authentification(Path::new(""), &access, &new_access, false)
+    change_authentication(Path::new(""), &access, &new_access, false)
         .await
         .unwrap();
 
@@ -123,7 +123,7 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
         key_file,
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentification(&env.discriminant_dir, &current_access, &new_access, true)
+    change_authentication(&env.discriminant_dir, &current_access, &new_access, true)
         .await
         .unwrap();
 
@@ -152,7 +152,7 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
         key_file: new_key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    change_authentification(&env.discriminant_dir, &current_access, &new_access, true)
+    change_authentication(&env.discriminant_dir, &current_access, &new_access, true)
         .await
         .unwrap();
 

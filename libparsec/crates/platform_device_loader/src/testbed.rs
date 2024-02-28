@@ -272,7 +272,7 @@ pub(crate) fn maybe_save_device(
         })
 }
 
-pub(crate) fn maybe_change_authentification(
+pub(crate) fn maybe_change_authentication(
     config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,

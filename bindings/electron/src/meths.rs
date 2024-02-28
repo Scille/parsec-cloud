@@ -2252,35 +2252,35 @@ fn variant_client_cancel_invitation_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ClientChangeAuthentificationError
+// ClientChangeAuthenticationError
 
 #[allow(dead_code)]
-fn variant_client_change_authentification_error_rs_to_js<'a>(
+fn variant_client_change_authentication_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ClientChangeAuthentificationError,
+    rs_obj: libparsec::ClientChangeAuthenticationError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ClientChangeAuthentificationError::DecryptionFailed { .. } => {
-            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorDecryptionFailed")
+        libparsec::ClientChangeAuthenticationError::DecryptionFailed { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientChangeAuthenticationErrorDecryptionFailed")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientChangeAuthentificationError::Internal { .. } => {
+        libparsec::ClientChangeAuthenticationError::Internal { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ClientChangeAuthentificationErrorInternal").or_throw(cx)?;
+                JsString::try_new(cx, "ClientChangeAuthenticationErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientChangeAuthentificationError::InvalidData { .. } => {
-            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorInvalidData")
-                .or_throw(cx)?;
+        libparsec::ClientChangeAuthenticationError::InvalidData { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientChangeAuthenticationErrorInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ClientChangeAuthentificationError::InvalidPath { .. } => {
-            let js_tag = JsString::try_new(cx, "ClientChangeAuthentificationErrorInvalidPath")
-                .or_throw(cx)?;
+        libparsec::ClientChangeAuthenticationError::InvalidPath { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientChangeAuthenticationErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -6138,8 +6138,8 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// client_change_authentification
-fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// client_change_authentication
+fn client_change_authentication(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let client_config = {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
@@ -6152,10 +6152,6 @@ fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise
         let js_val = cx.argument::<JsObject>(2)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
-    let with_testbed_template = {
-        let js_val = cx.argument::<JsBoolean>(3)?;
-        js_val.value(&mut cx)
-    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -6164,13 +6160,9 @@ fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::client_change_authentification(
-                client_config,
-                current_auth,
-                new_auth,
-                with_testbed_template,
-            )
-            .await;
+            let ret =
+                libparsec::client_change_authentication(client_config, current_auth, new_auth)
+                    .await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -6191,7 +6183,7 @@ fn client_change_authentification(mut cx: FunctionContext) -> JsResult<JsPromise
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
-                            variant_client_change_authentification_error_rs_to_js(&mut cx, err)?;
+                            variant_client_change_authentication_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -7034,10 +7026,6 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         let js_val = cx.argument::<JsObject>(2)?;
         variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
     };
-    let with_testbed_template = {
-        let js_val = cx.argument::<JsBoolean>(3)?;
-        js_val.value(&mut cx)
-    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -7046,9 +7034,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret =
-                libparsec::client_start(config, on_event_callback, access, with_testbed_template)
-                    .await;
+            let ret = libparsec::client_start(config, on_event_callback, access).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -9778,10 +9764,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         claimer_user_initial_do_wait_peer,
     )?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
-    cx.export_function(
-        "clientChangeAuthentification",
-        client_change_authentification,
-    )?;
+    cx.export_function("clientChangeAuthentication", client_change_authentication)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
     cx.export_function("clientInfo", client_info)?;

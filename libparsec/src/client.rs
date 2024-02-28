@@ -68,18 +68,13 @@ pub async fn client_start(
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
     access: DeviceAccessStrategy,
-    with_testbed_template: bool,
 ) -> Result<Handle, ClientStartError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     // 1) Load the device
 
-    let device = libparsec_platform_device_loader::load_device(
-        &config.config_dir,
-        &access,
-        with_testbed_template,
-    )
-    .await?;
+    let device =
+        libparsec_platform_device_loader::load_device(&config.config_dir, &access, true).await?;
 
     // 2) Make sure another client is not running this device
 
@@ -250,7 +245,7 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
  */
 
 #[derive(Debug, thiserror::Error)]
-pub enum ClientChangeAuthentificationError {
+pub enum ClientChangeAuthenticationError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -261,7 +256,7 @@ pub enum ClientChangeAuthentificationError {
     Internal(#[from] anyhow::Error),
 }
 
-impl From<ChangeAuthentificationError> for ClientChangeAuthentificationError {
+impl From<ChangeAuthentificationError> for ClientChangeAuthenticationError {
     fn from(value: ChangeAuthentificationError) -> Self {
         match value {
             ChangeAuthentificationError::InvalidPath(e) => Self::InvalidPath(e),
@@ -274,22 +269,21 @@ impl From<ChangeAuthentificationError> for ClientChangeAuthentificationError {
     }
 }
 
-pub async fn client_change_authentification(
+pub async fn client_change_authentication(
     config: ClientConfig,
     current_auth: DeviceAccessStrategy,
     new_auth: DeviceSaveStrategy,
-    with_testbed_template: bool,
-) -> Result<(), ClientChangeAuthentificationError> {
+) -> Result<(), ClientChangeAuthenticationError> {
     let key_file = match &current_auth {
         DeviceAccessStrategy::Password { key_file, .. } => key_file.clone(),
         DeviceAccessStrategy::Smartcard { key_file } => key_file.clone(),
     };
 
-    libparsec_platform_device_loader::change_authentification(
+    libparsec_platform_device_loader::change_authentication(
         &config.config_dir,
         &current_auth,
         &new_auth.into_access(key_file),
-        with_testbed_template,
+        true,
     )
     .await?;
     Ok(())

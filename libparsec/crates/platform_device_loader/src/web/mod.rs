@@ -34,7 +34,7 @@ pub async fn save_device(
     todo!()
 }
 
-pub async fn change_authentification(
+pub async fn change_authentication(
     _current_access: &DeviceAccessStrategy,
     _new_access: &DeviceAccessStrategy,
 ) -> Result<(), ChangeAuthentificationError> {

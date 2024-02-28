@@ -2415,42 +2415,42 @@ fn variant_client_cancel_invitation_error_rs_to_js(
     Ok(js_obj)
 }
 
-// ClientChangeAuthentificationError
+// ClientChangeAuthenticationError
 
 #[allow(dead_code)]
-fn variant_client_change_authentification_error_rs_to_js(
-    rs_obj: libparsec::ClientChangeAuthentificationError,
+fn variant_client_change_authentication_error_rs_to_js(
+    rs_obj: libparsec::ClientChangeAuthenticationError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ClientChangeAuthentificationError::DecryptionFailed { .. } => {
+        libparsec::ClientChangeAuthenticationError::DecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientChangeAuthentificationErrorDecryptionFailed".into(),
+                &"ClientChangeAuthenticationErrorDecryptionFailed".into(),
             )?;
         }
-        libparsec::ClientChangeAuthentificationError::Internal { .. } => {
+        libparsec::ClientChangeAuthenticationError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientChangeAuthentificationErrorInternal".into(),
+                &"ClientChangeAuthenticationErrorInternal".into(),
             )?;
         }
-        libparsec::ClientChangeAuthentificationError::InvalidData { .. } => {
+        libparsec::ClientChangeAuthenticationError::InvalidData { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientChangeAuthentificationErrorInvalidData".into(),
+                &"ClientChangeAuthenticationErrorInvalidData".into(),
             )?;
         }
-        libparsec::ClientChangeAuthentificationError::InvalidPath { .. } => {
+        libparsec::ClientChangeAuthenticationError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientChangeAuthentificationErrorInvalidPath".into(),
+                &"ClientChangeAuthenticationErrorInvalidPath".into(),
             )?;
         }
     }
@@ -6306,14 +6306,13 @@ pub fn clientCancelInvitation(client: u32, token: String) -> Promise {
     })
 }
 
-// client_change_authentification
+// client_change_authentication
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientChangeAuthentification(
+pub fn clientChangeAuthentication(
     client_config: Object,
     current_auth: Object,
     new_auth: Object,
-    with_testbed_template: bool,
 ) -> Promise {
     future_to_promise(async move {
         let client_config = client_config.into();
@@ -6325,13 +6324,8 @@ pub fn clientChangeAuthentification(
         let new_auth = new_auth.into();
         let new_auth = variant_device_save_strategy_js_to_rs(new_auth)?;
 
-        let ret = libparsec::client_change_authentification(
-            client_config,
-            current_auth,
-            new_auth,
-            with_testbed_template,
-        )
-        .await;
+        let ret =
+            libparsec::client_change_authentication(client_config, current_auth, new_auth).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -6346,7 +6340,7 @@ pub fn clientChangeAuthentification(
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_client_change_authentification_error_rs_to_js(err)?;
+                let js_err = variant_client_change_authentication_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -6777,12 +6771,7 @@ pub fn clientShareWorkspace(
 // client_start
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn clientStart(
-    config: Object,
-    on_event_callback: Function,
-    access: Object,
-    with_testbed_template: bool,
-) -> Promise {
+pub fn clientStart(config: Object, on_event_callback: Function, access: Object) -> Promise {
     future_to_promise(async move {
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
@@ -6799,8 +6788,7 @@ pub fn clientStart(
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;
 
-        let ret =
-            libparsec::client_start(config, on_event_callback, access, with_testbed_template).await;
+        let ret = libparsec::client_start(config, on_event_callback, access).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
