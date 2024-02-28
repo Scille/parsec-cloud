@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from enum import Enum
+from enum import auto
 from typing import assert_never
 
 import httpx
@@ -22,6 +22,7 @@ from parsec.api import api
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.client_context import AuthenticatedClientContext
 from parsec.components.realm import BadKeyIndex
+from parsec.types import BadOutcomeEnum
 
 logger = get_logger()
 
@@ -50,55 +51,48 @@ class VlobReadResult:
     needed_realm_certificate_timestamp: DateTime
 
 
-VlobCreateBadOutcome = Enum(
-    "VlobCreateBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "REALM_NOT_FOUND",
-        "VLOB_ALREADY_EXISTS",
-        "ORGANIZATION_NOT_SEQUESTERED",
-    ),
-)
-VlobUpdateBadOutcome = Enum(
-    "VlobUpdateBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "VLOB_NOT_FOUND",
-        "BAD_VLOB_VERSION",
-        "ORGANIZATION_NOT_SEQUESTERED",
-    ),
-)
-VlobReadAsUserBadOutcome = Enum(
-    "VlobReadBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "REALM_NOT_FOUND",
-    ),
-)
-VlobPollChangesAsUserBadOutcome = Enum(
-    "VlobPollChangesBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "REALM_NOT_FOUND",
-    ),
-)
-VlobListVersionsBadOutcome = Enum("VlobListVersionsBadOutcome", ("ORGANIZATION_NOT_FOUND",))
+class VlobCreateBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
+    VLOB_ALREADY_EXISTS = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
+
+
+class VlobUpdateBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    VLOB_NOT_FOUND = auto()
+    BAD_VLOB_VERSION = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
+
+
+class VlobReadAsUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
+
+
+class VlobPollChangesAsUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
+
+
+class VlobListVersionsBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
 
 
 class BaseVlobComponent:

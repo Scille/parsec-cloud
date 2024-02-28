@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, auto
 
 from parsec._parsec import (
     CryptoError,
@@ -15,6 +15,7 @@ from parsec._parsec import (
     VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp
+from parsec.types import BadOutcomeEnum
 
 
 class SequesterServiceType(Enum):
@@ -59,10 +60,8 @@ class WebhookSequesterService(BaseSequesterService):
     webhook_url: str
 
 
-SequesterCreateServiceValidateBadOutcome = Enum(
-    "SequesterCreateServiceValidateBadOutcome",
-    ("INVALID_CERTIFICATE",),
-)
+class SequesterCreateServiceValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
 
 
 def sequester_create_service_validate(
@@ -85,10 +84,8 @@ def sequester_create_service_validate(
     return certif
 
 
-SequesterRevokeServiceValidateBadOutcome = Enum(
-    "SequesterRevokeServiceValidateBadOutcome",
-    ("INVALID_CERTIFICATE",),
-)
+class SequesterRevokeServiceValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
 
 
 def sequester_revoke_service_validate(
@@ -111,43 +108,35 @@ def sequester_revoke_service_validate(
     return certif
 
 
-SequesterCreateServiceStoreBadOutcome = Enum(
-    "SequesterCreateServiceStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "SEQUESTER_DISABLED",
-        "SEQUESTER_SERVICE_ALREADY_EXISTS",
-    ),
-)
-SequesterRevokeServiceStoreBadOutcome = Enum(
-    "SequesterCreateServiceStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "SEQUESTER_DISABLED",
-        "SEQUESTER_SERVICE_NOT_FOUND",
-        "SEQUESTER_SERVICE_ALREADY_REVOKED",
-    ),
-)
-SequesterGetServiceBadOutcome = Enum(
-    "SequesterGetServiceBadOutcome",
-    ("ORGANIZATION_NOT_FOUND", "SEQUESTER_DISABLED", "SEQUESTER_SERVICE_NOT_FOUND"),
-)
-SequesterGetOrganizationServicesBadOutcome = Enum(
-    "SequesterGetOrganizationServicesBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "SEQUESTER_DISABLED",
-    ),
-)
-SequesterDumpRealmBadOutcome = Enum(
-    "SequesterDumpRealmBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "SEQUESTER_DISABLED",
-        "SEQUESTER_SERVICE_NOT_FOUND",
-        "SEQUESTER_SERVICE_NOT_STORAGE",
-    ),
-)
+class SequesterCreateServiceStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
+    SEQUESTER_SERVICE_ALREADY_EXISTS = auto()
+
+
+class SequesterRevokeServiceStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
+    SEQUESTER_SERVICE_NOT_FOUND = auto()
+    SEQUESTER_SERVICE_ALREADY_REVOKED = auto()
+
+
+class SequesterGetServiceBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
+    SEQUESTER_SERVICE_NOT_FOUND = auto()
+
+
+class SequesterGetOrganizationServicesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
+
+
+class SequesterDumpRealmBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_DISABLED = auto()
+    SEQUESTER_SERVICE_NOT_FOUND = auto()
+    SEQUESTER_SERVICE_NOT_STORAGE = auto()
 
 
 class BaseSequesterComponent:

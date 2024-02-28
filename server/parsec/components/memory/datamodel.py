@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, auto
 from typing import Iterable
 
 from parsec._parsec import (
@@ -216,13 +216,9 @@ class MemoryDevice:
     redacted_device_certificate: bytes = field(repr=False)
 
 
-MemoryInvitationDeletedReason = Enum(
-    "MemoryPkiEnrollmentState",
-    (
-        "FINISHED",
-        "CANCELLED",
-    ),
-)
+class MemoryInvitationDeletedReason(Enum):
+    FINISHED = auto()
+    CANCELLED = auto()
 
 
 @dataclass(slots=True)
@@ -245,15 +241,11 @@ class MemoryInvitation:
         return self.deleted_on is not None
 
 
-MemoryPkiEnrollmentState = Enum(
-    "MemoryPkiEnrollmentState",
-    (
-        "SUBMITTED",
-        "ACCEPTED",
-        "REJECTED",
-        "CANCELLED",
-    ),
-)
+class MemoryPkiEnrollmentState(Enum):
+    SUBMITTED = auto()
+    ACCEPTED = auto()
+    REJECTED = auto()
+    CANCELLED = auto()
 
 
 @dataclass(slots=True)

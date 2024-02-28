@@ -5,7 +5,7 @@ import asyncio
 from collections import deque
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import auto
 from typing import AsyncIterator, Callable, Iterator, Sequence, Type, assert_never
 from unittest.mock import ANY
 from uuid import UUID
@@ -25,6 +25,7 @@ from parsec.events import (
     EventUserRevokedOrFrozen,
     EventUserUpdated,
 )
+from parsec.types import BadOutcomeEnum
 
 PER_CLIENT_MAX_BUFFER_EVENTS = 100
 
@@ -232,15 +233,11 @@ class RegisteredClient:
     cancel_scope: anyio.CancelScope
 
 
-SseAPiEventsListenBadOutcome = Enum(
-    "SseAPiEventsListenBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-    ),
-)
+class SseAPiEventsListenBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
 
 
 class BaseEventsComponent:
