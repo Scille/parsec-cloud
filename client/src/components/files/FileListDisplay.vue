@@ -36,7 +36,7 @@
         :entry="folder"
         :show-checkbox="someSelected"
         @click="$emit('click', folder, $event)"
-        @menu-click="$emit('menuClick', folder, $event)"
+        @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
         @selected-change="onSelectedChange"
       />
       <file-list-item
@@ -45,7 +45,7 @@
         :entry="file"
         :show-checkbox="someSelected"
         @click="$emit('click', file, $event)"
-        @menu-click="$emit('menuClick', file, $event)"
+        @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
         @selected-change="onSelectedChange"
       />
       <file-list-item-importing
@@ -78,7 +78,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
-  (e: 'menuClick', entry: EntryModel, event: Event): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
 }>();
 
 const selectedCount = ref(0);

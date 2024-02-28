@@ -6,20 +6,22 @@
     class="user-list-item"
     lines="full"
     :detail="false"
-    :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
+    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="user-selected">
+      <!-- eslint-disable vue/no-mutating-props -->
       <ion-checkbox
         aria-label=""
-        v-model="isSelected"
-        v-show="isSelected || isHovered || showCheckbox"
+        v-model="user.isSelected"
+        v-show="user.isSelected || isHovered || showCheckbox"
         class="checkbox"
         @click.stop
-        @ion-change="$emit('select', user, isSelected)"
+        @ion-change="$emit('select', user, $event.detail.checked)"
       />
+      <!-- eslint-enable vue/no-mutating-props -->
     </div>
 
     <!-- user name -->
@@ -31,6 +33,11 @@
           :user-name="user.humanHandle.label"
         />
       </ion-label>
+    </div>
+
+    <!-- user status -->
+    <div class="user-status">
+      <user-status-tag :revoked="user.isRevoked()" />
     </div>
 
     <!-- user mail -->
@@ -74,35 +81,29 @@
 import { formatTimeSince } from '@/common/date';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserInfo } from '@/parsec';
+import UserStatusTag from '@/components/users/UserStatusTag.vue';
+import { UserModel } from '@/components/users/types';
 import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
-const isSelected = ref(false);
 const menuOpened = ref(false);
 
 const props = defineProps<{
-  user: UserInfo;
+  user: UserModel;
   showCheckbox: boolean;
   hideOptions?: boolean;
 }>();
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, user: UserInfo): void;
-  (e: 'menuClick', event: Event, user: UserInfo, onFinished: () => void): void;
-  (e: 'select', user: UserInfo, selected: boolean): void;
+  (e: 'click', event: Event, user: UserModel): void;
+  (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'select', user: UserModel, selected: boolean): void;
 }>();
-
-function getUser(): UserInfo {
-  return props.user;
-}
 
 defineExpose({
   isHovered,
-  isSelected,
-  getUser,
 });
 
 async function onOptionsClick(event: Event): Promise<void> {
@@ -128,6 +129,13 @@ async function onOptionsClick(event: Event): Promise<void> {
   min-width: 11.25rem;
   white-space: nowrap;
   overflow: hidden;
+}
+
+.user-status {
+  min-width: 3rem;
+  width: auto;
+  flex-grow: 0;
+  color: var(--parsec-color-light-secondary-grey);
 }
 
 .user-email {

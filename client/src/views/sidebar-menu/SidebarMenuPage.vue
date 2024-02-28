@@ -44,7 +44,7 @@
               <div
                 class="organization-card-manageBtn"
                 v-show="userInfo && userInfo.currentProfile != UserProfile.Outsider"
-                @click="navigateTo(Routes.ActiveUsers)"
+                @click="navigateTo(Routes.Users)"
               >
                 <ion-text
                   class="subtitles-sm"
@@ -144,7 +144,7 @@
                 lines="none"
                 class="sidebar-item users-title menu-default"
                 :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
-                @click="navigateTo(Routes.ActiveUsers)"
+                @click="navigateTo(Routes.Users)"
               >
                 <ion-icon
                   :icon="people"
@@ -152,37 +152,6 @@
                 />
                 <ion-label>{{ $t('SideMenu.users') }}</ion-label>
               </ion-item>
-
-              <ion-list class="user-menu">
-                <ion-item
-                  lines="none"
-                  button
-                  class="user-menu__item body"
-                  :class="currentRouteIs(Routes.ActiveUsers) ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="navigateTo(Routes.ActiveUsers)"
-                >
-                  <ion-label>{{ $t('SideMenu.activeUsers') }}</ion-label>
-                </ion-item>
-                <ion-item
-                  lines="none"
-                  button
-                  class="user-menu__item body"
-                  :class="currentRouteIs(Routes.RevokedUsers) ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="navigateTo(Routes.RevokedUsers)"
-                >
-                  <ion-label>{{ $t('SideMenu.revokedUsers') }}</ion-label>
-                </ion-item>
-                <ion-item
-                  v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
-                  lines="none"
-                  button
-                  class="user-menu__item body"
-                  :class="currentRouteIs(Routes.Invitations) ? 'user-menu-selected' : 'user-menu-not-selected'"
-                  @click="navigateTo(Routes.Invitations)"
-                >
-                  <ion-label>{{ $t('SideMenu.invitations') }}</ion-label>
-                </ion-item>
-              </ion-list>
             </ion-list>
             <!-- storage -->
             <ion-list
@@ -684,60 +653,5 @@ ion-menu {
   display: flex;
   flex-direction: column;
   color: var(--parsec-color-light-secondary-inversed-contrast);
-}
-
-.user-menu {
-  padding: 0.5rem 2.5rem;
-
-  &__item {
-    --background: none;
-    position: relative;
-    opacity: 0.5;
-    min-height: 100%;
-    --background-hover: none;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    &.user-menu-selected {
-      opacity: 1;
-      width: fit-content;
-
-      ion-label {
-        position: relative;
-        overflow: visible;
-        width: auto;
-
-        &::after {
-          content: '';
-          position: absolute;
-          left: 0;
-          bottom: -4px;
-          height: 1.5px;
-          width: 100%;
-          background: var(--parsec-color-light-primary-100);
-          border-radius: var(--parsec-radius-6);
-        }
-      }
-    }
-
-    &::part(native) {
-      padding: 0;
-    }
-
-    ion-label {
-      --color: var(--parsec-color-light-primary-100);
-    }
-  }
-}
-
-.user-menu-selected {
-  text-decoration-color: var(--parsec-color-light-primary-30);
-}
-
-.user-menu-not-selected {
-  color: var(--parsec-color-light-primary-100);
-  text-decoration: none;
 }
 </style>

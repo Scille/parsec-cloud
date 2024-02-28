@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { UserModel } from '@/components/users';
 import UserListItem from '@/components/users/UserListItem.vue';
-import { UserInfo, UserProfile } from '@/parsec';
+import { UserProfile } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
@@ -18,7 +19,7 @@ describe('User List Item', () => {
   });
 
   it('Display item for user', () => {
-    const USER: UserInfo = {
+    const USER: UserModel = {
       id: '0',
       humanHandle: { label: 'John Smith', email: 'john.smith@gmail.com' },
       currentProfile: UserProfile.Standard,
@@ -27,6 +28,7 @@ describe('User List Item', () => {
       revokedOn: null,
       revokedBy: null,
       isRevoked: () => false,
+      isSelected: false,
     };
 
     const wrapper = mount(UserListItem, {
@@ -48,7 +50,6 @@ describe('User List Item', () => {
       },
     });
 
-    expect((wrapper.vm as any).isSelected).to.be.false;
     // "JoJohn Smith" because the user is displayed with an avatar before their name,
     // currently using the first two letters for the avatar, (Jo) John Smith
     expect(wrapper.get('.user-name__label').text()).to.equal('JoJohn Smith');

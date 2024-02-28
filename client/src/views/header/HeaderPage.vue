@@ -258,12 +258,8 @@ function getTitleForRoute(): string {
       return translate('HeaderPage.titles.settings');
     case Routes.Devices:
       return translate('HeaderPage.titles.devices');
-    case Routes.ActiveUsers:
-      return translate('HeaderPage.titles.users.activeUsers');
-    case Routes.RevokedUsers:
-      return translate('HeaderPage.titles.users.revokedUsers');
-    case Routes.Invitations:
-      return translate('HeaderPage.titles.users.invitations');
+    case Routes.Users:
+      return translate('HeaderPage.titles.users');
     case Routes.Storage:
       return translate('HeaderPage.titles.organization.storage');
     case Routes.Organization:

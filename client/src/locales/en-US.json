@@ -209,11 +209,7 @@
             "settings": "Settings",
             "devices": "Devices",
             "about": "About",
-            "users": {
-                "activeUsers": "Active users",
-                "revokedUsers": "Revoked users",
-                "invitations": "Invitations"
-            },
+            "users": "Users",
             "organization": {
                 "storage": "Storage",
                 "information": "Information"
@@ -722,6 +718,7 @@
         "listDisplayTitles": {
             "name": "Name",
             "email": "Email",
+            "status": "Status",
             "profile": "Profile",
             "joinedOn": "Joined On"
         },
@@ -740,6 +737,10 @@
                 "label": "Outsider",
                 "description": "Can only access shared workspaces."
             }
+        },
+        "status": {
+            "active": "Active",
+            "revoked": "Revoked"
         },
         "success": {
             "email": "Email address:",

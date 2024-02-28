@@ -8,28 +8,27 @@
     >
       <!-- contextual menu -->
       <ms-action-bar id="activate-users-ms-action-bar">
-        <div v-if="selectedUsersCount === 0">
+        <div v-show="users.selectedCount() === 0 && isAdmin">
           <ms-action-bar-button
             :icon="personAdd"
             id="button-invite-user"
             :button-label="$t('UsersPage.inviteUser')"
             @click="inviteUser()"
-            v-show="isAdmin"
           />
         </div>
         <!-- revoke or view common workspace -->
-        <div v-else-if="selectedUsersCount >= 1">
+        <div v-show="activeSelectedCount >= 1 && isAdmin">
           <ms-action-bar-button
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
-            :button-label="$t('UsersPage.userContextMenu.actionRevoke', selectedUsersCount)"
+            :button-label="$t('UsersPage.userContextMenu.actionRevoke', activeSelectedCount)"
             @click="revokeSelectedUsers"
-            v-show="isAdmin"
           />
+        </div>
+        <div v-show="users.selectedCount() === 1">
           <ms-action-bar-button
             :icon="informationCircle"
-            v-show="selectedUsersCount === 1"
             id="button-common-workspaces"
             :button-label="$t('UsersPage.userContextMenu.actionDetails')"
             @click="openSelectedUserDetails"
@@ -39,27 +38,24 @@
           <div class="counter">
             <ion-text
               class="body"
-              v-if="selectedUsersCount === 0"
+              v-show="users.selectedCount() === 0"
             >
-              {{ $t('UsersPage.itemCount', { count: userList.length }, userList.length) }}
+              {{ $t('UsersPage.itemCount', { count: users.usersCount() + 1 }, users.usersCount() + 1) }}
             </ion-text>
             <ion-text
               class="body item-selected"
-              v-if="selectedUsersCount !== 0"
+              v-show="users.selectedCount() > 0"
             >
-              {{ $t('UsersPage.userSelectedCount', { count: selectedUsersCount }, selectedUsersCount) }}
+              {{ $t('UsersPage.userSelectedCount', { count: users.selectedCount() }, users.selectedCount()) }}
             </ion-text>
           </div>
-          <ms-grid-list-toggle
-            v-model="displayView"
-            @update:model-value="resetSelection()"
-          />
+          <ms-grid-list-toggle v-model="displayView" />
         </div>
       </ms-action-bar>
       <!-- users -->
       <div class="users-container scroll">
         <div
-          v-if="userList.length === 0"
+          v-show="users.usersCount() === 0"
           class="no-active body-lg"
         >
           <div class="no-active-content">
@@ -69,72 +65,22 @@
             </ion-text>
           </div>
         </div>
-        <div v-else>
-          <div v-if="displayView === DisplayState.List">
-            <ion-list class="list">
-              <ion-list-header
-                class="user-list-header"
-                lines="full"
-              >
-                <ion-label class="user-list-header__label label-selected">
-                  <ion-checkbox
-                    aria-label=""
-                    class="checkbox"
-                    @ion-change="selectAllUsers($event.detail.checked)"
-                    v-model="allUsersSelected"
-                    :indeterminate="indeterminateState"
-                  />
-                </ion-label>
-                <ion-label class="user-list-header__label cell-title label-name">
-                  {{ $t('UsersPage.listDisplayTitles.name') }}
-                </ion-label>
-                <ion-label class="user-list-header__label cell-title label-email">
-                  {{ $t('UsersPage.listDisplayTitles.email') }}
-                </ion-label>
-                <ion-label class="user-list-header__label cell-title label-profile">
-                  {{ $t('UsersPage.listDisplayTitles.profile') }}
-                </ion-label>
-                <ion-label class="user-list-header__label cell-title label-joined-on">
-                  {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
-                </ion-label>
-                <ion-label class="user-list-header__label cell-title label-space" />
-              </ion-list-header>
-              <user-list-item
-                :user="userList.find((user) => isCurrentUser(user.id))!"
-                :show-checkbox="false"
-                :disabled="true"
-                :hide-options="true"
-              />
-              <user-list-item
-                v-for="user in userList.filter((user) => !isCurrentUser(user.id))"
-                :key="user.id"
-                :user="user"
-                :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-                @menu-click="openUserContextMenu"
-                @select="onUserSelect"
-                ref="userListItemRefs"
-              />
-            </ion-list>
+        <div v-show="users.usersCount() > 0">
+          <div v-if="displayView === DisplayState.List && currentUser">
+            <user-list-display
+              :users="users"
+              :current-user="currentUser"
+              @menu-click="openUserContextMenu"
+            />
           </div>
           <div
-            v-else
+            v-else-if="currentUser"
             class="users-container-grid"
           >
-            <user-card
-              :disabled="true"
-              :user="userList.find((user) => isCurrentUser(user.id))!"
-              :show-checkbox="false"
-              :show-options="false"
-            />
-            <user-card
-              v-for="user in userList.filter((user) => !isCurrentUser(user.id))"
-              :key="user.id"
-              :user="user"
-              :show-checkbox="selectedUsersCount > 0 || allUsersSelected"
-              :show-options="selectedUsersCount === 0"
+            <user-grid-display
+              :users="users"
+              :current-user="currentUser"
               @menu-click="openUserContextMenu"
-              @select="onUserSelect"
-              ref="userGridItemRefs"
             />
           </div>
         </div>
@@ -144,117 +90,52 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, askQuestion } from '@/components/core';
+import { emailValidator } from '@/common/validators';
+import {
+  Answer,
+  DisplayState,
+  MsActionBar,
+  MsActionBarButton,
+  MsGridListToggle,
+  askQuestion,
+  getTextInputFromUser,
+} from '@/components/core';
 import { MsImage, NoActiveUser } from '@/components/core/ms-image';
-import UserCard from '@/components/users/UserCard.vue';
-import UserListItem from '@/components/users/UserListItem.vue';
+import { UserCollection, UserModel } from '@/components/users';
 import {
   ClientInfo,
+  ClientNewUserInvitationErrorTag,
+  InvitationEmailSentStatus,
   UserID,
   UserInfo,
   UserProfile,
   getClientInfo as parsecGetClientInfo,
+  inviteUser as parsecInviteUser,
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { Routes, navigateTo, watchRoute } from '@/router';
+import { getCurrentRouteQuery, watchRoute } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
-import {
-  IonCheckbox,
-  IonContent,
-  IonLabel,
-  IonList,
-  IonListHeader,
-  IonPage,
-  IonText,
-  modalController,
-  popoverController,
-} from '@ionic/vue';
+import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
+import UserListDisplay from '@/views/users/UserListDisplay.vue';
+import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const displayView = ref(DisplayState.List);
-const userList: Ref<UserInfo[]> = ref([]);
-const userListItemRefs: Ref<(typeof UserListItem)[]> = ref([]);
-const userGridItemRefs: Ref<(typeof UserCard)[]> = ref([]);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const informationManager: InformationManager = inject(InformationKey)!;
 
-const allUsersSelected = computed({
-  // -1 to exclude the current user
-  get: (): boolean => selectedUsersCount.value === userList.value.length - 1,
-  set: (_val) => _val,
+const users = ref(new UserCollection());
+const currentUser: Ref<UserModel | null> = ref(null);
+
+const activeSelectedCount = computed(() => {
+  return users.value.selectedCount() - users.value.revokedSelectedCount();
 });
-
-const indeterminateState = computed({
-  // -1 to exclude the current user
-  get: (): boolean => selectedUsersCount.value > 0 && selectedUsersCount.value < userList.value.length - 1,
-  set: (_val) => _val,
-});
-
-const selectedUsersCount = computed(() => {
-  if (displayView.value === DisplayState.List) {
-    return userListItemRefs.value.filter((item) => item.isSelected).length;
-  } else {
-    return userGridItemRefs.value.filter((item) => item.isSelected).length;
-  }
-});
-
-function getSelectedUsers(): UserInfo[] {
-  const selectedUsers: UserInfo[] = [];
-
-  if (displayView.value === DisplayState.List) {
-    for (const item of userListItemRefs.value) {
-      if (item.isSelected) {
-        selectedUsers.push(item.getUser());
-      }
-    }
-  } else {
-    for (const item of userGridItemRefs.value) {
-      if (item.isSelected) {
-        selectedUsers.push(item.getUser());
-      }
-    }
-  }
-  return selectedUsers;
-}
-
-async function inviteUser(): Promise<void> {
-  await navigateTo(Routes.Invitations, { query: { openInvite: true } });
-}
-
-function onUserSelect(_user: UserInfo, _selected: boolean): void {
-  if (selectedUsersCount.value === 0) {
-    selectAllUsers(false);
-  }
-}
-
-function selectAllUsers(checked: boolean): void {
-  if (displayView.value === DisplayState.List) {
-    for (const item of userListItemRefs.value || []) {
-      item.isSelected = checked;
-      if (checked) {
-        item.showCheckbox = true;
-      } else {
-        item.showCheckbox = false;
-      }
-    }
-  } else {
-    for (const item of userGridItemRefs.value || []) {
-      item.isSelected = checked;
-      if (checked) {
-        item.showCheckbox = true;
-      } else {
-        item.showCheckbox = false;
-      }
-    }
-  }
-}
 
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
@@ -292,7 +173,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
 }
 
 async function revokeSelectedUsers(): Promise<void> {
-  const selectedUsers = getSelectedUsers();
+  const selectedUsers = users.value.getSelectedUsers();
 
   if (selectedUsers.length === 1) {
     return await revokeUser(selectedUsers[0]);
@@ -312,7 +193,7 @@ async function revokeSelectedUsers(): Promise<void> {
   }
   let errorCount = 0;
 
-  for (const user of getSelectedUsers()) {
+  for (const user of selectedUsers) {
     const result = await parsecRevokeUser(user.id);
     if (!result.ok) {
       errorCount += 1;
@@ -360,7 +241,7 @@ async function openUserDetails(user: UserInfo): Promise<void> {
 }
 
 async function openSelectedUserDetails(): Promise<void> {
-  const selectedUsers = getSelectedUsers();
+  const selectedUsers = users.value.getSelectedUsers();
 
   if (selectedUsers.length === 1) {
     return await openUserDetails(selectedUsers[0]);
@@ -409,15 +290,82 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   }
 }
 
-function resetSelection(): void {
-  userListItemRefs.value = [];
-  userGridItemRefs.value = [];
+async function inviteUser(): Promise<void> {
+  const email = await getTextInputFromUser({
+    title: translate('UsersPage.CreateUserInvitationModal.pageTitle'),
+    trim: true,
+    validator: emailValidator,
+    inputLabel: translate('UsersPage.CreateUserInvitationModal.label'),
+    placeholder: translate('UsersPage.CreateUserInvitationModal.placeholder'),
+    okButtonText: translate('UsersPage.CreateUserInvitationModal.create'),
+  });
+  if (!email) {
+    return;
+  }
+  const result = await parsecInviteUser(email);
+  if (result.ok) {
+    if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
+      informationManager.present(
+        new Information({
+          message: translate('UsersPage.invitation.inviteSuccessMailSent', {
+            email: email,
+          }),
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    } else {
+      informationManager.present(
+        new Information({
+          message: translate('UsersPage.invitation.inviteSuccessNoMail', {
+            email: email,
+          }),
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  } else {
+    let message = '';
+    switch (result.error.tag) {
+      case ClientNewUserInvitationErrorTag.AlreadyMember:
+        message = translate('UsersPage.invitation.inviteFailedAlreadyMember');
+        break;
+      case ClientNewUserInvitationErrorTag.Offline:
+        message = translate('UsersPage.invitation.inviteFailedOffline');
+        break;
+      case ClientNewUserInvitationErrorTag.NotAllowed:
+        message = translate('UsersPage.invitation.inviteFailedNotAllowed');
+        break;
+      default:
+        message = translate('UsersPage.invitation.inviteFailedUnknown', {
+          reason: result.error.tag,
+        });
+        break;
+    }
+    informationManager.present(
+      new Information({
+        message,
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function refreshUserList(): Promise<void> {
-  const result = await parsecListUsers();
+  const result = await parsecListUsers(false);
+  const newUsers: UserModel[] = [];
   if (result.ok) {
-    userList.value = result.value;
+    for (const user of result.value) {
+      (user as UserModel).isSelected = false;
+      if (!isCurrentUser(user.id)) {
+        newUsers.push(user as UserModel);
+      } else {
+        currentUser.value = user as UserModel;
+      }
+    }
+    users.value.replace(newUsers);
   } else {
     informationManager.present(
       new Information({
@@ -427,10 +375,14 @@ async function refreshUserList(): Promise<void> {
       PresentationMode.Toast,
     );
   }
-  selectAllUsers(false);
 }
 
 const routeWatchCancel = watchRoute(async () => {
+  const query = getCurrentRouteQuery();
+  console.log(query);
+  if (query.openInvite) {
+    await inviteUser();
+  }
   await refreshUserList();
 });
 
@@ -442,6 +394,10 @@ onMounted(async (): Promise<void> => {
     isAdmin.value = clientInfo.value.currentProfile === UserProfile.Admin;
   }
   await refreshUserList();
+  const query = getCurrentRouteQuery();
+  if (query.openInvite) {
+    await inviteUser();
+  }
 });
 
 onUnmounted(async () => {
@@ -468,54 +424,6 @@ onUnmounted(async () => {
     gap: 1rem;
     align-items: center;
     padding: 2rem 1rem;
-  }
-}
-
-.user-list-header {
-  &__label {
-    padding: 0 1rem;
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-
-  .label-selected {
-    min-width: 4rem;
-    flex-grow: 0;
-    display: flex;
-    align-items: center;
-    justify-content: end;
-  }
-
-  .label-name {
-    width: 100%;
-    max-width: 20vw;
-    min-width: 11.25rem;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .label-email {
-    min-width: 17.5rem;
-    flex-grow: 0;
-  }
-
-  .label-profile {
-    min-width: 11.5rem;
-    max-width: 10vw;
-    flex-grow: 2;
-  }
-
-  .label-joined-on {
-    min-width: 11.25rem;
-    flex-grow: 0;
-  }
-
-  .label-space {
-    min-width: 4rem;
-    flex-grow: 0;
-    margin-left: auto;
-    margin-right: 1rem;
   }
 }
 

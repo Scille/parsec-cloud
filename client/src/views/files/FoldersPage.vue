@@ -782,7 +782,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function openEntryContextMenu(entry: parsec.EntryStat, event: Event, onFinished?: () => void): Promise<void> {
+async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFinished?: () => void): Promise<void> {
   hotkeyManager.disableGroup(Groups.Documents);
   const popover = await popoverController.create({
     component: FileContextMenu,

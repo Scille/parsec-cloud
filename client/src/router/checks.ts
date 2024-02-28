@@ -46,7 +46,7 @@ export function currentRouteIsWorkspaceRoute(workspaceId: WorkspaceID): boolean 
 }
 
 export function currentRouteIsUserRoute(): boolean {
-  return currentRouteIsOneOf([Routes.ActiveUsers, Routes.RevokedUsers, Routes.Invitations]);
+  return currentRouteIsOneOf([Routes.Users]);
 }
 
 export function currentRouteIsOrganizationManagementRoute(): boolean {
