@@ -129,7 +129,7 @@ async function selectAll(selected: boolean): Promise<void> {
   }
 
   .label-status {
-    min-width: 3rem;
+    min-width: 6rem;
     flex-grow: 0;
   }
 
