@@ -38,9 +38,7 @@ describe('Check user details modal', () => {
   });
 
   it('Tests no common workspaces', () => {
-    cy.get('.user-menu__item').eq(1).contains('Revoked').click();
-    cy.get('.revoked-users-container').find('.user-list-item').should('have.length', 1);
-    cy.get('.revoked-users-container').find('.user-list-item').eq(0).find('.options-button').invoke('show').click();
+    cy.get('.users-container').find('.user-list-item').last().realHover().find('.options-button').invoke('show').click();
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems');
     cy.get('@menuItems').eq(1).contains('View details').click();
     cy.get('.user-details-modal').as('modal').find('ion-header').contains('User details');

@@ -16,17 +16,9 @@
 </template>
 
 <script setup lang="ts">
-import { emailValidator } from '@/common/validators';
-import { Answer, MsModalResult, askQuestion, getTextInputFromUser } from '@/components/core';
-import {
-  ClientCancelInvitationErrorTag,
-  ClientNewUserInvitationErrorTag,
-  InvitationEmailSentStatus,
-  UserInvitation,
-  cancelInvitation,
-  listUserInvitations,
-  inviteUser as parsecInviteUser,
-} from '@/parsec';
+import { Answer, MsModalResult, askQuestion } from '@/components/core';
+import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
+import { Routes, navigateTo } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
@@ -67,7 +59,8 @@ async function openInvitationsPopover(event: Event): Promise<void> {
     } else if (data.action === 'cancel') {
       await cancelUserInvitation(data.invitation);
     } else if (data.action === 'invite') {
-      await inviteUser();
+      await navigateTo(Routes.Users, { query: { openInvite: true } });
+      await updateInvitations();
     }
   }
 }
@@ -132,74 +125,6 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
   await modal.onWillDismiss();
   await modal.dismiss();
   await updateInvitations();
-}
-
-async function inviteUser(): Promise<void> {
-  const email = await getTextInputFromUser({
-    title: translate('UsersPage.CreateUserInvitationModal.pageTitle'),
-    trim: true,
-    validator: emailValidator,
-    inputLabel: translate('UsersPage.CreateUserInvitationModal.label'),
-    placeholder: translate('UsersPage.CreateUserInvitationModal.placeholder'),
-    okButtonText: translate('UsersPage.CreateUserInvitationModal.create'),
-  });
-
-  if (!email) {
-    return;
-  }
-
-  const result = await parsecInviteUser(email);
-
-  if (result.ok) {
-    await updateInvitations();
-    if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
-      informationManager.present(
-        new Information({
-          message: translate('UsersPage.invitation.inviteSuccessMailSent', {
-            email: email,
-          }),
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: translate('UsersPage.invitation.inviteSuccessNoMail', {
-            email: email,
-          }),
-          level: InformationLevel.Success,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else {
-    let message = '';
-    switch (result.error.tag) {
-      case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = translate('UsersPage.invitation.inviteFailedAlreadyMember');
-        break;
-      case ClientNewUserInvitationErrorTag.Offline:
-        message = translate('UsersPage.invitation.inviteFailedOffline');
-        break;
-      case ClientNewUserInvitationErrorTag.NotAllowed:
-        message = translate('UsersPage.invitation.inviteFailedNotAllowed');
-        break;
-      default:
-        message = translate('UsersPage.invitation.inviteFailedUnknown', {
-          reason: result.error.tag,
-        });
-        break;
-    }
-
-    informationManager.present(
-      new Information({
-        message,
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
 }
 </script>
 

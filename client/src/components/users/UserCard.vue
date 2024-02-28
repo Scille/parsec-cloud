@@ -4,20 +4,22 @@
   <ion-item
     class="user-card-item ion-no-padding"
     :detail="false"
-    :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
+    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
     <div class="card-checkbox">
+      <!-- eslint-disable vue/no-mutating-props -->
       <ion-checkbox
         aria-label=""
-        v-model="isSelected"
-        v-if="isSelected || isHovered || showCheckbox"
+        v-model="user.isSelected"
+        v-if="user.isSelected || isHovered || showCheckbox"
         class="checkbox"
         @click.stop
-        @ion-change="$emit('select', user, isSelected)"
+        @ion-change="$emit('select', user, $event.detail.checked)"
       />
+      <!-- eslint-enable vue/no-mutating-props -->
     </div>
     <div
       class="card-option"
@@ -46,34 +48,27 @@
 <script setup lang="ts">
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserInfo } from '@/parsec';
+import { UserModel } from '@/components/users/types';
 import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isHovered = ref(false);
-const isSelected = ref(false);
 const menuOpened = ref(false);
 
 const emits = defineEmits<{
-  (e: 'click', event: Event, user: UserInfo): void;
-  (e: 'menuClick', event: Event, user: UserInfo, onFinished: () => void): void;
-  (e: 'select', user: UserInfo, selected: boolean): void;
+  (e: 'click', event: Event, user: UserModel): void;
+  (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
+  (e: 'select', user: UserModel, selected: boolean): void;
 }>();
 
 const props = defineProps<{
-  user: UserInfo;
+  user: UserModel;
   showCheckbox: boolean;
 }>();
 
-function getUser(): UserInfo {
-  return props.user;
-}
-
 defineExpose({
   isHovered,
-  isSelected,
-  getUser,
 });
 
 async function onOptionsClick(event: Event): Promise<void> {

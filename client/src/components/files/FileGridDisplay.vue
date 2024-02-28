@@ -9,7 +9,7 @@
       :entry="folder"
       :show-checkbox="hasSelected()"
       @click="$emit('click', folder, $event)"
-      @menu-click="$emit('menuClick', folder, $event)"
+      @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
     />
     <file-card
       class="folder-grid-item"
@@ -18,7 +18,7 @@
       :entry="file"
       :show-checkbox="hasSelected()"
       @click="$emit('click', file, $event)"
-      @menu-click="$emit('menuClick', file, $event)"
+      @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
     />
 
     <file-card-importing
@@ -63,7 +63,7 @@ const props = defineProps<{
 
 defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
-  (e: 'menuClick', entry: EntryModel, event: Event): void;
+  (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
 }>();
 
 function hasSelected(): boolean {

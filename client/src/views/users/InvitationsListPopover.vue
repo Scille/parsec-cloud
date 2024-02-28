@@ -14,6 +14,7 @@
           @click="onInviteClick"
           class="invitations-list-header__button"
           size="small"
+          v-show="!currentRouteIsUserRoute()"
         >
           <ion-icon
             slot="start"
@@ -48,6 +49,7 @@
 import { MsModalResult } from '@/components/core';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
 import { UserInvitation, listUserInvitations } from '@/parsec';
+import { currentRouteIsUserRoute } from '@/router';
 import { IonButton, IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';

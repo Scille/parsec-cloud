@@ -209,11 +209,7 @@
             "settings": "Paramètres",
             "devices": "Appareils",
             "about": "À propos",
-            "users": {
-                "activeUsers": "Utilisateurs actifs",
-                "revokedUsers": "Utilisateurs révoqués",
-                "invitations": "Invitations"
-            },
+            "users": "Utilisateurs",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -722,6 +718,7 @@
         "listDisplayTitles": {
             "name": "Nom",
             "email": "Email",
+            "status": "Statut",
             "profile": "Profil",
             "joinedOn": "Rejoint le"
         },
@@ -740,6 +737,10 @@
                 "label": "Externe",
                 "description": "Peut uniquement accéder aux espaces de travail qui lui sont partagés."
             }
+        },
+        "status": {
+            "active": "Actif",
+            "revoked": "Révoqué"
         },
         "success": {
             "email": "Adresse mail :",
