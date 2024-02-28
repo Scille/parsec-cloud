@@ -182,7 +182,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 realm_id,
                 user_id: user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"<encrypted>".to_vec(),
@@ -545,7 +545,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 user_id: user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"realm_role1".to_vec(),
@@ -561,7 +561,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 user_id: user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"realm_role2".to_vec(),
@@ -577,7 +577,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id: other_realm_id,
                 user_id: user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"other_realm_role".to_vec(),
@@ -593,7 +593,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id: realm_id,
                 user_id: other_user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"realm_role_other_user".to_vec(),
@@ -1117,7 +1117,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 realm_id,
                 user_id: user_id.clone(),
                 // Not meaningful for the test
-                author: CertificateSignerOwned::Root,
+                author: device_id.clone(),
                 role: None,
             },
             b"<encrypted>".to_vec(),

@@ -258,37 +258,6 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn authored_by_root(env: &TestbedEnv) {
-    let (env, realm_id) =
-        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
-    let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
-
-    let (alice_realm_role_certif, _) = env.get_last_realm_role_certificate("alice", realm_id);
-
-    let mut alice_realm_role_certif_authored_by_root = (*alice_realm_role_certif).clone();
-    alice_realm_role_certif_authored_by_root.author = CertificateSignerOwned::Root;
-    let alice_realm_role_signed_authored_by_root =
-        Bytes::from(alice_realm_role_certif_authored_by_root.dump_and_sign(&alice.signing_key));
-
-    let err = ops
-        .add_certificates_batch(
-            &env.get_common_certificates_signed(),
-            &[],
-            &[],
-            &HashMap::from([(realm_id, vec![alice_realm_role_signed_authored_by_root])]),
-        )
-        .await
-        .unwrap_err();
-
-    p_assert_matches!(
-        err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::Corrupted { .. })
-    )
-}
-
-#[parsec_test(testbed = "minimal")]
 async fn initial_realm_role_not_signed_by_self(env: &TestbedEnv) {
     let (env, realm_id) = env.customize_with_map(|builder| {
         builder.new_user("bob");
@@ -300,8 +269,7 @@ async fn initial_realm_role_not_signed_by_self(env: &TestbedEnv) {
     let (bob_realm_role_certif, _) = env.get_last_realm_role_certificate("bob", realm_id);
 
     let mut bob_realm_role_certif_authored_by_alice = (*bob_realm_role_certif).clone();
-    bob_realm_role_certif_authored_by_alice.author =
-        CertificateSignerOwned::User("alice@dev1".try_into().unwrap());
+    bob_realm_role_certif_authored_by_alice.author = "alice@dev1".try_into().unwrap();
     let bob_realm_role_signed_authored_by_alice =
         Bytes::from(bob_realm_role_certif_authored_by_alice.dump_and_sign(&alice.signing_key));
 

@@ -3,8 +3,11 @@
     "type": "realm_role_certificate",
     "other_fields": [
         {
+            // This field used to be `RequiredOption<DeviceID>` up until Parsec 3.0
+            // however this was an error in definition (as root is only ever used to
+            // sign the initial user & device certificate during organization bootstrap)
             "name": "author",
-            "type": "RequiredOption<DeviceID>"
+            "type": "DeviceID"
         },
         {
             "name": "timestamp",

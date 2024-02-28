@@ -123,7 +123,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    CertificateSignerRef::User(&alice.device_id),
+                    &alice.device_id,
                     Some(alice.user_realm_id),
                     Some(alice.user_id()),
                 )

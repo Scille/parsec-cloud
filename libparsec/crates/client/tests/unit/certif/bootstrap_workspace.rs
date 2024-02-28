@@ -37,7 +37,7 @@ async fn ok_full_bootstrap(env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    CertificateSignerRef::User(&alice.device_id),
+                    &alice.device_id,
                     Some(realm_id),
                     Some(alice.user_id()),
                 )
@@ -166,7 +166,7 @@ async fn ok_partial_bootstrap_realm_created(env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    CertificateSignerRef::User(&alice.device_id),
+                    &alice.device_id,
                     Some(realm_id),
                     Some(alice.user_id()),
                 )

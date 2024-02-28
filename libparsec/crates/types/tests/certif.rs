@@ -93,7 +93,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_role_certificate = RealmRoleCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: alice.device_id.clone(),
         timestamp,
         user_id: bob.user_id().to_owned(),
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
@@ -103,7 +103,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         format!("{:?}", realm_role_certificate),
         concat!(
             "RealmRoleCertificate {",
-            " author: User(DeviceID(\"alice@dev1\")),",
+            " author: DeviceID(\"alice@dev1\"),",
             " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
             " realm_id: VlobID(60478445-0642-426b-91eb-89242f54fa52),",
             " user_id: UserID(\"bob\"),",
@@ -883,14 +883,14 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let certif = RealmRoleCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        &alice.device_id,
         None,
         None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: alice.device_id.clone(),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
@@ -899,10 +899,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     p_assert_eq!(certif, expected);
 
     let unsecure_certif = RealmRoleCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(
-        unsecure_certif.author(),
-        &CertificateSignerOwned::User(alice.device_id.clone())
-    );
+    p_assert_eq!(unsecure_certif.author(), &alice.device_id,);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -922,7 +919,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let certif2 = RealmRoleCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        &alice.device_id,
         None,
         None,
     )
@@ -938,7 +935,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         RealmRoleCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            CertificateSignerRef::Root,
+            &alice.device_id,
             None,
             None
         ),
@@ -966,14 +963,14 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let certif = RealmRoleCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        &alice.device_id,
         None,
         None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: alice.device_id.clone(),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         user_id: bob.user_id().to_owned(),
@@ -988,7 +985,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let certif2 = RealmRoleCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        CertificateSignerRef::User(&alice.device_id),
+        &alice.device_id,
         None,
         None,
     )

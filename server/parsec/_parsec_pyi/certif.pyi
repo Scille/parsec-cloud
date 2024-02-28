@@ -161,14 +161,14 @@ class UserUpdateCertificate:
 class RealmRoleCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
         user_id: UserID,
         role: RealmRole | None,
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property

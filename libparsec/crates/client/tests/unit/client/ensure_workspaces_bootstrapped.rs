@@ -41,7 +41,7 @@ async fn ok(env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    CertificateSignerRef::User(&alice.device_id),
+                    &alice.device_id,
                     Some(wksp1_id),
                     Some(alice.user_id()),
                 )
