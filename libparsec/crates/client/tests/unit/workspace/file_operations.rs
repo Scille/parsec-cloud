@@ -23,7 +23,7 @@ fn padded_data(data: &[u8], start: i64, stop: i64) -> Vec<u8> {
 }
 
 #[derive(Default)]
-struct Storage(HashMap<ChunkID, Vec<u8>>);
+pub struct Storage(pub HashMap<ChunkID, Vec<u8>>);
 
 impl Storage {
     fn read_chunk_data(&self, chunk_id: ChunkID) -> &[u8] {
@@ -72,14 +72,14 @@ impl Storage {
 
     // File operations
 
-    fn read(&self, manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<u8> {
+    pub fn read(&self, manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<u8> {
         let (written_size, chunks) = prepare_read(manifest, size, offset);
         let data = self.build_data(&chunks.collect::<Vec<_>>());
         p_assert_eq!(data.len() as u64, written_size);
         data
     }
 
-    fn write(
+    pub fn write(
         &mut self,
         manifest: &mut LocalFileManifest,
         content: &[u8],
@@ -101,7 +101,7 @@ impl Storage {
         }
     }
 
-    fn resize(&mut self, manifest: &mut LocalFileManifest, size: u64, timestamp: DateTime) {
+    pub fn resize(&mut self, manifest: &mut LocalFileManifest, size: u64, timestamp: DateTime) {
         // No-op
         if size == manifest.size {
             return;
@@ -117,7 +117,7 @@ impl Storage {
         }
     }
 
-    fn reshape(&mut self, manifest: &mut LocalFileManifest) {
+    pub fn reshape(&mut self, manifest: &mut LocalFileManifest) {
         let operations: Vec<_> = prepare_reshape(manifest).collect();
         for operation in operations {
             let data = self.build_data(&operation.source());
