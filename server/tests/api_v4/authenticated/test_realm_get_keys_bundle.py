@@ -49,6 +49,7 @@ async def test_authenticated_realm_get_keys_bundle_access_not_available_for_auth
         now=t1,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_key_rotation_certificate=certif,
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: b"<alice keys bundle 2 access>",
@@ -72,6 +73,7 @@ async def test_authenticated_realm_get_keys_bundle_access_not_available_for_auth
         now=t2,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         key_index=2,
         realm_role_certificate=certif,
         recipient_keys_bundle_access=b"<mallory keys bundle 2 access>",
