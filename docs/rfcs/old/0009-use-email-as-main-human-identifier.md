@@ -32,13 +32,13 @@ However 1) the name can be hard to tell and 2) other human may try to do imperso
 ## The solution
 
 The email would be used as a top level identifier on the human (a HumanHandle).
-A given HumanHandle would be referenced by n Users, with at most 1 non-revoked User (this should be enforced by the backend API).
+A given HumanHandle would be referenced by n Users, with at most 1 non-revoked User (this should be enforced by the server API).
 
 The UserCertificate would store the HumanHandle (and a human_name field to store the full name of the human provided by himself during enrollment and verified by the inviter as discussed in [RFC-0008](0008-smoothening-the-invite-process.md)).
 
 For compatibility, those fields should be optional (defaulting if needed to the UserID).
 
-The HumanHandle would be usable in the Backend API for user_get and user_find. Those APIs could be provided with a regular UserID or a HumanHandle, in which case HumanHandle is a pointer on the current non-revoked User.
+The HumanHandle would be usable in the Server API for user_get and user_find. Those APIs could be provided with a regular UserID or a HumanHandle, in which case HumanHandle is a pointer on the current non-revoked User.
 
 ## Get a readable UserID from the email ?
 
@@ -48,10 +48,10 @@ However email is a really complex format (for instance ```!#$%&'*+-/=?^_`.{|}~@e
 So it would mean to develop a cooking format to turn email into a readable UserID.
 
 On top of that this would increase the complexity when creating a User for a human which already had a previous User revoked (given we would want to have both Users with the same UserID name pattern).
-We need to have a cooking format not using randomness or to interrogate the backend (with all the concurrency issues that implies...) to get the previous UserID corresponding of the given email and patch it.
+We need to have a cooking format not using randomness or to interrogate the server (with all the concurrency issues that implies...) to get the previous UserID corresponding of the given email and patch it.
 
 In the end I don't think it's worth it to go this way, using UUID for UserID linked to HumanHandle is just much simpler.
-Another interesting point is using UUID may allow us to totally hide human identity to the Backend in the future (by having a secured entity separated from the backend storing the UserCertificates).
+Another interesting point is using UUID may allow us to totally hide human identity to the Server in the future (by having a secured entity separated from the server storing the UserCertificates).
 
 ## Non-human actors
 

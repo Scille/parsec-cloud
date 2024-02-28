@@ -18,12 +18,12 @@ class RequireGreaterTimestamp:
     strictly_greater_than: DateTime
 
 
-# Those values are used by the backend to determine whether the client
+# Those values are used by the server to determine whether the client
 # operates in an acceptable time window. A client early offset of
 # 300 seconds means that a timestamp provided by the client cannot be
-# higher than 300 seconds after the backend current time. A client late
+# higher than 300 seconds after the server current time. A client late
 # offset of 320 seconds means that a timestamp provided by the client
-# cannot be lower than 320 seconds before the backend current time.
+# cannot be lower than 320 seconds before the server current time.
 #
 # Those values used to be higher (30 minutes), but an argument for
 # decreasing this value is that client clocks are usually either
@@ -45,9 +45,9 @@ class RequireGreaterTimestamp:
 # moment. Typically:
 # - The client generates a timestamp
 # - The client generates a request including this timestamp
-# - The client sends this request to the backend over the network
-# - The backend receives and processes the request
-# - The backend compares the timestamp to its current time
+# - The client sends this request to the server over the network
+# - The server receives and processes the request
+# - The server compares the timestamp to its current time
 # The worst case scenario would be a slow client machine, a large
 # request, a slow network connection and a busy server. Even
 # in this scenario, a 10 seconds time difference is hardly
@@ -55,7 +55,7 @@ class RequireGreaterTimestamp:
 #
 # This is an argument for making this comparison asymmetrical: with no
 # clock drift between client and server, communication latency makes data
-# arriving to the backend always in the past. Hence we should be more
+# arriving to the server always in the past. Hence we should be more
 # forgiving of data in the past than in the future !
 #
 # A more radical check would be to not accept more than 10 seconds

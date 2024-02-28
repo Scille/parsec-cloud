@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Execute the script line `bash packaging/backend/build.sh ...`
+# Execute the script line `bash server/packaging/server/build.sh ...`
 
 set -e -o pipefail
 

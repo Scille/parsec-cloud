@@ -364,7 +364,7 @@ class WorkspaceExport:
         Raises nothing (errors are passed through `on_progress` callback)
         """
         # In theory we should use `parsec.core.fs.path.FsPath` instead of `pathlib.PurePath`.
-        # However we cannot import stuff from `parsec.core` if only backend dependencies are
+        # However we cannot import stuff from `parsec.core` if only server dependencies are
         # installed. In our case `PurePath` is good enough given we need anything fancy anyway.
         fs_path = PurePath("/")
         try:

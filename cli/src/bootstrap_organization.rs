@@ -4,8 +4,8 @@ use clap::Args;
 use std::sync::Arc;
 
 use libparsec::{
-    AvailableDevice, BackendOrganizationBootstrapAddr, ClientConfig, DeviceLabel,
-    DeviceSaveStrategy, HumanHandle, Password,
+    AvailableDevice, ClientConfig, DeviceLabel, DeviceSaveStrategy, HumanHandle,
+    ParsecOrganizationBootstrapAddr, Password,
 };
 
 use crate::utils::*;
@@ -15,7 +15,7 @@ pub struct BootstrapOrganization {
     /// Bootstrap address
     /// (e.g: parsec://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
     #[arg(short, long)]
-    addr: BackendOrganizationBootstrapAddr,
+    addr: ParsecOrganizationBootstrapAddr,
     /// Device label
     #[arg(short, long)]
     device_label: DeviceLabel,
@@ -29,7 +29,7 @@ pub struct BootstrapOrganization {
 
 pub async fn bootstrap_organization_req(
     client_config: ClientConfig,
-    addr: BackendOrganizationBootstrapAddr,
+    addr: ParsecOrganizationBootstrapAddr,
     device_label: DeviceLabel,
     human_handle: HumanHandle,
     password: Password,

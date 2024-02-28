@@ -8,7 +8,7 @@ pub enum ParseBackendAddrError {
     InvalidUrl,
 }
 
-pub enum ParsedBackendAddr {
+pub enum ParsedParsecAddr {
     Server {
         hostname: String,
         port: u32,
@@ -58,11 +58,11 @@ pub enum ParsedBackendAddr {
     },
 }
 
-pub fn parse_backend_addr(url: &str) -> Result<ParsedBackendAddr, ParseBackendAddrError> {
-    if let Ok(addr) = BackendActionAddr::from_any(url) {
+pub fn parse_backend_addr(url: &str) -> Result<ParsedParsecAddr, ParseBackendAddrError> {
+    if let Ok(addr) = ParsecActionAddr::from_any(url) {
         Ok(match addr {
-            BackendActionAddr::OrganizationBootstrap(addr) => {
-                ParsedBackendAddr::OrganizationBootstrap {
+            ParsecActionAddr::OrganizationBootstrap(addr) => {
+                ParsedParsecAddr::OrganizationBootstrap {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
                     use_ssl: addr.use_ssl(),
@@ -70,8 +70,8 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedBackendAddr, ParseBackendAd
                     token: addr.token().map(|x| x.to_string()),
                 }
             }
-            BackendActionAddr::OrganizationFileLink(addr) => {
-                ParsedBackendAddr::OrganizationFileLink {
+            ParsecActionAddr::OrganizationFileLink(addr) => {
+                ParsedParsecAddr::OrganizationFileLink {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
                     use_ssl: addr.use_ssl(),
@@ -81,15 +81,15 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedBackendAddr, ParseBackendAd
                     workspace_id: addr.workspace_id(),
                 }
             }
-            BackendActionAddr::Invitation(addr) => match addr.invitation_type() {
-                InvitationType::User => ParsedBackendAddr::InvitationUser {
+            ParsecActionAddr::Invitation(addr) => match addr.invitation_type() {
+                InvitationType::User => ParsedParsecAddr::InvitationUser {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     token: addr.token(),
                 },
-                InvitationType::Device => ParsedBackendAddr::InvitationDevice {
+                InvitationType::Device => ParsedParsecAddr::InvitationDevice {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
                     use_ssl: addr.use_ssl(),
@@ -97,22 +97,22 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedBackendAddr, ParseBackendAd
                     token: addr.token(),
                 },
             },
-            BackendActionAddr::PkiEnrollment(addr) => ParsedBackendAddr::PkiEnrollment {
+            ParsecActionAddr::PkiEnrollment(addr) => ParsedParsecAddr::PkiEnrollment {
                 hostname: addr.hostname().into(),
                 port: addr.port() as u32,
                 use_ssl: addr.use_ssl(),
                 organization_id: addr.organization_id().clone(),
             },
         })
-    } else if let Ok(addr) = BackendOrganizationAddr::from_any(url) {
-        Ok(ParsedBackendAddr::Organization {
+    } else if let Ok(addr) = ParsecOrganizationAddr::from_any(url) {
+        Ok(ParsedParsecAddr::Organization {
             hostname: addr.hostname().into(),
             port: addr.port() as u32,
             use_ssl: addr.use_ssl(),
             organization_id: addr.organization_id().clone(),
         })
-    } else if let Ok(addr) = BackendAddr::from_any(url) {
-        Ok(ParsedBackendAddr::Server {
+    } else if let Ok(addr) = ParsecAddr::from_any(url) {
+        Ok(ParsedParsecAddr::Server {
             hostname: addr.hostname().into(),
             port: addr.port() as u32,
             use_ssl: addr.use_ssl(),
@@ -123,8 +123,8 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedBackendAddr, ParseBackendAd
 }
 
 pub fn build_backend_organization_bootstrap_addr(
-    addr: BackendAddr,
+    addr: ParsecAddr,
     organization_id: OrganizationID,
-) -> BackendOrganizationBootstrapAddr {
-    BackendOrganizationBootstrapAddr::new(addr, organization_id, None)
+) -> ParsecOrganizationBootstrapAddr {
+    ParsecOrganizationBootstrapAddr::new(addr, organization_id, None)
 }

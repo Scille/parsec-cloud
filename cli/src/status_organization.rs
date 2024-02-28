@@ -4,7 +4,7 @@ use clap::Args;
 use reqwest::Client;
 use serde_json::Value;
 
-use libparsec::{BackendAddr, OrganizationID};
+use libparsec::{OrganizationID, ParsecAddr};
 
 #[derive(Args)]
 pub struct StatusOrganization {
@@ -13,7 +13,7 @@ pub struct StatusOrganization {
     organization_id: OrganizationID,
     /// Server address (e.g: parsec://127.0.0.1:6770?no_ssl=true)
     #[arg(short, long)]
-    addr: BackendAddr,
+    addr: ParsecAddr,
     /// Administration token
     #[arg(short, long)]
     token: String,
@@ -21,7 +21,7 @@ pub struct StatusOrganization {
 
 pub async fn status_organization_req(
     organization_id: &OrganizationID,
-    addr: &BackendAddr,
+    addr: &ParsecAddr,
     administration_token: &str,
 ) -> anyhow::Result<Value> {
     let url = addr.to_http_url(Some(&format!(

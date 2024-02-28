@@ -15,7 +15,7 @@ use crate::{
 
 #[parsec_test(testbed = "minimal")]
 async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
-    let addr = BackendInvitationAddr::new(
+    let addr = ParsecInvitationAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
         libparsec_types::InvitationType::User,

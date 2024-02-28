@@ -68,7 +68,7 @@ pub enum UserOrDeviceClaimInitialCtx {
 
 pub async fn claimer_retrieve_info(
     config: Arc<ClientConfig>,
-    addr: BackendInvitationAddr,
+    addr: ParsecInvitationAddr,
 ) -> Result<UserOrDeviceClaimInitialCtx, ClaimerRetrieveInfoError> {
     use invited_cmds::latest::invite_info::{Rep, Req, UserOrDevice};
 
@@ -474,7 +474,7 @@ impl UserClaimInProgress3Ctx {
         let addr = self.0.cmds.addr();
 
         let organization_addr =
-            BackendOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
+            ParsecOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
 
         let new_local_device = Arc::new(LocalDevice::generate_new_device(
             organization_addr,
@@ -536,7 +536,7 @@ impl DeviceClaimInProgress3Ctx {
         let addr = self.0.cmds.addr();
 
         let organization_addr =
-            BackendOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
+            ParsecOrganizationAddr::new(addr, addr.organization_id().clone(), root_verify_key);
 
         let new_local_device = Arc::new(LocalDevice {
             organization_addr,

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from parsec._parsec import ActiveUsersLimit, BackendAddr
+from parsec._parsec import ActiveUsersLimit, ParsecAddr
 
 
 class BaseBlockStoreConfig:
@@ -109,7 +109,7 @@ class BackendConfig:
 
     email_config: SmtpEmailConfig | MockedEmailConfig
     forward_proto_enforce_https: tuple[str, str] | None
-    backend_addr: BackendAddr | None
+    server_addr: ParsecAddr | None
 
     debug: bool
 

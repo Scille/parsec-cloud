@@ -70,7 +70,7 @@ macro_rules! merge_local_xxx_manifest {
             // Of course removing local storage is an unlikely situation, but:
             // - it cannot be ruled out and would produce rare&exotic behavior
             //   that would be considered as bug :/
-            // - the fixtures and backend data binder system used in the tests
+            // - the fixtures and server data binder system used in the tests
             //   makes it much more likely
             let is_speculative_fn = $is_speculative_fn;
             if $remote.author == *$local_author && !is_speculative_fn($local) {

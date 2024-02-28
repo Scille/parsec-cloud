@@ -102,7 +102,7 @@ pub async fn bootstrap_organization(
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
-    bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
+    bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
     device_label: DeviceLabel,
@@ -204,7 +204,7 @@ pub async fn claimer_retrieve_info(
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
     #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(ClientEvent)>,
 
-    addr: BackendInvitationAddr,
+    addr: ParsecInvitationAddr,
 ) -> Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
     // TODO
@@ -581,7 +581,7 @@ pub async fn claimer_device_finalize_save_local_device(
  */
 
 pub struct NewInvitationInfo {
-    pub addr: BackendInvitationAddr,
+    pub addr: ParsecInvitationAddr,
     pub token: InvitationToken,
     pub email_sent_status: InvitationEmailSentStatus,
 }
@@ -601,7 +601,7 @@ pub async fn client_new_user_invitation(
         .await?;
 
     Ok(NewInvitationInfo {
-        addr: BackendInvitationAddr::new(
+        addr: ParsecInvitationAddr::new(
             client.organization_addr(),
             client.organization_id().to_owned(),
             InvitationType::User,
@@ -624,7 +624,7 @@ pub async fn client_new_device_invitation(
     let (token, email_sent_status) = client.new_device_invitation(send_email).await?;
 
     Ok(NewInvitationInfo {
-        addr: BackendInvitationAddr::new(
+        addr: ParsecInvitationAddr::new(
             client.organization_addr(),
             client.organization_id().to_owned(),
             InvitationType::Device,
@@ -651,14 +651,14 @@ pub async fn client_cancel_invitation(
 
 pub enum InviteListItem {
     User {
-        addr: BackendInvitationAddr,
+        addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
         claimer_email: String,
         status: InvitationStatus,
     },
     Device {
-        addr: BackendInvitationAddr,
+        addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
         status: InvitationStatus,
@@ -684,7 +684,7 @@ pub async fn client_list_invitations(
                 status,
                 token,
             } => {
-                let addr = BackendInvitationAddr::new(
+                let addr = ParsecInvitationAddr::new(
                     client.organization_addr(),
                     client.organization_id().to_owned(),
                     InvitationType::User,
@@ -703,7 +703,7 @@ pub async fn client_list_invitations(
                 status,
                 token,
             } => {
-                let addr = BackendInvitationAddr::new(
+                let addr = ParsecInvitationAddr::new(
                     client.organization_addr(),
                     client.organization_id().to_owned(),
                     InvitationType::Device,

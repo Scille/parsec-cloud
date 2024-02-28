@@ -6,13 +6,13 @@ from parsec._parsec_pyi import (
     testbed,  # Only define when build with `test-utils` feature
 )
 from parsec._parsec_pyi.addrs import (
-    BackendActionAddr,
-    BackendAddr,
-    BackendInvitationAddr,
-    BackendOrganizationAddr,
-    BackendOrganizationBootstrapAddr,
-    BackendOrganizationFileLinkAddr,
-    BackendPkiEnrollmentAddr,
+    ParsecActionAddr,
+    ParsecAddr,
+    ParsecInvitationAddr,
+    ParsecOrganizationAddr,
+    ParsecOrganizationBootstrapAddr,
+    ParsecOrganizationFileLinkAddr,
+    ParsecPkiEnrollmentAddr,
     export_root_verify_key,
 )
 from parsec._parsec_pyi.certif import (
@@ -150,13 +150,13 @@ __all__ = [
     "BootstrapToken",
     "InvitationToken",
     # Addrs
-    "BackendAddr",
-    "BackendActionAddr",
-    "BackendInvitationAddr",
-    "BackendOrganizationAddr",
-    "BackendOrganizationBootstrapAddr",
-    "BackendOrganizationFileLinkAddr",
-    "BackendPkiEnrollmentAddr",
+    "ParsecAddr",
+    "ParsecActionAddr",
+    "ParsecInvitationAddr",
+    "ParsecOrganizationAddr",
+    "ParsecOrganizationBootstrapAddr",
+    "ParsecOrganizationFileLinkAddr",
+    "ParsecPkiEnrollmentAddr",
     "export_root_verify_key",
     # Manifest
     "EntryName",

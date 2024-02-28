@@ -206,7 +206,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
  */
 
 pub struct ClientInfo {
-    pub organization_addr: BackendOrganizationAddr,
+    pub organization_addr: ParsecOrganizationAddr,
     pub organization_id: OrganizationID,
     pub device_id: DeviceID,
     pub user_id: UserID,

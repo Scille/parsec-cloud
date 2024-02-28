@@ -26,7 +26,7 @@ const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 pub struct AnonymousCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
     client: Client,
-    addr: BackendAnonymousAddr,
+    addr: ParsecAnonymousAddr,
     url: Url,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
@@ -35,7 +35,7 @@ pub struct AnonymousCmds {
 impl AnonymousCmds {
     pub fn new(
         config_dir: &Path,
-        addr: BackendAnonymousAddr,
+        addr: ParsecAnonymousAddr,
         proxy: ProxyConfig,
     ) -> anyhow::Result<Self> {
         let client = {
@@ -46,7 +46,7 @@ impl AnonymousCmds {
         Ok(Self::from_client(client, config_dir, addr))
     }
 
-    pub fn from_client(client: Client, _config_dir: &Path, addr: BackendAnonymousAddr) -> Self {
+    pub fn from_client(client: Client, _config_dir: &Path, addr: ParsecAnonymousAddr) -> Self {
         let url = addr.to_anonymous_http_url();
 
         #[cfg(feature = "test-with-testbed")]
@@ -61,7 +61,7 @@ impl AnonymousCmds {
         }
     }
 
-    pub fn addr(&self) -> &BackendAnonymousAddr {
+    pub fn addr(&self) -> &ParsecAnonymousAddr {
         &self.addr
     }
 

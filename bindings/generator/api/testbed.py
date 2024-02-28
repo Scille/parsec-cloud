@@ -2,11 +2,11 @@
 
 from typing import Optional
 
-from .addr import BackendAddr, BackendOrganizationBootstrapAddr
+from .addr import ParsecAddr, ParsecOrganizationBootstrapAddr
 from .common import OrganizationID, Path, Ref
 
 
-async def test_new_testbed(template: Ref[str], test_server: Optional[Ref[BackendAddr]]) -> Path:
+async def test_new_testbed(template: Ref[str], test_server: Optional[Ref[ParsecAddr]]) -> Path:
     raise NotImplementedError
 
 
@@ -16,7 +16,7 @@ def test_get_testbed_organization_id(discriminant_dir: Ref[Path]) -> Optional[Or
 
 def test_get_testbed_bootstrap_organization_addr(
     discriminant_dir: Ref[Path],
-) -> Optional[BackendOrganizationBootstrapAddr]:
+) -> Optional[ParsecOrganizationBootstrapAddr]:
     raise NotImplementedError
 
 

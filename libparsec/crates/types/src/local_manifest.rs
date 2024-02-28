@@ -654,7 +654,7 @@ pub struct LocalWorkspaceManifest {
     // to upload.
     pub remote_confinement_points: HashSet<VlobID>,
     // Speculative placeholders are created when we want to access a workspace
-    // but didn't retrieve manifest data from backend yet. This implies:
+    // but didn't retrieve manifest data from server yet. This implies:
     // - non-placeholders cannot be speculative
     // - the only non-speculative placeholder is the placeholder initialized
     //   during the initial workspace creation

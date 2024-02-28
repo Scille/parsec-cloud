@@ -4,15 +4,15 @@ import { needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
-  BackendOrganizationFileLinkAddr,
   ClientCreateWorkspaceError,
-  ClientListWorkspacesError,
   ClientListWorkspaceUsersError,
+  ClientListWorkspacesError,
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   LinkError,
+  ParsecOrganizationFileLinkAddr,
   Result,
   UserID,
   UserProfile,
@@ -23,7 +23,7 @@ import {
   WorkspaceName,
   WorkspaceRole,
 } from '@/parsec/types';
-import { libparsec, WorkspaceStopError } from '@/plugins/libparsec';
+import { WorkspaceStopError, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
@@ -298,7 +298,7 @@ export async function getPathLink(
   workspaceId: WorkspaceID,
   path: string,
   timestamp: DateTime | null = null,
-): Promise<Result<BackendOrganizationFileLinkAddr, LinkError>> {
+): Promise<Result<ParsecOrganizationFileLinkAddr, LinkError>> {
   const handle = getParsecHandle();
 
   const org = 'Org';

@@ -33,7 +33,7 @@ RUN bash in-docker-build.sh
 FROM python:3.12-slim
 
 LABEL org.opencontainers.image.source=https://github.com/Scille/parsec-cloud
-LABEL org.opencontainers.image.description="Run the Parsec backend server."
+LABEL org.opencontainers.image.description="Run the Parsec server."
 
 RUN groupadd --gid=1234 parsec && useradd --home-dir=/home/parsec --create-home --uid=1234 --gid=1234 parsec
 

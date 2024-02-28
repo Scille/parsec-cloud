@@ -226,7 +226,7 @@ impl Client {
         self.config.clone()
     }
 
-    pub fn organization_addr(&self) -> &BackendOrganizationAddr {
+    pub fn organization_addr(&self) -> &ParsecOrganizationAddr {
         &self.device.organization_addr
     }
 

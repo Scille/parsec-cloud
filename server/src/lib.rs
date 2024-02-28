@@ -42,13 +42,13 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
     )?;
 
-    m.add_class::<BackendAddr>()?;
-    m.add_class::<BackendOrganizationAddr>()?;
-    m.add_class::<BackendActionAddr>()?;
-    m.add_class::<BackendOrganizationBootstrapAddr>()?;
-    m.add_class::<BackendOrganizationFileLinkAddr>()?;
-    m.add_class::<BackendInvitationAddr>()?;
-    m.add_class::<BackendPkiEnrollmentAddr>()?;
+    m.add_class::<ParsecAddr>()?;
+    m.add_class::<ParsecOrganizationAddr>()?;
+    m.add_class::<ParsecActionAddr>()?;
+    m.add_class::<ParsecOrganizationBootstrapAddr>()?;
+    m.add_class::<ParsecOrganizationFileLinkAddr>()?;
+    m.add_class::<ParsecInvitationAddr>()?;
+    m.add_class::<ParsecPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(export_root_verify_key, m)?)?;
 
     m.add_class::<DeviceFileType>()?;

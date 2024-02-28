@@ -18,7 +18,7 @@ import {
   NewInvitationInfo,
   Result,
 } from '@/parsec/types';
-import { BackendInvitationAddr, InvitationToken, SASCode, libparsec } from '@/plugins/libparsec';
+import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
 
 export class DeviceGreet {
   handle: ConnectionHandle | null;
@@ -28,7 +28,7 @@ export class DeviceGreet {
   SASCodeChoices: SASCode[];
   requestedDeviceLabel: DeviceLabel;
   token: InvitationToken;
-  invitationLink: BackendInvitationAddr;
+  invitationLink: ParsecInvitationAddr;
 
   constructor() {
     this.handle = null;

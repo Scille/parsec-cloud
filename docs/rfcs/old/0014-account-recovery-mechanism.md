@@ -26,5 +26,5 @@ Here is a draft of a potential strategy to implement an account recovery mechani
 
 ## Notes
 
-Might be good to store `Etp(EUp(USI))` in the backend to add a third party (hence preventing trustee from having access to `DSI` if he has access to the device's machine)
-This way account recovery can start by the backend sending a recovery email to the user with a specific link to start the recovery.
+Might be good to store `Etp(EUp(USI))` in the sever to add a third party (hence preventing trustee from having access to `DSI` if he has access to the device's machine)
+This way account recovery can start by the sever sending a recovery email to the user with a specific link to start the recovery.

@@ -582,7 +582,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let alice_through_disconnect_proxy = {
         let mut alice = alice.clone();
-        Arc::make_mut(&mut alice).organization_addr = BackendOrganizationAddr::new(
+        Arc::make_mut(&mut alice).organization_addr = ParsecOrganizationAddr::new(
             alice_disconnect_proxy.to_backend_addr(),
             alice.organization_id().clone(),
             alice.root_verify_key().clone(),

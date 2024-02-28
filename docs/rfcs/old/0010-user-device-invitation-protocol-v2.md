@@ -55,7 +55,7 @@ Transmit Asas as 7 digit
 User/Device pub key -->
  (Device pub key in case of Device invitation)
 
-                           Create User certificate & send it to backend
+                           Create User certificate & send it to server
                            <-- root public key
                               (+ user private key in case of Device invitation)
 ```

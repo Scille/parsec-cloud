@@ -47,18 +47,18 @@ export enum UserProfile {
     Outsider = 'UserProfileOutsider',
     Standard = 'UserProfileStandard',
 }
-export type BackendAddr = string
-export type BackendInvitationAddr = string
-export type BackendOrganizationAddr = string
-export type BackendOrganizationBootstrapAddr = string
-export type BackendOrganizationFileLinkAddr = string
-export type BackendPkiEnrollmentAddr = string
 export type DeviceID = string
 export type DeviceLabel = string
 export type EntryName = string
 export type FsPath = string
 export type InvitationToken = string
 export type OrganizationID = string
+export type ParsecAddr = string
+export type ParsecInvitationAddr = string
+export type ParsecOrganizationAddr = string
+export type ParsecOrganizationBootstrapAddr = string
+export type ParsecOrganizationFileLinkAddr = string
+export type ParsecPkiEnrollmentAddr = string
 export type Password = string
 export type Path = string
 export type SASCode = string
@@ -96,7 +96,7 @@ export interface ClientConfig {
 }
 
 export interface ClientInfo {
-    organizationAddr: BackendOrganizationAddr
+    organizationAddr: ParsecOrganizationAddr
     organizationId: OrganizationID
     deviceId: DeviceID
     userId: UserID
@@ -161,7 +161,7 @@ export interface HumanHandle {
 }
 
 export interface NewInvitationInfo {
-    addr: BackendInvitationAddr
+    addr: ParsecInvitationAddr
     token: InvitationToken
     emailSentStatus: InvitationEmailSentStatus
 }
@@ -1056,14 +1056,14 @@ export enum InviteListItemTag {
 
 export interface InviteListItemDevice {
     tag: InviteListItemTag.Device
-    addr: BackendInvitationAddr
+    addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
     status: InvitationStatus
 }
 export interface InviteListItemUser {
     tag: InviteListItemTag.User
-    addr: BackendInvitationAddr
+    addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
     claimerEmail: string
@@ -1103,50 +1103,50 @@ export interface ParseBackendAddrErrorInvalidUrl {
 export type ParseBackendAddrError =
   | ParseBackendAddrErrorInvalidUrl
 
-// ParsedBackendAddr
-export enum ParsedBackendAddrTag {
-    InvitationDevice = 'ParsedBackendAddrInvitationDevice',
-    InvitationUser = 'ParsedBackendAddrInvitationUser',
-    Organization = 'ParsedBackendAddrOrganization',
-    OrganizationBootstrap = 'ParsedBackendAddrOrganizationBootstrap',
-    OrganizationFileLink = 'ParsedBackendAddrOrganizationFileLink',
-    PkiEnrollment = 'ParsedBackendAddrPkiEnrollment',
-    Server = 'ParsedBackendAddrServer',
+// ParsedParsecAddr
+export enum ParsedParsecAddrTag {
+    InvitationDevice = 'ParsedParsecAddrInvitationDevice',
+    InvitationUser = 'ParsedParsecAddrInvitationUser',
+    Organization = 'ParsedParsecAddrOrganization',
+    OrganizationBootstrap = 'ParsedParsecAddrOrganizationBootstrap',
+    OrganizationFileLink = 'ParsedParsecAddrOrganizationFileLink',
+    PkiEnrollment = 'ParsedParsecAddrPkiEnrollment',
+    Server = 'ParsedParsecAddrServer',
 }
 
-export interface ParsedBackendAddrInvitationDevice {
-    tag: ParsedBackendAddrTag.InvitationDevice
+export interface ParsedParsecAddrInvitationDevice {
+    tag: ParsedParsecAddrTag.InvitationDevice
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: InvitationToken
 }
-export interface ParsedBackendAddrInvitationUser {
-    tag: ParsedBackendAddrTag.InvitationUser
+export interface ParsedParsecAddrInvitationUser {
+    tag: ParsedParsecAddrTag.InvitationUser
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: InvitationToken
 }
-export interface ParsedBackendAddrOrganization {
-    tag: ParsedBackendAddrTag.Organization
+export interface ParsedParsecAddrOrganization {
+    tag: ParsedParsecAddrTag.Organization
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
 }
-export interface ParsedBackendAddrOrganizationBootstrap {
-    tag: ParsedBackendAddrTag.OrganizationBootstrap
+export interface ParsedParsecAddrOrganizationBootstrap {
+    tag: ParsedParsecAddrTag.OrganizationBootstrap
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
     token: string | null
 }
-export interface ParsedBackendAddrOrganizationFileLink {
-    tag: ParsedBackendAddrTag.OrganizationFileLink
+export interface ParsedParsecAddrOrganizationFileLink {
+    tag: ParsedParsecAddrTag.OrganizationFileLink
     hostname: string
     port: U32
     useSsl: boolean
@@ -1155,27 +1155,27 @@ export interface ParsedBackendAddrOrganizationFileLink {
     encryptedPath: Uint8Array
     encryptedTimestamp: Uint8Array | null
 }
-export interface ParsedBackendAddrPkiEnrollment {
-    tag: ParsedBackendAddrTag.PkiEnrollment
+export interface ParsedParsecAddrPkiEnrollment {
+    tag: ParsedParsecAddrTag.PkiEnrollment
     hostname: string
     port: U32
     useSsl: boolean
     organizationId: OrganizationID
 }
-export interface ParsedBackendAddrServer {
-    tag: ParsedBackendAddrTag.Server
+export interface ParsedParsecAddrServer {
+    tag: ParsedParsecAddrTag.Server
     hostname: string
     port: U32
     useSsl: boolean
 }
-export type ParsedBackendAddr =
-  | ParsedBackendAddrInvitationDevice
-  | ParsedBackendAddrInvitationUser
-  | ParsedBackendAddrOrganization
-  | ParsedBackendAddrOrganizationBootstrap
-  | ParsedBackendAddrOrganizationFileLink
-  | ParsedBackendAddrPkiEnrollment
-  | ParsedBackendAddrServer
+export type ParsedParsecAddr =
+  | ParsedParsecAddrInvitationDevice
+  | ParsedParsecAddrInvitationUser
+  | ParsedParsecAddrOrganization
+  | ParsedParsecAddrOrganizationBootstrap
+  | ParsedParsecAddrOrganizationFileLink
+  | ParsedParsecAddrPkiEnrollment
+  | ParsedParsecAddrServer
 
 // UserOrDeviceClaimInitialInfo
 export enum UserOrDeviceClaimInitialInfoTag {
@@ -1797,16 +1797,16 @@ export interface LibParsecPlugin {
     bootstrapOrganization(
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
-        bootstrap_organization_addr: BackendOrganizationBootstrapAddr,
+        bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
         save_strategy: DeviceSaveStrategy,
         human_handle: HumanHandle,
         device_label: DeviceLabel,
         sequester_authority_verify_key: SequesterVerifyKeyDer | null
     ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
     buildBackendOrganizationBootstrapAddr(
-        addr: BackendAddr,
+        addr: ParsecAddr,
         organization_id: OrganizationID
-    ): Promise<BackendOrganizationBootstrapAddr>
+    ): Promise<ParsecOrganizationBootstrapAddr>
     cancel(
         canceller: Handle
     ): Promise<Result<null, CancelError>>
@@ -1837,7 +1837,7 @@ export interface LibParsecPlugin {
     claimerRetrieveInfo(
         config: ClientConfig,
         on_event_callback: (event: ClientEvent) => void,
-        addr: BackendInvitationAddr
+        addr: ParsecInvitationAddr
     ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
     claimerUserFinalizeSaveLocalDevice(
         handle: Handle,
@@ -2032,7 +2032,7 @@ export interface LibParsecPlugin {
     ): Promise<Handle>
     parseBackendAddr(
         url: string
-    ): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+    ): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>>
     pathFilename(
         path: FsPath
     ): Promise<EntryName | null>
@@ -2054,13 +2054,13 @@ export interface LibParsecPlugin {
     ): Promise<null>
     testGetTestbedBootstrapOrganizationAddr(
         discriminant_dir: Path
-    ): Promise<BackendOrganizationBootstrapAddr | null>
+    ): Promise<ParsecOrganizationBootstrapAddr | null>
     testGetTestbedOrganizationId(
         discriminant_dir: Path
     ): Promise<OrganizationID | null>
     testNewTestbed(
         template: string,
-        test_server: BackendAddr | null
+        test_server: ParsecAddr | null
     ): Promise<Path>
     validateDeviceLabel(
         raw: string

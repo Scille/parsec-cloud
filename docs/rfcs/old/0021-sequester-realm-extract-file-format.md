@@ -21,7 +21,7 @@ CREATE TABLE block (
     -- TODO: are author/size/created_on useful ?
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
-    -- this field is created by the backend when inserting (unlike vlob's timestamp, see below)
+    -- this field is created by the server when inserting (unlike vlob's timestamp, see below)
     created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(block_id)
@@ -40,7 +40,7 @@ CREATE TABLE vlob_atom (
     -- keep this relationship valid !
     author INTEGER REFERENCES device (_id) NOT NULL,
     -- this field is called created_on in Parsec datamodel, but it correspond to the timestamp field in the API
-    -- (the value is provided by the client when sending request and not created on backend side) so better
+    -- (the value is provided by the client when sending request and not created on server side) so better
     -- give it the better understandable name
     timestamp TIMESTAMPTZ NOT NULL,
 

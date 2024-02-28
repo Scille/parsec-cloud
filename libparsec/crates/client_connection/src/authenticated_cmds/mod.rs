@@ -67,7 +67,7 @@ impl AuthenticatedCmds {
         }
     }
 
-    pub fn addr(&self) -> &BackendOrganizationAddr {
+    pub fn addr(&self) -> &ParsecOrganizationAddr {
         &self.device.organization_addr
     }
 

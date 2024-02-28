@@ -15,34 +15,36 @@ from .common import (
 )
 
 
-class BackendAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = (
+        "|addr: libparsec::ParsecAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+    )
 
 
-class BackendOrganizationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendOrganizationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecOrganizationAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecOrganizationAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecOrganizationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class BackendOrganizationBootstrapAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecOrganizationBootstrapAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecOrganizationBootstrapAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class BackendInvitationAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendInvitationAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecInvitationAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class BackendOrganizationFileLinkAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecOrganizationFileLinkAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class BackendPkiEnrollmentAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::BackendPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::BackendPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecPkiEnrollmentAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecPkiEnrollmentAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecPkiEnrollmentAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class ParseBackendAddrError(ErrorVariant):
@@ -50,7 +52,7 @@ class ParseBackendAddrError(ErrorVariant):
         pass
 
 
-class ParsedBackendAddr(Variant):
+class ParsedParsecAddr(Variant):
     class Server:
         hostname: str
         port: U32
@@ -99,11 +101,11 @@ class ParsedBackendAddr(Variant):
         organization_id: OrganizationID
 
 
-def parse_backend_addr(url: Ref[str]) -> Result[ParsedBackendAddr, ParseBackendAddrError]:
+def parse_backend_addr(url: Ref[str]) -> Result[ParsedParsecAddr, ParseBackendAddrError]:
     raise NotImplementedError
 
 
 def build_backend_organization_bootstrap_addr(
-    addr: BackendAddr, organization_id: OrganizationID
-) -> BackendOrganizationBootstrapAddr:
+    addr: ParsecAddr, organization_id: OrganizationID
+) -> ParsecOrganizationBootstrapAddr:
     raise NotImplementedError

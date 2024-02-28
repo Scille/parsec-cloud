@@ -24,6 +24,6 @@ Restaurer un fichier/répertoire
 - fuse support
   - fuse component can hot-swap FS class
   - HistoryFS wrap regular FS with state machine for date, read only mode
-- backend api
+- server api
   - allow date based request
   - allow list vlob versions + pagination retrieval ?

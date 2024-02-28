@@ -151,7 +151,7 @@ import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsChoosePasswordInput, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { DeviceClaim, ParsedBackendAddrInvitationDevice, ParsedBackendAddrTag, parseBackendAddr } from '@/parsec';
+import { DeviceClaim, ParsedParsecAddrInvitationDevice, ParsedParsecAddrTag, parseBackendAddr } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
@@ -170,7 +170,7 @@ enum DeviceJoinOrganizationStep {
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
 const passwordPage = ref();
-let backendAddr: ParsedBackendAddrInvitationDevice | null = null;
+let backendAddr: ParsedParsecAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
 
 const props = defineProps<{
@@ -382,8 +382,8 @@ async function restartProcess(): Promise<void> {
 onMounted(async () => {
   const addrResult = await parseBackendAddr(props.invitationLink);
 
-  if (addrResult.ok && addrResult.value.tag === ParsedBackendAddrTag.InvitationDevice) {
-    backendAddr = addrResult.value as ParsedBackendAddrInvitationDevice;
+  if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.InvitationDevice) {
+    backendAddr = addrResult.value as ParsedParsecAddrInvitationDevice;
   }
   await startProcess();
 });

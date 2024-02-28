@@ -81,7 +81,7 @@ impl TestbedScope {
 /// across all tests.
 /// Alternatively, `TESTBED_SERVER` environ variable can be passed to use an
 /// external server.
-fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::process::Child>) {
+fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::process::Child>) {
     // TESTBED_SERVER should have 3 possible values:
     // - not set, `AUTOSTART`, `1` or just defined to empty: auto start the server
     // - `SKIP`, `0` if so the test is skipped
@@ -133,7 +133,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
                 url
             };
 
-            let addr = BackendAddr::from_any(&url)
+            let addr = ParsecAddr::from_any(&url)
                 .expect("Invalid value in `TESTBED_SERVER` environ variable");
             log::info!("Using already started testbed server at {}", &addr);
             return (Some(addr), None);
@@ -242,7 +242,7 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
 
     log::info!("Testbed server running on 127.0.0.1:{}", port);
     (
-        Some(BackendAddr::new("127.0.0.1".to_owned(), Some(port), false)),
+        Some(ParsecAddr::new("127.0.0.1".to_owned(), Some(port), false)),
         Some(process),
     )
 }
@@ -256,6 +256,6 @@ fn ensure_testbed_server_is_started() -> (Option<BackendAddr>, Option<std::proce
 // Note we still have to keep reference of the child handle, this is to avoid it
 // stderr pipe to be closed which would break subprocess logging.
 lazy_static! {
-    static ref TESTBED_SERVER: (Option<BackendAddr>, Option<std::process::Child>) =
+    static ref TESTBED_SERVER: (Option<ParsecAddr>, Option<std::process::Child>) =
         ensure_testbed_server_is_started();
 }

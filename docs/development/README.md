@@ -134,7 +134,7 @@ The python code is located in the folder `server`, The following steps and instr
    python ./make.py python-dev-install
    ```
 
-   > The Python backend is built from the `server` directory.
+   > The Python server is built from the `server` directory.
 
 2. Start a shell with the initialized virtual env
 
@@ -163,7 +163,7 @@ In addition, the following options are available:
 | Option           | Description                                                                                               |
 | ---------------- | --------------------------------------------------------------------------------------------------------- |
 | ``--runslow``    | Include slow tests                                                                                        |
-| ``--postgresql`` | Use PostgreSQL in the backend instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken** |
+| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken**  |
 | ``-n 4``         | Run tests in parallel (here `4` jobs)                                                                     |
 
 Note you can mix&match the flags, e.g.

@@ -20,8 +20,8 @@ import anyio
 from click.testing import CliRunner, Result
 
 from parsec._parsec import (
-    BackendAddr,
-    BackendOrganizationAddr,
+    ParsecAddr,
+    ParsecOrganizationAddr,
 )
 from parsec.cli import cli
 
@@ -159,12 +159,12 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
             )
         )
         _, port, *_ = listeners[0].socket.getsockname()
-        backend_addr = BackendAddr("127.0.0.1", port, use_ssl=False)
+        server_addr = ParsecAddr("127.0.0.1", port, use_ssl=False)
 
-        # Now the local device point to an invalid backend address, must fix this
+        # Now the local device point to an invalid server address, must fix this
         def _correct_local_device_backend_addr(device):
-            organization_addr = BackendOrganizationAddr.build(
-                backend_addr,
+            organization_addr = ParsecOrganizationAddr.build(
+                server_addr=server_addr,
                 organization_id=device.organization_addr.organization_id,
                 root_verify_key=device.organization_addr.root_verify_key,
             )
@@ -181,7 +181,7 @@ async def cli_with_running_backend_testbed(backend_asgi_app, *devices):
                 local_symkey=device.local_symkey,
             )
 
-        yield (backend_addr, *(_correct_local_device_backend_addr(d) for d in devices))
+        yield (server_addr, *(_correct_local_device_backend_addr(d) for d in devices))
 
         task_group.cancel_scope.cancel()
 

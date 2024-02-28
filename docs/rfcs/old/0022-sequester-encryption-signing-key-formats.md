@@ -65,7 +65,7 @@ class SequesterServiceEncryptionKey(BaseAPIData):
     service_name: str
 ```
 
-The sequester key payload has to be signed by the Organisation sequester verify key. The signature has to be stored in the backend.
+The sequester key payload has to be signed by the Organisation sequester verify key. The signature has to be stored in the server.
 
 ```python
 class SequesterRegisterServiceSchema(BaseSchema):

@@ -937,8 +937,8 @@ export type ParseBackendAddrError =
   | ParseBackendAddrErrorInvalidUrl
 
 
-// ParsedBackendAddr
-export interface ParsedBackendAddrInvitationDevice {
+// ParsedParsecAddr
+export interface ParsedParsecAddrInvitationDevice {
     tag: "InvitationDevice"
     hostname: string
     port: number
@@ -946,7 +946,7 @@ export interface ParsedBackendAddrInvitationDevice {
     organization_id: string
     token: string
 }
-export interface ParsedBackendAddrInvitationUser {
+export interface ParsedParsecAddrInvitationUser {
     tag: "InvitationUser"
     hostname: string
     port: number
@@ -954,14 +954,14 @@ export interface ParsedBackendAddrInvitationUser {
     organization_id: string
     token: string
 }
-export interface ParsedBackendAddrOrganization {
+export interface ParsedParsecAddrOrganization {
     tag: "Organization"
     hostname: string
     port: number
     use_ssl: boolean
     organization_id: string
 }
-export interface ParsedBackendAddrOrganizationBootstrap {
+export interface ParsedParsecAddrOrganizationBootstrap {
     tag: "OrganizationBootstrap"
     hostname: string
     port: number
@@ -969,7 +969,7 @@ export interface ParsedBackendAddrOrganizationBootstrap {
     organization_id: string
     token: string | null
 }
-export interface ParsedBackendAddrOrganizationFileLink {
+export interface ParsedParsecAddrOrganizationFileLink {
     tag: "OrganizationFileLink"
     hostname: string
     port: number
@@ -979,27 +979,27 @@ export interface ParsedBackendAddrOrganizationFileLink {
     encrypted_path: Uint8Array
     encrypted_timestamp: Uint8Array | null
 }
-export interface ParsedBackendAddrPkiEnrollment {
+export interface ParsedParsecAddrPkiEnrollment {
     tag: "PkiEnrollment"
     hostname: string
     port: number
     use_ssl: boolean
     organization_id: string
 }
-export interface ParsedBackendAddrServer {
+export interface ParsedParsecAddrServer {
     tag: "Server"
     hostname: string
     port: number
     use_ssl: boolean
 }
-export type ParsedBackendAddr =
-  | ParsedBackendAddrInvitationDevice
-  | ParsedBackendAddrInvitationUser
-  | ParsedBackendAddrOrganization
-  | ParsedBackendAddrOrganizationBootstrap
-  | ParsedBackendAddrOrganizationFileLink
-  | ParsedBackendAddrPkiEnrollment
-  | ParsedBackendAddrServer
+export type ParsedParsecAddr =
+  | ParsedParsecAddrInvitationDevice
+  | ParsedParsecAddrInvitationUser
+  | ParsedParsecAddrOrganization
+  | ParsedParsecAddrOrganizationBootstrap
+  | ParsedParsecAddrOrganizationFileLink
+  | ParsedParsecAddrPkiEnrollment
+  | ParsedParsecAddrServer
 
 
 // UserOrDeviceClaimInitialInfo
@@ -1740,7 +1740,7 @@ export function newCanceller(
 ): Promise<number>
 export function parseBackendAddr(
     url: string
-): Promise<Result<ParsedBackendAddr, ParseBackendAddrError>>
+): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>>
 export function pathFilename(
     path: string
 ): Promise<string | null>

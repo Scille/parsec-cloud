@@ -3,7 +3,7 @@
     "other_fields": [
         {
             "name": "organization_addr",
-            "type": "BackendOrganizationAddr"
+            "type": "ParsecOrganizationAddr"
         },
         {
             "name": "device_id",

@@ -49,7 +49,7 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
 
     // Good request
 
-    let addr = BackendInvitationAddr::new(
+    let addr = ParsecInvitationAddr::new(
         env.server_addr.clone(),
         env.organization_id.to_owned(),
         InvitationType::User,
@@ -117,7 +117,7 @@ async fn invalid_token_with_server(env: &TestbedEnv) {
 async fn invalid_token(env: &TestbedEnv, mocked: bool) {
     // Bad request: invalid invitation token
 
-    let bad_addr = BackendInvitationAddr::new(
+    let bad_addr = ParsecInvitationAddr::new(
         env.server_addr.clone(),
         env.organization_id.to_owned(),
         InvitationType::User,

@@ -35,7 +35,7 @@ lazy_static! {
 
 #[derive(Default)]
 struct TestbedEnvCache {
-    organization_addr: Option<Arc<BackendOrganizationAddr>>,
+    organization_addr: Option<Arc<ParsecOrganizationAddr>>,
     // Testbed is designed to run entirely in memory (i.e. with no FS accesses)
     //
     // This hashmap should be used by components (e.g. device storage, local database)
@@ -148,11 +148,11 @@ impl TestbedEnvCache {
         local_device
     }
 
-    pub fn organization_addr(&mut self, env: &TestbedEnv) -> Arc<BackendOrganizationAddr> {
+    pub fn organization_addr(&mut self, env: &TestbedEnv) -> Arc<ParsecOrganizationAddr> {
         self.organization_addr
             .get_or_insert_with(|| {
                 let root_signing_key = env.template.root_signing_key();
-                let organization_addr = BackendOrganizationAddr::new(
+                let organization_addr = ParsecOrganizationAddr::new(
                     env.server_addr.clone(),
                     env.organization_id.clone(),
                     root_signing_key.verify_key(),
@@ -182,7 +182,7 @@ pub struct TestbedEnv {
     /// Note: testbed is designed to always run mocked in memory, so this path
     /// will never exist on the file system.
     pub discriminant_dir: PathBuf,
-    pub server_addr: BackendAddr,
+    pub server_addr: ParsecAddr,
     pub organization_id: OrganizationID,
     pub template: Arc<TestbedTemplate>,
 
@@ -280,7 +280,7 @@ impl TestbedEnv {
         ((*env).clone(), ret)
     }
 
-    pub fn organization_addr(&self) -> Arc<BackendOrganizationAddr> {
+    pub fn organization_addr(&self) -> Arc<ParsecOrganizationAddr> {
         self.seal_and(|cache| cache.organization_addr(self))
     }
 
@@ -725,10 +725,7 @@ impl TestbedEnv {
 
 /// `test_new_testbed` should be called when a test starts (and be followed
 /// by a `test_drop_testbed` call at it end)
-pub async fn test_new_testbed(
-    template: &str,
-    server_addr: Option<&BackendAddr>,
-) -> Arc<TestbedEnv> {
+pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) -> Arc<TestbedEnv> {
     // 1) Retrieve the template
     let template = test_get_template(template).expect("Testbed template not found");
 

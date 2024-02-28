@@ -24,10 +24,10 @@ The following instruction will consider that you have exported the following var
 
 | Name                          | Description                                                                                                                                                        |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PARSEC_BACKEND_ADDR`         | The URL to access the parsec server (using the `parsec:` scheme).                                                                                                  |
+| `PARSEC_SERVER_ADDR`         | The URL to access the parsec server (using the `parsec:` scheme).                                                                                                  |
 | `PARSEC_ADMINISTRATION_TOKEN` | The administration token to perform admin task on the server.                                                                                                      |
 | `PARSEC_DB`                   | The URL to the database used by the parsec server.                                                                                                                 |
-| `PARSEC_BLOCKSTORE`           | The URL to access the block storage service used by the backend.                                                                                                   |
+| `PARSEC_BLOCKSTORE`           | The URL to access the block storage service used by the server.                                                                                                   |
 | `PARSEC_ORGANIZATION_ID`      | The organization ID that will be created in this tutorial, you could set it to something like `TestSequester-$(parsec.cli --version \| cut -f3 -d' ' \| tr . - )`. |
 
 ## Generate the RSA keys
@@ -57,10 +57,10 @@ The organization is now ready.
 
 ## Create the sequester service
 
-We are now using the backend CLI to interact directly with the backend database.
+We are now using the server CLI to interact directly with the server database.
 
 ```shell
-parsec.cli backend sequester create-service \
+parsec.cli server sequester create-service \
   --organization "$PARSEC_ORGANIZATION_ID" \
   --service-label "TestSequesterService" \
   --service-public-key sequester-service-key.pub \
@@ -75,7 +75,7 @@ That command requires the service public key (used for manifest encryption) and 
 The new service could be listed with the following command:
 
 ```shell
-parsec.cli backend sequester list_services --organization "$PARSEC_ORGANIZATION_ID"
+parsec.cli server sequester list_services --organization "$PARSEC_ORGANIZATION_ID"
 ```
 
 > The `list_services` also provide the service-id that could be used to enable/disable a specific service.
@@ -83,7 +83,7 @@ parsec.cli backend sequester list_services --organization "$PARSEC_ORGANIZATION_
 ### Enable or disable a service
 
 ```shell
-parsec.cli backend sequester update_service \
+parsec.cli server sequester update_service \
   --organization "$PARSEC_ORGANIZATION_ID" \
   --service "$SERVICE_ID"
   --disable # or --enable
@@ -96,7 +96,7 @@ parsec.cli backend sequester update_service \
 To dump the data, you will need the realm-id of the organization:
 
 ```shell
-parsec.cli backend human_accesses --organization "$PARSEC_ORGANIZATION_ID"
+parsec.cli server human_accesses --organization "$PARSEC_ORGANIZATION_ID"
 ```
 
 > Save the realm-id into the variable `REALM_ID`.
@@ -104,7 +104,7 @@ parsec.cli backend human_accesses --organization "$PARSEC_ORGANIZATION_ID"
 Export the sequester data:
 
 ```shell
-parsec.cli backend sequester export_realm \
+parsec.cli server sequester export_realm \
   --organization "$PARSEC_ORGANIZATION_ID" \
   --realm "$REALM_ID" \
   --output sequester-export
@@ -113,7 +113,7 @@ parsec.cli backend sequester export_realm \
 The workspaces can be retrieved with the encryption private key:
 
 ```shell
-parsec.cli backend sequester extract_realm_export \
+parsec.cli server sequester extract_realm_export \
   --service-decryption-key sequester-service-key \
   --input "sequester-export/parsec-sequester-export-realm-$(echo $REALM_ID | xxd -p -u).sqlite"
   --output sequester-export
