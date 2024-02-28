@@ -52,8 +52,9 @@
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const props = defineProps<{
   users: UserCollection;
@@ -64,6 +65,9 @@ defineEmits<{
   (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
 }>();
 
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+let hotkeys: Hotkeys | null = null;
+
 const selectedCount = ref(0);
 
 const allSelected = computed(() => {
@@ -72,6 +76,17 @@ const allSelected = computed(() => {
 
 const someSelected = computed(() => {
   return selectedCount.value > 0;
+});
+
+onMounted(async () => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Users);
+  hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop, async () => await selectAll(true));
+});
+
+onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
 });
 
 async function onSelectedChange(_entry: UserInfo, _checked: boolean): Promise<void> {
