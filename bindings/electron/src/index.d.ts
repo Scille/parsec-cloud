@@ -635,6 +635,60 @@ export type ClientRenameWorkspaceError =
   | ClientRenameWorkspaceErrorWorkspaceNotFound
 
 
+// ClientRevokeUserError
+export interface ClientRevokeUserErrorAuthorNotAllowed {
+    tag: "AuthorNotAllowed"
+    error: string
+}
+export interface ClientRevokeUserErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientRevokeUserErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientRevokeUserErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface ClientRevokeUserErrorNoKey {
+    tag: "NoKey"
+    error: string
+}
+export interface ClientRevokeUserErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientRevokeUserErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientRevokeUserErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+}
+export interface ClientRevokeUserErrorUserIsSelf {
+    tag: "UserIsSelf"
+    error: string
+}
+export interface ClientRevokeUserErrorUserNotFound {
+    tag: "UserNotFound"
+    error: string
+}
+export type ClientRevokeUserError =
+  | ClientRevokeUserErrorAuthorNotAllowed
+  | ClientRevokeUserErrorInternal
+  | ClientRevokeUserErrorInvalidCertificate
+  | ClientRevokeUserErrorInvalidKeysBundle
+  | ClientRevokeUserErrorNoKey
+  | ClientRevokeUserErrorOffline
+  | ClientRevokeUserErrorStopped
+  | ClientRevokeUserErrorTimestampOutOfBallpark
+  | ClientRevokeUserErrorUserIsSelf
+  | ClientRevokeUserErrorUserNotFound
+
+
 // ClientShareWorkspaceError
 export interface ClientShareWorkspaceErrorAuthorNotAllowed {
     tag: "AuthorNotAllowed"
@@ -1621,6 +1675,10 @@ export function clientRenameWorkspace(
     realm_id: string,
     new_name: string
 ): Promise<Result<null, ClientRenameWorkspaceError>>
+export function clientRevokeUser(
+    client: number,
+    user: string
+): Promise<Result<null, ClientRevokeUserError>>
 export function clientShareWorkspace(
     client: number,
     realm_id: string,
