@@ -18,7 +18,7 @@ UNIQ_TAG="$CURRENT_DATE-$CURRENT_VERSION-$CURRENT_COMMIT_SHA"
 PREFIX=ghcr.io/scille/parsec-cloud
 IMAGE_NAME=parsec-server
 
-echo "Will create an image \`parsec-backend-server\` with the following tags:"
+echo "Will create an image \`parsec-server\` with the following tags:"
 echo "- \`latest\`"
 echo "- \`$UNIQ_TAG\`"
 echo
@@ -33,11 +33,11 @@ DOCKER_BUILDKIT=1 docker build \
 
 echo
 echo "You can now test/use the docker image with:"
-echo "docker run --publish 6777:6777 --env-file env.list --rm --name=parsec-backend-server $PREFIX/parsec-backend-server:$UNIQ_TAG"
+echo "docker run --publish 6777:6777 --env-file env.list --rm --name=parsec-server $PREFIX/parsec-server:$UNIQ_TAG"
 echo
 echo "Note:"
 echo "  You need to configure the env variables in a file to be provided to \`--env-file\`"
 echo "  Refer to the example file \`template-prod.env.list\`"
 echo
 echo "Once You have tested that the image is working you can push it with"
-echo "for tag in latest $UNIQ_TAG; do docker push $PREFIX/parsec-backend-server:\$tag; done"
+echo "for tag in latest $UNIQ_TAG; do docker push $PREFIX/parsec-server:\$tag; done"
