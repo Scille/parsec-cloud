@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import auto
 from typing import assert_never
 
 from parsec._parsec import (
@@ -16,33 +16,28 @@ from parsec._parsec import (
 )
 from parsec.api import api
 from parsec.client_context import AuthenticatedClientContext
+from parsec.types import BadOutcomeEnum
 
-BlockReadBadOutcome = Enum(
-    "BlockReadBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "BLOCK_NOT_FOUND",
-        "STORE_UNAVAILABLE",
-    ),
-)
 
-BlockCreateBadOutcome = Enum(
-    "BlockCreateBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "REALM_NOT_FOUND",
-        "BLOCK_ALREADY_EXISTS",
-        "STORE_UNAVAILABLE",
-    ),
-)
+class BlockReadBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    BLOCK_NOT_FOUND = auto()
+    STORE_UNAVAILABLE = auto()
+
+
+class BlockCreateBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    REALM_NOT_FOUND = auto()
+    BLOCK_ALREADY_EXISTS = auto()
+    STORE_UNAVAILABLE = auto()
 
 
 class BaseBlockComponent:

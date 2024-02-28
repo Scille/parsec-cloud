@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import auto
 from typing import assert_never
 
 from parsec._parsec import (
@@ -25,6 +25,7 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.types import BadOutcomeEnum
 
 
 @dataclass(slots=True)
@@ -63,15 +64,11 @@ class KeysBundle:
     keys_bundle: bytes
 
 
-RealmCreateValidateBadOutcome = Enum(
-    "RealmCreateValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "INVALID_ROLE",
-        "USER_ID_MISMATCH",
-    ),
-)
+class RealmCreateValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    INVALID_ROLE = auto()
+    USER_ID_MISMATCH = auto()
 
 
 def realm_create_validate(
@@ -106,15 +103,11 @@ def realm_create_validate(
     return data
 
 
-RealmShareValidateBadOutcome = Enum(
-    "RealmShareValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "INVALID_ROLE",
-        "CANNOT_SELF_SHARE",
-    ),
-)
+class RealmShareValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    INVALID_ROLE = auto()
+    CANNOT_SELF_SHARE = auto()
 
 
 def realm_share_validate(
@@ -149,15 +142,11 @@ def realm_share_validate(
     return data
 
 
-RealmUnshareValidateBadOutcome = Enum(
-    "RealmUnshareValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "INVALID_ROLE",
-        "CANNOT_SELF_UNSHARE",
-    ),
-)
+class RealmUnshareValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    INVALID_ROLE = auto()
+    CANNOT_SELF_UNSHARE = auto()
 
 
 def realm_unshare_validate(
@@ -192,13 +181,9 @@ def realm_unshare_validate(
     return data
 
 
-RealmRenameValidateBadOutcome = Enum(
-    "RealmRenameValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-    ),
-)
+class RealmRenameValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
 
 
 def realm_rename_validate(
@@ -224,13 +209,9 @@ def realm_rename_validate(
     return data
 
 
-RealmRotateKeyValidateBadOutcome = Enum(
-    "RealmRotateKeyValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-    ),
-)
+class RealmRotateKeyValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
 
 
 def realm_rotate_key_validate(
@@ -256,97 +237,86 @@ def realm_rotate_key_validate(
     return data
 
 
-RealmCreateStoreBadOutcome = Enum(
-    "RealmCreateStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-    ),
-)
-RealmShareStoreBadOutcome = Enum(
-    "RealmShareStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "RECIPIENT_NOT_FOUND",
-        "RECIPIENT_REVOKED",
-        "ROLE_INCOMPATIBLE_WITH_OUTSIDER",
-    ),
-)
-RealmUnshareStoreBadOutcome = Enum(
-    "RealmUnshareStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "RECIPIENT_NOT_FOUND",
-    ),
-)
-RealmRenameStoreBadOutcome = Enum(
-    "RealmRenameStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-    ),
-)
-RealmRotateKeyStoreBadOutcome = Enum(
-    "RealmRotateKeyStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "PARTICIPANT_MISMATCH",
-    ),
-)
-RealmGetKeysBundleBadOutcome = Enum(
-    "RealmGetKeysBundleBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "ACCESS_NOT_AVAILABLE_FOR_AUTHOR",
-        "BAD_KEY_INDEX",
-    ),
-)
-RealmGetStatsAsUserBadOutcome = Enum(
-    "RealmGetStatsAsBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "REALM_NOT_FOUND",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-    ),
-)
-RealmGetStatsBadOutcome = Enum(
-    "RealmGetStatsBadOutcome", ("ORGANIZATION_NOT_FOUND", "REALM_NOT_FOUND")
-)
-RealmGetCurrentRealmsForUserBadOutcome = Enum(
-    "RealmGetRealmsForUserBadOutcome", ("ORGANIZATION_NOT_FOUND", "USER_NOT_FOUND")
-)
-RealmDumpRealmsGrantedRolesBadOutcome = Enum(
-    "RealmDumpRealmsGrantedRolesBadOutcome", ("ORGANIZATION_NOT_FOUND",)
-)
+class RealmCreateStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+
+
+class RealmShareStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    RECIPIENT_NOT_FOUND = auto()
+    RECIPIENT_REVOKED = auto()
+    ROLE_INCOMPATIBLE_WITH_OUTSIDER = auto()
+
+
+class RealmUnshareStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    RECIPIENT_NOT_FOUND = auto()
+
+
+class RealmRenameStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
+class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    PARTICIPANT_MISMATCH = auto()
+
+
+class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ACCESS_NOT_AVAILABLE_FOR_AUTHOR = auto()
+    BAD_KEY_INDEX = auto()
+
+
+class RealmGetStatsAsUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    REALM_NOT_FOUND = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
+class RealmGetStatsBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+class RealmGetCurrentRealmsForUserBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    USER_NOT_FOUND = auto()
+
+
+class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
 
 
 class BaseRealmComponent:

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import auto
 from typing import assert_never
 
 from parsec._parsec import (
@@ -24,17 +24,15 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
+from parsec.types import BadOutcomeEnum
 
-PkiEnrollmentAcceptValidateBadOutcome = Enum(
-    "PkiEnrollmentAcceptValidateBadOutcome",
-    (
-        "INVALID_CERTIFICATE",
-        "TIMESTAMP_MISMATCH",
-        "USER_ID_MISMATCH",
-        "INVALID_REDACTED",
-        "REDACTED_MISMATCH",
-    ),
-)
+
+class PkiEnrollmentAcceptValidateBadOutcome(BadOutcomeEnum):
+    INVALID_CERTIFICATE = auto()
+    TIMESTAMP_MISMATCH = auto()
+    USER_ID_MISMATCH = auto()
+    INVALID_REDACTED = auto()
+    REDACTED_MISMATCH = auto()
 
 
 def pki_enrollment_accept_validate(
@@ -152,64 +150,52 @@ class PkiEnrollmentSubmitX509CertificateAlreadySubmitted:
     submitted_on: DateTime
 
 
-PkiEnrollmentSubmitBadOutcome = Enum(
-    "PkiEnrollmentSubmitBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "ENROLLMENT_ALREADY_EXISTS",
-        "ENROLLMENT_ID_ALREADY_USED",
-        "X509_CERTIFICATE_ALREADY_ENROLLED",
-        "USER_EMAIL_ALREADY_ENROLLED",
-        "INVALID_SUBMIT_PAYLOAD",
-    ),
-)
-PkiEnrollmentInfoBadOutcome = Enum(
-    "PkiEnrollmentInfoBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "ENROLLMENT_NOT_FOUND",
-    ),
-)
-PkiEnrollmentListBadOutcome = Enum(
-    "PkiEnrollmentListBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-    ),
-)
-PkiEnrollmentRejectBadOutcome = Enum(
-    "PkiEnrollmentRejectBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "ENROLLMENT_NOT_FOUND",
-        "ENROLLMENT_NO_LONGER_AVAILABLE",
-    ),
-)
-PkiEnrollmentAcceptStoreBadOutcome = Enum(
-    "PkiEnrollmentAcceptStoreBadOutcome",
-    (
-        "ORGANIZATION_NOT_FOUND",
-        "ORGANIZATION_EXPIRED",
-        "AUTHOR_NOT_FOUND",
-        "AUTHOR_REVOKED",
-        "AUTHOR_NOT_ALLOWED",
-        "ENROLLMENT_NOT_FOUND",
-        "ENROLLMENT_NO_LONGER_AVAILABLE",
-        "USER_ALREADY_EXISTS",
-        "HUMAN_HANDLE_ALREADY_TAKEN",
-        "ACTIVE_USERS_LIMIT_REACHED",
-        "INVALID_ACCEPT_PAYLOAD",
-    ),
-)
+class PkiEnrollmentSubmitBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    ENROLLMENT_ALREADY_EXISTS = auto()
+    ENROLLMENT_ID_ALREADY_USED = auto()
+    X509_CERTIFICATE_ALREADY_ENROLLED = auto()
+    USER_EMAIL_ALREADY_ENROLLED = auto()
+    INVALID_SUBMIT_PAYLOAD = auto()
+
+
+class PkiEnrollmentInfoBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    ENROLLMENT_NOT_FOUND = auto()
+
+
+class PkiEnrollmentListBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
+class PkiEnrollmentRejectBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ENROLLMENT_NOT_FOUND = auto()
+    ENROLLMENT_NO_LONGER_AVAILABLE = auto()
+
+
+class PkiEnrollmentAcceptStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    ENROLLMENT_NOT_FOUND = auto()
+    ENROLLMENT_NO_LONGER_AVAILABLE = auto()
+    USER_ALREADY_EXISTS = auto()
+    HUMAN_HANDLE_ALREADY_TAKEN = auto()
+    ACTIVE_USERS_LIMIT_REACHED = auto()
+    INVALID_ACCEPT_PAYLOAD = auto()
 
 
 class BasePkiEnrollmentComponent:

@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from enum import Enum
+from enum import auto
 from typing import TYPE_CHECKING
 
 import asyncpg
@@ -17,19 +17,19 @@ from parsec.config import (
     S3BlockStoreConfig,
     SWIFTBlockStoreConfig,
 )
+from parsec.types import BadOutcomeEnum
 
 if TYPE_CHECKING:
     from parsec.components.memory.datamodel import MemoryDatamodel
 
 
-BlockStoreReadBadOutcome = Enum(
-    "BlockStoreReadBadOutcome",
-    (
-        "BLOCK_NOT_FOUND",
-        "STORE_UNAVAILABLE",
-    ),
-)
-BlockStoreCreateBadOutcome = Enum("BlockStoreCreateBadOutcome", ("STORE_UNAVAILABLE",))
+class BlockStoreReadBadOutcome(BadOutcomeEnum):
+    BLOCK_NOT_FOUND = auto()
+    STORE_UNAVAILABLE = auto()
+
+
+class BlockStoreCreateBadOutcome(BadOutcomeEnum):
+    STORE_UNAVAILABLE = auto()
 
 
 class BaseBlockStoreComponent:

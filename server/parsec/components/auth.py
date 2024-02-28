@@ -2,7 +2,7 @@
 
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from dataclasses import dataclass
-from enum import Enum, auto
+from enum import auto
 
 from parsec._parsec import (
     CryptoError,
@@ -18,21 +18,22 @@ from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.events import EventBus
 from parsec.config import BackendConfig
 from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
+from parsec.types import BadOutcomeEnum
 
 
-class AuthAnonymousAuthBadOutcome(Enum):
+class AuthAnonymousAuthBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     ORGANIZATION_NOT_FOUND = auto()
 
 
-class AuthInvitedAuthBadOutcome(Enum):
+class AuthInvitedAuthBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     ORGANIZATION_NOT_FOUND = auto()
     INVITATION_NOT_FOUND = auto()
     INVITATION_ALREADY_USED = auto()
 
 
-class AuthAuthenticatedAuthBadOutcome(Enum):
+class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     ORGANIZATION_NOT_FOUND = auto()
     USER_REVOKED = auto()

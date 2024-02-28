@@ -154,14 +154,10 @@ def generate_invite_email(
     return message
 
 
-SendEmailBadOutcome = Enum(
-    "SendEmailBadOutcome",
-    (
-        "SERVER_UNAVAILABLE",
-        "RECIPIENT_REFUSED",
-        "BAD_SMTP_CONFIG",
-    ),
-)
+class SendEmailBadOutcome(BadOutcomeEnum):
+    SERVER_UNAVAILABLE = auto()
+    RECIPIENT_REFUSED = auto()
+    BAD_SMTP_CONFIG = auto()
 
 
 def _smtp_send_email(

@@ -337,10 +337,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # Sequester services certificates is None if sequester is not enabled
         sequester_authority_certificate = None
         sequester_services_certificates = None
-        sequester_authority_veryify_key_der = None
+        sequester_authority_verify_key_der = None
 
         if row["sequester_authority_certificate"]:
-            sequester_authority_veryify_key_der = SequesterVerifyKeyDer(
+            sequester_authority_verify_key_der = SequesterVerifyKeyDer(
                 row["sequester_authority_verify_key_der"]
             )
             sequester_authority_certificate = row["sequester_authority_certificate"]
@@ -361,7 +361,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users_limit=ActiveUsersLimit.from_maybe_int(row["active_users_limit"]),
             user_profile_outsider_allowed=row["user_profile_outsider_allowed"],
             sequester_authority_certificate=sequester_authority_certificate,
-            sequester_authority_verify_key_der=sequester_authority_veryify_key_der,
+            sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
         )
 
