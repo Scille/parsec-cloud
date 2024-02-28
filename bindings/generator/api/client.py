@@ -138,6 +138,45 @@ class DeviceInfo(Structure):
     created_by: Optional[DeviceID]
 
 
+class ClientRevokeUserError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class UserIsSelf:
+        pass
+
+    class UserNotFound:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+    class TimestampOutOfBallpark:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_revoke_user(
+    client: Handle,
+    user: UserID,
+) -> Result[None, ClientRevokeUserError]:
+    raise NotImplementedError
+
+
 class ClientListUsersError(ErrorVariant):
     class Stopped:
         pass

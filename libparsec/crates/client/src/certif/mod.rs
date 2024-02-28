@@ -12,6 +12,7 @@ mod realm_keys_bundle;
 mod realm_rename;
 mod realm_share;
 mod store;
+mod user_revoke;
 mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
@@ -32,6 +33,7 @@ pub use realm_keys_bundle::{CertifEncryptForRealmError, InvalidKeysBundleError};
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
 pub use store::{CertifStoreError, UpTo};
+pub use user_revoke::CertifRevokeUserError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
 use std::sync::Arc;
@@ -282,6 +284,13 @@ impl CertifOps {
                 CertifStoreError::Stopped => CertifEncryptForSequesterServicesError::Stopped,
                 CertifStoreError::Internal(err) => err.context("Cannot access storage").into(),
             })?
+    }
+
+    pub async fn revoke_user(
+        &self,
+        user: UserID,
+    ) -> Result<CertificateBasedActionOutcome, CertifRevokeUserError> {
+        user_revoke::revoke_user(self, user).await
     }
 
     /// Returns the timestamp of the uploaded certificate

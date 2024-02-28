@@ -7,6 +7,7 @@ mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
 mod rename_workspace;
+mod revoke_user;
 mod start_workspace;
 mod utils;
 mod with_monitors;
