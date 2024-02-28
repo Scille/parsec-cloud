@@ -23,7 +23,13 @@
                 "status": "user_not_found"
             },
             {
-                "status": "user_already_revoked"
+                "status": "user_already_revoked",
+                "fields": [
+                    {
+                        "name": "last_common_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"
