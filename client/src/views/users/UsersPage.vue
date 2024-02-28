@@ -115,6 +115,7 @@ import {
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
 import { getCurrentRouteQuery, watchRoute } from '@/router';
+import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
@@ -129,7 +130,9 @@ const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationKey)!;
+const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
+let hotkeys: Hotkeys | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
 
@@ -387,6 +390,11 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
+  hotkeys = hotkeyManager.newHotkeys(Groups.Users);
+  hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
+    displayView.value = displayView.value === DisplayState.List ? DisplayState.Grid : DisplayState.List;
+  });
+
   const result = await parsecGetClientInfo();
 
   if (result.ok) {
@@ -401,6 +409,9 @@ onMounted(async (): Promise<void> => {
 });
 
 onUnmounted(async () => {
+  if (hotkeys) {
+    hotkeyManager.unregister(hotkeys);
+  }
   routeWatchCancel();
 });
 </script>
