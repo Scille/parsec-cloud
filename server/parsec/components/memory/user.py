@@ -24,6 +24,7 @@ from parsec.components.memory.datamodel import (
     MemoryUser,
     MemoryUserProfileUpdate,
 )
+from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
     BaseUserComponent,
     CertificatesBundle,
@@ -232,6 +233,7 @@ class MemoryUserComponent(BaseUserComponent):
         revoked_user_certificate: bytes,
     ) -> (
         RevokedUserCertificate
+        | CertificateBasedActionIdempotentOutcome
         | UserRevokeUserValidateBadOutcome
         | UserRevokeUserStoreBadOutcome
         | TimestampOutOfBallpark
@@ -269,7 +271,10 @@ class MemoryUserComponent(BaseUserComponent):
             return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
 
         if target_user.is_revoked:
-            return UserRevokeUserStoreBadOutcome.USER_ALREADY_REVOKED
+            assert target_user.cooked_revoked is not None
+            return CertificateBasedActionIdempotentOutcome(
+                certificate_timestamp=target_user.cooked_revoked.timestamp
+            )
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
