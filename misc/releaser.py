@@ -192,10 +192,12 @@ class Version:
     def __str__(self) -> str:
         base = f"{self.major}.{self.minor}.{self.patch}"
         prerelease = self.prerelease
+        sep = "-"
         if prerelease is not None:
-            base += "-" + prerelease
+            base += sep + prerelease
+            sep = "."
         if self.dev is not None:
-            base += f"-dev.{self.dev}"
+            base += f"{sep}dev.{self.dev}"
         if self.local is not None:
             base += "+" + self.local
         return base
@@ -334,12 +336,12 @@ assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3-rc1+dev")
 assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3+dev")
 _test_format_version(Version(1, 2, 3), "1.2.3")
 _test_format_version(Version(1, 2, 3, prerelease="a1"), "1.2.3-a.1")
-_test_format_version(Version(1, 2, 3, prerelease="b2", dev=4), "1.2.3-b.2-dev.4")
+_test_format_version(Version(1, 2, 3, prerelease="b2", dev=4), "1.2.3-b.2.dev.4")
 _test_format_version(Version(1, 2, 3, dev=0), "1.2.3-dev.0")
 _test_format_version(Version(1, 2, 3, dev=5), "1.2.3-dev.5")
 _test_format_version(Version(1, 2, 3, prerelease="a1", local="foo.bar"), "1.2.3-a.1+foo.bar")
 _test_format_version(
-    Version(1, 2, 3, prerelease="b2", dev=4, local="foo.bar"), "1.2.3-b.2-dev.4+foo.bar"
+    Version(1, 2, 3, prerelease="b2", dev=4, local="foo.bar"), "1.2.3-b.2.dev.4+foo.bar"
 )
 _test_format_version(Version(1, 2, 3, dev=4, local="foo.bar"), "1.2.3-dev.4+foo.bar")
 
