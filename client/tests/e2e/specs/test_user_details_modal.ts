@@ -12,7 +12,7 @@ describe('Check user details modal', () => {
   });
 
   it('Tests user details modal', () => {
-    cy.get('.users-container').find('.user-list-item').eq(2).find('.options-button').invoke('show').click();
+    cy.get('.users-container').find('.user-list-item').eq(1).find('.options-button').invoke('show').click();
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems');
     cy.get('@menuItems').eq(3).contains('View details').click();
     cy.get('.user-details-modal').as('modal').find('ion-header').contains('User details');
@@ -38,7 +38,7 @@ describe('Check user details modal', () => {
   });
 
   it('Tests no common workspaces', () => {
-    cy.get('.users-container').find('.user-list-item').last().realHover().find('.options-button').invoke('show').click();
+    cy.get('.users-container').find('.user-list-item').eq(5).realHover().find('.options-button').invoke('show').click();
     cy.get('.user-context-menu').find('.menu-list').find('ion-item').as('menuItems');
     cy.get('@menuItems').eq(1).contains('View details').click();
     cy.get('.user-details-modal').as('modal').find('ion-header').contains('User details');

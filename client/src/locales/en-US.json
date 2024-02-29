@@ -860,6 +860,14 @@
             "revokeFailed": "Failed to revoke this user | Failed to revoke any user",
             "revokeSuccess": "{user} has been revoked. They can no longer access this organization. | {count} users have been revoked, they can no longer access this organization.",
             "revokeSomeFailed": "Some users could not be revoked"
+        },
+        "sort": {
+            "byName": "By name",
+            "byJoined": "By date joined",
+            "byProfile": "By profile",
+            "byStatus": "By status",
+            "asc": "Ascending",
+            "desc": "Descending"
         }
     },
     "AboutPage": {

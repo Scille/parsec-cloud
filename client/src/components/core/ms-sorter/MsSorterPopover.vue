@@ -15,7 +15,10 @@
         slot="end"
       />
     </ion-item>
-    <div class="sorter-list">
+    <div
+      class="sorter-list"
+      id="sort-item-list"
+    >
       <ion-item
         class="sorter-list-item body"
         :class="{ selected: selectedOption?.key === option.key }"
