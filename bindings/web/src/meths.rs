@@ -1276,13 +1276,6 @@ fn struct_open_options_js_to_rs(obj: JsValue) -> Result<libparsec::OpenOptions, 
             .map_err(|_| TypeError::new("Not a boolean"))?
             .value_of()
     };
-    let append = {
-        let js_val = Reflect::get(&obj, &"append".into())?;
-        js_val
-            .dyn_into::<Boolean>()
-            .map_err(|_| TypeError::new("Not a boolean"))?
-            .value_of()
-    };
     let truncate = {
         let js_val = Reflect::get(&obj, &"truncate".into())?;
         js_val
@@ -1307,7 +1300,6 @@ fn struct_open_options_js_to_rs(obj: JsValue) -> Result<libparsec::OpenOptions, 
     Ok(libparsec::OpenOptions {
         read,
         write,
-        append,
         truncate,
         create,
         create_new,
@@ -1321,8 +1313,6 @@ fn struct_open_options_rs_to_js(rs_obj: libparsec::OpenOptions) -> Result<JsValu
     Reflect::set(&js_obj, &"read".into(), &js_read)?;
     let js_write = rs_obj.write.into();
     Reflect::set(&js_obj, &"write".into(), &js_write)?;
-    let js_append = rs_obj.append.into();
-    Reflect::set(&js_obj, &"append".into(), &js_append)?;
     let js_truncate = rs_obj.truncate.into();
     Reflect::set(&js_obj, &"truncate".into(), &js_truncate)?;
     let js_create = rs_obj.create.into();

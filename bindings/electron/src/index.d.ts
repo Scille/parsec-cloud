@@ -157,7 +157,6 @@ export interface NewInvitationInfo {
 export interface OpenOptions {
     read: boolean
     write: boolean
-    append: boolean
     truncate: boolean
     create: boolean
     createNew: boolean

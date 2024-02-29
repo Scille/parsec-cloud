@@ -1208,10 +1208,6 @@ fn struct_open_options_js_to_rs<'a>(
         let js_val: Handle<JsBoolean> = obj.get(cx, "write")?;
         js_val.value(cx)
     };
-    let append = {
-        let js_val: Handle<JsBoolean> = obj.get(cx, "append")?;
-        js_val.value(cx)
-    };
     let truncate = {
         let js_val: Handle<JsBoolean> = obj.get(cx, "truncate")?;
         js_val.value(cx)
@@ -1227,7 +1223,6 @@ fn struct_open_options_js_to_rs<'a>(
     Ok(libparsec::OpenOptions {
         read,
         write,
-        append,
         truncate,
         create,
         create_new,
@@ -1244,8 +1239,6 @@ fn struct_open_options_rs_to_js<'a>(
     js_obj.set(cx, "read", js_read)?;
     let js_write = JsBoolean::new(cx, rs_obj.write);
     js_obj.set(cx, "write", js_write)?;
-    let js_append = JsBoolean::new(cx, rs_obj.append);
-    js_obj.set(cx, "append", js_append)?;
     let js_truncate = JsBoolean::new(cx, rs_obj.truncate);
     js_obj.set(cx, "truncate", js_truncate)?;
     let js_create = JsBoolean::new(cx, rs_obj.create);
