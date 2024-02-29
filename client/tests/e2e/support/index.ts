@@ -83,7 +83,7 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
 
 Cypress.Commands.add('login', (userName, password) => {
   cy.get('.organization-list').contains(userName).click();
-  cy.get('#ms-password-input').find('input').type(password);
+  cy.get('#ms-password-input').find('input').type(password, { delay: 0 });
   cy.get('.login-button').click();
   cy.wait(200);
   cy.url().should('include', '/workspaces');
