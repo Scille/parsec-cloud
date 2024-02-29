@@ -44,6 +44,7 @@ def claimer_greeter_abort_operation(
 
 
 class DeviceFileType(Enum):
+    Keyring = EnumItemUnit
     Password = EnumItemUnit
     Recovery = EnumItemUnit
     Smartcard = EnumItemUnit
@@ -64,6 +65,9 @@ async def list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
 
 
 class DeviceSaveStrategy(Variant):
+    class Keyring:
+        pass
+
     class Password:
         password: Password
 

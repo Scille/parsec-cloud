@@ -1,18 +1,33 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use keyring::Entry as KeyringEntry;
 use std::{
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::Arc,
 };
+use zeroize::Zeroize;
 
 use libparsec_types::prelude::*;
-use zeroize::Zeroize;
 
 use crate::{
     ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError, DEVICE_FILE_EXT,
 };
+
+const KEYRING_SERVICE: &str = "parsec";
+
+impl From<keyring::Error> for LoadDeviceError {
+    fn from(value: keyring::Error) -> Self {
+        Self::Internal(anyhow::anyhow!(value))
+    }
+}
+
+impl From<keyring::Error> for SaveDeviceError {
+    fn from(value: keyring::Error) -> Self {
+        Self::Internal(anyhow::anyhow!(value))
+    }
+}
 
 /*
  * List available devices
@@ -96,6 +111,14 @@ fn load_available_device(
         .map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
 
     let (ty, organization_id, device_id, human_handle, device_label, slug) = match device_file {
+        DeviceFile::Keyring(device) => (
+            DeviceFileType::Keyring,
+            device.organization_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+            device.slug,
+        ),
         DeviceFile::Password(device) => (
             DeviceFileType::Password,
             device.organization_id,
@@ -194,6 +217,38 @@ pub async fn load_device(
     access: &DeviceAccessStrategy,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     let device = match access {
+        DeviceAccessStrategy::Keyring { key_file } => {
+            // TODO: make file access on a worker thread !
+            let content =
+                std::fs::read(key_file).map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
+
+            // Regular load
+            let device_file =
+                DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
+
+            if let DeviceFile::Keyring(x) = device_file {
+                let entry = KeyringEntry::new(KEYRING_SERVICE, &slughash(&x.slug))?;
+
+                let passphrase = entry.get_password()?.into();
+
+                let key = SecretKey::from_recovery_passphrase(passphrase)
+                    .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+
+                let mut cleartext = key
+                    .decrypt(&x.ciphertext)
+                    .map_err(|_| LoadDeviceError::DecryptionFailed)?;
+
+                let device =
+                    LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
+
+                cleartext.zeroize();
+
+                device
+            } else {
+                return Err(LoadDeviceError::InvalidData);
+            }
+        }
+
         DeviceAccessStrategy::Password { key_file, password } => {
             // TODO: make file access on a worker thread !
             let content =
@@ -233,11 +288,66 @@ pub async fn load_device(
     Ok(Arc::new(device))
 }
 
+fn save_device_file(key_file: &PathBuf, file_content: &DeviceFile) -> Result<(), SaveDeviceError> {
+    let file_content = file_content.dump();
+
+    if let Some(parent) = key_file.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+    }
+    let tmp_path = match key_file.file_name() {
+        Some(file_name) => {
+            let mut tmp_path = key_file.clone();
+            {
+                let mut tmp_file_name = file_name.to_owned();
+                tmp_file_name.push(".tmp");
+                tmp_path.set_file_name(tmp_file_name);
+            }
+            tmp_path
+        }
+        None => {
+            return Err(SaveDeviceError::InvalidPath(anyhow::anyhow!(
+                "Path is missing a file name"
+            )))
+        }
+    };
+
+    // Classic pattern for atomic file creation:
+    // - First write the file in a temporary location
+    // - Then move the file to it final location
+    // This way a crash during file write won't end up with a corrupted
+    // file in the final location.
+    std::fs::write(&tmp_path, file_content).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+    std::fs::rename(&tmp_path, key_file).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+
+    Ok(())
+}
+
 pub async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<(), SaveDeviceError> {
     match access {
+        DeviceAccessStrategy::Keyring { key_file } => {
+            let entry = KeyringEntry::new(KEYRING_SERVICE, &device.slughash())?;
+
+            let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+            entry.set_password(&passphrase)?;
+
+            let cleartext = device.dump();
+            let ciphertext = key.encrypt(&cleartext);
+            let file_content = DeviceFile::Keyring(DeviceFileKeyring {
+                ciphertext: ciphertext.into(),
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                device_id: device.device_id.clone(),
+                organization_id: device.organization_id().clone(),
+                slug: device.slug(),
+            });
+
+            save_device_file(key_file, &file_content)
+        }
+
         DeviceAccessStrategy::Password { key_file, password } => {
             let salt = SecretKey::generate_salt();
             let key =
@@ -258,39 +368,9 @@ pub async fn save_device(
                 organization_id: device.organization_id().to_owned(),
                 slug: device.slug(),
                 salt: salt.into(),
-            })
-            .dump();
+            });
 
-            if let Some(parent) = key_file.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-            }
-            let tmp_path = match key_file.file_name() {
-                Some(file_name) => {
-                    let mut tmp_path = key_file.clone();
-                    {
-                        let mut tmp_file_name = file_name.to_owned();
-                        tmp_file_name.push(".tmp");
-                        tmp_path.set_file_name(tmp_file_name);
-                    }
-                    tmp_path
-                }
-                None => {
-                    return Err(SaveDeviceError::InvalidPath(anyhow::anyhow!(
-                        "Path is missing a file name"
-                    )))
-                }
-            };
-
-            // Classic pattern for atomic file creation:
-            // - First write the file in a temporary location
-            // - Then move the file to it final location
-            // This way a crash during file write won't end up with a corrupted
-            // file in the final location.
-            std::fs::write(&tmp_path, file_content)
-                .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
-            std::fs::rename(&tmp_path, key_file)
-                .map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
+            save_device_file(key_file, &file_content)
         }
 
         DeviceAccessStrategy::Smartcard { .. } => {
@@ -298,8 +378,6 @@ pub async fn save_device(
             todo!()
         }
     }
-
-    Ok(())
 }
 
 pub async fn change_authentication(
@@ -412,4 +490,10 @@ pub async fn save_recovery_device(
         .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
 
     Ok(passphrase)
+}
+
+pub fn is_keyring_available() -> bool {
+    // Using "tmp" as user, because keyring-rs forbids the use of empty string
+    // due to an issue in macOS. See: https://github.com/hwchen/keyring-rs/pull/87
+    KeyringEntry::new(KEYRING_SERVICE, "tmp").is_ok()
 }

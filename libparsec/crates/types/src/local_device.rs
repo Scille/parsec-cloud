@@ -24,6 +24,12 @@ pub fn local_device_slug(
     format!("{}#{}#{}", &hashed_rvk[..10], organization_id, device_id)
 }
 
+pub fn slughash(slug: &str) -> String {
+    let mut hasher = sha2::Sha256::new();
+    hasher.update(slug.as_bytes()); // Slug is encoded as utf8
+    format!("{:x}", hasher.finalize())
+}
+
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
@@ -113,9 +119,7 @@ impl LocalDevice {
     /// Hence it's often simpler to rely on it hash instead (e.g. select the
     /// device to use in the CLI by providing the beginning of the hash)
     pub fn slughash(&self) -> String {
-        let mut hasher = sha2::Sha256::new();
-        hasher.update(self.slug().as_bytes()); // Slug is encoded as utf8
-        format!("{:x}", hasher.finalize())
+        slughash(&self.slug())
     }
 
     pub fn load_slug(slug: &str) -> Result<(OrganizationID, DeviceID), &'static str> {

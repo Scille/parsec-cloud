@@ -56,6 +56,7 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
             libparsec_platform_device_loader::LoadDeviceError::DecryptionFailed => {
                 Self::LoadDeviceDecryptionFailed
             }
+            libparsec_platform_device_loader::LoadDeviceError::Internal(e) => Self::Internal(e),
         }
     }
 }
@@ -264,6 +265,7 @@ impl From<ChangeAuthentificationError> for ClientChangeAuthenticationError {
             ChangeAuthentificationError::CannotRemoveOldDevice => {
                 Self::Internal(anyhow::anyhow!(value))
             }
+            ChangeAuthentificationError::Internal(e) => Self::Internal(e),
         }
     }
 }
@@ -273,10 +275,7 @@ pub async fn client_change_authentication(
     current_auth: DeviceAccessStrategy,
     new_auth: DeviceSaveStrategy,
 ) -> Result<(), ClientChangeAuthenticationError> {
-    let key_file = match &current_auth {
-        DeviceAccessStrategy::Password { key_file, .. } => key_file.clone(),
-        DeviceAccessStrategy::Smartcard { key_file } => key_file.clone(),
-    };
+    let key_file = current_auth.key_file().to_owned();
 
     libparsec_platform_device_loader::change_authentication(
         &config.config_dir,

@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{PyBytes, PyTuple, PyType},
+    types::{PyTuple, PyType},
     IntoPy, PyObject, PyResult, Python,
 };
 
@@ -55,44 +55,3 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     ["STANDARD", standard, libparsec_types::UserProfile::Standard],
     ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider]
 );
-
-crate::binding_utils::gen_py_wrapper_class_for_enum!(
-    DeviceFileType,
-    libparsec_types::DeviceFileType,
-    [
-        "PASSWORD",
-        password,
-        libparsec_types::DeviceFileType::Password
-    ],
-    [
-        "SMARTCARD",
-        smartcard,
-        libparsec_types::DeviceFileType::Smartcard
-    ],
-    [
-        "RECOVERY",
-        recovery,
-        libparsec_types::DeviceFileType::Recovery
-    ]
-);
-
-#[pymethods]
-impl DeviceFileType {
-    pub fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
-            py,
-            &self
-                .0
-                .dump()
-                .map_err(|err| PyValueError::new_err(err.to_string()))?,
-        ))
-    }
-
-    #[classmethod]
-    pub fn load(_cls: &PyType, bytes: &[u8]) -> PyResult<&'static PyObject> {
-        Ok(Self::convert(
-            libparsec_types::DeviceFileType::load(bytes)
-                .map_err(|_| PyValueError::new_err("Failed to deserialize"))?,
-        ))
-    }
-}

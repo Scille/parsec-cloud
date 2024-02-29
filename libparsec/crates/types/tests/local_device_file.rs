@@ -78,6 +78,70 @@ fn password_protected_device_file(alice: &Device) {
 }
 
 #[rstest]
+fn keyring_device_file(alice: &Device) {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   type: "keyring"
+    //   ciphertext: <encrypted alice local device>
+    //   human_handle: ("bob@example.com", "Boby McBobFace")
+    //   device_label: "My dev1 machine"
+    //   organization_id: "CoolOrg"
+    //   device_id: "alice@dev1"
+    //   slug: "f78292422e#CoolOrg#alice@dev1"
+    let filedata = hex!(
+        "97a76b657972696e67c5021141d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d"
+        "0e054188e38aa85e2a02d0a344cd986e712274f8824f9464fa5a27f7f2291f42cf579b6be44e07"
+        "33f89a07f45150dfd8096634f685a44db07693e085e3af6f5525c14216f3860adaf612c4a8235e"
+        "005bc1f9dc31aa24f49383b5afb9f7a2e788bbadb675894a5f316085449b223df957b799140fe9"
+        "cdfd3fea56fbaa452b250cad39ce4cc6c7ccdfe8248e15c7575c4b259f7d3aa93c106b5d994437"
+        "24b6b2be4e9f55dd3ba5cd29da633aa20a643599221b8bfe99c6029f7f2160cd18c89a05d71713"
+        "d51b57b98f56036a9cab704376cd6a754985345fc6309de5c6e852489406b946e213a71154668c"
+        "cf9adb089527d28f84ba7b8425d0d13aa697e8ecaa5b6192b7400b1fc589bbb72a7b5dbf1b9942"
+        "a3837d1bb1e86401f329172ed57e140a67ec80ba3a74fc804436588ec8057540529c121887ba4e"
+        "86236d53b1b8ed7f8d8d4798c769e5ddbdf785fbe9872cf5dc201016705f67424dfd3a02ddc5be"
+        "737a64325c80a3b678b3908e1036de6880c897fb87236decde2110eeff7453f07b755bb634020d"
+        "2a06fb3599513cbd0c56f25f2cd7fc10ecf11719ec719d7e36d6d79d9f72ec213d9be2113c9e90"
+        "d9449e1e2b143c608662c9456b7fb34ff1dcbcf8f54ef860d6681f6a8c6ef65e7831a381999dfe"
+        "dc98e7b33afae58d4edb101475c29fd9804a7bd9adfc99bc2697e16c460e5a4f2dc792b1616c69"
+        "6365406578616d706c652e636f6db2416c69636579204d63416c69636546616365af4d79206465"
+        "7631206d616368696e65aa616c6963654064657631a7436f6f6c4f7267bd663738323932343232"
+        "6523436f6f6c4f726723616c6963654064657631"
+    );
+
+    let expected = DeviceFileKeyring {
+        ciphertext: hex!(
+            "41d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d0e054188e38aa85e2a02"
+            "d0a344cd986e712274f8824f9464fa5a27f7f2291f42cf579b6be44e0733f89a07f45150df"
+            "d8096634f685a44db07693e085e3af6f5525c14216f3860adaf612c4a8235e005bc1f9dc31"
+            "aa24f49383b5afb9f7a2e788bbadb675894a5f316085449b223df957b799140fe9cdfd3fea"
+            "56fbaa452b250cad39ce4cc6c7ccdfe8248e15c7575c4b259f7d3aa93c106b5d99443724b6"
+            "b2be4e9f55dd3ba5cd29da633aa20a643599221b8bfe99c6029f7f2160cd18c89a05d71713"
+            "d51b57b98f56036a9cab704376cd6a754985345fc6309de5c6e852489406b946e213a71154"
+            "668ccf9adb089527d28f84ba7b8425d0d13aa697e8ecaa5b6192b7400b1fc589bbb72a7b5d"
+            "bf1b9942a3837d1bb1e86401f329172ed57e140a67ec80ba3a74fc804436588ec805754052"
+            "9c121887ba4e86236d53b1b8ed7f8d8d4798c769e5ddbdf785fbe9872cf5dc201016705f67"
+            "424dfd3a02ddc5be737a64325c80a3b678b3908e1036de6880c897fb87236decde2110eeff"
+            "7453f07b755bb634020d2a06fb3599513cbd0c56f25f2cd7fc10ecf11719ec719d7e36d6d7"
+            "9d9f72ec213d9be2113c9e90d9449e1e2b143c608662c9456b7fb34ff1dcbcf8f54ef860d6"
+            "681f6a8c6ef65e7831a381999dfedc98e7b33afae58d4edb101475c29fd9804a7bd9adfc99"
+            "bc2697e16c460e5a4f2dc7"
+        )
+        .as_ref()
+        .into(),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
+        device_id: alice.device_id.to_owned(),
+        organization_id: alice.organization_id().to_owned(),
+        slug: alice.local_device().slug(),
+    };
+
+    let file_device = rmp_serde::from_slice::<DeviceFileKeyring>(&filedata).unwrap();
+    p_assert_eq!(file_device, expected);
+
+    // TODO: Test ciphertext decryption
+}
+
+#[rstest]
 fn recovery_device_file(alice: &Device) {
     // Generated from Python implementation (Parsec v2.6.0)
     // Content:

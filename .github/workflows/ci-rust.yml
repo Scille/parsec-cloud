@@ -138,6 +138,9 @@ jobs:
         env:
           RUST_LOG: debug
 
+      - name: unlock keyring
+        uses: t1m0thyj/unlock-keyring@728cc718a07b5e7b62c269fc89295e248b24cba7 # pin v1.1.0
+
       # Use sodiumoxide here given 1) it is composed of C code, so not totally
       # platform independant and 2) it is what is going to be used in release
       - name: Test platform crates using sodium crypto features (🐧 Linux specific)

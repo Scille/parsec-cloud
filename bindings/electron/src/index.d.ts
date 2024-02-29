@@ -10,6 +10,7 @@ export type Result<T, E = Error> =
   | { ok: false; error: E }
 
 export enum DeviceFileType {
+    Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
     Smartcard = 'DeviceFileTypeSmartcard',
@@ -813,6 +814,10 @@ export type ClientStopError =
 
 
 // DeviceAccessStrategy
+export interface DeviceAccessStrategyKeyring {
+    tag: "Keyring"
+    key_file: string
+}
 export interface DeviceAccessStrategyPassword {
     tag: "Password"
     password: string
@@ -823,11 +828,15 @@ export interface DeviceAccessStrategySmartcard {
     key_file: string
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 
 // DeviceSaveStrategy
+export interface DeviceSaveStrategyKeyring {
+    tag: "Keyring"
+}
 export interface DeviceSaveStrategyPassword {
     tag: "Password"
     password: string
@@ -836,6 +845,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: "Smartcard"
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
@@ -1788,6 +1798,8 @@ export function greeterUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+export function isKeyringAvailable(
+): Promise<boolean>
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>

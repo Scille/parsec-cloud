@@ -133,6 +133,7 @@ instant = { version = "0.1.12", default-features = false }
 itertools = { version = "0.12.0", default-features = false }
 jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.68", default-features = false }
+keyring = { version = "2.3.2", default-features = false }
 lazy_static = { version = "1.4.0", default-features = false }
 libc = { version = "0.2.153", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }

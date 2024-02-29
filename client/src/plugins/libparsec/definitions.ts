@@ -9,6 +9,7 @@ export type Result<T, E = Error> =
   | { ok: false; error: E }
 
 export enum DeviceFileType {
+    Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
     Smartcard = 'DeviceFileTypeSmartcard',
@@ -953,10 +954,15 @@ export type ClientStopError =
 
 // DeviceAccessStrategy
 export enum DeviceAccessStrategyTag {
+    Keyring = 'DeviceAccessStrategyKeyring',
     Password = 'DeviceAccessStrategyPassword',
     Smartcard = 'DeviceAccessStrategySmartcard',
 }
 
+export interface DeviceAccessStrategyKeyring {
+    tag: DeviceAccessStrategyTag.Keyring
+    keyFile: Path
+}
 export interface DeviceAccessStrategyPassword {
     tag: DeviceAccessStrategyTag.Password
     password: Password
@@ -967,15 +973,20 @@ export interface DeviceAccessStrategySmartcard {
     keyFile: Path
 }
 export type DeviceAccessStrategy =
+  | DeviceAccessStrategyKeyring
   | DeviceAccessStrategyPassword
   | DeviceAccessStrategySmartcard
 
 // DeviceSaveStrategy
 export enum DeviceSaveStrategyTag {
+    Keyring = 'DeviceSaveStrategyKeyring',
     Password = 'DeviceSaveStrategyPassword',
     Smartcard = 'DeviceSaveStrategySmartcard',
 }
 
+export interface DeviceSaveStrategyKeyring {
+    tag: DeviceSaveStrategyTag.Keyring
+}
 export interface DeviceSaveStrategyPassword {
     tag: DeviceSaveStrategyTag.Password
     password: Password
@@ -984,6 +995,7 @@ export interface DeviceSaveStrategySmartcard {
     tag: DeviceSaveStrategyTag.Smartcard
 }
 export type DeviceSaveStrategy =
+  | DeviceSaveStrategyKeyring
   | DeviceSaveStrategyPassword
   | DeviceSaveStrategySmartcard
 
@@ -2092,6 +2104,8 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+    isKeyringAvailable(
+    ): Promise<boolean>
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
