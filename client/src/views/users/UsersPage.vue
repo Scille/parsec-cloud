@@ -49,6 +49,13 @@
               {{ $t('UsersPage.userSelectedCount', { count: users.selectedCount() }, users.selectedCount()) }}
             </ion-text>
           </div>
+          <ms-sorter
+            :label="$t('UsersPage.sort.byName')"
+            :options="msSorterOptions"
+            :default-option="SortProperty.Profile"
+            :sorter-labels="msSorterLabels"
+            @change="onSortChange"
+          />
           <ms-grid-list-toggle
             v-model="displayView"
             @update:model-value="onDisplayStateChange"
@@ -100,11 +107,14 @@ import {
   MsActionBar,
   MsActionBarButton,
   MsGridListToggle,
+  MsOptions,
+  MsSorter,
+  MsSorterChangeEvent,
   askQuestion,
   getTextInputFromUser,
 } from '@/components/core';
 import { MsImage, NoActiveUser } from '@/components/core/ms-image';
-import { UserCollection, UserModel } from '@/components/users';
+import { SortProperty, UserCollection, UserModel } from '@/components/users';
 import {
   ClientInfo,
   ClientNewUserInvitationErrorTag,
@@ -140,6 +150,8 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 let hotkeys: Hotkeys | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
+const currentSortProperty = ref();
+const currentSortOrder = ref();
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 
@@ -149,6 +161,24 @@ interface UsersPageSavedData {
 
 async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: displayView.value });
+}
+
+const msSorterOptions: MsOptions = new MsOptions([
+  { label: translate('UsersPage.sort.byName'), key: SortProperty.Name },
+  { label: translate('UsersPage.sort.byJoined'), key: SortProperty.JoinedDate },
+  { label: translate('UsersPage.sort.byProfile'), key: SortProperty.Profile },
+  { label: translate('UsersPage.sort.byStatus'), key: SortProperty.Status },
+]);
+
+const msSorterLabels = {
+  asc: translate('UsersPage.sort.asc'),
+  desc: translate('UsersPage.sort.desc'),
+};
+
+function onSortChange(event: MsSorterChangeEvent): void {
+  currentSortProperty.value = event.option.key;
+  currentSortOrder.value = event.sortByAsc;
+  users.value.sort(currentSortProperty.value, currentSortOrder.value);
 }
 
 async function revokeUser(user: UserInfo): Promise<void> {
@@ -389,6 +419,7 @@ async function refreshUserList(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  users.value.sort(currentSortProperty.value, currentSortOrder.value);
 }
 
 const routeWatchCancel = watchRoute(async () => {
@@ -408,6 +439,9 @@ onMounted(async (): Promise<void> => {
   hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
     displayView.value = displayView.value === DisplayState.List ? DisplayState.Grid : DisplayState.List;
   });
+
+  currentSortProperty.value = SortProperty.Profile;
+  currentSortOrder.value = true;
 
   const result = await parsecGetClientInfo();
 

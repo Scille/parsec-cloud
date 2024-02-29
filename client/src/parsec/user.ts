@@ -26,6 +26,19 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
   } else {
     const value: Array<UserInfo> = [
       {
+        id: 'me',
+        humanHandle: {
+          email: 'user@host.com',
+          label: 'Gordon Freeman',
+        },
+        currentProfile: UserProfile.Admin,
+        createdOn: DateTime.now(),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      },
+      {
         id: 'id1',
         // cspell:disable-next-line
         humanHandle: { label: 'Cernd', email: 'cernd@gmail.com' },
@@ -48,13 +61,22 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
         isRevoked: (): boolean => false,
       },
       {
-        id: 'me',
-        humanHandle: {
-          email: 'user@host.com',
-          label: 'Gordon Freeman',
-        },
-        currentProfile: UserProfile.Admin,
-        createdOn: DateTime.now(),
+        id: 'id3',
+        // cspell:disable-next-line
+        humanHandle: { label: 'Karl Hungus', email: 'karlhungus@gmail.com' },
+        currentProfile: UserProfile.Outsider,
+        createdOn: DateTime.utc(1998, 4, 22),
+        createdBy: 'device',
+        revokedOn: null,
+        revokedBy: null,
+        isRevoked: (): boolean => false,
+      },
+      {
+        id: 'id4',
+        // cspell:disable-next-line
+        humanHandle: { label: 'Patches', email: 'patches@yahoo.fr' },
+        currentProfile: UserProfile.Standard,
+        createdOn: DateTime.utc(2009, 10, 6),
         createdBy: 'device',
         revokedOn: null,
         revokedBy: null,
@@ -62,17 +84,41 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
       },
     ];
     if (!skipRevoked) {
-      value.push({
-        id: 'id3',
-        // cspell:disable-next-line
-        humanHandle: { label: 'Valygar Corthala', email: 'val@gmail.com' },
-        currentProfile: UserProfile.Standard,
-        createdOn: DateTime.now(),
-        createdBy: 'device',
-        revokedOn: DateTime.now(),
-        revokedBy: 'device',
-        isRevoked: (): boolean => true,
-      });
+      value.push(
+        {
+          id: 'id5',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Arthas Menethil', email: 'arthasmenethil@gmail.com' },
+          currentProfile: UserProfile.Admin,
+          createdOn: DateTime.utc(2002, 7, 3),
+          createdBy: 'device',
+          revokedOn: DateTime.now(),
+          revokedBy: 'device',
+          isRevoked: (): boolean => true,
+        },
+        {
+          id: 'id6',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Gaia', email: 'gaia@gmail.com' },
+          currentProfile: UserProfile.Outsider,
+          createdOn: DateTime.utc(2019, 7, 16),
+          createdBy: 'device',
+          revokedOn: DateTime.now(),
+          revokedBy: 'device',
+          isRevoked: (): boolean => true,
+        },
+        {
+          id: 'id7',
+          // cspell:disable-next-line
+          humanHandle: { label: 'Valygar Corthala', email: 'val@gmail.com' },
+          currentProfile: UserProfile.Standard,
+          createdOn: DateTime.now(),
+          createdBy: 'device',
+          revokedOn: DateTime.now(),
+          revokedBy: 'device',
+          isRevoked: (): boolean => true,
+        },
+      );
     }
     return { ok: true, value: value };
   }

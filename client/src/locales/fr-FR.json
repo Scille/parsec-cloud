@@ -860,6 +860,14 @@
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
             "revokeSuccess": "L'utilisateur {user} a été révoqué(e), il ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
             "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
+        },
+        "sort": {
+            "byName": "Par nom",
+            "byJoined": "Par date",
+            "byProfile": "Par profil",
+            "byStatus": "Par statut",
+            "asc": "Croissant",
+            "desc": "Décroissant"
         }
     },
     "AboutPage": {
