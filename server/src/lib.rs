@@ -51,7 +51,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ParsecPkiEnrollmentAddr>()?;
     m.add_function(wrap_pyfunction!(export_root_verify_key, m)?)?;
 
-    m.add_class::<DeviceFileType>()?;
     m.add_class::<InvitationStatus>()?;
     m.add_class::<InvitationType>()?;
     m.add_class::<RealmRole>()?;

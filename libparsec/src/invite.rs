@@ -15,6 +15,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub enum DeviceSaveStrategy {
+    Keyring,
     Password { password: Password },
     Smartcard,
 }
@@ -22,6 +23,7 @@ pub enum DeviceSaveStrategy {
 impl DeviceSaveStrategy {
     pub fn into_access(self, key_file: PathBuf) -> DeviceAccessStrategy {
         match self {
+            DeviceSaveStrategy::Keyring => DeviceAccessStrategy::Keyring { key_file },
             DeviceSaveStrategy::Password { password } => {
                 DeviceAccessStrategy::Password { key_file, password }
             }

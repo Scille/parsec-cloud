@@ -22,6 +22,9 @@ libparsec_testbed = { workspace = true, optional = true }
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+keyring = { workspace = true, features = ["platform-all"] }
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { workspace = true, features = ["Window", "Storage"] }
 serde_json = { workspace = true, features = ["std"] }

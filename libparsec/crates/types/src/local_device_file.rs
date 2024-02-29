@@ -14,6 +14,30 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileKeyringData", from = "DeviceFileKeyringData")]
+pub struct DeviceFileKeyring {
+    pub ciphertext: Bytes,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+}
+
+parsec_data!("schema/local_device/device_file_keyring.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileKeyring,
+    DeviceFileKeyringData,
+    ciphertext,
+    human_handle,
+    device_label,
+    device_id,
+    organization_id,
+    slug,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
     pub ciphertext: Bytes,
@@ -98,6 +122,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DeviceFile {
+    Keyring(DeviceFileKeyring),
     Password(DeviceFilePassword),
     Recovery(DeviceFileRecovery),
     Smartcard(DeviceFileSmartcard),
@@ -142,6 +167,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
+    Keyring,
     Password,
     Recovery,
     Smartcard,
@@ -162,6 +188,9 @@ impl DeviceFileType {
 /// import/export functions.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeviceAccessStrategy {
+    Keyring {
+        key_file: PathBuf,
+    },
     Password {
         key_file: PathBuf,
         password: Password,
@@ -180,8 +209,17 @@ pub enum DeviceAccessStrategy {
 impl DeviceAccessStrategy {
     pub fn key_file(&self) -> &Path {
         match self {
+            Self::Keyring { key_file } => key_file,
             Self::Password { key_file, .. } => key_file,
             Self::Smartcard { key_file } => key_file,
+        }
+    }
+
+    pub fn ty(&self) -> DeviceFileType {
+        match self {
+            Self::Keyring { .. } => DeviceFileType::Keyring,
+            Self::Password { .. } => DeviceFileType::Password,
+            Self::Smartcard { .. } => DeviceFileType::Smartcard,
         }
     }
 }

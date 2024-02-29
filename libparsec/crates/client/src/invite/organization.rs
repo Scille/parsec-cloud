@@ -227,14 +227,8 @@ impl OrganizationBootstrapFinalizeCtx {
             anyhow::anyhow!("Error while saving the device file: {e}")
         })?;
 
-        let (key_file_path, ty) = match access {
-            DeviceAccessStrategy::Password { key_file, .. } => {
-                (key_file.to_owned(), DeviceFileType::Password)
-            }
-            DeviceAccessStrategy::Smartcard { key_file } => {
-                (key_file.to_owned(), DeviceFileType::Smartcard)
-            }
-        };
+        let key_file_path = access.key_file().to_owned();
+        let ty = access.ty();
 
         Ok(AvailableDevice {
             key_file_path,

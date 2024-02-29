@@ -36,6 +36,9 @@ class RealmRole(Enum):
 
 
 class DeviceAccessStrategy(Variant):
+    class Keyring:
+        key_file: Path
+
     class Password:
         password: Password
         key_file: Path
@@ -373,4 +376,8 @@ async def client_share_workspace(
     recipient: UserID,
     role: Optional[RealmRole],
 ) -> Result[None, ClientShareWorkspaceError]:
+    raise NotImplementedError
+
+
+def is_keyring_available() -> bool:
     raise NotImplementedError

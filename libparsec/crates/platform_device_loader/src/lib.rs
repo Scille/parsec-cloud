@@ -53,6 +53,8 @@ pub enum LoadDeviceError {
     InvalidData,
     #[error("Failed to decrypt file content")]
     DecryptionFailed,
+    #[error(transparent)]
+    Internal(anyhow::Error),
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
@@ -73,6 +75,8 @@ pub async fn load_device(
 pub enum SaveDeviceError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
+    #[error(transparent)]
+    Internal(anyhow::Error),
 }
 
 /// Note `config_dir` is only used as discriminant for the testbed here
@@ -100,6 +104,8 @@ pub enum ChangeAuthentificationError {
     DecryptionFailed,
     #[error("Cannot remove the old device")]
     CannotRemoveOldDevice,
+    #[error(transparent)]
+    Internal(anyhow::Error),
 }
 
 impl From<LoadDeviceError> for ChangeAuthentificationError {
@@ -108,6 +114,7 @@ impl From<LoadDeviceError> for ChangeAuthentificationError {
             LoadDeviceError::DecryptionFailed => Self::DecryptionFailed,
             LoadDeviceError::InvalidData => Self::InvalidData,
             LoadDeviceError::InvalidPath(e) => Self::InvalidPath(e),
+            LoadDeviceError::Internal(e) => Self::Internal(e),
         }
     }
 }
@@ -116,6 +123,7 @@ impl From<SaveDeviceError> for ChangeAuthentificationError {
     fn from(value: SaveDeviceError) -> Self {
         match value {
             SaveDeviceError::InvalidPath(e) => Self::InvalidPath(e),
+            SaveDeviceError::Internal(e) => Self::Internal(e),
         }
     }
 }
@@ -166,4 +174,12 @@ pub async fn load_recovery_device(
     passphrase: SecretKeyPassphrase,
 ) -> Result<LocalDevice, LoadRecoveryDeviceError> {
     platform::load_recovery_device(key_file, passphrase).await
+}
+
+pub fn is_keyring_available() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    return false;
+
+    #[cfg(not(target_arch = "wasm32"))]
+    native::is_keyring_available()
 }

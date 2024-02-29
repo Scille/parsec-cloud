@@ -1,0 +1,30 @@
+{
+    "label": "DeviceFileKeyring",
+    "type": "keyring",
+    "other_fields": [
+        {
+            "name": "ciphertext",
+            "type": "Bytes"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "slug",
+            "type": "String"
+        }
+    ]
+}

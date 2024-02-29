@@ -82,6 +82,12 @@ where
 {
     load_device_file_and_run(config_dir.clone(), device_slughash, |device| async move {
         let device = match device.ty {
+            DeviceFileType::Keyring => {
+                return Err(anyhow::anyhow!(
+                    "Unsupported device file authentication `{:?}`",
+                    device.ty
+                ));
+            }
             DeviceFileType::Password => {
                 #[cfg(feature = "testenv")]
                 let password = "test".to_string().into();
