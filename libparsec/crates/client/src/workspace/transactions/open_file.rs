@@ -18,7 +18,6 @@ use crate::{
 pub struct OpenOptions {
     pub read: bool,
     pub write: bool,
-    pub append: bool,
     pub truncate: bool,
     pub create: bool,
     pub create_new: bool,
@@ -176,10 +175,8 @@ pub async fn open_file(
             } else {
                 ReadMode::Denied
             },
-            write_mode: if options.append {
-                WriteMode::AllowedAppend
-            } else if options.write {
-                WriteMode::AllowedAtCursor
+            write_mode: if options.write {
+                WriteMode::Allowed
             } else {
                 WriteMode::Denied
             },

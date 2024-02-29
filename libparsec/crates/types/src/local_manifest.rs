@@ -110,8 +110,8 @@ impl Chunk {
         chunk_data: &[u8],
         dst: &mut impl std::io::Write,
     ) -> std::io::Result<()> {
-        let start = self.start as usize;
-        let stop = self.stop.get() as usize;
+        let start = (self.start - self.raw_offset) as usize;
+        let stop = (self.stop.get() - self.raw_offset) as usize;
         dst.write_all(&chunk_data[start..stop])
     }
 

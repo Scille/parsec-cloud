@@ -101,7 +101,7 @@ pub async fn fd_write(
         let chunk_data_stop = {
             write_operation
                 .offset
-                .checked_sub_unsigned(chunk_stop - chunk_start)
+                .checked_add_unsigned(chunk_stop - chunk_start)
                 .expect("overflow !")
         };
 
@@ -120,7 +120,7 @@ pub async fn fd_write(
             // 3) This chunk contains first some zeroes, then some data from the buffer
             // chunk_data_start < 0 and chunk_data_stop > 0
             (_, _) => {
-                let zeroes_filler_size = 0 - chunk_data_start as usize;
+                let zeroes_filler_size = (0 - chunk_data_start) as usize;
                 let from_buffer_size = chunk_data_stop as usize;
                 let chunk_data_size = zeroes_filler_size + from_buffer_size;
                 let mut chunk_data = vec![0; chunk_data_size];

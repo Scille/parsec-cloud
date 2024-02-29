@@ -34,8 +34,7 @@ enum ReadMode {
 }
 
 enum WriteMode {
-    AllowedAtCursor,
-    AllowedAppend,
+    Allowed,
     Denied,
 }
 
@@ -156,11 +155,21 @@ impl WorkspaceOps {
     /// Once stopped, it can still theoretically be used (i.e. `stop` doesn't
     /// consume `self`), but will do nothing but return stopped error.
     pub(crate) async fn stop(&self) -> anyhow::Result<()> {
+        // If we are already closed, there is not file descriptors to close so this
+        // operation is a noop.
+        let close_outcome = transactions::close_all_fds(self)
+            .await
+            .context("cannot close opened file");
+
+        // Continue even if the close has failed: no matter what we still want to
+        // close the store.
+
         self.store
             .stop()
             .await
-            .context("Cannot stop data storage")?;
-        Ok(())
+            .context("cannot stop data storage")?;
+
+        close_outcome
     }
 
     /// Workspace entry contains information related to the workspace that are
