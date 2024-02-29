@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use super::utils::workspace_ops_factory;
 use crate::workspace::{OpenOptions, WorkspaceFdReadError};
 
-#[parsec_test(testbed = "minimal_client_ready", with_server)]
+#[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
@@ -19,7 +19,6 @@ async fn ok(env: &TestbedEnv) {
     let options = OpenOptions {
         read: true,
         write: false,
-        append: false,
         truncate: false,
         create: false,
         create_new: false,
@@ -84,6 +83,7 @@ async fn ok(env: &TestbedEnv) {
     p_assert_eq!(buf, expected_buf);
 
     ops.fd_close(fd).await.unwrap();
+    ops.stop().await.unwrap();
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -99,7 +99,6 @@ async fn cursor_not_in_read_mode(env: &TestbedEnv) {
     let options = OpenOptions {
         read: false,
         write: false,
-        append: false,
         truncate: false,
         create: false,
         create_new: false,
@@ -115,6 +114,27 @@ async fn cursor_not_in_read_mode(env: &TestbedEnv) {
     p_assert_matches!(err, WorkspaceFdReadError::NotInReadMode);
 
     ops.fd_close(fd).await.unwrap();
+    ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn unknown_file_descriptor(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    let err = ops
+        .fd_read(FileDescriptor(1), 0, 1, &mut vec![])
+        .await
+        .unwrap_err();
+    spy.assert_no_events();
+    p_assert_matches!(err, WorkspaceFdReadError::BadFileDescriptor);
+
+    ops.stop().await.unwrap();
 }
 
 // TODO: test invalid manifest with less block that in declared size
+// TODO: test read with data not in store

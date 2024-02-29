@@ -18,6 +18,90 @@ pub enum WorkspaceFdCloseError {
     Internal(#[from] anyhow::Error),
 }
 
+pub async fn close_all_fds(ops: &WorkspaceOps) -> Result<(), WorkspaceFdCloseError> {
+    // 1) Clean the list of opened files
+
+    let opened_files = {
+        let mut guard = ops.opened_files.lock().expect("Mutex is poisoned");
+
+        guard.file_descriptors.clear();
+
+        // /!\ From now on, no error should be returned !!! /!\
+        //
+        // We are in a inconsistent state where `guard.file_descriptors` and
+        // `guard.opened_files` are not in sync
+
+        std::mem::take(&mut guard.opened_files)
+    };
+
+    // 2) Flush the data
+
+    let mut first_bad_flush_outcome = None;
+
+    for opened_file in opened_files.values() {
+        let mut opened_file = opened_file.lock().await;
+
+        // Don't bother cleaning the list of cursors in the opened file, as we
+        // are going to destroy it right away.
+
+        // 1) Flush the changes
+        let flush_outcome = super::force_reshape_and_flush(ops, &mut opened_file)
+            .await
+            .map_err(|err| match err {
+                ReshapeAndFlushError::Stopped => WorkspaceFdCloseError::Stopped,
+                ReshapeAndFlushError::Internal(err) => err.context("cannot flush file").into(),
+            }); // No ? here: we want to first finish the close before returning the error !
+
+        // In case multiple errors occur, we only keep the first one (it is most likely
+        // they are all the same anyway).
+        if flush_outcome.is_err() && first_bad_flush_outcome.is_none() {
+            first_bad_flush_outcome = Some(flush_outcome);
+        }
+    }
+
+    // 3) Close the updaters
+
+    // Last step is to close the updater so that the file manifest is no longer locked
+    // in the store.
+    //
+    // To do that we need to take ownership of the updater, which is not easy given it
+    // is stored in an Arc !
+    //
+    // However there is a trick here: given `opened_file` is no longer referenced in
+    // `ops.opened_files`, only the operations that are currently running can have a
+    // reference on it.
+    // On top of that, those operations should fail as soon as they realize `opened_file`
+    // no longer contains their file descriptor's cursor.
+    // So we can just wait in a loop until the Arc is only referenced by ourselves.
+    for (_, opened_file) in opened_files {
+        let mut our_opened_file_ref_wrapper = Some(opened_file);
+        loop {
+            match Arc::try_unwrap(
+                our_opened_file_ref_wrapper
+                    .take()
+                    .expect("contains our reference"),
+            ) {
+                // The Arc is single referenced
+                Ok(opened_file_mutex) => {
+                    // Unwrap the mutex to obtain ownership on the `OpenedFile` object...
+                    let opened_file = opened_file_mutex.into_inner();
+                    // ...and finally close the updater !
+                    opened_file.updater.close(&ops.store);
+                    break;
+                }
+                // The Arc is still referenced by others coroutines...
+                Err(our_opened_file_ref) => {
+                    our_opened_file_ref.lock().await;
+                    // Put back our reference in the wrapper for the next try
+                    our_opened_file_ref_wrapper = Some(our_opened_file_ref);
+                }
+            }
+        }
+    }
+
+    first_bad_flush_outcome.unwrap_or(Ok(()))
+}
+
 pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), WorkspaceFdCloseError> {
     // 1) Retrieve the opened file from the file descriptor
 

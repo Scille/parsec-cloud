@@ -298,7 +298,6 @@ async def workspace_remove_folder_all(
 class OpenOptions(Structure):
     read: bool
     write: bool
-    append: bool
     truncate: bool
     create: bool
     create_new: bool

@@ -274,17 +274,28 @@ mod child_manifests_lock {
     #[derive(Debug)]
     pub(super) struct ChildManifestLockGuard {
         entry_id: VlobID,
+        #[allow(unused)]
         is_released: bool,
     }
 
-    impl Drop for ChildManifestLockGuard {
-        fn drop(&mut self) {
-            assert!(
-                self.is_released,
-                "Child manifest guard dropped without being released !"
-            );
-        }
-    }
+    // TODO: Lock is useful to detect misuse of the guard, but it is also very
+    // annoying given it is triggered any time another error in the tests makes
+    // us skip the release part. Worst, in this case the only outputted error
+    // is the panic message, which is not very helpful.
+
+    // impl Drop for ChildManifestLockGuard {
+    //     fn drop(&mut self) {
+    //         if !self.is_released {
+
+    //             panic!("Child manifest `{}` guard dropped without being released !", self.entry_id);
+    //         }
+    //         assert!(
+    //             self.is_released,
+    //             "Child manifest `{}` guard dropped without being released !",
+    //             self.entry_id,
+    //         );
+    //     }
+    // }
 
     impl ChildManifestsLock {
         pub(super) fn new() -> Self {
@@ -1238,7 +1249,14 @@ impl WorkspaceStore {
             Some(storage) => storage,
         };
 
-        let maybe_encrypted = storage.get_chunk(chunk.id).await?;
+        let mut maybe_encrypted = storage.get_chunk(chunk.id).await?;
+
+        if maybe_encrypted.is_none() {
+            maybe_encrypted = storage
+                .get_block(chunk.id.into(), self.device.now())
+                .await?;
+        }
+
         if let Some(encrypted) = maybe_encrypted {
             let data: Bytes = self
                 .device

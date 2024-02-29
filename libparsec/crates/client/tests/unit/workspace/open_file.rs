@@ -30,7 +30,6 @@ async fn not_existing(#[values(true, false)] open_in_root: bool, env: &TestbedEn
             OpenOptions {
                 read: false,
                 write: false,
-                append: false,
                 truncate: false,
                 create: false,
                 create_new: false,
@@ -63,7 +62,6 @@ async fn cannot_open_folder(#[values(true, false)] open_in_root: bool, env: &Tes
             OpenOptions {
                 read: false,
                 write: false,
-                append: false,
                 truncate: false,
                 create: false,
                 create_new: false,
@@ -90,7 +88,6 @@ async fn cannot_open_root(env: &TestbedEnv) {
             OpenOptions {
                 read: false,
                 write: false,
-                append: false,
                 truncate: false,
                 create: false,
                 create_new: false,
@@ -121,7 +118,6 @@ async fn open_with_create(#[values(true, false)] file_already_exists: bool, env:
     let options = OpenOptions {
         read: false,
         write: false,
-        append: false,
         truncate: false,
         create: true,
         create_new: false,
@@ -174,7 +170,6 @@ async fn open_with_create_new(#[values(true, false)] file_already_exists: bool, 
     let options = OpenOptions {
         read: false,
         write: false,
-        append: false,
         truncate: false,
         create: false,
         create_new: true,
@@ -228,7 +223,6 @@ async fn multiple_opens(env: &TestbedEnv) {
     let options = OpenOptions {
         read: false,
         write: false,
-        append: false,
         truncate: false,
         create: false,
         create_new: false,
@@ -240,7 +234,6 @@ async fn multiple_opens(env: &TestbedEnv) {
     let options = OpenOptions {
         read: true,
         write: true,
-        append: false,
         truncate: false,
         create: false,
         create_new: false,
