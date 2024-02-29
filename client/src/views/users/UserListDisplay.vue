@@ -36,7 +36,7 @@
       :user="currentUser as UserModel"
       :show-checkbox="false"
       :disabled="true"
-      :hide-options="true"
+      :main-user="true"
     />
     <user-list-item
       v-for="user in users.getUsers()"
@@ -134,7 +134,7 @@ async function selectAll(selected: boolean): Promise<void> {
   }
 
   .label-email {
-    min-width: 17.5rem;
+    min-width: 15.5rem;
     flex-grow: 0;
   }
 

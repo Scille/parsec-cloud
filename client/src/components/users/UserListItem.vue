@@ -32,6 +32,12 @@
           :user-avatar="user.humanHandle.label"
           :user-name="user.humanHandle.label"
         />
+        <span
+          v-if="mainUser"
+          class="body user-name__you"
+        >
+          {{ $t('UsersPage.mainUser') }}
+        </span>
       </ion-label>
     </div>
 
@@ -62,7 +68,7 @@
     <!-- options -->
     <div class="user-options ion-item-child-clickable">
       <ion-button
-        v-show="(isHovered || menuOpened) && !hideOptions"
+        v-show="(isHovered || menuOpened) && !mainUser"
         fill="clear"
         class="options-button"
         @click.stop="onOptionsClick($event)"
@@ -93,7 +99,7 @@ const menuOpened = ref(false);
 const props = defineProps<{
   user: UserModel;
   showCheckbox: boolean;
-  hideOptions?: boolean;
+  mainUser?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -127,8 +133,21 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-grow: 1;
   max-width: 20vw;
   min-width: 11.25rem;
-  white-space: nowrap;
-  overflow: hidden;
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    .main-cell {
+      white-space: nowrap;
+      overflow: hidden;
+    }
+  }
+
+  &__you {
+    color: var(--parsec-color-light-primary-600);
+  }
 }
 
 .user-status {
@@ -139,7 +158,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-email {
-  min-width: 17.5rem;
+  min-width: 14rem;
   width: auto;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);
