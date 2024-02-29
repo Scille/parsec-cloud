@@ -722,6 +722,7 @@
             "profile": "Profile",
             "joinedOn": "Joined On"
         },
+        "mainUser": "(You)",
         "inviteUser": "Invite a user",
         "itemCount": "No user | One user | {count} users",
         "profile": {

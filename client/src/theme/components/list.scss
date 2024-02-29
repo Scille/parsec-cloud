@@ -72,6 +72,23 @@ ion-item:has(.file-list-item),
       color: var(--parsec-color-light-secondary-text);
     }
   }
+
+  &.item-disabled {
+    opacity: 1;
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.4;
+      background: var(--parsec-color-light-secondary-disabled);
+      z-index: 1;
+    }
+  }
 }
 
 .workspace-list-item > [class^='workspace-'],
