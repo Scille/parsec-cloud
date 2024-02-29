@@ -4,7 +4,7 @@ import { libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { getParsecHandle } from '@/parsec/routing';
-import { ClientListUsersError, Result, UserID, UserInfo, UserProfile } from '@/parsec/types';
+import { ClientListUsersError, ClientRevokeUserError, Result, UserID, UserInfo, UserProfile } from '@/parsec/types';
 import { DateTime } from 'luxon';
 
 export async function listUsers(skipRevoked = true): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
@@ -78,29 +78,11 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
   }
 }
 
-export async function listRevokedUsers(): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
-  const result = await listUsers(false);
-
-  if (result.ok) {
-    result.value = result.value.filter((user) => user.isRevoked());
-  }
-  return result;
-}
-
-export enum RevokeUserTag {
-  Internal = 'Internal',
-}
-
-export interface RevokeUserError {
-  tag: RevokeUserTag.Internal;
-}
-
-export async function revokeUser(_userId: UserID): Promise<Result<null, RevokeUserError>> {
+export async function revokeUser(userId: UserID): Promise<Result<null, ClientRevokeUserError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
-    // Will call the bindings
-    return { ok: true, value: null };
+    return await libparsec.clientRevokeUser(handle, userId);
   } else {
     return { ok: true, value: null };
   }

@@ -382,7 +382,6 @@ async function refreshUserList(): Promise<void> {
 
 const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
-  console.log(query);
   if (query.openInvite) {
     await inviteUser();
   }
