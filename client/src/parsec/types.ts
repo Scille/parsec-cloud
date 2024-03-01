@@ -34,6 +34,9 @@ export {
   UserProfile,
   WorkspaceCreateFileErrorTag,
   WorkspaceCreateFolderErrorTag,
+  WorkspaceFdCloseErrorTag,
+  WorkspaceFdWriteErrorTag,
+  WorkspaceOpenFileErrorTag,
   WorkspaceRemoveEntryErrorTag,
   WorkspaceRenameEntryErrorTag,
   WorkspaceStatEntryErrorTag,
@@ -79,6 +82,7 @@ export type {
   DeviceLabel,
   DeviceSaveStrategy,
   EntryName,
+  FileDescriptor,
   VlobID as FileID,
   FsPath,
   GreetInProgressError,
@@ -114,7 +118,11 @@ export type {
   UserOrDeviceClaimInitialInfoUser,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceFdCloseError,
+  WorkspaceFdResizeError,
+  WorkspaceFdWriteError,
   VlobID as WorkspaceID,
+  WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
@@ -159,6 +167,15 @@ interface EntryStatFolder extends ParsecEntryStatFolder {
 interface EntryStatFile extends ParsecEntryStatFile {
   isFile: () => boolean;
   name: EntryName;
+}
+
+interface OpenOptions {
+  read?: boolean;
+  write?: boolean;
+  append?: boolean;
+  truncate?: boolean;
+  create?: boolean;
+  createNew?: boolean;
 }
 
 type EntryStat = EntryStatFile | EntryStatFolder;
@@ -257,6 +274,7 @@ export {
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   HumanHandle,
+  OpenOptions,
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,

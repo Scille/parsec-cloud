@@ -79,6 +79,7 @@ import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, EntryStatFolder, FsPath, Path, entryStat, getWorkspaceName } from '@/parsec';
+import { getWorkspaceHandle } from '@/router';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -101,14 +102,18 @@ onMounted(async () => {
 });
 
 async function update(): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    return;
+  }
   const components = await Path.parse(selectedPath.value);
 
-  const result = await entryStat(selectedPath.value);
+  const result = await entryStat(workspaceHandle, selectedPath.value);
   if (result.ok) {
     currentEntries.value = [];
     for (const [childName] of (result.value as EntryStatFolder).children) {
       const childPath = await Path.join(selectedPath.value, childName);
-      const entryResult = await entryStat(childPath);
+      const entryResult = await entryStat(workspaceHandle, childPath);
       if (entryResult.ok) {
         currentEntries.value.push(entryResult.value);
       }

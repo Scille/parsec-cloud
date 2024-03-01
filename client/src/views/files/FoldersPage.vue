@@ -126,7 +126,7 @@
       </ms-action-bar>
       <div class="folder-container scroll">
         <div
-          v-if="folders.entriesCount() + files.entriesCount() === 0"
+          v-if="folders.entriesCount() + files.entriesCount() + fileImportsCurrentDir.length === 0"
           class="no-files body-lg"
         >
           <div class="no-files-content">
@@ -187,9 +187,17 @@ import {
   FolderModel,
   SortProperty,
 } from '@/components/files';
-import { Routes, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
+import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
+import {
+  FileProgressStateData,
+  FolderCreatedStateData,
+  ImportData,
+  ImportManager,
+  ImportManagerKey,
+  ImportState,
+  StateData,
+} from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -224,9 +232,10 @@ const routeWatchCancel = watchRoute(async () => {
     return;
   }
   if (newPath !== currentPath.value) {
-    await setCurrentPath(newPath);
+    currentPath.value = newPath;
   }
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
+  await listFolder();
 });
 
 const importManager: ImportManager = inject(ImportManagerKey)!;
@@ -278,8 +287,8 @@ onMounted(async () => {
 
   ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
   callbackId = await importManager.registerCallback(onFileImportState);
-  const path = getDocumentPath();
-  await setCurrentPath(path);
+  currentPath.value = getDocumentPath();
+  await listFolder();
 });
 
 onUnmounted(async () => {
@@ -291,23 +300,6 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
-
-async function setCurrentPath(path: parsec.FsPath): Promise<void> {
-  if (path === '') {
-    return;
-  }
-  let selectFile: parsec.EntryName | null = null;
-  const result = await parsec.entryStat(currentPath.value);
-  if (result.ok) {
-    if (result.value.isFile()) {
-      currentPath.value = await parsec.Path.parent(path);
-      selectFile = await parsec.Path.filename(path);
-    } else {
-      currentPath.value = path;
-    }
-  }
-  await listFolder(selectFile);
-}
 
 async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, { displayState: displayView.value });
@@ -322,25 +314,44 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
   if (fileUploadModal && state === ImportState.FileAdded) {
     await fileUploadModal?.dismiss();
   }
-  if (!importData) {
-    return;
-  }
-  if (state === ImportState.FileAdded) {
+  if (state === ImportState.FileAdded && importData) {
     fileImports.value.push({ data: importData, progress: 0 });
-  } else if (state === ImportState.FileProgress) {
+  } else if (state === ImportState.FileProgress && importData) {
     const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
     if (index !== -1) {
       fileImports.value[index].progress = (stateData as FileProgressStateData).progress;
     }
-  } else if (
-    [ImportState.FileImported, ImportState.Cancelled, ImportState.CreateFailed, ImportState.WriteError, ImportState].includes(state)
-  ) {
+  } else if ([ImportState.Cancelled, ImportState.CreateFailed, ImportState.WriteError].includes(state) && importData) {
+    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
+    if (index !== -1) {
+      fileImports.value.splice(index, 1);
+    }
+  } else if (state === ImportState.FileImported && importData) {
     const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
     if (index !== -1) {
       fileImports.value.splice(index, 1);
     }
     if (parsec.Path.areSame(importData.path, currentPath.value)) {
-      await listFolder();
+      const importedFilePath = await parsec.Path.join(importData.path, importData.file.name);
+      const statResult = await parsec.entryStat(importData.workspaceHandle, importedFilePath);
+      if (statResult.ok && statResult.value.isFile()) {
+        if (!files.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
+          (statResult.value as FileModel).isSelected = false;
+          files.value.append(statResult.value as FileModel);
+        }
+      }
+    }
+  } else if (state === ImportState.FolderCreated) {
+    const folderData = stateData as FolderCreatedStateData;
+    const parent = await parsec.Path.parent(folderData.path);
+    if (parsec.Path.areSame(parent, currentPath.value)) {
+      const statResult = await parsec.entryStat(folderData.workspaceHandle, folderData.path);
+      if (statResult.ok && !statResult.value.isFile()) {
+        if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
+          (statResult.value as FolderModel).isSelected = false;
+          folders.value.append(statResult.value as FolderModel);
+        }
+      }
     }
   }
 }
@@ -349,20 +360,25 @@ const fileImportsCurrentDir = computed(() => {
   return fileImports.value.filter((item) => parsec.Path.areSame(item.data.path, currentPath.value));
 });
 
-async function listFolder(selectFile: parsec.EntryName | null = null): Promise<void> {
-  const result = await parsec.entryStat(currentPath.value);
+async function listFolder(): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    return;
+  }
+  const result = await parsec.entryStat(workspaceHandle, currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
     const newFiles: FileModel[] = [];
     folderInfo.value = result.value as parsec.EntryStatFolder;
+    const query = getCurrentRouteQuery();
     for (const [childName] of (result.value as parsec.EntryStatFolder).children) {
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
         const childPath = await parsec.Path.join(currentPath.value, childName);
-        const fileResult = await parsec.entryStat(childPath);
+        const fileResult = await parsec.entryStat(workspaceHandle, childPath);
         if (fileResult.ok) {
           if (fileResult.value.isFile()) {
-            (fileResult.value as FileModel).isSelected = selectFile && selectFile === fileResult.value.name ? true : false;
+            (fileResult.value as FileModel).isSelected = query.selectFile && query.selectFile === fileResult.value.name ? true : false;
             newFiles.push(fileResult.value as FileModel);
           } else {
             (fileResult.value as FolderModel).isSelected = false;
@@ -397,6 +413,10 @@ async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<voi
 }
 
 async function createFolder(): Promise<void> {
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    return;
+  }
   hotkeyManager.disableGroup(Groups.Documents);
   const folderName = await getTextInputFromUser({
     title: translate('FoldersPage.CreateFolderModal.title'),
@@ -412,7 +432,7 @@ async function createFolder(): Promise<void> {
     return;
   }
   const folderPath = await parsec.Path.join(currentPath.value, folderName);
-  const result = await parsec.createFolder(folderPath);
+  const result = await parsec.createFolder(workspaceHandle, folderPath);
   if (!result.ok) {
     informationManager.present(
       new Information({
@@ -423,8 +443,6 @@ async function createFolder(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-  } else {
-    console.log(`New folder ${folderName} created`);
   }
   await listFolder();
 }
@@ -454,7 +472,8 @@ function getSelectedEntries(): parsec.EntryStat[] {
 }
 
 async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length === 0) {
+  const workspaceHandle = getWorkspaceHandle();
+  if (entries.length === 0 || !workspaceHandle) {
     return;
   } else if (entries.length === 1) {
     const entry = entries[0];
@@ -476,7 +495,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       return;
     }
     const path = await parsec.Path.join(currentPath.value, entry.name);
-    const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
+    const result = entry.isFile() ? await parsec.deleteFile(workspaceHandle, path) : await parsec.deleteFolder(workspaceHandle, path);
     if (!result.ok) {
       informationManager.present(
         new Information({
@@ -485,8 +504,6 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
         }),
         PresentationMode.Toast,
       );
-    } else {
-      console.log(`File ${entry.name} deleted`);
     }
   } else {
     hotkeyManager.disableGroup(Groups.Documents);
@@ -508,7 +525,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     let errorsEncountered = 0;
     for (const entry of entries) {
       const path = await parsec.Path.join(currentPath.value, entry.name);
-      const result = entry.isFile() ? await parsec.deleteFile(path) : await parsec.deleteFolder(path);
+      const result = entry.isFile() ? await parsec.deleteFile(workspaceHandle, path) : await parsec.deleteFolder(workspaceHandle, path);
       if (!result.ok) {
         errorsEncountered += 1;
       }
@@ -524,15 +541,14 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
         }),
         PresentationMode.Toast,
       );
-    } else {
-      console.log(`${entries.length} entries deleted`);
     }
   }
   await listFolder();
 }
 
 async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length !== 1) {
+  const workspaceHandle = getWorkspaceHandle();
+  if (entries.length !== 1 || !workspaceHandle) {
     return;
   }
   const entry = entries[0];
@@ -556,7 +572,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.rename(filePath, newName);
+  const result = await parsec.rename(workspaceHandle, filePath, newName);
   if (!result.ok) {
     informationManager.present(
       new Information({
@@ -565,8 +581,6 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-  } else {
-    console.log(`File ${entry.name} renamed to ${newName}`);
   }
   await listFolder();
 }
@@ -749,7 +763,9 @@ async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length !== 1) {
+  const workspaceHandle = getWorkspaceHandle();
+
+  if (entries.length !== 1 || !workspaceHandle) {
     return;
   }
   if (parsec.isWeb()) {
@@ -765,7 +781,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const result = await parsec.getAbsolutePath(getWorkspaceHandle(), entry);
+  const result = await parsec.getAbsolutePath(workspaceHandle, entry);
 
   if (!result.ok) {
     await informationManager.present(

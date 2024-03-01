@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { MsModal } from '@/components/core';
 import { FileDropZone, FileImport } from '@/components/files';
-import { Path, WorkspaceHandle, WorkspaceID, createFolder } from '@/parsec';
+import { Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { inject } from 'vue';
 
@@ -32,13 +32,6 @@ async function uploadFileEntry(currentPath: string, fsEntry: FileSystemEntry): P
   const parsecPath = await Path.join(currentPath, fsEntry.name);
 
   if (fsEntry.isDirectory) {
-    console.log('Uploading folder', fsEntry.name, 'to', currentPath, 'create', parsecPath);
-    const result = await createFolder(parsecPath);
-    if (!result.ok) {
-      console.log(`Failed to create folder ${parsecPath} (reason: ${result.error.tag}), cancelling...`);
-      // No need to go further if the folder creation failed
-      return;
-    }
     const reader = (fsEntry as FileSystemDirectoryEntry).createReader();
     reader.readEntries((entries) => {
       entries.forEach(async (entry) => {

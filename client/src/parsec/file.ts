@@ -8,17 +8,23 @@ import {
   EntryStat,
   EntryStatFile,
   EntryStatFolder,
+  FileDescriptor,
   FileID,
   FileType,
   FsPath,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
+  OpenOptions,
   OrganizationID,
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceFdCloseError,
+  WorkspaceFdResizeError,
+  WorkspaceFdWriteError,
   WorkspaceHandle,
   WorkspaceID,
+  WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
@@ -27,55 +33,54 @@ import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
-export async function createFile(path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
+export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (clientHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFile(workspaceHandle, path);
   } else {
     return { ok: true, value: '42' };
   }
 }
 
-export async function createFolder(path: FsPath): Promise<Result<FileID, WorkspaceCreateFolderError>> {
+export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFolderError>> {
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
-    return await libparsec.workspaceCreateFolder(workspaceHandle, path);
+  if (clientHandle && !needsMocks()) {
+    return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
   } else {
     return { ok: true, value: '7' };
   }
 }
 
-export async function deleteFile(path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
+export async function deleteFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (clientHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFile(workspaceHandle, path);
   } else {
     return { ok: true, value: null };
   }
 }
 
-export async function deleteFolder(path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
+export async function deleteFolder(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (clientHandle && !needsMocks()) {
     return await libparsec.workspaceRemoveFolder(workspaceHandle, path);
   } else {
     return { ok: true, value: null };
   }
 }
 
-export async function rename(path: FsPath, newName: EntryName): Promise<Result<null, WorkspaceRenameEntryError>> {
+export async function rename(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  newName: EntryName,
+): Promise<Result<null, WorkspaceRenameEntryError>> {
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (clientHandle && !needsMocks()) {
     return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, true);
   } else {
     return { ok: true, value: null };
@@ -84,7 +89,7 @@ export async function rename(path: FsPath, newName: EntryName): Promise<Result<n
 
 let MOCK_FILE_ID = 1;
 
-export async function entryStat(path: FsPath): Promise<Result<EntryStat, WorkspaceStatEntryError>> {
+export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<EntryStat, WorkspaceStatEntryError>> {
   function generateEntryName(prefix: string = '', addExtension = false): string {
     const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
     const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
@@ -115,11 +120,10 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
   const FILE_PREFIX = 'File_';
 
   const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
 
   const fileName = (await Path.filename(path)) || '';
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (clientHandle && !needsMocks()) {
     const result = await libparsec.workspaceStatEntry(workspaceHandle, path);
     if (result.ok) {
       result.value.created = DateTime.fromSeconds(result.value.created as any as number);
@@ -256,5 +260,67 @@ export async function parseFileLink(_link: string): Promise<Result<FileLinkData,
         workspaceId: 'abcd',
       },
     };
+  }
+}
+
+export async function openFile(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+  options: OpenOptions,
+): Promise<Result<FileDescriptor, WorkspaceOpenFileError>> {
+  const clientHandle = getParsecHandle();
+
+  const parsecOptions = {
+    read: options.read ? true : false,
+    write: options.write ? true : false,
+    append: options.append ? true : false,
+    truncate: options.truncate ? true : false,
+    create: options.create ? true : false,
+    createNew: options.createNew ? true : false,
+  };
+
+  if (clientHandle && workspaceHandle && !needsMocks()) {
+    return await libparsec.workspaceOpenFile(workspaceHandle, path, parsecOptions);
+  } else {
+    return { ok: true, value: 42 };
+  }
+}
+
+export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescriptor): Promise<Result<null, WorkspaceFdCloseError>> {
+  const clientHandle = getParsecHandle();
+
+  if (clientHandle && !needsMocks()) {
+    return await libparsec.fdClose(workspaceHandle, fd);
+  } else {
+    return { ok: true, value: null };
+  }
+}
+
+export async function resizeFile(
+  workspaceHandle: WorkspaceHandle,
+  fd: FileDescriptor,
+  length: number,
+): Promise<Result<null, WorkspaceFdResizeError>> {
+  const clientHandle = getParsecHandle();
+
+  if (clientHandle && workspaceHandle && !needsMocks()) {
+    return await libparsec.fdResize(workspaceHandle, fd, length, true);
+  } else {
+    return { ok: true, value: null };
+  }
+}
+
+export async function writeFile(
+  workspaceHandle: WorkspaceHandle,
+  fd: FileDescriptor,
+  offset: number,
+  data: Uint8Array,
+): Promise<Result<number, WorkspaceFdWriteError>> {
+  const clientHandle = getParsecHandle();
+
+  if (clientHandle && !needsMocks()) {
+    return await libparsec.fdWrite(workspaceHandle, fd, offset, data);
+  } else {
+    return { ok: true, value: 1337 };
   }
 }
