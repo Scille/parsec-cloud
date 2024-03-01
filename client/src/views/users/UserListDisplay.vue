@@ -36,7 +36,7 @@
       :user="currentUser as UserModel"
       :show-checkbox="false"
       :disabled="true"
-      :main-user="true"
+      :is-current-user="true"
     />
     <user-list-item
       v-for="user in users.getUsers()"
@@ -69,9 +69,10 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: Hotkeys | null = null;
 
 const selectedCount = ref(0);
+const activeUsersCount = props.users.getUsers().filter((user) => !user.isRevoked()).length;
 
 const allSelected = computed(() => {
-  return selectedCount.value === props.users.usersCount();
+  return selectedCount.value > 0 && selectedCount.value === activeUsersCount;
 });
 
 const someSelected = computed(() => {
@@ -96,7 +97,7 @@ async function onSelectedChange(_entry: UserInfo, _checked: boolean): Promise<vo
 async function selectAll(selected: boolean): Promise<void> {
   props.users.selectAll(selected);
   if (selected) {
-    selectedCount.value = props.users.usersCount();
+    selectedCount.value = props.users.selectedCount();
   } else {
     selectedCount.value = 0;
   }

@@ -6,7 +6,11 @@
     class="user-list-item"
     lines="full"
     :detail="false"
-    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected }"
+    :class="{
+      selected: user.isSelected && !user.isRevoked(),
+      revoked: user.isRevoked(),
+      'no-padding-end': !user.isSelected,
+    }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -17,6 +21,7 @@
         aria-label=""
         v-model="user.isSelected"
         v-show="user.isSelected || isHovered || showCheckbox"
+        v-if="!user.isRevoked()"
         class="checkbox"
         @click.stop
         @ion-change="$emit('select', user, $event.detail.checked)"
@@ -33,16 +38,19 @@
           :user-name="user.humanHandle.label"
         />
         <span
-          v-if="mainUser"
+          v-if="isCurrentUser"
           class="body user-name__you"
         >
-          {{ $t('UsersPage.mainUser') }}
+          {{ $t('UsersPage.currentUser') }}
         </span>
       </ion-label>
     </div>
 
     <!-- user status -->
-    <div class="user-status">
+    <div
+      class="user-status"
+      :class="user.isRevoked() ? 'user-revoked' : ''"
+    >
       <user-status-tag :revoked="user.isRevoked()" />
     </div>
 
@@ -68,7 +76,7 @@
     <!-- options -->
     <div class="user-options ion-item-child-clickable">
       <ion-button
-        v-show="(isHovered || menuOpened) && !mainUser"
+        v-show="(isHovered || menuOpened) && !isCurrentUser"
         fill="clear"
         class="options-button"
         @click.stop="onOptionsClick($event)"
@@ -99,7 +107,7 @@ const menuOpened = ref(false);
 const props = defineProps<{
   user: UserModel;
   showCheckbox: boolean;
-  mainUser?: boolean;
+  isCurrentUser?: boolean;
 }>();
 
 const emits = defineEmits<{

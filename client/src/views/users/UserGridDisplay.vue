@@ -6,6 +6,7 @@
     :user="currentUser as UserModel"
     :show-checkbox="false"
     :show-options="false"
+    :is-current-user="true"
   />
   <user-card
     v-for="user in users.getUsers()"

@@ -68,7 +68,6 @@ describe('Check active users page', () => {
     // Options button should not be visible
     cy.get('@userItems').eq(1).find('.options-button').should('not.be.visible');
     cy.get('@userItems').eq(2).find('.options-button').should('not.be.visible');
-    cy.get('@userItems').eq(3).find('.options-button').should('not.be.visible');
 
     cy.get('.counter').contains('4 users');
 
@@ -77,13 +76,12 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-checked');
     checkChecked(true);
 
-    cy.get('.counter').contains('3 users selected');
+    cy.get('.counter').contains('2 users selected');
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').should('not.be.visible');
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke these users');
 
     // Deselect [2] and [3], only [1] is selected
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
-    cy.get('@userItems').eq(3).find('ion-checkbox').click();
     cy.get('#activate-users-ms-action-bar').find('#button-revoke-user').contains('Revoke this user');
     cy.get('#activate-users-ms-action-bar').find('#button-common-workspaces').contains('View details');
 
@@ -93,7 +91,7 @@ describe('Check active users page', () => {
     // Re-select all
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(true);
-    cy.get('.counter').contains('3 users selected');
+    cy.get('.counter').contains('2 users selected');
 
     // Deselect all
     cy.get('.user-list-header').find('ion-checkbox').click();
@@ -106,6 +104,9 @@ describe('Check active users page', () => {
 
     cy.get('#activate-users-ms-action-bar').find('#button-invite-user').contains('Invite a user');
     cy.get('.users-container-grid').find('.user-card-item').as('userItems').should('have.length', 4);
+
+    // checking "you" mark for the current user
+    cy.get('@userItems').eq(0).find('.name-you').should('be.visible');
 
     cy.get('@userItems').eq(1).realHover().find('.checkbox').should('be.visible');
 
@@ -144,7 +145,6 @@ describe('Check active users page', () => {
     // Since the checkbox appears only on hover, it's easier to select all and deselect the one we don't want
     cy.get('.user-list-header').find('ion-checkbox').click();
     cy.get('@userItems').eq(2).find('ion-checkbox').click();
-    cy.get('@userItems').eq(3).find('ion-checkbox').click();
     cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('@userItems').eq(2).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('.counter').contains('One user selected');
@@ -160,7 +160,6 @@ describe('Check active users page', () => {
   it('Tests revoke multiple', () => {
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 4);
     cy.get('.user-list-header').find('ion-checkbox').click();
-    cy.get('@userItems').eq(3).find('ion-checkbox').click();
     cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('@userItems').eq(2).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.contextual-menu').find('#button-revoke-user').contains('Revoke these users').click();
