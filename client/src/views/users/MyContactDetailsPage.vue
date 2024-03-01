@@ -77,7 +77,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 // import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
   AvailableDevice,
-  ClientChangeAuthentificationErrorTag,
+  ClientChangeAuthenticationErrorTag,
   ClientInfo,
   getClientInfo,
   getCurrentAvailableDevice,
@@ -121,7 +121,7 @@ async function changePassword(): Promise<void> {
     fieldsUpdated.value = !fieldsUpdated.value;
   } else {
     switch (result.error.tag) {
-      case ClientChangeAuthentificationErrorTag.DecryptionFailed: {
+      case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
         informationManager.present(
           new Information({
             message: translate('ContactDetailsPage.errors.wrongPassword'),
