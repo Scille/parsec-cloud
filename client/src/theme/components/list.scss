@@ -28,7 +28,7 @@ ion-item:has(.file-list-item),
     z-index: 1;
   }
 
-  &:hover {
+  &:hover:not(.revoked) {
     --background-hover: var(--parsec-color-light-primary-30);
     --background-hover-opacity: 1;
     --background: var(--parsec-color-light-primary-30);
@@ -72,7 +72,10 @@ ion-item:has(.file-list-item),
       color: var(--parsec-color-light-secondary-text);
     }
   }
+}
 
+.user-list-item,
+.user-card-item {
   &.item-disabled {
     opacity: 1;
     position: relative;
@@ -87,6 +90,12 @@ ion-item:has(.file-list-item),
       opacity: 0.4;
       background: var(--parsec-color-light-secondary-disabled);
       z-index: 1;
+    }
+  }
+
+  &.revoked {
+    div:not(.user-revoked) {
+      filter: grayscale(75%);
     }
   }
 }

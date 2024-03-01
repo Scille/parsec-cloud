@@ -17,12 +17,12 @@
           />
         </div>
         <!-- revoke or view common workspace -->
-        <div v-show="activeSelectedCount >= 1 && isAdmin">
+        <div v-show="users.selectedCount() >= 1 && isAdmin">
           <ms-action-bar-button
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
-            :button-label="$t('UsersPage.userContextMenu.actionRevoke', activeSelectedCount)"
+            :button-label="$t('UsersPage.userContextMenu.actionRevoke', users.selectedCount())"
             @click="revokeSelectedUsers"
           />
         </div>
@@ -124,7 +124,7 @@ import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
 import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -135,10 +135,6 @@ const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: Hotkeys | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
-
-const activeSelectedCount = computed(() => {
-  return users.value.selectedCount() - users.value.revokedSelectedCount();
-});
 
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(

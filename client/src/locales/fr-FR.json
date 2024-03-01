@@ -723,7 +723,7 @@
             "joinedOn": "Rejoint le"
         },
         "inviteUser": "Inviter un utilisateur",
-        "mainUser": "(Vous)",
+        "currentUser": "(Vous)",
         "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
         "profile": {
             "admin": {

@@ -26,7 +26,7 @@ export class UserCollection {
   }
 
   selectAll(selected: boolean): void {
-    for (const entry of this.users) {
+    for (const entry of this.users.filter((user) => !user.isRevoked())) {
       entry.isSelected = selected;
     }
   }
@@ -40,15 +40,11 @@ export class UserCollection {
   }
 
   getSelectedUsers(): Array<UserModel> {
-    return this.users.filter((user) => user.isSelected);
+    return this.users.filter((user) => user.isSelected && !user.isRevoked());
   }
 
   selectedCount(): number {
-    return this.users.filter((user) => user.isSelected).length;
-  }
-
-  revokedSelectedCount(): number {
-    return this.users.filter((user) => user.isSelected && user.isRevoked()).length;
+    return this.users.filter((user) => user.isSelected && !user.isRevoked()).length;
   }
 
   sort(_property: SortProperty, _ascending: boolean): void {

@@ -47,6 +47,10 @@ defineProps<{
       margin-left: 0;
     }
   }
+  &.medium {
+    --width: 2.5rem;
+    --height: 2.5rem;
+  }
 
   &.medium {
     --width: 2.5rem;
@@ -59,7 +63,7 @@ defineProps<{
       min-width: 3rem;
     }
     .person-avatar {
-      font-size: 1.125rem;
+      width: 100%;
     }
 
     .person-name {

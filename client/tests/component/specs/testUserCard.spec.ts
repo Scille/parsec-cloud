@@ -42,13 +42,13 @@ describe('User Card', () => {
 
     // "JoJohn Smith" because the user is displayed with an avatar before their name,
     // currently using the first two letters for the avatar, (Jo) John Smith
-    expect(wrapper.get('.card-content-avatar').text()).to.equal('Jo');
-    expect(wrapper.get('.user-name').text()).to.equal('John Smith');
-    expect(wrapper.get('.user-profile').text()).to.equal('UserProfileStandard');
+    expect(wrapper.get('.user-card-avatar').text()).to.equal('Jo');
+    expect(wrapper.get('.user-card-info__name').text()).to.equal('John Smith');
+    expect(wrapper.get('.user-card-profile').text()).to.equal('UserProfileStandard');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);
-    wrapper.get('.card-option').trigger('click');
+    wrapper.get('.user-card-option').trigger('click');
     expect(wrapper.emitted('menuClick')?.length).to.equal(1);
     expect(wrapper.emitted('menuClick')?.at(0)?.at(1)).to.deep.equal(USER);
   });

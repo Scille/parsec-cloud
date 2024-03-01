@@ -4,12 +4,15 @@
   <ion-item
     class="user-card-item ion-no-padding"
     :detail="false"
-    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected }"
+    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected, revoked: user.isRevoked() }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div class="card-checkbox">
+    <div
+      class="user-card-checkbox"
+      v-if="!user.isRevoked()"
+    >
       <!-- eslint-disable vue/no-mutating-props -->
       <ion-checkbox
         aria-label=""
@@ -22,23 +25,38 @@
       <!-- eslint-enable vue/no-mutating-props -->
     </div>
     <div
-      class="card-option"
+      v-if="user.isRevoked()"
+      class="user-revoked"
+    >
+      <user-status-tag :revoked="user.isRevoked()" />
+    </div>
+    <div
+      class="user-card-option"
       v-show="isHovered || menuOpened"
       @click.stop="onOptionsClick($event)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
-    <div class="card-content">
-      <ion-avatar class="card-content-avatar">
-        <user-avatar-name
-          class="user-avatar large"
-          :user-avatar="user.humanHandle.label"
-        />
-      </ion-avatar>
-      <ion-text class="user-name body">
-        {{ user.humanHandle.label }}
-      </ion-text>
-      <div class="user-profile">
+    <div class="user-card">
+      <user-avatar-name
+        class="user-card-avatar medium"
+        :user-avatar="user.humanHandle.label"
+      />
+      <div class="user-card-info">
+        <ion-text class="user-card-info__name body">
+          <span>{{ user.humanHandle.label }}</span>
+          <span
+            v-if="isCurrentUser"
+            class="body name-you"
+          >
+            {{ $t('UsersPage.currentUser') }}
+          </span>
+        </ion-text>
+        <ion-text class="user-card-info__email body-sm">
+          {{ user.humanHandle.email }}
+        </ion-text>
+      </div>
+      <div class="user-card-profile">
         <tag-profile :profile="user.currentProfile" />
       </div>
     </div>
@@ -48,8 +66,9 @@
 <script setup lang="ts">
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
-import { IonAvatar, IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
+import { IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 
@@ -65,6 +84,7 @@ const emits = defineEmits<{
 const props = defineProps<{
   user: UserModel;
   showCheckbox: boolean;
+  isCurrentUser?: boolean;
 }>();
 
 defineExpose({
@@ -85,7 +105,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   --background-hover: none;
   background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-medium);
-  width: 10.5rem;
+  width: 14rem;
   border-radius: var(--parsec-radius-12);
   position: relative;
   height: fit-content;
@@ -94,35 +114,59 @@ async function onOptionsClick(event: Event): Promise<void> {
     --inner-padding-end: 0px;
   }
 
-  &:hover:not(.item-disabled) {
+  &:hover:not(.revoked) {
     background: var(--parsec-color-light-primary-30);
+
+    .user-card-info__email {
+      color: var(--parsec-color-light-secondary-text);
+    }
   }
 
-  &.selected {
+  &.revoked {
+    background: var(--parsec-color-light-secondary-background);
+    position: relative;
+
+    .user-revoked {
+      position: absolute;
+      top: 0.725rem;
+      right: 0.725rem;
+    }
+  }
+
+  &.selected:not(.revoked) {
     --background: var(--parsec-color-light-primary-100);
     border: 1px solid var(--parsec-color-light-primary-100);
+
+    .user-card-info__name {
+      color: var(--parsec-color-light-primary-700);
+    }
+
+    .user-card-info__email {
+      color: var(--parsec-color-light-secondary-text);
+    }
   }
 }
 
-.card-option,
-.card-checkbox {
+.user-card-option,
+.user-card-checkbox {
   position: absolute;
+  z-index: 10;
 }
 
-.card-checkbox {
-  left: 0.5rem;
-  top: 0.5rem;
+.user-card-checkbox {
+  top: 1rem;
+  right: 1rem;
 }
 
-.card-option {
+.user-card-option {
   color: var(--parsec-color-light-secondary-grey);
   text-align: right;
   display: flex;
   align-items: center;
-  top: 0;
+  bottom: 0;
   right: 0;
   font-size: 1.5rem;
-  padding: 0.5rem;
+  padding: 1rem;
   cursor: pointer;
 
   &:hover {
@@ -130,15 +174,33 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.card-content {
+.user-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 1.5rem 0.5rem;
+  padding: 1rem 0.5rem 1rem 1rem;
   width: 100%;
   margin: auto;
   color: var(--parsec-color-light-secondary-text);
+
+  &-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__name {
+      color: var(--parsec-color-light-secondary-text);
+      display: flex;
+      gap: 0.5rem;
+
+      .name-you {
+        color: var(--parsec-color-light-primary-600);
+      }
+    }
+
+    &__email {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+  }
 }
 </style>
