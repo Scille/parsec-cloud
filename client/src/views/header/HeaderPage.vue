@@ -305,6 +305,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
 .topbar-right {
   display: flex;
   gap: 1.5em;
+  margin-inline-end: 0;
 
   &-button {
     display: flex;
@@ -316,7 +317,6 @@ async function openNotificationCenter(event: Event): Promise<void> {
       display: block;
       width: 1px;
       height: 1.5em;
-      margin: 0 0.5em 0 1em;
       background: var(--parsec-color-light-secondary-light);
     }
 

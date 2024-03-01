@@ -4,15 +4,13 @@
   <ion-item
     button
     id="click-trigger"
-    class="container"
+    class="container ion-no-padding"
     @click="openPopover($event)"
   >
-    <ion-avatar
-      slot="start"
-      class="avatar"
-    >
-      <ion-icon :icon="personCircle" />
-    </ion-avatar>
+    <user-avatar-name
+      :user-avatar="name"
+      class="avatar medium"
+    />
     <div class="text-icon">
       <ion-text class="body">
         {{ name }}
@@ -28,13 +26,14 @@
 
 <script setup lang="ts">
 import { Answer, askQuestion } from '@/components/core';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { logout as parsecLogout } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
-import { IonAvatar, IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
-import { chevronDown, personCircle } from 'ionicons/icons';
+import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
+import { chevronDown } from 'ionicons/icons';
 import { inject, ref } from 'vue';
 
 const isPopoverOpen = ref(false);
@@ -122,11 +121,6 @@ async function openPopover(event: Event): Promise<void> {
   margin: 0 0.75em 0 0;
   position: relative;
 
-  ion-icon {
-    width: 100%;
-    height: 100%;
-  }
-
   &::after {
     content: '';
     position: absolute;
@@ -135,7 +129,7 @@ async function openPopover(event: Event): Promise<void> {
     height: 0.625rem;
     width: 0.625rem;
     border-radius: 50%;
-    border: var(--parsec-color-light-secondary-white) solid 0.25rem;
+    border: var(--parsec-color-light-secondary-white) solid 3px;
     background-color: var(--parsec-color-light-success-500);
   }
 }
