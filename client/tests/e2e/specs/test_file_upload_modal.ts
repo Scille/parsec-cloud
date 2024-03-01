@@ -61,14 +61,15 @@ describe('Upload files', () => {
     cy.get('.upload-menu-list').find('.element-container').should('have.class', 'done');
   });
 
-  it('Import file with button and cancel', () => {
-    cy.get('#button-import').click();
-    cy.get('.ion-page').find('.import-button').find('ion-button').click();
-    cy.get('.ion-page').find('.import-button input').attachFile('splash.png');
-    cy.get('.upload-menu-list').find('.element-container').find('.element-details__name').should('contain', 'splash.png');
-    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
-    cy.get('.upload-menu-list').find('.element-container').find('.cancel-button').click();
-    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
-    cy.get('.upload-menu-list').find('.element-container').should('have.class', 'cancelled');
-  });
+  // Import is instant, can't cancel it
+  // it('Import file with button and cancel', () => {
+  //   cy.get('#button-import').click();
+  //   cy.get('.ion-page').find('.import-button').find('ion-button').click();
+  //   cy.get('.ion-page').find('.import-button input').attachFile('splash.png');
+  //   cy.get('.upload-menu-list').find('.element-container').find('.element-details__name').should('contain', 'splash.png');
+  //   cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
+  //   cy.get('.upload-menu-list').find('.element-container').find('.cancel-button').click();
+  //   cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
+  //   cy.get('.upload-menu-list').find('.element-container').should('have.class', 'cancelled');
+  // });
 });

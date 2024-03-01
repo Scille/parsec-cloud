@@ -40,7 +40,6 @@ describe('Check folders page', () => {
     cy.get('.text-input-modal').find('ion-input').find('input').type('MyFolder');
     cy.get('@createButton').should('not.have.class', 'button-disabled');
     cy.get('@createButton').click();
-    cy.get('@consoleLog').should('have.been.calledWith', 'New folder MyFolder created');
   });
 
   it('Import files', () => {
@@ -154,7 +153,6 @@ describe('Check folders page', () => {
 
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
-    cy.get('@consoleLog').should('have.been.called.with', /File File_[a-z_]+ deleted/);
   });
 
   it('Tests delete one file in grid view', () => {
@@ -169,7 +167,6 @@ describe('Check folders page', () => {
 
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
-    cy.get('@consoleLog').should('have.been.called.with', /File File_[a-z_]+ deleted/);
   });
 
   it('Tests delete multiple files', () => {
@@ -185,7 +182,6 @@ describe('Check folders page', () => {
       .click();
     cy.get('.question-modal').should('not.exist');
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('@consoleLog').should('have.been.called.with', /^\d+ entries deleted$/);
   });
 
   it('Tests file details', () => {

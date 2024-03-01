@@ -13,14 +13,14 @@ export function getConnectionHandle(): ConnectionHandle | null {
   return null;
 }
 
-export function getWorkspaceHandle(): WorkspaceHandle {
+export function getWorkspaceHandle(): WorkspaceHandle | undefined {
   const router = getRouter();
   const currentRoute = router.currentRoute.value;
 
   if (currentRoute && currentRoute.name === Routes.Documents && currentRoute.params && 'workspaceHandle' in currentRoute.params) {
     return parseInt(currentRoute.params.workspaceHandle as string) as WorkspaceHandle;
   }
-  return -1;
+  return undefined;
 }
 
 export function getWorkspaceId(): WorkspaceID {
