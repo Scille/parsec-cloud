@@ -441,6 +441,7 @@ printsupport
 privkey
 proguard
 PROJNAME
+proptest
 pseudoxml
 psqlrc
 psrk
