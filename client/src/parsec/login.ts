@@ -7,8 +7,8 @@ import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
-  ClientChangeAuthentificationError,
-  ClientChangeAuthentificationErrorTag,
+  ClientChangeAuthenticationError,
+  ClientChangeAuthenticationErrorTag,
   ClientEvent,
   ClientInfo,
   ClientInfoError,
@@ -181,9 +181,11 @@ export async function changePassword(
   device: AvailableDevice,
   oldPassword: string,
   newPassword: string,
-): Promise<Result<null, ClientChangeAuthentificationError>> {
+): Promise<Result<null, ClientChangeAuthenticationError>> {
   if (!needsMocks()) {
-    return await libparsec.clientChangeAuthentification(
+    const clientConfig = getClientConfig();
+    return await libparsec.clientChangeAuthentication(
+      clientConfig,
       {
         tag: DeviceAccessStrategyTag.Password,
         password: oldPassword,
@@ -197,7 +199,7 @@ export async function changePassword(
   } else {
     // Fake an error
     if (oldPassword !== 'P@ssw0rd.') {
-      return { ok: false, error: { tag: ClientChangeAuthentificationErrorTag.DecryptionFailed, error: 'Invalid password' } };
+      return { ok: false, error: { tag: ClientChangeAuthenticationErrorTag.DecryptionFailed, error: 'Invalid password' } };
     }
     return { ok: true, value: null };
   }
