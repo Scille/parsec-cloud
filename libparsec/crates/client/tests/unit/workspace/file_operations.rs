@@ -121,12 +121,14 @@ impl Storage {
         let operations: Vec<_> = prepare_reshape(manifest).collect();
         for operation in operations {
             let data = self.build_data(&operation.source());
-            let new_chunk = operation.destination().to_owned();
-            for old_chunk in operation.source() {
-                self.clear_chunk_data(old_chunk.id);
+            let new_chunk = operation.destination();
+            if operation.write_back() {
+                self.write_chunk(&new_chunk, &data, 0);
+            }
+            for chunk_id in operation.cleanup_ids() {
+                self.clear_chunk_data(chunk_id);
             }
             operation.commit(&data);
-            self.write_chunk(&new_chunk, &data, 0);
         }
     }
 }
