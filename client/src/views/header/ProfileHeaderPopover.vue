@@ -131,7 +131,7 @@ function onOptionClick(option: ProfilePopoverOption): void {
     padding: 0.5rem 0.75rem;
     --min-height: 1rem;
     width: 100%;
-    border-radius: 0.25rem;
+    border-radius: var(--parsec-radius-6);
 
     .item-label {
       margin: 0;
