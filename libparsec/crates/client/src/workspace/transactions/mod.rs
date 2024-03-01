@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod copy_entry;
 mod create_file;
 mod create_folder;
 mod fd_close;
@@ -15,6 +16,7 @@ mod remove_entry;
 mod rename_entry;
 mod stat_entry;
 
+pub use copy_entry::*;
 pub use create_file::*;
 pub use create_folder::*;
 pub use fd_close::*;
