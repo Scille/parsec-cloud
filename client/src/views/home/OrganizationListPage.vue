@@ -59,21 +59,21 @@
                   <ion-grid>
                     <organization-card
                       :device="device"
-                      class="card-content__body"
+                      class="card-content-body"
                     />
-                    <ion-row class="card-content__footer">
+                    <ion-row class="card-content-footer">
                       <ion-col
                         size="auto"
                         v-show="!isDeviceLoggedIn(device)"
                       >
-                        <p class="body-sm">
+                        <ion-text class="body-sm">
                           {{ $t('HomePage.organizationList.lastLogin') }}
-                        </p>
-                        <p>
+                        </ion-text>
+                        <ion-text class="body-sm">
                           {{
                             device.slug in storedDeviceDataDict ? formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
                           }}
-                        </p>
+                        </ion-text>
                       </ion-col>
                       <ion-col
                         v-show="isDeviceLoggedIn(device)"
@@ -339,16 +339,21 @@ const filteredDevices = computed(() => {
       padding-inline-end: 0px;
       padding-inline-start: 0px;
 
-      .card-content__body {
+      .card-content-body {
         padding: 1.5em 0em 1.5rem 1rem;
       }
 
-      &__footer {
+      &-footer {
         padding: 0.5em 1em;
         background: var(--parsec-color-light-secondary-medium);
         border-top: 1px solid var(--parsec-color-light-secondary-disabled);
         color: var(--parsec-color-light-secondary-grey);
         height: 4.6em;
+
+        ion-text {
+          display: flex;
+          align-items: center;
+        }
 
         .connected {
           display: flex;
@@ -366,7 +371,7 @@ const filteredDevices = computed(() => {
         background: var(--parsec-color-light-primary-50);
         cursor: pointer;
 
-        .card-content__footer {
+        .card-content-footer {
           background: var(--parsec-color-light-primary-50);
           border-top: 1px solid var(--parsec-color-light-primary-100);
         }
