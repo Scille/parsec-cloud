@@ -6,10 +6,7 @@ use std::num::NonZeroU64;
 
 use libparsec_types::prelude::*;
 
-pub(crate) struct WriteOperation {
-    pub chunk: Chunk,
-    pub offset: i64,
-}
+type WriteOperation = (Chunk, i64);
 
 // Prepare read
 
@@ -45,16 +42,10 @@ fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = C
         })
 }
 
-// TODO: replace Chunk in the return by a dedicated type
-
 /// Prepare a read operation on a provided manifest.
 ///
-/// Return a contiguous list of chunks that must be read and concatenated.
-pub(crate) fn prepare_read(
-    manifest: &LocalFileManifest,
-    size: u64,
-    offset: u64,
-) -> (u64, impl Iterator<Item = Chunk> + '_) {
+/// Return a contiguous `Vec` of chunks that must be read and concatenated.
+pub fn prepare_read(manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<Chunk> {
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
     let size = min(
@@ -71,28 +62,27 @@ pub(crate) fn prepare_read(
     let stop_block = (offset + size + blocksize - 1) / blocksize;
 
     // Loop over blocks
-    let operations = (start_block..stop_block).flat_map(move |block| {
-        // Get sub_start, sub_stop and sub_size
-        let block_start = block * blocksize;
-        let sub_start = max(offset, block_start);
-        let sub_stop = min(offset + size, block_start + blocksize);
-        let sub_size = sub_stop
-            .checked_sub(sub_start)
-            .expect("Sub-stop is always greater than sub-start");
-        // Get the corresponding chunks
-        let block_chunks = manifest
-            .get_chunks(block as usize)
-            // TODO: handle invalid manifest !
-            .expect("A valid manifest must have enough blocks to cover its full range.");
-        block_read(block_chunks, sub_size, sub_start)
-    });
-
-    (size, operations)
+    (start_block..stop_block)
+        .flat_map(move |block| {
+            // Get sub_start, sub_stop and sub_size
+            let block_start = block * blocksize;
+            let sub_start = max(offset, block_start);
+            let sub_stop = min(offset + size, block_start + blocksize);
+            let sub_size = sub_stop
+                .checked_sub(sub_start)
+                .expect("Sub-stop is always greater than sub-start");
+            // Get the corresponding chunks
+            let block_chunks = manifest
+                .get_chunks(block as usize)
+                .expect("A valid manifest must have enough blocks to cover its full range.");
+            block_read(block_chunks, sub_size, sub_start)
+        })
+        // Collect as a flatten vec of Chunks
+        .collect()
 }
 
 // Prepare write
 
-// TODO: replace the HashSet by a simpler Vec
 fn block_write(
     chunks: &[Chunk],
     size: u64,
@@ -188,18 +178,18 @@ fn block_write(
 
 /// Prepare a write operation by updating the provided manifest.
 ///
-/// Return a list of write operations that must be performed in order for the updated manifest to become valid.
+/// Return a `Vec` of write operations that must be performed in order for the updated manifest to become valid.
 /// Each write operation consists of a new chunk to store, along with an offset to apply to the corresponding raw data.
 /// Note that the raw data also needs to be sliced to the chunk size and padded with null bytes if necessary.
-/// Also return a list of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
-pub(crate) fn prepare_write(
+/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
+pub fn prepare_write(
     manifest: &mut LocalFileManifest,
     mut size: u64,
     mut offset: u64,
     timestamp: DateTime,
-) -> (Vec<WriteOperation>, Vec<ChunkID>) {
+) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
     let mut padding = 0;
-    let mut removed_ids = vec![];
+    let mut removed_ids = HashSet::new();
     let mut write_operations = vec![];
 
     // Padding
@@ -231,10 +221,7 @@ pub(crate) fn prepare_write(
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
         );
-        write_operations.push(WriteOperation {
-            chunk: new_chunk.clone(),
-            offset: content_offset as i64 - padding as i64,
-        });
+        write_operations.push((new_chunk.clone(), content_offset as i64 - padding as i64));
 
         // Get the corresponding chunks
         let new_chunks = match manifest.get_chunks(block as usize) {
@@ -272,91 +259,72 @@ fn prepare_truncate(
     manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
-) -> Vec<ChunkID> {
+) -> HashSet<ChunkID> {
     // Check that there is something to truncate
     if size >= manifest.size {
-        return vec![];
+        return HashSet::new();
     }
 
     // Find limit block
     let blocksize = u64::from(manifest.blocksize);
-    let last_block_index = (size / blocksize) as usize;
+    let block = (size / blocksize) as usize;
     let remainder = size % blocksize;
 
-    let last_block_chunks = manifest
-        .get_chunks(last_block_index)
-        .expect("Block is expected to be part of the manifest");
+    // Prepare removed ids
+    let mut removed_ids: HashSet<ChunkID> = manifest
+        .blocks
+        .get(block..)
+        .unwrap_or_default()
+        .iter()
+        .flatten()
+        .map(|x| x.id)
+        .collect();
 
-    let (blocks_drain_at, chunks_skip_drain_until, maybe_new_last_block_chunks) = if remainder == 0
-    {
-        // Last block's start corresponds to the new end of the file, hence it is entirely removed !
-        (last_block_index, 0, None)
+    // No block to split
+    if remainder == 0 {
+        // Simply truncate to the correct amount of blocks
+        manifest.blocks.truncate(block);
+
+    // Last block needs to be split
     } else {
-        // Only part of last block should be kept
+        let chunks = manifest
+            .get_chunks(block)
+            .expect("Block is expected to be part of the manifest");
 
         // Find the index of the last chunk to include
-        let last_block_last_chunk_index =
-            match last_block_chunks.binary_search_by_key(&size, |chunk| chunk.start) {
-                Ok(found_index) => found_index - 1,
-                Err(insert_index) => insert_index - 1,
-            };
+        let chunk_index = match chunks.binary_search_by_key(&size, |chunk| chunk.start) {
+            Ok(found_index) => found_index - 1,
+            Err(insert_index) => insert_index - 1,
+        };
 
-        let last_block_last_chunk = last_block_chunks
-            .get(last_block_last_chunk_index)
+        // Create the new last chunk
+        let last_chunk = chunks
+            .get(chunk_index)
             .expect("The index is found using binary search and hence always valid");
+        let mut new_chunk = last_chunk.clone();
+        new_chunk.stop =
+            NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero");
 
-        // Create the new last chunk of the last block
-        let new_last_block_last_chunk = {
-            let mut new_last_block_last_chunk = last_block_last_chunk.clone();
-            new_last_block_last_chunk.stop =
-                NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero");
-            new_last_block_last_chunk
-        };
+        // Create the new chunks for the last block
+        let mut new_chunks = chunks.get(..chunk_index).unwrap_or_default().to_vec();
+        new_chunks.push(new_chunk);
 
-        // Create the new last block
-        let new_last_block_chunks = {
-            let mut new_last_block_chunks = Vec::with_capacity(last_block_last_chunk_index + 1);
-            new_last_block_chunks.extend_from_slice(
-                last_block_chunks
-                    .get(..last_block_last_chunk_index)
-                    .unwrap_or_default(),
-            );
-            new_last_block_chunks.push(new_last_block_last_chunk);
-            new_last_block_chunks
-        };
+        // Those new chunks should not be removed
+        for chunk in &new_chunks {
+            removed_ids.remove(&chunk.id);
+        }
 
-        // Remove all blocks after the new size, and also the last block...
-        let blocks_drain_at = last_block_index;
-        // ...but in the drain ignore the first chunks of the last block (as there are still in use)...
-        let chunks_skip_drain_until = last_block_last_chunk_index + 1;
-        // ...and finally we have an updated last block to append (containing the chunks ignored in the drain).
-        let maybe_new_last_block_chunks = Some(new_last_block_chunks);
-        (
-            blocks_drain_at,
-            chunks_skip_drain_until,
-            maybe_new_last_block_chunks,
-        )
-    };
+        // Truncate and add the new chunks
+        manifest.blocks.truncate(block);
+        manifest.blocks.push(new_chunks);
+    }
 
-    // Update the manifest with the new last block
-
+    // Update the manifest
     manifest.need_sync = true;
     manifest.size = size;
     manifest.updated = timestamp;
-    // Only keep the blocks that should still be used as-is...
-    let removed_chunks = manifest
-        .blocks
-        .drain(blocks_drain_at..)
-        .flatten()
-        .skip(chunks_skip_drain_until)
-        .map(|x| x.id)
-        .collect();
-    // ...then re-insert the last block if only part of it is still used
-    if let Some(new_last_block_chunks) = maybe_new_last_block_chunks {
-        manifest.blocks.push(new_last_block_chunks);
-    }
 
-    removed_chunks
+    removed_ids
 }
 
 /// Prepare a resize operation by updating the provided manifest.
@@ -364,12 +332,12 @@ fn prepare_truncate(
 /// Return a `Vec` of write operations that must be performed in order for the updated manifest to become valid.
 /// Each write operation consists of a new chunk to store, along with an offset to apply to the corresponding raw data.
 /// Note that the raw data also needs to be sliced to the chunk size and padded with null bytes if necessary.
-/// Also return a list of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
-pub(crate) fn prepare_resize(
+/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
+pub fn prepare_resize(
     manifest: &mut LocalFileManifest,
     size: u64,
     timestamp: DateTime,
-) -> (Vec<WriteOperation>, Vec<ChunkID>) {
+) -> (Vec<WriteOperation>, HashSet<ChunkID>) {
     if size >= manifest.size {
         // Extend
         prepare_write(manifest, 0, size, timestamp)
@@ -382,66 +350,45 @@ pub(crate) fn prepare_resize(
 
 // Prepare reshape
 
-pub(crate) struct ReshapeBlockOperation<'a> {
-    manifest_chunks: &'a mut Vec<Chunk>,
-    reshaped_chunk: Chunk,
-}
-
-impl ReshapeBlockOperation<'_> {
-    pub fn destination(&self) -> &Chunk {
-        &self.reshaped_chunk
-    }
-
-    pub fn source(&self) -> &[Chunk] {
-        self.manifest_chunks
-    }
-
-    pub fn commit(self, chunk_data: &[u8]) {
-        let ReshapeBlockOperation {
-            manifest_chunks: chunks,
-            mut reshaped_chunk,
-        } = self;
-        chunks.clear();
-        reshaped_chunk
-            .promote_as_block(chunk_data)
-            .expect("chunk is block-compatible");
-        chunks.push(reshaped_chunk);
-    }
-}
-
-pub(crate) fn prepare_reshape(
-    manifest: &mut LocalFileManifest,
-) -> impl Iterator<Item = ReshapeBlockOperation<'_>> + '_ {
-    manifest.blocks.iter_mut().filter_map(|manifest_chunks| {
-        let reshaped_chunk = {
-            let first_chunk = match manifest_chunks.first() {
-                Some(first_chunk) => first_chunk,
-                // TODO: chunks should never be empty, we should enforce that
-                //       by using a dedicated type to represent the chunks in a block
-                None => return None,
-            };
-            if manifest_chunks.len() == 1 {
-                if first_chunk.is_block() {
-                    // Already a valid block
-                    return None;
-                }
-                if first_chunk.is_pseudo_block() {
-                    // Pseudo-block is what the reshape is aiming at, so nothing to do here
-                    return None;
-                }
+/// Prepare a reshape operation without updating the provided manifest.
+/// The reason why the manifest is not updated is because the hash of the corresponding data is required to turn a chunk into a block.
+/// Instead, it's up to the caller to call `chunk.evolve_as_block` and `manifest.set_single_block` to update the manifest.
+///
+/// Return an iterator where each item corresponds to a block to reshape.
+/// Each item consists of:
+/// - the index of the block that is being reshaped
+/// - a source block, represented as a `Vec` of chunks
+/// - a destination block, represented as a single chunk
+/// - a write back boolean indicating the new chunk must be written
+/// - a `HashSet` of chunk IDs that must cleaned up from the storage
+pub fn prepare_reshape(
+    manifest: &LocalFileManifest,
+) -> impl Iterator<Item = (u64, Vec<Chunk>, Chunk, bool, HashSet<ChunkID>)> + '_ {
+    // Loop over blocks
+    manifest
+        .blocks
+        .iter()
+        .enumerate()
+        .filter_map(|(block, chunks)| {
+            let block = block as u64;
+            // Already a valid block
+            if chunks.len() == 1 && chunks[0].is_block() {
+                None
+            // Already a pseudo-block, we can keep the chunk as it is
+            } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
+                let new_chunk = chunks[0].clone();
+                let to_remove = HashSet::new();
+                let write_back = false;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
+            // Reshape those chunks as a single block
+            } else {
+                // Start and stop should be 0 and blocksize respectively
+                let start = chunks[0].start;
+                let stop = chunks.last().expect("A block cannot be empty").stop;
+                let new_chunk = Chunk::new(start, stop);
+                let to_remove = chunks.iter().map(|x| x.id).collect();
+                let write_back = true;
+                Some((block, chunks.to_vec(), new_chunk, write_back, to_remove))
             }
-
-            // Reshape is needed to turn those multiple chunks into a single one forming a pseudo-block
-            let start = first_chunk.start;
-            let stop = manifest_chunks
-                .last()
-                .expect("already checked chunks is not empty")
-                .stop;
-            Chunk::new(start, stop)
-        };
-        Some(ReshapeBlockOperation {
-            manifest_chunks,
-            reshaped_chunk,
         })
-    })
 }
