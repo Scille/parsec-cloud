@@ -370,7 +370,7 @@ impl ReshapeBlockOperation<'_> {
             let reshaped_chunk = chunks[0].clone();
             Some(ReshapeBlockOperation {
                 manifest_chunks: chunks,
-                reshaped_chunk: reshaped_chunk,
+                reshaped_chunk,
             })
         } else {
             let start = chunks[0].start;
@@ -439,5 +439,5 @@ pub fn prepare_reshape(
     manifest
         .blocks
         .iter_mut()
-        .filter_map(|chunks| ReshapeBlockOperation::new(chunks))
+        .filter_map(ReshapeBlockOperation::new)
 }
