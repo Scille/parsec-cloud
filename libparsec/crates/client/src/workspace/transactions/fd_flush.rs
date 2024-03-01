@@ -150,7 +150,8 @@ async fn reshape(
         }
         if reshape_ok {
             let new_chunk_id = reshape.destination().id;
-            for to_remove_chunk_id in reshape.source().iter().map(|c| c.id) {
+            // Remove old chunks
+            for to_remove_chunk_id in reshape.cleanup_ids() {
                 let found = opened_file
                     .new_chunks
                     .iter()
@@ -164,8 +165,15 @@ async fn reshape(
                     }
                 }
             }
-            reshape.commit(&buf);
-            opened_file.new_chunks.push((new_chunk_id, buf));
+            // Add new chunk
+            let buf_ref = if reshape.write_back() {
+                opened_file.new_chunks.push((new_chunk_id, buf));
+                &opened_file.new_chunks.last().unwrap().1
+            } else {
+                &buf
+            };
+            // Commit the changes
+            reshape.commit(&buf_ref);
         }
     }
 
