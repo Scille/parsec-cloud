@@ -104,15 +104,15 @@ describe('Check workspaces page', () => {
 
   it('Open workspace menu in grid view', () => {
     cy.get('.card-option').first().click();
-    cy.get('.popover-viewport').get('.group-item').should('have.length', 7);
-    cy.get('.popover-viewport').get('.group-title').should('have.length', 3);
+    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 7);
+    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
   });
 
   it('Open workspace menu in list view', () => {
     cy.get('#workspaces-ms-action-bar').find('#list-view').click();
     cy.get('.workspace-options > ion-button').first().click();
-    cy.get('.popover-viewport').get('.group-item').should('have.length', 7);
-    cy.get('.popover-viewport').get('.group-title').should('have.length', 3);
+    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 7);
+    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
   });
 
   it('Get link to the workspace', () => {
