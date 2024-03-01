@@ -59,18 +59,19 @@ pub async fn fd_write(
         return Err(WorkspaceFdWriteError::NotInWriteMode);
     }
 
+    // Truncate the data to the right length if the write is constrained
     let data = if constrained_io && offset + data.len() as u64 > manifest.size {
-        let end = match manifest.size.checked_sub(offset) {
-            Some(end) => end,
-            // Cursor is past the end of the file, we should not write anything
-            None => return Ok(0),
-        };
+        let end = manifest.size.saturating_sub(offset);
         &data[..end as usize]
     } else {
-        // No early exit if data is empty: if offset is past the end of the file a
-        // zero-length write means we extend the file !
         data
     };
+
+    // Writing an empty buffer is a no-op
+    // (it does **not** extend the file if the offset is past the end of the file)
+    if data.is_empty() {
+        return Ok(0);
+    }
 
     let manifest: &mut LocalFileManifest = Arc::make_mut(manifest);
     let (write_operations, removed_chunks) =
