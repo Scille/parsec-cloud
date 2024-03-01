@@ -76,7 +76,7 @@ describe('Check active users page', () => {
 
   it('Tests selection list item', () => {
     function checkChecked(checked: boolean): void {
-      for (let i = 1; i < 7 && i !== 2 && i !== 5 && i !== 7; i++) {
+      for (let i = 1; i < 6 && i !== 2 && i !== 5; i++) {
         cy.get('@userItems')
           .eq(i)
           .find('ion-checkbox')
@@ -119,6 +119,8 @@ describe('Check active users page', () => {
     cy.get('.user-list-header').find('ion-checkbox').should('have.class', 'checkbox-indeterminate');
 
     // Re-select all
+    cy.get('.user-list-header').find('ion-checkbox').click();
+    checkChecked(false);
     cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(true);
     cy.get('.counter').contains('4 users selected');

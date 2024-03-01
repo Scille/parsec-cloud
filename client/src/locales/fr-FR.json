@@ -868,6 +868,14 @@
             "byStatus": "Par statut",
             "asc": "Croissant",
             "desc": "Décroissant"
+        },
+        "filter": {
+            "title": "Filtrer",
+            "status": "État",
+            "role": "Rôle",
+            "admin": "Administrateur",
+            "standard": "Standard",
+            "outsider": "Externe"
         }
     },
     "AboutPage": {

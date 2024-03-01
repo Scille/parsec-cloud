@@ -868,6 +868,14 @@
             "byStatus": "By status",
             "asc": "Ascending",
             "desc": "Descending"
+        },
+        "filter": {
+            "title": "Filter",
+            "status": "Status",
+            "role": "Role",
+            "admin": "Administrator",
+            "standard": "Standard",
+            "outsider": "Outsider"
         }
     },
     "AboutPage": {

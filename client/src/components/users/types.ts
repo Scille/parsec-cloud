@@ -23,37 +23,83 @@ function compareUserProfiles(profile1: UserProfile, profile2: UserProfile): numb
   return WEIGHTS.get(profile2)! - WEIGHTS.get(profile1)!;
 }
 
+export interface UserFilterLabels {
+  statusActive?: boolean;
+  statusRevoked?: boolean;
+  profileAdmin?: boolean;
+  profileStandard?: boolean;
+  profileOutsider?: boolean;
+}
+
+export interface UserFilterChangeEvent {
+  filters: UserFilterLabels;
+}
+
 export class UserCollection {
   users: Array<UserModel>;
+  filters: UserFilterLabels;
 
   constructor() {
     this.users = [];
+    this.filters = {
+      statusActive: true,
+      statusRevoked: true,
+      profileAdmin: true,
+      profileStandard: true,
+      profileOutsider: true,
+    };
   }
 
   hasSelected(): boolean {
-    return this.users.find((user) => user.isSelected) !== undefined;
+    return this.getSelectedUsers().length > 0;
   }
 
   selectAll(selected: boolean): void {
-    for (const entry of this.users.filter((user) => !user.isRevoked())) {
-      entry.isSelected = selected;
+    for (const entry of this.users) {
+      if (this.userIsVisible(entry) && !entry.isRevoked()) {
+        entry.isSelected = selected;
+      }
     }
   }
 
   getUsers(): Array<UserModel> {
-    return this.users;
+    return this.users.filter((user) => {
+      return this.userIsVisible(user);
+    });
+  }
+
+  unselectHiddenUsers(): void {
+    for (const entry of this.users) {
+      if (!this.userIsVisible(entry)) {
+        entry.isSelected = false;
+      }
+    }
   }
 
   usersCount(): number {
-    return this.users.length;
+    return this.getUsers().length;
+  }
+
+  private userIsVisible(user: UserModel): boolean {
+    if (
+      (!this.filters.profileAdmin && user.currentProfile === UserProfile.Admin) ||
+      (!this.filters.profileStandard && user.currentProfile === UserProfile.Standard) ||
+      (!this.filters.profileOutsider && user.currentProfile === UserProfile.Outsider)
+    ) {
+      return false;
+    }
+    if ((!this.filters.statusRevoked && user.isRevoked()) || (!this.filters.statusActive && !user.isRevoked())) {
+      return false;
+    }
+    return true;
   }
 
   getSelectedUsers(): Array<UserModel> {
-    return this.users.filter((user) => user.isSelected && !user.isRevoked());
+    return this.users.filter((user) => user.isSelected && this.userIsVisible(user));
   }
 
   selectedCount(): number {
-    return this.users.filter((user) => user.isSelected && !user.isRevoked()).length;
+    return this.getSelectedUsers().length;
   }
 
   sort(property: SortProperty, ascending: boolean): void {

@@ -49,6 +49,8 @@
               {{ $t('UsersPage.userSelectedCount', { count: users.selectedCount() }, users.selectedCount()) }}
             </ion-text>
           </div>
+          <!-- prettier-ignore -->
+          <user-filter :users="(users as UserCollection)" />
           <ms-sorter
             :label="$t('UsersPage.sort.byName')"
             :options="msSorterOptions"
@@ -65,7 +67,7 @@
       <!-- users -->
       <div class="users-container scroll">
         <div
-          v-show="users.usersCount() === 0"
+          v-show="users.usersCount() === 0 && !currentUser"
           class="no-active body-lg"
         >
           <div class="no-active-content">
@@ -75,10 +77,11 @@
             </ion-text>
           </div>
         </div>
-        <div v-show="users.usersCount() > 0">
+        <div v-show="users.usersCount() > 0 || currentUser">
           <div v-if="displayView === DisplayState.List && currentUser">
+            <!-- prettier-ignore -->
             <user-list-display
-              :users="users"
+              :users="(users as UserCollection)"
               :current-user="currentUser"
               @menu-click="openUserContextMenu"
             />
@@ -87,8 +90,9 @@
             v-else-if="currentUser"
             class="users-container-grid"
           >
+            <!-- prettier-ignore -->
             <user-grid-display
-              :users="users"
+              :users="(users as UserCollection)"
               :current-user="currentUser"
               @menu-click="openUserContextMenu"
             />
@@ -114,7 +118,7 @@ import {
   getTextInputFromUser,
 } from '@/components/core';
 import { MsImage, NoActiveUser } from '@/components/core/ms-image';
-import { SortProperty, UserCollection, UserModel } from '@/components/users';
+import { SortProperty, UserCollection, UserFilter, UserModel } from '@/components/users';
 import {
   ClientInfo,
   ClientNewUserInvitationErrorTag,
