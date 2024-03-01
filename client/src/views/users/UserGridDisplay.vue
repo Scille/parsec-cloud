@@ -13,7 +13,6 @@
     :key="user.id"
     :user="user"
     :show-checkbox="someSelected"
-    @select="onSelectedChange"
     @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     ref="userGridItemRefs"
   />
@@ -52,10 +51,6 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
 });
-
-async function onSelectedChange(_entry: UserInfo, _checked: boolean): Promise<void> {
-  selectedCount.value = props.users.selectedCount();
-}
 </script>
 
 <style scoped lang="scss"></style>

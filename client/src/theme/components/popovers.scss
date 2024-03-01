@@ -75,7 +75,14 @@ ion-popover {
   --width: fit-content;
 }
 
-/* --- dropdown options popover --- */
+/* --- filter, dropdown popover --- */
+.filter-popover,
+.dropdown-popover {
+  --width: fit-content;
+  --height: fit-content;
+}
+
+/* --- dropdown option popover --- */
 .workspace-context-menu,
 .file-context-menu,
 .user-context-menu {
