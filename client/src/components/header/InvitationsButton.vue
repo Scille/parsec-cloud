@@ -136,7 +136,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     background: var(--parsec-color-light-warning-100);
     --background-hover: none;
     color: var(--parsec-color-light-warning-500);
-    padding: 0.5rem 0.75rem;
+    padding: 0.375rem 0.625rem;
     border: 1px solid var(--parsec-color-light-warning-100);
     transition: all 150ms ease-in-out;
 
@@ -161,7 +161,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
       width: 0.625rem;
       height: 0.625rem;
       background: var(--parsec-color-light-danger-500);
-      border: 2px solid var(--parsec-color-light-secondary-inversed-contrast);
+      border: 2px solid var(--parsec-color-light-warning-100);
       border-radius: var(--parsec-radius-12);
     }
   }

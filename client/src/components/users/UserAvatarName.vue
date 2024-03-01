@@ -48,10 +48,15 @@ defineProps<{
     }
   }
 
+  &.medium {
+    --width: 2.5rem;
+    --height: 2.5rem;
+  }
+
   &.large {
     .avatar {
-      height: 4rem;
-      min-width: 4rem;
+      height: 3rem;
+      min-width: 3rem;
     }
     .person-avatar {
       font-size: 1.125rem;
