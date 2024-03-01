@@ -168,12 +168,16 @@ async fn reshape(
             // Add new chunk
             let buf_ref = if reshape.write_back() {
                 opened_file.new_chunks.push((new_chunk_id, buf));
-                &opened_file.new_chunks.last().unwrap().1
+                &opened_file
+                    .new_chunks
+                    .last()
+                    .expect("An item has just been pushed")
+                    .1
             } else {
                 &buf
             };
             // Commit the changes
-            reshape.commit(&buf_ref);
+            reshape.commit(buf_ref);
         }
     }
 
