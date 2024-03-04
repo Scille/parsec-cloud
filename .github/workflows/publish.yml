@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload Snap
         if: false
-        run: snapcraft upload --release=edge snap/parsec_v${{ steps.version.outputs.full }}_*.snap
+        run: snapcraft upload --release=nightly/stable snap/parsec_v${{ steps.version.outputs.full }}_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 2
