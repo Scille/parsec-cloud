@@ -89,7 +89,7 @@ RELEASE_REGEX = re.compile(
     r"v?"
     r"(?P<release>(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.(?P<patch>[0-9]+))"
     rf"(?:-(?P<pre>{PRERELEASE_EXPR}))?"
-    r"(?:-dev\.(?P<dev>[0-9]+))?"
+    r"(?:.dev\.(?P<dev>[0-9]+))?"
     r"(?:\+(?P<local>[a-z0-9]+(?:[-_\.][a-z0-9]+)*))?"
     r"$"
 )
@@ -317,6 +317,10 @@ _test_parse_version_string(
 _test_parse_version_string("1.2.3-b42", Version(1, 2, 3, prerelease="b42"))
 _test_parse_version_string("1.2.3-rc1+dev", Version(1, 2, 3, prerelease="rc1", local="dev"))
 _test_parse_version_string("v2.15.0+dev.2950f88", Version(2, 15, 0, local="dev.2950f88"))
+_test_parse_version_string(
+    "2.16.0-a.0.dev.19786+a4f9627ee",
+    Version(2, 16, 0, prerelease="a.0", dev=19786, local="a4f9627ee"),
+)
 assert Version.parse("1.2.3") < Version.parse("1.2.4")
 assert Version.parse("1.2.3-a1") < Version.parse("1.2.3-a2")
 assert Version.parse("1.2.3-a10") < Version.parse("1.2.3-b1")
