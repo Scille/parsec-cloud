@@ -1292,7 +1292,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
 
 #[rstest]
 #[case::empty((0, vec![]))]
-#[case::blocks((2, vec![
+#[case::blocks((1024, vec![
     BlockAccess {
         id: BlockID::default(),
         key: SecretKey::generate(),
@@ -1303,7 +1303,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     BlockAccess {
         id: BlockID::default(),
         key: SecretKey::generate(),
-        offset: 1,
+        offset: 513,
         size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
     }

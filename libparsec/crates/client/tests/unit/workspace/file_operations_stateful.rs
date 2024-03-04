@@ -184,9 +184,6 @@ impl StateMachineTest for FileOperationStateMachine {
 
 prop_state_machine! {
     #![proptest_config(Config {
-        // Turn failure persistence off for demonstration. This means that no
-        // regression file will be captured.
-        failure_persistence: None,
         // Enable verbose mode to make the state machine test print the
         // transitions for each case.
         verbose: 0,
