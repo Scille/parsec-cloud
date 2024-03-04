@@ -14,8 +14,8 @@ Parsec
     :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-server.yml
     :alt: Latest Server Packaging CI
 
-.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-ionic-app.yml/badge.svg
-    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-ionic-app.yml
+.. image:: https://github.com/Scille/parsec-cloud/actions/workflows/package-client.yml/badge.svg
+    :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-client.yml
     :alt: Latest App Packaging CI
 
 .. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
