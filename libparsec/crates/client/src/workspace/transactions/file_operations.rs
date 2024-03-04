@@ -366,7 +366,7 @@ pub(crate) struct ReshapeBlockOperation<'a> {
 }
 
 impl ReshapeBlockOperation<'_> {
-    pub fn new(chunks: &mut Vec<Chunk>) -> Option<ReshapeBlockOperation> {
+    pub fn try_reshape(chunks: &mut Vec<Chunk>) -> Option<ReshapeBlockOperation> {
         // All zeroes or already a valid block
         if chunks.is_empty() || chunks.len() == 1 && chunks[0].is_block() {
             None
@@ -408,6 +408,7 @@ impl ReshapeBlockOperation<'_> {
         if self.is_pseudo_block() {
             HashSet::new()
         } else {
+            // Remove duplicate IDs by returning a HashSet
             self.manifest_chunks.iter().map(|chunk| chunk.id).collect()
         }
     }
@@ -445,5 +446,5 @@ pub fn prepare_reshape(
     manifest
         .blocks
         .iter_mut()
-        .filter_map(ReshapeBlockOperation::new)
+        .filter_map(ReshapeBlockOperation::try_reshape)
 }
