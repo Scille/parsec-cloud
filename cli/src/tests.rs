@@ -85,7 +85,10 @@ fn version() {
         .unwrap()
         .arg("--version")
         .assert()
-        .stdout("parsec_cli 2.16.0-a.0+dev\n");
+        .stdout(
+            // Using `concat!` simplify updating the version using `version-updater`
+            concat!("parsec_cli 3.0.0-a.0+dev", "\n"),
+        );
 }
 
 #[rstest::rstest]

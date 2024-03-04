@@ -12,11 +12,11 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
 from pathlib import Path
-from typing import Callable, Dict, List, Pattern, Tuple, Union
+from typing import Callable, NamedTuple, Pattern, Union
 
 ReplacementPattern = Union[str, Callable[[str], str]]
 
-RawRegexes = List["ReplaceRegex"]
+RawRegexes = list["ReplaceRegex"]
 
 ROOT_DIR = (Path(__file__) / "../..").resolve()
 
@@ -26,7 +26,7 @@ class ReplaceRegex:
     regex: str
     replaced: ReplacementPattern
 
-    def compile(self, version: str) -> Tuple[Pattern[str], str]:
+    def compile(self, version: str) -> tuple[Pattern[str], str]:
         regex = re.compile(self.regex)
         replace = (
             self.replaced.format(version=version)
@@ -72,15 +72,19 @@ class Tool(enum.Enum):
     License = "license"
     PostgreSQL = "postgres"
 
-    def post_update_hook(self) -> None:
+    def post_update_hook(self, updated_files: set[Path]) -> None:
         match self:
             case Tool.Parsec:
-                refresh_cargo_lock()
+                refresh_cargo_lock(updated_files)
             case _:
                 pass
 
 
-def refresh_cargo_lock() -> None:
+def refresh_cargo_lock(updated_files: set[Path]) -> None:
+    a_cargo_file_has_been_updated = any("Cargo.toml" in file.name for file in updated_files)
+    if not a_cargo_file_has_been_updated:
+        return
+
     print("Listing installed rust toolchains ...")
     rust_installed_toolchain = subprocess.check_output(["rustup", "toolchain", "list"]).decode()
 
@@ -100,20 +104,20 @@ def refresh_cargo_lock() -> None:
     )
 
 
-TOOLS_VERSION: Dict[Tool, str] = {
+TOOLS_VERSION: dict[Tool, str] = {
     Tool.Rust: "1.75.0",
     Tool.Python: "3.12.0",
     Tool.Poetry: "1.5.1",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
-    Tool.Parsec: "2.16.0-a.0+dev",
+    Tool.Parsec: "3.0.0-a.0+dev",
     Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
 }
 
 
-FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
+FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / ".github/workflows/ci-docs.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
@@ -155,6 +159,9 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
     ROOT_DIR / "client/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "cli/src/tests.rs": {
+        Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
+    },
     ROOT_DIR / "docs/development/quickstart.md": {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
@@ -247,7 +254,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Python: [PYTHON_DOCKER_VERSION]
     },
     ROOT_DIR / "server/parsec/_version.py": {
-        Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "v{version}"')]
+        Tool.Parsec: [ReplaceRegex(r'^__version__ = ".*"$', '__version__ = "{version}"')]
     },
     ROOT_DIR / "server/pyproject.toml": {
         Tool.Python: [
@@ -266,7 +273,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
                 hide_patch_version('python_version = "{version}"'),
             ),
         ],
-        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "v{version}"')],
+        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
         Tool.License: [TOML_LICENSE_FIELD],
     },
     ROOT_DIR / ".pre-commit-config.yaml": {
@@ -287,7 +294,14 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
 }
 
 
-def check_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) -> List[str]:
+class VersionUpdateResult(NamedTuple):
+    errors: list[str]
+    updated: set[Path]
+
+
+def check_tool_version(
+    filename: Path, raw_regexes: RawRegexes, version: str
+) -> VersionUpdateResult:
     try:
         regexes = compile_regexes(raw_regexes, version)
     except re.error:
@@ -309,35 +323,41 @@ def check_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) ->
                     )
 
     errors += does_every_regex_where_used(filename, matched)
-    return errors
+    return VersionUpdateResult(
+        errors,
+        set(),  # No file are updated in check mode
+    )
 
 
-def update_tool_version(filename: Path, raw_regexes: RawRegexes, version: str) -> List[str]:
-    root_cargo = filename.name == "Cargo.toml"
+def update_tool_version(
+    filename: Path, raw_regexes: RawRegexes, version: str
+) -> VersionUpdateResult:
     try:
         regexes = compile_regexes(raw_regexes, version)
     except re.error:
         raise ValueError(f"Failed to compile regexes for file `{filename}`")
     matched = {regex[0].pattern: False for regex in regexes}
+    updated: set[Path] = set()
 
-    if root_cargo:
-        print(f"Update {filename}")
     with FileInput(filename, inplace=True) as f:
-        for line in f:
+        for old_line in f:
+            line = old_line
             for regex, replaced_line in regexes:
                 line, substitution_count = regex.subn(replaced_line, line, count=1)
                 if substitution_count >= 1:
                     matched[regex.pattern] = True
+                    if line != old_line:
+                        updated.add(filename)
             print(line, end="")
 
-    return does_every_regex_where_used(filename, matched)
+    return VersionUpdateResult(does_every_regex_where_used(filename, matched), updated)
 
 
-def compile_regexes(regexes: RawRegexes, version: str) -> List[Tuple[Pattern[str], str]]:
+def compile_regexes(regexes: RawRegexes, version: str) -> list[tuple[Pattern[str], str]]:
     return [regex.compile(version) for regex in regexes]
 
 
-def does_every_regex_where_used(filename: Path, have_matched: Dict[str, bool]) -> List[str]:
+def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -> list[str]:
     errors = []
     for pattern, matched in have_matched.items():
         if not matched:
@@ -346,8 +366,9 @@ def does_every_regex_where_used(filename: Path, have_matched: Dict[str, bool]) -
     return errors
 
 
-def check_tool(tool: Tool, version: str, update: bool) -> List[str]:
+def check_tool(tool: Tool, version: str, update: bool) -> list[str]:
     errors = []
+    updated: set[Path] = set()
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
@@ -356,12 +377,14 @@ def check_tool(tool: Tool, version: str, update: bool) -> List[str]:
         for glob_file in glob.glob(str(filename), recursive=True):
             file = Path(glob_file)
             if update:
-                errors += update_tool_version(file, regexes, version)
+                res = update_tool_version(file, regexes, version)
+                errors += res.errors
+                updated.update(res.updated)
             else:
-                errors += check_tool_version(file, regexes, version)
+                errors += check_tool_version(file, regexes, version).errors
 
     if not errors and update:
-        tool.post_update_hook()
+        tool.post_update_hook(updated)
     return errors
 
 
@@ -386,7 +409,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     failed = False
 
-    errors: List[str] = []
+    errors: list[str] = []
 
     if args.tool is not None:
         tool = Tool(args.tool)

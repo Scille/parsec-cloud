@@ -54,7 +54,7 @@ authors = [ "@Scille/parsec-dev", "@Scille/rust-code-owners" ]
 edition = "2021"
 homepage = "https://parsec.cloud"
 license = "BUSL-1.1"
-version = "2.16.0-a.0+dev"
+version = "3.0.0-a.0+dev"
 repository = "https://github.com/Scille/parsec-cloud"
 
 [workspace.lints.clippy]
