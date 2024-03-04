@@ -52,7 +52,7 @@ pub fn req() {
     for (raw, expected) in raw_expected {
         let expected = authenticated_cmds::AnyCmdReq::VlobReadBatch(expected);
 
-        let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
+        let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
         p_assert_eq!(data, expected);
 

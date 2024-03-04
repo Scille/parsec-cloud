@@ -110,9 +110,9 @@ impl Storage {
         for operation in operations {
             let new_chunk = operation.destination();
             let size = new_chunk.stop.get() - new_chunk.start;
-            let data = self.build_data(&operation.source(), size, new_chunk.start);
+            let data = self.build_data(operation.source(), size, new_chunk.start);
             if operation.write_back() {
-                self.write_chunk(&new_chunk, &data, 0);
+                self.write_chunk(new_chunk, &data, 0);
             }
             for chunk_id in operation.cleanup_ids() {
                 self.clear_chunk_data(chunk_id);

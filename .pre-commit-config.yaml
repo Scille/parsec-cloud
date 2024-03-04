@@ -14,10 +14,10 @@ repos:
       - id: mixed-line-ending
         alias: eol
       - id: trailing-whitespace
-        exclude_types: [ svg ]
+        exclude_types: [svg]
       - id: end-of-file-fixer
         alias: eof
-        exclude_types: [ svg ]
+        exclude_types: [svg]
         # `libparsec/version` must not have a trailing newline !
         exclude: ^libparsec/version$
 
@@ -95,10 +95,7 @@ repos:
     rev: v0.9.0.6
     hooks:
       - id: shellcheck
-        args: [
-          --exclude=SC1090,    # Do not follow non-constant sources
-          --severity=warning,  # Optionally only show errors and warnings
-        ]
+        args: [--exclude=SC1090, --severity=warning]
 
   ########
   # Python
@@ -140,46 +137,39 @@ repos:
         #
         # Fortunately Ruff is (as cool kids say) blazingly fast, so it's no big
         # deal to check everything on each run.
-        entry:
-          poetry --directory ./server run python -c 'import os;os.chdir("./server");os.execlp("ruff", "ruff", "check", "--fix", "./parsec", "./tests", "../docs", "../make.py", "../misc");'
+        entry: poetry --directory ./server run python -c 'import os;os.chdir("./server");os.execlp("ruff", "ruff", "check", "--fix", "./parsec", "./tests", "../docs", "../make.py", "../misc");'
         require_serial: true
         pass_filenames: false
         language: system
-        types_or: [ python, pyi ]
+        types_or: [python, pyi]
 
       - id: black # Still named `black` as it makes a unique recognizable name
         name: black (using `poetry run ruff format`)
         entry: poetry --directory ./server run ruff format
         require_serial: true
         language: system
-        types_or: [ python, pyi ]
-        args:
-          [
-            --config=server/pyproject.toml,
-          ]
+        types_or: [python, pyi]
+        args: [--config=server/pyproject.toml]
 
       - id: pyright
         name: Pyright (using `poetry run pyright`)
         entry: poetry --directory ./server run pyright
         require_serial: true
         language: system
-        types_or: [ python, pyi ]
-        args:
-          [
-            --project=server/,
-          ]
+        types_or: [python, pyi]
+        args: [--project=server/]
 
-      # - id: mypy
-      #   name: Mypy (using `poetry run mypy`)
-      #   entry: poetry --directory ./server run mypy
-      #   require_serial: true
-      #   language: system
-      #   types_or: [ python, pyi ]
-      #   args:
-      #     [
-      #       --config=server/pyproject.toml,
-      #     ]
-      #   files: ^(server|misc|bindings/generator)/
+  # - id: mypy
+  #   name: Mypy (using `poetry run mypy`)
+  #   entry: poetry --directory ./server run mypy
+  #   require_serial: true
+  #   language: system
+  #   types_or: [ python, pyi ]
+  #   args:
+  #     [
+  #       --config=server/pyproject.toml,
+  #     ]
+  #   files: ^(server|misc|bindings/generator)/
 
   ######
   # Rust
@@ -190,29 +180,55 @@ repos:
         name: fmt
         entry: cargo fmt
         language: system
-        types: [ rust ]
-        args: [ -- ]
+        types: [rust]
+        args: [--]
 
-      # - id: clippy
-      #   name: clippy
-      #   entry: cargo clippy
-      #   language: system
-      #   types: [ rust ]
-      #   pass_filenames: false
-      #   args:
-      #     [
-      #       --workspace,
-      #       --tests,
-      #       --bins,
-      #       --lib,
-      #       --exclude=libparsec_bindings_android,
-      #       --exclude=libparsec_bindings_web,
-      #       --exclude=libparsec_bindings_electron,
-      #       --,
-      #       --deny=warnings,
-      #       --deny=clippy::undocumented_unsafe_blocks,
-      #       --deny=clippy::unwrap_used
-      #     ]
+      - &clippy
+        id: clippy
+        name: clippy
+        entry: cargo clippy
+        language: system
+        types: [rust]
+        pass_filenames: false
+        args:
+          [
+            --workspace,
+            --tests,
+            --bins,
+            --lib,
+            --exclude=libparsec_bindings_android,
+            --exclude=libparsec_bindings_web,
+            --exclude=libparsec_bindings_electron,
+            --,
+            --deny=warnings,
+            --deny=clippy::undocumented_unsafe_blocks,
+            --deny=clippy::unwrap_used,
+          ]
+
+      - id: clippy-fix
+        name: clippy-fix
+        entry: cargo clippy
+        language: system
+        types: [rust]
+        pass_filenames: false
+        stages:
+          - manual
+        args:
+          [
+            --workspace,
+            --tests,
+            --bins,
+            --lib,
+            --exclude=libparsec_bindings_android,
+            --exclude=libparsec_bindings_web,
+            --exclude=libparsec_bindings_electron,
+            --fix,
+            --allow-staged,
+            --,
+            --deny=warnings,
+            --deny=clippy::undocumented_unsafe_blocks,
+            --deny=clippy::unwrap_used,
+          ]
 
   ####
   # Js
@@ -225,8 +241,8 @@ repos:
         language: node
         files: ^client/
         # see: https://github.com/pre-commit/identify/blob/master/identify/extensions.py
-        types_or: [ vue, ts, tsx, javascript, jsx ]
-        args: [ --config=client/.eslintrc.cjs ]
+        types_or: [vue, ts, tsx, javascript, jsx]
+        args: [--config=client/.eslintrc.cjs]
         stages:
           - manual
         # Deps should be kept updated with `client/package-lock.json` !
@@ -254,7 +270,7 @@ repos:
           --write
         language: node
         files: ^client/
-        types_or: [ vue, ts, tsx, javascript, jsx, html ]
+        types_or: [vue, ts, tsx, javascript, jsx, html]
         stages:
           - manual
         additional_dependencies:
@@ -269,18 +285,18 @@ repos:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
         alias: check-protocol-schema
-        types_or: [ json5 ]
+        types_or: [json5]
         files: ^libparsec/crates/protocol/schema/
-        args: [ --schemafile, json_schema/protocol.schema.json ]
-        additional_dependencies: [ json5 ]
+        args: [--schemafile, json_schema/protocol.schema.json]
+        additional_dependencies: [json5]
 
       - id: check-jsonschema
         name: Validate data files with jsonschema
         alias: check-data-schema
-        types_or: [ json5 ]
+        types_or: [json5]
         files: ^libparsec/crates/types/schema/
-        args: [ --schemafile, json_schema/data.schema.json ]
-        additional_dependencies: [ json5 ]
+        args: [--schemafile, json_schema/data.schema.json]
+        additional_dependencies: [json5]
 
       - id: check-metaschema
         files: ^json_schema/
@@ -289,10 +305,18 @@ repos:
         name: Validate Read the doc configuration files
         alias: check-readthedocs
         files: .readthedocs.yml
-        args: [ --schemafile, https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json ]
+        args:
+          [
+            --schemafile,
+            https://raw.githubusercontent.com/readthedocs/readthedocs.org/main/readthedocs/rtd_tests/fixtures/spec/v2/schema.json,
+          ]
 
       - id: check-jsonschema
         name: Validate snapcraft config
         alias: check-snapcraft
         files: ^packaging/snap/snap/snapcraft.yaml
-        args: [ --schemafile, https://raw.githubusercontent.com/snapcore/snapcraft/main/schema/snapcraft.json ]
+        args:
+          [
+            --schemafile,
+            https://raw.githubusercontent.com/snapcore/snapcraft/main/schema/snapcraft.json,
+          ]

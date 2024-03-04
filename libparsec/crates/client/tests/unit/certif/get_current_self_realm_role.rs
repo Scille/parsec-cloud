@@ -48,7 +48,7 @@ async fn last_share_role_is_used(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn empty(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops
         .get_current_self_realm_role(VlobID::default())
@@ -61,7 +61,7 @@ async fn empty(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn stopped(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     ops.stop().await.unwrap();
 

@@ -590,7 +590,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &RealmRoleCertificate {
                 timestamp: t10,
-                realm_id: realm_id,
+                realm_id,
                 user_id: other_user_id.clone(),
                 // Not meaningful for the test
                 author: device_id.clone(),

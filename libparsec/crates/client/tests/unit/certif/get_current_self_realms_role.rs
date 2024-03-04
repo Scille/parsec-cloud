@@ -84,7 +84,7 @@ async fn duplicate_realm_id(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn empty(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops.get_current_self_realms_role().await.unwrap();
 
@@ -94,7 +94,7 @@ async fn empty(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn stopped(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     ops.stop().await.unwrap();
 
