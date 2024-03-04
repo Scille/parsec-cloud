@@ -30,9 +30,15 @@ jobs:
         }}
 
   package-parsec-server:
-    needs:
-      - version
+    needs: version
     uses: ./.github/workflows/package-server.yml
+    with:
+      version: ${{ needs.version.outputs.full }}
+      version_patch_run_id: ${{ github.run_id }}
+
+  package-parsec-client:
+    needs: version
+    uses: ./.github/workflows/package-client.yml
     with:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
@@ -41,6 +47,7 @@ jobs:
     needs:
       - version
       - package-parsec-server
+      - package-parsec-client
     name: 🚛 Releaser
     runs-on: ubuntu-22.04
     steps:
@@ -56,12 +63,19 @@ jobs:
       - name: Create the folder that will contain the release files
         run: mkdir release-files
 
-      - name: Copy python wheels
+      - name: Copy artifacts to the release folder
         run: |
           set -ex
           cp -v artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+
+          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-alpha_${{ needs.version.outputs.no_local }}_amd64.snap release-files
+          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-alpha-${{ needs.version.outputs.no_local }}.AppImage release-files
+
+          cp -v artifacts/macOS-X64-electron-app/client/electron/dist/parsec-v3-alpha-${{ needs.version.outputs.no_local }}.dmg release-files
+
+          cp -v artifacts/Windows-X64-electron-app/client/electron/dist/'parsec-v3-alpha Setup ${{ needs.version.outputs.no_local }}.exe' release-files
         env:
           BASH_XTRACEFD: 1
 
@@ -117,7 +131,7 @@ jobs:
       - name: Create release
         if: github.event_name == 'push'
         # FIXME: rollback to `softprops/action-gh-release` once the issue <https://github.com/softprops/action-gh-release/issues/362> is fixed.
-        uses: FirelightFlagboy/action-gh-release@58fed080aaa4be111f1b7c31013ceeb8d68e0172
+        uses: FirelightFlagboy/action-gh-release@d9a17b2b70a11ff00e4a7d0be3ca04e74d66de24
         with:
           draft: true
           body: ${{ steps.summary.outputs.output }}

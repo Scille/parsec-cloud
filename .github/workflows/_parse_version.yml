@@ -32,6 +32,9 @@ on:
       local:
         description: The local version
         value: ${{ jobs.parse.outputs.local }}
+      no_local:
+        description: The full version without the local part
+        value: ${{ jobs.parse.outputs.no_local }}
 
 jobs:
   parse:
@@ -46,6 +49,7 @@ jobs:
       pre: ${{ steps.version.outputs.prerelease }}
       dev: ${{ steps.version.outputs.dev }}
       local: ${{ steps.version.outputs.local }}
+      no_local: ${{ steps.version.outputs.no_local }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5

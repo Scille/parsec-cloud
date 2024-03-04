@@ -186,6 +186,9 @@ class Version:
 
         return "".join(parts)
 
+    def without_local(self) -> Version:
+        return self.evolve(local=None)
+
     def __repr__(self) -> str:
         return f"Version(major={self.major}, minor={self.minor}, patch={self.patch}, prerelease={self.prerelease}, dev={self.dev}, local={self.local})"
 
@@ -338,6 +341,7 @@ assert Version.parse("1.2.4-b42-10-g3b5f5762", git=True) < Version.parse("1.2.4"
 assert Version.parse("1.2.3-rc10+dev") < Version.parse("1.2.3")
 assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3-rc1+dev")
 assert Version.parse("1.2.3-b10+dev") < Version.parse("1.2.3+dev")
+assert Version(1, 2, 3, local="foo").without_local() == Version(1, 2, 3)
 _test_format_version(Version(1, 2, 3), "1.2.3")
 _test_format_version(Version(1, 2, 3, prerelease="a1"), "1.2.3-a.1")
 _test_format_version(Version(1, 2, 3, prerelease="b2", dev=4), "1.2.3-b.2.dev.4")
@@ -777,6 +781,7 @@ def version_main(args: argparse.Namespace) -> None:
                 f"prerelease={version.prerelease or ''}",
                 f"dev={version.dev or ''}",
                 f"local={version.local or ''}",
+                f"no_local={version.without_local()}",
             ]
         )
     )
