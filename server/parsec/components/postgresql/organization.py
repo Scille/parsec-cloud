@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal, override
+from typing import Literal, assert_never, override
 
 import asyncpg
 from asyncpg import UniqueViolationError
@@ -26,6 +26,7 @@ from parsec.components.organization import (
     OrganizationBootstrapStoreBadOutcome,
     OrganizationBootstrapValidateBadOutcome,
     OrganizationCreateBadOutcome,
+    OrganizationDump,
     OrganizationGetBadOutcome,
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
@@ -540,6 +541,34 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
         #     if with_is_expired and is_expired:
         #         await send_signal(conn, BackendEventOrganizationExpired(organization_id=id))
+
+    @transaction
+    async def test_dump_organizations(
+        self, conn: asyncpg.Connection, skip_templates: bool = True
+    ) -> dict[OrganizationID, OrganizationDump]:
+        items = {}
+        for org in await conn.fetch(*_q_get_organizations()):
+            match await self._get(conn, OrganizationID(org["id"])):
+                case OrganizationGetBadOutcome():
+                    continue
+                case Organization() as org:
+                    pass
+                case unkown:
+                    assert_never(unkown)
+
+            if org.organization_id.str.endswith("Template") and skip_templates:
+                continue
+
+            org.active_users_limit
+            items[org.organization_id] = OrganizationDump(
+                organization_id=org.organization_id,
+                is_bootstrapped=org.is_bootstrapped,
+                is_expired=org.is_expired,
+                active_users_limit=org.active_users_limit,
+                user_profile_outsider_allowed=org.user_profile_outsider_allowed,
+            )
+
+        return items
 
     async def test_drop_organization(self, id: OrganizationID) -> None:
         async with self.pool.acquire() as conn:
