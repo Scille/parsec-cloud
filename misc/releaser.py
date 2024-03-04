@@ -37,7 +37,7 @@ import sys
 import textwrap
 from collections import defaultdict
 from copy import copy
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -748,10 +748,11 @@ def version_main(args: argparse.Namespace) -> None:
             setattr(version, part, overwritten_part)
 
     if args.uniq_dev:
-        now = datetime.utcnow()
+        SECONDS_IN_A_DAY = 24 * 3600
+        now = datetime.now(tz=timezone.utc)
         short_commit = run_git("rev-parse", "--short", "HEAD").strip()
-        interval = now.year * 366 + now.month * 31 + now.day
-        version.dev = interval
+        days_since_epoch = math.floor(now.timestamp() / SECONDS_IN_A_DAY)
+        version.dev = days_since_epoch
         version.local = short_commit
 
     SNAPCRAFT_MAX_VERSION_LEN = 32
