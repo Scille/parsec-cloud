@@ -4,8 +4,8 @@ use proptest::prelude::*;
 use proptest::test_runner::Config;
 use proptest_state_machine::{prop_state_machine, ReferenceStateMachine, StateMachineTest};
 use std::collections::HashSet;
+use std::io::Seek;
 use std::io::{Cursor, Read, SeekFrom, Write};
-use std::{io::Seek, str::FromStr};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -85,6 +85,8 @@ impl ReferenceStateMachine for FileOperationOracleStateMachine {
 pub struct FileOperationStateMachine {
     storage: Storage,
     manifest: LocalFileManifest,
+    device_id: DeviceID,
+    time_provider: TimeProvider,
 }
 
 impl FileOperationStateMachine {
@@ -93,12 +95,12 @@ impl FileOperationStateMachine {
         assert_eq!(data, expected);
     }
     fn resize(&mut self, length: u64) {
-        let timestamp = DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap();
+        let timestamp = self.time_provider.now();
         self.storage.resize(&mut self.manifest, length, timestamp);
     }
 
     fn write(&mut self, content: &[u8], offset: u64) {
-        let timestamp = DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap();
+        let timestamp = self.time_provider.now();
         self.storage
             .write(&mut self.manifest, content, offset, timestamp);
     }
@@ -116,16 +118,17 @@ impl StateMachineTest for FileOperationStateMachine {
     fn init_test(
         _ref_state: &<Self::Reference as ReferenceStateMachine>::State,
     ) -> Self::SystemUnderTest {
-        let mut manifest = LocalFileManifest::new(
-            DeviceID::default(),
-            VlobID::default(),
-            DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap(),
-        );
+        let time_provider = TimeProvider::default();
+        let device_id = DeviceID::default();
+        let mut manifest =
+            LocalFileManifest::new(device_id.clone(), VlobID::default(), time_provider.now());
         manifest.blocksize = Blocksize::try_from(8).unwrap();
         manifest.base.blocksize = manifest.blocksize;
         FileOperationStateMachine {
             storage: Storage::default(),
             manifest,
+            device_id,
+            time_provider,
         }
     }
 
@@ -163,10 +166,7 @@ impl StateMachineTest for FileOperationStateMachine {
         if state.manifest.is_reshaped() {
             let remote = state
                 .manifest
-                .to_remote(
-                    DeviceID::default(),
-                    DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap(),
-                )
+                .to_remote(state.device_id.clone(), state.time_provider.now())
                 .unwrap();
             LocalFileManifest::from_remote(remote).assert_integrity();
         }
@@ -192,10 +192,6 @@ prop_state_machine! {
         verbose: 0,
         .. Config::default()
     })]
-
-    // NOTE: The `#[test]` attribute is commented out in here so we can run it
-    // as an example from the `fn main`.
-
     #[parsec_test]
     fn file_operations_stateful_test(
         // This is a macro's keyword - only `sequential` is currently supported.
