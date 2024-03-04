@@ -200,6 +200,11 @@ pub fn prepare_write(
     let mut removed_ids = HashSet::new();
     let mut write_operations = vec![];
 
+    // Writing zero bytes is a no-op (it does not extend the file if the offset is past the end of the file)
+    if size == 0 {
+        return (write_operations, removed_ids);
+    }
+
     // Find proper block indexes
     let blocksize = u64::from(manifest.blocksize);
     let start_block = offset / blocksize;
