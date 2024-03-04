@@ -9,7 +9,7 @@ import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from structlog import get_logger
 
-from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import DeviceID, OrganizationID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.events import Event, EventOrganizationConfig
@@ -59,8 +59,8 @@ class MemoryEventsComponent(BaseEventsComponent):
         self._data = data
 
     @override
-    async def _get_registration_info_for_user(
-        self, organization_id: OrganizationID, author: UserID
+    async def _get_registration_info_for_author(
+        self, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -70,7 +70,7 @@ class MemoryEventsComponent(BaseEventsComponent):
             return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[author]
+            user = org.users[author.user_id]
         except KeyError:
             return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
         if user.is_revoked:
@@ -84,7 +84,7 @@ class MemoryEventsComponent(BaseEventsComponent):
 
         user_realms = set()
         for realm in org.realms.values():
-            if realm.get_current_role_for(author) is not None:
+            if realm.get_current_role_for(author.user_id) is not None:
                 user_realms.add(realm.realm_id)
 
         return org_config, user.current_profile, user_realms
