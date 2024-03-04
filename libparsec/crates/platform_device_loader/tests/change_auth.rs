@@ -37,7 +37,7 @@ async fn same_key_file(tmp_path: TmpPath) {
         key_file: key_file.clone(),
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentication(Path::new(""), &access, &new_access, false)
+    change_authentication(Path::new(""), &access, &new_access)
         .await
         .unwrap();
 
@@ -45,15 +45,11 @@ async fn same_key_file(tmp_path: TmpPath) {
     assert!(key_file.exists());
 
     p_assert_eq!(
-        *load_device(Path::new(""), &new_access, false)
-            .await
-            .unwrap(),
+        *load_device(Path::new(""), &new_access).await.unwrap(),
         device
     );
 
-    load_device(Path::new(""), &access, false)
-        .await
-        .unwrap_err();
+    load_device(Path::new(""), &access).await.unwrap_err();
 }
 
 #[parsec_test]
@@ -87,7 +83,7 @@ async fn different_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
 
-    change_authentication(Path::new(""), &access, &new_access, false)
+    change_authentication(Path::new(""), &access, &new_access)
         .await
         .unwrap();
 
@@ -96,15 +92,11 @@ async fn different_key_file(tmp_path: TmpPath) {
     assert!(new_key_file.exists());
 
     p_assert_eq!(
-        *load_device(Path::new(""), &new_access, false)
-            .await
-            .unwrap(),
+        *load_device(Path::new(""), &new_access).await.unwrap(),
         device
     );
 
-    load_device(Path::new(""), &access, false)
-        .await
-        .unwrap_err();
+    load_device(Path::new(""), &access).await.unwrap_err();
 }
 
 #[parsec_test(testbed = "empty")]
@@ -123,14 +115,14 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
         key_file,
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentication(&env.discriminant_dir, &current_access, &new_access, true)
+    change_authentication(&env.discriminant_dir, &current_access, &new_access)
         .await
         .unwrap();
 
-    load_device(&env.discriminant_dir, &new_access, false)
+    load_device(&env.discriminant_dir, &new_access)
         .await
         .unwrap();
-    load_device(&env.discriminant_dir, &current_access, false)
+    load_device(&env.discriminant_dir, &current_access)
         .await
         .unwrap_err();
 }
@@ -152,14 +144,14 @@ async fn testbed_different_key_file(env: &TestbedEnv) {
         key_file: new_key_file,
         password: "P@ssw0rd.".to_owned().into(),
     };
-    change_authentication(&env.discriminant_dir, &current_access, &new_access, true)
+    change_authentication(&env.discriminant_dir, &current_access, &new_access)
         .await
         .unwrap();
 
-    load_device(&env.discriminant_dir, &new_access, false)
+    load_device(&env.discriminant_dir, &new_access)
         .await
         .unwrap();
-    load_device(&env.discriminant_dir, &current_access, false)
+    load_device(&env.discriminant_dir, &current_access)
         .await
         .unwrap_err();
 }

@@ -73,8 +73,7 @@ pub async fn client_start(
 
     // 1) Load the device
 
-    let device =
-        libparsec_platform_device_loader::load_device(&config.config_dir, &access, true).await?;
+    let device = libparsec_platform_device_loader::load_device(&config.config_dir, &access).await?;
 
     // 2) Make sure another client is not running this device
 
@@ -283,7 +282,6 @@ pub async fn client_change_authentication(
         &config.config_dir,
         &current_auth,
         &new_auth.into_access(key_file),
-        true,
     )
     .await?;
     Ok(())

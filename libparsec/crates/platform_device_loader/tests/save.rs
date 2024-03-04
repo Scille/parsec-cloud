@@ -88,7 +88,7 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     p_assert_matches!(outcome, Ok(()));
 
     // Roundtrip check
-    let loaded = load_device(&tmp_path, &access, false).await.unwrap();
+    let loaded = load_device(&tmp_path, &access).await.unwrap();
     p_assert_eq!(*loaded, *alice_device);
 }
 
@@ -104,7 +104,7 @@ async fn testbed(env: &TestbedEnv) {
         key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
-    let device = load_device(&env.discriminant_dir, &old_access, true)
+    let device = load_device(&env.discriminant_dir, &old_access)
         .await
         .unwrap();
 
@@ -119,10 +119,10 @@ async fn testbed(env: &TestbedEnv) {
 
     // Finally roundtrip check
     p_assert_matches!(
-        load_device(&env.discriminant_dir, &old_access, false).await,
+        load_device(&env.discriminant_dir, &old_access).await,
         Err(LoadDeviceError::DecryptionFailed)
     );
-    let reloaded_device = load_device(&env.discriminant_dir, &new_access, false)
+    let reloaded_device = load_device(&env.discriminant_dir, &new_access)
         .await
         .unwrap();
     p_assert_eq!(reloaded_device, device);

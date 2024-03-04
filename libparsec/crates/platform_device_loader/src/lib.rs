@@ -60,10 +60,9 @@ pub async fn load_device(
     // TODO: Should we set under testbed feature ?
     #[allow(unused)] config_dir: &Path,
     access: &DeviceAccessStrategy,
-    #[allow(unused)] with_testbed_template: bool,
 ) -> Result<Arc<LocalDevice>, LoadDeviceError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) = testbed::maybe_load_device(config_dir, access, with_testbed_template) {
+    if let Some(result) = testbed::maybe_load_device(config_dir, access) {
         return result;
     }
 
@@ -126,15 +125,11 @@ pub async fn change_authentication(
     #[allow(unused)] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-    #[allow(unused)] with_testbed_template: bool,
 ) -> Result<(), ChangeAuthentificationError> {
     #[cfg(feature = "test-with-testbed")]
-    if let Some(result) = testbed::maybe_change_authentication(
-        config_dir,
-        current_access,
-        new_access,
-        with_testbed_template,
-    ) {
+    if let Some(result) =
+        testbed::maybe_change_authentication(config_dir, current_access, new_access)
+    {
         return result;
     }
 
