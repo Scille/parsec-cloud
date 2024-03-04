@@ -106,6 +106,8 @@ async def patch_handle_async_request(
         except Exception:
             if self.raise_app_exceptions or not response_complete.is_set():
                 raise
+        finally:
+            await body_queue.put(sentinel)
 
     async def body_stream() -> typing.AsyncGenerator[bytes, None]:
         while True:
@@ -113,9 +115,10 @@ async def patch_handle_async_request(
             if body != sentinel:
                 yield body
             else:
+                await future
                 return
 
-    asyncio.create_task(run_app())  # noqa: RUF006
+    future = asyncio.create_task(run_app())
 
     await response_started.wait()
     assert status_code is not None
