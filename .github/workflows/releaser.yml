@@ -20,56 +20,14 @@ concurrency:
 
 jobs:
   version:
-    runs-on: ubuntu-22.04
-    outputs:
-      full: ${{ steps.version.outputs.full }}
-      pep440: ${{ steps.version.outputs.pep440 }}
-      major: ${{ steps.version.outputs.major }}
-      minor: ${{ steps.version.outputs.minor }}
-      patch: ${{ steps.version.outputs.patch }}
-      prerelease: ${{ steps.version.outputs.prerelease }}
-      dev: ${{ steps.version.outputs.dev }}
-      local: ${{ steps.version.outputs.local }}
-    steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
-        timeout-minutes: 5
-
-      - name: Parse version for event ${{ github.event_name }}
-        id: version
-        run: |
-          set -o pipefail
-
-          function parse_version {
-            PYTHONPATH=. python3 misc/releaser.py version "$@"
-          }
-
-          case "${{ github.event_name }}" in
-            push)
-              echo "Triggered by a Push"
-              parse_version "${{ github.ref_name }}" | tee -a $GITHUB_OUTPUT
-            ;;
-
-            workflow_dispatch)
-              # If workflow dispatch trigger from a tag, we use the tag as a version else we behave like pull_request
-              TAG="${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}"
-              # If TAG isn't empty use it.
-              if [ -n $TAG ]; then
-                parse_version $TAG | tee -a $GITHUB_OUTPUT
-              else
-                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
-              fi
-            ;;
-
-            pull_request)
-              echo "Triggered by a Pull-Request"
-              parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
-            ;;
-
-            *)
-              echo "Unsupported event type ${{ github.event_name }}" >&2
-              exit 1
-            ;;
-          esac
+    uses: ./.github/workflows/_parse_version.yml
+    with:
+      version: >-
+        ${{
+          github.event_name == 'push' && github.ref_name ||
+          startsWith(github.ref, 'refs/tags/') && github.ref_name ||
+          ''
+        }}
 
   package-parsec-server:
     needs:
@@ -117,7 +75,7 @@ jobs:
             echo "major=${{ needs.version.outputs.major }}";
             echo "minor=${{ needs.version.outputs.minor }}";
             echo "patch=${{ needs.version.outputs.patch }}";
-            echo "prerelease=${{ needs.version.outputs.prerelease }}";
+            echo "pre=${{ needs.version.outputs.pre }}";
             echo "dev=${{ needs.version.outputs.dev }}";
             echo "local=${{ needs.version.outputs.local }}";
           ) | tee release-files/version
@@ -162,7 +120,7 @@ jobs:
         with:
           draft: true
           body: ${{ steps.summary.outputs.output }}
-          prerelease: ${{ needs.version.outputs.prerelease != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
+          prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: Release v${{ needs.version.outputs.full }}
           tag_name: v${{ needs.version.outputs.full }}
           files: |
