@@ -80,7 +80,7 @@ pub async fn fd_read(
         match found {
             Some(chunk_data) => {
                 chunk
-                    .copy_between_start_and_stop(chunk_data, buf)
+                    .copy_between_start_and_stop(chunk_data, buf) // TODO: Fix this logic now that chunks have gaps
                     .expect("prepare_read/buf/size are consistent");
             }
             None => {

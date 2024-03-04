@@ -55,13 +55,9 @@ impl Storage {
         self.write_chunk_data(chunk.id, data)
     }
 
-    fn build_data(&self, chunks: &[Chunk]) -> Vec<u8> {
-        if chunks.is_empty() {
-            return vec![];
-        }
-        let start = chunks.first().unwrap().start as usize;
-        let stop = chunks.last().unwrap().stop.get() as usize;
-        let mut result: Vec<u8> = vec![0; stop - start];
+    fn build_data(&self, chunks: &[Chunk], size: u64, offset: u64) -> Vec<u8> {
+        let start = offset as usize;
+        let mut result: Vec<u8> = vec![0; size as usize];
         for chunk in chunks {
             let data = self.read_chunk(chunk);
             result[chunk.start as usize - start..chunk.stop.get() as usize - start]
@@ -74,7 +70,7 @@ impl Storage {
 
     pub fn read(&self, manifest: &LocalFileManifest, size: u64, offset: u64) -> Vec<u8> {
         let (written_size, chunks) = prepare_read(manifest, size, offset);
-        let data = self.build_data(&chunks.collect::<Vec<_>>());
+        let data = self.build_data(&chunks.collect::<Vec<_>>(), written_size, offset);
         p_assert_eq!(data.len() as u64, written_size);
         data
     }
@@ -107,11 +103,7 @@ impl Storage {
             return;
         }
         // Resize
-        let empty = vec![];
-        let (write_operations, removed_ids) = prepare_resize(manifest, size, timestamp);
-        for wo in write_operations {
-            self.write_chunk(&wo.chunk, &empty, wo.offset);
-        }
+        let removed_ids = prepare_resize(manifest, size, timestamp);
         for removed_id in removed_ids {
             self.clear_chunk_data(removed_id);
         }
@@ -120,8 +112,9 @@ impl Storage {
     pub fn reshape(&mut self, manifest: &mut LocalFileManifest) {
         let operations: Vec<_> = prepare_reshape(manifest).collect();
         for operation in operations {
-            let data = self.build_data(&operation.source());
             let new_chunk = operation.destination();
+            let size = new_chunk.stop.get() - new_chunk.start;
+            let data = self.build_data(&operation.source(), size, new_chunk.start);
             if operation.write_back() {
                 self.write_chunk(&new_chunk, &data, 0);
             }
@@ -259,29 +252,16 @@ fn full_scenario() {
     // Check manifest
     assert_eq!(manifest.size, 40);
     assert_eq!(manifest.updated, t6);
-    assert_eq!(manifest.blocks.len(), 3);
+    assert_eq!(manifest.blocks.len(), 2);
     assert_eq!(manifest.blocks[0].len(), 3);
-    assert_eq!(manifest.blocks[1].len(), 4);
-    assert_eq!(manifest.blocks[2].len(), 1);
-    let chunk7 = manifest.blocks[1][3].clone();
-    let chunk8 = manifest.blocks[2][0].clone();
+    assert_eq!(manifest.blocks[1].len(), 3);
     assert_eq!(
         manifest.blocks,
         vec![
             vec![chunk0.clone(), chunk1.clone(), chunk2.clone()],
-            vec![
-                chunk4.clone(),
-                chunk5.clone(),
-                chunk6.clone(),
-                chunk7.clone()
-            ],
-            vec![chunk8.clone()],
+            vec![chunk4.clone(), chunk5.clone(), chunk6.clone(),]
         ]
     );
-
-    // Check chunks
-    assert_eq!(storage.read_chunk_data(chunk7.id), [0; 5]);
-    assert_eq!(storage.read_chunk_data(chunk8.id), [0; 8]);
 
     // Extend file and read everything back
     let t7 = DateTime::from_str("2000-01-01 07:00:00 UTC").unwrap();
@@ -378,15 +358,8 @@ fn full_scenario() {
     );
     assert_eq!(manifest.size, 32);
     assert_eq!(manifest.updated, t10);
-    assert_eq!(manifest.blocks.len(), 2);
+    assert_eq!(manifest.blocks.len(), 1);
     assert_eq!(manifest.blocks[0], vec![chunk10.clone()]);
-    let chunk12 = manifest.blocks[1][0].clone();
-    assert_eq!(chunk12.start, 16);
-    assert_eq!(chunk12.stop.get(), 32);
-    assert_eq!(chunk12.raw_offset, 16);
-    assert_eq!(chunk12.raw_size.get(), 16);
-    assert!(!chunk12.access.is_some());
-    assert!(!chunk12.is_block());
 }
 
 // TODO: split this test in smaller, easier to maintain, parts

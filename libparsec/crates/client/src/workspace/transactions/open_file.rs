@@ -145,8 +145,7 @@ pub async fn open_file(
         // Handle truncate-on-open
         if options.truncate {
             let file_manifest = Arc::make_mut(file_manifest);
-            let (_, removed_chunks) = super::prepare_resize(file_manifest, 0, ops.device.now());
-            // TODO: prepare_resize should return a Vec instead of a HashSet
+            let removed_chunks = super::prepare_resize(file_manifest, 0, ops.device.now());
             removed_chunks.into_iter().collect()
         } else {
             vec![]

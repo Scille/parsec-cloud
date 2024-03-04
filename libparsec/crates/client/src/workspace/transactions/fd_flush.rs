@@ -133,7 +133,7 @@ async fn reshape(
             match outcome {
                 Ok(chunk_data) => {
                     chunk
-                        .copy_between_start_and_stop(&chunk_data, &mut buf)
+                        .copy_between_start_and_stop(&chunk_data, &mut buf) // TODO: fix this logic now that chunks have gaps
                         .expect("write on vec cannot fail");
                 }
                 Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
