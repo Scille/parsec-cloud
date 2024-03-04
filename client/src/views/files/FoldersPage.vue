@@ -386,9 +386,9 @@ async function listFolder(): Promise<void> {
           }
         }
       }
-      folders.value.replace(newFolders);
-      files.value.replace(newFiles);
     }
+    folders.value.replace(newFolders);
+    files.value.replace(newFiles);
   } else {
     informationManager.present(
       new Information({

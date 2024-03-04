@@ -78,7 +78,7 @@ class ImportManager {
   private callbacks: Array<[string, FileImportCallback]>;
   private cancelList: Array<ImportID>;
   private running: boolean;
-  private importJobs: Array<Promise<void>>;
+  private importJobs: Array<[ImportID, Promise<void>]>;
 
   constructor() {
     this.importData = [];
@@ -91,6 +91,10 @@ class ImportManager {
 
   get isRunning(): boolean {
     return this.running;
+  }
+
+  isImporting(): boolean {
+    return this.importJobs.length + this.importData.length > 0;
   }
 
   async importFile(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath): Promise<void> {
@@ -108,6 +112,9 @@ class ImportManager {
   }
 
   async cancelAll(): Promise<void> {
+    for (const elem of this.importJobs) {
+      await this.cancelImport(elem[0]);
+    }
     for (const elem of this.importData) {
       await this.cancelImport(elem.id);
     }
@@ -212,6 +219,10 @@ class ImportManager {
   }
 
   async stop(): Promise<void> {
+    await this.cancelAll();
+    while (this.importJobs.length > 0) {
+      await wait(100);
+    }
     this.running = false;
   }
 
@@ -264,11 +275,12 @@ class ImportManager {
         if (index !== -1) {
           this.cancelList.splice(index, 1);
           await this.sendState(ImportState.Cancelled, elem as ImportData);
+          continue;
         }
         const job = this.doImport(elem);
-        this.importJobs.push(job);
+        this.importJobs.push([elem.id, job]);
         job.then(async () => {
-          const index = this.importJobs.findIndex((item) => item === job);
+          const index = this.importJobs.findIndex((item) => item[1] === job);
           if (index !== -1) {
             this.importJobs.splice(index, 1);
           }

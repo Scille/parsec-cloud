@@ -68,7 +68,9 @@ async function openPopover(event: Event): Promise<void> {
     if (value.data.option === ProfilePopoverOption.LogOut) {
       const answer = await askQuestion(
         translate('HomePage.topbar.logoutConfirmTitle'),
-        translate('HomePage.topbar.logoutConfirmQuestion'),
+        importManager.isImporting()
+          ? translate('HomePage.topbar.logoutImportsConfirmQuestion')
+          : translate('HomePage.topbar.logoutConfirmQuestion'),
         {
           yesText: translate('HomePage.topbar.logoutYes'),
           noText: translate('HomePage.topbar.logoutNo'),
@@ -76,7 +78,7 @@ async function openPopover(event: Event): Promise<void> {
       );
 
       if (answer === Answer.Yes) {
-        await importManager.cancelAll();
+        await importManager.stop();
         const result = await parsecLogout();
         if (!result.ok) {
           informationManager.present(
