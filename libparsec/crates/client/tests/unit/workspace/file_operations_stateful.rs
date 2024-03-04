@@ -159,6 +159,17 @@ impl StateMachineTest for FileOperationStateMachine {
         state.manifest.assert_integrity();
         // 2. Same size for the manifest and the cursor
         assert_eq!(ref_state.cursor.position(), state.manifest.size);
+        // 3. Remote conversion is OK
+        if state.manifest.is_reshaped() {
+            let remote = state
+                .manifest
+                .to_remote(
+                    DeviceID::default(),
+                    DateTime::from_str("2000-01-01 01:00:00 UTC").unwrap(),
+                )
+                .unwrap();
+            LocalFileManifest::from_remote(remote).assert_integrity();
+        }
         // 3. No corruption or leaks in the storage
         let manifest_ids: HashSet<_> = state
             .manifest
