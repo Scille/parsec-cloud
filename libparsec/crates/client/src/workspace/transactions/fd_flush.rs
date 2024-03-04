@@ -127,13 +127,15 @@ async fn reshape(
     for reshape in prepare_reshape(manifest) {
         // Build the chunk of data resulting of the reshape...
         let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
+        let mut buf_size = 0;
         let mut reshape_ok = true;
+        let start = reshape.destination().start;
         for chunk in reshape.source().iter() {
             let outcome = ops.store.get_chunk_local_only(chunk).await;
             match outcome {
                 Ok(chunk_data) => {
                     chunk
-                        .copy_between_start_and_stop(&chunk_data, &mut buf) // TODO: fix this logic now that chunks have gaps
+                        .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
                         .expect("write on vec cannot fail");
                 }
                 Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
@@ -147,6 +149,9 @@ async fn reshape(
                     return Err(err.context("cannot read chunks").into())
                 }
             }
+        }
+        if buf_size < buf.len() {
+            buf.extend_from_slice(&vec![0; buf.len() - buf_size]);
         }
         if reshape_ok {
             let new_chunk_id = reshape.destination().id;

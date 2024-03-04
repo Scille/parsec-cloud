@@ -66,6 +66,7 @@ pub async fn fd_read(
     }
 
     let (written_size, chunks) = super::prepare_read(&opened_file.manifest, size, offset);
+    let mut buf_size = 0;
     for chunk in chunks {
         let found = opened_file
             .new_chunks
@@ -80,7 +81,7 @@ pub async fn fd_read(
         match found {
             Some(chunk_data) => {
                 chunk
-                    .copy_between_start_and_stop(chunk_data, buf) // TODO: Fix this logic now that chunks have gaps
+                    .copy_between_start_and_stop(chunk_data, offset, buf, &mut buf_size)
                     .expect("prepare_read/buf/size are consistent");
             }
             None => {
@@ -99,11 +100,14 @@ pub async fn fd_read(
                 })?;
 
                 chunk
-                    .copy_between_start_and_stop(&chunk_data, buf)
+                    .copy_between_start_and_stop(&chunk_data, offset, buf, &mut buf_size)
                     .expect("prepare_read/buf/size are consistent");
             }
         }
     }
-
+    if buf_size < written_size as usize {
+        buf.write_all(&vec![0; written_size as usize - buf_size])
+            .expect("write_all should not fail");
+    }
     Ok(written_size)
 }
