@@ -86,6 +86,7 @@
             "myContactDetails": "Mes coordonnées",
             "logoutConfirmTitle": "Déconnexion",
             "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sur(e) de vouloir vous déconnecter ?",
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté",
             "logoutFailed": "Une erreur est survenue lors de la déconnexion."

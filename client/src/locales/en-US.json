@@ -86,6 +86,7 @@
             "myContactDetails": "My contact details",
             "logoutConfirmTitle": "Log out",
             "logoutConfirmQuestion": "Are you sure you want to log out?",
+            "logoutImportsConfirmQuestion": "All imports will be cancelled. Are you sure you want to log out?",
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
             "logoutFailed": "An error occured while logging out."
