@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Download every artifact generated (and uploaded)
-        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe # pin v4.1.2
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # pin v4.1.4
         with:
           path: artifacts
         timeout-minutes: 5
