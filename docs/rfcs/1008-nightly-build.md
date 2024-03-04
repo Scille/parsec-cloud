@@ -98,11 +98,13 @@ A track allow to more precisely specify which version to install with `snap`, wh
 
 - `latest`: We already have this one since it's the default one used by Snapcraft when we don't specify it
 - `v{MAJOR}`: A track per major version (in the case we need to maintained multiple version at the same time)
-- `insider`: A track that contain the nightly build
+- `nightly`: A track that contain the nightly build
 
-  > I've also thought of the following track name instead of `insider` (VS-Code style):
+  > I've also considered the following naming instead of `nightly` (Firefox style):
   > - `canary` (Chrome style)
-  > - `nightly` (Firefox style)
+  > - `insider` (VS-Code style)
+  >
+  > I've made a poll on `2024-03-01` about which naming to use and `nightly` came first.
 
 [track]: https://snapcraft.io/docs/channels#heading--tracks
 
