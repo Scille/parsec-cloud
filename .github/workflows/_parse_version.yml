@@ -1,0 +1,61 @@
+name: Parse Version
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: The version to parse
+    outputs:
+      full:
+        description: The full version
+        value: ${{ jobs.parse.outputs.full }}
+      pep440:
+        description: The PEP 440 version
+        value: ${{ jobs.parse.outputs.pep440 }}
+      major:
+        description: The major version
+        value: ${{ jobs.parse.outputs.major }}
+      minor:
+        description: The minor version
+        value: ${{ jobs.parse.outputs.minor }}
+      patch:
+        description: The patch version
+        value: ${{ jobs.parse.outputs.patch }}
+      pre:
+        description: The pre-release version
+        value: ${{ jobs.parse.outputs.pre }}
+      dev:
+        description: The dev version
+        value: ${{ jobs.parse.outputs.dev }}
+      local:
+        description: The local version
+        value: ${{ jobs.parse.outputs.local }}
+
+jobs:
+  parse:
+    name: Parse Version
+    runs-on: ubuntu-22.04
+    outputs:
+      full: ${{ steps.version.outputs.full }}
+      pep440: ${{ steps.version.outputs.pep440 }}
+      major: ${{ steps.version.outputs.major }}
+      minor: ${{ steps.version.outputs.minor }}
+      patch: ${{ steps.version.outputs.patch }}
+      pre: ${{ steps.version.outputs.prerelease }}
+      dev: ${{ steps.version.outputs.dev }}
+      local: ${{ steps.version.outputs.local }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        timeout-minutes: 5
+
+      - name: Parse Version
+        id: version
+        shell: bash
+        run: >-
+          PYTHONPATH=. python3
+          misc/releaser.py version
+          "${{ inputs.version || '--uniq-dev' }}"
+          | tee -a "$GITHUB_OUTPUT"
+        timeout-minutes: 2

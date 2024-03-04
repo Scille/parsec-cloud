@@ -38,7 +38,13 @@ permissions:
   contents: read
 
 jobs:
+  version:
+    uses: ./.github/workflows/_parse_version.yml
+    with:
+      version: ${{ inputs.version }}
+
   package-wheel:
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -54,8 +60,6 @@ jobs:
             os: windows-2022
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
-    outputs:
-      wheel-version: ${{ steps.version.outputs.full }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
@@ -66,40 +70,8 @@ jobs:
           project-path: ./server
         timeout-minutes: 10
 
-      - name: Get wheel version
-        id: version
-        shell: bash
-        run: |
-          set -eux
-
-          function parse_version {
-            PYTHONPATH=. python3 misc/releaser.py version "$@"
-          }
-
-          if [ -n "${{ inputs.version }}" ]; then
-            parse_version "${{ inputs.version }}" | tee -a $GITHUB_OUTPUT
-          else
-            case "${{ github.event_name }}" in
-              workflow_call)
-                echo "The top workflow should have provided the version to use"
-                exit 2
-                ;;
-              workflow_dispatch)
-                # No version provided, fallback to the version in the repository
-                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
-                ;;
-              pull_request)
-                parse_version --uniq-dev | tee -a $GITHUB_OUTPUT
-                ;;
-              *)
-                echo 'Unsupported event type ${{ github.event_name }}' >&2
-                exit 1
-                ;;
-            esac
-          fi
-
-      - name: Set parsec version ${{ steps.version.outputs.full }}
-        run: python3 misc/version_updater.py --tool parsec --version ${{ steps.version.outputs.full }}
+      - name: Set parsec version ${{ needs.version.outputs.full }}
+        run: python3 misc/version_updater.py --tool parsec --version ${{ needs.version.outputs.full }}
 
       - name: Build wheel
         uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # pin v2.16.5
@@ -109,7 +81,7 @@ jobs:
         timeout-minutes: 50
 
       - name: Set file for wheel version
-        run: echo ${{ steps.version.outputs.full }} > dist/version
+        run: echo ${{ needs.version.outputs.full }} > dist/version
 
       - name: Hack the wheel macos version
         if: startsWith(matrix.os, 'macos-')
