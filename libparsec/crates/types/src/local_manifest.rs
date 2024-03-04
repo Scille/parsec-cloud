@@ -268,7 +268,10 @@ impl LocalFileManifest {
 
     pub fn is_reshaped(&self) -> bool {
         for chunks in self.blocks.iter() {
-            if chunks.len() != 1 || !chunks[0].is_block() {
+            if chunks.is_empty() {
+                continue;
+            }
+            if chunks.len() > 1 || !chunks[0].is_block() {
                 return false;
             }
         }
@@ -278,36 +281,49 @@ impl LocalFileManifest {
     pub fn assert_integrity(&self) {
         let mut current = 0;
         for (i, chunks) in self.blocks.iter().enumerate() {
-            assert_eq!(i as u64 * *self.blocksize, current);
-            assert!(!chunks.is_empty());
+            assert!(current <= i as u64 * *self.blocksize);
             for chunk in chunks {
-                assert_eq!(chunk.start, current);
+                assert!(current <= chunk.start);
                 assert!(chunk.start < chunk.stop.into());
                 assert!(chunk.raw_offset <= chunk.start);
                 assert!(chunk.stop.get() <= chunk.raw_offset + chunk.raw_size.get());
                 current = chunk.stop.into()
             }
         }
-        assert_eq!(current, self.size);
+        if let Some(chunks) = self.blocks.last() {
+            assert!(!chunks.is_empty())
+        }
+        assert!(current <= self.size);
     }
 
     pub fn from_remote(remote: FileManifest) -> Self {
         let base = remote.clone();
-        let blocks = remote
+        let chunks: Vec<Chunk> = remote
             .blocks
             .into_iter()
             .map(Chunk::from_block_access)
-            .map(|b| vec![b])
             .collect();
 
-        Self {
+        let mut blocks = vec![];
+        for chunk in chunks {
+            let block = (chunk.start / *remote.blocksize) as usize;
+            while blocks.len() <= block {
+                blocks.push(vec![]);
+            }
+            blocks[block].push(chunk);
+        }
+
+        let manifest = Self {
             base,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
-        }
+        };
+        // TODO: use proper error handling
+        manifest.assert_integrity();
+        manifest
     }
 
     pub fn to_remote(
@@ -320,6 +336,7 @@ impl LocalFileManifest {
         let blocks = self
             .blocks
             .iter()
+            .filter(|chunks| !chunks.is_empty())
             .map(|chunks| chunks[0].get_block_access())
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| "Need reshape")?

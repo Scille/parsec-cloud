@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 
 use crate::workspace::{WorkspaceOps, WriteMode};
 
-use super::{ReshapeAndFlushError, WriteOperation};
+use super::ReshapeAndFlushError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceFdResizeError {
@@ -64,8 +64,7 @@ pub async fn fd_resize(
     // Actual resize is needed
 
     let manifest: &mut LocalFileManifest = Arc::make_mut(&mut opened_file.manifest);
-    let (write_operations, removed_chunks) =
-        super::file_operations::prepare_resize(manifest, length, ops.device.now());
+    let removed_chunks = super::file_operations::prepare_resize(manifest, length, ops.device.now());
 
     for removed_chunk in removed_chunks {
         let found = opened_file
@@ -80,12 +79,6 @@ pub async fn fd_resize(
                 opened_file.removed_chunks.push(removed_chunk);
             }
         }
-    }
-
-    for WriteOperation { chunk, .. } in write_operations {
-        let chunk_size = (chunk.stop.get() - chunk.start) as usize;
-        let chunk_data = vec![0; chunk_size];
-        opened_file.new_chunks.push((chunk.id, chunk_data));
     }
 
     opened_file.flush_needed = true;
