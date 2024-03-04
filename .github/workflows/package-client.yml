@@ -5,7 +5,17 @@ on:
     paths:
       - .github/workflows/package-client.yml
   workflow_call:
+    inputs:
+      version:
+        description: The version to use
+        type: string
+        required: true
   workflow_dispatch:
+    inputs:
+      version:
+        description: The version to use (if not provided, will generate one from code space version)
+        type: string
+        required: false
 
 # Set `concurrency` to prevent this workflow from being run on code that is not up-to-date on a PR (e.g. when making many push quickly on a PR).
 # This behavior is only intended for a PR and not for merge commits on the main branch. Having the workflow run on each merge commit can be useful to spot regressions missed by previous checks.
@@ -24,7 +34,13 @@ permissions:
   contents: read
 
 jobs:
+  version:
+    uses: ./.github/workflows/_parse_version.yml
+    with:
+      version: ${{ inputs.version }}
+
   webapp:
+    needs: version
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
@@ -35,6 +51,14 @@ jobs:
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
+
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # pin v5.0.0
+        with:
+          python-version-file: server/pyproject.toml
+        timeout-minutes: 2
+
+      - name: Set parsec version ${{ needs.version.outputs.full }}
+        run: python3 misc/version_updater.py --tool parsec --version ${{ needs.version.outputs.full }}
 
       - name: Install dependencies
         run: npm clean-install
@@ -65,6 +89,7 @@ jobs:
           if-no-files-found: error
 
   electron:
+    needs: version
     strategy:
       fail-fast: false
       matrix:
@@ -96,6 +121,19 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
         timeout-minutes: 5
+
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # pin v4.0.2
+        with:
+          node-version: ${{ env.node-version }}
+        timeout-minutes: 2
+
+      - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # pin v5.0.0
+        with:
+          python-version-file: server/pyproject.toml
+        timeout-minutes: 2
+
+      - name: Set parsec version ${{ needs.version.outputs.full }}
+        run: python3 misc/version_updater.py --tool parsec --version ${{ needs.version.outputs.full }}
 
       - name: Install dependencies
         shell: bash
