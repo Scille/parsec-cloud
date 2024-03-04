@@ -10,6 +10,12 @@ on:
         description: The version to use
         type: string
         required: true
+      version_patch_run_id:
+        description: |
+          The run id where the version.patch artifact was uploaded.
+          If not provided, the workflow will generate the patch by itself.
+        type: string
+        required: true
   workflow_dispatch:
     inputs:
       version:
@@ -35,12 +41,15 @@ permissions:
 
 jobs:
   version:
+    if: ${{ inputs.version_patch_run_id == '' }}
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: ${{ inputs.version }}
 
   webapp:
     needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
@@ -57,6 +66,7 @@ jobs:
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
         run: git apply ${{ runner.temp }}/version.patch/version.patch
@@ -91,6 +101,8 @@ jobs:
 
   electron:
     needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     strategy:
       fail-fast: false
       matrix:
@@ -133,6 +145,7 @@ jobs:
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
         run: git apply ${{ runner.temp }}/version.patch/version.patch

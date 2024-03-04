@@ -10,7 +10,7 @@ on:
       version_patch_run_id:
         description: |
           The run id where the version.patch artifact was uploaded.
-          if not provided, the workflow will generate the patch for itself.
+          If not provided, the workflow will generate the patch by itself.
         type: string
         required: true
 
@@ -53,8 +53,8 @@ jobs:
 
   package-wheel:
     needs: version
-    # Always run the job even if `version` job was skipped.
-    if: ${{ always() }}
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     strategy:
       fail-fast: false
       matrix:
