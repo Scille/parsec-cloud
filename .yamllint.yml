@@ -12,15 +12,15 @@ extends: default
 rules:
   braces:
     forbid: non-empty
-    min-spaces-inside: 1
-    max-spaces-inside: 1
+    min-spaces-inside: 0
+    max-spaces-inside: 0
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
 
   brackets:
     forbid: false
-    min-spaces-inside: 1
-    max-spaces-inside: 1
+    min-spaces-inside: 0
+    max-spaces-inside: 0
     min-spaces-inside-empty: 0
     max-spaces-inside-empty: 0
 
@@ -84,5 +84,5 @@ rules:
 
   truthy:
     level: error
-    allowed-values: [ "true", "false" ]
+    allowed-values: ["true", "false"]
     check-keys: false

@@ -62,8 +62,8 @@ fn user_agent_without_trailing_whitespace() {
 
     // It's easy to slip a \n when modifying the `../../../version` file
     p_assert_eq!(CLIENT_USER_AGENT.trim(), CLIENT_USER_AGENT);
-    assert!(!CLIENT_USER_AGENT.contains("\t"), "{:?}", CLIENT_USER_AGENT);
-    assert!(!CLIENT_USER_AGENT.contains("\n"), "{:?}", CLIENT_USER_AGENT);
+    assert!(!CLIENT_USER_AGENT.contains('\t'), "{:?}", CLIENT_USER_AGENT);
+    assert!(!CLIENT_USER_AGENT.contains('\n'), "{:?}", CLIENT_USER_AGENT);
 
     // User-Agent should be something like "Parsec-Client/0.0.0 Linux"
     let parts: Vec<_> = CLIENT_USER_AGENT.split_whitespace().collect();

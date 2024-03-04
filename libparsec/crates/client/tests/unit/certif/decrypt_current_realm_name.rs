@@ -31,7 +31,7 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, &alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
     test_register_send_hook(
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -89,7 +89,7 @@ async fn invalid_keys_bundle(
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
 
-    let rep = rep(&env, realm_id, &alice.user_id());
+    let rep = rep(&env, realm_id, alice.user_id());
     test_register_send_hook(&env.discriminant_dir, {
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             p_assert_eq!(req.key_index, 1);

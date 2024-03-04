@@ -111,12 +111,12 @@ impl CertifOps {
         self.store
             .for_write(move |store| async move {
                 add::add_certificates_batch(
-                    &self,
+                    self,
                     store,
-                    &common_certificates,
-                    &sequester_certificates,
-                    &shamir_recovery_certificates,
-                    &realm_certificates,
+                    common_certificates,
+                    sequester_certificates,
+                    shamir_recovery_certificates,
+                    realm_certificates,
                 )
                 .await
             })
@@ -412,4 +412,4 @@ impl CertifOps {
 #[cfg(test)]
 #[path = "../../tests/unit/certif/mod.rs"]
 #[allow(clippy::unwrap_used)]
-mod certif;
+mod certif_test;

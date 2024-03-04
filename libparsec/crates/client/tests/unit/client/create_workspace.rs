@@ -82,8 +82,7 @@ async fn duplicated_name_is_allowed(
             builder.rename_realm(wksp1_id, common_name.clone());
             wksp1_id
         } else {
-            let wksp1_id = VlobID::default();
-            wksp1_id
+            VlobID::default()
         };
 
         builder.certificates_storage_fetch_certificates("alice@dev1");

@@ -67,7 +67,7 @@ impl ReferenceStateMachine for FileOperationOracleStateMachine {
             Transition::Write { content, offset } => {
                 if !content.is_empty() {
                     state.cursor.seek(SeekFrom::Start(*offset)).unwrap();
-                    state.cursor.write(&content).unwrap();
+                    state.cursor.write_all(content).unwrap();
                 }
             }
             Transition::Resize { length } => {

@@ -126,7 +126,7 @@ fn fs_path_debug() {
 #[test]
 fn fs_path_with_mountpoint() {
     let fs_path = "/foo/bar".parse::<FsPath>().unwrap();
-    let base_path = PathBuf::try_from("/home/bob/parsec").unwrap();
+    let base_path = PathBuf::from("/home/bob/parsec");
     p_assert_eq!(
         fs_path.with_mountpoint(&base_path),
         base_path.join("foo/bar")

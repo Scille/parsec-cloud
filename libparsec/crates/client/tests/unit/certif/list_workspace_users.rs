@@ -96,7 +96,7 @@ async fn empty(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn stopped(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     ops.stop().await.unwrap();
 

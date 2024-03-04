@@ -219,7 +219,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, &alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
     test_register_send_hook(
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
