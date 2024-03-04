@@ -1,9 +1,9 @@
-name: package-ionic-app
+name: Package client
 
 on:
   pull_request:
     paths:
-      - .github/workflows/package-ionic-app.yml
+      - .github/workflows/package-client.yml
   workflow_call:
   workflow_dispatch:
 
@@ -11,7 +11,7 @@ on:
 # This behavior is only intended for a PR and not for merge commits on the main branch. Having the workflow run on each merge commit can be useful to spot regressions missed by previous checks.
 # To distinguish between these cases, we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
 concurrency:
-  group: package-ionic-app-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: package-client-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:

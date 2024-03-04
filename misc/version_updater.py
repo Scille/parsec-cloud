@@ -147,7 +147,7 @@ FILES_WITH_VERSION_INFO: Dict[Path, Dict[Tool, RawRegexes]] = {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
     },
-    ROOT_DIR / ".github/workflows/package-ionic-app.yml": {
+    ROOT_DIR / ".github/workflows/package-client.yml": {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
