@@ -108,11 +108,23 @@ impl Chunk {
     pub fn copy_between_start_and_stop(
         &self,
         chunk_data: &[u8],
+        offset: u64,
         dst: &mut impl std::io::Write,
+        dst_size: &mut usize,
     ) -> std::io::Result<()> {
         let start = (self.start - self.raw_offset) as usize;
         let stop = (self.stop.get() - self.raw_offset) as usize;
-        dst.write_all(&chunk_data[start..stop])
+        let data_slice = &chunk_data[start..stop];
+        let dst_index = (self.start - offset) as usize;
+        // Fill-up with zeroes to reach dst_index
+        if dst_index > *dst_size {
+            dst.write_all(&vec![0; dst_index - *dst_size])?;
+            *dst_size = dst_index;
+        }
+        // Write data and update destination size
+        dst.write_all(data_slice)?;
+        *dst_size += data_slice.len();
+        Ok(())
     }
 
     pub fn from_block_access(block_access: BlockAccess) -> Self {
