@@ -2,16 +2,23 @@
 
 import math
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, override
+from typing import AsyncIterator, assert_never, override
 
 import anyio
 import asyncpg
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from structlog import get_logger
 
-from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import DeviceID, OrganizationID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
+from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql.handler import parse_signal, send_signal
+from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm_queries.get import query_get_realms_for_user
+from parsec.components.postgresql.user import PGUserComponent
+from parsec.components.postgresql.user_queries.get import query_check_user_with_device
+from parsec.components.postgresql.utils import transaction
+from parsec.components.user import CheckUserWithDeviceBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 
@@ -93,36 +100,50 @@ async def event_bus_factory(url: str) -> AsyncIterator[PGEventBus]:
 class PGEventsComponent(BaseEventsComponent):
     def __init__(self, pool: asyncpg.Pool, config: BackendConfig, event_bus: EventBus):
         super().__init__(config, event_bus)
-        self._pool = pool
+        self.pool = pool
+        self._organization: PGOrganizationComponent
+        self._user: PGUserComponent
+
+    def register_components(
+        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
+    ) -> None:
+        self._organization = organization
+        self._user = user
 
     @override
-    async def _get_registration_info_for_user(
-        self, organization_id: OrganizationID, author: UserID
+    @transaction
+    async def _get_registration_info_for_author(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
-        raise NotImplementedError
-        # try:
-        #     org = self._data.organizations[organization_id]
-        # except KeyError:
-        #     return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
-        # if org.is_expired:
-        #     return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
+        match await self._organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+            case unknown:
+                assert_never(unknown)
 
-        # try:
-        #     user = org.users[author]
-        # except KeyError:
-        #     return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-        # if user.is_revoked:
-        #     return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
+        if org.is_expired:
+            return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
 
-        # org_config = EventOrganizationConfig(
-        #     organization_id=org.organization_id,
-        #     user_profile_outsider_allowed=org.user_profile_outsider_allowed,
-        #     active_users_limit=org.active_users_limit,
-        # )
+        match await query_check_user_with_device(conn, organization_id, author):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as profile:
+                pass
+            case unknown:
+                assert_never(unknown)
 
-        # user_realms = set()
-        # for realm in org.realms.values():
-        #     if realm.get_current_role_for(author) is not None:
-        #         user_realms.add(realm.realm_id)
+        org_config = EventOrganizationConfig(
+            organization_id=org.organization_id,
+            user_profile_outsider_allowed=org.user_profile_outsider_allowed,
+            active_users_limit=org.active_users_limit,
+        )
 
-        # return org_config, user.current_profile, user_realms
+        mapping = await query_get_realms_for_user(conn, organization_id, author.user_id)
+        print(org_config, profile, set(mapping.keys()))
+        return org_config, profile, set(mapping.keys())

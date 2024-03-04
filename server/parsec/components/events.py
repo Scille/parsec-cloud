@@ -6,14 +6,14 @@ from collections import deque
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import auto
-from typing import AsyncIterator, Callable, Iterator, Sequence, Type, assert_never
+from typing import AsyncIterator, Callable, Iterator, Sequence, Type, TypeAlias, assert_never
 from unittest.mock import ANY
 from uuid import UUID
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile, VlobID
 from parsec.client_context import AuthenticatedClientContext
 from parsec.config import BackendConfig
 from parsec.events import (
@@ -30,7 +30,7 @@ from parsec.types import BadOutcomeEnum
 PER_CLIENT_MAX_BUFFER_EVENTS = 100
 
 
-type ClientBroadcastableEventStream = MemoryObjectReceiveStream[
+ClientBroadcastableEventStream: TypeAlias = MemoryObjectReceiveStream[
     tuple[ClientBroadcastableEvent, bytes | None] | None
 ]
 
@@ -347,8 +347,8 @@ class BaseEventsComponent:
                     realms_changed[event.realm_id] = True
 
         self._event_bus.connect(_collect_realm_changes)
-        outcome = await self._get_registration_info_for_user(
-            organization_id=client_ctx.organization_id, author=client_ctx.user_id
+        outcome = await self._get_registration_info_for_author(
+            organization_id=client_ctx.organization_id, author=client_ctx.device_id
         )
         match outcome:
             case (initial_organization_config_event, user_profile, realms):
@@ -412,8 +412,8 @@ class BaseEventsComponent:
 
         return initial_organization_config_event, channel_receiver
 
-    async def _get_registration_info_for_user(
-        self, organization_id: OrganizationID, author: UserID
+    async def _get_registration_info_for_author(
+        self, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
         raise NotImplementedError
 
