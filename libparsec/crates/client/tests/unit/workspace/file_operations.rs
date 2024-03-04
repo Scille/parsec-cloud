@@ -82,10 +82,6 @@ impl Storage {
         offset: u64,
         timestamp: DateTime,
     ) {
-        // No-op
-        if content.is_empty() {
-            return;
-        }
         // Write
         let (write_operations, removed_ids) =
             prepare_write(manifest, content.len() as u64, offset, timestamp);
