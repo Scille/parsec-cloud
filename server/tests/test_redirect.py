@@ -18,7 +18,7 @@ async def test_get_redirect(client: httpx.AsyncClient, backend: Backend):
 
     rep = await client.get("http://parsec.invalid/redirect/foo/bar?a=1&b=2")
     assert rep.status_code == 302
-    assert rep.headers["location"] == "parsec://parsec.invalid/foo/bar?a=1&b=2&no_ssl=true"
+    assert rep.headers["location"] == "parsec3://parsec.invalid/foo/bar?a=1&b=2&no_ssl=true"
 
 
 async def test_get_redirect_over_ssl(client: httpx.AsyncClient, backend: Backend):
@@ -26,7 +26,7 @@ async def test_get_redirect_over_ssl(client: httpx.AsyncClient, backend: Backend
 
     rep = await client.get("https://parsec.invalid/redirect/foo/bar?a=1&b=2")
     assert rep.status_code == 302
-    assert rep.headers["location"] == "parsec://parsec.invalid/foo/bar?a=1&b=2"
+    assert rep.headers["location"] == "parsec3://parsec.invalid/foo/bar?a=1&b=2"
 
 
 async def test_get_redirect_no_ssl_param_overwritten(client: httpx.AsyncClient, backend: Backend):
@@ -34,7 +34,7 @@ async def test_get_redirect_no_ssl_param_overwritten(client: httpx.AsyncClient, 
 
     rep = await client.get("http://parsec.invalid/redirect/spam?no_ssl=false&a=1&b=2")
     assert rep.status_code == 302
-    assert rep.headers["location"] == "parsec://parsec.invalid/spam?a=1&b=2&no_ssl=true"
+    assert rep.headers["location"] == "parsec3://parsec.invalid/spam?a=1&b=2&no_ssl=true"
 
 
 async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
@@ -44,7 +44,7 @@ async def test_get_redirect_no_ssl_param_overwritten_with_ssl_enabled(
 
     rep = await client.get("https://parsec.invalid/redirect/spam?a=1&b=2&no_ssl=true")
     assert rep.status_code == 302
-    assert rep.headers["location"] == "parsec://parsec.invalid/spam?a=1&b=2"
+    assert rep.headers["location"] == "parsec3://parsec.invalid/spam?a=1&b=2"
 
 
 @pytest.mark.parametrize("use_ssl", (False, True))

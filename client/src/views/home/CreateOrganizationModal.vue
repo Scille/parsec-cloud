@@ -198,7 +198,7 @@ enum CreateOrganizationStep {
   FinishStep = 7,
 }
 
-const DEFAULT_SAAS_ADDR = 'parsec://saas.parsec.cloud';
+const DEFAULT_SAAS_ADDR = 'parsec3://saas.parsec.cloud';
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const informationManager: InformationManager = inject(InformationKey)!;

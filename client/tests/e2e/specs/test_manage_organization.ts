@@ -64,7 +64,7 @@ describe('Check manage org page', () => {
     cy.get('@items').eq(1).find('ion-chip').contains('Unlimited');
     // Server addr
     cy.get('@items').eq(2).find('ion-label').eq(0).contains('Server address');
-    cy.get('@items').eq(2).find('ion-label').eq(1).contains('parsec://example.com/MyOrg');
+    cy.get('@items').eq(2).find('ion-label').eq(1).contains('parsec3://example.com/MyOrg');
     // Global data
     cy.get('@items').eq(3).find('ion-label').eq(0).contains('Global data');
     cy.get('@items').eq(3).find('ion-label').eq(1).contains('4.09 TB');

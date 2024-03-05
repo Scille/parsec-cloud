@@ -779,7 +779,7 @@ pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) 
     } else {
         // No server, organization ID & Addr are not relevant
         let organization_id = "OfflineOrg".parse().unwrap();
-        let dummy_server_addr = "parsec://noserver.example.com".parse().unwrap();
+        let dummy_server_addr = "parsec3://noserver.example.com".parse().unwrap();
         (TestbedKind::ClientOnly, dummy_server_addr, organization_id)
     };
 

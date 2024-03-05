@@ -54,7 +54,7 @@ def test_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
             f"run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port=0"
-            f" --server-addr=parsec://127.0.0.1:{unused_tcp_port}"
+            f" --server-addr=parsec3://127.0.0.1:{unused_tcp_port}"
             f" --email-host=MOCKED"
             f" --log-level=INFO"
             f" {ssl_conf.backend_opts}"

@@ -665,7 +665,7 @@
         "understand": "J'ai compris !",
         "waitingForHost": "(En attente de l'hôte)",
         "linkFormLabel": "Lien d'invitation",
-        "linkFormPlaceholder": "parsec://exemple.com/Org?...",
+        "linkFormPlaceholder": "parsec3://exemple.com/Org?...",
         "successMessage": "Vous avez rejoint l'organisation avec succès.",
         "stepTitles": {
             "GetHostCode": "Code hôte",
@@ -942,21 +942,21 @@
             "forbiddenCharacters": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles."
         },
         "claimLink": {
-            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
             "missingAction": "Le lien n'inclut pas d'action.",
             "invalidAction": "Le lien contient une action invalide.",
             "missingToken": "Le lien n'inclut pas de jeton.",
             "invalidToken": "Le lien contient un jeton invalide."
         },
         "claimUserLink": {
-            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
             "missingAction": "Le lien n'inclut pas d'action.",
             "invalidAction": "Le lien contient une action invalide.",
             "missingToken": "Le lien n'inclut pas de jeton.",
             "invalidToken": "Le lien contient un jeton invalide."
         },
         "claimDeviceLink": {
-            "invalidProtocol": "Le lien doit commencer par 'parsec://'.",
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
             "missingAction": "Le lien n'inclut pas d'action.",
             "invalidAction": "Le lien contient une action invalide.",
             "missingToken": "Le lien n'inclut pas de jeton.",

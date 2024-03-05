@@ -36,7 +36,7 @@ jobs:
     # https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:2.16.0-a.0-dev-20240228.sha.fd1a4ba
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:2.16.0-a.0-dev-20240305.sha.d132c14
         ports:
           - 6777:6777
     steps:
@@ -141,6 +141,6 @@ jobs:
       - name: E2E tests
         run: npm run test:e2e:headless
         env:
-          TESTBED_SERVER_URL: parsec://localhost:6777?no_ssl=true
+          TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20

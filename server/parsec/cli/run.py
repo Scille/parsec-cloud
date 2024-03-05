@@ -58,9 +58,9 @@ class DevOption(click.Option):
         value, args = super().handle_parse_result(ctx, opts, args)
         if value:
             if "port" in opts:
-                server_addr = "parsec://localhost:" + str(opts["port"])
+                server_addr = "parsec3://localhost:" + str(opts["port"])
             else:
-                server_addr = "parsec://localhost:" + str(DEFAULT_PORT)
+                server_addr = "parsec3://localhost:" + str(DEFAULT_PORT)
             for key, value in (
                 ("debug", True),
                 ("db", "MOCKED"),
@@ -291,7 +291,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
         "Equivalent to `--debug --db=MOCKED"
         " --blockstore=MOCKED --administration-token=s3cr3t"
         " --email-sender=no-reply@parsec.com --email-host=MOCKED"
-        " --server-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)`"
+        " --server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)`"
     ),
 )
 @click.option(

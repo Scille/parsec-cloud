@@ -75,7 +75,7 @@ pub struct Organization {
 }
 
 impl Organization {
-    /// Convert `parsec://example.com:9999/...` -> `parsec://alice_dev1.example.com:9999/...`
+    /// Convert `parsec3://example.com:9999/...` -> `parsec3://alice_dev1.example.com:9999/...`
     /// (useful to filter connections so that some devices end up offline)
     pub fn addr_with_prefixed_host(&self, prefix: &str) -> ParsecOrganizationAddr {
         let mut url = self.addr.to_url();
@@ -89,7 +89,7 @@ impl Organization {
 #[once]
 pub fn coolorg() -> Organization {
     Organization {
-        addr: "parsec://example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss".parse().unwrap(),
+        addr: "parsec3://example.com:9999/CoolOrg?no_ssl=true&rvk=XYUXM4ZM5SGKSTXNZ4FK7VATZUKZGY7A7LOJ42CXFR32DYL5TO6Qssss".parse().unwrap(),
         signing_key: SigningKey::from(hex!("b62e7d2a9ed95187975294a1afb1ba345a79e4beb873389366d6c836d20ec5bc")),
     }
 }

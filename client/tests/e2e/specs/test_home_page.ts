@@ -104,10 +104,10 @@ describe('Check organization list', () => {
     cy.get('@input').find('input').type('http://parsec.cloud/Test?action=claim_user&token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
-    cy.get('@error').contains("Link should start with 'parsec://'");
+    cy.get('@error').contains("Link should start with 'parsec3://'");
 
     cy.get('@input').find('input').clear();
-    cy.get('@input').find('input').type('parsec://parsec.cloud/Test?token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
+    cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
     cy.get('@error').contains("Link doesn't include an action");
@@ -115,19 +115,19 @@ describe('Check organization list', () => {
     cy.get('@input').find('input').clear();
     cy.get('@input')
       .find('input')
-      .type('parsec://parsec.cloud/Test?action=bootstrap_organization&token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
+      .type('parsec3://parsec.cloud/Test?action=bootstrap_organization&token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
     cy.get('@error').contains('Link contains an invalid action');
 
     cy.get('@input').find('input').clear();
-    cy.get('@input').find('input').type('parsec://parsec.cloud/Test?action=claim_user', { delay: 0 });
+    cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?action=claim_user', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
     cy.get('@error').contains("Link doesn't include a token");
 
     cy.get('@input').find('input').clear();
-    cy.get('@input').find('input').type('parsec://parsec.cloud/Test?action=claim_user&token=abcde', { delay: 0 });
+    cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?action=claim_user&token=abcde', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
     cy.get('@error').contains('Link contains an invalid token');
@@ -135,7 +135,7 @@ describe('Check organization list', () => {
     cy.get('@input').find('input').clear();
     cy.get('@input')
       .find('input')
-      .type('parsec://parsec.cloud/Test?action=claim_user&token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
+      .type('parsec3://parsec.cloud/Test?action=claim_user&token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@error').should('not.be.visible');
   });

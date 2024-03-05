@@ -7,7 +7,7 @@ Extract server statistics
 
 In order to extract server statistics, the administrator needs to provide :
 
-- The parsec metadata server location, through a parsec url ``parsec://hostname:port``
+- The parsec metadata server location, through a parsec url ``parsec3://hostname:port``
 - The ``administration_token`` configured in the parsec metadata server
 - The extraction date, ignore everything after the date
 - The output filename
@@ -15,7 +15,7 @@ In order to extract server statistics, the administrator needs to provide :
 
 .. code-block:: shell
 
-    parsec.cli core stats_server --addr=parsec://example.com --administration-token=s3cr3t --at 2023-05-13 --output 202001-my_server_stats.csv --format=csv
+    parsec.cli core stats_server --addr=parsec3://example.com --administration-token=s3cr3t --at 2023-05-13 --output 202001-my_server_stats.csv --format=csv
 
 Information available in the extraction are :
 

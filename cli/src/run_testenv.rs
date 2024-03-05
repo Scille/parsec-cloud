@@ -17,6 +17,7 @@ use libparsec::{
     DeviceAccessStrategy, DeviceCertificate, DeviceLabel, DeviceName, HumanHandle, LocalDevice,
     MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr, ProxyConfig,
     SigningKey, UserCertificate, UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    PARSEC_SCHEME,
 };
 
 use crate::{
@@ -497,11 +498,11 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
 
 pub fn backend_addr_from_http_url(url: &str) -> ParsecAddr {
     let url = if url.starts_with("http://") {
-        url.replacen("http", "parsec", 1) + "?no_ssl=true"
+        url.replacen("http", PARSEC_SCHEME, 1) + "?no_ssl=true"
     } else if url.starts_with("https://") {
-        url.replacen("https", "parsec", 1)
-    } else if !url.starts_with("parsec://") {
-        format!("parsec://{url}")
+        url.replacen("https", PARSEC_SCHEME, 1)
+    } else if !url.starts_with("parsec3://") {
+        format!("{PARSEC_SCHEME}://{url}")
     } else {
         url.to_string()
     };

@@ -16,7 +16,7 @@ async fn same_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
     let device = LocalDevice::generate_new_device(
-        ParsecOrganizationAddr::from_any("parsec://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss").unwrap(),
+        ParsecOrganizationAddr::from_any("parsec3://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss").unwrap(),
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
@@ -60,7 +60,7 @@ async fn different_key_file(tmp_path: TmpPath) {
         password: "P@ssw0rd.".to_owned().into(),
     };
     let device = LocalDevice::generate_new_device(
-        ParsecOrganizationAddr::from_any("parsec://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss").unwrap(),
+        ParsecOrganizationAddr::from_any("parsec3://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss").unwrap(),
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),

@@ -160,11 +160,11 @@ poetry run pytest tests
 
 In addition, the following options are available:
 
-| Option           | Description                                                                                               |
-| ---------------- | --------------------------------------------------------------------------------------------------------- |
-| ``--runslow``    | Include slow tests                                                                                        |
-| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken**  |
-| ``-n 4``         | Run tests in parallel (here `4` jobs)                                                                     |
+| Option           | Description                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------- |
+| ``--runslow``    | Include slow tests                                                                                       |
+| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken** |
+| ``-n 4``         | Run tests in parallel (here `4` jobs)                                                                    |
 
 Note you can mix&match the flags, e.g.
 
@@ -294,7 +294,7 @@ that will provide some mocked data.
    [..]
    2023-04-18T12:16:38.649668Z [info     ] Running on http://127.0.0.1:6770 (CTRL + C to quit)
    All set ! Don't forget to export `TESTBED_SERVER_URL` environ variable:
-   export TESTBED_SERVER_URL='parsec://127.0.0.1:6770?no_ssl=true'
+   export TESTBED_SERVER_URL='parsec3://127.0.0.1:6770?no_ssl=true'
    ```
 
    > Note the last 2 line `All set ...` and `export ...`

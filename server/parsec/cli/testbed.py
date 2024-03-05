@@ -215,7 +215,7 @@ async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[Test
 @click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
-    default="parsec://saas.parsec.invalid",
+    default="parsec3://saas.parsec.invalid",
     show_default=True,
     metavar="URL",
     type=ParsecAddr.from_url,
@@ -264,7 +264,7 @@ def testbed_cmd(
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
                 click.secho(
-                    f"export TESTBED_SERVER_URL='parsec://127.0.0.1:{port}?no_ssl=true'",
+                    f"export TESTBED_SERVER_URL='parsec3://127.0.0.1:{port}?no_ssl=true'",
                     fg="magenta",
                 )
 

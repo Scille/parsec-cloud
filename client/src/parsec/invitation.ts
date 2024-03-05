@@ -28,7 +28,7 @@ export async function inviteUser(email: string): Promise<Result<NewInvitationInf
       value: {
         token: '12346565645645654645645645645645',
         emailSentStatus: InvitationEmailSentStatus.Success,
-        addr: 'parsec://parsec.example.com/Org?action=claimer_user&token=12346565645645654645645645645645',
+        addr: 'parsec3://parsec.example.com/Org?action=claimer_user&token=12346565645645654645645645645645',
       },
     };
   }
@@ -73,7 +73,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
       value: [
         {
           tag: InviteListItemTag.User,
-          addr: 'parsec://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
+          addr: 'parsec3://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645',
           token: '12346565645645654645645645645645',
           createdOn: DateTime.now(),
           claimerEmail: 'shadowheart@swordcoast.faerun',
@@ -81,7 +81,7 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
         },
         {
           tag: InviteListItemTag.User,
-          addr: 'parsec://parsec.example.com/MyOrg?action=claim_user&token=32346565645645654645645645645645',
+          addr: 'parsec3://parsec.example.com/MyOrg?action=claim_user&token=32346565645645654645645645645645',
           token: '32346565645645654645645645645645',
           createdOn: DateTime.now(),
           claimerEmail: 'gale@waterdeep.faerun',

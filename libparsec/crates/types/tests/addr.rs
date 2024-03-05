@@ -93,7 +93,7 @@ struct BackendAddrTestbed {}
 impl Testbed for BackendAddrTestbed {
     impl_testbed_common!(ParsecAddr);
     fn url(&self) -> String {
-        format!("parsec://{}", DOMAIN)
+        format!("{PARSEC_SCHEME}://{DOMAIN}")
     }
 }
 
@@ -102,7 +102,7 @@ impl Testbed for BackendOrganizationAddrTestbed {
     impl_testbed_common!(ParsecOrganizationAddr);
     impl_testbed_with_org!(ParsecOrganizationAddr);
     fn url(&self) -> String {
-        format!("parsec://{}/{}?rvk={}", DOMAIN, ORG, RVK)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?rvk={RVK}")
     }
 }
 
@@ -111,10 +111,7 @@ impl Testbed for BackendOrganizationBootstrapAddrTestbed {
     impl_testbed_common!(ParsecOrganizationBootstrapAddr);
     impl_testbed_with_org!(ParsecOrganizationBootstrapAddr);
     fn url(&self) -> String {
-        format!(
-            "parsec://{}/{}?action=bootstrap_organization&token={}",
-            DOMAIN, ORG, TOKEN
-        )
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=bootstrap_organization&token={TOKEN}",)
     }
 }
 
@@ -124,8 +121,7 @@ impl Testbed for BackendOrganizationFileLinkAddrTestbed {
     impl_testbed_with_org!(ParsecOrganizationFileLinkAddr);
     fn url(&self) -> String {
         format!(
-            "parsec://{}/{}?action=file_link&workspace_id={}&path={}",
-            DOMAIN, ORG, WORKSPACE_ID, ENCRYPTED_PATH
+            "{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={ENCRYPTED_PATH}",
         )
     }
 }
@@ -135,10 +131,7 @@ impl Testbed for BackendInvitationAddrTestbed {
     impl_testbed_common!(ParsecInvitationAddr);
     impl_testbed_with_org!(ParsecInvitationAddr);
     fn url(&self) -> String {
-        format!(
-            "parsec://{}/{}?action={}&token={}",
-            DOMAIN, ORG, INVITATION_TYPE, TOKEN
-        )
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action={INVITATION_TYPE}&token={TOKEN}",)
     }
 }
 
@@ -174,40 +167,44 @@ fn good_addr(testbed: &dyn Testbed) {
 
 #[rstest(value, path, expected)]
 #[case::absolute_path(
-    "parsec://example.com",
+    "parsec3://example.com",
     Some("/foo/bar/"),
     "https://example.com/foo/bar/"
 )]
-#[case::relative_path("parsec://example.com", Some("foo/bar"), "https://example.com/foo/bar")]
-#[case::root_path("parsec://example.com", Some("/"), "https://example.com/")]
-#[case::empty_path("parsec://example.com", Some(""), "https://example.com/")]
-#[case::no_path("parsec://example.com", None, "https://example.com/")]
+#[case::relative_path(
+    "parsec3://example.com",
+    Some("foo/bar"),
+    "https://example.com/foo/bar"
+)]
+#[case::root_path("parsec3://example.com", Some("/"), "https://example.com/")]
+#[case::empty_path("parsec3://example.com", Some(""), "https://example.com/")]
+#[case::no_path("parsec3://example.com", None, "https://example.com/")]
 #[case::ip_as_domain(
-    "parsec://192.168.1.1:4242",
+    "parsec3://192.168.1.1:4242",
     Some("foo"),
     "https://192.168.1.1:4242/foo"
 )]
-#[case::no_ssl("parsec://example.com?no_ssl=true", None, "http://example.com/")]
-#[case::no_ssl_false("parsec://example.com:443?no_ssl=false", None, "https://example.com/")]
+#[case::no_ssl("parsec3://example.com?no_ssl=true", None, "http://example.com/")]
+#[case::no_ssl_false("parsec3://example.com:443?no_ssl=false", None, "https://example.com/")]
 #[case::no_ssl_with_port(
-    "parsec://example.com:4242?no_ssl=true",
+    "parsec3://example.com:4242?no_ssl=true",
     None,
     "http://example.com:4242/"
 )]
 #[case::no_ssl_with_default_port(
-    "parsec://example.com:80?no_ssl=true",
+    "parsec3://example.com:80?no_ssl=true",
     None,
     "http://example.com/"
 )]
-#[case::default_port("parsec://example.com:443", None, "https://example.com/")]
-#[case::non_default_port("parsec://example.com:80", None, "https://example.com:80/")]
+#[case::default_port("parsec3://example.com:443", None, "https://example.com/")]
+#[case::non_default_port("parsec3://example.com:80", None, "https://example.com:80/")]
 #[case::unicode(
-    "parsec://example.com",
+    "parsec3://example.com",
     Some("你好"),
     "https://example.com/%E4%BD%A0%E5%A5%BD"
 )]
 #[case::unicode_with_space(
-    "parsec://example.com",
+    "parsec3://example.com",
     Some("/El Niño/"),
     "https://example.com/El%20Ni%C3%B1o/"
 )]
@@ -239,8 +236,8 @@ fn addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domai
     let (url, expected_error) = if bad_domain.is_empty() {
         // `http:///foo` is a valid url, so we also have to remove the path
         let url = match testbed.url().split('?').nth(1) {
-            Some(extra) => format!("parsec://?{}", extra),
-            None => "parsec://".to_string(),
+            Some(extra) => format!("parsec3://?{}", extra),
+            None => "parsec3://".to_string(),
         };
         let expected_error = AddrError::InvalidUrl(url.to_string(), url::ParseError::EmptyHost);
         (url, expected_error)
@@ -523,7 +520,7 @@ fn invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme:
 
     let expected_redirection_url = testbed
         .url()
-        .replacen("parsec", redirection_scheme, 1)
+        .replacen(PARSEC_SCHEME, redirection_scheme, 1)
         .replace(ORG, &format!("redirect/{}", ORG));
     p_assert_eq!(redirection_url, expected_redirection_url);
 
@@ -547,7 +544,7 @@ fn addr_to_redirection(testbed: &dyn Testbed, #[values("http", "https")] redirec
     let redirection_url = testbed.to_redirection_url(&url);
     let expected_redirection_url = testbed
         .url()
-        .replacen("parsec", redirection_scheme, 1)
+        .replacen(PARSEC_SCHEME, redirection_scheme, 1)
         .replace(DOMAIN, &format!("{}/redirect", DOMAIN));
     p_assert_eq!(redirection_url, expected_redirection_url);
 
@@ -614,30 +611,30 @@ macro_rules! test_redirection {
 fn backend_addr_redirection() {
     test_redirection!(
         ParsecAddr,
-        "parsec://example.com",
+        "parsec3://example.com",
         "https://example.com/redirect"
     );
     test_redirection!(
         ParsecAddr,
-        "parsec://example.com?no_ssl=false",
-        "parsec://example.com",
+        "parsec3://example.com?no_ssl=false",
+        "parsec3://example.com",
         "https://example.com/redirect"
     );
     test_redirection!(
         ParsecAddr,
-        "parsec://example.com?no_ssl=true",
+        "parsec3://example.com?no_ssl=true",
         "http://example.com/redirect"
     );
 
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec3://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
         "https://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
     );
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec://parsec.example.com/my_org?action=file_link&no_ssl=true&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
-        "parsec://parsec.example.com/my_org?no_ssl=true&action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec3://parsec.example.com/my_org?action=file_link&no_ssl=true&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec3://parsec.example.com/my_org?no_ssl=true&action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
         "http://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
     );
 }
@@ -655,13 +652,13 @@ fn faulty_addr_redirection(#[case] raw_url: &str) {
 }
 
 #[rstest]
-#[case("parsec://foo", 443, true)]
-#[case("parsec://foo?no_ssl=false", 443, true)]
-#[case("parsec://foo?no_ssl=true", 80, false)]
-#[case("parsec://foo:42", 42, true)]
-#[case("parsec://foo:42?dummy=", 42, true)]
-#[case("parsec://foo:42?no_ssl=true", 42, false)]
-#[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
+#[case("parsec3://foo", 443, true)]
+#[case("parsec3://foo?no_ssl=false", 443, true)]
+#[case("parsec3://foo?no_ssl=true", 80, false)]
+#[case("parsec3://foo:42", 42, true)]
+#[case("parsec3://foo:42?dummy=", 42, true)]
+#[case("parsec3://foo:42?no_ssl=true", 42, false)]
+#[case("parsec3://foo:42?no_ssl=false&dummy=foo", 42, true)]
 fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
     let addr = ParsecAddr::from_str(url).unwrap();
     p_assert_eq!(addr.hostname(), "foo");
@@ -672,10 +669,10 @@ fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool
 #[rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { got: "xx".to_string(), expected: "parsec" })]
-#[case::path_not_allowed("parsec://foo:42/dummy", AddrError::ShouldNotHaveAPath("https://foo:42/dummy".parse().unwrap()))]
+#[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { got: "xx".to_string(), expected: PARSEC_SCHEME })]
+#[case::path_not_allowed("parsec3://foo:42/dummy", AddrError::ShouldNotHaveAPath("https://foo:42/dummy".parse().unwrap()))]
 #[case::bad_parsing_in_valid_param(
-    "parsec://foo:42?no_ssl",
+    "parsec3://foo:42?no_ssl",
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "".to_string(),
@@ -683,7 +680,7 @@ fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool
     }
 )]
 #[case::missing_value_for_param(
-    "parsec://foo:42?no_ssl=",
+    "parsec3://foo:42?no_ssl=",
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "".to_string(),
@@ -691,7 +688,7 @@ fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool
     }
 )]
 #[case::bad_value_for_param(
-    "parsec://foo:42?no_ssl=nop",
+    "parsec3://foo:42?no_ssl=nop",
     AddrError::InvalidParamValue {
          param: "no_ssl",
          value: "nop".to_string(),
@@ -703,14 +700,14 @@ fn backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
 }
 
 #[rstest]
-#[case("parsec://foo", 443, true)]
-#[case("parsec://foo?no_ssl=false", 443, true)]
-#[case("parsec://foo?no_ssl=true", 80, false)]
-#[case("parsec://foo:42", 42, true)]
-#[case("parsec://foo:42?dummy=", 42, true)]
-#[case("parsec://foo:42?no_ssl=true", 42, false)]
-#[case("parsec://foo:42?no_ssl=false", 42, true)]
-#[case("parsec://foo:42?no_ssl=false&dummy=foo", 42, true)]
+#[case("parsec3://foo", 443, true)]
+#[case("parsec3://foo?no_ssl=false", 443, true)]
+#[case("parsec3://foo?no_ssl=true", 80, false)]
+#[case("parsec3://foo:42", 42, true)]
+#[case("parsec3://foo:42?dummy=", 42, true)]
+#[case("parsec3://foo:42?no_ssl=true", 42, false)]
+#[case("parsec3://foo:42?no_ssl=false", 42, true)]
+#[case("parsec3://foo:42?no_ssl=false&dummy=foo", 42, true)]
 fn backend_organization_addr_good(
     #[case] base_url: &str,
     #[case] port: u16,
@@ -734,23 +731,23 @@ fn backend_organization_addr_good(
 #[rstest]
 // #[case::empty("", "Invalid URL")]
 // #[case::invalid_url("foo", "Invalid URL")]
-// #[case::missing_mandatory_rvk("parsec://foo:42/org", "Missing mandatory `rvk` param")]
-// #[case::missing_value_for_param("parsec://foo:42/org?rvk=", "Invalid `rvk` param value")]
-// #[case::bad_value_for_param("parsec://foo:42/org?rvk=nop", "Invalid `rvk` param value")]
+// #[case::missing_mandatory_rvk("parsec3://foo:42/org", "Missing mandatory `rvk` param")]
+// #[case::missing_value_for_param("parsec3://foo:42/org?rvk=", "Invalid `rvk` param value")]
+// #[case::bad_value_for_param("parsec3://foo:42/org?rvk=nop", "Invalid `rvk` param value")]
 #[case::missing_org_name(
-    "parsec://foo:42?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "parsec3://foo:42?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec://foo:42/?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "parsec3://foo:42/?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec://foo:42/bad/org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "parsec3://foo:42/bad/org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec://foo:42/~org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    "parsec3://foo:42/~org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
@@ -758,14 +755,14 @@ fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError
 }
 
 #[rstest]
-#[case("parsec://foo", 443, true)]
-#[case("parsec://foo?no_ssl=false", 443, true)]
-#[case("parsec://foo?no_ssl=true", 80, false)]
-#[case("parsec://foo:42", 42, true)]
-#[case("parsec://foo:42?dummy=foo", 42, true)]
-#[case("parsec://foo:42?no_ssl=true", 42, false)]
-#[case("parsec://foo:42?no_ssl=true&dummy=", 42, false)]
-#[case("parsec://foo:42?no_ssl=false", 42, true)]
+#[case("parsec3://foo", 443, true)]
+#[case("parsec3://foo?no_ssl=false", 443, true)]
+#[case("parsec3://foo?no_ssl=true", 80, false)]
+#[case("parsec3://foo:42", 42, true)]
+#[case("parsec3://foo:42?dummy=foo", 42, true)]
+#[case("parsec3://foo:42?no_ssl=true", 42, false)]
+#[case("parsec3://foo:42?no_ssl=true&dummy=", 42, false)]
+#[case("parsec3://foo:42?no_ssl=false", 42, true)]
 fn backend_organization_bootstrap_addr_good(
     #[case] base_url: &str,
     #[case] port: u16,
@@ -797,9 +794,9 @@ fn backend_organization_bootstrap_addr_good(
 #[rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::missing_action("parsec://foo:42/org?token=123", AddrError::MissingParam("action"))]
+#[case::missing_action("parsec3://foo:42/org?token=123", AddrError::MissingParam("action"))]
 #[case::bad_action(
-    "parsec://foo:42/org?action=dummy&token=123",
+    "parsec3://foo:42/org?action=dummy&token=123",
     AddrError::InvalidParamValue {
         param: "action",
         value: "dummy".to_string(),
@@ -807,23 +804,23 @@ fn backend_organization_bootstrap_addr_good(
     }
 )]
 #[case::org_name(
-    "parsec://foo:42?action=bootstrap_organization&token=123",
+    "parsec3://foo:42?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec://foo:42?action=bootstrap_organization&token=123",
+    "parsec3://foo:42?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec://foo:42/?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec://foo:42/bad/org?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/bad/org?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec://foo:42/~org?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/~org?action=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
