@@ -72,6 +72,7 @@ class CreateOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[Unset] = Unset
+    minimum_archiving_period: int | Literal[Unset] = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -106,6 +107,7 @@ async def administration_create_organizations(
         id=body.organization_id,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         active_users_limit=body.active_users_limit,
+        minimum_archiving_period=body.minimum_archiving_period,
     )
     match outcome:
         case BootstrapToken() as bootstrap_token:

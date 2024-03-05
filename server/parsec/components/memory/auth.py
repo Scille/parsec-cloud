@@ -32,6 +32,7 @@ class MemoryAuthComponent(BaseAuthComponent):
                     bootstrap_token=None,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     active_users_limit=self._config.organization_initial_active_users_limit,
+                    minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
                     created_on=now,
                 )
                 self._data.organizations[organization_id] = org
