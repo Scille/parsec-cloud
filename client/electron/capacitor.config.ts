@@ -19,6 +19,8 @@ const config: CapacitorElectronConfig = {
   electron: {
     trayIconAndMenuEnabled: true,
     splashScreenEnabled: true,
+    deepLinkingEnabled: true,
+    deepLinkingCustomProtocol: 'parsec3',
   },
 };
 
