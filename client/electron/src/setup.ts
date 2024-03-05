@@ -283,7 +283,7 @@ export class ElectronCapacitorApp {
         if (process.argv.length > 0) {
           const lastArg = process.argv.at(-1);
           // We're only interested in potential Parsec links
-          if (lastArg.startsWith('parsec://')) {
+          if (lastArg.startsWith('parsec3://')) {
             this.MainWindow.webContents.send('open-link', lastArg);
           }
         }

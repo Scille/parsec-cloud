@@ -35,7 +35,7 @@ describe('Greet a new device', () => {
         cy.window().then((win) => {
           win.navigator.clipboard.readText().then((text) => {
             // cspell:disable-next-line
-            expect(text).to.eq('parsec://example.parsec.cloud/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529');
+            expect(text).to.eq('parsec3://example.parsec.cloud/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529');
           });
         });
       });

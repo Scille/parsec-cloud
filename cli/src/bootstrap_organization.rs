@@ -13,7 +13,7 @@ use crate::utils::*;
 #[derive(Args)]
 pub struct BootstrapOrganization {
     /// Bootstrap address
-    /// (e.g: parsec://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
+    /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
     #[arg(short, long)]
     addr: ParsecOrganizationBootstrapAddr,
     /// Device label

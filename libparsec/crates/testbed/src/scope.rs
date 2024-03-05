@@ -85,7 +85,7 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
     // TESTBED_SERVER should have 3 possible values:
     // - not set, `AUTOSTART`, `1` or just defined to empty: auto start the server
     // - `SKIP`, `0` if so the test is skipped
-    // - `parsec://<domain>:<port>[?no_ssl=true]`,
+    // - `parsec3://<domain>:<port>[?no_ssl=true]`,
     //   `<domain>:<port>`,
     //   `http://<domain>:<port>` or
     //   `https://<domain>:<port>` consider the server is already started
@@ -124,11 +124,11 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
 
         ServerConfig::Custom { url } => {
             let url = if url.starts_with("http://") {
-                url.replacen("http", "parsec", 1) + "?no_ssl=true"
+                url.replacen("http", PARSEC_SCHEME, 1) + "?no_ssl=true"
             } else if url.starts_with("https://") {
-                url.replacen("https", "parsec", 1)
-            } else if !url.starts_with("parsec://") {
-                format!("parsec://{url}")
+                url.replacen("https", PARSEC_SCHEME, 1)
+            } else if !url.starts_with("parsec3://") {
+                format!("parsec3://{url}")
             } else {
                 url
             };

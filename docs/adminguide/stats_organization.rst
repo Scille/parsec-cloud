@@ -7,13 +7,13 @@ Extract organization statistics
 
 In order to extract organization statistics, the administrator needs to provide :
 
-- The parsec metadata server location, through a parsec url ``parsec://hostname:port``
+- The parsec metadata server location, through a parsec url ``parsec3://hostname:port``
 - The ``administration_token`` configured in the parsec metadata server
 - The organization name
 
 .. code-block:: shell
 
-    $ parsec.cli core stats_organization --addr=parsec://example.com --administration-token=s3cr3t TestOrganization
+    $ parsec.cli core stats_organization --addr=parsec3://example.com --administration-token=s3cr3t TestOrganization
 
     active_users: 31
     data_size: 130464340

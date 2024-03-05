@@ -122,7 +122,7 @@ export const claimLinkValidator: IValidator = async function (value: string) {
     }
   }
   let reason = '';
-  if (!value.startsWith('parsec://')) {
+  if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimLink.invalidProtocol';
   } else if (!value.includes('action=')) {
     reason = 'validators.claimLink.missingAction';
@@ -158,7 +158,7 @@ export const claimUserLinkValidator: IValidator = async function (value: string)
     return result.value.tag === ParsedParsecAddrTag.InvitationUser ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   let reason = '';
-  if (!value.startsWith('parsec://')) {
+  if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimUserLink.invalidProtocol';
   } else if (!value.includes('action=')) {
     reason = 'validators.claimUserLink.missingAction';
@@ -182,7 +182,7 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
     return result.value.tag === ParsedParsecAddrTag.InvitationDevice ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   let reason = '';
-  if (!value.startsWith('parsec://')) {
+  if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimDeviceLink.invalidProtocol';
   } else if (!value.includes('action=')) {
     reason = 'validators.claimDeviceLink.missingAction';

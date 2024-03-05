@@ -128,7 +128,7 @@ describe('Check workspaces page', () => {
         const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
         expect(text).to.eq(
           // cspell:disable-next-line
-          `parsec://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
+          `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
         );
       });
     });

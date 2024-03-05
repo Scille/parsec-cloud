@@ -32,10 +32,10 @@ msgstr ""
 
 #: ../../adminguide/stats_organization.rst:10
 msgid ""
-"The parsec metadata server location, through a parsec url ``parsec://"
+"The parsec metadata server location, through a parsec url ``parsec3://"
 "hostname:port``"
 msgstr ""
-"La localisation du serveur de métadonnées, par une url Parsec``parsec://"
+"La localisation du serveur de métadonnées, par une url Parsec``parsec3://"
 "hostname:port``"
 
 #: ../../adminguide/stats_organization.rst:11

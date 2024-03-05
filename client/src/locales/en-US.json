@@ -665,7 +665,7 @@
         "understand": "I understand!",
         "waitingForHost": "(Waiting for the host)",
         "linkFormLabel": "Invitation link",
-        "linkFormPlaceholder": "parsec://example.com/Org?...",
+        "linkFormPlaceholder": "parsec3://example.com/Org?...",
         "successMessage": "You successfully joined the organization.",
         "stepTitles": {
             "GetHostCode": "Host code",
@@ -942,21 +942,21 @@
             "forbiddenCharacters": "Only letters, digits, underscores and hyphens. No spaces."
         },
         "claimLink": {
-            "invalidProtocol": "Link should start with 'parsec://'.",
+            "invalidProtocol": "Link should start with 'parsec3://'.",
             "missingAction": "Link doesn't include an action.",
             "invalidAction": "Link contains an invalid action.",
             "missingToken": "Link doesn't include a token.",
             "invalidToken": "Link contains an invalid token."
         },
         "claimUserLink": {
-            "invalidProtocol": "Link should start with 'parsec://'.",
+            "invalidProtocol": "Link should start with 'parsec3://'.",
             "missingAction": "Link doesn't include an action.",
             "invalidAction": "Link contains an invalid action.",
             "missingToken": "Link doesn't include a token.",
             "invalidToken": "Link contains an invalid token."
         },
         "claimDeviceLink": {
-            "invalidProtocol": "Link should start with 'parsec://'.",
+            "invalidProtocol": "Link should start with 'parsec3://'.",
             "missingAction": "Link doesn't include an action.",
             "invalidAction": "Link contains an invalid action.",
             "missingToken": "Link doesn't include a token.",

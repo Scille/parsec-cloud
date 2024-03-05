@@ -87,7 +87,7 @@ describe('Create a new organization', () => {
     cy.get('.org-server').find('ion-input').should('be.visible');
 
     // Type 'parsec' as server addr, it's invalid
-    cy.get('.org-server').find('ion-input').find('input').type('parsec', { delay: 0 });
+    cy.get('.org-server').find('ion-input').find('input').type('parsec3', { delay: 0 });
     cy.get('#next-button').should('have.class', 'button-disabled');
     // Adds the last part of the server addr
     cy.get('.org-server').find('ion-input').find('input').type('://localhost?no_ssl=true', { delay: 0 });
@@ -127,7 +127,7 @@ describe('Create a new organization', () => {
     cy.get('@summaryItems').eq(0).find('.summary-item__text').contains('MyOrg');
     cy.get('@summaryItems').eq(1).find('.summary-item__text').contains('Banjo');
     cy.get('@summaryItems').eq(2).find('.summary-item__text').contains('banjo@rare.com');
-    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('parsec://localhost?no_ssl=true');
+    cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('parsec3://localhost?no_ssl=true');
     cy.get('#next-button').contains('Create organization').click();
 
     // Sixth page, spinner, X button should be hidden

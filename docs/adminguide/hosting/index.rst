@@ -356,7 +356,7 @@ Create the first organization
   set -a
   source parsec-admin-token.env
   export SSL_CAFILE=$PWD/custom-ca.crt
-  parsec.cli core create_organization --addr parsec://127.0.0.1:6777 <orgname>
+  parsec.cli core create_organization --addr parsec3://127.0.0.1:6777 <orgname>
 
 .. note::
 

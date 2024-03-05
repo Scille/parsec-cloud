@@ -8,7 +8,7 @@ use libparsec::{DateTime, ParsecAddr};
 
 #[derive(Args)]
 pub struct StatsServer {
-    /// Server address (e.g: parsec://127.0.0.1:6770?no_ssl=true)
+    /// Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)
     #[arg(short, long)]
     addr: ParsecAddr,
     /// Administration token

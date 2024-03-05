@@ -320,5 +320,5 @@ Equivalent to:
 ```txt
 --debug --db=MOCKED --blockstore=MOCKED --administration-token=s3cr3t
 --email-sender=no-reply@parsec.com --email-host=MOCKED
---server-addr=parsec://localhost:<port>(?no_ssl=False if ssl is not set)
+--server-addr=parsec3://localhost:<port>(?no_ssl=False if ssl is not set)
 ```

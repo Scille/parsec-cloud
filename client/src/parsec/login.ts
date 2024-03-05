@@ -122,7 +122,7 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
     return {
       ok: true,
       value: {
-        organizationAddr: 'parsec://example.com/MyOrg',
+        organizationAddr: 'parsec3://example.com/MyOrg',
         organizationId: 'MyOrg',
         deviceId: 'device1',
         deviceLabel: 'My First Device',

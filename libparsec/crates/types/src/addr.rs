@@ -13,14 +13,14 @@ use libparsec_crypto::VerifyKey;
 
 use crate::{BootstrapToken, InvitationToken, InvitationType, OrganizationID, VlobID};
 
-const PARSEC_SCHEME: &str = "parsec";
+pub const PARSEC_SCHEME: &str = "parsec3";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
 /// The issue is we want our custom parsec scheme to work in a similar fashion, but
-/// we cannot just tell Url "apply to parsec:// whatever rules you use for http://".
+/// we cannot just tell Url "apply to parsec3:// whatever rules you use for http://".
 /// So instead we have to rely on a hack and manually replace our scheme by http before
 /// handing it to Url :'(
 /// see. https://github.com/servo/rust-url/issues/763
@@ -63,7 +63,7 @@ impl FromStr for ParsecUrlAsHTTPScheme {
     type Err = AddrError;
 
     fn from_str(url: &str) -> Result<Self, Self::Err> {
-        // 1) Validate the url with it parsec:// scheme
+        // 1) Validate the url with it parsec3:// scheme
 
         let parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
 
@@ -91,15 +91,19 @@ impl FromStr for ParsecUrlAsHTTPScheme {
 
         // 2) Convert the url into a http/https scheme
 
-        if parsed.scheme() != PARSEC_SCHEME {
-            return Err(AddrError::InvalidUrlScheme {
-                got: parsed.scheme().to_string(),
-                expected: PARSEC_SCHEME,
-            });
-        }
         // http vs https is important as it changes the default port for parsing !
         let http_scheme = if use_ssl { "https" } else { "http" };
-        let url_as_http = url.replacen(PARSEC_SCHEME, http_scheme, 1);
+        let url_as_http = match parsed.scheme() {
+            // Support old parsec scheme
+            "parsec" => url.replacen("parsec", http_scheme, 1),
+            PARSEC_SCHEME => url.replacen(PARSEC_SCHEME, http_scheme, 1),
+            scheme => {
+                return Err(AddrError::InvalidUrlScheme {
+                    got: scheme.to_string(),
+                    expected: PARSEC_SCHEME,
+                });
+            }
+        };
 
         // 3) Continue parsing with the http/https url
 
@@ -130,7 +134,7 @@ macro_rules! impl_common_stuff {
     };
     ($name:ty, _internal_) => {
         impl $name {
-            /// Returns a `parsec://` url
+            /// Returns a `parsec3://` url
             pub fn to_url(&self) -> Url {
                 self._to_url(self.base.to_url())
             }
@@ -144,9 +148,9 @@ macro_rules! impl_common_stuff {
                 self._to_url(url)
             }
 
-            /// Accept both `parsec://` and http redirection url
+            /// Accept both `parsec3://` and http redirection url
             pub fn from_any(url: &str) -> Result<Self, AddrError> {
-                // End with parsec:// parsing given it error message is the
+                // End with parsec3:// parsing given it error message is the
                 // more interesting to return
                 Self::from_http_redirection(url).or_else(|_| url.parse())
             }
@@ -288,7 +292,7 @@ impl BaseParsecAddr {
         })
     }
 
-    /// create a url in parsec format (i.e.: `parsec://foo.bar[...]`)
+    /// create a url in parsec format (i.e.: `parsec3://foo.bar[...]`)
     pub fn to_url(&self) -> Url {
         let mut url = Url::parse(&format!("{}://{}", PARSEC_SCHEME, &self.hostname))
             .expect("hostname already validated");
@@ -375,7 +379,7 @@ fn extract_organization_id(parsed: &ParsecUrlAsHTTPScheme) -> Result<Organizatio
  * ParsecAddr
  */
 
-/// Represent the URL to reach a server (e.g. ``parsec://parsec.example.com/``)
+/// Represent the URL to reach a server (e.g. ``parsec3://parsec.example.com/``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecAddr {
     base: BaseParsecAddr,
@@ -424,7 +428,7 @@ impl ParsecAddr {
  */
 
 /// Represent the URL to access an organization within a server
-/// (e.g. ``parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+/// (e.g. ``parsec3://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationAddr {
     base: BaseParsecAddr,
@@ -569,7 +573,7 @@ impl std::str::FromStr for ParsecActionAddr {
  */
 
 // Represent the URL to bootstrap an organization within a server
-// (e.g. ``parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
+// (e.g. ``parsec3://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
@@ -680,7 +684,7 @@ impl ParsecOrganizationBootstrapAddr {
  */
 
 /// Represent the URL to share a file link
-/// (e.g. ``parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationFileLinkAddr {
     base: BaseParsecAddr,
@@ -807,7 +811,7 @@ impl ParsecOrganizationFileLinkAddr {
  */
 
 /// Represent the URL to invite a user or a device
-/// (e.g. ``parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecInvitationAddr {
     base: BaseParsecAddr,
@@ -929,7 +933,7 @@ impl ParsecInvitationAddr {
  */
 
 /// Represent the URL to invite a user using PKI
-/// (e.g. ``parsec://parsec.example.com/my_org?action=pki_enrollment``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?action=pki_enrollment``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecPkiEnrollmentAddr {
     base: BaseParsecAddr,
