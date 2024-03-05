@@ -59,3 +59,23 @@ jobs:
           "${{ inputs.version || '--uniq-dev' }}"
           | tee -a "$GITHUB_OUTPUT"
         timeout-minutes: 2
+
+      - name: Set version for patching
+        run: >-
+          PYTHONPATH=. python3
+          misc/version_updater.py
+          --tool parsec
+          --version ${{ steps.version.outputs.full }}
+        timeout-minutes: 2
+
+      - name: Generate git patch
+        run: git diff | tee -a version.patch
+        timeout-minutes: 2
+
+      - name: Upload patch
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
+        with:
+          name: version.patch
+          path: version.patch
+          if-no-files-found: error
+          retention-days: 1
