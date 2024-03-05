@@ -65,7 +65,8 @@ INSERT INTO organization (
     _bootstrapped_on,
     _created_on,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 )
 SELECT
     $target_id,
@@ -78,7 +79,8 @@ SELECT
     _bootstrapped_on,
     _created_on,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $source_id
 """

@@ -152,6 +152,7 @@ class Organization:
     bootstrap_token: BootstrapToken | None
     is_expired: bool
     created_on: DateTime
+    minimum_archiving_period: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
