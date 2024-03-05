@@ -296,6 +296,13 @@ class CheckUserWithDeviceBadOutcome(BadOutcomeEnum):
     DEVICE_NOT_FOUND = auto()
 
 
+class CheckUserForAuthenticationBadOutcome(BadOutcomeEnum):
+    USER_REVOKED = auto()
+    USER_NOT_FOUND = auto()
+    DEVICE_NOT_FOUND = auto()
+    USER_FROZEN = auto()
+
+
 class UserListUsersBadOutcome(BadOutcomeEnum):
     # Note we don't care the organization is expired here, this is because this
     # command is used by the administration.

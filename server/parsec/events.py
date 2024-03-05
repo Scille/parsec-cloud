@@ -254,7 +254,7 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     timestamp: DateTimeField
-    participants: tuple[UserID, ...]
+    participants: tuple[UserIDField, ...]
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
@@ -278,8 +278,8 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     timestamp: DateTimeField
-    realm_id: VlobID
-    user_id: UserID
+    realm_id: VlobIDField
+    user_id: UserIDField
     role_removed: bool
 
     @override
@@ -340,7 +340,7 @@ class EventUserRevokedOrFrozen(BaseModel):
     type: Literal["USER_REVOKED_OR_FROZEN"] = "USER_REVOKED_OR_FROZEN"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    user_id: UserID
+    user_id: UserIDField
 
 
 class EventUserUnfrozen(BaseModel):
@@ -348,7 +348,7 @@ class EventUserUnfrozen(BaseModel):
     type: Literal["USER_UNFROZEN"] = "USER_UNFROZEN"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    user_id: UserID
+    user_id: UserIDField
 
 
 class EventUserUpdated(BaseModel):
@@ -356,7 +356,7 @@ class EventUserUpdated(BaseModel):
     type: Literal["USER_UPDATED"] = "USER_UPDATED"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    user_id: UserID
+    user_id: UserIDField
     new_profile: UserProfile
 
 

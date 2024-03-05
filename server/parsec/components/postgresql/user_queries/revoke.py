@@ -78,3 +78,14 @@ async def query_revoke_user(
                 organization_id=organization_id, user_id=user_id, profile=None
             ),
         )
+
+
+q_freeze_user = Q(
+    f"""
+UPDATE user_ SET
+    frozen = $frozen
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
