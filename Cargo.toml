@@ -119,7 +119,7 @@ eventsource-stream = { version = "0.2.3", default-features = false }
 flate2 = { version = "1.0.28", default-features = false }
 flume = { version = "0.11.0", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }
-fuser = { version = "0.13.0", default-features =  false }
+fuser = { version = "0.14.0", default-features =  false }
 futures = { version = "0.3.30", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
 # Two versions of `getrandom` needed in `libparsec_crypto`
