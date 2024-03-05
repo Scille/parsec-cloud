@@ -603,6 +603,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return items
 
+    @override
     async def list_users(
         self, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
