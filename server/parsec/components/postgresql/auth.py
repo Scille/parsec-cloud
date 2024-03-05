@@ -21,7 +21,9 @@ from parsec.components.postgresql.invite import InviteAsInvitedInfoBadOutcome, P
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user_queries.get import query_check_user_for_authentication
 from parsec.components.postgresql.utils import transaction
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import (
+    CheckUserForAuthenticationBadOutcome,
+)
 from parsec.config import BackendConfig
 
 
@@ -115,12 +117,14 @@ class PGAuthComponent(BaseAuthComponent):
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
 
         match await query_check_user_for_authentication(conn, organization_id, device_id):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+            case CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND:
                 return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND:
                 return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckUserForAuthenticationBadOutcome.USER_REVOKED:
                 return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
+            case CheckUserForAuthenticationBadOutcome.USER_FROZEN:
+                return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
             case DeviceCertificate() as certificate:
                 pass
             case unknown:

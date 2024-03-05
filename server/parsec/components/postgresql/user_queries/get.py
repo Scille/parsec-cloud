@@ -17,10 +17,14 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_human,
     q_organization_internal_id,
+    q_human_internal_id,
     q_user_internal_id,
     query,
 )
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import (
+    CheckUserWithDeviceBadOutcome,
+    CheckUserForAuthenticationBadOutcome,
+)
 
 _q_get_organization_users = Q(
     f"""
@@ -55,7 +59,8 @@ SELECT
     created_on,
     revoked_on,
     revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    frozen
 FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -209,6 +214,33 @@ SELECT DISTINCT ON (_did)
     redacted_user_certificate,
     revoked_user_certificate
 FROM cte2;
+"""
+)
+
+_q_get_user_info = Q(
+    f"""
+SELECT
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+_q_get_user_info_from_email = Q(
+    f"""
+SELECT
+    user_id,
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND human = { q_human_internal_id(organization_id="$organization_id", email="$email") }
 """
 )
 
@@ -404,19 +436,21 @@ async def query_check_user_with_device(
 
 async def query_check_user_for_authentication(
     conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
-) -> DeviceCertificate | CheckUserWithDeviceBadOutcome:
+) -> DeviceCertificate | CheckUserForAuthenticationBadOutcome:
     d_row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
     if not d_row:
-        return CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND
+        return CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND
     u_row = await conn.fetchrow(
         *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
     )
     if not u_row:
-        return CheckUserWithDeviceBadOutcome.USER_NOT_FOUND
+        return CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND
     if u_row["revoked_on"] is not None:
-        return CheckUserWithDeviceBadOutcome.USER_REVOKED
+        return CheckUserForAuthenticationBadOutcome.USER_REVOKED
+    if u_row["frozen"]:
+        return CheckUserForAuthenticationBadOutcome.USER_FROZEN
     return DeviceCertificate.unsecure_load(d_row["device_certificate"])
 
 

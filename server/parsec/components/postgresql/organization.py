@@ -434,6 +434,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case error:
                 return error
 
+        # All checks are good, now we do the actual insertion
+
         match await q_create_user(
             conn,
             id,
@@ -449,23 +451,21 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case UserCreateDeviceStoreBadOutcome():
                 assert False, "The organization is empty, device creation should always succeed"
 
-        # sequester_authority_certificate = None
-        # sequester_authority_verify_key_der = None
-        # if sequester_authority:
-        #     sequester_authority_certificate = sequester_authority.certificate
-        #     sequester_authority_verify_key_der = sequester_authority.verify_key_der.dump()
-        # result = await conn.execute(
-        #     *_q_bootstrap_organization(
-        #         organization_id=id.str,
-        #         bootstrap_token=bootstrap_token,
-        #         bootstrapped_on=bootstrapped_on,
-        #         root_verify_key=root_verify_key.encode(),
-        #         sequester_authority_certificate=sequester_authority_certificate,
-        #         sequester_authority_verify_key_der=sequester_authority_verify_key_der,
-        #     )
-        # )
-        # if result != "UPDATE 1":
-        #     raise OrganizationError(f"Update error: {result}")
+        sequester_authority_verify_key_der = (
+            None if s_certif is None else s_certif.verify_key_der.dump()
+        )
+        bootstrap_token_string = bootstrap_token.hex if bootstrap_token is not None else ""
+        result = await conn.execute(
+            *_q_bootstrap_organization(
+                organization_id=id.str,
+                bootstrap_token=bootstrap_token_string,
+                bootstrapped_on=now,
+                root_verify_key=root_verify_key.encode(),
+                sequester_authority_certificate=s_certif,
+                sequester_authority_verify_key_der=sequester_authority_verify_key_der,
+            )
+        )
+        assert result == "UPDATE 1"
 
         return u_certif, d_certif, s_certif
 

@@ -145,5 +145,4 @@ class PGEventsComponent(BaseEventsComponent):
         )
 
         mapping = await query_get_realms_for_user(conn, organization_id, author.user_id)
-        print(org_config, profile, set(mapping.keys()))
         return org_config, profile, set(mapping.keys())
