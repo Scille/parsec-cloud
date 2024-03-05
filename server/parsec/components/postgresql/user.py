@@ -33,6 +33,7 @@ from parsec.components.postgresql.user_queries import (
 from parsec.components.postgresql.user_queries.get import (
     _q_get_user_info,
     _q_get_user_info_from_email,
+    query_list_users,
 )
 from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
 from parsec.components.postgresql.user_queries.get import query_check_user_with_device
@@ -48,6 +49,7 @@ from parsec.components.user import (
     UserDump,
     UserFreezeUserBadOutcome,
     UserInfo,
+    UserListUsersBadOutcome,
     user_create_device_validate,
     user_create_user_validate,
 )
@@ -236,6 +238,21 @@ class PGUserComponent(BaseUserComponent):
         user_id = UserID(row["user_id"])
         human_handle = HumanHandle(row["email"], row["label"])
         return UserInfo(user_id, human_handle, bool(row["frozen"]))
+
+    @override
+    @transaction
+    async def list_users(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID
+    ) -> list[UserInfo] | UserListUsersBadOutcome:
+        match await self._organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization():
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        return await query_list_users(conn, organization_id)
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
