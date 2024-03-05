@@ -67,6 +67,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         id: OrganizationID,
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: Literal[Unset] | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -82,12 +83,16 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 self._config.organization_initial_user_profile_outsider_allowed
             )
         assert isinstance(user_profile_outsider_allowed, bool)
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        assert isinstance(minimum_archiving_period, int)
 
         self._data.organizations[id] = MemoryOrganization(
             organization_id=id,
             bootstrap_token=bootstrap_token,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             active_users_limit=active_users_limit,
+            minimum_archiving_period=minimum_archiving_period,
             created_on=now,
         )
 
@@ -120,6 +125,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             root_verify_key=org.root_verify_key,
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
+            minimum_archiving_period=org.minimum_archiving_period,
             sequester_authority_certificate=org.sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
@@ -307,6 +313,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         is_expired: Literal[Unset] | bool = Unset,
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: Literal[Unset] | int = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         try:
             org = self._data.organizations[id]
@@ -319,6 +326,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org.active_users_limit = active_users_limit
         if user_profile_outsider_allowed is not Unset:
             org.user_profile_outsider_allowed = user_profile_outsider_allowed
+        if minimum_archiving_period is not Unset:
+            org.minimum_archiving_period = minimum_archiving_period
 
         # TODO: the event is triggered even if the orga was already expired, is this okay ?
         if org.is_expired:
