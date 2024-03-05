@@ -20,6 +20,7 @@ from parsec._parsec import (
     VerifyKey,
 )
 from parsec.ballpark import TimestampOutOfBallpark
+from parsec.components.events import EventBus
 from parsec.components.organization import (
     BaseOrganizationComponent,
     Organization,
@@ -31,6 +32,7 @@ from parsec.components.organization import (
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
     OrganizationStatsBadOutcome,
+    OrganizationUpdateBadOutcome,
     organization_bootstrap_validate,
 )
 from parsec.components.postgresql.test_queries import (
@@ -49,6 +51,7 @@ from parsec.components.postgresql.user_queries.create import q_create_user
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, transaction
 from parsec.components.user import UserCreateDeviceStoreBadOutcome, UserCreateUserStoreBadOutcome
 from parsec.config import BackendConfig
+from parsec.events import EventOrganizationExpired
 from parsec.types import Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
@@ -282,10 +285,15 @@ async def _organization_stats(
 
 class PGOrganizationComponent(BaseOrganizationComponent):
     def __init__(
-        self, pool: asyncpg.Pool, webhooks: WebhooksComponent, config: BackendConfig
+        self,
+        pool: asyncpg.Pool,
+        webhooks: WebhooksComponent,
+        config: BackendConfig,
+        event_bus: EventBus,
     ) -> None:
         super().__init__(webhooks, config)
         self.pool = pool
+        self.event_bus = event_bus
 
     @override
     async def create(
@@ -508,61 +516,62 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # return results
 
     @override
+    @transaction
     async def update(
         self,
+        conn: asyncpg.Connection,
         id: OrganizationID,
-        is_expired: UnsetType | bool = Unset,
-        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: UnsetType | bool = Unset,
-        minimum_archiving_period: UnsetType | int = Unset,
-    ) -> None:
-        raise NotImplementedError
-        # fields: dict[str, Any] = {}
+        is_expired: Literal[Unset] | bool = Unset,
+        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: Literal[Unset] | int = Unset,
+    ) -> None | OrganizationUpdateBadOutcome:
+        with_is_expired = is_expired is not Unset
+        with_active_users_limit = active_users_limit is not Unset
+        with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+        with_minimum_archiving_period = minimum_archiving_period is not Unset
 
-        # with_is_expired = is_expired is not Unset
-        # with_active_users_limit = active_users_limit is not Unset
-        # with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
-        # with_minimum_archiving_period = minimum_archiving_period is not Unset
+        match await self._get(conn, id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unkown:
+                assert_never(unkown)
 
-        # if (
-        #     not with_is_expired
-        #     and not with_active_users_limit
-        #     and not with_user_profile_outsider_allowed
-        #     and not with_minimum_archiving_period
-        # ):
-        #     # Nothing to update, just make sure the organization exists and
-        #     # pretent we actually did an update
-        #     await self.get(id=id)
-        #     return
+        if (
+            not with_is_expired
+            and not with_active_users_limit
+            and not with_user_profile_outsider_allowed
+            and not with_minimum_archiving_period
+        ):
+            # Nothing to update
+            return
 
-        # if with_is_expired:
-        #     fields["is_expired"] = is_expired
-        # if with_active_users_limit:
-        #     assert isinstance(active_users_limit, ActiveUsersLimit)
-        #     fields["active_users_limit"] = active_users_limit.to_int()
-        # if with_user_profile_outsider_allowed:
-        #     fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
-        # if with_minimum_archiving_period:
-        #     fields["minimum_archiving_period"] = minimum_archiving_period
+        fields: dict[str, object] = {}
+        if with_is_expired:
+            fields["is_expired"] = is_expired
+        if with_active_users_limit:
+            assert isinstance(active_users_limit, ActiveUsersLimit)
+            fields["active_users_limit"] = active_users_limit.to_maybe_int()
+        if with_user_profile_outsider_allowed:
+            fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+        if with_minimum_archiving_period:
+            fields["minimum_archiving_period"] = minimum_archiving_period
 
-        # q = _q_update_factory(
-        #     with_is_expired=with_is_expired,
-        #     with_active_users_limit=with_active_users_limit,
-        #     with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
-        #     with_minimum_archiving_period=with_minimum_archiving_period,
-        # )
+        q = _q_update_factory(
+            with_is_expired=with_is_expired,
+            with_active_users_limit=with_active_users_limit,
+            with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
+            with_minimum_archiving_period=with_minimum_archiving_period,
+        )
 
-        # async with self.dbh.pool.acquire() as conn, conn.transaction():
-        #     result = await conn.execute(*q(organization_id=id.str, **fields))
+        result = await conn.execute(*q(organization_id=id.str, **fields))
+        assert result == "UPDATE 1"
 
-        #     if result == "UPDATE 0":
-        #         raise OrganizationNotFoundError
-
-        #     if result != "UPDATE 1":
-        #         raise OrganizationError(f"Update error: {result}")
-
-        #     if with_is_expired and is_expired:
-        #         await send_signal(conn, BackendEventOrganizationExpired(organization_id=id))
+        # TODO: the event is triggered even if the orga was already expired, is this okay ?
+        if organization.is_expired:
+            await self.event_bus.send(EventOrganizationExpired(organization_id=id))
 
     # async def archiving_config(
     #     self,
