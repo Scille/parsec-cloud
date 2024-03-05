@@ -2,20 +2,22 @@
 
 #![cfg(target_os = "windows")]
 
-use std::{path::Path, process::Command, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+    sync::Arc,
+    time::Duration,
+};
 
 use libparsec_platform_mountpoint::{FileSystemMounted, MemFS};
+use libparsec_tests_lite::parsec_test;
 
-#[test]
-fn winfsp_tests() {
-    let (tx, rx) = std::sync::mpsc::channel();
-
-    let handle = std::thread::spawn(move || {
-        winfsp_wrs::init().expect("Can't init WinFSP");
-        let fs = FileSystemMounted::mount(Path::new("Z:"), MemFS::default()).unwrap();
-        rx.recv().unwrap();
-        fs.stop();
-    });
+#[parsec_test]
+async fn winfsp_tests() {
+    winfsp_wrs::init().expect("Can't init WinFSP");
+    let fs = FileSystemMounted::mount(PathBuf::from("Z:"), Arc::new(MemFS::default()))
+        .await
+        .unwrap();
 
     while !Path::new("Z:").exists() {
         std::thread::sleep(Duration::from_millis(100))
@@ -66,6 +68,5 @@ fn winfsp_tests() {
     let code = tests.wait().expect("Tests should exit");
     assert!(code.success());
 
-    tx.send(()).unwrap();
-    handle.join().unwrap();
+    fs.stop().await.unwrap();
 }
