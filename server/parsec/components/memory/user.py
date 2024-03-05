@@ -623,6 +623,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return users
 
+    @override
     async def freeze_user(
         self,
         organization_id: OrganizationID,

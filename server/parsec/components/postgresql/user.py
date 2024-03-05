@@ -14,6 +14,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
     VerifyKey,
+    HumanHandle,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
@@ -29,8 +30,13 @@ from parsec.components.postgresql.user_queries import (
     query_get_user_with_trustchain,
     query_revoke_user,
 )
+from parsec.components.postgresql.user_queries.get import (
+    _q_get_user_info,
+    _q_get_user_info_from_email,
+)
 from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
 from parsec.components.postgresql.user_queries.get import query_check_user_with_device
+from parsec.components.postgresql.user_queries.revoke import q_freeze_user
 from parsec.components.postgresql.utils import transaction
 from parsec.components.user import (
     BaseUserComponent,
@@ -39,10 +45,13 @@ from parsec.components.user import (
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
     UserCreateUserValidateBadOutcome,
+    UserDump,
+    UserFreezeUserBadOutcome,
+    UserInfo,
     user_create_device_validate,
     user_create_user_validate,
 )
-from parsec.events import EventCommonCertificate
+from parsec.events import EventCommonCertificate, EventUserRevokedOrFrozen, EventUserUnfrozen
 
 
 class PGUserComponent(BaseUserComponent):
@@ -205,10 +214,28 @@ class PGUserComponent(BaseUserComponent):
 
         return certif
 
-    async def get_user(self, organization_id: OrganizationID, user_id: UserID) -> User:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user(conn, organization_id, user_id)
+    async def get_user_info(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID, user_id: UserID
+    ) -> UserInfo | None:
+        row = await conn.fetchrow(
+            *_q_get_user_info(organization_id=organization_id.str, user_id=user_id.str)
+        )
+        if row is None:
+            return None
+        human_handle = HumanHandle(row["email"], row["label"])
+        return UserInfo(user_id, human_handle, bool(row["frozen"]))
+
+    async def get_user_info_from_email(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID, email: str
+    ) -> UserInfo | None:
+        row = await conn.fetchrow(
+            *_q_get_user_info_from_email(organization_id=organization_id.str, email=email)
+        )
+        if row is None:
+            return None
+        user_id = UserID(row["user_id"])
+        human_handle = HumanHandle(row["email"], row["label"])
+        return UserInfo(user_id, human_handle, bool(row["frozen"]))
 
     async def get_user_with_trustchain(
         self, organization_id: OrganizationID, user_id: UserID
@@ -278,7 +305,78 @@ class PGUserComponent(BaseUserComponent):
                 revoked_on,
             )
 
-    async def dump_users(self, organization_id: OrganizationID) -> tuple[list[User], list[Device]]:
+    @override
+    @transaction
+    async def freeze_user(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        user_id: UserID | None,
+        user_email: str | None,
+        frozen: bool,
+    ) -> UserInfo | UserFreezeUserBadOutcome:
+        match await self._organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        match (user_id, user_email):
+            case (None, None):
+                return UserFreezeUserBadOutcome.NO_USER_ID_NOR_EMAIL
+            case (UserID() as user_id, None):
+                match await self.get_user_info(conn, organization_id, user_id):
+                    case UserInfo() as info:
+                        pass
+                    case None:
+                        return UserFreezeUserBadOutcome.USER_NOT_FOUND
+                    case unknown:
+                        assert_never(unknown)
+            case (None, str() as user_email):
+                match await self.get_user_info_from_email(conn, organization_id, user_email):
+                    case UserInfo() as info:
+                        pass
+                    case None:
+                        return UserFreezeUserBadOutcome.USER_NOT_FOUND
+                    case unknown:
+                        assert_never(unknown)
+            case (UserID(), str()):
+                return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
+            case _:
+                assert (
+                    False
+                )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
+
+        await conn.execute(
+            *q_freeze_user(
+                organization_id=organization_id.str, user_id=info.user_id.str, frozen=frozen
+            )
+        )
+        info.frozen = frozen
+
+        if info.frozen:
+            await self.event_bus.send(
+                EventUserRevokedOrFrozen(
+                    organization_id=organization_id,
+                    user_id=info.user_id,
+                )
+            )
+        else:
+            await self.event_bus.send(
+                EventUserUnfrozen(
+                    organization_id=organization_id,
+                    user_id=info.user_id,
+                )
+            )
+
+        return info
+
+    @override
+    @transaction
+    async def test_dump_current_users(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID
+    ) -> dict[UserID, UserDump]:
         raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_dump_users(conn, organization_id)
+        return await query_dump_users(conn, organization_id)

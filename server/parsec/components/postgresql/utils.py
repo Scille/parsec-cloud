@@ -268,13 +268,19 @@ def transaction[**P, T, S: WithPool](
 
     async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
         async with self.pool.acquire() as conn:
-            transaction = conn.transaction()
             conn = cast(asyncpg.Connection, conn)
-            async with transaction:
+            transaction = conn.transaction()
+            await transaction.start()
+            try:
                 result = await func(self, conn, *args, **kwargs)
-                match result:
-                    case BadOutcome():
-                        await transaction.rollback()
-                return result
+            except:
+                await transaction.rollback()
+                raise
+            match result:
+                case BadOutcome():
+                    await transaction.rollback()
+                case _:
+                    await transaction.commit()
+            return result
 
     return wrapper

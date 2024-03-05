@@ -126,6 +126,7 @@ class GetOrganizationOut(BaseModel):
     is_expired: bool
     user_profile_outsider_allowed: bool
     active_users_limit: int | None
+    minimum_archiving_period: int
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
@@ -153,6 +154,7 @@ async def administration_get_organization(
         is_expired=organization.is_expired,
         user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
         active_users_limit=organization.active_users_limit.to_maybe_int(),
+        minimum_archiving_period=organization.minimum_archiving_period,
     )
 
 
