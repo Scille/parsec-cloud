@@ -119,6 +119,7 @@ target-version = "py312"
 extend-exclude = [
     "tests/cli/common.py",
     "../misc/bench.py",
+    "parsec/components/postgresql/pki.py",
     "parsec/components/postgresql/vlob.py",
     "parsec/components/postgresql/user.py",
     "parsec/components/postgresql/sequester.py",

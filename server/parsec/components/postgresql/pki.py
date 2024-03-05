@@ -8,37 +8,25 @@ from typing import Any
 from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
-    BackendEventPkiEnrollmentUpdated,
     DateTime,
     EnrollmentID,
     OrganizationID,
 )
 from parsec.components.pki import (
     BasePkiEnrollmentComponent,
-    PkiEnrollmentActiveUsersLimitReached,
-    PkiEnrollmentAlreadyEnrolledError,
-    PkiEnrollmentAlreadyExistError,
-    PkiEnrollmentCertificateAlreadySubmittedError,
-    PkiEnrollmentEmailAlreadyUsedError,
-    PkiEnrollmentError,
-    PkiEnrollmentIdAlreadyUsedError,
     PkiEnrollmentInfo,
     PkiEnrollmentInfoAccepted,
     PkiEnrollmentInfoCancelled,
     PkiEnrollmentInfoRejected,
     PkiEnrollmentInfoSubmitted,
     PkiEnrollmentListItem,
-    PkiEnrollmentNoLongerAvailableError,
-    PkiEnrollmentNotFoundError,
 )
-from parsec.components.postgresql.handler import PGHandler, send_signal
+from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.user_queries.create import (
     q_create_user,
     q_take_user_device_write_lock,
 )
 from parsec.components.postgresql.utils import Q, q_device_internal_id, q_organization_internal_id
-from parsec.components.user import UserActiveUsersLimitReached, UserAlreadyExistsError
-from parsec.components.user_type import Device, User
 
 
 class PkiEnrollmentStatus(Enum):
