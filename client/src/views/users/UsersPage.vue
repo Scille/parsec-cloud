@@ -49,7 +49,10 @@
               {{ $t('UsersPage.userSelectedCount', { count: users.selectedCount() }, users.selectedCount()) }}
             </ion-text>
           </div>
-          <ms-grid-list-toggle v-model="displayView" />
+          <ms-grid-list-toggle
+            v-model="displayView"
+            @update:model-value="onDisplayStateChange"
+          />
         </div>
       </ms-action-bar>
       <!-- users -->
@@ -117,6 +120,7 @@ import {
 import { getCurrentRouteQuery, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
@@ -131,10 +135,21 @@ const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 let hotkeys: Hotkeys | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
+
+const USERS_PAGE_DATA_KEY = 'UsersPage';
+
+interface UsersPageSavedData {
+  displayState?: DisplayState;
+}
+
+async function onDisplayStateChange(): Promise<void> {
+  await storageManager.storeComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: displayView.value });
+}
 
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
@@ -385,6 +400,10 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
+  const savedData = await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY);
+  if (savedData && savedData.displayState !== undefined) {
+    displayView.value = savedData.displayState;
+  }
   hotkeys = hotkeyManager.newHotkeys(Groups.Users);
   hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
     displayView.value = displayView.value === DisplayState.List ? DisplayState.Grid : DisplayState.List;
