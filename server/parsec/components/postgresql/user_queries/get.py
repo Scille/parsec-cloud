@@ -24,6 +24,8 @@ from parsec.components.postgresql.utils import (
 from parsec.components.user import (
     CheckUserWithDeviceBadOutcome,
     CheckUserForAuthenticationBadOutcome,
+    UserInfo,
+    UserListUsersBadOutcome,
 )
 
 _q_get_organization_users = Q(
@@ -39,7 +41,8 @@ SELECT
     created_on,
     revoked_on,
     revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    frozen
 FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -497,6 +500,23 @@ async def query_get_user_with_device(
         else None,
     )
     return user, device
+
+
+async def query_list_users(
+    conn: asyncpg.Connection, organization_id: OrganizationID
+) -> list[UserInfo]:
+    users = []
+
+    rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+    for row in rows:
+        users.append(
+            UserInfo(
+                user_id=UserID(row["user_id"]),
+                human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
+                frozen=row["frozen"],
+            )
+        )
+    return users
 
 
 @query()
