@@ -7,6 +7,13 @@ on:
         description: The version to use
         type: string
         required: true
+      version_patch_run_id:
+        description: |
+          The run id where the version.patch artifact was uploaded.
+          if not provided, the workflow will generate the patch for itself.
+        type: string
+        required: true
+
   # PS: If you trigger manually the packaging, take into account that it will use the workflow as defined in the main branch not in the target branch.
   workflow_dispatch:
     inputs:
@@ -39,12 +46,15 @@ permissions:
 
 jobs:
   version:
+    if: ${{ inputs.version_patch_run_id == '' }}
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: ${{ inputs.version }}
 
   package-wheel:
     needs: version
+    # Always run the job even if `version` job was skipped.
+    if: ${{ always() }}
     strategy:
       fail-fast: false
       matrix:
@@ -70,8 +80,15 @@ jobs:
           project-path: ./server
         timeout-minutes: 10
 
-      - name: Set parsec version ${{ needs.version.outputs.full }}
-        run: python3 misc/version_updater.py --tool parsec --version ${{ needs.version.outputs.full }}
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # pin v4.1.4
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+
+      - name: Apply version.patch
+        run: git apply ${{ runner.temp }}/version.patch/version.patch
 
       - name: Build wheel
         uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # pin v2.16.5
@@ -81,7 +98,7 @@ jobs:
         timeout-minutes: 50
 
       - name: Set file for wheel version
-        run: echo ${{ needs.version.outputs.full }} > dist/version
+        run: cp -v libparsec/version dist/version
 
       - name: Hack the wheel macos version
         if: startsWith(matrix.os, 'macos-')

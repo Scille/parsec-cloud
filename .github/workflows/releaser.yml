@@ -35,6 +35,7 @@ jobs:
     uses: ./.github/workflows/package-server.yml
     with:
       version: ${{ needs.version.outputs.full }}
+      version_patch_run_id: ${{ github.run_id }}
 
   releaser:
     needs:
