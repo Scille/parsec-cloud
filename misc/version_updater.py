@@ -58,6 +58,7 @@ PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("pytho
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
 TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*",', '"license": "{version}",')
+JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*",', '"version": "{version}",')
 
 
 @enum.unique
@@ -76,6 +77,9 @@ class Tool(enum.Enum):
         match self:
             case Tool.Parsec:
                 refresh_cargo_lock(updated_files)
+                refresh_npm_package_lock(updated_files)
+            case Tool.License:
+                refresh_npm_package_lock(updated_files)
             case _:
                 pass
 
@@ -102,6 +106,22 @@ def refresh_cargo_lock(updated_files: set[Path]) -> None:
             "direct-minimal-versions",
         ]
     )
+
+
+def refresh_npm_package_lock(update_files: set[Path]) -> None:
+    import sys
+
+    npm = "npm" if sys.platform != "win32" else "npm.cmd"
+    print("Checking npm version ...")
+    subprocess.check_call([npm, "--version"])
+    for file in update_files:
+        if "package.json" not in file.name:
+            continue
+        print(f"Refreshing npm lock file for {file} ...")
+        subprocess.check_call(
+            [npm, "install", "--package-lock-only", "--no-audit", "--ignore-scripts"],
+            cwd=file.parent,
+        )
 
 
 TOOLS_VERSION: dict[Tool, str] = {
@@ -155,12 +175,18 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
     },
-    ROOT_DIR / "client/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
-    ROOT_DIR / "client/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "cli/src/tests.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
+    },
+    ROOT_DIR / "client/electron/package.json": {
+        Tool.License: [JSON_LICENSE_FIELD],
+        Tool.Parsec: [JSON_VERSION_FIELD],
+    },
+    ROOT_DIR / "client/package.json": {
+        Tool.License: [JSON_LICENSE_FIELD],
+        Tool.Parsec: [JSON_VERSION_FIELD],
     },
     ROOT_DIR / "docs/development/quickstart.md": {
         Tool.Rust: [
