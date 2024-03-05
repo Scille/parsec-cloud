@@ -29,7 +29,7 @@ const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarM
 // If deep linking is enabled then we will set it up here.
 if (capacitorFileConfig.electron?.deepLinkingEnabled) {
   setupElectronDeepLinking(myCapacitorApp, {
-    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'mycapacitorapp',
+    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'parsec3',
   });
 }
 
@@ -65,7 +65,7 @@ if (!lock) {
     if (commandLine.length > 0) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
-      if (lastArg.startsWith('parsec://')) {
+      if (lastArg.startsWith('parsec3://')) {
         myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
       }
     }
