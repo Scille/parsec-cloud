@@ -1,18 +1,19 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, assert_never, override
+from typing import assert_never, override
+
 import asyncpg
 
 from parsec._parsec import (
     DateTime,
+    DeviceCertificate,
     DeviceID,
     OrganizationID,
-    UserID,
-    VerifyKey,
     UserCertificate,
-    DeviceCertificate,
+    UserID,
     UserProfile,
+    VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
@@ -28,7 +29,7 @@ from parsec.components.postgresql.user_queries import (
     query_get_user_with_trustchain,
     query_revoke_user,
 )
-from parsec.components.postgresql.user_queries.create import q_create_user, q_create_device
+from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
 from parsec.components.postgresql.user_queries.get import query_check_user_with_device
 from parsec.components.postgresql.utils import transaction
 from parsec.components.user import (
