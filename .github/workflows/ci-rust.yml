@@ -235,12 +235,20 @@ jobs:
         shell: bash
         run: |
           set -ex
-          CRATES=`python3 misc/libparsec_crates_flags.py platform`
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $CRATES --features libparsec_crypto/use-sodiumoxide
+          PLATFORM_CRATES=`python3 misc/libparsec_crates_flags.py platform`
+          # TODO: mountpoint not supported yet on MacOS (macFUSE not installed on the CI)
+          if [[ '{{ matrix.os }}' = macos* ]]; then
+            PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
+          fi
+          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-sodiumoxide
           # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
           # implementation and it compatibility with the rest of the project
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
           NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
+          # TODO: mountpoint not supported yet on MacOS (macFUSE not installed on the CI)
+          if [[ '{{ matrix.os }}' = macos* ]]; then
+            NON_BINDINGS_CRATES=`echo $NON_BINDINGS_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
+          fi
           cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
         timeout-minutes: 50 # It can be very slow if cache has missed
         env:

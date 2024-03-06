@@ -22,14 +22,16 @@ libc = { workspace = true }
 
 [dependencies]
 libparsec_types = { workspace = true }
-chrono = { workspace = true }
-thiserror = { workspace = true }
+libparsec_client = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
+libparsec_client_connection = { workspace = true }
 libparsec_tests_lite = { workspace = true }
-libparsec_tests_fixtures = { workspace = true }
+libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 env_logger = { workspace = true }
 ctrlc = { workspace = true }
+tokio = { workspace = true, features = ["fs"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winfsp_build = { workspace = true }
