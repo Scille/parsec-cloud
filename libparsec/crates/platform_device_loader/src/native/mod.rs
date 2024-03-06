@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use uuid::Uuid;
 use zeroize::Zeroize;
 
 use libparsec_types::prelude::*;
@@ -16,6 +17,12 @@ use crate::{
 };
 
 const KEYRING_SERVICE: &str = "parsec";
+
+fn get_default_data_dir() -> PathBuf {
+    dirs::data_dir()
+        .expect("Could not determine base data directory")
+        .join("parsec-v3-alpha")
+}
 
 impl From<keyring::Error> for LoadDeviceError {
     fn from(value: keyring::Error) -> Self {
@@ -227,7 +234,7 @@ pub async fn load_device(
                 DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
 
             if let DeviceFile::Keyring(x) = device_file {
-                let entry = KeyringEntry::new(KEYRING_SERVICE, &slughash(&x.slug))?;
+                let entry = KeyringEntry::new(&x.keyring_service, &x.keyring_user)?;
 
                 let passphrase = entry.get_password()?.into();
 
@@ -288,9 +295,7 @@ pub async fn load_device(
     Ok(Arc::new(device))
 }
 
-fn save_device_file(key_file: &PathBuf, file_content: &DeviceFile) -> Result<(), SaveDeviceError> {
-    let file_content = file_content.dump();
-
+fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
     if let Some(parent) = key_file.parent() {
         std::fs::create_dir_all(parent).map_err(|e| SaveDeviceError::InvalidPath(e.into()))?;
     }
@@ -322,17 +327,50 @@ fn save_device_file(key_file: &PathBuf, file_content: &DeviceFile) -> Result<(),
     Ok(())
 }
 
+fn generate_keyring_user(
+    keyring_user_path: &PathBuf,
+) -> Result<(SecretKey, String), SaveDeviceError> {
+    // Generate a keyring user
+    let keyring_user = Uuid::new_v4().to_string();
+
+    // Generate a key
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let entry = KeyringEntry::new(KEYRING_SERVICE, &keyring_user)?;
+
+    // Add the key to the keyring
+    entry.set_password(&passphrase)?;
+
+    // Save the keyring user to the config file
+    save_content(keyring_user_path, keyring_user.as_bytes())?;
+
+    Ok((key, keyring_user))
+}
+
 pub async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
 ) -> Result<(), SaveDeviceError> {
     match access {
         DeviceAccessStrategy::Keyring { key_file } => {
-            let entry = KeyringEntry::new(KEYRING_SERVICE, &device.slughash())?;
+            let keyring_user_path = get_default_data_dir().join("keyring_user.txt");
 
-            let (passphrase, key) = SecretKey::generate_recovery_passphrase();
-
-            entry.set_password(&passphrase)?;
+            let (key, keyring_user) = std::fs::read_to_string(&keyring_user_path)
+                .ok()
+                .and_then(|keyring_user| {
+                    KeyringEntry::new(KEYRING_SERVICE, &keyring_user)
+                        .map(|x| (x, keyring_user))
+                        .ok()
+                })
+                .and_then(|(entry, keyring_user)| {
+                    entry.get_password().map(|x| (x, keyring_user)).ok()
+                })
+                .and_then(|(passphrase, keyring_user)| {
+                    SecretKey::from_recovery_passphrase(passphrase.into())
+                        .map(|x| (x, keyring_user))
+                        .ok()
+                })
+                .unwrap_or(generate_keyring_user(&keyring_user_path)?);
 
             let cleartext = device.dump();
             let ciphertext = key.encrypt(&cleartext);
@@ -343,9 +381,13 @@ pub async fn save_device(
                 device_id: device.device_id.clone(),
                 organization_id: device.organization_id().clone(),
                 slug: device.slug(),
+                keyring_service: KEYRING_SERVICE.into(),
+                keyring_user,
             });
 
-            save_device_file(key_file, &file_content)
+            let file_content = file_content.dump();
+
+            save_content(key_file, &file_content)
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
@@ -370,7 +412,9 @@ pub async fn save_device(
                 salt: salt.into(),
             });
 
-            save_device_file(key_file, &file_content)
+            let file_content = file_content.dump();
+
+            save_content(key_file, &file_content)
         }
 
         DeviceAccessStrategy::Smartcard { .. } => {

@@ -2044,6 +2044,7 @@ dependencies = [
 name = "libparsec_platform_device_loader"
 version = "3.0.0-a.0+dev"
 dependencies = [
+ "dirs",
  "keyring",
  "libparsec_crypto",
  "libparsec_testbed",
@@ -2051,6 +2052,7 @@ dependencies = [
  "libparsec_tests_lite",
  "libparsec_types",
  "serde_json",
+ "uuid",
  "web-sys",
  "zeroize",
 ]

@@ -25,6 +25,14 @@
         {
             "name": "slug",
             "type": "String"
+        },
+        {
+            "name": "keyring_service",
+            "type": "String"
+        },
+        {
+            "name": "keyring_user",
+            "type": "String"
         }
     ]
 }

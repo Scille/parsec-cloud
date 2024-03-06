@@ -22,6 +22,8 @@ pub struct DeviceFileKeyring {
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
+    pub keyring_service: String,
+    pub keyring_user: String,
 }
 
 parsec_data!("schema/local_device/device_file_keyring.json5");
@@ -35,6 +37,8 @@ impl_transparent_data_format_conversion!(
     device_id,
     organization_id,
     slug,
+    keyring_service,
+    keyring_user,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
