@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
 from pathlib import Path
-from typing import Callable, NamedTuple, Pattern, Union
+from typing import Callable, Pattern, Union
 
 ReplacementPattern = Union[str, Callable[[str], str]]
 
@@ -320,7 +320,8 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
 }
 
 
-class VersionUpdateResult(NamedTuple):
+@dataclass
+class VersionUpdateResult:
     errors: list[str]
     updated: set[Path]
 
@@ -392,9 +393,8 @@ def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -
     return errors
 
 
-def check_tool(tool: Tool, version: str, update: bool) -> list[str]:
-    errors = []
-    updated: set[Path] = set()
+def check_tool(tool: Tool, version: str, update: bool) -> VersionUpdateResult:
+    update_res = VersionUpdateResult([], set())
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
@@ -404,14 +404,14 @@ def check_tool(tool: Tool, version: str, update: bool) -> list[str]:
             file = Path(glob_file)
             if update:
                 res = update_tool_version(file, regexes, version)
-                errors += res.errors
-                updated.update(res.updated)
+                update_res.errors += res.errors
+                update_res.updated.update(res.updated)
             else:
-                errors += check_tool_version(file, regexes, version).errors
+                update_res.errors += check_tool_version(file, regexes, version).errors
 
-    if not errors and update:
-        tool.post_update_hook(updated)
-    return errors
+    if not update_res.errors and update_res.updated:
+        tool.post_update_hook(update_res.updated)
+    return update_res
 
 
 if __name__ == "__main__":
@@ -441,10 +441,10 @@ if __name__ == "__main__":
         tool = Tool(args.tool)
         tool_version: str = args.version or TOOLS_VERSION[tool]
 
-        errors += check_tool(tool, tool_version, update=not args.check)
+        errors += check_tool(tool, tool_version, update=not args.check).errors
     else:
         for tool in Tool:
-            errors += check_tool(tool, TOOLS_VERSION[tool], update=not args.check)
+            errors += check_tool(tool, TOOLS_VERSION[tool], update=not args.check).errors
 
     if errors:
         raise SystemExit("\n".join(errors))
