@@ -19,6 +19,10 @@ impl std::ops::Deref for TmpPath {
 impl Drop for TmpPath {
     fn drop(&mut self) {
         if let Err(err) = std::fs::remove_dir_all(&self.0) {
+            if matches!(err.kind(), std::io::ErrorKind::NotFound) {
+                // TmpPath was already removed
+                return;
+            }
             // Cannot remove the directory :'(
             // If we are on Windows, it most likely means a file in the directory
             // is still opened. Typically a SQLite database is still opened because
