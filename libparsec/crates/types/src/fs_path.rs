@@ -217,7 +217,7 @@ impl FsPath {
         path
     }
 
-    pub fn starts_with(&self, path: &Self) -> bool {
+    pub fn is_descendant_of(&self, path: &Self) -> bool {
         if path.parts.len() > self.parts.len() {
             return false;
         }
