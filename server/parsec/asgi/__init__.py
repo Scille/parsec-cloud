@@ -84,15 +84,14 @@ async def serve_parsec_asgi_app(
 ) -> None:
     # `app.state.backend` must be overwritten by caller !
     assert app.state.backend is not None
+    assert not parsec_version.startswith("v")
     if app.debug:
-        assert parsec_version.startswith("v")
         # ex: parsec/3.0.1+dev1
-        server_header = f"parsec/{parsec_version[1:]}"
+        server_header = f"parsec/{parsec_version}"
     else:
         v_major, _ = parsec_version.split(".", 1)
-        assert v_major.startswith("v")
         # ex: parsec/3
-        server_header = f"parsec/{v_major[1:]}"
+        server_header = f"parsec/{v_major}"
     # Note: Uvicorn comes with default values for incoming data size to
     # avoid DoS abuse, so just trust them on that ;-)
     config = uvicorn.Config(
