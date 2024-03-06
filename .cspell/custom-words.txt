@@ -155,6 +155,7 @@ exceptiongroup
 excrepr
 executemany
 executescript
+fallocate
 farn
 fastapi
 fdata
@@ -500,6 +501,7 @@ Reencrypting
 ReEncryption
 REFRESHICONHANDLER
 regexes
+releasedir
 renamesourcefileattribute
 renderplugins
 replacen
