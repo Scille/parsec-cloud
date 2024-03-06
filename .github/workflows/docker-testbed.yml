@@ -55,8 +55,10 @@ jobs:
 
       - name: Get current version
         id: version
-        run: |
-          sed -n 's/^.*Tool.Parsec: "\(.*\)",$/current=\1/p' misc/version_updater.py | tee $GITHUB_OUTPUT
+        run: >-
+          PYTHONPATH=. python3
+          misc/releaser.py version --uniq-dev
+          | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Generate build metadata
@@ -66,7 +68,7 @@ jobs:
           images:
             ghcr.io/scille/parsec-cloud/parsec-testbed-server
           tags: |
-            type=raw,value=${{ steps.version.outputs.current }}+{{ date 'YYYYMMDD' }}.sha.{{ sha }}
+            type=raw,value=${{ steps.version.outputs.docker }}
           flavor: |
             latest=${{ github.event_name == 'workflow_dispatch' }}
 

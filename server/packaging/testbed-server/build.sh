@@ -9,11 +9,7 @@ SCRIPTDIR=${SCRIPTDIR:=$(dirname "$(realpath -s "$0")")}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
 ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
-CURRENT_DATE=$(date --iso-8601)
-CURRENT_VERSION=$(grep -o '^version = .*$' $ROOTDIR/server/pyproject.toml | sed 's/version = "\(.*\)"$/\1/' | tr '+' '-' )
-CURRENT_COMMIT_SHA=$(git rev-parse --short HEAD)
-
-UNIQ_TAG="$CURRENT_VERSION.$CURRENT_DATE-sha.$CURRENT_COMMIT_SHA"
+UNIQ_TAG=$(PYTHONPATH=$ROOTDIR python $ROOTDIR/misc/releaser.py version --uniq-dev | sed -n 's/docker=\(.*\)$/\1/p')
 # We use Github package repository to store our docker's container.
 PREFIX=ghcr.io/scille/parsec-cloud
 
