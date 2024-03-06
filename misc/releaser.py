@@ -48,15 +48,20 @@ LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
 BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
-VERSION_UPDATER = PROJECT_DIR / "misc/version_updater.py"
-VERSION_FILE = PROJECT_DIR / "server/parsec/_version.py"
-PYPROJECT_FILE = PROJECT_DIR / "server/pyproject.toml"
-FILES_TO_COMMIT_ON_VERSION_CHANGE = [
-    BUSL_LICENSE_FILE.absolute(),
-    VERSION_FILE.absolute(),
-    PYPROJECT_FILE.absolute(),
-    VERSION_UPDATER.absolute(),
-]
+FILES_TO_COMMIT_ON_VERSION_CHANGE = list(
+    map(
+        lambda path: path.absolute(),
+        [
+            BUSL_LICENSE_FILE,
+            PROJECT_DIR / "server/parsec/_version.py",
+            PROJECT_DIR / "server/pyproject.toml",
+            PROJECT_DIR / "misc/version_updater.py",
+            PROJECT_DIR / "Cargo.lock",
+            PROJECT_DIR / "client/electron/package-lock.json",
+            PROJECT_DIR / "client/package-lock.json",
+        ],
+    )
+)
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
@@ -380,8 +385,15 @@ def get_version_from_code() -> Version:
     return Version.parse(version_updater.TOOLS_VERSION[version_updater.Tool.Parsec])
 
 
-def update_version_files(version: Version) -> None:
-    version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=True)
+def update_version_files(version: Version) -> set[Path]:
+    """
+    Update the required files to the provided version.
+    Return the set of updated files
+    """
+    res = version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=True)
+    if res.errors:
+        raise ReleaseError("Error while updating version files:\n" + "\n".join(res.errors))
+    return res.updated
 
 
 def update_license_file(version: Version, new_release_date: datetime) -> None:
@@ -440,7 +452,7 @@ def ensure_working_on_the_correct_branch(
 
     if version.patch == 0:
         print("Creating release branch...")
-        run_git("switch", "--create", release_branch, *([base_ref] if base_ref else []))
+        run_git("switch", "--force-create", release_branch, *([base_ref] if base_ref else []))
     else:
         raise ReleaseError(
             f"""
@@ -485,11 +497,14 @@ def update_history_changelog(
 
 
 def create_bump_commit_to_new_version(
-    release_version: Version, current_version: Version, newsfragments: list[Path]
+    new_version: Version,
+    current_version: Version,
+    newsfragments: list[Path],
+    files_to_commit: set[Path],
 ) -> None:
-    commit_msg = f"Bump version {current_version} -> {release_version}"
+    commit_msg = f"Bump version {current_version} -> {new_version}"
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
-    run_git("add", HISTORY_FILE.absolute(), *FILES_TO_COMMIT_ON_VERSION_CHANGE)
+    run_git("add", HISTORY_FILE.absolute(), *FILES_TO_COMMIT_ON_VERSION_CHANGE, *files_to_commit)
     if newsfragments:
         fragments_paths = [str(x.absolute()) for x in newsfragments]
         run_git("rm", *fragments_paths)
@@ -498,10 +513,11 @@ def create_bump_commit_to_new_version(
     run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
 
 
-def create_tag_for_new_version(version: Version, tag: str) -> None:
-    print(f"Create tag {COLOR_GREEN}{version}{COLOR_END}")
+def create_tag_for_new_version(version: Version, tag: str, force: bool = False) -> None:
+    print(f"Create tag {COLOR_GREEN}{tag}{COLOR_END}")
     run_git(
         "tag",
+        *(["--force"] if force else []),
         tag,
         f"--message=Release version {version}",
         "--annotate",
@@ -521,22 +537,28 @@ def inspect_tag(tag: str, yes: bool) -> None:
 
 def create_bump_commit_to_dev_version(version: Version, license_eol_date: datetime) -> None:
     dev_version = version.evolve(local="dev")
-    commit_msg = f"Bump version {version} -> {dev_version}"
-    print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
     update_license_file(dev_version, license_eol_date)
-    update_version_files(dev_version)
-    run_git("add", *FILES_TO_COMMIT_ON_VERSION_CHANGE)
-    # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
+    updated_files = update_version_files(dev_version)
+    create_bump_commit_to_new_version(dev_version, version, [], updated_files)
 
 
-def push_release(tag: str, release_branch: str, yes: bool) -> None:
+def push_release(tag: str, release_branch: str, yes: bool, force_push: bool = False) -> None:
     print("Pushing changes to remote...")
 
     if not yes:
         input("Press any key to push the changes to the remote server")
     # Push the release branch and the tag at the same time
-    print(run_git("push", "--set-upstream", "--atomic", "origin", release_branch, tag))
+    print(
+        run_git(
+            "push",
+            "--set-upstream",
+            "--atomic",
+            *(["--force"] if force_push else []),
+            "origin",
+            release_branch,
+            tag,
+        )
+    )
 
 
 def gen_rst_release_entry(
@@ -648,25 +670,34 @@ def check_release(version: Version) -> None:
 
 
 def build_main(args: argparse.Namespace) -> None:
-    if not args.version:
-        raise SystemExit("version is required for build command")
-    # TODO: rethink the non-release checks
-    # current_version = get_version_from_repo_describe_tag(args.verbose)
-    # check_non_release(current_version)
-    release_version: Version = args.version
     yes: bool = args.yes
     base_ref: str | None = args.base_ref
+    current_version = get_version_from_code()
 
-    if release_version.is_dev:
-        raise ReleaseError(f"Releasing a development version is not supported: {release_version}")
-    release_branch = get_release_branch(release_version)
-    tag = "v" + str(release_version)
+    if args.nightly:
+        release_version = generate_uniq_version(current_version)
+        release_branch = "releases/nightly"
+        tag = "nightly"
+    elif not args.version:
+        raise SystemExit("version is required for build command")
+    else:
+        # TODO: rethink the non-release checks
+        # current_version = get_version_from_repo_describe_tag(args.verbose)
+        # check_non_release(current_version)
+        release_version = args.version
+
+        if release_version.is_dev:
+            raise ReleaseError(
+                f"Releasing a development version is not supported: {release_version}"
+            )
+
+        release_branch = get_release_branch(release_version)
+        tag = "v" + str(release_version)
 
     print(f"Release version to build: {COLOR_GREEN}{release_version}{COLOR_END}")
     print(f"Release branch: {COLOR_GREEN}{release_branch}{COLOR_END}")
     print(f"Release commit tag: {COLOR_GREEN}{tag}{COLOR_END}")
 
-    current_version = get_version_from_code()
     if release_version <= current_version:
         raise ReleaseError(
             f"Previous version is greater that the new version ({COLOR_YELLOW}{current_version}{COLOR_END} >= {COLOR_YELLOW}{release_version}{COLOR_END})"
@@ -676,25 +707,29 @@ def build_main(args: argparse.Namespace) -> None:
 
     ensure_working_on_the_correct_branch(release_branch, base_ref, release_version)
 
-    release_date = datetime.utcnow()
+    release_date = datetime.now(tz=timezone.utc)
     license_eol_date = get_licence_eol_date(release_date)
 
     update_license_file(release_version, license_eol_date)
 
-    update_version_files(release_version)
+    updated_files = update_version_files(release_version)
 
     newsfragments = collect_newsfragments()
     update_history_changelog(newsfragments, release_version, yes, release_date)
 
-    create_bump_commit_to_new_version(release_version, current_version, newsfragments)
+    create_bump_commit_to_new_version(
+        release_version, current_version, newsfragments, updated_files
+    )
 
-    create_tag_for_new_version(release_version, tag)
+    create_tag_for_new_version(release_version, tag, force=args.nightly)
 
     inspect_tag(tag, yes)
 
-    create_bump_commit_to_dev_version(release_version, license_eol_date)
+    # No need to create a dev version for a nightly release.
+    if not args.nightly:
+        create_bump_commit_to_dev_version(release_version, license_eol_date)
 
-    push_release(tag, release_branch, yes)
+    push_release(tag, release_branch, yes, force_push=args.nightly)
 
 
 def check_main(args: argparse.Namespace) -> None:
@@ -756,12 +791,7 @@ def version_main(args: argparse.Namespace) -> None:
             setattr(version, part, overwritten_part)
 
     if args.uniq_dev:
-        SECONDS_IN_A_DAY = 24 * 3600
-        now = datetime.now(tz=timezone.utc)
-        short_commit = run_git("rev-parse", "--short", "HEAD").strip()
-        days_since_epoch = math.floor(now.timestamp() / SECONDS_IN_A_DAY)
-        version.dev = days_since_epoch
-        version.local = short_commit
+        version = generate_uniq_version(version)
 
     SNAPCRAFT_MAX_VERSION_LEN = 32
     if len(str(version)) > SNAPCRAFT_MAX_VERSION_LEN:
@@ -785,6 +815,14 @@ def version_main(args: argparse.Namespace) -> None:
             ]
         )
     )
+
+
+def generate_uniq_version(version: Version) -> Version:
+    SECONDS_IN_A_DAY = 24 * 3600
+    now = datetime.now(tz=timezone.utc)
+    short_commit = run_git("rev-parse", "--short", "HEAD").strip()
+    days_since_epoch = math.floor(now.timestamp() / SECONDS_IN_A_DAY)
+    return version.evolve(dev=days_since_epoch, local=short_commit)
 
 
 def acknowledge_main(args: argparse.Namespace) -> None:
@@ -847,7 +885,11 @@ def cli(description: str) -> argparse.Namespace:
         description=build_main.__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    build.add_argument("version", type=Version.parse, help="The new release version")
+    build_exclusion = build.add_mutually_exclusive_group()
+    build_exclusion.add_argument("--version", type=Version.parse, help="The new release version")
+    build_exclusion.add_argument(
+        "--nightly", action="store_true", help="Prepare for a new nightly release"
+    )
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
     build.add_argument(
         "--base",
