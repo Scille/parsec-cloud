@@ -43,7 +43,6 @@
       :key="user.id"
       :user="user"
       :show-checkbox="someSelected"
-      @select="onSelectedChange"
       @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     />
   </ion-list>
@@ -54,7 +53,7 @@ import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps<{
   users: UserCollection;
@@ -68,15 +67,16 @@ defineEmits<{
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: Hotkeys | null = null;
 
-const selectedCount = ref(0);
-const activeUsersCount = props.users.getUsers().filter((user) => !user.isRevoked()).length;
+const activeUsersCount = computed(() => {
+  return props.users.getUsers().filter((user) => !user.isRevoked()).length;
+});
 
 const allSelected = computed(() => {
-  return selectedCount.value > 0 && selectedCount.value === activeUsersCount;
+  return activeUsersCount.value > 0 && props.users.selectedCount() === activeUsersCount.value;
 });
 
 const someSelected = computed(() => {
-  return selectedCount.value > 0;
+  return props.users.selectedCount() > 0;
 });
 
 onMounted(async () => {
@@ -90,17 +90,8 @@ onUnmounted(async () => {
   }
 });
 
-async function onSelectedChange(_entry: UserInfo, _checked: boolean): Promise<void> {
-  selectedCount.value = props.users.selectedCount();
-}
-
 async function selectAll(selected: boolean): Promise<void> {
   props.users.selectAll(selected);
-  if (selected) {
-    selectedCount.value = props.users.selectedCount();
-  } else {
-    selectedCount.value = 0;
-  }
 }
 </script>
 

@@ -37,7 +37,6 @@
         :show-checkbox="someSelected"
         @click="$emit('click', folder, $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-        @selected-change="onSelectedChange"
       />
       <file-list-item
         v-for="file in files.getEntries()"
@@ -46,7 +45,6 @@
         :show-checkbox="someSelected"
         @click="$emit('click', file, $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-        @selected-change="onSelectedChange"
       />
       <file-list-item-importing
         v-for="fileImport in importing"
@@ -100,8 +98,6 @@ const allSelected = computed(() => {
 const someSelected = computed(() => {
   return props.files.selectedCount() + props.folders.selectedCount() > 0;
 });
-
-async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}
 
 async function selectAll(selected: boolean): Promise<void> {
   props.files.selectAll(selected);
