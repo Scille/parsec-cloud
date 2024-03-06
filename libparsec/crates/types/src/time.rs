@@ -187,6 +187,12 @@ impl From<DateTime> for chrono::DateTime<chrono::Utc> {
     }
 }
 
+impl From<DateTime> for std::time::SystemTime {
+    fn from(dt: DateTime) -> Self {
+        dt.0.into()
+    }
+}
+
 impl From<LocalDateTime> for DateTime {
     fn from(ldt: LocalDateTime) -> Self {
         Self(ldt.0.into())
