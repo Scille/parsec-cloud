@@ -71,6 +71,96 @@ impl From<ConnectionError> for WorkspaceStatEntryError {
     }
 }
 
+pub(crate) async fn stat_entry_by_id(
+    ops: &WorkspaceOps,
+    entry_id: VlobID,
+) -> Result<EntryStat, WorkspaceStatEntryError> {
+    if entry_id == ops.realm_id {
+        let manifest = ops.store.get_workspace_manifest();
+
+        // Ensure children are sorted alphabetically to simplify testing
+        let children = {
+            let mut children: Vec<_> = manifest
+                .children
+                .iter()
+                .map(|(name, id)| (name.to_owned(), *id))
+                .collect();
+            children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
+            children
+        };
+
+        let info = EntryStat::Folder {
+            confinement_point: None,
+            id: manifest.base.id,
+            created: manifest.base.created,
+            updated: manifest.updated,
+            base_version: manifest.base.version,
+            is_placeholder: manifest.base.version == 0,
+            need_sync: manifest.need_sync,
+            children,
+        };
+
+        return Ok(info);
+    }
+
+    let manifest = ops
+        .store
+        .get_child_manifest(entry_id)
+        .await
+        .map_err(|err| match err {
+            GetEntryError::Offline => WorkspaceStatEntryError::Offline,
+            GetEntryError::Stopped => WorkspaceStatEntryError::Stopped,
+            GetEntryError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+            GetEntryError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+            GetEntryError::InvalidKeysBundle(err) => {
+                WorkspaceStatEntryError::InvalidKeysBundle(err)
+            }
+            GetEntryError::InvalidCertificate(err) => {
+                WorkspaceStatEntryError::InvalidCertificate(err)
+            }
+            GetEntryError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
+            GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
+        })?;
+
+    let info = match manifest {
+        ArcLocalChildManifest::Folder(manifest) => {
+            // Ensure children are sorted alphabetically to simplify testing
+            let children = {
+                let mut children: Vec<_> = manifest
+                    .children
+                    .iter()
+                    .map(|(name, id)| (name.to_owned(), *id))
+                    .collect();
+                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
+                children
+            };
+
+            EntryStat::Folder {
+                confinement_point: None,
+                id: manifest.base.id,
+                created: manifest.base.created,
+                updated: manifest.updated,
+                base_version: manifest.base.version,
+                is_placeholder: manifest.base.version == 0,
+                need_sync: manifest.need_sync,
+                children,
+            }
+        }
+        ArcLocalChildManifest::File(manifest) => EntryStat::File {
+            confinement_point: None,
+            id: manifest.base.id,
+            created: manifest.base.created,
+            updated: manifest.updated,
+            base_version: manifest.base.version,
+            is_placeholder: manifest.base.version == 0,
+            need_sync: manifest.need_sync,
+            size: manifest.size,
+        },
+    };
+
+    Ok(info)
+}
+
 pub(crate) async fn stat_entry(
     ops: &WorkspaceOps,
     path: &FsPath,

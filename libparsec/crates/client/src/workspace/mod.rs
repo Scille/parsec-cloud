@@ -19,25 +19,29 @@ use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, InboundSyncOutcome, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
-    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
-    WorkspaceFdResizeError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    EntryStat, FileStat, InboundSyncOutcome, OpenOptions, OutboundSyncOutcome,
+    WorkspaceCreateFileError, WorkspaceCreateFolderError, WorkspaceFdCloseError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
+    WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
     WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceSyncError,
 };
 
 use self::store::FileUpdater;
 
+#[derive(Debug)]
 enum ReadMode {
     Allowed,
     Denied,
 }
 
+#[derive(Debug)]
 enum WriteMode {
     Allowed,
     Denied,
 }
 
+#[derive(Debug)]
 struct OpenedFileCursor {
     file_descriptor: FileDescriptor,
     read_mode: ReadMode,
@@ -85,6 +89,8 @@ pub struct WorkspaceOps {
     /// certificates, and hence can be updated at any time.
     workspace_entry: Mutex<LocalUserManifestWorkspaceEntry>,
 }
+
+impl std::panic::UnwindSafe for WorkspaceOps {}
 
 impl std::fmt::Debug for WorkspaceOps {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -237,12 +243,31 @@ impl WorkspaceOps {
      * Public interface
      */
 
+    pub fn config(&self) -> &ClientConfig {
+        &self.config
+    }
+
     pub fn realm_id(&self) -> VlobID {
         self.realm_id
     }
 
+    pub fn name(&self) -> EntryName {
+        self.workspace_entry
+            .lock()
+            .expect("Mutex is poisoned")
+            .name
+            .clone()
+    }
+
     pub async fn stat_entry(&self, path: &FsPath) -> Result<EntryStat, WorkspaceStatEntryError> {
         transactions::stat_entry(self, path).await
+    }
+
+    pub async fn stat_entry_by_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<EntryStat, WorkspaceStatEntryError> {
+        transactions::stat_entry_by_id(self, entry_id).await
     }
 
     pub async fn rename_entry(
@@ -252,6 +277,21 @@ impl WorkspaceOps {
         overwrite: bool,
     ) -> Result<(), WorkspaceRenameEntryError> {
         transactions::rename_entry(self, path, new_name, overwrite).await
+    }
+
+    pub async fn move_entry(
+        &self,
+        src: FsPath,
+        dst: FsPath,
+        overwrite: bool,
+    ) -> Result<(), WorkspaceRenameEntryError> {
+        if src.parent() == dst.parent() {
+            if let Some(dst_name) = dst.name() {
+                return self.rename_entry(src, dst_name.to_owned(), overwrite).await;
+            }
+        }
+        todo!()
+        // transactions::move_entry(self, path, new_name, overwrite).await
     }
 
     pub async fn create_folder(&self, path: FsPath) -> Result<VlobID, WorkspaceCreateFolderError> {
@@ -322,6 +362,16 @@ impl WorkspaceOps {
         path: FsPath,
         options: OpenOptions,
     ) -> Result<FileDescriptor, WorkspaceOpenFileError> {
+        transactions::open_file(self, path, options)
+            .await
+            .map(|(fd, _)| fd)
+    }
+
+    pub async fn open_file_and_get_id(
+        &self,
+        path: FsPath,
+        options: OpenOptions,
+    ) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
         transactions::open_file(self, path, options).await
     }
 
@@ -360,6 +410,24 @@ impl WorkspaceOps {
     ) -> Result<u64, WorkspaceFdWriteError> {
         transactions::fd_write(self, fd, offset, data, false).await
     }
+
+    pub async fn fd_stat(&self, fd: FileDescriptor) -> Result<FileStat, WorkspaceFdStatError> {
+        transactions::fd_stat(self, fd).await
+    }
+
+    // TODO: add `rename_entry` `move_entry` `create_folder` `create_file` `remove_entry` & `open_file`
+    //       versions that work with parent entry_id instead of path (to match more closely how FUSE works)
+
+    // TODO: a `fd_write_buff()` taking a `Vec<u8>` instead of `&[u8]` would be useful
+    //       to avoid extra copy in FUSE
+
+    // TODO: a `fd_copy_file_range` would be useful to avoid extra copy in FUSE
+
+    // TODO: a `fd_allocate` would be useful to set the blocksize according to the
+    //       expected final file size
+
+    // TODO: a `stat_entry_and_children` would be useful for FUSE to implement
+    //       `readdirplus` that avoid extra round-trips when doing ls
 
     pub async fn fd_write_with_constrained_io(
         &self,

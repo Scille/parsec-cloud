@@ -468,6 +468,8 @@ pub(super) struct WorkspaceStore {
     storage: AsyncMutex<Option<WorkspaceStorage>>,
 }
 
+impl std::panic::UnwindSafe for WorkspaceStore {}
+
 impl WorkspaceStore {
     pub(crate) async fn start(
         data_base_dir: &Path,
