@@ -92,8 +92,8 @@ export async function entryStat(path: FsPath): Promise<Result<EntryStat, Workspa
   }
 
   function generateChildren(): Array<[string, string]> {
-    const fileCount = Math.floor(Math.random() * 15) + 1;
-    const folderCount = Math.floor(Math.random() * 15) + 1;
+    const fileCount = Math.floor(Math.random() * 1) + 2;
+    const folderCount = Math.floor(Math.random() * 1) + 2;
 
     const result: Array<[string, string]> = [];
     for (let i = 0; i < fileCount + folderCount; i++) {

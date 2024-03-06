@@ -212,7 +212,7 @@ async function updateRoute(): Promise<void> {
       id: 1,
       display: workspaceName.value,
       name: Routes.Documents,
-      query: { documentPath: '/' },
+      query: { documentPath: '/', workspaceId: workspaceId },
       params: getCurrentRouteParams(),
     });
     for (let i = 0; i < workspacePath.length; i++) {
@@ -221,7 +221,7 @@ async function updateRoute(): Promise<void> {
         id: i + 2,
         display: workspacePath[i],
         name: Routes.Documents,
-        query: { documentPath: `/${rebuildPath.join('/')}` },
+        query: { documentPath: `/${rebuildPath.join('/')}`, workspaceId: workspaceId },
         params: getCurrentRouteParams(),
       });
     }

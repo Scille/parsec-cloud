@@ -173,7 +173,7 @@ describe('Check folders page', () => {
   });
 
   it('Tests delete multiple files', () => {
-    cy.get('.folder-list-header').find('ion-checkbox').invoke('show').click();
+    cy.get('.folder-list-header').find('ion-checkbox').click();
     cy.get('#button-delete').contains('Delete').click();
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete multiple items');
     cy.get('.question-modal')
