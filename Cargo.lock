@@ -1896,6 +1896,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
+ "libparsec_platform_mountpoint",
  "libparsec_platform_storage",
  "libparsec_protocol",
  "libparsec_serialization_format",
@@ -2069,17 +2070,18 @@ dependencies = [
 name = "libparsec_platform_mountpoint"
 version = "3.0.0-a.0+dev"
 dependencies = [
- "chrono",
  "ctrlc",
  "env_logger",
  "fuser",
  "libc",
+ "libparsec_client",
+ "libparsec_client_connection",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",
  "libparsec_types",
  "once_cell",
  "regex",
- "thiserror",
+ "tokio",
  "winfsp_build",
  "winfsp_wrs",
 ]
