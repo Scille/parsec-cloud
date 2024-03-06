@@ -12,7 +12,8 @@ use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
 
 use crate::handle::{
-    borrow_from_handle, register_handle_with_init, take_and_close_handle, Handle, HandleItem,
+    borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
+    FilterCloseHandle, Handle, HandleItem,
 };
 
 fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::WorkspaceOps>> {
@@ -127,7 +128,9 @@ pub enum WorkspaceStopError {
 }
 
 pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError> {
-    let (client_handle, realm_id) = take_and_close_handle(workspace, |x| match x {
+    let workspace_handle = workspace;
+
+    let (client_handle, realm_id) = take_and_close_handle(workspace_handle, |x| match x {
         HandleItem::Workspace {
             client,
             workspace_ops,
@@ -147,7 +150,207 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
 
     client.stop_workspace(realm_id).await;
 
+    // Finally cleanup the handles related to the workspace's mountpoints
+    // (Note the mountpoints are automatically unmounted when the handle item is dropped).
+    loop {
+        let mut maybe_wait = None;
+        filter_close_handles(client_handle, |_, x| match x {
+            HandleItem::Mountpoint {
+                workspace: x_workspace,
+                ..
+            } if *x_workspace == workspace_handle => FilterCloseHandle::Close,
+            // If something is still starting, it will most likely won't go very far
+            // (all workspace ops now are stopped), but we have to wait for it anyway
+            HandleItem::StartingMountpoint {
+                workspace: x_workspace,
+                to_wake_on_done,
+                ..
+            } if *x_workspace == workspace_handle => {
+                if maybe_wait.is_none() {
+                    let event = Event::new();
+                    let listener = event.listen();
+                    to_wake_on_done.push(event);
+                    maybe_wait = Some(listener);
+                }
+                FilterCloseHandle::Keep
+            }
+            _ => FilterCloseHandle::Keep,
+        });
+        // Note there is no risk (in theory it least !) to end up in an infinite
+        // loop here: the workspace's handle is closed so no new workspace mount
+        // commands can be issued and we only process the remaining ones.
+        match maybe_wait {
+            Some(listener) => listener.await,
+            None => break,
+        }
+    }
+
     Ok(())
+}
+
+/*
+ * Mount workspace
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceMountError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn workspace_mount(
+    _workspace: Handle,
+) -> Result<(Handle, std::path::PathBuf), WorkspaceMountError> {
+    Err(WorkspaceMountError::Internal(anyhow::anyhow!(
+        "Not available in web"
+    )))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn workspace_mount(
+    workspace: Handle,
+) -> Result<(Handle, std::path::PathBuf), WorkspaceMountError> {
+    let workspace_handle = workspace;
+    let (client_handle, workspace) = borrow_from_handle(workspace_handle, |x| match x {
+        HandleItem::Workspace {
+            client,
+            workspace_ops,
+            ..
+        } => Some((*client, workspace_ops.clone())),
+        _ => None,
+    })?;
+
+    // 1. Check if the mountpoint isn't already started (or starting)
+
+    enum RegisterFailed {
+        AlreadyRegistered((Handle, std::path::PathBuf)),
+        ConcurrentRegister(EventListener),
+    }
+    let initializing = loop {
+        let outcome = register_handle_with_init(
+            HandleItem::StartingMountpoint {
+                client: client_handle,
+                workspace: workspace_handle,
+                to_wake_on_done: vec![],
+            },
+            // We don't check if the mountpoint path is already used in the precondition,
+            // this is because if that's the case the mount operation will simply fail
+            |handle, item| match item {
+                HandleItem::Mountpoint {
+                    workspace: x_workspace,
+                    mountpoint: x_mountpoint,
+                    ..
+                } if *x_workspace == workspace_handle => Err(RegisterFailed::AlreadyRegistered((
+                    handle,
+                    x_mountpoint.path().to_owned(),
+                ))),
+                HandleItem::StartingMountpoint {
+                    workspace: x_workspace,
+                    to_wake_on_done,
+                    ..
+                } if *x_workspace == workspace_handle => {
+                    let event = Event::new();
+                    let listener = event.listen();
+                    to_wake_on_done.push(event);
+                    Err(RegisterFailed::ConcurrentRegister(listener))
+                }
+                _ => Ok(()),
+            },
+        );
+
+        match outcome {
+            Ok(initializing) => break initializing,
+            Err(RegisterFailed::AlreadyRegistered((handle, mountpoint_path))) => {
+                // Go idempotent here
+                return Ok((handle, mountpoint_path));
+            }
+            // Wait for concurrent operation to finish before retrying
+            Err(RegisterFailed::ConcurrentRegister(listener)) => listener.await,
+        }
+    };
+
+    // 2. Actually do the mount
+
+    let mountpoint = libparsec_platform_mountpoint::Mountpoint::mount(workspace).await?;
+
+    // 3. Finally register the mountpoint to get a handle
+
+    let mountpoint_path = mountpoint.path().to_owned();
+    let handle = initializing.initialized(HandleItem::Mountpoint {
+        client: client_handle,
+        workspace: workspace_handle,
+        mountpoint,
+    });
+
+    Ok((handle, mountpoint_path))
+}
+
+/*
+ * Unmount workspace
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum MountpointUnmountError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn mountpoint_unmount(_mountpoint: Handle) -> Result<(), MountpointUnmountError> {
+    Err(MountpointUnmountError::Internal(anyhow::anyhow!(
+        "Not available in web"
+    )))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn mountpoint_unmount(mountpoint: Handle) -> Result<(), MountpointUnmountError> {
+    let mountpoint = take_and_close_handle(mountpoint, |x| match x {
+        HandleItem::Mountpoint { mountpoint, .. } => Ok(mountpoint),
+        // Note we consider an error if the handle is in `HandleItem::StartingMountpoint` state
+        // this is because at that point this is not a legit use of the handle given it
+        // has never been yet provided to the caller in the first place !
+        // On top of that it simplifies the start logic (given it guarantees nothing will
+        // concurrently close the handle)
+        invalid => Err(invalid),
+    })?;
+
+    mountpoint
+        .unmount()
+        .await
+        .map_err(MountpointUnmountError::Internal)
+}
+
+/*
+ * Get file path in mountpoint
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum MountpointToOsPathError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[cfg(target_arch = "wasm32")]
+pub async fn mountpoint_to_os_path(
+    _mountpoint: Handle,
+    _parsec_path: FsPath,
+) -> Result<std::path::PathBuf, MountpointToOsPathError> {
+    Err(MountpointToOsPathError::Internal(anyhow::anyhow!(
+        "Not available in web"
+    )))
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn mountpoint_to_os_path(
+    mountpoint: Handle,
+    parsec_path: FsPath,
+) -> Result<std::path::PathBuf, MountpointToOsPathError> {
+    borrow_from_handle(mountpoint, |x| match x {
+        HandleItem::Mountpoint { mountpoint, .. } => Some(mountpoint.to_os_path(&parsec_path)),
+        _ => None,
+    })
+    .map_err(MountpointToOsPathError::Internal)
 }
 
 /*
