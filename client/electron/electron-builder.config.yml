@@ -30,7 +30,7 @@ linux:
     cryptographically secure file hosting.
   category: Office Network FileTransfer FileSystem Security
   desktop:
-    MimeType: x-scheme-handler/parsec;
+    MimeType: x-scheme-handler/parsec3;
 
 snap:
   base: core20
