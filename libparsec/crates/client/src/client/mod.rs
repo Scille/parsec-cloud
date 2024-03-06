@@ -223,8 +223,8 @@ impl Client {
      * Public interface
      */
 
-    pub fn config(&self) -> Arc<ClientConfig> {
-        self.config.clone()
+    pub fn config(&self) -> &ClientConfig {
+        &self.config
     }
 
     pub fn organization_addr(&self) -> &ParsecOrganizationAddr {
