@@ -23,7 +23,9 @@ libparsec_testbed = { workspace = true, optional = true }
 zeroize = { workspace = true, features = ["alloc"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dirs = { workspace = true }
 keyring = { workspace = true, features = ["platform-all"] }
+uuid = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { workspace = true, features = ["Window", "Storage"] }

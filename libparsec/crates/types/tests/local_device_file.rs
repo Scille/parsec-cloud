@@ -88,8 +88,9 @@ fn keyring_device_file(alice: &Device) {
     //   organization_id: "CoolOrg"
     //   device_id: "alice@dev1"
     //   slug: "f78292422e#CoolOrg#alice@dev1"
+    //   keyring_user: "keyring_user"
     let filedata = hex!(
-        "97a76b657972696e67c5021141d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d"
+        "99a76b657972696e67c5021141d162cceacbc6845a582ee1497e37469ce46e6e09b33e1cd5d68d"
         "0e054188e38aa85e2a02d0a344cd986e712274f8824f9464fa5a27f7f2291f42cf579b6be44e07"
         "33f89a07f45150dfd8096634f685a44db07693e085e3af6f5525c14216f3860adaf612c4a8235e"
         "005bc1f9dc31aa24f49383b5afb9f7a2e788bbadb675894a5f316085449b223df957b799140fe9"
@@ -105,7 +106,8 @@ fn keyring_device_file(alice: &Device) {
         "dc98e7b33afae58d4edb101475c29fd9804a7bd9adfc99bc2697e16c460e5a4f2dc792b1616c69"
         "6365406578616d706c652e636f6db2416c69636579204d63416c69636546616365af4d79206465"
         "7631206d616368696e65aa616c6963654064657631a7436f6f6c4f7267bd663738323932343232"
-        "6523436f6f6c4f726723616c6963654064657631"
+        "6523436f6f6c4f726723616c6963654064657631a6706172736563ac6b657972696e675f757365"
+        "72"
     );
 
     let expected = DeviceFileKeyring {
@@ -133,6 +135,8 @@ fn keyring_device_file(alice: &Device) {
         device_id: alice.device_id.to_owned(),
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
+        keyring_service: "parsec".into(),
+        keyring_user: "keyring_user".into(),
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFileKeyring>(&filedata).unwrap();
