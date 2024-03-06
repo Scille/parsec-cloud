@@ -77,7 +77,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
 
     builder.certificates_storage_fetch_certificates("bob@dev1");
     builder
-        .user_storage_local_update("alice@dev1")
+        .user_storage_local_update("bob@dev1")
         .update_local_workspaces_with_fetched_certificates();
     builder.user_storage_fetch_realm_checkpoint("bob@dev1");
     builder.workspace_data_storage_fetch_workspace_vlob("bob@dev1", wksp1_id, None);
