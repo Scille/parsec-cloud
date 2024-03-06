@@ -17,6 +17,7 @@ from .common import (
     VlobID,
     Structure,
     U32BasedType,
+    Path,
 )
 
 
@@ -40,6 +41,35 @@ class WorkspaceStopError(ErrorVariant):
 
 
 async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
+    raise NotImplementedError
+
+
+class WorkspaceMountError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_mount(workspace: Handle) -> Result[tuple[Handle, Path], WorkspaceMountError]:
+    raise NotImplementedError
+
+
+class MountpointUnmountError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def mountpoint_unmount(mountpoint: Handle) -> Result[None, MountpointUnmountError]:
+    raise NotImplementedError
+
+
+class MountpointToOsPathError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def mountpoint_to_os_path(
+    mountpoint: Handle, parsec_path: FsPath
+) -> Result[Path, MountpointToOsPathError]:
     raise NotImplementedError
 
 

@@ -160,16 +160,25 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // we don't miss any event fired during client teardown
     drop(on_event);
 
-    // Finally cleanup the handles related to the client's workspaces
+    // Finally cleanup the handles related to the client's workspaces and mountpoints
+    // (Note the mountpoints are automatically unmounted when the handle item is dropped).
     loop {
         let mut maybe_wait = None;
         filter_close_handles(client_handle, |_, x| match x {
             HandleItem::Workspace {
                 client: x_client, ..
+            }
+            | HandleItem::Mountpoint {
+                client: x_client, ..
             } if *x_client == client_handle => FilterCloseHandle::Close,
             // If something is still starting, it will most likely won't go very far
             // (all workspace ops now are stopped), but we have to wait for it anyway
-            HandleItem::StartingWorkspace {
+            HandleItem::StartingMountpoint {
+                client: x_client,
+                to_wake_on_done,
+                ..
+            }
+            | HandleItem::StartingWorkspace {
                 client: x_client,
                 to_wake_on_done,
                 ..

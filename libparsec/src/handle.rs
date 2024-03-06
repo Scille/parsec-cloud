@@ -34,6 +34,20 @@ pub(crate) enum HandleItem {
         client: Handle,
         workspace_ops: Arc<libparsec_client::WorkspaceOps>,
     },
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+    StartingMountpoint {
+        client: Handle,
+        workspace: Handle,
+        // Concurrent start for the same mountpoint will register itself here
+        to_wake_on_done: Vec<Event>,
+    },
+    #[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+    Mountpoint {
+        client: Handle,
+        workspace: Handle,
+        #[cfg(not(target_arch = "wasm32"))]
+        mountpoint: libparsec_platform_mountpoint::Mountpoint,
+    },
 
     UserGreetInitial(libparsec_client::UserGreetInitialCtx),
     DeviceGreetInitial(libparsec_client::DeviceGreetInitialCtx),
