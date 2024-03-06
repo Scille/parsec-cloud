@@ -33,9 +33,12 @@ linux:
     MimeType: x-scheme-handler/parsec;
 
 snap:
-  base: core20
+  base: core22
   # Currently the snap is not ready for production
   grade: devel
   allowNativeWayland: true
+  stagePackages:
+    - default
+    - fuse3
 
 extends: null
