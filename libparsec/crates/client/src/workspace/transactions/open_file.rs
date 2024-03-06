@@ -15,6 +15,7 @@ use crate::{
     },
 };
 
+#[derive(Debug)]
 pub struct OpenOptions {
     pub read: bool,
     pub write: bool,
@@ -62,14 +63,23 @@ pub async fn open_file(
     ops: &WorkspaceOps,
     path: FsPath,
     options: OpenOptions,
-) -> Result<FileDescriptor, WorkspaceOpenFileError> {
-    // 0) Handle root early as it is a special case (cannot use `get_child_manifest` for it)
+) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
+    // 0) Access control
+
+    if options.write || options.truncate || options.create || options.create_new {
+        let guard = ops.workspace_entry.lock().expect("mutex is poisoned");
+        if !guard.role.can_write() {
+            return Err(WorkspaceOpenFileError::ReadOnlyRealm);
+        }
+    }
+
+    // 1) Handle root early as it is a special case (cannot use `get_child_manifest` for it)
 
     if path.is_root() {
         return Err(WorkspaceOpenFileError::EntryNotAFile);
     }
 
-    // 1) Resolve the file path (and create the file if needed)
+    // 2) Resolve the file path (and create the file if needed)
 
     let entry_id = {
         let outcome = ops.store.resolve_path(&path).await;
@@ -141,16 +151,17 @@ pub async fn open_file(
 
     // Handling of truncate-on-open, will be done in the next step
 
-    let maybe_truncate_on_open = |file_manifest: &mut Arc<LocalFileManifest>| {
-        // Handle truncate-on-open
-        if options.truncate {
-            let file_manifest = Arc::make_mut(file_manifest);
-            let removed_chunks = super::prepare_resize(file_manifest, 0, ops.device.now());
-            removed_chunks.into_iter().collect()
-        } else {
-            vec![]
-        }
-    };
+    let maybe_truncate_on_open =
+        |file_manifest: &mut Arc<LocalFileManifest>| -> Option<Vec<ChunkID>> {
+            // Handle truncate-on-open
+            if options.truncate && file_manifest.size > 0 {
+                let file_manifest = Arc::make_mut(file_manifest);
+                let removed_chunks = super::prepare_resize(file_manifest, 0, ops.device.now());
+                Some(removed_chunks.into_iter().collect())
+            } else {
+                None
+            }
+        };
 
     enum CursorInsertionOutcome {
         OpenedFile {
@@ -184,7 +195,10 @@ pub async fn open_file(
         let cursor_insertion_outcome = match outcome {
             // The file exists and is not currently opened
             Ok((updater, mut manifest)) => {
-                let removed_chunks = maybe_truncate_on_open(&mut manifest);
+                let (removed_chunks, flush_needed) = match maybe_truncate_on_open(&mut manifest) {
+                    None => (vec![], false),
+                    Some(removed_chunks) => (removed_chunks, true),
+                };
                 let opened_file = Arc::new(AsyncMutex::new(OpenedFile {
                     updater,
                     manifest,
@@ -192,7 +206,7 @@ pub async fn open_file(
                     cursors: vec![cursor],
                     new_chunks: vec![],
                     removed_chunks,
-                    flush_needed: false,
+                    flush_needed,
                 }));
                 opened_files_guard
                     .opened_files
@@ -262,7 +276,7 @@ pub async fn open_file(
     };
 
     match cursor_insertion_outcome {
-        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok(file_descriptor),
+        CursorInsertionOutcome::OpenedFile { file_descriptor } => Ok((file_descriptor, entry_id)),
         CursorInsertionOutcome::FileAlreadyOpened {
             opened_file,
             new_cursor,
@@ -270,9 +284,11 @@ pub async fn open_file(
             let file_descriptor = new_cursor.file_descriptor;
             let mut opened_file_guard = opened_file.lock().await;
             opened_file_guard.cursors.push(new_cursor);
-            let removed_chunks = maybe_truncate_on_open(&mut opened_file_guard.manifest);
-            opened_file_guard.removed_chunks.extend(removed_chunks);
-            Ok(file_descriptor)
+            if let Some(removed_chunks) = maybe_truncate_on_open(&mut opened_file_guard.manifest) {
+                opened_file_guard.flush_needed = true;
+                opened_file_guard.removed_chunks.extend(removed_chunks);
+            }
+            Ok((file_descriptor, entry_id))
         }
     }
 }
