@@ -58,6 +58,7 @@
 
         <ion-item
           button
+          v-show="isDesktop()"
           @click="onClick(FileAction.Open)"
           class="ion-no-padding list-group-item"
         >
@@ -69,6 +70,7 @@
 
         <ion-item
           button
+          v-show="false"
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
         >

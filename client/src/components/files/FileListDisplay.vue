@@ -64,7 +64,7 @@ import FileListItemImporting from '@/components/files/FileListItemImporting.vue'
 import { EntryCollection, EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, onMounted, onUnmounted } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
@@ -81,8 +81,6 @@ defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
 }>();
 
-const selectedCount = ref(0);
-
 onMounted(async () => {
   hotkeys = hotkeyManager.newHotkeys(Groups.Workspaces);
   hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop | Platforms.Web, async () => await selectAll(true));
@@ -95,25 +93,19 @@ onUnmounted(async () => {
 });
 
 const allSelected = computed(() => {
-  return selectedCount.value === props.files.getEntries().length + props.folders.getEntries().length;
+  const selectedCount = props.files.selectedCount() + props.folders.selectedCount();
+  return selectedCount > 0 && selectedCount === props.files.entriesCount() + props.folders.entriesCount();
 });
 
 const someSelected = computed(() => {
-  return selectedCount.value > 0;
+  return props.files.selectedCount() + props.folders.selectedCount() > 0;
 });
 
-async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {
-  selectedCount.value = props.files.getSelectedEntries().length + props.folders.getSelectedEntries().length;
-}
+async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}
 
 async function selectAll(selected: boolean): Promise<void> {
   props.files.selectAll(selected);
   props.folders.selectAll(selected);
-  if (selected) {
-    selectedCount.value = props.files.getEntries().length + props.folders.getEntries().length;
-  } else {
-    selectedCount.value = 0;
-  }
 }
 </script>
 
