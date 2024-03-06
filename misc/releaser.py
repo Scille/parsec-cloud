@@ -189,6 +189,14 @@ class Version:
     def without_local(self) -> Version:
         return self.evolve(local=None)
 
+    def docker_tag(self) -> str:
+        """
+        Format the version into a docker tag.
+        A docker tag is human-readable identifier composed of [a-zA-Z0-9_.-]
+        https://docs.docker.com/reference/cli/docker/image/tag/
+        """
+        return str(self).replace("+", ".")
+
     def __repr__(self) -> str:
         return f"Version(major={self.major}, minor={self.minor}, patch={self.patch}, prerelease={self.prerelease}, dev={self.dev}, local={self.local})"
 
@@ -782,6 +790,7 @@ def version_main(args: argparse.Namespace) -> None:
                 f"dev={version.dev or ''}",
                 f"local={version.local or ''}",
                 f"no_local={version.without_local()}",
+                f"docker={version.docker_tag()}",
             ]
         )
     )

@@ -45,8 +45,11 @@ jobs:
 
       - name: Get current version
         id: version
-        run: |
-          sed -n 's/^.*Tool.Parsec: "\(.*\)",$/current=\1/p' misc/version_updater.py | tee $GITHUB_OUTPUT
+        run: >-
+          PYTHONPATH=. python3
+          misc/releaser.py version --uniq-dev
+          | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
 
       - name: Generate build metadata
         uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
@@ -57,7 +60,8 @@ jobs:
           tags: |
             type=semver,pattern={{ version }}
             type=semver,pattern={{ major }}.{{ minor }}
-            type=raw,value=${{ steps.version.outputs.current }}+{{ date 'YYYYMMDD' }}.sha.{{ sha }}
+            type=raw,value=${{ steps.version.outputs.docker }}
+            type=schedule,enable=${{ github.event_name == 'push' && github.ref_type == 'tag' && github.ref == 'refs/tags/nightly' && 'true' || 'false' }},pattern=nightly
           flavor: |
             latest=${{ github.event_name == 'push' && github.ref_type == 'tag' }}
 
