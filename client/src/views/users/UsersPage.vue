@@ -461,6 +461,5 @@ onUnmounted(async () => {
   flex-wrap: wrap;
   gap: 1.5em;
   overflow-y: auto;
-  height: 100%;
 }
 </style>
