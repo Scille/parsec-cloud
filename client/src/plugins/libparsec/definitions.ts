@@ -1168,6 +1168,30 @@ export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
 
+// MountpointToOsPathError
+export enum MountpointToOsPathErrorTag {
+    Internal = 'MountpointToOsPathErrorInternal',
+}
+
+export interface MountpointToOsPathErrorInternal {
+    tag: MountpointToOsPathErrorTag.Internal
+    error: string
+}
+export type MountpointToOsPathError =
+  | MountpointToOsPathErrorInternal
+
+// MountpointUnmountError
+export enum MountpointUnmountErrorTag {
+    Internal = 'MountpointUnmountErrorInternal',
+}
+
+export interface MountpointUnmountErrorInternal {
+    tag: MountpointUnmountErrorTag.Internal
+    error: string
+}
+export type MountpointUnmountError =
+  | MountpointUnmountErrorInternal
+
 // ParseBackendAddrError
 export enum ParseBackendAddrErrorTag {
     InvalidUrl = 'ParseBackendAddrErrorInvalidUrl',
@@ -1558,6 +1582,18 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorBadFileDescriptor
   | WorkspaceFdWriteErrorInternal
   | WorkspaceFdWriteErrorNotInWriteMode
+
+// WorkspaceMountError
+export enum WorkspaceMountErrorTag {
+    Internal = 'WorkspaceMountErrorInternal',
+}
+
+export interface WorkspaceMountErrorInternal {
+    tag: WorkspaceMountErrorTag.Internal
+    error: string
+}
+export type WorkspaceMountError =
+  | WorkspaceMountErrorInternal
 
 // WorkspaceOpenFileError
 export enum WorkspaceOpenFileErrorTag {
@@ -2109,6 +2145,13 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
+    mountpointToOsPath(
+        mountpoint: Handle,
+        parsec_path: FsPath
+    ): Promise<Result<Path, MountpointToOsPathError>>
+    mountpointUnmount(
+        mountpoint: Handle
+    ): Promise<Result<null, MountpointUnmountError>>
     newCanceller(
     ): Promise<Handle>
     parseBackendAddr(
@@ -2176,6 +2219,9 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<VlobID, WorkspaceCreateFolderError>>
+    workspaceMount(
+        workspace: Handle
+    ): Promise<Result<[Handle, Path], WorkspaceMountError>>
     workspaceOpenFile(
         workspace: Handle,
         path: FsPath,
