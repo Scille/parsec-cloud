@@ -8,6 +8,12 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
+
+# TODO: fix pyright error
+# - error: "VLOB_READ_REQUEST_ITEMS_LIMIT" is unknown import symbol (reportGeneralTypeIssues)
+# from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
+VLOB_READ_REQUEST_ITEMS_LIMIT = 1000
+
 from tests.common import Backend, CoolorgRpcClients
 
 
@@ -133,3 +139,31 @@ async def test_authenticated_vlob_read_versions_ok(
         needed_common_certificate_timestamp=DateTime(2000, 1, 6),
         needed_realm_certificate_timestamp=DateTime(2020, 1, 2),
     )
+
+
+async def test_authenticated_vlob_read_version_realm_not_found(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    bad_realm_id = VlobID.new()
+    rep = await coolorg.alice.vlob_read_versions(realm_id=bad_realm_id, items=[(VlobID.new(), 1)])
+    assert rep == authenticated_cmds.v4.vlob_read_versions.RepRealmNotFound()
+
+
+async def test_authenticated_vlob_read_version_author_not_allowed(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    rep = await coolorg.mallory.vlob_read_versions(
+        realm_id=coolorg.wksp1_id, items=[(VlobID.new(), 1)]
+    )
+    assert rep == authenticated_cmds.v4.vlob_read_versions.RepAuthorNotAllowed()
+
+
+async def test_authenticated_vlob_read_version_too_many_elements(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    too_many_items = [(VlobID.new(), int(1))] * (VLOB_READ_REQUEST_ITEMS_LIMIT + 1)
+    rep = await coolorg.alice.vlob_read_versions(
+        realm_id=coolorg.wksp1_id,
+        items=too_many_items,
+    )
+    assert rep == authenticated_cmds.v4.vlob_read_versions.RepTooManyElements()

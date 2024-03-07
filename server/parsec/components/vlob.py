@@ -26,6 +26,9 @@ from parsec.types import BadOutcomeEnum
 
 logger = get_logger()
 
+# Maximum number of vlobs that can be read in a single request
+VLOB_READ_REQUEST_ITEMS_LIMIT: int = 1000
+
 
 @dataclass(slots=True)
 class SequesterInconsistency:
@@ -401,7 +404,7 @@ class BaseVlobComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.vlob_read_batch.Req,
     ) -> authenticated_cmds.latest.vlob_read_batch.Rep:
-        if len(req.vlobs) > 1000:
+        if len(req.vlobs) > VLOB_READ_REQUEST_ITEMS_LIMIT:
             return authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
 
         outcome = await self.read_batch_as_user(
@@ -439,7 +442,7 @@ class BaseVlobComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.vlob_read_versions.Req,
     ) -> authenticated_cmds.latest.vlob_read_versions.Rep:
-        if len(req.items) > 1000:
+        if len(req.items) > VLOB_READ_REQUEST_ITEMS_LIMIT:
             return authenticated_cmds.latest.vlob_read_versions.RepTooManyElements()
 
         outcome = await self.read_versions_as_user(
