@@ -72,6 +72,40 @@ impl_transparent_data_format_conversion!(
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(into = "DeviceFileBiometricsData", from = "DeviceFileBiometricsData")]
+pub struct DeviceFileBiometrics {
+    pub ciphertext: Vec<u8>,
+    pub human_handle: Option<HumanHandle>,
+    pub device_label: Option<DeviceLabel>,
+    pub device_id: DeviceID,
+    pub organization_id: OrganizationID,
+    pub slug: String,
+    pub salt: Vec<u8>,
+}
+
+impl DeviceFileBiometrics {
+    pub fn slughash(&self) -> String {
+        let mut hasher = sha2::Sha256::new();
+        hasher.update(self.slug.as_bytes()); // Slug is encoded as utf8
+        format!("{:x}", hasher.finalize())
+    }
+}
+
+parsec_data!("schema/local_device/device_file_biometrics.json5");
+
+impl_transparent_data_format_conversion!(
+    DeviceFileBiometrics,
+    DeviceFileBiometricsData,
+    ciphertext,
+    human_handle,
+    device_label,
+    device_id,
+    organization_id,
+    slug,
+    salt,
+);
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
     pub ciphertext: Vec<u8>,
@@ -133,6 +167,7 @@ pub enum DeviceFile {
     Recovery(DeviceFileRecovery),
     Smartcard(DeviceFileSmartcard),
     Keyring(DeviceFileKeyring),
+    Biometrics(DeviceFileBiometrics),
 }
 
 impl DeviceFile {
@@ -178,6 +213,7 @@ pub enum DeviceFileType {
     Recovery,
     Smartcard,
     Keyring,
+    Biometrics,
 }
 
 impl DeviceFileType {

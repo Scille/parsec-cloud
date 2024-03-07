@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Iterable, Union
 
 PYTHON_RELEASE_CARGO_FLAGS = "--profile=release --features libparsec/use-sodiumoxide"
-PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
+PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
 ELECTRON_RELEASE_CARGO_FLAGS = "--profile=release"

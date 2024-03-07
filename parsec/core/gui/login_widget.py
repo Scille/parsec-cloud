@@ -303,6 +303,7 @@ class LoginWidget(QWidget, Ui_LoginWidget):
     login_with_password_clicked = pyqtSignal(Path, str)
     login_with_smartcard_clicked = pyqtSignal(Path)
     login_with_keyring_clicked = pyqtSignal(Path)
+    login_with_biometrics_clicked = pyqtSignal(Path)
     create_organization_clicked = pyqtSignal()
     join_organization_clicked = pyqtSignal()
     recover_device_clicked = pyqtSignal()
@@ -463,6 +464,8 @@ class LoginWidget(QWidget, Ui_LoginWidget):
             # lw.back_clicked.connect(self._on_back_clicked)
             # lw.log_in_clicked.connect(self.try_login_with_keyring)
             # self.widget.layout().addWidget(lw)
+        elif device.type == DeviceFileType.BIOMETRICS:
+            self.try_login_with_biometrics(device)
 
     def _on_back_clicked(self) -> None:
         self.login_canceled.emit()
@@ -476,6 +479,9 @@ class LoginWidget(QWidget, Ui_LoginWidget):
 
     def try_login_with_keyring(self, device: AvailableDevice) -> None:
         self.login_with_keyring_clicked.emit(Path(device.key_file_path))
+
+    def try_login_with_biometrics(self, device: AvailableDevice) -> None:
+        self.login_with_biometrics_clicked.emit(Path(device.key_file_path))
 
     def disconnect_all(self) -> None:
         pass

@@ -14,6 +14,7 @@ from parsec._parsec import (
     LocalDeviceError,
     LocalDeviceNotFoundError,
     get_available_device,
+    save_device_with_biometrics_in_config,
     save_device_with_keyring_in_config,
     save_device_with_password_in_config,
 )
@@ -61,6 +62,10 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 )
             elif auth_method == DeviceFileType.KEYRING:
                 save_device_with_keyring_in_config(self.core.config.config_dir, self.loaded_device)
+            elif auth_method == DeviceFileType.BIOMETRICS:
+                save_device_with_biometrics_in_config(
+                    self.core.config.config_dir, self.loaded_device
+                )
             show_info(self, _("TEXT_AUTH_CHANGE_SUCCESS"))
             if self.dialog:
                 self.dialog.accept()
@@ -117,6 +122,10 @@ class AuthenticationChangeWidget(QWidget, Ui_AuthenticationChangeWidget):
                 )
             elif available_device.type == DeviceFileType.KEYRING:
                 loaded_device = LocalDevice.load_device_with_keyring(available_device.key_file_path)
+            elif available_device.type == DeviceFileType.BIOMETRICS:
+                loaded_device = LocalDevice.load_device_with_biometrics(
+                    available_device.key_file_path
+                )
             else:
                 assert False
         except LocalDeviceError:

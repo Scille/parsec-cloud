@@ -7,6 +7,7 @@ class DeviceFileType:
     SMARTCARD: DeviceFileType
     RECOVERY: DeviceFileType
     KEYRING: DeviceFileType
+    BIOMETRICS: DeviceFileType
 
     def values(self) -> tuple[DeviceFileType, ...]: ...
     def str(self) -> str: ...

@@ -54,6 +54,12 @@ msgstr "Gestionnaire d'identification du système"
 msgid "TEXT_EXPLAIN_KEYRING"
 msgstr "Le gestionnaire d'informations d'identification du système est utilisé pour accéder à l'appareil PARSEC."
 
+msgid "TEXT_AUTH_METHOD_BIOMETRICS"
+msgstr "Windows Hello"
+
+msgid "TEXT_EXPLAIN_BIOMETRICS"
+msgstr "Windows Hello est utilisé pour accéder à l'appareil PARSEC."
+
 msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Une seule méthode d'authentification est disponible dans cette version de"

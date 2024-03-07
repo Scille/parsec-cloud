@@ -54,6 +54,12 @@ msgstr "System credentials"
 msgid "TEXT_EXPLAIN_KEYRING"
 msgstr "The system credentials manager is used to access the PARSEC device."
 
+msgid "TEXT_AUTH_METHOD_BIOMETRICS"
+msgstr "Windows Hello"
+
+msgid "TEXT_EXPLAIN_BIOMETRICS"
+msgstr "Windows Hello is used to access the PARSEC device."
+
 msgid "TEXT_ONLY_ONE_AUTH_METHOD_AVAILABLE"
 msgstr ""
 "Only one method authentication method is available in this version of "

@@ -1,7 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 (eventually AGPL-3.0) 2016-present Scille SAS
 
+mod biometrics;
 mod local_device;
 mod local_device_file;
 
+pub use biometrics::*;
 pub use local_device::*;
 pub use local_device_file::*;

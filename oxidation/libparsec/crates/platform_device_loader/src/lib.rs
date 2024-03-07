@@ -37,3 +37,15 @@ pub(crate) fn load_device_with_keyring_core(
         ty: DeviceFileType::Keyring,
     })
 }
+
+pub(crate) fn load_device_with_biometrics_core(
+    device: &DeviceFileBiometrics,
+    password: &str,
+) -> LocalDeviceResult<LocalDevice> {
+    let key = SecretKey::from_password(password, &device.salt);
+    let data = key.decrypt(&device.ciphertext)?;
+
+    LocalDevice::load(&data).map_err(|_| LocalDeviceError::Validation {
+        ty: DeviceFileType::Biometrics,
+    })
+}

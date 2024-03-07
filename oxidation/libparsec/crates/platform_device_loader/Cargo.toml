@@ -13,6 +13,15 @@ libparsec_types = { path = "../types" }
 libparsec_crypto = { path = "../crypto" }
 libparsec_testbed = { path = "../testbed", optional = true }
 keyring = "2"
+base64 = "0.21.0"
+windows = { version = "=0.54.0", features = [
+  "Security_Credentials_UI",
+  "Security_Cryptography",
+  "Storage_Streams",
+  "Win32_Security_Credentials",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3.60", features = ["Window", "Storage"] }

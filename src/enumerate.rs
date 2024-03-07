@@ -417,7 +417,8 @@ crate::binding_utils::impl_enum_field!(
     ["PASSWORD", password, types::DeviceFileType::Password],
     ["SMARTCARD", smartcard, types::DeviceFileType::Smartcard],
     ["RECOVERY", recovery, types::DeviceFileType::Recovery],
-    ["KEYRING", keyring, types::DeviceFileType::Keyring]
+    ["KEYRING", keyring, types::DeviceFileType::Keyring],
+    ["BIOMETRICS", biometrics, types::DeviceFileType::Biometrics]
 );
 
 #[pymethods]

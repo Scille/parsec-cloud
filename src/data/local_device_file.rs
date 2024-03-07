@@ -158,6 +158,38 @@ impl DeviceFile {
                     slug,
                 })
             }
+            DeviceFileType(libparsec::types::DeviceFileType::Biometrics) => {
+                if encrypted_key.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found encrypted_key attribute for keyring",
+                    ))
+                } else if certificate_id.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found certificate_id attribute for keyring",
+                    ))
+                } else if certificate_sha1.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found certificate_sha1 attribute for keyring",
+                    ))
+                } else if salt.is_some() {
+                    Err(PyAttributeError::new_err(
+                        "Found salt attribute for keyring",
+                    ))
+                } else {
+                    Ok(())
+                }?;
+
+                libparsec::types::DeviceFile::Biometrics(libparsec::types::DeviceFileBiometrics {
+                    ciphertext,
+                    human_handle: human_handle.map(|x| x.0),
+                    device_label: device_label.map(|x| x.0),
+                    device_id: device_id.0,
+                    organization_id: organization_id.0,
+                    slug,
+                    salt: salt
+                        .ok_or_else(|| PyAttributeError::new_err("Missing salt attribute"))?,
+                })
+            }
         };
 
         Ok(Self(device))
@@ -170,6 +202,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Recovery(_) => DeviceFileType::recovery(),
             libparsec::types::DeviceFile::Smartcard(_) => DeviceFileType::smartcard(),
             libparsec::types::DeviceFile::Keyring(_) => DeviceFileType::keyring(),
+            libparsec::types::DeviceFile::Biometrics(_) => DeviceFileType::biometrics(),
         }
     }
 
@@ -182,6 +215,7 @@ impl DeviceFile {
                 libparsec::types::DeviceFile::Recovery(device) => &device.ciphertext,
                 libparsec::types::DeviceFile::Smartcard(device) => &device.ciphertext,
                 libparsec::types::DeviceFile::Keyring(device) => &device.ciphertext,
+                libparsec::types::DeviceFile::Biometrics(device) => &device.ciphertext,
             },
         )
     }
@@ -199,6 +233,9 @@ impl DeviceFile {
                 device.human_handle.clone().map(HumanHandle)
             }
             libparsec::types::DeviceFile::Keyring(device) => {
+                device.human_handle.clone().map(HumanHandle)
+            }
+            libparsec::types::DeviceFile::Biometrics(device) => {
                 device.human_handle.clone().map(HumanHandle)
             }
         }
@@ -219,6 +256,9 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Keyring(device) => {
                 device.device_label.clone().map(DeviceLabel)
             }
+            libparsec::types::DeviceFile::Biometrics(device) => {
+                device.device_label.clone().map(DeviceLabel)
+            }
         }
     }
 
@@ -229,6 +269,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Recovery(device) => device.device_id.clone(),
             libparsec::types::DeviceFile::Smartcard(device) => device.device_id.clone(),
             libparsec::types::DeviceFile::Keyring(device) => device.device_id.clone(),
+            libparsec::types::DeviceFile::Biometrics(device) => device.device_id.clone(),
         })
     }
 
@@ -239,6 +280,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Recovery(device) => device.organization_id.clone(),
             libparsec::types::DeviceFile::Smartcard(device) => device.organization_id.clone(),
             libparsec::types::DeviceFile::Keyring(device) => device.organization_id.clone(),
+            libparsec::types::DeviceFile::Biometrics(device) => device.organization_id.clone(),
         })
     }
 
@@ -249,6 +291,7 @@ impl DeviceFile {
             libparsec::types::DeviceFile::Recovery(device) => &device.slug,
             libparsec::types::DeviceFile::Smartcard(device) => &device.slug,
             libparsec::types::DeviceFile::Keyring(device) => &device.slug,
+            libparsec::types::DeviceFile::Biometrics(device) => &device.slug,
         }
     }
 
@@ -258,6 +301,7 @@ impl DeviceFile {
             py,
             match &self.0 {
                 libparsec::types::DeviceFile::Password(device) => &device.salt,
+                libparsec::types::DeviceFile::Biometrics(device) => &device.salt,
                 _ => return Err(PyAttributeError::new_err("No such attribute")),
             },
         ))

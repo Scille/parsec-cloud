@@ -137,8 +137,12 @@ pub enum LocalDeviceError {
     LocalStorageNotAvailable,
 
     #[cfg(not(target_arch = "wasm32"))]
-    #[error("Device key file `{0}` already exists")]
+    #[error("Keyring error `{0}`")]
     Keyring(String),
+
+    #[cfg(not(target_arch = "wasm32"))]
+    #[error("Biometrics error `{0}`")]
+    Biometrics(String),
 }
 
 impl From<CryptoError> for LocalDeviceError {

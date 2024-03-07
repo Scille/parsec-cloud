@@ -11,7 +11,7 @@ use libparsec_types::prelude::*;
 
 use keyring::Entry as KeyringEntry;
 
-use crate::load_device_with_password_from_path;
+use crate::{derive_key_from_biometrics, load_device_with_password_from_path};
 
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
@@ -189,6 +189,14 @@ pub fn load_available_device(key_file_path: PathBuf) -> LocalDeviceResult<Availa
                 device.device_label,
                 device.slug,
             ),
+            DeviceFile::Biometrics(device) => (
+                DeviceFileType::Biometrics,
+                device.organization_id,
+                device.device_id,
+                device.human_handle,
+                device.device_label,
+                device.slug,
+            ),
         };
 
     Ok(AvailableDevice {
@@ -304,6 +312,35 @@ pub fn save_device_with_keyring(
     Ok(())
 }
 
+pub fn save_device_with_biometrics(
+    key_file: &Path,
+    device: &LocalDevice,
+    force: bool,
+) -> Result<(), LocalDeviceError> {
+    if key_file.exists() && !force {
+        return Err(LocalDeviceError::AlreadyExists(key_file.to_path_buf()));
+    }
+    let salt = SecretKey::generate_salt();
+    let password =
+        derive_key_from_biometrics(&device.slughash()).map_err(LocalDeviceError::Biometrics)?;
+    let key = SecretKey::from_password(&password, &salt);
+    let cleartext = device.dump();
+    let ciphertext = key.encrypt(&cleartext);
+    let key_file_content = DeviceFile::Biometrics(DeviceFileBiometrics {
+        ciphertext,
+        salt,
+        // TODO: Can we avoid these copy?
+        human_handle: device.human_handle.clone(),
+        device_label: device.device_label.clone(),
+        device_id: device.device_id.clone(),
+        organization_id: device.organization_id().clone(),
+        slug: device.slug(),
+    });
+    save_device_file(key_file, &key_file_content)?;
+
+    Ok(())
+}
+
 pub fn save_device_with_password_in_config(
     config_dir: &Path,
     device: &LocalDevice,
@@ -343,6 +380,27 @@ pub fn save_device_with_keyring_in_config(
     //   Parsec server), in this case the old device object is now invalid
     //   and it's a good thing to replace it.
     save_device_with_keyring(&key_file, device, true)?;
+
+    Ok(key_file)
+}
+
+pub fn save_device_with_biometrics_in_config(
+    config_dir: &Path,
+    device: &LocalDevice,
+) -> Result<PathBuf, LocalDeviceError> {
+    let key_file = get_default_key_file(config_dir, device);
+
+    // Why do we use `force=True` here ?
+    // Key file name is per-device unique (given it contains the device slughash),
+    // hence there is no risk to overwrite another device.
+    // So if we are overwriting a key file it could be by:
+    // - the same device object, hence overwriting has no effect
+    // - a device object with same slughash but different device/user keys
+    //   This would mean the device enrollment has been replayed (which is
+    //   not possible in theory, but could occur in case of a rollback in the
+    //   Parsec server), in this case the old device object is now invalid
+    //   and it's a good thing to replace it.
+    save_device_with_biometrics(&key_file, device, true)?;
 
     Ok(key_file)
 }

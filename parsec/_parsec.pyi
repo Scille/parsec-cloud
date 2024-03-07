@@ -151,6 +151,8 @@ from parsec._parsec_pyi.local_device import (
     get_available_device,
     list_available_devices,
     load_recovery_device,
+    save_device_with_biometrics,
+    save_device_with_biometrics_in_config,
     save_device_with_keyring,
     save_device_with_keyring_in_config,
     save_device_with_password,
@@ -871,6 +873,8 @@ __all__ = [
     "save_device_with_password_in_config",
     "save_device_with_keyring",
     "save_device_with_keyring_in_config",
+    "save_device_with_biometrics",
+    "save_device_with_biometrics_in_config",
     # Workspace Storage
     "WorkspaceStorage",
     "WorkspaceStorageSnapshot",
