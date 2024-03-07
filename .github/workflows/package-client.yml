@@ -160,6 +160,11 @@ jobs:
           done
         timeout-minutes: 1
 
+      - name: Linux > Install snapcraft
+        if: matrix.platform == 'linux'
+        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
+        timeout-minutes: 1
+
       - name: Windows > Install WinFSP
         if: matrix.platform == 'windows'
         shell: bash
