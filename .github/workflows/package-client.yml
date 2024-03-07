@@ -150,6 +150,15 @@ jobs:
       - name: Apply version.patch
         run: git apply ${{ runner.temp }}/version.patch/version.patch
 
+      - name: Linux > Install fuse devel
+        if: matrix.platform == 'linux'
+        run: |
+          until sudo apt-get install fuse3 libfuse3-dev; do
+            sleep 1;
+            echo "Retrying";
+          done
+        timeout-minutes: 1
+
       - name: Install dependencies
         shell: bash
         run: |
