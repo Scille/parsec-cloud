@@ -1,0 +1,53 @@
+name: Releaser nightly build
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/_releaser_nightly_build.yml
+  workflow_call:
+    outputs:
+      commit_sha:
+        description: |
+          The commit sha of the nightly release branch/tag.
+        value: ${{ jobs.nightly-build.outputs.commit_sha }}
+      version_full:
+        description: |
+          The full version of the nightly release that was created.
+        value: ${{ jobs.nightly-build.outputs.version_full }}
+
+jobs:
+  nightly-build:
+    name: 🌙 Nightly build
+    runs-on: ubuntu-22.04
+    outputs:
+      commit_sha: ${{ steps.commit.outputs.id }}
+      version_full: ${{ steps.version.outputs.full }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        timeout-minutes: 5
+
+      - name: Configure git
+        run: |
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+        timeout-minutes: 1
+
+      - name: Create nightly release
+        run: >-
+          PYTHONPATH=. python3
+          misc/releaser.py build --nightly --yes --no-gpg-sign
+        timeout-minutes: 2
+
+      - name: Get commit for nightly tag
+        id: commit
+        run: echo "id=$(git rev-parse nightly)" | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - name: Parse version
+        id: version
+        run: >-
+          PYTHONPATH=. python3
+          misc/releaser.py version | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1

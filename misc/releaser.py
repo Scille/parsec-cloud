@@ -509,6 +509,7 @@ def create_bump_commit_to_new_version(
     current_version: Version,
     newsfragments: list[Path],
     files_to_commit: set[Path],
+    gpg_sign: bool,
 ) -> None:
     commit_msg = f"Bump version {current_version} -> {new_version}"
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
@@ -518,10 +519,15 @@ def create_bump_commit_to_new_version(
         run_git("rm", *fragments_paths)
     # FIXME: the `releaser` steps in pre-commit is disable is `no-verify` still required ?
     # Disable pre-commit hooks given this commit wouldn't pass `releaser check`
-    run_git("commit", f"--message={commit_msg}", "--no-verify", "--gpg-sign")
+    run_git(
+        "commit",
+        f"--message={commit_msg}",
+        "--no-verify",
+        "--gpg-sign" if gpg_sign else "--no-gpg-sign",
+    )
 
 
-def create_tag_for_new_version(version: Version, tag: str, force: bool = False) -> None:
+def create_tag_for_new_version(version: Version, tag: str, gpg_sign: bool, force: bool) -> None:
     print(f"Create tag {COLOR_GREEN}{tag}{COLOR_END}")
     run_git(
         "tag",
@@ -529,28 +535,31 @@ def create_tag_for_new_version(version: Version, tag: str, force: bool = False) 
         tag,
         f"--message=Release version {version}",
         "--annotate",
-        "--sign",
+        "--sign" if gpg_sign else "--no-sign",
     )
 
 
-def inspect_tag(tag: str, yes: bool) -> None:
+def inspect_tag(tag: str, yes: bool, gpg_sign: bool) -> None:
     print(f"Inspect tag {COLOR_GREEN}{tag}{COLOR_END}")
 
-    print(run_git("show", tag, "--show-signature", "--quiet"))
-    print(run_git("tag", "--verify", tag))
+    if gpg_sign:
+        print(run_git("show", tag, "--show-signature", "--quiet"))
+        print(run_git("tag", "--verify", tag))
 
     if not yes:
         input("Check if the generated git tag is okay... (press any key to continue)")
 
 
-def create_bump_commit_to_dev_version(version: Version, license_eol_date: datetime) -> None:
+def create_bump_commit_to_dev_version(
+    version: Version, license_eol_date: datetime, gpg_sign: bool
+) -> None:
     dev_version = version.evolve(local="dev")
     update_license_file(dev_version, license_eol_date)
     updated_files = update_version_files(dev_version)
-    create_bump_commit_to_new_version(dev_version, version, [], updated_files)
+    create_bump_commit_to_new_version(dev_version, version, [], updated_files, gpg_sign)
 
 
-def push_release(tag: str, release_branch: str, yes: bool, force_push: bool = False) -> None:
+def push_release(tag: str, release_branch: str, yes: bool, force_push: bool) -> None:
     print("Pushing changes to remote...")
 
     if not yes:
@@ -726,16 +735,16 @@ def build_main(args: argparse.Namespace) -> None:
     update_history_changelog(newsfragments, release_version, yes, release_date)
 
     create_bump_commit_to_new_version(
-        release_version, current_version, newsfragments, updated_files
+        release_version, current_version, newsfragments, updated_files, gpg_sign=args.gpg_sign
     )
 
-    create_tag_for_new_version(release_version, tag, force=args.nightly)
+    create_tag_for_new_version(release_version, tag, gpg_sign=args.gpg_sign, force=args.nightly)
 
-    inspect_tag(tag, yes)
+    inspect_tag(tag, yes, gpg_sign=args.gpg_sign)
 
     # No need to create a dev version for a nightly release.
     if not args.nightly:
-        create_bump_commit_to_dev_version(release_version, license_eol_date)
+        create_bump_commit_to_dev_version(release_version, license_eol_date, gpg_sign=args.gpg_sign)
 
     push_release(tag, release_branch, yes, force_push=args.nightly)
 
@@ -900,6 +909,9 @@ def cli(description: str) -> argparse.Namespace:
         "--nightly", action="store_true", help="Prepare for a new nightly release"
     )
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
+    build.add_argument(
+        "--no-gpg-sign", dest="gpg_sign", action="store_false", help="Do not sign the commit or tag"
+    )
     build.add_argument(
         "--base",
         dest="base_ref",
