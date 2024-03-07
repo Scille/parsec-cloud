@@ -10,7 +10,6 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
-use crate::Mountpoint;
 
 // TODO: move is not supported yet :'(
 #[ignore]

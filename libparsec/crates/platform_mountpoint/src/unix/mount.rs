@@ -30,8 +30,9 @@ impl Mountpoint {
         tokio::task::spawn_blocking(move || {
             let mountpoint_base_dir = &ops.config().mountpoint_base_dir;
 
-            let mountpoint_path = create_suitable_mountpoint_dir(mountpoint_base_dir, &ops)
-                .context("cannot create mountpoint dir")?;
+            let (mountpoint_path, initial_st_dev) =
+                create_suitable_mountpoint_dir(mountpoint_base_dir, &ops)
+                    .context("cannot create mountpoint dir")?;
 
             let filesystem =
                 super::filesystem::Filesystem::new(ops, tokio::runtime::Handle::current());
@@ -52,6 +53,22 @@ impl Mountpoint {
             let unmounter = session.unmount_callable();
 
             let session_loop = std::thread::spawn(move || session.run());
+
+            // Poll the FS to check if the mountpoint has appeared
+            // (`st_dev` is the device number of the filesystem, hence it will change after unmounting)
+            // Note we only wait for a limited amount of time to avoid ending up in a deadlock
+            // given this part is more of a best-effort mechanism to try to have the mountpoint ready
+            // when our function returns.
+            for _ in 0..100 {
+                if let Ok(new_st_dev) =
+                    std::fs::metadata(&mountpoint_path).map(|stat| stat.st_dev())
+                {
+                    if new_st_dev != initial_st_dev {
+                        break;
+                    }
+                }
+                std::thread::sleep(std::time::Duration::from_millis(30));
+            }
 
             Ok(Mountpoint {
                 unmounter,
@@ -117,7 +134,7 @@ impl Drop for Mountpoint {
 fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
     ops: &WorkspaceOps,
-) -> anyhow::Result<std::path::PathBuf> {
+) -> anyhow::Result<(std::path::PathBuf, u64)> {
     let workspace_name = ops.name();
 
     // In case of hard crash, it's possible the FUSE mountpoint is still mounted
@@ -161,8 +178,7 @@ fn create_suitable_mountpoint_dir(
             continue;
         }
 
-        // Return initial st_dev ?
-        return Ok(mountpoint_path);
+        return Ok((mountpoint_path, initial_st_dev));
     }
 
     unreachable!()

@@ -6,8 +6,7 @@ use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::mount_and_test;
-use crate::Mountpoint;
+use super::utils::{mount_and_test, os_ls};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
@@ -15,16 +14,7 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut children = vec![];
-            let mut readdir = tokio::fs::read_dir(mountpoint_path).await.unwrap();
-            while let Some(child) = readdir.next_entry().await.unwrap() {
-                children.push(child.file_name());
-            }
-
-            p_assert_eq!(
-                children,
-                [std::ffi::OsStr::new("bar.txt"), std::ffi::OsStr::new("foo")]
-            );
+            p_assert_eq!(os_ls!(mountpoint_path).await, ["bar.txt", "foo"]);
         }
     );
 }
@@ -41,14 +31,11 @@ async fn ok_lot_of_entries(tmp_path: TmpPath, env: &TestbedEnv) {
                 wksp1_ops.create_file(path).await.unwrap();
             }
 
-            let mut readdir = tokio::fs::read_dir(mountpoint_path.join("foo/spam"))
+            let mut children: Vec<_> = os_ls!(mountpoint_path.join("foo/spam"))
                 .await
-                .unwrap();
-            let mut children = Vec::with_capacity(1000);
-            while let Some(child) = readdir.next_entry().await.unwrap() {
-                let file_index = child.file_name().to_str().unwrap().parse::<u64>().unwrap();
-                children.push(file_index);
-            }
+                .into_iter()
+                .map(|n| n.parse::<u64>().unwrap())
+                .collect();
             p_assert_eq!(
                 children.len(),
                 1000,

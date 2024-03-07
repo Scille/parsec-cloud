@@ -10,7 +10,6 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
-use crate::Mountpoint;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_file(tmp_path: TmpPath, env: &TestbedEnv) {

@@ -9,8 +9,7 @@ use libparsec_client::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::mount_and_test;
-use crate::{tests::utils::start_client, Mountpoint};
+use super::utils::{mount_and_test, start_client};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
