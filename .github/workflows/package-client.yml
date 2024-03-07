@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/package-client.yml
+      - ./client/electron/package.js
   workflow_call:
     inputs:
       version:
