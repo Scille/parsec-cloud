@@ -77,14 +77,14 @@ async def test_authenticated_vlob_read_versions_ok(
     assert isinstance(outcome, RealmKeyRotationCertificate)
 
     outcome = await backend.vlob.update(
-        now=dt2,
+        now=dt3,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         vlob_id=vlob1_id,
         key_index=2,
         version=2,
         blob="<block 1 content v2>".encode(),
-        timestamp=dt2,
+        timestamp=dt3,
         sequester_blob=None,
     )
     assert outcome is None

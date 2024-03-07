@@ -286,21 +286,21 @@ async def test_authenticated_vlob_update_organization_not_sequestered(
     assert dump == initial_dump
 
 
-@pytest.mark.xfail(reason="TODO: missing test sequester")
+@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_sequester_inconsistency(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     raise Exception("Not implemented")
 
 
-@pytest.mark.xfail(reason="TODO: missing test sequester")
+@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_rejected_by_sequester_service(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     raise Exception("Not implemented")
 
 
-@pytest.mark.xfail(reason="TODO: missing test sequester")
+@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_sequester_service_unavailable(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
@@ -315,7 +315,7 @@ async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
     rep = await coolorg.alice.vlob_create(
         realm_id=coolorg.wksp1_id,
         vlob_id=VlobID.new(),
-        key_index=0,
+        key_index=1,
         timestamp=t0,
         blob=b"<block content>",
         sequester_blob=None,
@@ -339,41 +339,65 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
     backend: Backend,
     timestamp_offset: int,
 ) -> None:
-    timestamp = DateTime.now()
-    bad_timestamp = timestamp.subtract(seconds=timestamp_offset)
+    dt1 = DateTime.now()
+    dt2 = dt1.add(seconds=10)
+    bad_timestamp = dt2.subtract(seconds=timestamp_offset)
 
     # 1) Create a first vlob
 
+    author = coolorg.alice.device_id
+    realm_id = coolorg.wksp1_id
     organization_id = coolorg.organization_id
     vlob_id = VlobID.new()
-    key_index = 1
     outcome = await backend.vlob.create(
-        now=DateTime.now(),
+        now=dt1,
         organization_id=organization_id,
-        author=coolorg.alice.device_id,
+        author=author,
         realm_id=coolorg.wksp1_id,
         vlob_id=vlob_id,
-        key_index=key_index,
+        key_index=1,
         blob=b"<initial block content>",
-        timestamp=timestamp,
+        timestamp=dt1,
         sequester_blob=None,
     )
     assert outcome is None, outcome
 
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
 
+    outcome = await backend.realm.rotate_key(
+        now=dt2,
+        organization_id=organization_id,
+        author=author,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        keys_bundle=b"",
+        per_participant_keys_bundle_access={
+            coolorg.alice.user_id: b"",
+            coolorg.bob.user_id: b"",
+        },
+        realm_key_rotation_certificate=RealmKeyRotationCertificate(
+            author=author,
+            timestamp=dt2,
+            hash_algorithm=HashAlgorithm.SHA256,
+            encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+            key_index=2,
+            realm_id=realm_id,
+            key_canary=b"",
+        ).dump_and_sign(coolorg.alice.signing_key),
+    )
+    assert isinstance(outcome, RealmKeyRotationCertificate)
+
     # 2) Create second vlob with same or previous timestamp
 
     rep = await coolorg.alice.vlob_update(
         vlob_id=vlob_id,
-        key_index=key_index,
+        key_index=2,
         timestamp=bad_timestamp,
         version=2,
         blob=b"<updated block content>",
         sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepRequireGreaterTimestamp(
-        strictly_greater_than=timestamp
+        strictly_greater_than=dt2
     )
 
     # Ensure no changes were made
