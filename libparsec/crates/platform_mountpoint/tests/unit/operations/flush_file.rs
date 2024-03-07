@@ -11,7 +11,6 @@ use libparsec_types::prelude::*;
 use tokio::io::AsyncWriteExt;
 
 use super::utils::mount_and_test;
-use crate::Mountpoint;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(

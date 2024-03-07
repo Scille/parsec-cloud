@@ -41,7 +41,7 @@ macro_rules! mount_and_test {
         let client = $crate::tests::utils::start_client_with_mountpoint_base_dir($env, mountpoint_base_dir, $start_as).await;
         let wksp1_ops = client.start_workspace(wksp1_id).await.unwrap();
         let test_result = {
-            let mountpoint = Mountpoint::mount(wksp1_ops.clone())
+            let mountpoint = $crate::Mountpoint::mount(wksp1_ops.clone())
                 .await
                 .unwrap();
 
@@ -64,7 +64,7 @@ macro_rules! mount_and_test {
 
 pub(crate) use mount_and_test;
 
-macro_rules! cat {
+macro_rules! ops_cat {
     ($wksp_ops:expr, $path:expr) => {{
         let wksp_ops = $wksp_ops;
         let path = $path.parse::<FsPath>().unwrap();
@@ -84,4 +84,20 @@ macro_rules! cat {
     }};
 }
 
-pub(crate) use cat;
+pub(crate) use ops_cat;
+
+macro_rules! os_ls {
+    ($mountpoint_path:expr) => {{
+        let mountpoint_path = $mountpoint_path;
+        async move {
+            let mut children = vec![];
+            let mut readdir = tokio::fs::read_dir(mountpoint_path).await.unwrap();
+            while let Some(child) = readdir.next_entry().await.unwrap() {
+                children.push(child.file_name().to_str().unwrap().to_owned());
+            }
+            children
+        }
+    }};
+}
+
+pub(crate) use os_ls;

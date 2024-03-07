@@ -7,8 +7,7 @@ use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{cat, mount_and_test};
-use crate::Mountpoint;
+use super::utils::{mount_and_test, ops_cat};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_overwrite(tmp_path: TmpPath, env: &TestbedEnv) {
@@ -28,7 +27,10 @@ async fn ok_overwrite(tmp_path: TmpPath, env: &TestbedEnv) {
             // Flush guarantees that the write is pushed up to the filesystem
             fd.flush().await.unwrap();
 
-            p_assert_eq!(cat!(wksp1_ops.clone(), "/bar.txt").await, b"01234 w0rld");
+            p_assert_eq!(
+                ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
+                b"01234 w0rld"
+            );
         }
     );
 }
@@ -52,7 +54,7 @@ async fn ok_append(tmp_path: TmpPath, env: &TestbedEnv) {
             fd.flush().await.unwrap();
 
             p_assert_eq!(
-                cat!(wksp1_ops.clone(), "/bar.txt").await,
+                ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
                 b"hello world0123456789"
             );
         }
@@ -76,7 +78,7 @@ async fn ok_truncate(tmp_path: TmpPath, env: &TestbedEnv) {
             // Flush guarantees that the write is pushed up to the filesystem
             fd.flush().await.unwrap();
 
-            p_assert_eq!(cat!(wksp1_ops.clone(), "/bar.txt").await, b"01234");
+            p_assert_eq!(ops_cat!(wksp1_ops.clone(), "/bar.txt").await, b"01234");
         }
     );
 }
@@ -99,7 +101,7 @@ async fn ok_write_past_end(tmp_path: TmpPath, env: &TestbedEnv) {
             fd.flush().await.unwrap();
 
             p_assert_eq!(
-                cat!(wksp1_ops.clone(), "/bar.txt").await,
+                ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
                 b"hello world\x00\x00\x00\x00\x00\x00\x00\x00\x00\x000"
             );
         }

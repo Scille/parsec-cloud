@@ -13,3 +13,6 @@ mod rename_entry;
 mod to_os_path;
 mod utils;
 mod write_file;
+
+#[cfg(target_os = "linux")]
+mod linux_fusermount;
