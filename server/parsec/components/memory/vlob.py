@@ -120,7 +120,8 @@ class MemoryVlobComponent(BaseVlobComponent):
         if maybe_error is not None:
             return maybe_error
 
-        if timestamp < org.last_certificate_timestamp:
+        assert org.last_certificate_timestamp is not None  # Orga bootstrapped
+        if org.last_certificate_timestamp >= timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
 
         if org.is_sequestered:
@@ -254,7 +255,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             return maybe_error
 
         assert org.last_certificate_timestamp is not None  # Orga bootstrapped
-        if timestamp < org.last_certificate_timestamp:
+        if org.last_certificate_timestamp >= timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
 
         if org.is_sequestered:
