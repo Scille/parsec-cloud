@@ -4281,6 +4281,48 @@ fn variant_list_invitations_error_rs_to_js(
     Ok(js_obj)
 }
 
+// MountpointToOsPathError
+
+#[allow(dead_code)]
+fn variant_mountpoint_to_os_path_error_rs_to_js(
+    rs_obj: libparsec::MountpointToOsPathError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::MountpointToOsPathError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MountpointToOsPathErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// MountpointUnmountError
+
+#[allow(dead_code)]
+fn variant_mountpoint_unmount_error_rs_to_js(
+    rs_obj: libparsec::MountpointUnmountError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::MountpointUnmountError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MountpointUnmountErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ParseBackendAddrError
 
 #[allow(dead_code)]
@@ -5444,6 +5486,27 @@ fn variant_workspace_fd_write_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceFdWriteErrorNotInWriteMode".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceMountError
+
+#[allow(dead_code)]
+fn variant_workspace_mount_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceMountError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceMountError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceMountErrorInternal".into(),
             )?;
         }
     }
@@ -7680,6 +7743,76 @@ pub fn listAvailableDevices(path: String) -> Promise {
     })
 }
 
+// mountpoint_to_os_path
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
+    future_to_promise(async move {
+        let parsec_path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(parsec_path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::mountpoint_to_os_path(mountpoint, parsec_path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_mountpoint_to_os_path_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// mountpoint_unmount
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn mountpointUnmount(mountpoint: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::mountpoint_unmount(mountpoint).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_mountpoint_unmount_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // new_canceller
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -8110,6 +8243,50 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_create_folder_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_mount
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceMount(workspace: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_mount(workspace).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = JsValue::from(x1);
+                    js_array.push(&js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                            path.into_os_string()
+                                .into_string()
+                                .map_err(|_| "Path contains non-utf8 characters")
+                        };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_mount_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

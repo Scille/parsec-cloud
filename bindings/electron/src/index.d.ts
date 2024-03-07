@@ -991,6 +991,24 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 
+// MountpointToOsPathError
+export interface MountpointToOsPathErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type MountpointToOsPathError =
+  | MountpointToOsPathErrorInternal
+
+
+// MountpointUnmountError
+export interface MountpointUnmountErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type MountpointUnmountError =
+  | MountpointUnmountErrorInternal
+
+
 // ParseBackendAddrError
 export interface ParseBackendAddrErrorInvalidUrl {
     tag: "InvalidUrl"
@@ -1310,6 +1328,15 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorBadFileDescriptor
   | WorkspaceFdWriteErrorInternal
   | WorkspaceFdWriteErrorNotInWriteMode
+
+
+// WorkspaceMountError
+export interface WorkspaceMountErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type WorkspaceMountError =
+  | WorkspaceMountErrorInternal
 
 
 // WorkspaceOpenFileError
@@ -1803,6 +1830,13 @@ export function isKeyringAvailable(
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>
+export function mountpointToOsPath(
+    mountpoint: number,
+    parsec_path: string
+): Promise<Result<string, MountpointToOsPathError>>
+export function mountpointUnmount(
+    mountpoint: number
+): Promise<Result<null, MountpointUnmountError>>
 export function newCanceller(
 ): Promise<number>
 export function parseBackendAddr(
@@ -1870,6 +1904,9 @@ export function workspaceCreateFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceCreateFolderError>>
+export function workspaceMount(
+    workspace: number
+): Promise<Result<[number, string], WorkspaceMountError>>
 export function workspaceOpenFile(
     workspace: number,
     path: string,
