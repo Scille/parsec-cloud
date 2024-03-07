@@ -165,6 +165,11 @@ jobs:
         uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
         timeout-minutes: 1
 
+      - name: Linux > Setup LXD
+        if: matrix.platform == 'linux'
+        uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
+        timeout-minutes: 2
+
       - name: Windows > Install WinFSP
         if: matrix.platform == 'windows'
         shell: bash
