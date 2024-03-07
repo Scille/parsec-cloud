@@ -80,12 +80,9 @@
         <!-- part 4 (password)-->
         <div
           class="step org-password"
-          v-show="pageStep === CreateOrganizationStep.PasswordStep"
+          v-show="pageStep === CreateOrganizationStep.AuthenticationStep"
         >
-          <ms-choose-password-input
-            ref="passwordChoice"
-            @on-enter-keyup="nextStep()"
-          />
+          <choose-authentication ref="authChoice" />
         </div>
 
         <!-- part 5 (summary) -->
@@ -101,6 +98,7 @@
             :email="orgInfo.email"
             :server-mode="orgInfo.serverMode"
             :server-addr="orgInfo.serverAddr"
+            :authentication="authChoice.authentication"
             @update-request="onUpdateRequested"
           />
         </div>
@@ -173,18 +171,26 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
-
 import { asyncComputed } from '@/common/asyncComputed';
 import { getDefaultDeviceName } from '@/common/device';
 import { Validity, organizationValidator } from '@/common/validators';
-import { Answer, MsChoosePasswordInput, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
+import { Answer, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { AvailableDevice, BootstrapOrganizationErrorTag, createOrganization as parsecCreateOrganization } from '@/parsec';
+import {
+  AccessStrategy,
+  AvailableDevice,
+  BootstrapOrganizationErrorTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyPassword,
+  DeviceSaveStrategyTag,
+  createOrganization as parsecCreateOrganization,
+} from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
+import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
@@ -192,7 +198,7 @@ enum CreateOrganizationStep {
   OrgNameStep = 1,
   UserInfoStep = 2,
   ServerStep = 3,
-  PasswordStep = 4,
+  AuthenticationStep = 4,
   SummaryStep = 5,
   SpinnerStep = 6,
   FinishStep = 7,
@@ -200,13 +206,12 @@ enum CreateOrganizationStep {
 
 const DEFAULT_SAAS_ADDR = 'parsec3://saas.parsec.cloud';
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const informationManager: InformationManager = inject(InformationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();
 const serverChoice = ref();
-const passwordChoice = ref();
+const authChoice = ref();
 const summaryInfo = ref();
 const organizationNameInputRef = ref();
 
@@ -251,10 +256,10 @@ const titles = new Map<CreateOrganizationStep, Title>([
     },
   ],
   [
-    CreateOrganizationStep.PasswordStep,
+    CreateOrganizationStep.AuthenticationStep,
     {
-      title: translate('CreateOrganization.title.password'),
-      subtitle: translate('CreateOrganization.subtitle.password'),
+      title: translate('CreateOrganization.title.authentication'),
+      subtitle: translate('CreateOrganization.subtitle.authentication'),
     },
   ],
   [
@@ -270,10 +275,10 @@ const titles = new Map<CreateOrganizationStep, Title>([
       title: translate('CreateOrganization.title.done'),
     },
   ],
-]);
+]); // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 
-onMounted(() => {
-  organizationNameInputRef.value.setFocus();
+onMounted(async () => {
+  await organizationNameInputRef.value.setFocus();
 });
 
 function getNextButtonText(): string {
@@ -302,50 +307,25 @@ const canGoForward = asyncComputed(async () => {
     fieldsUpdated.value = false;
   }
 
-  const currentPage = getCurrentStep();
-
-  if (pageStep.value === CreateOrganizationStep.FinishStep || pageStep.value === CreateOrganizationStep.SpinnerStep) {
-    return true;
-  } else if (pageStep.value === CreateOrganizationStep.OrgNameStep) {
-    return (await organizationValidator(orgName.value)).validity === Validity.Valid;
-  } else if (
-    pageStep.value === CreateOrganizationStep.PasswordStep ||
-    pageStep.value === CreateOrganizationStep.ServerStep ||
-    pageStep.value === CreateOrganizationStep.UserInfoStep
-  ) {
-    return await currentPage.value.areFieldsCorrect();
+  switch (pageStep.value) {
+    case CreateOrganizationStep.FinishStep:
+    case CreateOrganizationStep.SpinnerStep:
+      return true;
+    case CreateOrganizationStep.OrgNameStep:
+      return (await organizationValidator(orgName.value)).validity === Validity.Valid;
+    case CreateOrganizationStep.AuthenticationStep:
+      return await authChoice.value.areFieldsCorrect();
+    case CreateOrganizationStep.ServerStep:
+      return await serverChoice.value.areFieldsCorrect();
+    case CreateOrganizationStep.UserInfoStep:
+      return await userInfo.value.areFieldsCorrect();
+    default:
+      return true;
   }
-  if (!currentPage.value) {
-    return false;
-  }
-  return true;
 });
 
 function shouldShowNextStep(): boolean {
   return pageStep.value !== CreateOrganizationStep.SpinnerStep;
-}
-
-function getCurrentStep(): Ref<any> {
-  switch (pageStep.value) {
-    case CreateOrganizationStep.OrgNameStep: {
-      return orgName;
-    }
-    case CreateOrganizationStep.UserInfoStep: {
-      return userInfo;
-    }
-    case CreateOrganizationStep.ServerStep: {
-      return serverChoice;
-    }
-    case CreateOrganizationStep.PasswordStep: {
-      return passwordChoice;
-    }
-    case CreateOrganizationStep.SummaryStep: {
-      return summaryInfo;
-    }
-    default: {
-      return ref(null);
-    }
-  }
 }
 
 async function cancelModal(): Promise<boolean> {
@@ -372,32 +352,29 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    modalController.dismiss({ device: device.value, password: passwordChoice.value.password }, MsModalResult.Confirm);
+    if (!device.value) {
+      return;
+    }
+    const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
+    const accessStrategy =
+      saveStrategy.tag === DeviceSaveStrategyTag.Keyring
+        ? AccessStrategy.useKeyring(device.value)
+        : AccessStrategy.usePassword(device.value, (saveStrategy as DeviceSaveStrategyPassword).password);
+    modalController.dismiss({ device: device.value, access: accessStrategy }, MsModalResult.Confirm);
     return;
   } else {
-    pageStep.value = pageStep.value + 1;
-    switch (pageStep.value) {
-      case CreateOrganizationStep.UserInfoStep:
-        userInfo.value.setFocus();
-        break;
-      case CreateOrganizationStep.PasswordStep:
-        passwordChoice.value.setFocus();
-        break;
+    pageStep.value += 1;
+    if (pageStep.value === CreateOrganizationStep.UserInfoStep) {
+      await userInfo.value.setFocus();
     }
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
 
     const deviceName = await getDefaultDeviceName();
+    const strategy = authChoice.value.getSaveStrategy();
 
-    const result = await parsecCreateOrganization(
-      addr,
-      orgName.value,
-      userInfo.value.fullName,
-      userInfo.value.email,
-      passwordChoice.value.password,
-      deviceName,
-    );
+    const result = await parsecCreateOrganization(addr, orgName.value, userInfo.value.fullName, userInfo.value.email, deviceName, strategy);
     if (result.ok) {
       device.value = result.value;
       await nextStep();
@@ -461,6 +438,8 @@ function onUpdateRequested(info: OrgInfo): void {
     pageStep.value = CreateOrganizationStep.UserInfoStep;
   } else if (info === OrgInfo.ServerMode) {
     pageStep.value = CreateOrganizationStep.ServerStep;
+  } else if (info === OrgInfo.AuthenticationMode) {
+    pageStep.value = CreateOrganizationStep.AuthenticationStep;
   }
 }
 </script>

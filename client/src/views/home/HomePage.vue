@@ -58,9 +58,20 @@
 <script setup lang="ts">
 import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
-import { AvailableDevice, getDeviceHandle, initializeWorkspace, isDeviceLoggedIn, login as parsecLogin } from '@/parsec';
+import {
+  AccessStrategy,
+  AvailableDevice,
+  ClientStartError,
+  DeviceAccessStrategy,
+  DeviceFileType,
+  getDeviceHandle,
+  initializeWorkspace,
+  isDeviceLoggedIn,
+  login as parsecLogin,
+} from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, switchOrganization, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
@@ -83,6 +94,7 @@ enum HomePageState {
   ForgottenPassword = 'forgotten-password',
 }
 
+const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const state = ref(HomePageState.OrganizationList);
@@ -132,7 +144,11 @@ async function openCreateOrganizationModal(): Promise<void> {
   hotkeyManager.enableGroup(Groups.Home);
 
   if (role === MsModalResult.Confirm) {
-    await login(data.device, data.password);
+    if (data.device.ty === DeviceFileType.Password) {
+      selectedDevice.value = data.device;
+      state.value = HomePageState.Login;
+    }
+    await login(data.device, data.access);
   }
 }
 
@@ -164,7 +180,11 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   await modal.dismiss();
   hotkeyManager.enableGroup(Groups.Home);
   if (result.role === MsModalResult.Confirm) {
-    await login(result.data.device, result.data.password);
+    if (result.data.device.ty === DeviceFileType.Password) {
+      selectedDevice.value = result.data.device;
+      state.value = HomePageState.Login;
+    }
+    await login(result.data.device, result.data.access);
   }
 }
 
@@ -173,18 +193,38 @@ async function backToOrganizations(): Promise<void> {
   selectedDevice.value = null;
 }
 
-function onOrganizationSelected(device: AvailableDevice): void {
+async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
   if (isDeviceLoggedIn(device)) {
     const handle = getDeviceHandle(device);
     switchOrganization(handle, false);
   } else {
-    selectedDevice.value = device;
-    state.value = HomePageState.Login;
+    if (device.ty === DeviceFileType.Keyring) {
+      await login(device, AccessStrategy.useKeyring(device));
+    } else {
+      selectedDevice.value = device;
+      state.value = HomePageState.Login;
+    }
   }
 }
 
-async function login(device: AvailableDevice, password: string): Promise<void> {
-  const result = await parsecLogin(device, password);
+async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
+  if (device.ty === DeviceFileType.Password) {
+    loginPageRef.value.setLoginError(error);
+  } else if (device.ty === DeviceFileType.Keyring) {
+    informationManager.present(
+      new Information({
+        message: translate('HomePage.keyringFailed'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    console.error('Could not connect to device type', device.ty);
+  }
+}
+
+async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
+  const result = await parsecLogin(device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.slug]) {
       storedDeviceDataDict.value[device.slug] = {
@@ -208,7 +248,7 @@ async function login(device: AvailableDevice, password: string): Promise<void> {
     }
     state.value = HomePageState.OrganizationList;
   } else {
-    loginPageRef.value.setLoginError(result.error);
+    await handleLoginError(device, result.error);
   }
 }
 

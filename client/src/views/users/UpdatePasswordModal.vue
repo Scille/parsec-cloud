@@ -85,8 +85,10 @@
 import { asyncComputed } from '@/common/asyncComputed';
 import { MsChoosePasswordInput, MsModalResult, MsPasswordInput } from '@/components/core';
 import {
+  AccessStrategy,
   AvailableDevice,
   ClientChangeAuthenticationErrorTag,
+  SaveStrategy,
   getCurrentAvailableDevice,
   changePassword as parsecChangePassword,
 } from '@/parsec';
@@ -152,7 +154,10 @@ async function changePassword(): Promise<void> {
   if (!currentDevice.value || !choosePasswordInput.value) {
     return;
   }
-  const result = await parsecChangePassword(currentDevice.value, oldPassword.value, choosePasswordInput.value.password);
+  const result = await parsecChangePassword(
+    AccessStrategy.usePassword(currentDevice.value, oldPassword.value),
+    SaveStrategy.usePassword(choosePasswordInput.value.password),
+  );
 
   if (result.ok) {
     informationManager.present(

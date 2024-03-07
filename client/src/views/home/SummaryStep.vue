@@ -69,6 +69,27 @@
         {{ $t('CreateOrganization.button.modify') }}
       </ion-button>
     </ion-item>
+
+    <!-- authentication mode -->
+    <ion-item class="summary-item">
+      <ion-label class="summary-item__label subtitles-sm">
+        {{ $t('CreateOrganization.overview.authentication') }}
+      </ion-label>
+      <ion-text class="summary-item__text body">
+        {{
+          authentication === DeviceSaveStrategyTag.Keyring
+            ? $t('CreateOrganization.keyringChoice')
+            : $t('CreateOrganization.passwordChoice')
+        }}
+      </ion-text>
+      <ion-button
+        fill="clear"
+        class="summary-item__button"
+        @click="$emit('update-request', OrgInfo.AuthenticationMode)"
+      >
+        {{ $t('CreateOrganization.button.modify') }}
+      </ion-button>
+    </ion-item>
   </ion-list>
 </template>
 
@@ -77,11 +98,13 @@ export enum OrgInfo {
   Organization = 'organization',
   UserInfo = 'userInfo',
   ServerMode = 'serverMode',
+  AuthenticationMode = 'authenticationMode',
 }
 </script>
 
 <script setup lang="ts">
 import { ServerMode } from '@/components/organizations/ChooseServer.vue';
+import { DeviceSaveStrategyTag } from '@/parsec';
 import { IonButton, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 
 defineEmits<{
@@ -98,6 +121,7 @@ defineProps<{
   email: string;
   serverMode: ServerMode;
   serverAddr: string;
+  authentication: DeviceSaveStrategyTag;
 }>();
 </script>
 

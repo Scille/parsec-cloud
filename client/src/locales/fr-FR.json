@@ -123,7 +123,8 @@
         "organizationActionSheet": "Organisation",
         "loginNotification": "Le mot de passe est incorrect !",
         "noDevices": "Vous n'avez pas d'organisation sur cet appareil.",
-        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante."
+        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
+        "keyringFailed": "Impossible de se connecter"
     },
     "CreateOrganization": {
         "fullname": "Nom complet",
@@ -137,6 +138,8 @@
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
         "saas": "Parsec SaaS",
+        "keyringChoice": "Authentification de l'appareil",
+        "passwordChoice": "Mot de passe personnalisé",
         "acceptTOS": {
             "label": "En utilisant le serveur PARSEC, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
@@ -152,7 +155,7 @@
             "create": "Créer une nouvelle organisation",
             "personalDetails": "Saisissez vos informations",
             "server": "Choisissez votre serveur adapté",
-            "password": "Créez votre mot de passe",
+            "authentication": "Authentification",
             "overview": "Récapitulatif de votre organisation",
             "done": "Votre organisation a bien été créée !"
         },
@@ -160,14 +163,15 @@
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
-            "password": "Pour finir, créez votre mot de passe.",
+            "authentication": "Pour finir, choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
         },
         "overview": {
             "organization": "Organisation",
             "fullname": "Nom complet",
             "email": "E-mail",
-            "server": "Choix du serveur"
+            "server": "Choix du serveur",
+            "authentication": "Méthode d'authentification"
         },
         "button": {
             "next": "Suivant",
@@ -597,6 +601,14 @@
         "passwordCriteria": "Assurez-vous qu'il correspond à un niveau fort : évitez les répétitions, les mots trop communs et les suites.",
         "noMatch": "Ne correspondent pas"
     },
+    "Authentication": {
+        "keyringInfo": "L'authentification sera gérée par votre système. Vous n'avez pas à retenir un mot de passe supplémentaire. N'oubliez pas de verrouiller votre session quand vous n'utilisez pas votre ordinateur !",
+        "useKeyring": "Utiliser le système",
+        "usePassword": "Utiliser un mot de passe",
+        "description": "Méthode d'authentification",
+        "keyringUnavailableOnSystem": "Indisponible sur votre système",
+        "keyringUnavailableOnWeb": "Indisponible sur le web"
+    },
     "PasswordInputModal": {
         "passwordNeeded": "Mot de passe requis",
         "enterPassword": "Veuillez saisir le mot de passe {org} pour continuer.",
@@ -677,7 +689,7 @@
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
             "ContactDetails": "Coordonnées",
-            "Password": "Mot de passe",
+            "Authentication": "Authentification",
             "Validation": "Validation"
         },
         "instructions": {
@@ -696,7 +708,7 @@
             "getHostCode": "Réception du code de l'hôte",
             "provideGuestCode": "Partage de votre code",
             "getUserInfo": "Vos coordonnées",
-            "getPassword": "Votre mot de passe",
+            "getAuthentication": "Authentification",
             "finish": "Vous avez rejoint l'organisation {org} !"
         },
         "subtitles": {
@@ -704,7 +716,7 @@
             "getHostCode": "Sélectionnez le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
             "getUserInfo": "Veuillez saisir vos coordonnées pour accéder à l'organisation.",
-            "getPassword": "Veuillez choisir un mot de passe pour finaliser l'enrôlement.",
+            "getAuthentication": "Veuillez choisir une méthode d'authentification pour finaliser l'enrôlement.",
             "finish": ""
         },
         "errors": {
@@ -901,20 +913,20 @@
         "stepper": {
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
-            "password": "Mot de passe"
+            "Authentication": "Authentication"
         },
         "titles": {
             "claimDevice": "Ajouter un nouvel appareil",
             "getCode": "Réception du code de l'hôte",
             "provideCode": "Partage du code invité",
-            "password": "Création du mot de passe",
+            "authentication": "Authentification",
             "done": "L'appareil a bien été ajouté !"
         },
         "subtitles": {
             "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l’inscription.",
             "getCode": "Sélectionnez le code que vous apercevez sur l’appareil principal.",
             "provideCode": "Sur l’appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
-            "password": "Pour terminer, créez un mot de passe pour votre nouvel appareil.",
+            "authentication": "Pour terminer, choisissez une méthode d'authentification pour votre nouvel appareil.",
             "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
         },
         "buttons": {
@@ -952,6 +964,7 @@
         "titleActualPassword": "Saisissez votre mot de passe",
         "titleNewPassword": "Choisissez un nouveau mot de passe",
         "validNewPassword": "Mettre à jour mon mot de passe",
+        "keyring": "Cet appareil est authentifié par le système.",
         "email": "Courriel",
         "password": "Mot de passe",
         "cancelButton": "Annuler",

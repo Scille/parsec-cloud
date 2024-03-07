@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { MsInput, MsPasswordInput } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, ClientStartError } from '@/parsec';
+import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
 import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
@@ -72,7 +72,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginClick', device: AvailableDevice, password: string): void;
+  (e: 'loginClick', device: AvailableDevice, access: DeviceAccessStrategyPassword): void;
   (e: 'forgottenPasswordClick', device: AvailableDevice): void;
 }>();
 
@@ -86,7 +86,7 @@ onMounted(async () => {
 });
 
 async function onLoginClick(): Promise<void> {
-  emits('loginClick', props.device, password.value);
+  emits('loginClick', props.device, AccessStrategy.usePassword(props.device, password.value));
 }
 
 async function setLoginError(_error?: ClientStartError): Promise<void> {

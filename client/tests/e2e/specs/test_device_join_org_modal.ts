@@ -74,7 +74,7 @@ describe('Claim new device', () => {
     cy.get('ion-modal').find('.ms-wizard-stepper__step').as('steps').should('have.length', 3);
     cy.get('@steps').eq(0).find('.step-title').contains('Host code');
     cy.get('@steps').eq(1).find('.step-title').contains('Guest code');
-    cy.get('@steps').eq(2).find('.step-title').contains('Password');
+    cy.get('@steps').eq(2).find('.step-title').contains('Authentication');
     checkStepper(0);
 
     cy.get('ion-modal').find('.button-choice').as('choiceButtons').should('have.length', 4);
@@ -95,8 +95,10 @@ describe('Claim new device', () => {
     // Page with 3 inputs (password, confirmPassword and deviceName)
     checkStepper(2);
 
-    cy.get('@modalTitle').contains('Create a password');
-    cy.get('@modalSubtitle').contains('Finally, create a password for your new device.');
+    cy.get('@modalTitle').contains('Authentication');
+    cy.get('@modalSubtitle').contains('Finally, choose an authentication method for your new device.');
+    cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
+    cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
     cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('#next-button').should('have.attr', 'disabled');

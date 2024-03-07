@@ -1,6 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ActiveUsersLimitTag, libparsec } from '@/plugins/libparsec';
+import {
+  ActiveUsersLimitTag,
+  DeviceAccessStrategyKeyring,
+  DeviceSaveStrategyKeyring,
+  DeviceSaveStrategyPassword,
+  libparsec,
+} from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
@@ -16,8 +22,10 @@ import {
   ClientStartErrorTag,
   ClientStopError,
   ConnectionHandle,
+  DeviceAccessStrategy,
   DeviceAccessStrategyPassword,
   DeviceAccessStrategyTag,
+  DeviceSaveStrategy,
   DeviceSaveStrategyTag,
   OrganizationID,
   Result,
@@ -55,7 +63,10 @@ export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
   return await libparsec.listAvailableDevices(window.getConfigDir());
 }
 
-export async function login(device: AvailableDevice, password: string): Promise<Result<ConnectionHandle, ClientStartError>> {
+export async function login(
+  device: AvailableDevice,
+  accessStrategy: DeviceAccessStrategy,
+): Promise<Result<ConnectionHandle, ClientStartError>> {
   function parsecEventCallback(event: ClientEvent): void {
     console.log('Event received', event);
   }
@@ -67,18 +78,16 @@ export async function login(device: AvailableDevice, password: string): Promise<
 
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
-    const strategy: DeviceAccessStrategyPassword = {
-      tag: DeviceAccessStrategyTag.Password,
-      password: password,
-      keyFile: device.keyFilePath,
-    };
-    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, strategy);
+    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, accessStrategy);
     if (result.ok) {
       loggedInDevices.push({ handle: result.value, device: device });
     }
     return result;
   } else {
-    if (password === 'P@ssw0rd.' || password === 'AVeryL0ngP@ssw0rd') {
+    if (
+      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
+      ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
+    ) {
       loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device });
       return { ok: true, value: DEFAULT_HANDLE };
     }
@@ -183,34 +192,62 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
     }
     return { ok: true, value: currentAvailableDevice };
   } else {
-    return { ok: true, value: availableDevices[0] };
+    const device = availableDevices[0];
+    // Uncomment this to experience the login as you would with keyring
+    // device.ty = DeviceFileType.Keyring;
+    return { ok: true, value: device };
   }
 }
 
 export async function changePassword(
-  device: AvailableDevice,
-  oldPassword: string,
-  newPassword: string,
+  accessStrategy: DeviceAccessStrategy,
+  saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<null, ClientChangeAuthenticationError>> {
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
-    return await libparsec.clientChangeAuthentication(
-      clientConfig,
-      {
-        tag: DeviceAccessStrategyTag.Password,
-        password: oldPassword,
-        keyFile: device.keyFilePath,
-      },
-      {
-        tag: DeviceSaveStrategyTag.Password,
-        password: newPassword,
-      },
-    );
+    return await libparsec.clientChangeAuthentication(clientConfig, accessStrategy, saveStrategy);
   } else {
     // Fake an error
-    if (oldPassword !== 'P@ssw0rd.') {
+    if (
+      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
+      (accessStrategy as DeviceAccessStrategyPassword).password !== 'P@ssw0rd.'
+    ) {
       return { ok: false, error: { tag: ClientChangeAuthenticationErrorTag.DecryptionFailed, error: 'Invalid password' } };
     }
     return { ok: true, value: null };
   }
 }
+
+export async function isKeyringAvailable(): Promise<boolean> {
+  return await libparsec.isKeyringAvailable();
+}
+
+export const AccessStrategy = {
+  usePassword(device: AvailableDevice, password: string): DeviceAccessStrategyPassword {
+    return {
+      tag: DeviceAccessStrategyTag.Password,
+      password: password,
+      keyFile: device.keyFilePath,
+    };
+  },
+  useKeyring(device: AvailableDevice): DeviceAccessStrategyKeyring {
+    return {
+      tag: DeviceAccessStrategyTag.Keyring,
+      keyFile: device.keyFilePath,
+    };
+  },
+};
+
+export const SaveStrategy = {
+  usePassword(password: string): DeviceSaveStrategyPassword {
+    return {
+      tag: DeviceSaveStrategyTag.Password,
+      password: password,
+    };
+  },
+  useKeyring(): DeviceSaveStrategyKeyring {
+    return {
+      tag: DeviceSaveStrategyTag.Keyring,
+    };
+  },
+};
