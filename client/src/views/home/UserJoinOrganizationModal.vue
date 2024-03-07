@@ -9,7 +9,7 @@
         $t('JoinOrganization.stepTitles.GetHostCode'),
         $t('JoinOrganization.stepTitles.ProvideGuestCode'),
         $t('JoinOrganization.stepTitles.ContactDetails'),
-        $t('JoinOrganization.stepTitles.Password'),
+        $t('JoinOrganization.stepTitles.Authentication'),
         $t('JoinOrganization.stepTitles.Validation'),
       ]"
     />
@@ -103,7 +103,6 @@
           <user-information
             ref="userInfoPage"
             :email-enabled="false"
-            :device-enabled="!waitingForHost"
             :name-enabled="!waitingForHost"
             @field-update="fieldsUpdated = true"
             @on-enter-keyup="nextStep()"
@@ -111,14 +110,11 @@
         </div>
         <!-- part 5 (get password)-->
         <div
-          v-show="pageStep === UserJoinOrganizationStep.GetPassword"
+          v-show="pageStep === UserJoinOrganizationStep.GetAuthentication"
           class="step"
           id="get-password"
         >
-          <ms-choose-password-input
-            ref="passwordPage"
-            @on-enter-keyup="nextStep()"
-          />
+          <choose-authentication ref="authChoice" />
         </div>
         <!-- part 6 (finish the process)-->
         <div
@@ -186,11 +182,12 @@ import {
 
 import { asyncComputed } from '@/common/asyncComputed';
 import { getDefaultDeviceName } from '@/common/device';
-import { Answer, MsChoosePasswordInput, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { UserClaim } from '@/parsec';
+import { AccessStrategy, DeviceSaveStrategy, DeviceSaveStrategyPassword, DeviceSaveStrategyTag, UserClaim } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
@@ -201,14 +198,14 @@ enum UserJoinOrganizationStep {
   GetHostSasCode = 2,
   ProvideGuestCode = 3,
   GetUserInfo = 4,
-  GetPassword = 5,
+  GetAuthentication = 5,
   Finish = 6,
 }
 
 const informationManager: InformationManager = inject(InformationKey)!;
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
-const passwordPage = ref();
+const authChoice = ref();
 const fieldsUpdated = ref(false);
 
 const claimer = ref(new UserClaim());
@@ -254,10 +251,10 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
     },
   ],
   [
-    UserJoinOrganizationStep.GetPassword,
+    UserJoinOrganizationStep.GetAuthentication,
     {
-      title: translate('JoinOrganization.titles.getPassword'),
-      subtitle: translate('JoinOrganization.subtitles.getPassword'),
+      title: translate('JoinOrganization.titles.getAuthentication'),
+      subtitle: translate('JoinOrganization.subtitles.getAuthentication'),
     },
   ],
   [
@@ -300,7 +297,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 function getNextButtonText(): string {
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     return translate('JoinOrganization.validateUserInfo');
-  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
+  } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
     return translate('JoinOrganization.createDevice');
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
     return translate('JoinOrganization.logIn');
@@ -315,7 +312,7 @@ const nextButtonIsVisible = computed(() => {
   return (
     (pageStep.value === UserJoinOrganizationStep.WaitForHost && !waitingForHost.value) ||
     (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !waitingForHost.value) ||
-    pageStep.value === UserJoinOrganizationStep.GetPassword ||
+    pageStep.value === UserJoinOrganizationStep.GetAuthentication ||
     pageStep.value === UserJoinOrganizationStep.Finish
   );
 });
@@ -326,8 +323,8 @@ const canGoForward = asyncComputed(async () => {
   }
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo && !(await userInfoPage.value.areFieldsCorrect())) {
     return false;
-  } else if (pageStep.value === UserJoinOrganizationStep.GetPassword && !(await passwordPage.value.areFieldsCorrect())) {
-    return false;
+  } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
+    return await authChoice.value.areFieldsCorrect();
   }
   return true;
 });
@@ -351,8 +348,9 @@ async function nextStep(): Promise<void> {
   if (!canGoForward.value) {
     return;
   }
-  if (pageStep.value === UserJoinOrganizationStep.GetPassword) {
-    const result = await claimer.value.finalize(passwordPage.value.password);
+  if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
+    const strategy = authChoice.value.getSaveStrategy();
+    const result = await claimer.value.finalize(strategy);
     if (!result.ok) {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
@@ -375,14 +373,21 @@ async function nextStep(): Promise<void> {
       return;
     }
     waitingForHost.value = false;
-    passwordPage.value.setFocus();
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
+    if (!claimer.value.device) {
+      return;
+    }
     const notification = new Information({
       message: translate('JoinOrganization.successMessage'),
       level: InformationLevel.Success,
     });
     informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
-    await modalController.dismiss({ device: claimer.value.device, password: passwordPage.value.password }, MsModalResult.Confirm);
+    const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
+    const accessStrategy =
+      saveStrategy.tag === DeviceSaveStrategyTag.Keyring
+        ? AccessStrategy.useKeyring(claimer.value.device)
+        : AccessStrategy.usePassword(claimer.value.device, (saveStrategy as DeviceSaveStrategyPassword).password);
+    await modalController.dismiss({ device: claimer.value.device, access: accessStrategy }, MsModalResult.Confirm);
     return;
   }
 

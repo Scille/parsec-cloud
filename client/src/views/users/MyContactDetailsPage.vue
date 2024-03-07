@@ -31,7 +31,10 @@
                 <ion-text class="user-info-inputs-item__label form-input">
                   {{ $t('ContactDetailsPage.password') }}
                 </ion-text>
-                <div class="user-info-inputs-item__password">
+                <div
+                  class="user-info-inputs-item__password"
+                  v-show="currentDevice && currentDevice.ty === DeviceFileType.Password"
+                >
                   <ms-input
                     :placeholder="'••••••••••'"
                     name="fullname"
@@ -46,6 +49,9 @@
                   >
                     {{ $t('ContactDetailsPage.changePasswordButton') }}
                   </ion-button>
+                </div>
+                <div v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring">
+                  {{ $t('ContactDetailsPage.keyring') }}
                 </div>
               </div>
             </div>
@@ -88,7 +94,7 @@
 <script setup lang="ts">
 import { MsInput } from '@/components/core';
 import TagProfile from '@/components/users/TagProfile.vue';
-import { ClientInfo, getClientInfo } from '@/parsec';
+import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UpdatePasswordModal from '@/views/users/UpdatePasswordModal.vue';
@@ -97,6 +103,7 @@ import { warning } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
+const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const informationManager: InformationManager = inject(InformationKey)!;
 
 async function openChangePassword(): Promise<void> {
@@ -110,9 +117,10 @@ async function openChangePassword(): Promise<void> {
 }
 
 onMounted(async () => {
+  const deviceResult = await getCurrentAvailableDevice();
   const result = await getClientInfo();
 
-  if (!result.ok) {
+  if (!result.ok || !deviceResult.ok) {
     informationManager.present(
       new Information({
         message: translate('ContactDetailsPage.errors.failedToRetrieveInformation'),
@@ -122,6 +130,7 @@ onMounted(async () => {
     );
   } else {
     clientInfo.value = result.value;
+    currentDevice.value = deviceResult.value;
   }
 });
 </script>

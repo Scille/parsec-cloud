@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { BootstrapOrganizationErrorTag, DeviceSaveStrategyTag, WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
+import { WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
@@ -8,9 +8,11 @@ import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
   BootstrapOrganizationError,
+  BootstrapOrganizationErrorTag,
   ClientConfig,
   ClientEvent,
   DeviceFileType,
+  DeviceSaveStrategy,
   OrganizationID,
   OrganizationInfo,
   OrganizationInfoError,
@@ -26,8 +28,8 @@ export async function createOrganization(
   orgName: OrganizationID,
   userName: string,
   email: string,
-  password: string,
   deviceLabel: string,
+  saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
   function parsecEventCallback(event: ClientEvent): void {
     console.log('On event', event);
@@ -47,7 +49,7 @@ export async function createOrganization(
       config,
       parsecEventCallback,
       bootstrapAddr,
-      { tag: DeviceSaveStrategyTag.Password, password: password },
+      saveStrategy,
       { label: userName, email: email },
       deviceLabel,
       null,

@@ -123,7 +123,8 @@
         "organizationActionSheet": "Organization",
         "loginNotification": "The password is incorrect!",
         "noDevices": "You don't have any organization on this device.",
-        "howToAddDevices": "Create a new organization or get invited into an existing one."
+        "howToAddDevices": "Create a new organization or get invited into an existing one.",
+        "keyringFailed": "Could not log in"
     },
     "CreateOrganization": {
         "fullname": "Full name",
@@ -137,6 +138,8 @@
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
         "saas": "Parsec SaaS",
+        "keyringChoice": "Device authentication",
+        "passwordChoice": "Custom password",
         "acceptTOS": {
             "label": "I accept PARSEC's ",
             "tos": "Terms and Conditions ",
@@ -152,7 +155,7 @@
             "create": "Create an organization",
             "personalDetails": "Enter your personal information",
             "server": "Choose the server you need",
-            "password": "Create your password",
+            "authentication": "Authentication",
             "overview": "Overview of your organization",
             "done": "Your organization has been created!"
         },
@@ -160,14 +163,15 @@
             "nameYourOrg": "Choose the name of your organization.",
             "personalDetails": "State your name, your email and your device name.",
             "server": "Choose the type of server you need.",
-            "password": "Finally, create your password.",
+            "authentication": "Finally, choose an authentication method.",
             "overview": "Check that the information is correct."
         },
         "overview": {
             "organization": "Organization",
             "fullname": "Full name",
             "email": "Email",
-            "server": "Server choice"
+            "server": "Server choice",
+            "authentication": "Authentication method"
         },
         "button": {
             "next": "Next",
@@ -598,6 +602,14 @@
         "passwordCriteria": "Make sure it corresponds to a strong level: avoid repetitions, overly common words and sequences.",
         "noMatch": "Does not match"
     },
+    "Authentication": {
+        "keyringInfo": "Authentication will be handled through your system, so you don't have to remember an additional password. Just don't forget to lock your session when you're not in front of your computer!",
+        "useKeyring": "Use system",
+        "usePassword": "Use password",
+        "description": "Authentication method",
+        "keyringUnavailableOnSystem": "Unavailable on your system",
+        "keyringUnavailableOnWeb": "Unavailable on web"
+    },
     "PasswordInputModal": {
         "passwordNeeded": "Password needed",
         "enterPassword": "Please enter the password for {org} to continue.",
@@ -678,7 +690,7 @@
             "GetHostCode": "Host code",
             "ProvideGuestCode": "Guest code",
             "ContactDetails": "Contact details",
-            "Password": "Password",
+            "Authentication": "Authentication",
             "Validation": "Validation"
         },
         "instructions": {
@@ -689,7 +701,7 @@
             },
             "finish": {
                 "first": "You can now log in to Parsec.",
-                "second": "We advise that you create a recovery file in the event that you forget your password."
+                "second": "We advise that you create a recovery file in the event that you forget your password or log in to your session."
             }
         },
         "titles": {
@@ -697,7 +709,7 @@
             "getHostCode": "Get host code",
             "provideGuestCode": "Share your code",
             "getUserInfo": "Your contact details",
-            "getPassword": "Your password",
+            "getAuthentication": "Authentication",
             "finish": "You have joined the organization {org}!"
         },
         "subtitles": {
@@ -705,7 +717,7 @@
             "getHostCode": "Click on the code given to you by the host.",
             "provideGuestCode": "Give the code below to the host.",
             "getUserInfo": "Please enter your contact details to access the organization.",
-            "getPassword": "Choose a password to complete the enrollment.",
+            "getAuthentication": "Choose an authentication method to complete the enrollment.",
             "finish": ""
         },
         "errors": {
@@ -902,20 +914,20 @@
         "stepper": {
             "GetHostCode": "Host code",
             "ProvideGuestCode": "Guest code",
-            "password": "Password"
+            "Authentication": "Authentication"
         },
         "titles": {
             "claimDevice": "Add a new device",
             "getCode": "Get host code",
             "provideCode": "Share guest code",
-            "password": "Create a password",
+            "authentication": "Authentication",
             "done": "The device has been added!"
         },
         "subtitles": {
             "claimDevice": "You must open Parsec on both devices during the registration period.",
             "getCode": "Click on the code you see on the main device.",
             "provideCode": "On the main device, click on the code you see below.",
-            "password": "Finally, create a password for your new device.",
+            "authentication": "Finally, choose an authentication method for your new device.",
             "done": "The device has been created and added to this organization. You can now use it to connect to Parsec."
         },
         "buttons": {
@@ -953,6 +965,7 @@
         "titleActualPassword": "Enter your current password",
         "titleNewPassword": "Choose a new password",
         "validNewPassword": "Change your password",
+        "keyring": "This device is authenticated using the system.",
         "email": "Email",
         "password": "Password",
         "cancelButton": "Cancel",

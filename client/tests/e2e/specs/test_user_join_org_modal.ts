@@ -78,7 +78,7 @@ describe('User join an organization', () => {
     cy.get('@steps').eq(0).find('.step-title').contains('Host code');
     cy.get('@steps').eq(1).find('.step-title').contains('Guest code');
     cy.get('@steps').eq(2).find('.step-title').contains('Contact details');
-    cy.get('@steps').eq(3).find('.step-title').contains('Password');
+    cy.get('@steps').eq(3).find('.step-title').contains('Authentication');
     cy.get('@steps').eq(4).find('.step-title').contains('Validation');
     checkStepper(0);
 
@@ -119,8 +119,11 @@ describe('User join an organization', () => {
 
     // Page with two inputs, choose and confirm password
     checkStepper(3);
-    cy.get('@modalTitle').contains('Your password');
-    cy.get('@modalSubtitle').contains('Choose a password to complete the enrollment');
+
+    cy.get('@modalTitle').contains('Authentication');
+    cy.get('@modalSubtitle').contains('Choose an authentication method to complete the enrollment.');
+    cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
+    cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
     cy.get('#get-password').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('#next-button').should('have.attr', 'disabled');

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { DeviceSaveStrategyTag, UserOrDeviceClaimInitialInfoTag, libparsec } from '@/plugins/libparsec';
+import { libparsec } from '@/plugins/libparsec';
 
 import {
   AvailableDevice,
@@ -9,6 +9,7 @@ import {
   ClientEvent,
   ConnectionHandle,
   DeviceFileType,
+  DeviceSaveStrategy,
   HumanHandle,
   Result,
   SASCode,
@@ -16,6 +17,7 @@ import {
   UserClaimInProgress1Info,
   UserClaimInProgress2Info,
   UserClaimInProgress3Info,
+  UserOrDeviceClaimInitialInfoTag,
   UserOrDeviceClaimInitialInfoUser,
 } from '@/parsec/types';
 
@@ -210,13 +212,13 @@ export class UserClaim {
     }
   }
 
-  async finalize(password: string): Promise<Result<AvailableDevice, ClaimInProgressError>> {
+  async finalize(saveStrategy: DeviceSaveStrategy): Promise<Result<AvailableDevice, ClaimInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       const result = await libparsec.claimerUserFinalizeSaveLocalDevice(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.handle!,
-        { tag: DeviceSaveStrategyTag.Password, password: password },
+        saveStrategy,
       );
       if (result.ok) {
         this.device = result.value;

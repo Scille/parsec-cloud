@@ -95,8 +95,10 @@ describe('Create a new organization', () => {
     cy.get('#next-button').click();
 
     // Fourth page, password
-    cy.get('@title').contains('Create your password');
-    cy.get('@subtitle').contains('Finally, create your password');
+    cy.get('@title').contains('Authentication');
+    cy.get('@subtitle').contains('Finally, choose an authentication method');
+    cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
+    cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
     cy.get('#next-button').should('have.class', 'button-disabled');
     cy.get('#previous-button').should('be.visible');
@@ -122,11 +124,13 @@ describe('Create a new organization', () => {
     // Fifth page, summary
     cy.get('@title').contains('Overview of your organization');
     cy.get('@subtitle').contains('Check that the information is correct');
-    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 4);
+    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 5);
     cy.get('@summaryItems').eq(0).find('.summary-item__text').contains('MyOrg');
     cy.get('@summaryItems').eq(1).find('.summary-item__text').contains('Banjo');
     cy.get('@summaryItems').eq(2).find('.summary-item__text').contains('banjo@rare.com');
     cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('parsec3://localhost?no_ssl=true');
+    cy.get('@summaryItems').eq(4).find('.summary-item__label').contains('Authentication method');
+    cy.get('@summaryItems').eq(4).find('.summary-item__text').contains('Custom password');
     cy.get('#next-button').contains('Create organization').click();
 
     // Sixth page, spinner, X button should be hidden
@@ -255,7 +259,8 @@ describe('Create a new organization', () => {
     cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
     cy.get('#next-button').click();
 
-    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 4);
+    cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 5);
+    cy.get('@title').contains('Overview of your organization');
     // Org name, should take us back to the first page
     cy.get('@summaryItems').eq(0).find('.summary-item__button').click();
     cy.get('@title').contains('Create an organization');
@@ -265,6 +270,7 @@ describe('Create a new organization', () => {
     cy.get('#next-button').click();
     cy.get('#next-button').click();
     cy.get('#next-button').click();
+    cy.get('@title').contains('Overview of your organization');
 
     // User name, should take us back to the second page
     cy.get('@summaryItems').eq(1).find('.summary-item__button').click();
@@ -274,6 +280,7 @@ describe('Create a new organization', () => {
     cy.get('#next-button').click();
     cy.get('#next-button').click();
     cy.get('#next-button').click();
+    cy.get('@title').contains('Overview of your organization');
 
     // User email, should take us back to the second page
     cy.get('@summaryItems').eq(2).find('.summary-item__button').click();
@@ -283,6 +290,7 @@ describe('Create a new organization', () => {
     cy.get('#next-button').click();
     cy.get('#next-button').click();
     cy.get('#next-button').click();
+    cy.get('@title').contains('Overview of your organization');
 
     // Server, should take us back to the third page
     cy.get('@summaryItems').eq(3).find('.summary-item__button').click();
@@ -291,5 +299,14 @@ describe('Create a new organization', () => {
     // Back to summary
     cy.get('#next-button').click();
     cy.get('#next-button').click();
+    cy.get('@title').contains('Overview of your organization');
+
+    // Authentication, should take us back to the fourth page
+    cy.get('@summaryItems').eq(4).find('.summary-item__button').click();
+    cy.get('@title').contains('Authentication');
+
+    // Back to summary
+    cy.get('#next-button').click();
+    cy.get('@title').contains('Overview of your organization');
   });
 });
