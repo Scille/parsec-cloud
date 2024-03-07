@@ -7,6 +7,11 @@ on:
         required: true
         type: string
         description: The version to parse
+      commit_sha:
+        required: true
+        type: string
+        description: The commit SHA to use when checkout'ing the repository
+        default: ${{ github.sha }}
     outputs:
       full:
         description: The full version
@@ -35,6 +40,9 @@ on:
       no_local:
         description: The full version without the local part
         value: ${{ jobs.parse.outputs.no_local }}
+      commit_sha:
+        description: The commit SHA used to checkout the repository
+        value: ${{ inputs.commit_sha }}
 
 jobs:
   parse:
@@ -52,6 +60,8 @@ jobs:
       no_local: ${{ steps.version.outputs.no_local }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        with:
+          ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
       - name: Parse Version

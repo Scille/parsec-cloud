@@ -13,7 +13,11 @@ on:
           If not provided, the workflow will generate the patch by itself.
         type: string
         required: true
-
+      commit_sha:
+        required: true
+        type: string
+        description: The commit SHA to use when checkout'ing the repository
+        default: ${{ github.sha }}
   # PS: If you trigger manually the packaging, take into account that it will use the workflow as defined in the main branch not in the target branch.
   workflow_dispatch:
     inputs:
@@ -50,6 +54,7 @@ jobs:
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: ${{ inputs.version }}
+      commit_sha: ${{ inputs.commit_sha }}
 
   package-wheel:
     needs: version
@@ -72,6 +77,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        with:
+          ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
       - uses: ./.github/actions/setup-python-poetry

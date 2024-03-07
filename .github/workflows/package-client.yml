@@ -16,6 +16,11 @@ on:
           If not provided, the workflow will generate the patch by itself.
         type: string
         required: true
+      commit_sha:
+        required: true
+        type: string
+        description: The commit SHA to use when checkout'ing the repository
+        default: ${{ github.sha }}
   workflow_dispatch:
     inputs:
       version:
@@ -46,6 +51,7 @@ jobs:
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: ${{ inputs.version }}
+      commit_sha: ${{ inputs.commit_sha }}
 
   webapp:
     needs: version
@@ -55,6 +61,8 @@ jobs:
     name: ⚡ Package web app
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        with:
+          ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # pin v4.0.2
@@ -133,6 +141,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+        with:
+          ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # pin v4.0.2

@@ -10,6 +10,8 @@ on:
     tags:
       - v[0-9]+.[0-9]+.[0-9]+*
       - nightly
+  schedule:
+    - cron: 30 22 * * * # At 22:30
 permissions:
   contents: write
 
@@ -19,29 +21,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scheduled-nightly-build:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_releaser_nightly_build.yml
+
   version:
+    needs: scheduled-nightly-build
+    # Always run the job if `scheduled-nightly-build` job is skipped otherwise only if `scheduled-nightly-build` job was successful.
+    if: github.event_name != 'schedule' && always() || success()
     uses: ./.github/workflows/_parse_version.yml
     with:
       version: >-
         ${{
-          github.event_name == 'push' && github.ref_name ||
-          startsWith(github.ref, 'refs/tags/') && github.ref_name ||
+          (github.event_name == 'schedule' && needs.scheduled-nightly-build.outputs.version_full) ||
+          (startsWith(github.ref, 'refs/tags/') && github.ref_name != 'nightly' && github.ref_name) ||
           ''
         }}
+      commit_sha: ${{ needs.scheduled-nightly-build.outputs.commit_sha || github.sha }}
 
   package-parsec-server:
     needs: version
+    if: needs.version.result == 'success' && always()
     uses: ./.github/workflows/package-server.yml
     with:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
+      commit_sha: ${{ needs.version.outputs.commit_sha }}
 
   package-parsec-client:
     needs: version
+    if: needs.version.result == 'success' && always()
     uses: ./.github/workflows/package-client.yml
     with:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
+      commit_sha: ${{ needs.version.outputs.commit_sha }}
 
   releaser:
     needs:
@@ -49,6 +63,7 @@ jobs:
       - package-parsec-server
       - package-parsec-client
     name: 🚛 Releaser
+    if: join(needs.*.result, '-') == 'success-success-success' && always()
     runs-on: ubuntu-22.04
     steps:
       - name: Download every artifact generated (and uploaded)
