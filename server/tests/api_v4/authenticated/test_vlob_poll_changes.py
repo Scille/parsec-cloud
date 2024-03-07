@@ -99,3 +99,18 @@ async def test_authenticated_vlob_poll_changes_ok(
 
     rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=6)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(current_checkpoint=6, changes=[])
+
+
+async def test_authenticated_vlob_poll_changes_author_not_allowed(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    rep = await coolorg.mallory.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
+    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepAuthorNotAllowed()
+
+
+async def test_authenticated_vlob_poll_changes_realm_not_found(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    bad_realm_id = VlobID.new()
+    rep = await coolorg.alice.vlob_poll_changes(realm_id=bad_realm_id, last_checkpoint=0)
+    assert rep == authenticated_cmds.v4.vlob_poll_changes.RepRealmNotFound()

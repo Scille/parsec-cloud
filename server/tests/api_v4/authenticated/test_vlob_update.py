@@ -9,10 +9,11 @@ from parsec._parsec import (
     HashAlgorithm,
     RealmKeyRotationCertificate,
     SecretKeyAlgorithm,
+    SequesterServiceID,
     VlobID,
     authenticated_cmds,
 )
-from parsec.events import EventVlob
+from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
 
 
@@ -249,4 +250,194 @@ async def test_authenticated_vlob_update_bad_vlob_version(
     assert dump == initial_dump
 
 
-# TODO: check that blob bigger than EVENT_VLOB_MAX_BLOB_SIZE doesn't get in the event
+async def test_authenticated_vlob_update_organization_not_sequestered(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    vlob_id = VlobID.new()
+    v1_timestamp = DateTime.now()
+    key_index = 1
+    outcome = await backend.vlob.create(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
+        vlob_id=vlob_id,
+        key_index=key_index,
+        blob=b"<initial block content>",
+        timestamp=v1_timestamp,
+        sequester_blob=None,
+    )
+    assert outcome is None, outcome
+    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+
+    v2_timestamp = DateTime.now()
+    rep = await coolorg.alice.vlob_update(
+        vlob_id=vlob_id,
+        key_index=key_index,
+        timestamp=v2_timestamp,
+        version=2,
+        blob=b"<updated block content>",
+        sequester_blob={SequesterServiceID.new(): b"<dummy>"},
+    )
+    assert rep == authenticated_cmds.v4.vlob_update.RepOrganizationNotSequestered()
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+    assert dump == initial_dump
+
+
+@pytest.mark.xfail(reason="TODO: missing test sequester")
+async def test_authenticated_vlob_update_sequester_inconsistency(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    raise Exception("Not implemented")
+
+
+@pytest.mark.xfail(reason="TODO: missing test sequester")
+async def test_authenticated_vlob_update_rejected_by_sequester_service(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    raise Exception("Not implemented")
+
+
+@pytest.mark.xfail(reason="TODO: missing test sequester")
+async def test_authenticated_vlob_update_sequester_service_unavailable(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    raise Exception("Not implemented")
+
+
+async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+    t0 = DateTime.now().subtract(seconds=3600)
+    rep = await coolorg.alice.vlob_create(
+        realm_id=coolorg.wksp1_id,
+        vlob_id=VlobID.new(),
+        key_index=0,
+        timestamp=t0,
+        blob=b"<block content>",
+        sequester_blob=None,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.vlob_create.RepTimestampOutOfBallpark)
+    assert rep.ballpark_client_early_offset == 300.0
+    assert rep.ballpark_client_late_offset == 320.0
+    assert rep.client_timestamp == t0
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+    assert dump == initial_dump
+
+
+@pytest.mark.parametrize(
+    "timestamp_offset",
+    (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
+)
+async def test_authenticated_vlob_create_require_greater_timestamp(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    timestamp_offset: int,
+) -> None:
+    timestamp = DateTime.now()
+    bad_timestamp = timestamp.subtract(seconds=timestamp_offset)
+
+    # 1) Create a first vlob
+
+    organization_id = coolorg.organization_id
+    vlob_id = VlobID.new()
+    key_index = 1
+    outcome = await backend.vlob.create(
+        now=DateTime.now(),
+        organization_id=organization_id,
+        author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
+        vlob_id=vlob_id,
+        key_index=key_index,
+        blob=b"<initial block content>",
+        timestamp=timestamp,
+        sequester_blob=None,
+    )
+    assert outcome is None, outcome
+
+    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
+
+    # 2) Create second vlob with same or previous timestamp
+
+    rep = await coolorg.alice.vlob_update(
+        vlob_id=vlob_id,
+        key_index=key_index,
+        timestamp=bad_timestamp,
+        version=2,
+        blob=b"<updated block content>",
+        sequester_blob=None,
+    )
+    assert rep == authenticated_cmds.v4.vlob_update.RepRequireGreaterTimestamp(
+        strictly_greater_than=timestamp
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
+    assert dump == initial_dump
+
+
+async def test_authenticated_vlob_update_max_blob_size(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
+
+    author = coolorg.alice.device_id
+    realm_id = coolorg.wksp1_id
+    organization_id = coolorg.organization_id
+    vlob_id = VlobID.new()
+    v1_blob = b"<initial block content>"
+    v1_timestamp = DateTime.now()
+    key_index = 1
+    outcome = await backend.vlob.create(
+        now=DateTime.now(),
+        organization_id=organization_id,
+        author=author,
+        realm_id=realm_id,
+        vlob_id=vlob_id,
+        key_index=key_index,
+        blob=v1_blob,
+        timestamp=v1_timestamp,
+        sequester_blob=None,
+    )
+    assert outcome is None, outcome
+
+    v2_timestamp = DateTime.now()
+    with backend.event_bus.spy() as spy:
+        v2_blob = bytes(EVENT_VLOB_MAX_BLOB_SIZE)
+        rep = await coolorg.alice.vlob_update(
+            vlob_id=vlob_id,
+            key_index=key_index,
+            timestamp=v2_timestamp,
+            version=2,
+            blob=v2_blob,
+            sequester_blob=None,
+        )
+        assert rep == authenticated_cmds.v4.vlob_update.RepOk()
+
+        await spy.wait_event_occurred(
+            EventVlob(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                timestamp=v2_timestamp,
+                vlob_id=vlob_id,
+                version=2,
+                blob=None,  # Event should be sent without the blob!
+                last_common_certificate_timestamp=DateTime(2000, 1, 6),
+                last_realm_certificate_timestamp=DateTime(2000, 1, 12),
+            )
+        )
+
+    dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
+    assert dump == {
+        **initial_dump,
+        vlob_id: [
+            (author, ANY, realm_id, v1_blob),
+            (author, ANY, realm_id, v2_blob),
+        ],
+    }
