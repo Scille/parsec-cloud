@@ -175,6 +175,14 @@ export interface OpenOptions {
     createNew: boolean
 }
 
+export interface StartedWorkspaceInfo {
+    client: Handle
+    id: VlobID
+    currentName: EntryName
+    currentSelfRole: RealmRole
+    mountpoints: Array<[Handle, Path]>
+}
+
 export interface UserClaimFinalizeInfo {
     handle: Handle
 }
@@ -231,8 +239,8 @@ export interface UserInfo {
 
 export interface WorkspaceInfo {
     id: VlobID
-    name: EntryName
-    selfCurrentRole: RealmRole
+    currentName: EntryName
+    currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
 }
@@ -1583,6 +1591,18 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorInternal
   | WorkspaceFdWriteErrorNotInWriteMode
 
+// WorkspaceInfoError
+export enum WorkspaceInfoErrorTag {
+    Internal = 'WorkspaceInfoErrorInternal',
+}
+
+export interface WorkspaceInfoErrorInternal {
+    tag: WorkspaceInfoErrorTag.Internal
+    error: string
+}
+export type WorkspaceInfoError =
+  | WorkspaceInfoErrorInternal
+
 // WorkspaceMountError
 export enum WorkspaceMountErrorTag {
     Internal = 'WorkspaceMountErrorInternal',
@@ -2219,6 +2239,9 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<VlobID, WorkspaceCreateFolderError>>
+    workspaceInfo(
+        workspace: Handle
+    ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
     workspaceMount(
         workspace: Handle
     ): Promise<Result<[Handle, Path], WorkspaceMountError>>
