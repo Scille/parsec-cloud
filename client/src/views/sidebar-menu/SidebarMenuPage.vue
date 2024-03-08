@@ -129,7 +129,7 @@
                   :icon="business"
                   slot="start"
                 />
-                <ion-label>{{ workspace.name }}</ion-label>
+                <ion-label>{{ workspace.currentName }}</ion-label>
               </ion-item>
             </ion-list>
             <!-- list of workspaces -->
