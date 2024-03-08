@@ -45,6 +45,11 @@
                     // client fetch a vlob/blob).
                     "name": "never_legacy_reencrypted_or_fail",
                     "type": "Boolean"
+                },
+                // Field set to `None` if sequester is disabled for the organization.
+                {
+                    "name": "per_sequester_service_keys_bundle_access",
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
                 }
             ]
         },
@@ -80,7 +85,34 @@
                 ]
             },
             {
-                "status": "participant_mismatch"
+                "status": "participant_mismatch",
+                "fields": [
+                    {
+                        "name": "last_common_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "sequester_service_mismatch",
+                "fields": [
+                    {
+                        "name": "last_sequester_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "sequester_service_unavailable",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    }
+                ]
+            },
+            {
+                "status": "organization_not_sequestered"
             },
             {
                 "status": "invalid_certificate"
