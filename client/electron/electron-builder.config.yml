@@ -1,4 +1,4 @@
-appId: com.scille.parsec-v3-alpha
+appId: cloud.parsec.parsec-v3
 
 directories:
   buildResources: assets
