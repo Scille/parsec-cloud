@@ -60,7 +60,18 @@ function onInputChange(_event: any): void {
   // an empty list (may be browser dependant).
   // So we have to use `.files` instead, which is a worst API.
   if (hiddenInput.value.files.length > 0) {
-    emits('filesImport', hiddenInput.value.files);
+    const files: File[] = [];
+    // Converting from `FileList` to `File[]`. No idea why the API is using
+    // a worst type.
+    for (let i = 0; i < hiddenInput.value.files.length; i++) {
+      const item = hiddenInput.value.files.item(i);
+      if (item) {
+        files.push(item);
+      }
+    }
+    if (files.length > 0) {
+      emits('filesImport', files);
+    }
   }
 }
 
