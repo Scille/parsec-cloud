@@ -102,8 +102,8 @@ jobs:
         run: |
           set -x
           # Every files that don't end with '.sha256'
-          for file in $(find release-files -not -name '*.sha256'); do
-            grep $(basename $file) checksums.sha256 | cut -d ' ' -f 1 > "$file".sha256
+          for file in $(find release-files -type f -not -name '*.sha256'); do
+            grep "$(basename "$file")" checksums.sha256 | cut -d ' ' -f 1 > "$file".sha256
           done
 
       - name: List files in 'release-files'.
@@ -129,15 +129,14 @@ jobs:
           ) | tee -a $GITHUB_OUTPUT
 
       - name: Create release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         # FIXME: rollback to `softprops/action-gh-release` once the issue <https://github.com/softprops/action-gh-release/issues/362> is fixed.
         uses: FirelightFlagboy/action-gh-release@d9a17b2b70a11ff00e4a7d0be3ca04e74d66de24
         with:
           draft: true
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
-          name: Release v${{ needs.version.outputs.full }}
-          tag_name: v${{ needs.version.outputs.full }}
+          name: ${{ github.ref_name == 'nightly' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
           files: |
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl.sha256
