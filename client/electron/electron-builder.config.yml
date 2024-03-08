@@ -31,6 +31,7 @@ linux:
   category: Office Network FileTransfer FileSystem Security
   desktop:
     MimeType: x-scheme-handler/parsec3;
+  target: snap
 
 snap:
   base: core22

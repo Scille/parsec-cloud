@@ -113,7 +113,6 @@ jobs:
             os: ubuntu-20.04
             paths: |
               client/electron/dist/parsec-v3_*_*.snap
-              client/electron/dist/parsec-v3-*.AppImage
               client/electron/dist/latest-linux.yml
           - name: 🏁 Windows
             platform: windows

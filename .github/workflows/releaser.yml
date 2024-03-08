@@ -71,7 +71,6 @@ jobs:
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
           cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3_${{ needs.version.outputs.no_local }}_amd64.snap release-files
-          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-${{ needs.version.outputs.no_local }}.AppImage release-files
 
           cp -v artifacts/macOS-X64-electron-app/client/electron/dist/parsec-v3-${{ needs.version.outputs.no_local }}.dmg release-files
 
