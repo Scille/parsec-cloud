@@ -139,7 +139,7 @@
             class="manage-organization"
           >
             <!-- user actions -->
-            <ion-list class="users">
+            <ion-list class="manage-organization-list users">
               <ion-item
                 lines="none"
                 class="sidebar-item users-title menu-default"
@@ -155,7 +155,7 @@
             </ion-list>
             <!-- storage -->
             <ion-list
-              class="storage"
+              class="manage-organization-list storage"
               v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
             >
               <ion-item
@@ -172,7 +172,7 @@
               </ion-item>
             </ion-list>
             <!-- org info -->
-            <ion-list class="organization">
+            <ion-list class="manage-organization-list organization">
               <ion-item
                 lines="none"
                 class="sidebar-item organization-title menu-default"
@@ -653,5 +653,11 @@ ion-menu {
   display: flex;
   flex-direction: column;
   color: var(--parsec-color-light-secondary-inversed-contrast);
+  padding: 0 1.25rem;
+  gap: 0.5rem;
+
+  &-list {
+    padding: 0;
+  }
 }
 </style>
