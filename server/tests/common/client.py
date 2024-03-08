@@ -130,7 +130,7 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         return rep.content
 
     @asynccontextmanager
-    async def events_listen(
+    async def events_listen(  # pyright: ignore [reportIncompatibleMethodOverride]
         self, last_event_id: str | None = None, now: DateTime | None = None
     ) -> AsyncIterator[EventsListenSSE]:
         now = now or DateTime.now()

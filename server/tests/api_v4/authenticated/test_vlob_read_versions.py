@@ -8,12 +8,7 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
-
-# TODO: fix pyright error
-# - error: "VLOB_READ_REQUEST_ITEMS_LIMIT" is unknown import symbol (reportGeneralTypeIssues)
-# from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
-VLOB_READ_REQUEST_ITEMS_LIMIT = 1000
-
+from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
 from tests.common import Backend, CoolorgRpcClients
 
 
