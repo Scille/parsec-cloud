@@ -70,12 +70,12 @@ jobs:
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
-          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-alpha_${{ needs.version.outputs.no_local }}_amd64.snap release-files
-          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-alpha-${{ needs.version.outputs.no_local }}.AppImage release-files
+          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3_${{ needs.version.outputs.no_local }}_amd64.snap release-files
+          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3-${{ needs.version.outputs.no_local }}.AppImage release-files
 
-          cp -v artifacts/macOS-X64-electron-app/client/electron/dist/parsec-v3-alpha-${{ needs.version.outputs.no_local }}.dmg release-files
+          cp -v artifacts/macOS-X64-electron-app/client/electron/dist/parsec-v3-${{ needs.version.outputs.no_local }}.dmg release-files
 
-          cp -v artifacts/Windows-X64-electron-app/client/electron/dist/'parsec-v3-alpha Setup ${{ needs.version.outputs.no_local }}.exe' release-files
+          cp -v artifacts/Windows-X64-electron-app/client/electron/dist/'parsec-v3 Setup ${{ needs.version.outputs.no_local }}.exe' release-files
         env:
           BASH_XTRACEFD: 1
 
@@ -141,12 +141,12 @@ jobs:
           files: |
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl.sha256
-            release-files/parsec_v${{ needs.version.outputs.full }}_*.snap
-            release-files/parsec_v${{ needs.version.outputs.full }}_*.snap.sha256
-            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip
-            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-raw-windows-installer.zip.sha256
-            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2
-            release-files/parsec-unsigned-v${{ needs.version.outputs.full }}-macos-*.tar.bz2.sha256
+            release-files/parsec-v3_${{ needs.version.outputs.full }}_*.snap
+            release-files/parsec-v3_${{ needs.version.outputs.full }}_*.snap.sha256
+            release-files/parsec-v3 Setup ${{ needs.version.outputs.full }}.exe
+            release-files/parsec-v3 Setup ${{ needs.version.outputs.full }}.exe.sha256
+            release-files/parsec-v3-${{ needs.version.outputs.full }}.dmg
+            release-files/parsec-v3-${{ needs.version.outputs.full }}.dmg.sha256
             release-files/Parsec-SBOM-Wheel-linux.spdx.json
             release-files/Parsec-SBOM-Wheel-linux.spdx.json.sha256
             release-files/Parsec-SBOM-Wheel-windows.spdx.json
