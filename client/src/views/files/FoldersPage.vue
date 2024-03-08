@@ -187,6 +187,7 @@ import {
   FolderModel,
   SortProperty,
 } from '@/components/files';
+import { EntryStatFile } from '@/parsec';
 import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -335,9 +336,16 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
       const importedFilePath = await parsec.Path.join(importData.path, importData.file.name);
       const statResult = await parsec.entryStat(importData.workspaceHandle, importedFilePath);
       if (statResult.ok && statResult.value.isFile()) {
-        if (!files.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
+        const existing = files.value.getEntries().find((entry) => entry.id === statResult.value.id);
+        if (!existing) {
           (statResult.value as FileModel).isSelected = false;
           files.value.append(statResult.value as FileModel);
+        } else {
+          existing.name = statResult.value.name;
+          existing.size = (statResult.value as EntryStatFile).size;
+          existing.needSync = statResult.value.needSync;
+          existing.updated = statResult.value.updated;
+          existing.isSelected = false;
         }
       }
     }
@@ -581,8 +589,9 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
       }),
       PresentationMode.Toast,
     );
+  } else {
+    entry.name = newName;
   }
-  await listFolder();
 }
 
 async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
