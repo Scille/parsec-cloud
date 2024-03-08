@@ -103,14 +103,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(*name, "wksp1".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(*current_name, "wksp1".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, true);
         p_assert_eq!(*is_started, false);
     }
@@ -119,14 +119,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp2_info;
         p_assert_eq!(*id, wksp2_id, "{:?}", wksp2_info);
-        p_assert_eq!(*name, "wksp2".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Contributor);
+        p_assert_eq!(*current_name, "wksp2".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Contributor);
         p_assert_eq!(*is_bootstrapped, true);
         p_assert_eq!(*is_started, false);
     }
@@ -135,14 +135,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp3_info;
         p_assert_eq!(*id, wksp3_id);
-        p_assert_eq!(*name, "wksp3".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(*current_name, "wksp3".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
     }
@@ -153,14 +153,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp5_info;
         p_assert_eq!(*id, wksp5_id);
-        p_assert_eq!(*name, "wksp5".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(*current_name, "wksp5".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
     }
@@ -169,14 +169,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp6_info;
         p_assert_eq!(*id, wksp6_id);
-        p_assert_eq!(*name, "wksp6".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Reader);
+        p_assert_eq!(*current_name, "wksp6".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Reader);
         p_assert_eq!(*is_bootstrapped, false);
         p_assert_eq!(*is_started, false);
     }

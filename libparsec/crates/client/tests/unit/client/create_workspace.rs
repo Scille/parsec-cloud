@@ -51,14 +51,14 @@ async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
                 p_assert_eq!(workspaces.len(), 1);
                 let WorkspaceInfo {
                     id,
-                    name,
-                    self_current_role,
+                    current_name,
+                    current_self_role,
                     is_started,
                     is_bootstrapped,
                 } = workspaces.pop().unwrap();
                 p_assert_eq!(id, wid);
-                p_assert_eq!(name, "wksp1".parse().unwrap());
-                p_assert_eq!(self_current_role, RealmRole::Owner);
+                p_assert_eq!(current_name, "wksp1".parse().unwrap());
+                p_assert_eq!(current_self_role, RealmRole::Owner);
                 p_assert_eq!(is_started, false);
                 p_assert_eq!(is_bootstrapped, $expected_is_bootstrapped);
             }
@@ -123,14 +123,14 @@ async fn duplicated_name_is_allowed(
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = &workspaces[0];
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(name, &common_name);
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(current_name, &common_name);
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, previous_is_bootstrapped);
     }
@@ -139,14 +139,14 @@ async fn duplicated_name_is_allowed(
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = &workspaces[1];
         p_assert_eq!(*id, wksp2_id);
-        p_assert_eq!(name, &common_name);
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(current_name, &common_name);
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_started, false);
         p_assert_eq!(*is_bootstrapped, false);
     }

@@ -164,7 +164,7 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // (Note the mountpoints are automatically unmounted when the handle item is dropped).
     loop {
         let mut maybe_wait = None;
-        filter_close_handles(client_handle, |_, x| match x {
+        filter_close_handles(client_handle, |x| match x {
             HandleItem::Workspace {
                 client: x_client, ..
             }

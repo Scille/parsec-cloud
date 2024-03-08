@@ -154,7 +154,7 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
     // (Note the mountpoints are automatically unmounted when the handle item is dropped).
     loop {
         let mut maybe_wait = None;
-        filter_close_handles(client_handle, |_, x| match x {
+        filter_close_handles(client_handle, |x| match x {
             HandleItem::Mountpoint {
                 workspace: x_workspace,
                 ..
@@ -186,6 +186,65 @@ pub async fn workspace_stop(workspace: Handle) -> Result<(), WorkspaceStopError>
     }
 
     Ok(())
+}
+
+/*
+ * Info on workspace
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceInfoError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug)]
+pub struct StartedWorkspaceInfo {
+    pub client: Handle,
+    pub id: VlobID,
+    pub current_name: EntryName,
+    pub current_self_role: RealmRole,
+    pub mountpoints: Vec<(Handle, std::path::PathBuf)>,
+}
+
+pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, WorkspaceInfoError> {
+    let workspace_handle = workspace;
+    let (client_handle, workspace) = borrow_from_handle(workspace_handle, |x| match x {
+        HandleItem::Workspace {
+            client,
+            workspace_ops,
+            ..
+        } => Some((*client, workspace_ops.clone())),
+        _ => None,
+    })?;
+
+    let (current_name, current_self_role) = workspace.get_current_name_and_self_role();
+
+    #[cfg(target_arch = "wasm32")]
+    let mountpoints = vec![];
+    #[cfg(not(target_arch = "wasm32"))]
+    let mountpoints = {
+        let mut mountpoints = vec![];
+        crate::handle::iter_opened_handles(|mountpoint_handle, x| match x {
+            HandleItem::Mountpoint {
+                workspace: x_workspace,
+                mountpoint,
+                ..
+            } if *x_workspace == workspace_handle => {
+                mountpoints.push((mountpoint_handle, mountpoint.path().to_owned()));
+            }
+            _ => (),
+        });
+        mountpoints
+    };
+
+    Ok(StartedWorkspaceInfo {
+        client: client_handle,
+        id: workspace.realm_id(),
+        current_name,
+        current_self_role,
+        mountpoints,
+    })
 }
 
 /*

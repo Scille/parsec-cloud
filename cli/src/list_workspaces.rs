@@ -33,8 +33,8 @@ pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<
 
             for ws in workspaces {
                 let id = ws.id.hex();
-                let name = ws.name;
-                let role = ws.self_current_role;
+                let name = ws.current_name;
+                let role = ws.current_self_role;
                 println!("{YELLOW}{id}{RESET} - {name}: {role}");
             }
         }

@@ -22,17 +22,11 @@ from .common import (
     UserProfile,
     Variant,
     VlobID,
+    RealmRole,
 )
 from .invite import DeviceSaveStrategy
 from .config import ClientConfig
 from .events import OnClientEventCallback
-
-
-class RealmRole(Enum):
-    Owner = EnumItemUnit
-    Manager = EnumItemUnit
-    Contributor = EnumItemUnit
-    Reader = EnumItemUnit
 
 
 class DeviceAccessStrategy(Variant):
@@ -259,8 +253,8 @@ class ClientListWorkspacesError(ErrorVariant):
 
 class WorkspaceInfo(Structure):
     id: VlobID
-    name: EntryName
-    self_current_role: RealmRole
+    current_name: EntryName
+    current_self_role: RealmRole
     is_started: bool
     is_bootstrapped: bool
 

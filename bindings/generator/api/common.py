@@ -238,3 +238,10 @@ class UserProfile(Enum):
     Admin = EnumItemUnit
     Standard = EnumItemUnit
     Outsider = EnumItemUnit
+
+
+class RealmRole(Enum):
+    Owner = EnumItemUnit
+    Manager = EnumItemUnit
+    Contributor = EnumItemUnit
+    Reader = EnumItemUnit
