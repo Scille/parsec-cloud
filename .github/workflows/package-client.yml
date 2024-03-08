@@ -178,7 +178,7 @@ jobs:
           curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o D:/a/_temp/winfsp-tests.zip
           unzip D:/a/_temp/winfsp-tests.zip -d D:/a/_temp/
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
-        timeout-minutes: 1
+        timeout-minutes: 2
 
       - name: Install dependencies
         shell: bash
