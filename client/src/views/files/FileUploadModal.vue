@@ -29,13 +29,13 @@ const props = defineProps<{
   workspaceId: WorkspaceID;
 }>();
 
-interface FileImport {
+interface FileImportTuple {
   file: File;
   path: string;
 }
 
-async function importFiles(imports: FileImport[]): Promise<void> {
-  const existing: FileImport[] = [];
+async function importFiles(imports: FileImportTuple[]): Promise<void> {
+  const existing: FileImportTuple[] = [];
 
   for (const imp of imports) {
     const fullPath = await Path.join(imp.path, imp.file.name);
@@ -96,9 +96,9 @@ async function getEntries(fsEntry: FileSystemDirectoryEntry): Promise<FileSystem
   });
 }
 
-async function unwindEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<FileImport[]> {
+async function unwindEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<FileImportTuple[]> {
   const parsecPath = await Path.join(currentPath, fsEntry.name);
-  const imports: FileImport[] = [];
+  const imports: FileImportTuple[] = [];
 
   if (fsEntry.isDirectory) {
     const entries = await getEntries(fsEntry as FileSystemDirectoryEntry);
@@ -114,7 +114,7 @@ async function unwindEntry(currentPath: string, fsEntry: FileSystemEntry): Promi
 }
 
 async function onFilesDrop(entries: FileSystemEntry[]): Promise<void> {
-  const imports: FileImport[] = [];
+  const imports: FileImportTuple[] = [];
   for (const entry of entries) {
     const result = await unwindEntry(props.currentPath, entry);
     imports.push(...result);
@@ -123,7 +123,7 @@ async function onFilesDrop(entries: FileSystemEntry[]): Promise<void> {
 }
 
 async function onFilesImport(files: File[]): Promise<void> {
-  const imports: FileImport[] = files.map((file): FileImport => {
+  const imports: FileImportTuple[] = files.map((file): FileImportTuple => {
     return { file: file, path: props.currentPath };
   });
   await importFiles(imports);
