@@ -40,7 +40,7 @@ export interface FileProgressStateData {
 }
 
 export interface CreateFailedStateData {
-  error: WorkspaceOpenFileErrorTag;
+  error: WorkspaceOpenFileErrorTag | WorkspaceCreateFolderErrorTag;
 }
 
 export interface WriteErrorStateData {
@@ -141,13 +141,16 @@ class ImportManager {
     const reader = data.file.stream().getReader();
     const filePath = await Path.join(data.path, data.file.name);
 
-    const result = await createFolder(data.workspaceHandle, data.path);
-    if (result.ok) {
-      await this.sendState(ImportState.FolderCreated, undefined, { path: data.path, workspaceHandle: data.workspaceHandle });
-    } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
-      console.log(`Failed to create folder ${data.path} (reason: ${result.error.tag}), cancelling...`);
-      // No need to go further if the folder creation failed
-      return;
+    if (data.path !== '/') {
+      const result = await createFolder(data.workspaceHandle, data.path);
+      if (result.ok) {
+        await this.sendState(ImportState.FolderCreated, undefined, { path: data.path, workspaceHandle: data.workspaceHandle });
+      } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
+        console.log(`Failed to create folder ${data.path} (reason: ${result.error.tag}), cancelling...`);
+        await this.sendState(ImportState.CreateFailed, data, { error: result.error.tag });
+        // No need to go further if the folder creation failed
+        return;
+      }
     }
 
     const openResult = await openFile(data.workspaceHandle, filePath, { write: true, truncate: true, create: true });
