@@ -153,14 +153,14 @@ async fn ok(env: &TestbedEnv) {
     {
         let WorkspaceInfo {
             id,
-            name,
-            self_current_role,
+            current_name,
+            current_self_role,
             is_started,
             is_bootstrapped,
         } = wksp1_info;
         p_assert_eq!(*id, wksp1_id);
-        p_assert_eq!(*name, "wksp1".parse().unwrap());
-        p_assert_eq!(*self_current_role, RealmRole::Owner);
+        p_assert_eq!(*current_name, "wksp1".parse().unwrap());
+        p_assert_eq!(*current_self_role, RealmRole::Owner);
         p_assert_eq!(*is_bootstrapped, false); // Weird but expected !
         p_assert_eq!(*is_started, false);
     }

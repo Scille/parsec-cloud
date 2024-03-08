@@ -51,14 +51,14 @@ async fn multi_devices(env: &TestbedEnv) {
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                name,
-                self_current_role,
+                current_name,
+                current_self_role,
                 is_started,
                 is_bootstrapped,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(name, "new workspace".parse().unwrap());
-            p_assert_eq!(self_current_role, RealmRole::Owner);
+            p_assert_eq!(current_name, "new workspace".parse().unwrap());
+            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
             break;
@@ -174,14 +174,14 @@ async fn sharing(env: &TestbedEnv) {
         if let Some(entry) = found {
             let WorkspaceInfo {
                 id,
-                name,
-                self_current_role,
+                current_name,
+                current_self_role,
                 is_started,
                 is_bootstrapped,
             } = entry;
             p_assert_eq!(id, wid);
-            p_assert_eq!(name, "new workspace".parse().unwrap());
-            p_assert_eq!(self_current_role, RealmRole::Owner);
+            p_assert_eq!(current_name, "new workspace".parse().unwrap());
+            p_assert_eq!(current_self_role, RealmRole::Owner);
             p_assert_eq!(is_started, false);
             p_assert_eq!(is_bootstrapped, true);
             break;

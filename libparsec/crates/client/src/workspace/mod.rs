@@ -251,12 +251,10 @@ impl WorkspaceOps {
         self.realm_id
     }
 
-    pub fn name(&self) -> EntryName {
-        self.workspace_entry
-            .lock()
-            .expect("Mutex is poisoned")
-            .name
-            .clone()
+    pub fn get_current_name_and_self_role(&self) -> (EntryName, RealmRole) {
+        let guard = self.workspace_entry.lock().expect("Mutex is poisoned");
+
+        (guard.name.clone(), guard.role)
     }
 
     pub async fn stat_entry(&self, path: &FsPath) -> Result<EntryStat, WorkspaceStatEntryError> {

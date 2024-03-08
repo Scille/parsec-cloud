@@ -7,8 +7,8 @@ use super::Client;
 #[derive(Debug)]
 pub struct WorkspaceInfo {
     pub id: VlobID,
-    pub name: EntryName,
-    pub self_current_role: RealmRole,
+    pub current_name: EntryName,
+    pub current_self_role: RealmRole,
     pub is_started: bool,
     /// `true` once the bootstrap has been done (i.e. initial user realm role certificate,
     /// key rotation & realm name certificate uploaded on server-side).
@@ -47,8 +47,8 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
                 .any(|workspace_ops| workspace_ops.realm_id() == entry.id);
             WorkspaceInfo {
                 id: entry.id,
-                name: entry.name.clone(),
-                self_current_role: entry.role,
+                current_name: entry.name.clone(),
+                current_self_role: entry.role,
                 is_started,
                 is_bootstrapped,
             }
@@ -57,7 +57,7 @@ pub async fn list_workspaces(client_ops: &Client) -> Vec<WorkspaceInfo> {
 
     // Workspace list is sorted during it refresh, but there is no strong guarantee
     // that's the case if the data comes from a serialized local user manifest.
-    infos.sort_unstable_by(|a, b| a.name.cmp(&b.name));
+    infos.sort_unstable_by(|a, b| a.current_name.cmp(&b.current_name));
 
     infos
 }

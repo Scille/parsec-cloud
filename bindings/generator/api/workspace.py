@@ -16,6 +16,7 @@ from .common import (
     VersionInt,
     VlobID,
     Structure,
+    RealmRole,
     U32BasedType,
     Path,
 )
@@ -41,6 +42,23 @@ class WorkspaceStopError(ErrorVariant):
 
 
 async def workspace_stop(workspace: Handle) -> Result[None, WorkspaceStopError]:
+    raise NotImplementedError
+
+
+class StartedWorkspaceInfo(Structure):
+    client: Handle
+    id: VlobID
+    current_name: EntryName
+    current_self_role: RealmRole
+    mountpoints: list[tuple[Handle, Path]]
+
+
+class WorkspaceInfoError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def workspace_info(workspace: Handle) -> Result[StartedWorkspaceInfo, WorkspaceInfoError]:
     raise NotImplementedError
 
 

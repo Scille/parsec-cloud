@@ -157,15 +157,25 @@ pub(crate) enum FilterCloseHandle {
 
 pub(crate) fn filter_close_handles(
     start_at: Handle,
-    mut filter: impl FnMut(Handle, &mut HandleItem) -> FilterCloseHandle,
+    mut filter: impl FnMut(&mut HandleItem) -> FilterCloseHandle,
 ) {
     let mut guard = get_handles();
 
-    for (handle, maybe_running) in guard.iter_mut().skip(start_at as usize).enumerate() {
+    for maybe_running in guard.iter_mut().skip(start_at as usize) {
         if let RegisteredHandleItem::Open(item) = maybe_running {
-            if let FilterCloseHandle::Close = filter(handle as Handle, item) {
+            if let FilterCloseHandle::Close = filter(item) {
                 *maybe_running = RegisteredHandleItem::Closed;
             }
+        }
+    }
+}
+
+#[cfg_attr(target_arch = "wasm32", allow(dead_code))]
+pub(crate) fn iter_opened_handles(mut callback: impl FnMut(Handle, &HandleItem)) {
+    let guard = get_handles();
+    for (handle, maybe_opened) in guard.iter().enumerate() {
+        if let RegisteredHandleItem::Open(item) = maybe_opened {
+            callback(handle as u32, item);
         }
     }
 }

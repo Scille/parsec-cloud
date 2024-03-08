@@ -135,7 +135,7 @@ fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
     ops: &WorkspaceOps,
 ) -> anyhow::Result<(std::path::PathBuf, u64)> {
-    let workspace_name = ops.name();
+    let (workspace_name, _) = ops.get_current_name_and_self_role();
 
     // In case of hard crash, it's possible the FUSE mountpoint is still mounted
     // but points to nothing. In such case any FS operation on it will fail.
