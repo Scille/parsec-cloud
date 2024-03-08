@@ -370,8 +370,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def bootstrap(
         self,
         conn: asyncpg.Connection,
-        now: DateTime,
         id: OrganizationID,
+        now: DateTime,
         bootstrap_token: BootstrapToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,

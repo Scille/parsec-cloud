@@ -32,6 +32,10 @@ DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 DEFAULT_PORT = 6770
 
 
+class TestbedNotAvailable(Exception):
+    pass
+
+
 class UnknownTemplateError(Exception):
     pass
 
@@ -60,8 +64,13 @@ class TestbedBackend:
                     return self._loaded_templates[template]
 
                 except KeyError:
+                    if not TESTBED_AVAILABLE:
+                        raise TestbedNotAvailable()
+
                     # If it exists, template has not been loaded yet
-                    maybe_template_content = testbed.test_get_testbed_template(template)
+                    maybe_template_content = testbed.test_get_testbed_template(  # pyright: ignore [reportPossiblyUnboundVariable]
+                        template
+                    )
 
                     if not maybe_template_content:
                         # No template with the given id

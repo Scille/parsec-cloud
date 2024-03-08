@@ -128,8 +128,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     @override
     async def bootstrap(
         self,
-        now: DateTime,
         id: OrganizationID,
+        now: DateTime,
         bootstrap_token: BootstrapToken | None,
         root_verify_key: VerifyKey,
         user_certificate: bytes,
@@ -212,6 +212,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         organization_id: OrganizationID,
         author: UserID,
+        at: DateTime | None = None,
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
         try:
             org = self._data.organizations[organization_id]

@@ -459,7 +459,7 @@ class BaseInviteComponent:
                     # Hence it's hazardous to send the event directly from this coroutine (it
                     # requires cancellation shielding), and instead the `send_nowait` will
                     # delegate the work to a dedicated coroutine.
-                    status = InvitationStatusField.IDLE
+                    status = InvitationStatusField.IDLE  # pyright: ignore [reportAttributeAccessIssue]
                     self._event_bus.send_nowait(
                         EventInvitation(
                             organization_id=organization_id,

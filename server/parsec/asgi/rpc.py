@@ -87,7 +87,7 @@ ANONYMOUS_ORGANIZATION_BOOTSTRAP_CMD_ALL_API_REQS = tuple(
 rpc_router = APIRouter()
 
 
-OrganizationIDField = TypeAdapter(
+OrganizationIDField = TypeAdapter(  # pyright: ignore [reportCallIssue]
     Annotated[
         OrganizationID,
         GetPydanticSchema(
