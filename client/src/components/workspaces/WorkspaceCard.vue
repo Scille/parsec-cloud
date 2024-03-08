@@ -25,7 +25,7 @@
       </ion-avatar>
 
       <ion-title class="card-content__title body-lg">
-        {{ workspace.name }}
+        {{ workspace.currentName }}
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">

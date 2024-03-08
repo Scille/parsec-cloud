@@ -38,8 +38,8 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         const sharingResult = await getWorkspaceSharing(result.value[i].id, false);
         const info: WorkspaceInfo = {
           id: result.value[i].id,
-          name: result.value[i].name,
-          selfCurrentRole: result.value[i].selfCurrentRole,
+          currentName: result.value[i].currentName,
+          currentSelfRole: result.value[i].currentSelfRole,
           isStarted: result.value[i].isStarted,
           isBootstrapped: result.value[i].isBootstrapped,
           sharing: [],
@@ -60,8 +60,8 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
     const value: Array<WorkspaceInfo> = [
       {
         id: '1',
-        name: 'Trademeet',
-        selfCurrentRole: WorkspaceRole.Owner,
+        currentName: 'Trademeet',
+        currentSelfRole: WorkspaceRole.Owner,
         size: 934_583,
         lastUpdated: DateTime.now().minus(2000),
         availableOffline: false,
@@ -71,8 +71,8 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
       },
       {
         id: '2',
-        name: 'The Copper Coronet',
-        selfCurrentRole: WorkspaceRole.Manager,
+        currentName: 'The Copper Coronet',
+        currentSelfRole: WorkspaceRole.Manager,
         size: 3_489_534_274,
         lastUpdated: DateTime.now(),
         availableOffline: false,
@@ -82,8 +82,8 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
       },
       {
         id: '3',
-        name: "Watcher's Keep",
-        selfCurrentRole: WorkspaceRole.Reader,
+        currentName: "Watcher's Keep",
+        currentSelfRole: WorkspaceRole.Reader,
         size: 56_153_023,
         lastUpdated: DateTime.now(),
         availableOffline: true,
@@ -110,7 +110,7 @@ export async function getWorkspaceRole(workspaceId: WorkspaceID): Promise<Worksp
   if (result.ok) {
     const workspaceInfo = result.value.find((wi) => wi.id === workspaceId);
     if (workspaceInfo) {
-      return workspaceInfo.selfCurrentRole;
+      return workspaceInfo.currentSelfRole;
     }
   }
 
@@ -141,7 +141,7 @@ export async function getWorkspaceName(workspaceId: WorkspaceID): Promise<Result
         return false;
       });
       if (workspace) {
-        return { ok: true, value: workspace.name };
+        return { ok: true, value: workspace.currentName };
       }
     }
     return { ok: false, error: { tag: GetWorkspaceNameErrorTag.NotFound } };

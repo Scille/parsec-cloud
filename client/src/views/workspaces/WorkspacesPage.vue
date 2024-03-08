@@ -256,7 +256,7 @@ async function refreshWorkspacesList(): Promise<void> {
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
     if (sortBy.value === 'name') {
-      return sortByAsc.value ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+      return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
     } else if (sortBy.value === 'size') {
       return sortByAsc.value ? a.size - b.size : b.size - a.size;
     } else if (sortBy.value === 'lastUpdated') {
@@ -328,7 +328,7 @@ async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promis
     component: WorkspaceSharingModal,
     componentProps: {
       workspaceId: workspace.id,
-      ownRole: workspace.selfCurrentRole,
+      ownRole: workspace.currentSelfRole,
     },
     cssClass: 'workspace-sharing-modal',
   });

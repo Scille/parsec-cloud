@@ -12,7 +12,7 @@ describe('Workspace List Item', () => {
 
   const WORKSPACE: WorkspaceInfo = {
     id: 'id1',
-    name: 'My Workspace',
+    currentName: 'My Workspace',
     sharing: [
       [
         {
@@ -56,7 +56,7 @@ describe('Workspace List Item', () => {
       ],
     ],
     size: 60_817_408,
-    selfCurrentRole: WorkspaceRole.Reader,
+    currentSelfRole: WorkspaceRole.Reader,
     availableOffline: true,
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,

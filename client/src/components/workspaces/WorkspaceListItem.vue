@@ -23,13 +23,13 @@
         />
       </div>
       <ion-label class="workspace-name__label cell">
-        {{ workspace.name }}
+        {{ workspace.currentName }}
       </ion-label>
     </div>
 
     <!-- role user -->
     <div class="workspace-role">
-      <workspace-tag-role :role="workspace.selfCurrentRole" />
+      <workspace-tag-role :role="workspace.currentSelfRole" />
     </div>
 
     <!-- user avatars -->
