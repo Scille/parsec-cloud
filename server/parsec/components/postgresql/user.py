@@ -66,6 +66,14 @@ class PGUserComponent(BaseUserComponent):
     def register_components(self, organization: PGOrganizationComponent, **kwargs) -> None:
         self._organization = organization
 
+    async def _check_user(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        author: DeviceID,
+    ) -> UserProfile | CheckUserWithDeviceBadOutcome:
+        return await query_check_user_with_device(conn, organization_id, author)
+
     @override
     @transaction
     async def create_user(
@@ -96,7 +104,7 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        match await query_check_user_with_device(conn, organization_id, author):
+        match await self._check_user(conn, organization_id, author):
             case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
