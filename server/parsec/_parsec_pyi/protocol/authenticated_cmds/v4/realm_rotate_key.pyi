@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, UserID
+from parsec._parsec import DateTime, SequesterServiceID, UserID
 
 class Req:
     def __init__(
@@ -13,6 +13,7 @@ class Req:
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
         never_legacy_reencrypted_or_fail: bool,
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
@@ -23,6 +24,10 @@ class Req:
     def keys_bundle(self) -> bytes: ...
     @property
     def never_legacy_reencrypted_or_fail(self) -> bool: ...
+    @property
+    def per_sequester_service_keys_bundle_access(
+        self,
+    ) -> dict[SequesterServiceID, bytes] | None: ...
 
 class Rep:
     @staticmethod
@@ -62,6 +67,21 @@ class RepBadKeyIndex(Rep):
     def last_realm_certificate_timestamp(self) -> DateTime: ...
 
 class RepParticipantMismatch(Rep):
+    def __init__(self, last_common_certificate_timestamp: DateTime) -> None: ...
+    @property
+    def last_common_certificate_timestamp(self) -> DateTime: ...
+
+class RepSequesterServiceMismatch(Rep):
+    def __init__(self, last_sequester_certificate_timestamp: DateTime) -> None: ...
+    @property
+    def last_sequester_certificate_timestamp(self) -> DateTime: ...
+
+class RepSequesterServiceUnavailable(Rep):
+    def __init__(self, service_id: SequesterServiceID) -> None: ...
+    @property
+    def service_id(self) -> SequesterServiceID: ...
+
+class RepOrganizationNotSequestered(Rep):
     def __init__(
         self,
     ) -> None: ...
