@@ -17,6 +17,7 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
     UserCertificate,
     UserID,
+    UserProfile,
     VerifyKey,
 )
 from parsec.ballpark import TimestampOutOfBallpark
@@ -32,6 +33,7 @@ from parsec.components.organization import (
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
     OrganizationStatsBadOutcome,
+    OrganizationStatsProfileDetailItem,
     OrganizationUpdateBadOutcome,
     organization_bootstrap_validate,
 )
@@ -40,11 +42,15 @@ from parsec.components.postgresql.test_queries import (
     q_test_drop_organization_from_human_table,
     q_test_drop_organization_from_invitation_table,
     q_test_drop_organization_from_organization_table,
+    q_test_drop_organization_from_realm_table,
+    q_test_drop_organization_from_realm_user_role_table,
     q_test_drop_organization_from_user_table,
     q_test_duplicate_organization_from_device_table,
     q_test_duplicate_organization_from_human_table,
     q_test_duplicate_organization_from_invitation_table,
     q_test_duplicate_organization_from_organization_table,
+    q_test_duplicate_organization_from_realm_table,
+    q_test_duplicate_organization_from_realm_user_role_table,
     q_test_duplicate_organization_from_user_table,
 )
 from parsec.components.postgresql.user_queries.create import q_create_user
@@ -244,43 +250,6 @@ def _q_update_factory(
             WHERE organization_id = $organization_id
         """
     )
-
-
-async def _organization_stats(
-    conn: asyncpg.Connection,
-    id: OrganizationID,
-    at: DateTime,
-) -> OrganizationStats | None:
-    raise NotImplementedError
-    # result = await conn.fetchrow(*_q_get_stats(organization_id=id.str, at=at))
-    # if not result["exist"]:
-    #     return None
-
-    # users = 0
-    # active_users = 0
-    # users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
-    # for u in result["users"]:
-    #     is_revoked, profile = u
-    #     users += 1
-    #     if is_revoked:
-    #         users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
-    #     else:
-    #         active_users += 1
-    #         users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
-
-    # users_per_profile_detail = tuple(
-    #     UsersPerProfileDetailItem(profile=profile, **data)
-    #     for profile, data in users_per_profile_detail.items()
-    # )
-
-    # return OrganizationStats(
-    #     data_size=result["data_size"],
-    #     metadata_size=result["metadata_size"],
-    #     realms=result["realms"],
-    #     users=users,
-    #     active_users=active_users,
-    #     users_per_profile_detail=users_per_profile_detail,
-    # )
 
 
 class PGOrganizationComponent(BaseOrganizationComponent):
@@ -488,19 +457,51 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
         raise NotImplementedError
 
+    async def _get_organization_stats(
+        self,
+        connection: asyncpg.Connection,
+        organization: OrganizationID,
+        at: DateTime | None = None,
+    ) -> OrganizationStats | OrganizationStatsBadOutcome:
+        at = at or DateTime.now()
+        result = await connection.fetchrow(*_q_get_stats(organization_id=organization.str, at=at))
+        if result is None or not result["exist"]:
+            return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
+
+        users = 0
+        active_users = 0
+        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
+        for u in result["users"]:
+            is_revoked, profile = u
+            users += 1
+            if is_revoked:
+                users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
+            else:
+                active_users += 1
+                users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
+
+        users_per_profile_detail = tuple(
+            OrganizationStatsProfileDetailItem(profile=profile, **data)
+            for profile, data in users_per_profile_detail.items()
+        )
+
+        return OrganizationStats(
+            data_size=result["data_size"],
+            metadata_size=result["metadata_size"],
+            realms=result["realms"],
+            users=users,
+            active_users=active_users,
+            users_per_profile_detail=users_per_profile_detail,
+        )
+
     @override
     @transaction
     async def organization_stats(
         self,
-        connection: asyncpg.Connection,
+        conn: asyncpg.Connection,
         organization_id: OrganizationID,
     ) -> OrganizationStats | OrganizationStatsBadOutcome:
-        raise NotImplementedError
-        # at = at or DateTime.now()
-        # stats = await _organization_stats(conn, id, at)
-        #     if not stats:
-        #         raise OrganizationNotFoundError()
-        #     return stats
+        return await self._get_organization_stats(conn, organization_id)
 
     @override
     @transaction
@@ -637,6 +638,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def test_drop_organization(self, id: OrganizationID) -> None:
         async with self.pool.acquire() as conn:
             await conn.execute(
+                *q_test_drop_organization_from_realm_user_role_table(organization_id=id.str)
+            )
+            await conn.execute(*q_test_drop_organization_from_realm_table(organization_id=id.str))
+            await conn.execute(
                 *q_test_drop_organization_from_invitation_table(organization_id=id.str)
             )
             await conn.execute(*q_test_drop_organization_from_device_table(organization_id=id.str))
@@ -672,6 +677,16 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             await conn.execute(
                 *q_test_duplicate_organization_from_invitation_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
+                *q_test_duplicate_organization_from_realm_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
+                *q_test_duplicate_organization_from_realm_user_role_table(
                     source_id=source_id.str, target_id=target_id.str
                 )
             )

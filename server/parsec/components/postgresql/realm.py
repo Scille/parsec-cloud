@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import override
+from typing import assert_never, override
 
 import asyncpg
 
@@ -13,9 +13,15 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRoleCertificate,
     UserID,
+    UserProfile,
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
+from parsec.components.events import EventBus
+from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm_queries.create import query_create
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import transaction
 from parsec.components.realm import (
     BadKeyIndex,
@@ -34,12 +40,21 @@ from parsec.components.realm import (
     realm_rotate_key_validate,
     realm_share_validate,
 )
+from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.events import EventRealmCertificate
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
         super().__init__()
         self.pool = pool
+        self.event_bus = event_bus
+
+    def register_components(
+        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
+    ) -> None:
+        self._organization = organization
+        self._user = user
 
     @override
     @transaction
@@ -59,8 +74,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmCreateStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        # TODO: we pretend that the realm has been created to use the CoolOrg template
-        # await query_create(conn, organization_id, self_granted_role)
+        match await self._organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        if org.is_expired:
+            return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self._user._check_user(conn, organization_id, author):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
 
         match realm_create_validate(
             now=now,
@@ -72,6 +107,31 @@ class PGRealmComponent(BaseRealmComponent):
                 pass
             case error:
                 return error
+
+        # All checks are good, now we do the actual insertion
+        match await query_create(
+            conn=conn,
+            organization_id=organization_id,
+            realm_role_certificate=realm_role_certificate,
+            realm_role_certificate_cooked=certif,
+        ):
+            case CertificateBasedActionIdempotentOutcome() as outcome:
+                return outcome
+            case None:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        await self.event_bus.send(
+            EventRealmCertificate(
+                organization_id=organization_id,
+                timestamp=certif.timestamp,
+                realm_id=certif.realm_id,
+                user_id=certif.user_id,
+                role_removed=certif.role is None,
+            )
+        )
+
         return certif
 
     @override

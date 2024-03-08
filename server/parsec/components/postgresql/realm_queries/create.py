@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncpg
 
-from parsec._parsec import OrganizationID, RealmRole
+from parsec._parsec import OrganizationID, RealmRoleCertificate, RealmRole
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.utils import (
     Q,
@@ -12,7 +12,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     query,
 )
-from parsec.components.realm import RealmGrantedRole
+from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 
 _q_insert_realm = Q(
     f"""
@@ -64,42 +64,50 @@ SELECT
 )
 
 
-@query(in_transaction=True)
 async def query_create(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    self_granted_role: RealmGrantedRole,
-) -> None:
-    assert self_granted_role.granted_by is not None
-    assert self_granted_role.granted_by.user_id == self_granted_role.user_id
-    assert self_granted_role.role == RealmRole.OWNER
+    realm_role_certificate: bytes,
+    realm_role_certificate_cooked: RealmRoleCertificate,
+) -> None | CertificateBasedActionIdempotentOutcome:
+    assert realm_role_certificate_cooked.role == RealmRole.OWNER
 
     realm_internal_id = await conn.fetchval(
-        *_q_insert_realm(organization_id=organization_id.str, realm_id=self_granted_role.realm_id)
+        *_q_insert_realm(
+            organization_id=organization_id.str, realm_id=realm_role_certificate_cooked.realm_id
+        )
     )
     if not realm_internal_id:
-        raise RealmAlreadyExistsError()
+        return CertificateBasedActionIdempotentOutcome(
+            certificate_timestamp=realm_role_certificate_cooked.timestamp  # TODO: fix with proper timestamp
+        )
+
+    # Ensure certificate consistency: our certificate must be the newest thing on the server.
+    #
+    # Strictly speaking there is no consistency requirement here (the new empty realm
+    # has no impact on existing data).
+    #
+    # However we still use the same check that is applied everywhere else in order to be
+    # consistent.
+
+    # TODO: migrate this:
+    # assert (
+    #     org.last_certificate_or_vlob_timestamp is not None
+    # )  # Bootstrap has created the first certif
+    # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+    #     return RequireGreaterTimestamp(
+    #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+    #     )
 
     await conn.execute(
         *_q_insert_realm_role(
             realm_internal_id=realm_internal_id,
             organization_id=organization_id.str,
-            user_id=self_granted_role.user_id.str,
-            certificate=self_granted_role.certificate,
-            certified_by=self_granted_role.granted_by.str,
-            certified_on=self_granted_role.granted_on,
+            user_id=realm_role_certificate_cooked.user_id.str,
+            certificate=realm_role_certificate,
+            certified_by=realm_role_certificate_cooked.author.str,
+            certified_on=realm_role_certificate_cooked.timestamp,
         )
     )
 
     await conn.execute(*_q_insert_realm_encryption_revision(_id=realm_internal_id))
-
-    await send_signal(
-        conn,
-        BackendEventRealmRolesUpdated(
-            organization_id=organization_id,
-            author=self_granted_role.granted_by,
-            realm_id=self_granted_role.realm_id,
-            user=self_granted_role.user_id,
-            role=self_granted_role.role,
-        ),
-    )

@@ -6,6 +6,8 @@ from parsec.components.postgresql.utils import (
     q_human,
     q_human_internal_id,
     q_organization_internal_id,
+    q_realm,
+    q_realm_internal_id,
     q_user,
     q_user_internal_id,
 )
@@ -49,6 +51,24 @@ q_test_drop_organization_from_invitation_table = Q(
     f"""
 DELETE FROM invitation
 WHERE organization = { q_organization_internal_id("$organization_id") }
+"""
+)
+
+q_test_drop_organization_from_realm_table = Q(
+    f"""
+DELETE FROM realm
+WHERE organization = { q_organization_internal_id("$organization_id") }
+"""
+)
+
+q_test_drop_organization_from_realm_user_role_table = Q(
+    f"""
+DELETE FROM realm_user_role
+WHERE realm in (
+    SELECT _id
+    FROM realm
+    WHERE organization = { q_organization_internal_id("$organization_id") }
+)
 """
 )
 
@@ -190,5 +210,45 @@ SELECT
     conduit_claimer_payload
 FROM invitation
 WHERE organization = { q_organization_internal_id("$source_id") }
+"""
+)
+
+
+q_test_duplicate_organization_from_realm_table = Q(
+    f"""
+INSERT INTO realm (
+    organization,
+    realm_id,
+    encryption_revision
+)
+SELECT
+    { q_organization_internal_id("$target_id") },
+    realm_id,
+    encryption_revision
+FROM realm
+WHERE organization = { q_organization_internal_id("$source_id") }
+"""
+)
+
+q_test_duplicate_organization_from_realm_user_role_table = Q(
+    f"""
+INSERT INTO realm_user_role (
+    realm,
+    user_,
+    role,
+    certificate,
+    certified_by,
+    certified_on
+)
+SELECT
+    { q_realm_internal_id(organization_id="$target_id", realm_id=q_realm(_id="realm_user_role.realm", select="realm_id")) },
+    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="realm_user_role.user_", select="user_id")) },
+    role,
+    certificate,
+    certified_by,
+    certified_on
+FROM realm_user_role
+INNER JOIN realm ON realm._id = realm_user_role.realm
+WHERE realm.organization = { q_organization_internal_id("$source_id") }
 """
 )
