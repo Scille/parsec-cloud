@@ -360,7 +360,11 @@
             "title": "Importer vos fichiers",
             "dragAndDrop": "Glisser/Déposer vos fichiers à uploader",
             "or": "ou",
-            "browse": "Parcourir"
+            "browse": "Parcourir",
+            "replaceTitle": "Remplacer ou ignorer le fichier | Remplacer ou ignorer les fichiers",
+            "replaceQuestion": "Le fichier `{file}` existe déjà. Souhaitez-vous le remplacer ? | {count} fichiers existent déjà. Souhaitez-vous les remplacer ?",
+            "skipText": "Ignorer | Ignorer tous",
+            "replaceText": "Remplacer | Replacer tous"
         },
         "errors": {
             "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",

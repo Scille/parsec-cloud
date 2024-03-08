@@ -360,7 +360,11 @@
             "title": "Upload your files",
             "dragAndDrop": "Drag and drop your files here",
             "or": "or",
-            "browse": "Browse"
+            "browse": "Browse",
+            "replaceTitle": "Replace or skip file | Replace or skip files",
+            "replaceQuestion": "The file `{file}` already exists, would you like to replace it? | {count} files already exist, would you like to replace them?",
+            "skipText": "Skip | Skip all",
+            "replaceText": "Replace | Replace all"
         },
         "errors": {
             "deleteFailed": "Could not delete the file `{name}`, please try again.",
