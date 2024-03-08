@@ -1608,6 +1608,8 @@ struct TestbedEventRotateKeyRealmCache {
     certificates: TestbedEventCertificatesCache,
     keys_bundle: TestbedEventCacheEntry<Bytes>,
     per_user_keys_bundle_access: TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
+    per_sequester_service_bundle_access:
+        TestbedEventCacheEntry<Option<HashMap<SequesterServiceID, Bytes>>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -1799,6 +1801,31 @@ impl TestbedEventRotateKeyRealm {
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard
             .per_user_keys_bundle_access
+            .populated(populate)
+            .to_owned()
+    }
+
+    pub fn per_sequester_service_keys_bundle_access(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Option<HashMap<SequesterServiceID, Bytes>> {
+        let populate = || {
+            let access = RealmKeysBundleAccess {
+                keys_bundle_key: self.keys_bundle_access_key.clone(),
+            }
+            .dump();
+
+            template.sequester_services_public_key().map(|iter| {
+                iter.map(|(id, public_key)| {
+                    let encrypted = public_key.encrypt(&access);
+                    (id.to_owned(), Bytes::from(encrypted))
+                })
+                .collect()
+            })
+        };
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        guard
+            .per_sequester_service_bundle_access
             .populated(populate)
             .to_owned()
     }
@@ -2473,7 +2500,6 @@ impl TestbedEventNewShamirRecoveryInvitation {
 pub struct TestbedEventCreateOrUpdateVlobCache {
     pub signed: Bytes,
     pub encrypted: Bytes,
-    pub sequestered: Option<Vec<(SequesterServiceID, Bytes)>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -2563,13 +2589,6 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
         self.cache(template).encrypted
     }
 
-    pub fn sequestered(
-        &self,
-        template: &TestbedTemplate,
-    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
-        self.cache(template).sequestered
-    }
-
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(self.manifest.author);
@@ -2578,16 +2597,8 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = user_realm_key.encrypt(&signed).into();
-            let sequestered = template.sequester_services_public_key().map(|iter| {
-                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
-                    .collect()
-            });
 
-            TestbedEventCreateOrUpdateVlobCache {
-                signed,
-                encrypted,
-                sequestered,
-            }
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -2727,29 +2738,14 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         self.cache(template).encrypted
     }
 
-    pub fn sequestered(
-        &self,
-        template: &TestbedTemplate,
-    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
-        self.cache(template).sequestered
-    }
-
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = self.key.encrypt(&signed).into();
-            let sequestered = template.sequester_services_public_key().map(|iter| {
-                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
-                    .collect()
-            });
 
-            TestbedEventCreateOrUpdateVlobCache {
-                signed,
-                encrypted,
-                sequestered,
-            }
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -2905,29 +2901,14 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         self.cache(template).encrypted
     }
 
-    pub fn sequestered(
-        &self,
-        template: &TestbedTemplate,
-    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
-        self.cache(template).sequestered
-    }
-
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = self.key.encrypt(&signed).into();
-            let sequestered = template.sequester_services_public_key().map(|iter| {
-                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
-                    .collect()
-            });
 
-            TestbedEventCreateOrUpdateVlobCache {
-                signed,
-                encrypted,
-                sequestered,
-            }
+            TestbedEventCreateOrUpdateVlobCache { signed, encrypted }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.populated(populate).to_owned()
@@ -2949,7 +2930,6 @@ no_certificate_event!(
         version: VersionInt,
         signed: Bytes,
         encrypted: Bytes,
-        sequestered: Option<Vec<(SequesterServiceID, Bytes)>>,
     ]
 );
 
