@@ -46,7 +46,7 @@ async def components_factory(
                 invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 user = PGUserComponent(pool=pool, event_bus=event_bus)
                 vlob = PGVlobComponent(pool=pool)
-                realm = PGRealmComponent(pool=pool)
+                realm = PGRealmComponent(pool=pool, event_bus=event_bus)
 
                 # message = PGMessageComponent(pool=pool)
                 # blockstore = blockstore_factory(
