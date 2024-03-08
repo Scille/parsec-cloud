@@ -69,6 +69,7 @@ async def test_authenticated_realm_rotate_key_ok(
             },
             keys_bundle=b"<keys bundle>",
             never_legacy_reencrypted_or_fail=False,
+            per_sequester_service_keys_bundle_access=None,
         )
         assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
         await spy.wait_event_occurred(
@@ -128,6 +129,7 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
         },
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
+        per_sequester_service_keys_bundle_access=None,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
 
@@ -154,6 +156,7 @@ async def test_authenticated_realm_rotate_key_realm_not_found(coolorg: CoolorgRp
         },
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
+        per_sequester_service_keys_bundle_access=None,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
 
@@ -224,6 +227,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
         },
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
+        per_sequester_service_keys_bundle_access=None,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp_last_certificate_timestamp
@@ -265,8 +269,11 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
+        per_sequester_service_keys_bundle_access=None,
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch()
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch(
+        last_common_certificate_timestamp=DateTime(2000, 1, 6)
+    )
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
@@ -302,5 +309,6 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
         },
         keys_bundle=b"<keys bundle>",
         never_legacy_reencrypted_or_fail=False,
+        per_sequester_service_keys_bundle_access=None,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepInvalidCertificate()

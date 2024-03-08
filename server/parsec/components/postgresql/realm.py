@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import override
 
 import asyncpg
+import httpx
 
 from parsec._parsec import (
     DateTime,
@@ -37,8 +38,8 @@ from parsec.components.realm import (
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: asyncpg.Pool):
-        super().__init__()
+    def __init__(self, http_client: httpx.AsyncClient, pool: asyncpg.Pool):
+        super().__init__(http_client)
         self.pool = pool
 
     @override

@@ -31,7 +31,6 @@ async def test_authenticated_vlob_read_versions_ok(
         key_index=1,
         blob="<block 1 content v1>".encode(),
         timestamp=dt1,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -44,7 +43,6 @@ async def test_authenticated_vlob_read_versions_ok(
         key_index=1,
         blob="<block 2 content v1>".encode(),
         timestamp=dt1,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -79,7 +77,6 @@ async def test_authenticated_vlob_read_versions_ok(
         version=2,
         blob="<block 1 content v2>".encode(),
         timestamp=dt2,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -92,7 +89,6 @@ async def test_authenticated_vlob_read_versions_ok(
         version=3,
         blob="<block 1 content v3>".encode(),
         timestamp=dt3,
-        sequester_blob=None,
     )
     assert outcome is None
 
