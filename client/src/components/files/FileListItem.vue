@@ -14,7 +14,7 @@
       <div class="file-selected">
         <!-- eslint-disable vue/no-mutating-props -->
         <ion-checkbox
-          aria-label=""
+          aria-label="''"
           class="checkbox"
           v-model="entry.isSelected"
           v-show="entry.isSelected || isHovered || showCheckbox"
