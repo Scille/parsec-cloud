@@ -1250,6 +1250,155 @@ fn struct_open_options_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// StartedWorkspaceInfo
+
+#[allow(dead_code)]
+fn struct_started_workspace_info_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::StartedWorkspaceInfo> {
+    let client = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "client")?;
+        {
+            let v = js_val.value(cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let id = {
+        let js_val: Handle<JsString> = obj.get(cx, "id")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let current_name = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let current_self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_realm_role_js_to_rs(cx, js_string.as_str())?
+        }
+    };
+    let mountpoints = {
+        let js_val: Handle<JsArray> = obj.get(cx, "mountpoints")?;
+        {
+            let size = js_val.len(cx);
+            let mut v = Vec::with_capacity(size as usize);
+            for i in 0..size {
+                let js_item: Handle<JsArray> = js_val.get(cx, i)?;
+                v.push((
+                    {
+                        let js_item: Handle<JsNumber> = js_item.get(cx, 0)?;
+                        {
+                            let v = js_item.value(cx);
+                            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                                cx.throw_type_error("Not an u32 number")?
+                            }
+                            let v = v as u32;
+                            v
+                        }
+                    },
+                    {
+                        let js_item: Handle<JsString> = js_item.get(cx, 1)?;
+                        {
+                            let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                                Ok(std::path::PathBuf::from(s))
+                            };
+                            match custom_from_rs_string(js_item.value(cx)) {
+                                Ok(val) => val,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        }
+                    },
+                ));
+            }
+            v
+        }
+    };
+    Ok(libparsec::StartedWorkspaceInfo {
+        client,
+        id,
+        current_name,
+        current_self_role,
+        mountpoints,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_started_workspace_info_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::StartedWorkspaceInfo,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_client = JsNumber::new(cx, rs_obj.client as f64);
+    js_obj.set(cx, "client", js_client)?;
+    let js_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "id", js_id)?;
+    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
+    js_obj.set(cx, "currentName", js_current_name)?;
+    let js_current_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
+    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
+    let js_mountpoints = {
+        // JsArray::new allocates with `undefined` value, that's why we `set` value
+        let js_array = JsArray::new(cx, rs_obj.mountpoints.len() as u32);
+        for (i, elem) in rs_obj.mountpoints.into_iter().enumerate() {
+            let js_elem = {
+                let (x0, x1) = elem;
+                let js_array = JsArray::new(cx, 2);
+                let js_value = JsNumber::new(cx, x0 as f64);
+                js_array.set(cx, 0, js_value)?;
+                let js_value = JsString::try_new(cx, {
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(x1) {
+                        Ok(ok) => ok,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                })
+                .or_throw(cx)?;
+                js_array.set(cx, 1, js_value)?;
+                js_array
+            };
+            js_array.set(cx, i as u32, js_elem)?;
+        }
+        js_array
+    };
+    js_obj.set(cx, "mountpoints", js_mountpoints)?;
+    Ok(js_obj)
+}
+
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
@@ -1871,8 +2020,8 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let name = {
-        let js_val: Handle<JsString> = obj.get(cx, "name")?;
+    let current_name = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentName")?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, _> {
                 s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
@@ -1883,8 +2032,8 @@ fn struct_workspace_info_js_to_rs<'a>(
             }
         }
     };
-    let self_current_role = {
-        let js_val: Handle<JsString> = obj.get(cx, "selfCurrentRole")?;
+    let current_self_role = {
+        let js_val: Handle<JsString> = obj.get(cx, "currentSelfRole")?;
         {
             let js_string = js_val.value(cx);
             enum_realm_role_js_to_rs(cx, js_string.as_str())?
@@ -1900,8 +2049,8 @@ fn struct_workspace_info_js_to_rs<'a>(
     };
     Ok(libparsec::WorkspaceInfo {
         id,
-        name,
-        self_current_role,
+        current_name,
+        current_self_role,
         is_started,
         is_bootstrapped,
     })
@@ -1923,11 +2072,11 @@ fn struct_workspace_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
-    let js_name = JsString::try_new(cx, rs_obj.name).or_throw(cx)?;
-    js_obj.set(cx, "name", js_name)?;
-    let js_self_current_role =
-        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.self_current_role)).or_throw(cx)?;
-    js_obj.set(cx, "selfCurrentRole", js_self_current_role)?;
+    let js_current_name = JsString::try_new(cx, rs_obj.current_name).or_throw(cx)?;
+    js_obj.set(cx, "currentName", js_current_name)?;
+    let js_current_self_role =
+        JsString::try_new(cx, enum_realm_role_rs_to_js(rs_obj.current_self_role)).or_throw(cx)?;
+    js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
     let js_is_started = JsBoolean::new(cx, rs_obj.is_started);
     js_obj.set(cx, "isStarted", js_is_started)?;
     let js_is_bootstrapped = JsBoolean::new(cx, rs_obj.is_bootstrapped);
@@ -4871,6 +5020,25 @@ fn variant_workspace_fd_write_error_rs_to_js<'a>(
         libparsec::WorkspaceFdWriteError::NotInWriteMode { .. } => {
             let js_tag =
                 JsString::try_new(cx, "WorkspaceFdWriteErrorNotInWriteMode").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceInfoError
+
+#[allow(dead_code)]
+fn variant_workspace_info_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceInfoError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceInfoError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceInfoErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -9525,6 +9693,55 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_info
+fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_info(workspace).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_started_workspace_info_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_info_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_mount
 fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
@@ -10285,6 +10502,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceCreateFile", workspace_create_file)?;
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
     cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
+    cx.export_function("workspaceInfo", workspace_info)?;
     cx.export_function("workspaceMount", workspace_mount)?;
     cx.export_function("workspaceOpenFile", workspace_open_file)?;
     cx.export_function("workspaceRemoveEntry", workspace_remove_entry)?;

@@ -164,6 +164,15 @@ export interface OpenOptions {
 }
 
 
+export interface StartedWorkspaceInfo {
+    client: number
+    id: string
+    currentName: string
+    currentSelfRole: RealmRole
+    mountpoints: Array<[number, string]>
+}
+
+
 export interface UserClaimFinalizeInfo {
     handle: number
 }
@@ -230,8 +239,8 @@ export interface UserInfo {
 
 export interface WorkspaceInfo {
     id: string
-    name: string
-    selfCurrentRole: RealmRole
+    currentName: string
+    currentSelfRole: RealmRole
     isStarted: boolean
     isBootstrapped: boolean
 }
@@ -1330,6 +1339,15 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorNotInWriteMode
 
 
+// WorkspaceInfoError
+export interface WorkspaceInfoErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type WorkspaceInfoError =
+  | WorkspaceInfoErrorInternal
+
+
 // WorkspaceMountError
 export interface WorkspaceMountErrorInternal {
     tag: "Internal"
@@ -1904,6 +1922,9 @@ export function workspaceCreateFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceCreateFolderError>>
+export function workspaceInfo(
+    workspace: number
+): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
 export function workspaceMount(
     workspace: number
 ): Promise<Result<[number, string], WorkspaceMountError>>

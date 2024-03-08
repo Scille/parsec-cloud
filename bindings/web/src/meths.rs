@@ -1324,6 +1324,172 @@ fn struct_open_options_rs_to_js(rs_obj: libparsec::OpenOptions) -> Result<JsValu
     Ok(js_obj)
 }
 
+// StartedWorkspaceInfo
+
+#[allow(dead_code)]
+fn struct_started_workspace_info_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::StartedWorkspaceInfo, JsValue> {
+    let client = {
+        let js_val = Reflect::get(&obj, &"client".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+    };
+    let current_name = {
+        let js_val = Reflect::get(&obj, &"currentName".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, _> {
+                    s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid EntryName"))?
+    };
+    let current_self_role = {
+        let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_realm_role_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let mountpoints = {
+        let js_val = Reflect::get(&obj, &"mountpoints".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Array>()
+                .map_err(|_| TypeError::new("Not an array"))?;
+            let mut converted = Vec::with_capacity(js_val.length() as usize);
+            for x in js_val.iter() {
+                let x_converted = (
+                    {
+                        let js_x1 = Reflect::get_u32(&x, 1)?;
+                        {
+                            let v = js_x1
+                                .dyn_into::<Number>()
+                                .map_err(|_| TypeError::new("Not a number"))?
+                                .value_of();
+                            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                            }
+                            v as u32
+                        }
+                    },
+                    {
+                        let js_x2 = Reflect::get_u32(&x, 2)?;
+                        js_x2
+                            .dyn_into::<JsString>()
+                            .ok()
+                            .and_then(|s| s.as_string())
+                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .and_then(|x| {
+                                let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                                    Ok(std::path::PathBuf::from(s))
+                                };
+                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                            })
+                            .map_err(|_| TypeError::new("Not a valid Path"))?
+                    },
+                );
+                converted.push(x_converted);
+            }
+            converted
+        }
+    };
+    Ok(libparsec::StartedWorkspaceInfo {
+        client,
+        id,
+        current_name,
+        current_self_role,
+        mountpoints,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_started_workspace_info_rs_to_js(
+    rs_obj: libparsec::StartedWorkspaceInfo,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_client = JsValue::from(rs_obj.client);
+    Reflect::set(&js_obj, &"client".into(), &js_client)?;
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_current_name = JsValue::from_str(rs_obj.current_name.as_ref());
+    Reflect::set(&js_obj, &"currentName".into(), &js_current_name)?;
+    let js_current_self_role =
+        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_self_role));
+    Reflect::set(&js_obj, &"currentSelfRole".into(), &js_current_self_role)?;
+    let js_mountpoints = {
+        // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+        let js_array = Array::new_with_length(rs_obj.mountpoints.len() as u32);
+        for (i, elem) in rs_obj.mountpoints.into_iter().enumerate() {
+            let js_elem = {
+                let (x1, x2) = elem;
+                let js_array = Array::new_with_length(2);
+                let js_value = JsValue::from(x1);
+                js_array.push(&js_value);
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(x2) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                js_array.push(&js_value);
+                js_array.into()
+            };
+            js_array.set(i as u32, js_elem);
+        }
+        js_array.into()
+    };
+    Reflect::set(&js_obj, &"mountpoints".into(), &js_mountpoints)?;
+    Ok(js_obj)
+}
+
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
@@ -1964,8 +2130,8 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             })
             .map_err(|_| TypeError::new("Not a valid VlobID"))?
     };
-    let name = {
-        let js_val = Reflect::get(&obj, &"name".into())?;
+    let current_name = {
+        let js_val = Reflect::get(&obj, &"currentName".into())?;
         js_val
             .dyn_into::<JsString>()
             .ok()
@@ -1979,8 +2145,8 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
             })
             .map_err(|_| TypeError::new("Not a valid EntryName"))?
     };
-    let self_current_role = {
-        let js_val = Reflect::get(&obj, &"selfCurrentRole".into())?;
+    let current_self_role = {
+        let js_val = Reflect::get(&obj, &"currentSelfRole".into())?;
         {
             let raw_string = js_val.as_string().ok_or_else(|| {
                 let type_error = TypeError::new("value is not a string");
@@ -2006,8 +2172,8 @@ fn struct_workspace_info_js_to_rs(obj: JsValue) -> Result<libparsec::WorkspaceIn
     };
     Ok(libparsec::WorkspaceInfo {
         id,
-        name,
-        self_current_role,
+        current_name,
+        current_self_role,
         is_started,
         is_bootstrapped,
     })
@@ -2026,11 +2192,11 @@ fn struct_workspace_info_rs_to_js(rs_obj: libparsec::WorkspaceInfo) -> Result<Js
         .as_ref()
     });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
-    let js_name = JsValue::from_str(rs_obj.name.as_ref());
-    Reflect::set(&js_obj, &"name".into(), &js_name)?;
-    let js_self_current_role =
-        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.self_current_role));
-    Reflect::set(&js_obj, &"selfCurrentRole".into(), &js_self_current_role)?;
+    let js_current_name = JsValue::from_str(rs_obj.current_name.as_ref());
+    Reflect::set(&js_obj, &"currentName".into(), &js_current_name)?;
+    let js_current_self_role =
+        JsValue::from_str(enum_realm_role_rs_to_js(rs_obj.current_self_role));
+    Reflect::set(&js_obj, &"currentSelfRole".into(), &js_current_self_role)?;
     let js_is_started = rs_obj.is_started.into();
     Reflect::set(&js_obj, &"isStarted".into(), &js_is_started)?;
     let js_is_bootstrapped = rs_obj.is_bootstrapped.into();
@@ -5492,6 +5658,23 @@ fn variant_workspace_fd_write_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceInfoError
+
+#[allow(dead_code)]
+fn variant_workspace_info_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceInfoError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceInfoError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceInfoErrorInternal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceMountError
 
 #[allow(dead_code)]
@@ -8243,6 +8426,31 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_create_folder_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_info
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceInfo(workspace: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::workspace_info(workspace).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_started_workspace_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_info_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
