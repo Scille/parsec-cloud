@@ -31,7 +31,6 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
         key_index=1,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -44,7 +43,6 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
             version=2,
             blob=v2_blob,
             timestamp=v2_timestamp,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_update.RepOk()
 
@@ -86,7 +84,6 @@ async def test_authenticated_vlob_update_author_not_allowed(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -98,7 +95,6 @@ async def test_authenticated_vlob_update_author_not_allowed(
         timestamp=DateTime.now(),
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepAuthorNotAllowed()
 
@@ -125,7 +121,6 @@ async def test_authenticated_vlob_update_bad_key_index(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -178,7 +173,6 @@ async def test_authenticated_vlob_update_bad_key_index(
         timestamp=t2,
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
@@ -196,7 +190,6 @@ async def test_authenticated_vlob_update_vlob_not_found(coolorg: CoolorgRpcClien
         timestamp=DateTime.now(),
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepVlobNotFound()
 
@@ -218,7 +211,6 @@ async def test_authenticated_vlob_update_bad_vlob_version(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -240,7 +232,6 @@ async def test_authenticated_vlob_update_bad_vlob_version(
         timestamp=DateTime.now(),
         version=bad_version,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepBadVlobVersion()
 

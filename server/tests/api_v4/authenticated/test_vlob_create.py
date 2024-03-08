@@ -41,7 +41,6 @@ async def test_authenticated_vlob_create_ok(
             key_index=key_index,
             timestamp=v1_timestamp,
             blob=v1_blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_create.RepOk()
 
@@ -79,7 +78,6 @@ async def test_authenticated_vlob_create_author_not_allowed(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepAuthorNotAllowed()
 
@@ -145,7 +143,6 @@ async def test_authenticated_vlob_create_bad_key_index(
         key_index=bad_key_index,
         timestamp=t1,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
@@ -169,7 +166,6 @@ async def test_authenticated_vlob_create_realm_not_found(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepRealmNotFound()
 
@@ -192,7 +188,6 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -204,7 +199,6 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepVlobAlreadyExists()
 

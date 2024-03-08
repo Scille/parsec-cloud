@@ -8,13 +8,7 @@ from parsec._parsec import DateTime, SequesterServiceID, VlobID
 
 class Req:
     def __init__(
-        self,
-        vlob_id: VlobID,
-        key_index: int,
-        timestamp: DateTime,
-        version: int,
-        blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None,
+        self, vlob_id: VlobID, key_index: int, timestamp: DateTime, version: int, blob: bytes
     ) -> None: ...
     def dump(self) -> bytes: ...
     @property
@@ -27,8 +21,6 @@ class Req:
     def version(self) -> int: ...
     @property
     def blob(self) -> bytes: ...
-    @property
-    def sequester_blob(self) -> dict[SequesterServiceID, bytes] | None: ...
 
 class Rep:
     @staticmethod
@@ -67,27 +59,17 @@ class RepBadVlobVersion(Rep):
         self,
     ) -> None: ...
 
-class RepOrganizationNotSequestered(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepSequesterInconsistency(Rep):
-    def __init__(self, last_common_certificate_timestamp: DateTime) -> None: ...
-    @property
-    def last_common_certificate_timestamp(self) -> DateTime: ...
-
-class RepSequesterServiceUnavailable(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
 class RepRejectedBySequesterService(Rep):
     def __init__(self, service_id: SequesterServiceID, reason: str) -> None: ...
     @property
     def service_id(self) -> SequesterServiceID: ...
     @property
     def reason(self) -> str: ...
+
+class RepSequesterServiceUnavailable(Rep):
+    def __init__(self, service_id: SequesterServiceID) -> None: ...
+    @property
+    def service_id(self) -> SequesterServiceID: ...
 
 class RepTimestampOutOfBallpark(Rep):
     def __init__(

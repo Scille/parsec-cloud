@@ -43,8 +43,8 @@ async def components_factory(
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 user = PGUserComponent(pool=pool, event_bus=event_bus)
-                vlob = PGVlobComponent(pool=pool)
-                realm = PGRealmComponent(pool=pool)
+                vlob = PGVlobComponent(http_client=http_client, pool=pool)
+                realm = PGRealmComponent(http_client=http_client, pool=pool)
 
                 # message = PGMessageComponent(pool=pool)
                 # blockstore = blockstore_factory(

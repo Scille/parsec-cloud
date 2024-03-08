@@ -20,8 +20,7 @@ from parsec.components.sequester import BaseSequesterService
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
-    SequesterInconsistency,
-    SequesterServiceNotAvailable,
+    SequesterServiceUnavailable,
     VlobCreateBadOutcome,
 )
 
@@ -59,7 +58,8 @@ async def _check_sequestered_organization(
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, http_client: httpx.AsyncClient, pool: asyncpg.Pool):
+        super().__init__(http_client)
         self.pool = pool
         self._sequester_organization_authority_cache: dict[
             OrganizationID, SequesterAuthority | None
@@ -130,7 +130,6 @@ class PGVlobComponent(BaseVlobComponent):
         key_index: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -138,8 +137,7 @@ class PGVlobComponent(BaseVlobComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
-        | SequesterServiceNotAvailable
-        | SequesterInconsistency
+        | SequesterServiceUnavailable
     ):
         # TODO: we return None to use the CoolOrg template
         return None
@@ -192,7 +190,6 @@ class PGVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> None:
         async with self.dbh.pool.acquire() as conn:
             sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
