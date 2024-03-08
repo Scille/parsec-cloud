@@ -339,33 +339,19 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
     backend: Backend,
     timestamp_offset: int,
 ) -> None:
-    dt1 = DateTime.now()
-    dt2 = dt1.add(seconds=10)
-    bad_timestamp = dt2.subtract(seconds=timestamp_offset)
+    last_certificate_timestamp = DateTime.now()
+    same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 
-    # 1) Create a first vlob
+    # 1) Rotate key to add a new certificate with last_certificate_timestamp
 
     author = coolorg.alice.device_id
     realm_id = coolorg.wksp1_id
     organization_id = coolorg.organization_id
-    vlob_id = VlobID.new()
-    outcome = await backend.vlob.create(
-        now=dt1,
-        organization_id=organization_id,
-        author=author,
-        realm_id=coolorg.wksp1_id,
-        vlob_id=vlob_id,
-        key_index=1,
-        blob=b"<initial block content>",
-        timestamp=dt1,
-        sequester_blob=None,
-    )
-    assert outcome is None, outcome
 
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=organization_id)
 
     outcome = await backend.realm.rotate_key(
-        now=dt2,
+        now=last_certificate_timestamp,
         organization_id=organization_id,
         author=author,
         author_verify_key=coolorg.alice.signing_key.verify_key,
@@ -376,7 +362,7 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
         },
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=author,
-            timestamp=dt2,
+            timestamp=last_certificate_timestamp,
             hash_algorithm=HashAlgorithm.SHA256,
             encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
             key_index=2,
@@ -386,18 +372,19 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
 
-    # 2) Create second vlob with same or previous timestamp
+    # 2) Try to update a vlob with same or previous timestamp
+    #    than the certificate created via key rotation above
 
     rep = await coolorg.alice.vlob_update(
-        vlob_id=vlob_id,
+        vlob_id=realm_id,
         key_index=2,
-        timestamp=bad_timestamp,
+        timestamp=same_or_previous_timestamp,
         version=2,
         blob=b"<updated block content>",
         sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepRequireGreaterTimestamp(
-        strictly_greater_than=dt2
+        strictly_greater_than=last_certificate_timestamp
     )
 
     # Ensure no changes were made
