@@ -3,6 +3,7 @@
 use std::path::PathBuf;
 
 pub use libparsec_client_connection::ProxyConfig;
+use libparsec_types::prelude::*;
 
 pub const DEFAULT_WORKSPACE_STORAGE_CACHE_SIZE: u64 = 512 * 1024 * 1024;
 
@@ -36,4 +37,23 @@ pub struct ClientConfig {
     /// If `false`, nothing runs & react in the background, useful for tests
     /// or CLI where the client is started to only perform a single operation.
     pub with_monitors: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ServerConfig {
+    pub user_profile_outsider_allowed: bool,
+    pub active_users_limit: ActiveUsersLimit,
+}
+
+// It's easy to provide "good enough" default value so that the config is guaranteed
+// to be always available \o/
+// Note in practice this default config should be overwritten as soon as the client
+// connects to the server (server always starts by sending a SSE event about its config).
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            user_profile_outsider_allowed: false,
+            active_users_limit: ActiveUsersLimit::NoLimit,
+        }
+    }
 }

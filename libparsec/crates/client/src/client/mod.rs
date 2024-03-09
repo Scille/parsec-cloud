@@ -27,11 +27,12 @@ pub use self::{
 };
 use crate::{
     certif::{CertifOps, CertifPollServerError},
-    config::ClientConfig,
+    config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
     monitors::{
-        start_certif_poll_monitor, start_connection_monitor, start_user_sync_monitor,
-        start_workspaces_bootstrap_monitor, start_workspaces_refresh_list_monitor, Monitor,
+        start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
+        start_user_sync_monitor, start_workspaces_bootstrap_monitor,
+        start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
 };
@@ -59,6 +60,7 @@ pub use crate::workspace::WorkspaceOps;
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
     pub(crate) config: Arc<ClientConfig>,
+    pub(crate) server_config: Mutex<ServerConfig>,
     pub(crate) device: Arc<LocalDevice>,
     pub(crate) event_bus: EventBus,
     pub(crate) cmds: Arc<AuthenticatedCmds>,
@@ -121,6 +123,7 @@ impl Client {
         );
 
         let client = Arc::new(Self {
+            server_config: Mutex::new(ServerConfig::default()),
             config,
             device,
             event_bus,
@@ -150,6 +153,9 @@ impl Client {
             )
             .await;
 
+            let server_config_monitor =
+                start_server_config_monitor(client.clone(), client.event_bus.clone()).await;
+
             // Start the connection monitors last, as it send the initial event that wakeup to others
 
             let connection_monitor =
@@ -160,6 +166,7 @@ impl Client {
             monitors.push(workspaces_refresh_list_monitor);
             monitors.push(user_sync_monitor);
             monitors.push(certif_poll_monitor);
+            monitors.push(server_config_monitor);
             monitors.push(connection_monitor);
         }
 
@@ -225,6 +232,13 @@ impl Client {
 
     pub fn config(&self) -> &ClientConfig {
         &self.config
+    }
+
+    pub fn server_config(&self) -> ServerConfig {
+        self.server_config
+            .lock()
+            .expect("Mutex is poisoned")
+            .clone()
     }
 
     pub fn organization_addr(&self) -> &ParsecOrganizationAddr {
@@ -403,6 +417,15 @@ impl Client {
     /// This method is typically used by a monitor.
     pub async fn refresh_workspaces_list(&self) -> Result<(), RefreshWorkspacesListError> {
         workspace_refresh_list::refresh_workspaces_list(self).await
+    }
+
+    /// Refresh the server configuration, typically after the server have send a
+    /// `ServerConfig` SSE event.
+    ///
+    /// This method is typically used by a monitor.
+    pub(crate) fn update_server_config(&self, updater: impl FnOnce(&mut ServerConfig)) {
+        let mut guard = self.server_config.lock().expect("Mutex is poisoned");
+        updater(&mut guard);
     }
 
     /// This function deals with subsequent (i.e. post bootstrap) key rotations.

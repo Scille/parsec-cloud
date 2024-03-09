@@ -4,6 +4,7 @@ from typing import Optional
 
 from .addr import ParsecOrganizationAddr
 from .common import (
+    U64,
     DateTime,
     DeviceID,
     DeviceLabel,
@@ -21,6 +22,8 @@ from .common import (
     UserID,
     UserProfile,
     Variant,
+    VariantItemTuple,
+    VariantItemUnit,
     VlobID,
     RealmRole,
 )
@@ -80,6 +83,16 @@ class ClientInfoError(ErrorVariant):
         pass
 
 
+class ActiveUsersLimit(Variant):
+    LimitedTo = VariantItemTuple(U64)
+    NoLimit = VariantItemUnit
+
+
+class ServerConfig(Structure):
+    user_profile_outsider_allowed: bool
+    active_users_limit: ActiveUsersLimit
+
+
 class ClientInfo(Structure):
     organization_addr: ParsecOrganizationAddr
     organization_id: OrganizationID
@@ -88,6 +101,7 @@ class ClientInfo(Structure):
     device_label: DeviceLabel
     human_handle: HumanHandle
     current_profile: UserProfile
+    server_config: ServerConfig
 
 
 async def client_info(

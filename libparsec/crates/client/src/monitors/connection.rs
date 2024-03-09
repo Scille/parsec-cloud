@@ -35,7 +35,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             active_users_limit,
             user_profile_outsider_allowed,
         } => {
-            let event = EventServerConfigChanged {
+            let event = EventServerConfigNotified {
                 active_users_limit,
                 user_profile_outsider_allowed,
             };
@@ -45,9 +45,9 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             token,
             invitation_status,
         } => {
-            let event = EventInviteStatusChanged {
-                invitation_status,
+            let event = EventInvitationChanged {
                 token,
+                status: invitation_status,
             };
             event_bus.send(&event);
         }
@@ -148,7 +148,7 @@ fn handle_sse_error(
             ControlFlow::Break(())
         }
         ConnectionError::RevokedUser => {
-            event_bus.send(&EventRevokedUser);
+            event_bus.send(&EventRevokedSelfUser);
             ControlFlow::Break(())
         }
         ConnectionError::UnsupportedApiVersion {

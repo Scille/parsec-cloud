@@ -2,7 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-pub use libparsec_client::{ProxyConfig, WorkspaceStorageCacheSize};
+pub use libparsec_client::{ProxyConfig, ServerConfig, WorkspaceStorageCacheSize};
 pub use libparsec_types::prelude::*;
 
 pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
