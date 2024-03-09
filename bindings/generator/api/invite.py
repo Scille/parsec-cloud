@@ -27,6 +27,7 @@ from .common import (
     UserID,
     UserProfile,
     Variant,
+    InvitationStatus,
 )
 from .config import ClientConfig
 from .events import OnClientEventCallback
@@ -301,13 +302,6 @@ async def claimer_device_finalize_save_local_device(
 #
 # Invitation greeter
 #
-
-
-class InvitationStatus(Enum):
-    Idle = EnumItemUnit
-    Ready = EnumItemUnit
-    Finished = EnumItemUnit
-    Cancelled = EnumItemUnit
 
 
 class InvitationEmailSentStatus(Enum):

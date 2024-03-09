@@ -104,6 +104,7 @@ export interface ClientInfo {
     deviceLabel: DeviceLabel
     humanHandle: HumanHandle
     currentProfile: UserProfile
+    serverConfig: ServerConfig
 }
 
 export interface DeviceClaimFinalizeInfo {
@@ -173,6 +174,11 @@ export interface OpenOptions {
     truncate: boolean
     create: boolean
     createNew: boolean
+}
+
+export interface ServerConfig {
+    userProfileOutsiderAllowed: boolean
+    activeUsersLimit: ActiveUsersLimit
 }
 
 export interface StartedWorkspaceInfo {
@@ -251,6 +257,23 @@ export interface WorkspaceUserAccessInfo {
     currentProfile: UserProfile
     currentRole: RealmRole
 }
+
+// ActiveUsersLimit
+export enum ActiveUsersLimitTag {
+    LimitedTo = 'ActiveUsersLimitLimitedTo',
+    NoLimit = 'ActiveUsersLimitNoLimit',
+}
+
+export interface ActiveUsersLimitLimitedTo {
+    tag: ActiveUsersLimitTag.LimitedTo
+    x1: U64
+}
+export interface ActiveUsersLimitNoLimit {
+    tag: ActiveUsersLimitTag.NoLimit
+}
+export type ActiveUsersLimit =
+  | ActiveUsersLimitLimitedTo
+  | ActiveUsersLimitNoLimit
 
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
@@ -504,15 +527,52 @@ export type ClientCreateWorkspaceError =
 
 // ClientEvent
 export enum ClientEventTag {
+    IncompatibleServer = 'ClientEventIncompatibleServer',
+    InvitationChanged = 'ClientEventInvitationChanged',
+    Offline = 'ClientEventOffline',
+    Online = 'ClientEventOnline',
     Ping = 'ClientEventPing',
+    ServerConfigChanged = 'ClientEventServerConfigChanged',
+    TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
 }
 
+export interface ClientEventIncompatibleServer {
+    tag: ClientEventTag.IncompatibleServer
+    detail: string
+}
+export interface ClientEventInvitationChanged {
+    tag: ClientEventTag.InvitationChanged
+    token: InvitationToken
+    status: InvitationStatus
+}
+export interface ClientEventOffline {
+    tag: ClientEventTag.Offline
+}
+export interface ClientEventOnline {
+    tag: ClientEventTag.Online
+}
 export interface ClientEventPing {
     tag: ClientEventTag.Ping
     ping: string
 }
+export interface ClientEventServerConfigChanged {
+    tag: ClientEventTag.ServerConfigChanged
+}
+export interface ClientEventTooMuchDriftWithServerClock {
+    tag: ClientEventTag.TooMuchDriftWithServerClock
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
 export type ClientEvent =
+  | ClientEventIncompatibleServer
+  | ClientEventInvitationChanged
+  | ClientEventOffline
+  | ClientEventOnline
   | ClientEventPing
+  | ClientEventServerConfigChanged
+  | ClientEventTooMuchDriftWithServerClock
 
 // ClientGetUserDeviceError
 export enum ClientGetUserDeviceErrorTag {

@@ -38,8 +38,8 @@ class EnumItemUnit:
 #     class Foo(Variant):
 #         class A:
 #             a: int
-#         B: VariantItemTuple(int, int)
-#         C: VariantItemUnit
+#         B = VariantItemTuple(int, int)
+#         C = VariantItemUnit
 class Variant:
     pass
 
@@ -245,3 +245,10 @@ class RealmRole(Enum):
     Manager = EnumItemUnit
     Contributor = EnumItemUnit
     Reader = EnumItemUnit
+
+
+class InvitationStatus(Enum):
+    Idle = EnumItemUnit
+    Ready = EnumItemUnit
+    Finished = EnumItemUnit
+    Cancelled = EnumItemUnit

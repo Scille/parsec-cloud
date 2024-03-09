@@ -178,6 +178,21 @@ pub enum IncompatibleServerReason {
     Unexpected(Arc<anyhow::Error>),
 }
 
+impl ToString for IncompatibleServerReason {
+    fn to_string(&self) -> String {
+        match self {
+            IncompatibleServerReason::UnsupportedApiVersion {
+                api_version,
+                supported_api_versions,
+            } => format!(
+                "Server is incompatible given it doesn't support API version: {} (supported versions: {:?})",
+                api_version, supported_api_versions
+            ),
+            IncompatibleServerReason::Unexpected(err) => format!("Server is incompatible due to an unexpected error: {}", err),
+        }
+    }
+}
+
 // All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)
 // Note all errors in the events are wrapped with an `Arc`, this due to`anyhow::Error`
 // not being `Clone`. If you wonder, performance impact should be minimal because:
@@ -197,7 +212,7 @@ impl_events!(
         ballpark_client_late_offset: Float,
     },
     ExpiredOrganization,
-    RevokedUser,
+    RevokedSelfUser,
     IncompatibleServer(IncompatibleServerReason),
     // TODO: two types of new certificates events:
     //       - poll from scratch
@@ -243,13 +258,21 @@ impl_events!(
     // WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),
     // Re-publishing of `events_listen`
-    ServerConfigChanged {
+    // `ServerConfigNotified` correspond to the SSE event that is always send by the
+    // server when connecting to it. `ServerConfigChanged` is the higher level event
+    // that detect an actual change in the server configuration (e.g. in case of
+    // disconnection we can have multiple `ServerConfigNotified`, but no
+    // `ServerConfigChanged`).
+    ServerConfigNotified {
         active_users_limit: ActiveUsersLimit,
         user_profile_outsider_allowed: bool,
     },
+    // `ServerConfigChanged` doesn't provide the actual config, use
+    // `Client::get_server_config` to get it instead.
+    ServerConfigChanged,
     CertificatesUpdated { last_timestamps: PerTopicLastTimestamps },
-    InviteStatusChanged {
-        invitation_status: InvitationStatus,
+    InvitationChanged {
+        status: InvitationStatus,
         token: InvitationToken,
     },
     RealmVlobUpdated {

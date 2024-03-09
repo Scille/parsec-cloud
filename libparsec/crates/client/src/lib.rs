@@ -11,6 +11,7 @@ mod user;
 pub mod workspace;
 
 // For clarity, user & certificate stuff are re-exposed through client
+pub use certif::*;
 pub use client::*;
 pub use config::*;
 pub use event_bus::*;

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
+import { ActiveUsersLimitTag, libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
@@ -131,6 +131,12 @@ export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoErro
         humanHandle: {
           email: 'user@host.com',
           label: 'Gordon Freeman',
+        },
+        serverConfig: {
+          userProfileOutsiderAllowed: true,
+          activeUsersLimit: {
+            tag: ActiveUsersLimitTag.NoLimit,
+          },
         },
       },
     };

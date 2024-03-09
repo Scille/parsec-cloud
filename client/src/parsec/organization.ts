@@ -9,7 +9,7 @@ import {
   AvailableDevice,
   BootstrapOrganizationError,
   ClientConfig,
-  ClientEventPing,
+  ClientEvent,
   DeviceFileType,
   OrganizationID,
   OrganizationInfo,
@@ -29,7 +29,7 @@ export async function createOrganization(
   password: string,
   deviceLabel: string,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  function parsecEventCallback(event: ClientEventPing): void {
+  function parsecEventCallback(event: ClientEvent): void {
     console.log('On event', event);
   }
 

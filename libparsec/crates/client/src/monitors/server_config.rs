@@ -54,7 +54,7 @@ fn task_future_factory(client: Arc<Client>, event_bus: EventBus) -> impl Future<
         // Our coroutine is only here to keep the event connection alive.
         let _events_connection_lifetime = events_connection_lifetime;
         // We want to sleep forever, but we can only do it for `Duration::MAX` (which is
-        // very, very long but not infinite). Hence the loop, which is mostly theorical.
+        // very, very long but not infinite). Hence the loop, which is mostly theoretical.
         loop {
             sleep(std::time::Duration::MAX).await;
         }

@@ -518,6 +518,10 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             enum_user_profile_js_to_rs(raw_string.as_str())
         }?
     };
+    let server_config = {
+        let js_val = Reflect::get(&obj, &"serverConfig".into())?;
+        struct_server_config_js_to_rs(js_val)?
+    };
     Ok(libparsec::ClientInfo {
         organization_addr,
         organization_id,
@@ -526,6 +530,7 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
         device_label,
         human_handle,
         current_profile,
+        server_config,
     })
 }
 
@@ -565,6 +570,8 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_current_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.current_profile));
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
+    let js_server_config = struct_server_config_rs_to_js(rs_obj.server_config)?;
+    Reflect::set(&js_obj, &"serverConfig".into(), &js_server_config)?;
     Ok(js_obj)
 }
 
@@ -1321,6 +1328,41 @@ fn struct_open_options_rs_to_js(rs_obj: libparsec::OpenOptions) -> Result<JsValu
     Reflect::set(&js_obj, &"create".into(), &js_create)?;
     let js_create_new = rs_obj.create_new.into();
     Reflect::set(&js_obj, &"createNew".into(), &js_create_new)?;
+    Ok(js_obj)
+}
+
+// ServerConfig
+
+#[allow(dead_code)]
+fn struct_server_config_js_to_rs(obj: JsValue) -> Result<libparsec::ServerConfig, JsValue> {
+    let user_profile_outsider_allowed = {
+        let js_val = Reflect::get(&obj, &"userProfileOutsiderAllowed".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let active_users_limit = {
+        let js_val = Reflect::get(&obj, &"activeUsersLimit".into())?;
+        variant_active_users_limit_js_to_rs(js_val)?
+    };
+    Ok(libparsec::ServerConfig {
+        user_profile_outsider_allowed,
+        active_users_limit,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_server_config_rs_to_js(rs_obj: libparsec::ServerConfig) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_user_profile_outsider_allowed = rs_obj.user_profile_outsider_allowed.into();
+    Reflect::set(
+        &js_obj,
+        &"userProfileOutsiderAllowed".into(),
+        &js_user_profile_outsider_allowed,
+    )?;
+    let js_active_users_limit = variant_active_users_limit_rs_to_js(rs_obj.active_users_limit)?;
+    Reflect::set(&js_obj, &"activeUsersLimit".into(), &js_active_users_limit)?;
     Ok(js_obj)
 }
 
@@ -2270,6 +2312,58 @@ fn struct_workspace_user_access_info_rs_to_js(
     Ok(js_obj)
 }
 
+// ActiveUsersLimit
+
+#[allow(dead_code)]
+fn variant_active_users_limit_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::ActiveUsersLimit, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "ActiveUsersLimitLimitedTo" => {
+            let x1 = {
+                let js_val = Reflect::get(&obj, &"x1".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    v as u64
+                }
+            };
+            Ok(libparsec::ActiveUsersLimit::LimitedTo(x1))
+        }
+        "ActiveUsersLimitNoLimit" => Ok(libparsec::ActiveUsersLimit::NoLimit {}),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a ActiveUsersLimit",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_active_users_limit_rs_to_js(
+    rs_obj: libparsec::ActiveUsersLimit,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::ActiveUsersLimit::LimitedTo(x1, ..) => {
+            Reflect::set(&js_obj, &"tag".into(), &"LimitedTo".into())?;
+            let js_x1 = JsValue::from(x1);
+            Reflect::set(&js_obj, &"x1".into(), &js_x1.into())?;
+        }
+        libparsec::ActiveUsersLimit::NoLimit { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ActiveUsersLimitNoLimit".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -2652,6 +2746,50 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "ClientEventIncompatibleServer" => {
+            let detail = {
+                let js_val = Reflect::get(&obj, &"detail".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            Ok(libparsec::ClientEvent::IncompatibleServer { detail })
+        }
+        "ClientEventInvitationChanged" => {
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            let status = {
+                let js_val = Reflect::get(&obj, &"status".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_invitation_status_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::ClientEvent::InvitationChanged { token, status })
+        }
+        "ClientEventOffline" => Ok(libparsec::ClientEvent::Offline {}),
+        "ClientEventOnline" => Ok(libparsec::ClientEvent::Online {}),
         "ClientEventPing" => {
             let ping = {
                 let js_val = Reflect::get(&obj, &"ping".into())?;
@@ -2663,6 +2801,45 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             };
             Ok(libparsec::ClientEvent::Ping { ping })
         }
+        "ClientEventServerConfigChanged" => Ok(libparsec::ClientEvent::ServerConfigChanged {}),
+        "ClientEventTooMuchDriftWithServerClock" => {
+            let server_timestamp = {
+                let js_val = Reflect::get(&obj, &"serverTimestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let client_timestamp = {
+                let js_val = Reflect::get(&obj, &"clientTimestamp".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let ballpark_client_early_offset = {
+                let js_val = Reflect::get(&obj, &"ballparkClientEarlyOffset".into())?;
+                js_val.dyn_into::<Number>()?.value_of()
+            };
+            let ballpark_client_late_offset = {
+                let js_val = Reflect::get(&obj, &"ballparkClientLateOffset".into())?;
+                js_val.dyn_into::<Number>()?.value_of()
+            };
+            Ok(libparsec::ClientEvent::TooMuchDriftWithServerClock {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            })
+        }
         _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
     }
 }
@@ -2671,10 +2848,98 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
 fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::ClientEvent::IncompatibleServer { detail, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventIncompatibleServer".into(),
+            )?;
+            let js_detail = detail.into();
+            Reflect::set(&js_obj, &"detail".into(), &js_detail)?;
+        }
+        libparsec::ClientEvent::InvitationChanged { token, status, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventInvitationChanged".into(),
+            )?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
+            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        }
+        libparsec::ClientEvent::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventOffline".into())?;
+        }
+        libparsec::ClientEvent::Online { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventOnline".into())?;
+        }
         libparsec::ClientEvent::Ping { ping, .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
             let js_ping = ping.into();
             Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
+        }
+        libparsec::ClientEvent::ServerConfigChanged { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventServerConfigChanged".into(),
+            )?;
+        }
+        libparsec::ClientEvent::TooMuchDriftWithServerClock {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventTooMuchDriftWithServerClock".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
         }
     }
     Ok(js_obj)

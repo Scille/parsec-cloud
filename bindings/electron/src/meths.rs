@@ -477,6 +477,10 @@ fn struct_client_info_js_to_rs<'a>(
             enum_user_profile_js_to_rs(cx, js_string.as_str())?
         }
     };
+    let server_config = {
+        let js_val: Handle<JsObject> = obj.get(cx, "serverConfig")?;
+        struct_server_config_js_to_rs(cx, js_val)?
+    };
     Ok(libparsec::ClientInfo {
         organization_addr,
         organization_id,
@@ -485,6 +489,7 @@ fn struct_client_info_js_to_rs<'a>(
         device_label,
         human_handle,
         current_profile,
+        server_config,
     })
 }
 
@@ -528,6 +533,8 @@ fn struct_client_info_rs_to_js<'a>(
     let js_current_profile =
         JsString::try_new(cx, enum_user_profile_rs_to_js(rs_obj.current_profile)).or_throw(cx)?;
     js_obj.set(cx, "currentProfile", js_current_profile)?;
+    let js_server_config = struct_server_config_rs_to_js(cx, rs_obj.server_config)?;
+    js_obj.set(cx, "serverConfig", js_server_config)?;
     Ok(js_obj)
 }
 
@@ -1247,6 +1254,44 @@ fn struct_open_options_rs_to_js<'a>(
     js_obj.set(cx, "create", js_create)?;
     let js_create_new = JsBoolean::new(cx, rs_obj.create_new);
     js_obj.set(cx, "createNew", js_create_new)?;
+    Ok(js_obj)
+}
+
+// ServerConfig
+
+#[allow(dead_code)]
+fn struct_server_config_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ServerConfig> {
+    let user_profile_outsider_allowed = {
+        let js_val: Handle<JsBoolean> = obj.get(cx, "userProfileOutsiderAllowed")?;
+        js_val.value(cx)
+    };
+    let active_users_limit = {
+        let js_val: Handle<JsObject> = obj.get(cx, "activeUsersLimit")?;
+        variant_active_users_limit_js_to_rs(cx, js_val)?
+    };
+    Ok(libparsec::ServerConfig {
+        user_profile_outsider_allowed,
+        active_users_limit,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_server_config_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ServerConfig,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_user_profile_outsider_allowed = JsBoolean::new(cx, rs_obj.user_profile_outsider_allowed);
+    js_obj.set(
+        cx,
+        "userProfileOutsiderAllowed",
+        js_user_profile_outsider_allowed,
+    )?;
+    let js_active_users_limit = variant_active_users_limit_rs_to_js(cx, rs_obj.active_users_limit)?;
+    js_obj.set(cx, "activeUsersLimit", js_active_users_limit)?;
     Ok(js_obj)
 }
 
@@ -2145,6 +2190,55 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ActiveUsersLimit
+
+#[allow(dead_code)]
+fn variant_active_users_limit_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::ActiveUsersLimit> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "ActiveUsersLimitLimitedTo" => {
+            let x0 = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "x0")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            Ok(libparsec::ActiveUsersLimit::LimitedTo(x0))
+        }
+        "ActiveUsersLimitNoLimit" => Ok(libparsec::ActiveUsersLimit::NoLimit {}),
+        _ => cx.throw_type_error("Object is not a ActiveUsersLimit"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_active_users_limit_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ActiveUsersLimit,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::ActiveUsersLimit::LimitedTo(x0, ..) => {
+            let js_tag = JsString::try_new(cx, "LimitedTo").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_x0 = JsNumber::new(cx, x0 as f64);
+            js_obj.set(cx, "x0", js_x0)?;
+        }
+        libparsec::ActiveUsersLimit::NoLimit { .. } => {
+            let js_tag = JsString::try_new(cx, "ActiveUsersLimitNoLimit").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // BootstrapOrganizationError
 
 #[allow(dead_code)]
@@ -2464,12 +2558,88 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ClientEventIncompatibleServer" => {
+            let detail = {
+                let js_val: Handle<JsString> = obj.get(cx, "detail")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ClientEvent::IncompatibleServer { detail })
+        }
+        "ClientEventInvitationChanged" => {
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let status = {
+                let js_val: Handle<JsString> = obj.get(cx, "status")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_invitation_status_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            Ok(libparsec::ClientEvent::InvitationChanged { token, status })
+        }
+        "ClientEventOffline" => Ok(libparsec::ClientEvent::Offline {}),
+        "ClientEventOnline" => Ok(libparsec::ClientEvent::Online {}),
         "ClientEventPing" => {
             let ping = {
                 let js_val: Handle<JsString> = obj.get(cx, "ping")?;
                 js_val.value(cx)
             };
             Ok(libparsec::ClientEvent::Ping { ping })
+        }
+        "ClientEventServerConfigChanged" => Ok(libparsec::ClientEvent::ServerConfigChanged {}),
+        "ClientEventTooMuchDriftWithServerClock" => {
+            let server_timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "serverTimestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let client_timestamp = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "clientTimestamp")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let ballpark_client_early_offset = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "ballparkClientEarlyOffset")?;
+                js_val.value(cx)
+            };
+            let ballpark_client_late_offset = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "ballparkClientLateOffset")?;
+                js_val.value(cx)
+            };
+            Ok(libparsec::ClientEvent::TooMuchDriftWithServerClock {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            })
         }
         _ => cx.throw_type_error("Object is not a ClientEvent"),
     }
@@ -2482,11 +2652,89 @@ fn variant_client_event_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ClientEvent::IncompatibleServer { detail, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventIncompatibleServer").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_detail = JsString::try_new(cx, detail).or_throw(cx)?;
+            js_obj.set(cx, "detail", js_detail)?;
+        }
+        libparsec::ClientEvent::InvitationChanged { token, status, .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventInvitationChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+            let js_status =
+                JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
+            js_obj.set(cx, "status", js_status)?;
+        }
+        libparsec::ClientEvent::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::Online { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventOnline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientEvent::Ping { ping, .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventPing").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
             js_obj.set(cx, "ping", js_ping)?;
+        }
+        libparsec::ClientEvent::ServerConfigChanged { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventServerConfigChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::TooMuchDriftWithServerClock {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventTooMuchDriftWithServerClock").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok(dt.get_f64_with_us_precision())
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
         }
     }
     Ok(js_obj)
