@@ -29,7 +29,7 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
-import { getOrganizationHandles, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
+import { getOrganizationHandles, initializeWorkspace, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
@@ -204,7 +204,10 @@ async function handleFileLink(link: string, informationManager: InformationManag
       // Switch to the organization first
       await switchOrganization(handles[0], true);
     }
-    await navigateToWorkspace(linkData.workspaceId, linkData.path);
+    const initResult = await initializeWorkspace(linkData.workspaceId, handles[0]);
+    if (initResult.ok) {
+      await navigateToWorkspace(initResult.value.handle, linkData.path);
+    }
   } else {
     // Check if we have a device with the org
     const devices = await listAvailableDevices();

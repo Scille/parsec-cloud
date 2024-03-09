@@ -10,7 +10,6 @@ export {
   getDocumentPath,
   getRoutePath,
   getWorkspaceHandle,
-  getWorkspaceId,
 } from '@/router/params';
 export * from '@/router/types';
 export { watchOrganizationSwitch, watchRoute } from '@/router/watchers';

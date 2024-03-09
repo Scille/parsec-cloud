@@ -15,7 +15,7 @@
           scope="global"
         >
           <template #workspace>
-            <strong>{{ workspaceName }}</strong>
+            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
           </template>
         </i18n-t>
       </ion-text>
@@ -39,30 +39,31 @@
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceName } from '@/parsec';
+import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
 import { currentRouteIsWorkspaceRoute, navigateToWorkspace } from '@/router';
 import { NewWorkspaceAccessData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, business } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, Ref } from 'vue';
 
-const workspaceName = ref('');
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+
 const props = defineProps<{
   notification: Notification;
 }>();
 
 onMounted(async () => {
-  const result = await getWorkspaceName(notificationData.workspaceId);
+  const result = await getWorkspaceInfo(notificationData.workspaceHandle);
   if (result.ok) {
-    workspaceName.value = result.value;
+    workspaceInfo.value = result.value;
   }
 });
 
 async function navigateToNewWorkspace(): Promise<void> {
   await popoverController.dismiss();
-  if (!currentRouteIsWorkspaceRoute(notificationData.workspaceId)) {
-    await navigateToWorkspace(notificationData.workspaceId);
+  if (!currentRouteIsWorkspaceRoute(notificationData.workspaceHandle)) {
+    await navigateToWorkspace(notificationData.workspaceHandle);
   }
 }
 

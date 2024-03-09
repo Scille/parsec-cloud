@@ -121,9 +121,9 @@
                 lines="none"
                 button
                 v-for="workspace in workspaces"
-                :key="workspace.id"
-                @click="goToWorkspace(workspace.id)"
-                :class="currentRouteIsWorkspaceRoute(workspace.id) ? 'item-selected' : 'item-not-selected'"
+                :key="workspace.handle"
+                @click="goToWorkspace(workspace.handle)"
+                :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item"
               >
                 <ion-icon
@@ -203,6 +203,7 @@ import OrganizationSwitchPopover from '@/components/organizations/OrganizationSw
 import {
   ClientInfo,
   UserProfile,
+  WorkspaceHandle,
   WorkspaceInfo,
   isDesktop,
   getClientInfo as parsecGetClientInfo,
@@ -261,8 +262,8 @@ const resetWatchCancel: WatchStopHandle = watch(wasReset, (value) => {
   }
 });
 
-async function goToWorkspace(workspaceId: string): Promise<void> {
-  await navigateToWorkspace(workspaceId);
+async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
+  await navigateToWorkspace(workspaceHandle);
   await menuController.close();
 }
 

@@ -48,7 +48,7 @@ describe('Information Manager', () => {
         level: InformationLevel.Warning,
         data: {
           type: InformationDataType.WorkspaceRoleChanged,
-          workspaceId: 'workspaceId',
+          workspaceHandle: 42,
           oldRole: WorkspaceRole.Reader,
           newRole: WorkspaceRole.Contributor,
         },
@@ -89,7 +89,7 @@ describe('Information Manager', () => {
     expect(informationWithSomeData).to.exist;
     expect(informationWithSomeData.data).to.deep.equal({
       type: InformationDataType.WorkspaceRoleChanged,
-      workspaceId: 'workspaceId',
+      workspaceHandle: 42,
       oldRole: WorkspaceRole.Reader,
       newRole: WorkspaceRole.Contributor,
     });

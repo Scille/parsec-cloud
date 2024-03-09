@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { WorkspaceID } from '@/parsec';
-import { getConnectionHandle, getCurrentRouteQuery } from '@/router/params';
+import { WorkspaceHandle } from '@/parsec';
+import { getConnectionHandle, getWorkspaceHandle } from '@/router/params';
 import { Routes, getRouter } from '@/router/types';
 
 export function isLoggedIn(): boolean {
@@ -40,9 +40,8 @@ export function currentRouteIsOneOf(routes: Routes[]): boolean {
   return (routes as string[]).includes(currentRouteName as string);
 }
 
-export function currentRouteIsWorkspaceRoute(workspaceId: WorkspaceID): boolean {
-  const query = getCurrentRouteQuery();
-  return currentRouteIs(Routes.Documents) && query.workspaceId === workspaceId;
+export function currentRouteIsWorkspaceRoute(workspaceHandle: WorkspaceHandle): boolean {
+  return currentRouteIs(Routes.Documents) && getWorkspaceHandle() === workspaceHandle;
 }
 
 export function currentRouteIsUserRoute(): boolean {

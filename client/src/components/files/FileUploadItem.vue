@@ -31,9 +31,9 @@
           <span class="default-state">{{ formatFileSize(fileCache.size) }}</span>
           <span
             class="default-state"
-            v-show="workspaceName !== ''"
+            v-if="workspaceInfo"
           >
-            &bull; {{ workspaceName }}
+            &bull; {{ workspaceInfo.currentName }}
           </span>
           <span
             class="hover-state"
@@ -128,11 +128,11 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage } from '@/components/core/ms-image';
 import MsInformationTooltip from '@/components/core/ms-tooltip/MsInformationTooltip.vue';
-import { getWorkspaceName } from '@/parsec';
+import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { ImportData, ImportState } from '@/services/importManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
-import { onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   importData: ImportData;
@@ -144,16 +144,16 @@ const props = defineProps<{
 // will never change, so we cache them.
 const fileCache = structuredClone(props.importData.file);
 
-const workspaceName = ref('');
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 
 defineExpose({
   props,
 });
 
 onMounted(async () => {
-  const result = await getWorkspaceName(props.importData.workspaceId);
+  const result = await getWorkspaceInfo(props.importData.workspaceHandle);
   if (result.ok) {
-    workspaceName.value = result.value;
+    workspaceInfo.value = result.value;
   }
 });
 

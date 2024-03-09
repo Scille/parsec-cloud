@@ -187,8 +187,8 @@ import {
   FolderModel,
   SortProperty,
 } from '@/components/files';
-import { EntryStatFile } from '@/parsec';
-import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, getWorkspaceId, navigateTo, watchRoute } from '@/router';
+import { EntryStatFile, StartedWorkspaceInfo, WorkspaceRole } from '@/parsec';
+import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
   FileProgressStateData,
@@ -235,7 +235,13 @@ const routeWatchCancel = watchRoute(async () => {
   if (newPath !== currentPath.value) {
     currentPath.value = newPath;
   }
-  ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    const infoResult = await parsec.getWorkspaceInfo(workspaceHandle);
+    if (infoResult.ok) {
+      workspaceInfo.value = infoResult.value;
+    }
+  }
   await listFolder();
 });
 
@@ -252,6 +258,7 @@ const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 
 const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
@@ -260,7 +267,10 @@ const selectedFilesCount = computed(() => {
 let hotkeys: Hotkeys | null = null;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
-const ownRole: Ref<parsec.WorkspaceRole> = ref(parsec.WorkspaceRole.Reader);
+
+const ownRole = computed(() => {
+  return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : WorkspaceRole.Reader;
+});
 
 onMounted(async () => {
   const savedData = await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY);
@@ -286,7 +296,13 @@ onMounted(async () => {
     displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
   });
 
-  ownRole.value = await parsec.getWorkspaceRole(getWorkspaceId());
+  const workspaceHandle = getWorkspaceHandle();
+  if (workspaceHandle) {
+    const infoResult = await parsec.getWorkspaceInfo(workspaceHandle);
+    if (infoResult.ok) {
+      workspaceInfo.value = infoResult.value;
+    }
+  }
   callbackId = await importManager.registerCallback(onFileImportState);
   currentPath.value = getDocumentPath();
   await listFolder();
@@ -415,7 +431,7 @@ async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<voi
     const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
       params: { workspaceHandle: getWorkspaceHandle() },
-      query: { documentPath: newPath, workspaceId: getWorkspaceId() },
+      query: { documentPath: newPath },
     });
   }
 }
@@ -466,7 +482,7 @@ async function importFiles(): Promise<void> {
     componentProps: {
       currentPath: currentPath.value.toString(),
       workspaceHandle: getWorkspaceHandle(),
-      workspaceId: getWorkspaceId(),
+      workspaceId: workspaceInfo.value?.id,
     },
   });
   await fileUploadModal.present();
@@ -599,8 +615,12 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
+  const workspaceHandle = getWorkspaceHandle();
+  if (!workspaceHandle) {
+    return;
+  }
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.getPathLink(getWorkspaceId(), filePath);
+  const result = await parsec.getPathLink(workspaceHandle, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
@@ -631,14 +651,15 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length === 0) {
+  const workspaceHandle = getWorkspaceHandle();
+  if (entries.length === 0 || !workspaceHandle) {
     return;
   }
   hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
     startingPath: currentPath.value,
-    workspaceId: getWorkspaceId(),
+    workspaceHandle: workspaceHandle,
   });
   hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
@@ -704,7 +725,8 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length === 0) {
+  const workspaceHandle = getWorkspaceHandle();
+  if (entries.length === 0 || !workspaceHandle) {
     return;
   }
   hotkeyManager.disableGroup(Groups.Documents);
@@ -712,7 +734,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
-    workspaceId: getWorkspaceId(),
+    workspaceHandle: workspaceHandle,
   });
   hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {

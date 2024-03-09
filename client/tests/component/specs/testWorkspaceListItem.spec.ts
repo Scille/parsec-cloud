@@ -61,6 +61,9 @@ describe('Workspace List Item', () => {
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,
     isBootstrapped: true,
+    mountpointHandle: 42,
+    mountpointPath: '/',
+    handle: 1,
   };
 
   beforeEach(() => {

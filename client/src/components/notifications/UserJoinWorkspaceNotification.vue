@@ -16,7 +16,7 @@
             <strong>{{ userInfo ? userInfo.humanHandle.label : '' }}</strong>
           </template>
           <template #workspace>
-            <strong>{{ workspaceName }}</strong>
+            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
           </template>
         </i18n-t>
       </ion-text>
@@ -31,24 +31,25 @@
 import { formatTimeSince } from '@/common/date';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserInfo, getUserInfo, getWorkspaceName } from '@/parsec';
+import { StartedWorkspaceInfo, UserInfo, getUserInfo, getWorkspaceInfo } from '@/parsec';
 import { UserJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 
 const userInfo: Ref<UserInfo | null> = ref(null);
-const workspaceName = ref('');
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+
 const props = defineProps<{
   notification: Notification;
 }>();
 
 onMounted(async () => {
-  const resultWorkspace = await getWorkspaceName(notificationData.workspaceId);
+  const resultWorkspace = await getWorkspaceInfo(notificationData.workspaceHandle);
   const resultUser = await getUserInfo(notificationData.userId);
 
   if (resultWorkspace.ok) {
-    workspaceName.value = resultWorkspace.value;
+    workspaceInfo.value = resultWorkspace.value;
   }
 
   if (resultUser.ok) {

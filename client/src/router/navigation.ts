@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, startWorkspace, WorkspaceID } from '@/parsec';
+import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { getCurrentRoute, getRouter, Query, Routes } from '@/router/types';
+import { Query, Routes, getCurrentRoute, getRouter } from '@/router/types';
 import { organizationKey } from '@/router/watchers';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
@@ -38,16 +38,10 @@ export async function navigateTo(routeName: Routes, options?: NavigationOptions)
   }
 }
 
-export async function navigateToWorkspace(workspaceId: WorkspaceID, path = '/', selectFile?: EntryName): Promise<void> {
-  startWorkspace(workspaceId).then(async (result) => {
-    if (result.ok) {
-      await navigateTo(Routes.Documents, {
-        params: { workspaceHandle: result.value },
-        query: { documentPath: path, workspaceId: workspaceId, selectFile: selectFile },
-      });
-    } else {
-      console.error(`Failed to navigate to workspace: ${result.error.tag}`);
-    }
+export async function navigateToWorkspace(workspaceHandle: WorkspaceHandle, path = '/', selectFile?: EntryName): Promise<void> {
+  await navigateTo(Routes.Documents, {
+    params: { workspaceHandle: workspaceHandle },
+    query: { documentPath: path, selectFile: selectFile },
   });
 }
 
