@@ -29,7 +29,7 @@ pub enum InvitationType {
  * InvitationStatus
  */
 
-#[derive(Debug, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum InvitationStatus {
     Idle,

@@ -79,6 +79,7 @@ export interface ClientInfo {
     deviceLabel: string
     humanHandle: HumanHandle
     currentProfile: UserProfile
+    serverConfig: ServerConfig
 }
 
 
@@ -161,6 +162,12 @@ export interface OpenOptions {
     truncate: boolean
     create: boolean
     createNew: boolean
+}
+
+
+export interface ServerConfig {
+    userProfileOutsiderAllowed: boolean
+    activeUsersLimit: ActiveUsersLimit
 }
 
 
@@ -252,6 +259,19 @@ export interface WorkspaceUserAccessInfo {
     currentProfile: UserProfile
     currentRole: RealmRole
 }
+
+
+// ActiveUsersLimit
+export interface ActiveUsersLimitLimitedTo {
+    tag: "LimitedTo"
+    x1: number
+}
+export interface ActiveUsersLimitNoLimit {
+    tag: "NoLimit"
+}
+export type ActiveUsersLimit =
+  | ActiveUsersLimitLimitedTo
+  | ActiveUsersLimitNoLimit
 
 
 // BootstrapOrganizationError
@@ -456,12 +476,43 @@ export type ClientCreateWorkspaceError =
 
 
 // ClientEvent
+export interface ClientEventIncompatibleServer {
+    tag: "IncompatibleServer"
+    detail: string
+}
+export interface ClientEventInvitationChanged {
+    tag: "InvitationChanged"
+    token: string
+    status: InvitationStatus
+}
+export interface ClientEventOffline {
+    tag: "Offline"
+}
+export interface ClientEventOnline {
+    tag: "Online"
+}
 export interface ClientEventPing {
     tag: "Ping"
     ping: string
 }
+export interface ClientEventServerConfigChanged {
+    tag: "ServerConfigChanged"
+}
+export interface ClientEventTooMuchDriftWithServerClock {
+    tag: "TooMuchDriftWithServerClock"
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
 export type ClientEvent =
+  | ClientEventIncompatibleServer
+  | ClientEventInvitationChanged
+  | ClientEventOffline
+  | ClientEventOnline
   | ClientEventPing
+  | ClientEventServerConfigChanged
+  | ClientEventTooMuchDriftWithServerClock
 
 
 // ClientGetUserDeviceError
