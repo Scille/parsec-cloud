@@ -75,7 +75,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.WorkspaceRoleChanged,
-          workspaceId: '1337',
+          workspaceHandle: 2,
           oldRole: WorkspaceRole.Contributor,
           newRole: WorkspaceRole.Manager,
         },
@@ -87,7 +87,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.NewWorkspaceAccess,
-          workspaceId: '1337',
+          workspaceHandle: 1,
           role: WorkspaceRole.Manager,
         },
       });
@@ -98,7 +98,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.NewWorkspaceAccess,
-          workspaceId: '1337',
+          workspaceHandle: 3,
           role: WorkspaceRole.Manager,
         },
       });
@@ -109,7 +109,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.UserJoinWorkspace,
-          workspaceId: '1337',
+          workspaceHandle: 1,
           role: WorkspaceRole.Manager,
           userId: 'id1',
         },
@@ -121,7 +121,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.MultipleUsersJoinWorkspace,
-          workspaceId: '1337',
+          workspaceHandle: 1,
           roles: [
             {
               userId: 'id1',
@@ -141,7 +141,7 @@ onMounted(() => {
         level: InformationLevel.Info,
         data: {
           type: InformationDataType.UserSharedDocument,
-          workspaceId: '1337',
+          workspaceHandle: 3,
           userId: 'id1',
           fileName: 'Encrypted-file.txt',
           filePath: '',

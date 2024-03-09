@@ -36,6 +36,8 @@ export {
   WorkspaceCreateFolderErrorTag,
   WorkspaceFdCloseErrorTag,
   WorkspaceFdWriteErrorTag,
+  WorkspaceInfoErrorTag,
+  WorkspaceMountErrorTag,
   WorkspaceOpenFileErrorTag,
   WorkspaceRemoveEntryErrorTag,
   WorkspaceRenameEntryErrorTag,
@@ -122,6 +124,8 @@ export type {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   VlobID as WorkspaceID,
+  WorkspaceInfoError,
+  WorkspaceMountError,
   WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
@@ -137,8 +141,10 @@ import type {
   HumanHandle,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
+  StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
   WorkspaceInfo as ParsecWorkspaceInfo,
+  Path,
   UserID,
   UserProfile,
   VlobID,
@@ -150,6 +156,8 @@ type WorkspaceHandle = Handle;
 type EntryID = VlobID;
 type WorkspaceName = EntryName;
 type ConnectionHandle = Handle;
+type MountpointHandle = Handle;
+type SystemPath = Path;
 
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
@@ -227,6 +235,13 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   size: number;
   lastUpdated: DateTime;
   availableOffline: boolean;
+  handle: WorkspaceHandle;
+  mountpointHandle: MountpointHandle;
+  mountpointPath: SystemPath;
+}
+
+interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
+  handle: WorkspaceHandle;
 }
 
 enum OrganizationInfoErrorTag {
@@ -274,11 +289,14 @@ export {
   GetWorkspaceNameError,
   GetWorkspaceNameErrorTag,
   HumanHandle,
+  MountpointHandle,
   OpenOptions,
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
+  StartedWorkspaceInfo,
+  SystemPath,
   UserID,
   UserInfo,
   UserTuple,

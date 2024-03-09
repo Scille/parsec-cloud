@@ -320,7 +320,7 @@ async function openCreateWorkspaceModal(): Promise<void> {
 }
 
 async function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): Promise<void> {
-  await navigateToWorkspace(workspace.id);
+  await navigateToWorkspace(workspace.handle);
 }
 
 async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promise<void> {
@@ -363,7 +363,7 @@ async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo):
 }
 
 async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
-  const result = await parsecGetPathLink(workspace.id, '/');
+  const result = await parsecGetPathLink(workspace.handle, '/');
 
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {

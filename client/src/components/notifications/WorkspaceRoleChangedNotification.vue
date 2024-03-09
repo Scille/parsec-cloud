@@ -19,7 +19,7 @@
             <strong>{{ translateWorkspaceRole(notificationData.newRole).label }}</strong>
           </template>
           <template #workspace>
-            <strong>{{ workspaceName }}</strong>
+            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
           </template>
         </i18n-t>
       </ion-text>
@@ -34,22 +34,23 @@
 import { formatTimeSince } from '@/common/date';
 import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceName } from '@/parsec';
+import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { translateWorkspaceRole } from '@/services/translation';
 import { IonText } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
-const workspaceName = ref('');
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+
 const props = defineProps<{
   notification: Notification;
 }>();
 
 onMounted(async () => {
-  const result = await getWorkspaceName(notificationData.workspaceId);
+  const result = await getWorkspaceInfo(notificationData.workspaceHandle);
   if (result.ok) {
-    workspaceName.value = result.value;
+    workspaceInfo.value = result.value;
   }
 });
 

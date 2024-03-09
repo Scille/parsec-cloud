@@ -78,7 +78,7 @@ import { Folder, MsImage } from '@/components/core/ms-image';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, EntryStatFolder, FsPath, Path, entryStat, getWorkspaceName } from '@/parsec';
+import { EntryStat, EntryStatFolder, FsPath, Path, StartedWorkspaceInfo, entryStat, getWorkspaceInfo } from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
@@ -88,15 +88,14 @@ const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const currentEntries: Ref<EntryStat[]> = ref([]);
-let workspaceName = '';
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
 
 onMounted(async () => {
-  // get workspace name only once
-  const result = await getWorkspaceName(props.workspaceId);
+  const result = await getWorkspaceInfo(props.workspaceHandle);
   if (result.ok) {
-    workspaceName = result.value;
+    workspaceInfo.value = result.value;
   }
   await update();
 });
@@ -125,7 +124,7 @@ async function update(): Promise<void> {
   headerPath.value = [];
   headerPath.value.push({
     id: 0,
-    display: workspaceName,
+    display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
     name: '',
     query: { documentPath: path },
   });

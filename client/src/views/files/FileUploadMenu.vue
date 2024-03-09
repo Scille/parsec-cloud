@@ -194,7 +194,7 @@ async function onImportFinishedClick(importData: ImportData, state: ImportState)
   if (state !== ImportState.FileImported) {
     return;
   }
-  await navigateToWorkspace(importData.workspaceId, importData.path, importData.file.name);
+  await navigateToWorkspace(importData.workspaceHandle, importData.path, importData.file.name);
   menu.minimize();
 }
 

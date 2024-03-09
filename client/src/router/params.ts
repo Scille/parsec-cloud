@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, FsPath, WorkspaceHandle, WorkspaceID } from '@/parsec';
+import { ConnectionHandle, FsPath, WorkspaceHandle } from '@/parsec';
 import { Query, Routes, getRouter } from '@/router/types';
 
 export function getConnectionHandle(): ConnectionHandle | null {
@@ -21,15 +21,6 @@ export function getWorkspaceHandle(): WorkspaceHandle | undefined {
     return parseInt(currentRoute.params.workspaceHandle as string) as WorkspaceHandle;
   }
   return undefined;
-}
-
-export function getWorkspaceId(): WorkspaceID {
-  const query = getCurrentRouteQuery();
-
-  if (getCurrentRouteName() === Routes.Documents && query.workspaceId) {
-    return query.workspaceId;
-  }
-  return '';
 }
 
 export function getRoutePath(): string {

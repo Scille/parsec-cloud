@@ -110,7 +110,7 @@
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, WorkspaceName, getClientInfo, getWorkspaceName, isMobile } from '@/parsec';
+import { ClientInfo, Path, StartedWorkspaceInfo, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
 import {
   Routes,
   currentRouteIs,
@@ -118,7 +118,7 @@ import {
   getCurrentRouteName,
   getCurrentRouteParams,
   getDocumentPath,
-  getWorkspaceId,
+  getWorkspaceHandle,
   hasHistory,
   navigateTo,
   routerGoBack,
@@ -148,7 +148,7 @@ import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: Hotkeys | null = null;
-const workspaceName: Ref<WorkspaceName> = ref('');
+const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
@@ -187,14 +187,11 @@ async function updateRoute(): Promise<void> {
       },
     ];
   } else if (currentRouteIs(Routes.Documents)) {
-    const workspaceId = getWorkspaceId();
-    if (workspaceId !== '') {
-      const result = await getWorkspaceName(workspaceId);
-      if (result.ok) {
-        workspaceName.value = result.value;
-      } else {
-        console.warn('Could not get workspace name', result.error);
-      }
+    const result = await getWorkspaceInfo(getWorkspaceHandle());
+    if (result.ok) {
+      workspaceInfo.value = result.value;
+    } else {
+      console.warn('Could not get workspace info', result.error);
     }
 
     const finalPath: RouterPathNode[] = [];
@@ -210,9 +207,9 @@ async function updateRoute(): Promise<void> {
     const workspacePath = await Path.parse(getDocumentPath());
     finalPath.push({
       id: 1,
-      display: workspaceName.value,
+      display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
       name: Routes.Documents,
-      query: { documentPath: '/', workspaceId: workspaceId },
+      query: { documentPath: '/' },
       params: getCurrentRouteParams(),
     });
     for (let i = 0; i < workspacePath.length; i++) {
@@ -221,7 +218,7 @@ async function updateRoute(): Promise<void> {
         id: i + 2,
         display: workspacePath[i],
         name: Routes.Documents,
-        query: { documentPath: `/${rebuildPath.join('/')}`, workspaceId: workspaceId },
+        query: { documentPath: `/${rebuildPath.join('/')}` },
         params: getCurrentRouteParams(),
       });
     }

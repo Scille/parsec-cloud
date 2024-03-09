@@ -33,7 +33,7 @@ describe('Notification Manager', () => {
         theme: MsReportTheme.Info,
         data: {
           type: InformationDataType.WorkspaceRoleChanged,
-          workspaceId: 'workspaceId',
+          workspaceHandle: 42,
           oldRole: WorkspaceRole.Reader,
           newRole: WorkspaceRole.Contributor,
         },

@@ -248,7 +248,7 @@ export async function parseFileLink(_link: string): Promise<Result<FileLinkData,
       value: {
         organizationId: 'MyOrg',
         path: '/Dir/file.txt',
-        workspaceId: 'abcd',
+        workspaceId: '1234',
       },
     };
   } else {
@@ -257,7 +257,7 @@ export async function parseFileLink(_link: string): Promise<Result<FileLinkData,
       value: {
         organizationId: 'MyOrg',
         path: '/Dir/file.txt',
-        workspaceId: 'abcd',
+        workspaceId: '1234',
       },
     };
   }

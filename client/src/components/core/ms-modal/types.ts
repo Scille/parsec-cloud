@@ -2,8 +2,7 @@
 
 import { IValidator } from '@/common/validators';
 import { MsReportTheme } from '@/components/core/ms-types';
-import { FsPath } from '@/parsec';
-import { WorkspaceID } from '@/parsec/types';
+import { FsPath, WorkspaceHandle } from '@/parsec';
 
 export enum Answer {
   No = 0,
@@ -14,7 +13,7 @@ export interface FolderSelectionOptions {
   title: string;
   subtitle?: string;
   startingPath: FsPath;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
 }
 
 export interface GetTextOptions {

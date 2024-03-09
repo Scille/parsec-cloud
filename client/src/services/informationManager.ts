@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/core';
-import { EntryName, FsPath, SizeInt, UserID, WorkspaceID, WorkspaceRole } from '@/parsec';
+import { EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
@@ -25,7 +25,7 @@ export interface AbstractInformationData {
 
 export interface WorkspaceRoleChangedData extends AbstractInformationData {
   type: InformationDataType.WorkspaceRoleChanged;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
   oldRole: WorkspaceRole;
   newRole: WorkspaceRole;
 }
@@ -33,14 +33,14 @@ export interface WorkspaceRoleChangedData extends AbstractInformationData {
 // The account owner has been granted access to a workspace
 export interface NewWorkspaceAccessData extends AbstractInformationData {
   type: InformationDataType.NewWorkspaceAccess;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
   role: WorkspaceRole;
 }
 
 // A user has been granted access to a workspace
 export interface UserJoinWorkspaceData extends AbstractInformationData {
   type: InformationDataType.UserJoinWorkspace;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
   role: WorkspaceRole;
   userId: UserID;
 }
@@ -48,7 +48,7 @@ export interface UserJoinWorkspaceData extends AbstractInformationData {
 // Multiple users have been granted access to a workspace
 export interface MultipleUsersJoinWorkspaceData extends AbstractInformationData {
   type: InformationDataType.MultipleUsersJoinWorkspace;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
   roles: {
     userId: UserID;
     role: WorkspaceRole;
@@ -58,7 +58,7 @@ export interface MultipleUsersJoinWorkspaceData extends AbstractInformationData 
 // A user has shared a document in a workspace
 export interface UserSharedDocumentData extends AbstractInformationData {
   type: InformationDataType.UserSharedDocument;
-  workspaceId: WorkspaceID;
+  workspaceHandle: WorkspaceHandle;
   userId: UserID;
   fileName: EntryName;
   filePath: FsPath;
