@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError, ClientGetUserDeviceError,
     ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
@@ -217,6 +218,7 @@ pub struct ClientInfo {
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
     pub current_profile: UserProfile,
+    pub server_config: ServerConfig,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -246,6 +248,7 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
                     e.context("Cannot retrieve profile").into()
                 }
             })?,
+        server_config: client.server_config(),
     })
 }
 
