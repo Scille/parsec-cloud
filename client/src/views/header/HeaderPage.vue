@@ -187,11 +187,14 @@ async function updateRoute(): Promise<void> {
       },
     ];
   } else if (currentRouteIs(Routes.Documents)) {
-    const result = await getWorkspaceInfo(getWorkspaceHandle());
-    if (result.ok) {
-      workspaceInfo.value = result.value;
-    } else {
-      console.warn('Could not get workspace info', result.error);
+    const workspaceHandle = getWorkspaceHandle();
+    if (workspaceHandle) {
+      const result = await getWorkspaceInfo(workspaceHandle);
+      if (result.ok) {
+        workspaceInfo.value = result.value;
+      } else {
+        console.warn('Could not get workspace info', result.error);
+      }
     }
 
     const finalPath: RouterPathNode[] = [];

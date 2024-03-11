@@ -144,7 +144,7 @@ onMounted(() => {
           workspaceHandle: 3,
           userId: 'id1',
           fileName: 'Encrypted-file.txt',
-          filePath: '',
+          filePath: '/',
           fileSize: 1024,
         },
       });

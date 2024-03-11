@@ -61,8 +61,7 @@ describe('Workspace Card', () => {
     lastUpdated: DateTime.fromISO('2023-05-08T12:00:00'),
     isStarted: false,
     isBootstrapped: true,
-    mountpointHandle: 42,
-    mountpointPath: '/',
+    mountpoints: [[42, '/']],
     handle: 1,
   };
 
