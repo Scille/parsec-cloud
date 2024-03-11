@@ -120,12 +120,11 @@ updates:
     groups:
       pytest:
         patterns:
-          - pytest-*
+          - pytest*
           - hypothesis
       pytools:
         patterns:
           - ruff
-          - black
           - mypy
           - maturin
           - editorconfig-checker
@@ -137,10 +136,9 @@ updates:
         patterns:
           - "*"
         exclude-patterns:
-          - pytest-*
+          - pytest*
           - hypothesis
           - ruff
-          - black
           - mypy
           - maturin
           - editorconfig-checker
