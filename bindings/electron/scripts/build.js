@@ -42,24 +42,10 @@ function exec_cmd(args, options) {
   return ret;
 }
 
-// This function is here to detect if `python3` is present or if we have to fallback to `python`.
-// We prefer to use `python3` since we're sure it's `python-3.x` where `python` can be `python-2.x`.
-function get_python() {
-  ret = exec_cmd(["python3", "--version"]);
-
-  if (ret.status == 0) {
-    return "python3";
-  } else {
-    console.log("`python3` wasn't found, fallback to `python`");
-    return "python";
-  }
-}
-
 // Fetch Cargo compile flags
 function fetch_cargo_flags() {
-  const PYTHON = get_python();
   const ARGS = [
-    PYTHON,
+    'python',
     path.join(__dirname, "../../../make.py"),
     `electron-${profile}-libparsec-cargo-flags`,
     "--quiet",
