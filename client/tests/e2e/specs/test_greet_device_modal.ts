@@ -76,8 +76,8 @@ describe('Greet a new device', () => {
     cy.get('@footer').find('ion-spinner').should('be.visible');
     cy.get('@nextButton').should('not.be.visible');
     cy.wait(WAIT_TIME);
-    cy.get('@title').contains('Device created!');
-    cy.get('.greet-organization-modal').find('.final-step').contains('The device My Device has been created.');
+    cy.get('@title').contains('New device added');
+    cy.get('.greet-organization-modal').find('.modal-header__text').contains('The device My Device has been added to your profile.');
     cy.get('@stepper').should('not.be.visible');
     cy.get('@nextButton').click();
     cy.get('.greet-organization-modal').should('not.exist');
