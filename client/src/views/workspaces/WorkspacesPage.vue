@@ -240,7 +240,7 @@ async function onDisplayStateChange(): Promise<void> {
 }
 
 async function refreshWorkspacesList(): Promise<void> {
-  const result = await parsecListWorkspaces();
+  const result = await parsecListWorkspaces(true);
   if (result.ok) {
     workspaceList.value = result.value;
   } else {

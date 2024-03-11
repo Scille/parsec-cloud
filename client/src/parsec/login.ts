@@ -176,7 +176,7 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   // clientInfo are not real on web right now
   // const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
 
-  if (!needsMocks) {
+  if (!needsMocks()) {
     const currentAvailableDevice = availableDevices.find((device) => device.deviceId === clientResult.value.deviceId);
     if (!currentAvailableDevice) {
       return { ok: false, error: { tag: 'NotFound' } };

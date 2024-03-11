@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { needsMocks } from '@/parsec/environment';
+import { isMacOS, isWindows, needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -61,7 +61,7 @@ export async function initializeWorkspace(
   return startedWorkspaceResult;
 }
 
-export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+export async function listWorkspaces(mount = false): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -70,9 +70,27 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
     if (result.ok) {
       const returnValue: Array<WorkspaceInfo> = [];
       for (const wkInfo of result.value) {
-        const initResult = await initializeWorkspace(wkInfo.id);
-        if (!initResult.ok) {
+        const startResult = await startWorkspace(wkInfo.id, handle);
+        if (!startResult.ok) {
+          console.error(`Failed to start workspace ${wkInfo.currentName}: ${startResult.error}`);
           continue;
+        }
+
+        const startedWorkspaceResult = await getWorkspaceInfo(startResult.value);
+        if (!startedWorkspaceResult.ok) {
+          console.error(`Failed to get started workspace info ${wkInfo.currentName}: ${startedWorkspaceResult.error}`);
+          continue;
+        }
+
+        let mountResult = undefined;
+        if (mount && startedWorkspaceResult.value.mountpoints.length === 0 && !isMacOS() && !isWindows()) {
+          mountResult = await mountWorkspace(startResult.value);
+          if (!mountResult.ok) {
+            console.error(`Failed to mount workspace ${wkInfo.currentName}`);
+          }
+        }
+        if (isMacOS() || isWindows()) {
+          console.warn('Mountpoints are not available yet');
         }
 
         const sharingResult = await getWorkspaceSharing(wkInfo.id, false);
@@ -86,9 +104,8 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
           size: 0,
           lastUpdated: DateTime.now(),
           availableOffline: false,
-          mountpointHandle: initResult.value.mountpoints[0][0],
-          mountpointPath: initResult.value.mountpoints[0][1],
-          handle: initResult.value.handle,
+          mountpoints: mountResult && mountResult.ok ? [mountResult.value] : startedWorkspaceResult.value.mountpoints,
+          handle: startResult.value,
         };
         if (sharingResult.ok) {
           info.sharing = sharingResult.value;
@@ -111,8 +128,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         isStarted: false,
         isBootstrapped: false,
         sharing: [],
-        mountpointHandle: 1,
-        mountpointPath: '/home/a',
+        mountpoints: [[1, '/home/a']],
         handle: 1,
       },
       {
@@ -125,8 +141,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         isStarted: false,
         isBootstrapped: true,
         sharing: [],
-        mountpointHandle: 2,
-        mountpointPath: '/home/b',
+        mountpoints: [[2, '/home/b']],
         handle: 2,
       },
       {
@@ -139,8 +154,7 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
         isStarted: false,
         isBootstrapped: true,
         sharing: [],
-        mountpointHandle: 3,
-        mountpointPath: '/home/c',
+        mountpoints: [[3, '/home/c']],
         handle: 3,
       },
     ];
@@ -361,7 +375,7 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
 export async function mountWorkspace(
   workspaceHandle: WorkspaceHandle,
 ): Promise<Result<[MountpointHandle, SystemPath], WorkspaceMountError>> {
-  if (!needsMocks) {
+  if (!needsMocks()) {
     return await libparsec.workspaceMount(workspaceHandle);
   }
   return { ok: true, value: [42, '/home/a'] };

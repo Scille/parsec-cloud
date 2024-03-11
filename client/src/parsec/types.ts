@@ -236,8 +236,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   lastUpdated: DateTime;
   availableOffline: boolean;
   handle: WorkspaceHandle;
-  mountpointHandle: MountpointHandle;
-  mountpointPath: SystemPath;
+  mountpoints: [MountpointHandle, SystemPath][];
 }
 
 interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
