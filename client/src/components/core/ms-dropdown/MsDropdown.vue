@@ -113,14 +113,13 @@ function getIcon(): string {
   // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
   --offset: 2px;
   --min-height: 3rem;
-  padding: var(--offset);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 
   .active {
     --background: var(--parsec-color-light-secondary-background);
-    outline: var(--offset) solid var(--parsec-color-light-primary-300);
+    outline: var(--offset) solid var(--parsec-color-light-outline);
     border-radius: var(--parsec-radius-6);
   }
 

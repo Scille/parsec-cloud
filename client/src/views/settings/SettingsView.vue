@@ -270,7 +270,7 @@ onUnmounted(async (): Promise<void> => {
   }
 
   .dropdown {
-    width: 12.5rem;
+    width: var(--popover-dropdown-settings-width);
   }
 }
 </style>
