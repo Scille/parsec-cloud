@@ -39,7 +39,7 @@ structlog = ">=21.5,<25.0"
 httpx = ">=0.25,<0.28"
 # ASGI server
 fastapi = ">=0.104.1,<0.111.0"
-uvicorn = ">=0.24,<0.28"
+uvicorn = ">=0.24,<0.29"
 jinja2 = { version = "^3.0" }
 # PostgreSQL
 asyncpg = "^0.28.0"
