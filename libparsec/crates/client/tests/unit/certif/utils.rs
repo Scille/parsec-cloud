@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{store::CertificatesStore, CertifOps},
-    ClientConfig, EventBus, WorkspaceStorageCacheSize,
+    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn certificates_ops_factory(
@@ -18,7 +18,7 @@ pub(crate) async fn certificates_ops_factory(
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,

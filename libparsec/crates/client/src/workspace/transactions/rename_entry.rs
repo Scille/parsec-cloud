@@ -65,9 +65,10 @@ pub(crate) async fn rename_entry(
     //       in an atomic way.
 
     if !ops
-        .workspace_entry
+        .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
+        .entry
         .role
         .can_write()
     {

@@ -9,7 +9,7 @@ use libparsec_client::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{mount_and_test, start_client};
+use super::utils::mount_and_test;
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
@@ -48,7 +48,15 @@ async fn not_empty(tmp_path: TmpPath, env: &TestbedEnv) {
             let path = mountpoint_path.join("foo");
 
             let err = tokio::fs::remove_dir(&path).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::ENOTEMPTY), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_DIR_NOT_EMPTY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -62,7 +70,15 @@ async fn is_file(tmp_path: TmpPath, env: &TestbedEnv) {
             let path = mountpoint_path.join("bar.txt");
 
             let err = tokio::fs::remove_dir(&path).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_DIRECTORY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -91,7 +107,15 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let path = mountpoint_path.join("foo/spam");
             let err = tokio::fs::remove_dir(&path).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -123,11 +147,22 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             let path = mountpoint_path.join("foo/spam");
             let err = tokio::fs::remove_dir(&path).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }
 
+// TODO: Github Action doesn't support container on Windows, which is used
+//       to run the testbed server !
+#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
     let env = env.customize(|builder| {
@@ -149,7 +184,7 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
         });
     });
 
-    let alice_client = start_client(&env, "alice@dev1").await;
+    let alice_client = super::utils::start_client(&env, "alice@dev1").await;
     mount_and_test!(as "bob@dev1", &env, &tmp_path, |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
         // Bob lose access to the workspace while it has it mounted...
 
@@ -185,7 +220,15 @@ async fn read_only_realm(tmp_path: TmpPath, env: &TestbedEnv) {
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let path = mountpoint_path.join("foo/spam");
             let err = tokio::fs::remove_dir(&path).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32),
+                "{}",
+                err
+            );
         }
     );
 }

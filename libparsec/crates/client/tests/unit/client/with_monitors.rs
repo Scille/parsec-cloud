@@ -6,7 +6,8 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::EntryStat, Client, ClientConfig, EventBus, WorkspaceInfo, WorkspaceStorageCacheSize,
+    workspace::EntryStat, Client, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceInfo,
+    WorkspaceStorageCacheSize,
 };
 
 #[ignore]
@@ -18,7 +19,7 @@ async fn multi_devices(env: &TestbedEnv) {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: libparsec_client_connection::ProxyConfig::default(),
         with_monitors: true,
@@ -133,7 +134,7 @@ async fn sharing(env: &TestbedEnv) {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: libparsec_client_connection::ProxyConfig::default(),
         with_monitors: true,

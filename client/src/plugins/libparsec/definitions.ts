@@ -91,7 +91,7 @@ export interface AvailableDevice {
 export interface ClientConfig {
     configDir: Path
     dataBaseDir: Path
-    mountpointBaseDir: Path
+    mountpointMountStrategy: MountpointMountStrategy
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
     withMonitors: boolean
 }
@@ -1236,6 +1236,28 @@ export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
 
+// MountpointMountStrategy
+export enum MountpointMountStrategyTag {
+    Directory = 'MountpointMountStrategyDirectory',
+    Disabled = 'MountpointMountStrategyDisabled',
+    DriveLetter = 'MountpointMountStrategyDriveLetter',
+}
+
+export interface MountpointMountStrategyDirectory {
+    tag: MountpointMountStrategyTag.Directory
+    baseDir: Path
+}
+export interface MountpointMountStrategyDisabled {
+    tag: MountpointMountStrategyTag.Disabled
+}
+export interface MountpointMountStrategyDriveLetter {
+    tag: MountpointMountStrategyTag.DriveLetter
+}
+export type MountpointMountStrategy =
+  | MountpointMountStrategyDirectory
+  | MountpointMountStrategyDisabled
+  | MountpointMountStrategyDriveLetter
+
 // MountpointToOsPathError
 export enum MountpointToOsPathErrorTag {
     Internal = 'MountpointToOsPathErrorInternal',
@@ -1665,14 +1687,20 @@ export type WorkspaceInfoError =
 
 // WorkspaceMountError
 export enum WorkspaceMountErrorTag {
+    Disabled = 'WorkspaceMountErrorDisabled',
     Internal = 'WorkspaceMountErrorInternal',
 }
 
+export interface WorkspaceMountErrorDisabled {
+    tag: WorkspaceMountErrorTag.Disabled
+    error: string
+}
 export interface WorkspaceMountErrorInternal {
     tag: WorkspaceMountErrorTag.Internal
     error: string
 }
 export type WorkspaceMountError =
+  | WorkspaceMountErrorDisabled
   | WorkspaceMountErrorInternal
 
 // WorkspaceOpenFileError
@@ -2162,10 +2190,15 @@ export interface LibParsecPlugin {
         offset: U64,
         data: Uint8Array
     ): Promise<Result<U64, WorkspaceFdWriteError>>
-    fdWriteWithConstrainedIo(
+    fdWriteConstrainedIo(
         workspace: Handle,
         fd: FileDescriptor,
         offset: U64,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
+    fdWriteStartEof(
+        workspace: Handle,
+        fd: FileDescriptor,
         data: Uint8Array
     ): Promise<Result<U64, WorkspaceFdWriteError>>
     getDefaultConfigDir(

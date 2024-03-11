@@ -286,12 +286,12 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => match err {
                     WorkspaceStatEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
                     WorkspaceStatEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    WorkspaceStatEntryError::Stopped => todo!(),
                     WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    WorkspaceStatEntryError::InvalidKeysBundle(_) => todo!(),
-                    WorkspaceStatEntryError::InvalidCertificate(_) => todo!(),
-                    WorkspaceStatEntryError::InvalidManifest(_) => todo!(),
-                    WorkspaceStatEntryError::Internal(_) => todo!(),
+                    WorkspaceStatEntryError::Stopped
+                    | WorkspaceStatEntryError::InvalidKeysBundle(_)
+                    | WorkspaceStatEntryError::InvalidCertificate(_)
+                    | WorkspaceStatEntryError::InvalidManifest(_)
+                    | WorkspaceStatEntryError::Internal(_) => reply.manual().error(libc::EIO),
                 },
             }
         });
@@ -944,7 +944,6 @@ impl fuser::Filesystem for Filesystem {
                             }
                         }
                     };
-                    println!("~~~~~ open {:?} => {:?}", path, fd);
 
                     let stat = match ops.fd_stat(fd).await {
                         Ok(stat) => stat,
@@ -957,7 +956,6 @@ impl fuser::Filesystem for Filesystem {
                             };
                         }
                     };
-                    println!("~~~~~ fd_stat {:?} => {:?}", fd, stat);
 
                     match ops.fd_close(fd).await {
                         Ok(()) => (),
@@ -971,7 +969,6 @@ impl fuser::Filesystem for Filesystem {
                         };
                         }
                     }
-                    println!("~~~~~ fd_close {:?}", fd);
 
                     reply
                         .manual()

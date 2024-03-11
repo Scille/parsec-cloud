@@ -7,7 +7,6 @@ use libparsec_client::{
     Client,
 };
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
 
@@ -125,6 +124,10 @@ async fn dst_parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
+// TODO: `tokio::fs::rename` always overwrite target, however on Windows there
+//       is a `MOVEFILE_REPLACE_EXISTING` flag to control this behavior
+//       (see https://learn.microsoft.com/fr-fr/windows/win32/api/winbase/nf-winbase-movefileexw)
+#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
@@ -136,11 +139,25 @@ async fn dst_parent_exists_as_file(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
 
-            p_assert_matches!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(not(target_os = "windows"))]
+            p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(target_os = "windows")]
+            {
+                p_assert_eq!(
+                    err.raw_os_error(),
+                    Some(windows_sys::Win32::Foundation::ERROR_ALREADY_EXISTS as i32),
+                    "{}",
+                    err
+                );
+            }
         }
     );
 }
 
+// TODO: `tokio::fs::rename` always overwrite target, however on Windows there
+//       is a `MOVEFILE_REPLACE_EXISTING` flag to control this behavior
+//       (see https://learn.microsoft.com/fr-fr/windows/win32/api/winbase/nf-winbase-movefileexw)
+#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn dst_parent_exists_as_folder(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
@@ -152,7 +169,15 @@ async fn dst_parent_exists_as_folder(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
 
-            p_assert_matches!(err.raw_os_error(), Some(libc::EISDIR), "{}", err);
+            #[cfg(not(target_os = "windows"))]
+            p_assert_eq!(err.raw_os_error(), Some(libc::EISDIR), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_ALREADY_EXISTS as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -168,7 +193,15 @@ async fn dst_parent_is_file(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
 
-            p_assert_matches!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(not(target_os = "windows"))]
+            p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_DIRECTORY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -185,7 +218,15 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
             let dst = mountpoint_path.join("bar2.txt");
 
             let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -219,7 +260,15 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let err = tokio::fs::rename(&src, &dst).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }

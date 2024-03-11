@@ -20,12 +20,17 @@ pub enum WorkspaceFdWriteError {
     Internal(#[from] anyhow::Error),
 }
 
+pub enum FdWriteStrategy {
+    Normal { offset: u64 },
+    ConstrainedIO { offset: u64 },
+    StartEOF,
+}
+
 pub async fn fd_write(
     ops: &WorkspaceOps,
     fd: FileDescriptor,
-    offset: u64,
     data: &[u8],
-    constrained_io: bool,
+    mode: FdWriteStrategy,
 ) -> Result<u64, WorkspaceFdWriteError> {
     // Retrieve the opened file & cursor from the file descriptor
 
@@ -60,11 +65,17 @@ pub async fn fd_write(
     }
 
     // Truncate the data to the right length if the write is constrained
-    let data = if constrained_io && offset + data.len() as u64 > manifest.size {
-        let end = manifest.size.saturating_sub(offset);
-        &data[..end as usize]
-    } else {
-        data
+    let (offset, data) = match mode {
+        FdWriteStrategy::ConstrainedIO { offset } => {
+            if offset + data.len() as u64 > manifest.size {
+                let end = manifest.size.saturating_sub(offset);
+                (offset, &data[..end as usize])
+            } else {
+                (offset, data)
+            }
+        }
+        FdWriteStrategy::Normal { offset } => (offset, data),
+        FdWriteStrategy::StartEOF => (manifest.size, data),
     };
 
     // Writing an empty buffer is a no-op

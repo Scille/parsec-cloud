@@ -253,6 +253,8 @@ pub async fn workspace_info(workspace: Handle) -> Result<StartedWorkspaceInfo, W
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceMountError {
+    #[error("Mountpoint is disabled")]
+    Disabled,
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -279,6 +281,13 @@ pub async fn workspace_mount(
         } => Some((*client, workspace_ops.clone())),
         _ => None,
     })?;
+
+    if matches!(
+        workspace.config().mountpoint_mount_strategy,
+        libparsec_client::MountpointMountStrategy::Disabled
+    ) {
+        return Err(WorkspaceMountError::Disabled);
+    }
 
     // 1. Check if the mountpoint isn't already started (or starting)
 
@@ -549,22 +558,30 @@ pub async fn fd_write(
     workspace: Handle,
     fd: FileDescriptor,
     offset: u64,
-    data: Vec<u8>,
+    data: &[u8],
 ) -> Result<u64, WorkspaceFdWriteError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.fd_write(fd, offset, &data).await
+    workspace.fd_write(fd, offset, data).await
 }
 
-pub async fn fd_write_with_constrained_io(
+pub async fn fd_write_constrained_io(
     workspace: Handle,
     fd: FileDescriptor,
     offset: u64,
-    data: Vec<u8>,
+    data: &[u8],
 ) -> Result<u64, WorkspaceFdWriteError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace
-        .fd_write_with_constrained_io(fd, offset, &data)
-        .await
+    workspace.fd_write_constrained_io(fd, offset, data).await
+}
+
+pub async fn fd_write_start_eof(
+    workspace: Handle,
+    fd: FileDescriptor,
+    data: &[u8],
+) -> Result<u64, WorkspaceFdWriteError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_write_start_eof(fd, data).await
 }

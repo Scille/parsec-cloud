@@ -5,7 +5,7 @@ use std::{path::Path, sync::Arc};
 use libparsec_client_connection::ProxyConfig;
 use libparsec_types::prelude::*;
 
-use crate::{Client, ClientConfig, EventBus, WorkspaceStorageCacheSize};
+use crate::{Client, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize};
 
 /// Create a client for the given device WITHOUT monitors (i.e. the client has
 /// no background task reacting to events, which is pretty useful for testing
@@ -18,7 +18,7 @@ pub(crate) async fn client_factory(
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),
         data_base_dir: discriminant_dir.to_owned(),
-        mountpoint_base_dir: discriminant_dir.to_owned(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,

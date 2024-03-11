@@ -2,9 +2,12 @@
 
 use std::sync::Arc;
 
-use libparsec_client::{Client, ClientConfig, EventBus, ProxyConfig, WorkspaceStorageCacheSize};
+use libparsec_client::{
+    Client, ClientConfig, EventBus, MountpointMountStrategy, ProxyConfig, WorkspaceStorageCacheSize,
+};
 use libparsec_tests_fixtures::prelude::*;
 
+#[cfg_attr(target_os = "windows", allow(dead_code))]
 pub async fn start_client(env: &TestbedEnv, start_as: &'static str) -> Arc<Client> {
     start_client_with_mountpoint_base_dir(env, env.discriminant_dir.clone(), start_as).await
 }
@@ -18,7 +21,9 @@ pub async fn start_client_with_mountpoint_base_dir(
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir,
+        mountpoint_mount_strategy: MountpointMountStrategy::Directory {
+            base_dir: mountpoint_base_dir,
+        },
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
@@ -29,16 +34,16 @@ pub async fn start_client_with_mountpoint_base_dir(
 
 macro_rules! mount_and_test {
     ($env:expr, $mountpoint_base_dir:expr, $test:expr) => {
-        mount_and_test!(as "alice@dev1", $env, $mountpoint_base_dir, $test);
+        mount_and_test!(as "alice@dev1", $env, $mountpoint_base_dir, $test)
     };
     (as $start_as:literal, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {{
         // Ensure we don't take ownership on TmpPath fixture, otherwise it drop will
         // kicks in too early and will shadow the real error.
-        let mountpoint_base_dir: &TmpPath = $mountpoint_base_dir;
-        let mountpoint_base_dir: PathBuf = (*mountpoint_base_dir).to_owned();
+        let mountpoint_base_dir: &libparsec_tests_fixtures::TmpPath = $mountpoint_base_dir;
+        let mountpoint_base_dir: std::path::PathBuf = (*mountpoint_base_dir).to_owned();
 
-        let wksp1_id: VlobID = *$env.template.get_stuff("wksp1_id");
-        let client = $crate::tests::utils::start_client_with_mountpoint_base_dir($env, mountpoint_base_dir, $start_as).await;
+        let wksp1_id: libparsec_types::VlobID = *$env.template.get_stuff("wksp1_id");
+        let client = $crate::operations::utils::start_client_with_mountpoint_base_dir($env, mountpoint_base_dir, $start_as).await;
         let wksp1_ops = client.start_workspace(wksp1_id).await.unwrap();
         let test_result = {
             let mountpoint = $crate::Mountpoint::mount(wksp1_ops.clone())

@@ -57,8 +57,11 @@ async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, W
     // otherwise we have to make sure it is the case !
     if local.base.version == 0 {
         let name = {
-            let guard = ops.workspace_entry.lock().expect("Mutex is poisoned");
-            guard.name.clone()
+            let guard = ops
+                .workspace_external_info
+                .lock()
+                .expect("Mutex is poisoned");
+            guard.entry.name.clone()
         };
         // Note `bootstrap_workspace` is idempotent
         ops.certificates_ops
@@ -145,16 +148,20 @@ async fn outbound_sync_child(
     //   (given initial rename is the last step).
     if base_version == 0
         && matches!(
-            ops.workspace_entry
+            ops.workspace_external_info
                 .lock()
                 .expect("Mutex is poisoned")
+                .entry
                 .name_origin,
             CertificateBasedInfoOrigin::Placeholder
         )
     {
         let name = {
-            let guard = ops.workspace_entry.lock().expect("Mutex is poisoned");
-            guard.name.clone()
+            let guard = ops
+                .workspace_external_info
+                .lock()
+                .expect("Mutex is poisoned");
+            guard.entry.name.clone()
         };
         // Note `bootstrap_workspace` is idempotent
         ops.certificates_ops

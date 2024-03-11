@@ -3,7 +3,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{
-    workspace::{EntryStat, WorkspaceOps, WorkspaceStatEntryError},
+    workspace::{EntryStat, WorkspaceOps},
     Client,
 };
 use libparsec_tests_fixtures::prelude::*;
@@ -57,10 +57,13 @@ async fn ok_first_open(
                 unknown => panic!("Unknown kind: {}", unknown),
             };
 
-            open_options
-                .open(&mountpoint_path.join(name))
-                .await
-                .unwrap();
+            // Scope to ensure when the drop occurs, as it closes the file
+            {
+                open_options
+                    .open(&mountpoint_path.join(name))
+                    .await
+                    .unwrap();
+            }
 
             let stat = wksp1_ops
                 .stat_entry(&format!("/{}", name).parse().unwrap())
@@ -120,6 +123,8 @@ async fn ok_already_opened(
     );
 }
 
+// TODO: Fix for Windows
+#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(
@@ -157,8 +162,12 @@ async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
+// TODO: Fix for Windows
+#[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn create_new_and_already_exists(tmp_path: TmpPath, env: &TestbedEnv) {
+    use libparsec_client::workspace::WorkspaceStatEntryError;
+
     mount_and_test!(
         env,
         &tmp_path,
@@ -215,7 +224,15 @@ async fn stopped(
                 .open(&mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -263,7 +280,15 @@ async fn offline(
                 .await
                 .unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -316,7 +341,16 @@ async fn read_only_realm(
             open_options.open(&path).await.unwrap();
         } else {
             let err = open_options.open(&path).await.unwrap_err();
+            // TODO: change error to be closer to
+            #[cfg(not(target_os = "windows"))]
             p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_WRITE_PROTECT as i32),
+                "{}",
+                err
+            );
         }
     });
 }

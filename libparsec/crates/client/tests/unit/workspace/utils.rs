@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::CertifOps,
-    workspace::{LocalUserManifestWorkspaceEntry, WorkspaceOps},
-    ClientConfig, EventBus, WorkspaceStorageCacheSize,
+    workspace::{LocalUserManifestWorkspaceEntry, WorkspaceExternalInfo, WorkspaceOps},
+    ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn workspace_ops_factory(
@@ -19,7 +19,7 @@ pub(crate) async fn workspace_ops_factory(
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),
         data_base_dir: discriminant_dir.to_owned(),
-        mountpoint_base_dir: discriminant_dir.to_owned(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
@@ -45,12 +45,16 @@ pub(crate) async fn workspace_ops_factory(
         certificates_ops,
         event_bus,
         realm_id,
-        LocalUserManifestWorkspaceEntry {
-            id: realm_id,
-            name: "wksp1".parse().unwrap(),
-            name_origin: CertificateBasedInfoOrigin::Placeholder,
-            role: RealmRole::Owner,
-            role_origin: CertificateBasedInfoOrigin::Placeholder,
+        WorkspaceExternalInfo {
+            entry: LocalUserManifestWorkspaceEntry {
+                id: realm_id,
+                name: "wksp1".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                role: RealmRole::Owner,
+                role_origin: CertificateBasedInfoOrigin::Placeholder,
+            },
+            workspace_index: 0,
+            total_workspaces: 1,
         },
     )
     .await
@@ -74,12 +78,16 @@ pub(crate) async fn restart_workspace_ops(ops: WorkspaceOps) -> WorkspaceOps {
         certificates_ops,
         event_bus,
         realm_id,
-        LocalUserManifestWorkspaceEntry {
-            id: realm_id,
-            name: "wksp1".parse().unwrap(),
-            name_origin: CertificateBasedInfoOrigin::Placeholder,
-            role: RealmRole::Owner,
-            role_origin: CertificateBasedInfoOrigin::Placeholder,
+        WorkspaceExternalInfo {
+            entry: LocalUserManifestWorkspaceEntry {
+                id: realm_id,
+                name: "wksp1".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                role: RealmRole::Owner,
+                role_origin: CertificateBasedInfoOrigin::Placeholder,
+            },
+            workspace_index: 0,
+            total_workspaces: 1,
         },
     )
     .await

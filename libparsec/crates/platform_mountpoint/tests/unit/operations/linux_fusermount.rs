@@ -4,7 +4,6 @@ use std::{os::linux::fs::MetadataExt, path::PathBuf, sync::Arc};
 
 use libparsec_client::{Client, WorkspaceOps};
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 
 use super::utils::mount_and_test;
 
@@ -23,7 +22,7 @@ async fn unmount_with_fusermount(tmp_path: TmpPath, env: &TestbedEnv) {
             // `-z` option is important here: it's the "lazy umount" mode, which allows the
             // filesystem to be unmounted even if it is still in use.
             // This is important given upon mounting, the filesystem gets polled by various
-            // system that can clash with our attempt at unmounting.
+            // systems that can clash with our attempt at unmounting.
             assert!(std::process::Command::new("fusermount")
                 .args(["-uz", mountpoint_path.to_str().unwrap()])
                 .status()

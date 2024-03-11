@@ -206,12 +206,14 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
     // There is no risk of deadlock as this is the only place those two locks are
     // held together.
 
+    let workspaces = updater.workspaces();
+    let total_workspaces = workspaces.len();
     let mut running_workspaces = client.workspaces.lock().await;
     for workspace_ops in (*running_workspaces).clone() {
-        let found = updater
-            .workspaces()
+        let found = workspaces
             .iter()
-            .find(|e| e.id == workspace_ops.realm_id());
+            .enumerate()
+            .find(|(_, e)| e.id == workspace_ops.realm_id());
         match found {
             // Workspace not longer shared with us
             None => {
@@ -223,9 +225,13 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 .await
             }
             // Workspace still shared with us, but it might have changed nevertheless
-            Some(workspace_entry) => workspace_ops.update_workspace_entry(|entry| {
-                *entry = workspace_entry.to_owned();
-            }),
+            Some((workspace_index, workspace_entry)) => workspace_ops
+                .update_workspace_external_info(|info| {
+                    info.entry = workspace_entry.to_owned();
+                    // Note workspace index doesn't have to be stable, so we can just overwrite it
+                    info.workspace_index = workspace_index;
+                    info.total_workspaces = total_workspaces;
+                }),
         }
     }
 

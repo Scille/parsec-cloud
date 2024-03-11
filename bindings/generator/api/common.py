@@ -39,7 +39,7 @@ class EnumItemUnit:
 #         class A:
 #             a: int
 #         B = VariantItemTuple(int, int)
-#         C = VariantItemUnit
+#         C = VariantItemUnit()
 class Variant:
     pass
 

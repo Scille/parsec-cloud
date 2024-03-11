@@ -32,12 +32,14 @@ pub enum FsPathError {
 pub struct EntryName(String);
 
 impl EntryName {
+    pub const MAX_LENGTH_BYTES: usize = 255;
+
     /// Stick to UNIX filesystem philosophy:
     /// - no `.` or `..` name
     /// - no `/` or null byte in the name
     /// - max 255 bytes long name
     pub fn is_valid(raw: &str) -> Result<(), EntryNameError> {
-        if raw.len() >= 256 {
+        if raw.len() > Self::MAX_LENGTH_BYTES {
             Err(EntryNameError::NameTooLong)
         } else if raw.is_empty()
             || raw == "."

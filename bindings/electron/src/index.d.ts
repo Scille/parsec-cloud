@@ -65,7 +65,7 @@ export interface AvailableDevice {
 export interface ClientConfig {
     configDir: string
     dataBaseDir: string
-    mountpointBaseDir: string
+    mountpointMountStrategy: MountpointMountStrategy
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
     withMonitors: boolean
 }
@@ -1051,6 +1051,23 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 
+// MountpointMountStrategy
+export interface MountpointMountStrategyDirectory {
+    tag: "Directory"
+    base_dir: string
+}
+export interface MountpointMountStrategyDisabled {
+    tag: "Disabled"
+}
+export interface MountpointMountStrategyDriveLetter {
+    tag: "DriveLetter"
+}
+export type MountpointMountStrategy =
+  | MountpointMountStrategyDirectory
+  | MountpointMountStrategyDisabled
+  | MountpointMountStrategyDriveLetter
+
+
 // MountpointToOsPathError
 export interface MountpointToOsPathErrorInternal {
     tag: "Internal"
@@ -1400,11 +1417,16 @@ export type WorkspaceInfoError =
 
 
 // WorkspaceMountError
+export interface WorkspaceMountErrorDisabled {
+    tag: "Disabled"
+    error: string
+}
 export interface WorkspaceMountErrorInternal {
     tag: "Internal"
     error: string
 }
 export type WorkspaceMountError =
+  | WorkspaceMountErrorDisabled
   | WorkspaceMountErrorInternal
 
 
@@ -1836,10 +1858,15 @@ export function fdWrite(
     offset: number,
     data: Uint8Array
 ): Promise<Result<number, WorkspaceFdWriteError>>
-export function fdWriteWithConstrainedIo(
+export function fdWriteConstrainedIo(
     workspace: number,
     fd: number,
     offset: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
+export function fdWriteStartEof(
+    workspace: number,
+    fd: number,
     data: Uint8Array
 ): Promise<Result<number, WorkspaceFdWriteError>>
 export function getDefaultConfigDir(

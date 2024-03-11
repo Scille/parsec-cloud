@@ -134,7 +134,15 @@ async fn not_in_write_mode(tmp_path: TmpPath, env: &TestbedEnv) {
                 Err(err) => err,
             };
 
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EBADF), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32),
+                "{}",
+                err
+            );
         }
     );
 }

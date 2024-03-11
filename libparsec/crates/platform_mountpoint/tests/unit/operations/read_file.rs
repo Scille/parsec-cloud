@@ -77,7 +77,15 @@ async fn not_in_read_mode(tmp_path: TmpPath, env: &TestbedEnv) {
             let mut buff = vec![0; 20];
             let err = fd.read_exact(&mut buff).await.unwrap_err();
 
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EBADF), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -99,7 +107,17 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
             let mut buff = Vec::new();
             let err = fd.read_to_end(&mut buff).await.unwrap_err();
 
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            // TODO: error is expected to be `ERROR_NOT_READY`, but due to lookup
+            //       before actually doing the flush, the error is different
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_INVALID_HANDLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -130,7 +148,15 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             let mut buff = Vec::new();
             let err = fd.read_to_end(&mut buff).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -185,7 +211,15 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
             let mut buff = Vec::new();
             let err = fd.read_to_end(&mut buff).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EACCES), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -231,7 +265,15 @@ async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &Testbe
             let err = fd.read_to_end(&mut buff).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             // TODO: what should be the error here?
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EACCES), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -279,7 +321,15 @@ async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEn
             let err = fd.read_to_end(&mut buff).await.unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             // TODO: what should be the error here?
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EACCES), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }

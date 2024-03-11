@@ -69,9 +69,10 @@ pub(crate) async fn remove_entry(
     expect: RemoveEntryExpect,
 ) -> Result<(), WorkspaceRemoveEntryError> {
     if !ops
-        .workspace_entry
+        .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
+        .entry
         .role
         .can_write()
     {

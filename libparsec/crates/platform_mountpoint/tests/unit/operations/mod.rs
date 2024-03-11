@@ -16,3 +16,7 @@ mod write_file;
 
 #[cfg(target_os = "linux")]
 mod linux_fusermount;
+#[cfg(target_os = "windows")]
+mod windows_drive_mount;
+#[cfg(target_os = "windows")]
+mod windows_winfsp_tests;
