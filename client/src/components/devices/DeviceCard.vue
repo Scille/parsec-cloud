@@ -15,7 +15,13 @@
       </ion-text>
       <ion-text class="join-date body-sm">
         {{ $t('DevicesPage.joinedOn') }}
-        {{ formatTimeSince(date, '--', 'short', true) }}
+        <span v-if="date">{{ formatTimeSince(date, '--', 'short', true) }}</span>
+        <span
+          v-if="!date"
+          class="join-date-now"
+        >
+          {{ $t('DevicesPage.now') }}
+        </span>
       </ion-text>
     </div>
 
@@ -38,7 +44,7 @@ import { DateTime } from 'luxon';
 defineProps<{
   label: string;
   isCurrent: boolean;
-  date: DateTime;
+  date?: DateTime;
 }>();
 </script>
 
@@ -73,6 +79,23 @@ defineProps<{
 
     .join-date {
       color: var(--parsec-color-light-secondary-grey);
+
+      &:has(.join-date-now) {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+
+        &::before {
+          content: '';
+          position: relative;
+          display: block;
+          width: 0.5em;
+          height: 0.5em;
+          border-radius: 50%;
+          background-color: var(--parsec-color-light-primary-500);
+        }
+      }
     }
   }
 }

@@ -180,11 +180,10 @@
           v-show="pageStep === GreetDeviceStep.Summary"
           class="step final-step"
         >
-          {{
-            $t('DevicesPage.greet.subtitles.summary', {
-              label: greeter.requestedDeviceLabel,
-            })
-          }}
+          <device-card
+            :label="greeter.requestedDeviceLabel"
+            :is-current="false"
+          />
         </div>
       </div>
       <ion-footer class="modal-footer">
@@ -223,6 +222,7 @@
 <script setup lang="ts">
 import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
 import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
+import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
@@ -282,7 +282,12 @@ function getTitleAndSubtitle(): GreetDeviceTitle {
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     return { title: translate('DevicesPage.greet.titles.deviceDetails') };
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return { title: translate('DevicesPage.greet.titles.summary') };
+    return {
+      title: translate('DevicesPage.greet.titles.summary'),
+      subtitle: translate('DevicesPage.greet.subtitles.summary', {
+        label: greeter.value.requestedDeviceLabel,
+      }),
+    };
   }
   return { title: '' };
 }
@@ -680,10 +685,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  background: var(--parsec-color-light-secondary-background);
-  padding: 0.75rem 1rem;
   border-radius: var(--parsec-radius-6);
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
+  width: 20rem;
 }
 </style>

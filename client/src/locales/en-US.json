@@ -516,6 +516,7 @@
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
         "joinedOn": "Joined:",
+        "now": "Now",
         "restorePassword": {
             "title": "Password recovery files",
             "done": {
@@ -540,13 +541,13 @@
                 "provideHostCode": "Share your code",
                 "getGuestCode": "Get guest code",
                 "deviceDetails": "Waiting for the device information",
-                "summary": "Device created!",
+                "summary": "New device added",
                 "cancelGreet": "Cancel"
             },
             "subtitles": {
                 "provideHostCode": "Click the code below on the guest.",
                 "getGuestCode": "Click on the code that appears on the guest.",
-                "summary": "The device {label} has been created.",
+                "summary": "The device {label} has been added to your profile.",
                 "getDeviceInfo": "Waiting for you to fill the information on the guest.",
                 "waitForGuest": "You need to have Parsec open on both devices for the inscription duration.",
                 "scanOrShare1": "Scan the QR Code ",

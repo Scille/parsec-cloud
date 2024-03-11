@@ -516,6 +516,7 @@
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
         "joinedOn": "Rejoint :",
+        "now": "À l'instant",
         "restorePassword": {
             "title": "Fichiers de récupération de mot de passe",
             "done": {
@@ -540,13 +541,13 @@
                 "provideHostCode": "Partagez votre code",
                 "getGuestCode": "Récupérez le code invité",
                 "deviceDetails": "En attente des informations de l'appareil",
-                "summary": "L'appareil a été créé !",
+                "summary": "Nouvel appareil ajouté",
                 "cancelGreet": "Annuler"
             },
             "subtitles": {
                 "provideHostCode": "Cliquez sur le code ci-dessous sur l'appareil invité.",
                 "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché par l'invité.",
-                "summary": "L'appareil {label} a été créé.",
+                "summary": "L'appareil {label} a été ajouté à votre profil.",
                 "getDeviceInfo": "En attente des informations de l'invité.",
                 "waitForGuest": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l'inscription.",
                 "scanOrShare1": "Scanner le QR Code ",
