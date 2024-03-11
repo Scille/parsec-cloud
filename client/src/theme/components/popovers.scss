@@ -8,7 +8,8 @@
   --popover-option-height: 25rem;
   --popover-dropdown-width: var(--popover-default-width);
   --popover-notification-center-width: 28rem;
-  --popover-dropdown-settings-width: 12.5rem;
+  --popover-dropdown-settings-width: 9rem;
+  --popover-dropdown-sort-width: 12.5rem;
 }
 
 // Global popover style
@@ -161,11 +162,8 @@ ion-popover {
 /* --- dropdown outline popover --- */
 .dropdown-popover {
   --width: var(--popover-dropdown-width);
+}
 
-  // an offset is required but this varies depending on the popover side (top or bottom)
-  // --offset-y: 0.5rem;
-
-  // .popover-side-top {
-  //   --offset-y: -0.5rem;
-  // }
+.sorter-popover {
+  --width: var(--popover-dropdown-sort-width);
 }
