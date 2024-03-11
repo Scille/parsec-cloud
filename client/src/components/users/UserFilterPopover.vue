@@ -2,9 +2,14 @@
 
 <template>
   <!-- eslint-disable vue/no-mutating-props -->
-  <ion-list class="filter-container">
-    {{ $t('UsersPage.filter.status') }}
-    <div>
+  <ion-list
+    class="filter-container"
+    id="user-filter-list"
+  >
+    <div id="filter-title-status">
+      {{ $t('UsersPage.filter.status') }}
+    </div>
+    <div id="filter-check-active">
       <user-status-tag :revoked="false" />
       <ion-checkbox
         aria-label=""
@@ -13,7 +18,7 @@
         @ion-change="users.unselectHiddenUsers()"
       />
     </div>
-    <div>
+    <div id="filter-check-revoked">
       <user-status-tag :revoked="true" />
       <ion-checkbox
         aria-label=""
@@ -22,10 +27,10 @@
         @ion-change="users.unselectHiddenUsers()"
       />
     </div>
-    <div>
+    <div id="filter-title-role">
       {{ $t('UsersPage.filter.role') }}
     </div>
-    <div>
+    <div id="filter-check-admin">
       {{ $t('UsersPage.filter.admin') }}
       <ion-checkbox
         aria-label=""
@@ -34,7 +39,7 @@
         @ion-change="users.unselectHiddenUsers()"
       />
     </div>
-    <div>
+    <div id="filter-check-standard">
       {{ $t('UsersPage.filter.standard') }}
       <ion-checkbox
         aria-label=""
@@ -43,7 +48,7 @@
         @ion-change="users.unselectHiddenUsers()"
       />
     </div>
-    <div>
+    <div id="filter-check-outsider">
       {{ $t('UsersPage.filter.outsider') }}
       <ion-checkbox
         aria-label=""

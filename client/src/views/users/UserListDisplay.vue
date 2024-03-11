@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-list class="list">
+  <ion-list
+    class="list"
+    id="users-page-user-list"
+  >
     <ion-list-header
       class="user-list-header"
       lines="full"
