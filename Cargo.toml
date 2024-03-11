@@ -114,7 +114,7 @@ dirs = { version = "5.0.1", default-features = false }
 ed25519-dalek = { version = "2.1.1", default-features = false }
 email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.2", default-features = false }
-event-listener = { version = "5.1.0", default-features = false }
+event-listener = { version = "5.2.0", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
 flate2 = { version = "1.0.28", default-features = false }
 flume = { version = "0.11.0", default-features = false }
