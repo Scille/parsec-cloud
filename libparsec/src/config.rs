@@ -2,7 +2,9 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-pub use libparsec_client::{ProxyConfig, ServerConfig, WorkspaceStorageCacheSize};
+pub use libparsec_client::{
+    MountpointMountStrategy, ProxyConfig, ServerConfig, WorkspaceStorageCacheSize,
+};
 pub use libparsec_types::prelude::*;
 
 pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
@@ -13,7 +15,7 @@ pub const PARSEC_HOME_DIR: &str = "PARSEC_HOME_DIR";
 pub struct ClientConfig {
     pub config_dir: PathBuf,
     pub data_base_dir: PathBuf,
-    pub mountpoint_base_dir: PathBuf, // Ignored on web
+    pub mountpoint_mount_strategy: MountpointMountStrategy,
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
     pub with_monitors: bool,
 }
@@ -23,9 +25,9 @@ impl Default for ClientConfig {
         Self {
             config_dir: get_default_config_dir(),
             data_base_dir: get_default_data_base_dir(),
-            mountpoint_base_dir: get_default_mountpoint_base_dir(),
+            mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
             workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
-            with_monitors: true,
+            with_monitors: false,
         }
     }
 }
@@ -41,8 +43,7 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
         Self {
             config_dir: config.config_dir,
             data_base_dir: config.data_base_dir,
-            #[cfg(not(target_arch = "wasm32"))]
-            mountpoint_base_dir: config.mountpoint_base_dir,
+            mountpoint_mount_strategy: config.mountpoint_mount_strategy,
             workspace_storage_cache_size: config.workspace_storage_cache_size,
             proxy: ProxyConfig::default(),
             with_monitors: config.with_monitors,

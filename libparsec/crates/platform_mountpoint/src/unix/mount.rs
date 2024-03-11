@@ -2,7 +2,7 @@
 
 use std::{os::linux::fs::MetadataExt, sync::Arc, thread::JoinHandle};
 
-use libparsec_client::WorkspaceOps;
+use libparsec_client::{MountpointMountStrategy, WorkspaceOps};
 use libparsec_types::prelude::*;
 
 #[derive(Debug)]
@@ -28,7 +28,15 @@ impl Mountpoint {
     ) -> anyhow::Result<Self> {
         // Mount operation consist of blocking code, so run it in a thread
         tokio::task::spawn_blocking(move || {
-            let mountpoint_base_dir = &ops.config().mountpoint_base_dir;
+            let mountpoint_base_dir = match &ops.config().mountpoint_mount_strategy {
+                MountpointMountStrategy::Directory { base_dir } => base_dir,
+                MountpointMountStrategy::DriveLetter => {
+                    return Err(anyhow::anyhow!("Mount strategy not supported !"))
+                }
+                MountpointMountStrategy::Disabled => {
+                    return Err(anyhow::anyhow!("Mount disabled !"))
+                }
+            };
 
             let (mountpoint_path, initial_st_dev) =
                 create_suitable_mountpoint_dir(mountpoint_base_dir, &ops)

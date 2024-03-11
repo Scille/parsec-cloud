@@ -7,7 +7,6 @@ use libparsec_client::{
     Client,
 };
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 use tokio::io::AsyncWriteExt;
 
 use super::utils::mount_and_test;
@@ -75,7 +74,17 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
             client.stop_workspace(wksp1_ops.realm_id()).await;
             let err = fd.flush().await.unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            // TODO: error is expected to be `ERROR_NOT_READY`, but due to lookup
+            //       before actually doing the flush, the error is different
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_INVALID_HANDLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }

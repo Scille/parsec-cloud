@@ -57,9 +57,10 @@ pub(crate) async fn create_folder(
     path: FsPath,
 ) -> Result<VlobID, WorkspaceCreateFolderError> {
     if !ops
-        .workspace_entry
+        .workspace_external_info
         .lock()
         .expect("Mutex is poisoned")
+        .entry
         .role
         .can_write()
     {

@@ -27,7 +27,7 @@ pub use transactions::{
     WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceSyncError,
 };
 
-use self::store::FileUpdater;
+use self::{store::FileUpdater, transactions::FdWriteStrategy};
 
 #[derive(Debug)]
 enum ReadMode {
@@ -74,6 +74,17 @@ struct OpenedFiles {
     opened_files: HashMap<VlobID, Arc<AsyncMutex<OpenedFile>>>,
 }
 
+pub struct WorkspaceExternalInfo {
+    /// Workspace entry as stored in the local user manifest.
+    pub entry: LocalUserManifestWorkspaceEntry,
+    /// Total number of workspace the user has access to (currently only used to
+    /// determine the drive letter on WinFSP).
+    pub total_workspaces: usize,
+    /// Arbitrary index for this workspace among the user's workspaces (currently
+    /// only used to determine the drive letter on WinFSP).
+    pub workspace_index: usize,
+}
+
 pub struct WorkspaceOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
@@ -84,10 +95,9 @@ pub struct WorkspaceOps {
     store: WorkspaceStore,
     opened_files: Mutex<OpenedFiles>,
     realm_id: VlobID,
-    /// Workspace entry as stored in the local user manifest.
     /// This contains the workspaces info that can change by uploading new
     /// certificates, and hence can be updated at any time.
-    workspace_entry: Mutex<LocalUserManifestWorkspaceEntry>,
+    workspace_external_info: Mutex<WorkspaceExternalInfo>,
 }
 
 impl std::panic::UnwindSafe for WorkspaceOps {}
@@ -123,10 +133,10 @@ impl WorkspaceOps {
         certificates_ops: Arc<CertifOps>,
         event_bus: EventBus,
         realm_id: VlobID,
-        workspace_entry: LocalUserManifestWorkspaceEntry,
+        workspace_external_info: WorkspaceExternalInfo,
     ) -> Result<Self, anyhow::Error> {
         // Sanity check (note in practice `workspace_entry.id` is never used)
-        assert_eq!(workspace_entry.id, realm_id);
+        assert_eq!(workspace_external_info.entry.id, realm_id);
 
         let store = WorkspaceStore::start(
             &config.data_base_dir,
@@ -146,7 +156,7 @@ impl WorkspaceOps {
             certificates_ops,
             event_bus,
             realm_id,
-            workspace_entry: Mutex::new(workspace_entry),
+            workspace_external_info: Mutex::new(workspace_external_info),
             opened_files: Mutex::new(OpenedFiles {
                 // Avoid using 0 as file descriptor as it is error-prone
                 next_file_descriptor: FileDescriptor(1),
@@ -187,13 +197,17 @@ impl WorkspaceOps {
     ///
     /// Hence this workspace entry that bundles all the informations, but which
     /// needs to be update whenever the corresponding certificates are updated.
-    pub(crate) fn update_workspace_entry(
+    pub(crate) fn update_workspace_external_info(
         &self,
-        updater: impl FnOnce(&mut LocalUserManifestWorkspaceEntry),
+        updater: impl FnOnce(&mut WorkspaceExternalInfo),
     ) {
-        let mut guard = self.workspace_entry.lock().expect("Mutex is poisoned");
+        let mut guard = self
+            .workspace_external_info
+            .lock()
+            .expect("Mutex is poisoned");
         updater(guard.deref_mut());
-        assert_eq!(guard.id, self.realm_id); // Sanity check
+        assert_eq!(guard.entry.id, self.realm_id); // Sanity check
+        assert!(guard.workspace_index < guard.total_workspaces); // Sanity check
     }
 
     /// Download and merge remote changes from the server.
@@ -252,9 +266,22 @@ impl WorkspaceOps {
     }
 
     pub fn get_current_name_and_self_role(&self) -> (EntryName, RealmRole) {
-        let guard = self.workspace_entry.lock().expect("Mutex is poisoned");
+        let guard = self
+            .workspace_external_info
+            .lock()
+            .expect("Mutex is poisoned");
 
-        (guard.name.clone(), guard.role)
+        (guard.entry.name.clone(), guard.entry.role)
+    }
+
+    /// Only needed for WinFSP
+    pub fn get_workspace_index_and_total_workspaces(&self) -> (usize, usize) {
+        let guard = self
+            .workspace_external_info
+            .lock()
+            .expect("Mutex is poisoned");
+
+        (guard.workspace_index, guard.total_workspaces)
     }
 
     pub async fn stat_entry(&self, path: &FsPath) -> Result<EntryStat, WorkspaceStatEntryError> {
@@ -406,7 +433,7 @@ impl WorkspaceOps {
         offset: u64,
         data: &[u8],
     ) -> Result<u64, WorkspaceFdWriteError> {
-        transactions::fd_write(self, fd, offset, data, false).await
+        transactions::fd_write(self, fd, data, FdWriteStrategy::Normal { offset }).await
     }
 
     pub async fn fd_stat(&self, fd: FileDescriptor) -> Result<FileStat, WorkspaceFdStatError> {
@@ -427,13 +454,21 @@ impl WorkspaceOps {
     // TODO: a `stat_entry_and_children` would be useful for FUSE to implement
     //       `readdirplus` that avoid extra round-trips when doing ls
 
-    pub async fn fd_write_with_constrained_io(
+    pub async fn fd_write_constrained_io(
         &self,
         fd: FileDescriptor,
         offset: u64,
         data: &[u8],
     ) -> Result<u64, WorkspaceFdWriteError> {
-        transactions::fd_write(self, fd, offset, data, true).await
+        transactions::fd_write(self, fd, data, FdWriteStrategy::ConstrainedIO { offset }).await
+    }
+
+    pub async fn fd_write_start_eof(
+        &self,
+        fd: FileDescriptor,
+        data: &[u8],
+    ) -> Result<u64, WorkspaceFdWriteError> {
+        transactions::fd_write(self, fd, data, FdWriteStrategy::StartEOF).await
     }
 }
 

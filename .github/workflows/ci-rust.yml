@@ -253,4 +253,3 @@ jobs:
         timeout-minutes: 50 # It can be very slow if cache has missed
         env:
           RUST_LOG: debug
-          TESTBED_SERVER: http://localhost:6777

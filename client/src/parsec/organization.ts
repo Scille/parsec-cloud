@@ -1,6 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ActiveUsersLimitLimitedTo, ActiveUsersLimitTag, WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
+import {
+  ActiveUsersLimitLimitedTo,
+  ActiveUsersLimitTag,
+  MountpointMountStrategyTag,
+  WorkspaceStorageCacheSizeTag,
+  libparsec,
+} from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
@@ -44,9 +50,9 @@ export async function createOrganization(
     const config: ClientConfig = {
       configDir: window.getConfigDir(),
       dataBaseDir: window.getDataBaseDir(),
-      mountpointBaseDir: window.getMountpointBaseDir(),
+      mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
-      withMonitors: true,
+      withMonitors: false,
     };
     const result = await libparsec.bootstrapOrganization(
       config,

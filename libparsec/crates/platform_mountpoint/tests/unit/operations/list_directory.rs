@@ -4,7 +4,6 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_tests_fixtures::prelude::*;
-use libparsec_types::prelude::*;
 
 use super::utils::{mount_and_test, os_ls};
 
@@ -71,7 +70,15 @@ async fn is_file(tmp_path: TmpPath, env: &TestbedEnv) {
             let err = tokio::fs::read_dir(mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::ENOTDIR), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_DIRECTORY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -87,7 +94,15 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
             let err = tokio::fs::read_dir(mountpoint_path.join("foo"))
                 .await
                 .unwrap_err();
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_NOT_READY as i32),
+                "{}",
+                err
+            );
         }
     );
 }
@@ -120,7 +135,15 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
                 .await
                 .unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
+            #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
+            #[cfg(target_os = "windows")]
+            p_assert_eq!(
+                err.raw_os_error(),
+                Some(windows_sys::Win32::Foundation::ERROR_HOST_UNREACHABLE as i32),
+                "{}",
+                err
+            );
         }
     );
 }

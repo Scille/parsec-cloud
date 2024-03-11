@@ -77,9 +77,7 @@ let {{ param_name }} =
 })?;
 {% endif %}
 {% elif type.kind == "bytes" %}
-let {{ param_name }} = {{ param_name }}.to_vec().as_slice().try_into().map_err(|_| {
-    JsValue::from(TypeError::new("Not a valid bytes buffer"))
-})?;
+let {{ param_name }} = {{ param_name }}.to_vec();
 {% elif type.kind == "bytes_based" %}
 let {{ param_name }} =
 {% if type.custom_from_rs_bytes -%}

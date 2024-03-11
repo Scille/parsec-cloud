@@ -41,3 +41,6 @@ dirs = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_platform_mountpoint = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.build-dependencies]
+winfsp_wrs_build = { workspace = true }

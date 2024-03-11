@@ -8,6 +8,7 @@ use libparsec_types::prelude::*;
 use super::Client;
 use crate::{
     monitors::{start_workspace_inbound_sync_monitor, start_workspace_outbound_sync_monitor},
+    workspace::WorkspaceExternalInfo,
     WorkspaceOps,
 };
 
@@ -39,11 +40,16 @@ pub async fn start_workspace(
     // 3) Actually start the workspace
 
     let user_manifest = client.user_ops.get_user_manifest();
-    let found = user_manifest.get_local_workspace_entry(realm_id);
-    let entry = match found {
-        Some(entry) => entry,
+    let found = user_manifest
+        .local_workspaces
+        .iter()
+        .enumerate()
+        .find(|(_, w)| w.id == realm_id);
+    let (workspace_index, entry) = match found {
+        Some((workspace_index, entry)) => (workspace_index, entry),
         None => return Err(ClientStartWorkspaceError::WorkspaceNotFound),
     };
+    let total_workspaces = user_manifest.local_workspaces.len();
 
     let workspace_ops = Arc::new(
         WorkspaceOps::start(
@@ -53,7 +59,11 @@ pub async fn start_workspace(
             client.certificates_ops.clone(),
             client.event_bus.clone(),
             realm_id,
-            entry.to_owned(),
+            WorkspaceExternalInfo {
+                entry: entry.to_owned(),
+                workspace_index,
+                total_workspaces,
+            },
         )
         .await?,
     );

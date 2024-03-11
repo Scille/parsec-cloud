@@ -63,21 +63,48 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
 
     tokio::fs::create_dir(&mountpoint_dir).await.unwrap();
 
-    {
+    let actual_mountpoint_dir = {
         let mountpoint = Mountpoint::mount(wksp1_ops.clone()).await.unwrap();
+        let actual_mountpoint_dir = mountpoint.path().to_owned();
         mountpoint.unmount().await.unwrap();
+        actual_mountpoint_dir
+    };
+
+    // On Windows, mount has been done in a new directory, hence mountpoint dir has been untouched
+    #[cfg(target_os = "windows")]
+    {
+        p_assert_eq!(actual_mountpoint_dir, mountpoint_base_dir.join("wksp1 (2)"));
+        // Mountpoint base dir should exist with it empty child mountpoint dir
+        p_assert_matches!(
+            tokio::fs::read_dir(&mountpoint_dir)
+                .await
+                .unwrap()
+                .next_entry()
+                .await
+                .unwrap(),
+            None,
+        );
+
+        // Cleanup for next test
+        tokio::fs::remove_dir(&mountpoint_dir).await.unwrap();
     }
 
-    // Mountpoint base dir should exist but be empty
-    p_assert_matches!(
-        tokio::fs::read_dir(&mountpoint_base_dir)
-            .await
-            .unwrap()
-            .next_entry()
-            .await
-            .unwrap(),
-        None
-    );
+    // On Unix, mountpoint dir has been used for the mountpoint, and hence it has been
+    // removed by the unmount operation.
+    #[cfg(not(target_os = "windows"))]
+    {
+        p_assert_eq!(actual_mountpoint_dir, mountpoint_dir);
+        // Mountpoint base dir should exist but be empty
+        p_assert_matches!(
+            tokio::fs::read_dir(&mountpoint_base_dir)
+                .await
+                .unwrap()
+                .next_entry()
+                .await
+                .unwrap(),
+            None
+        );
+    }
 
     // 4) Mountpoint dir exist, but cannot be re-used (not a directory)
 

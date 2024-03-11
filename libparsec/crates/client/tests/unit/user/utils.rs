@@ -6,13 +6,16 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertifOps, user::UserOps, ClientConfig, EventBus, WorkspaceStorageCacheSize};
+use crate::{
+    certif::CertifOps, user::UserOps, ClientConfig, EventBus, MountpointMountStrategy,
+    WorkspaceStorageCacheSize,
+};
 
 pub(crate) async fn user_ops_factory(env: &TestbedEnv, device: &Arc<LocalDevice>) -> UserOps {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,

@@ -323,16 +323,9 @@ fn struct_client_config_js_to_rs<'a>(
             }
         }
     };
-    let mountpoint_base_dir = {
-        let js_val: Handle<JsString> = obj.get(cx, "mountpointBaseDir")?;
-        {
-            let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-            match custom_from_rs_string(js_val.value(cx)) {
-                Ok(val) => val,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        }
+    let mountpoint_mount_strategy = {
+        let js_val: Handle<JsObject> = obj.get(cx, "mountpointMountStrategy")?;
+        variant_mountpoint_mount_strategy_js_to_rs(cx, js_val)?
     };
     let workspace_storage_cache_size = {
         let js_val: Handle<JsObject> = obj.get(cx, "workspaceStorageCacheSize")?;
@@ -345,7 +338,7 @@ fn struct_client_config_js_to_rs<'a>(
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
-        mountpoint_base_dir,
+        mountpoint_mount_strategy,
         workspace_storage_cache_size,
         with_monitors,
     })
@@ -383,19 +376,9 @@ fn struct_client_config_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "dataBaseDir", js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsString::try_new(cx, {
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return cx.throw_type_error(err),
-        }
-    })
-    .or_throw(cx)?;
-    js_obj.set(cx, "mountpointBaseDir", js_mountpoint_base_dir)?;
+    let js_mountpoint_mount_strategy =
+        variant_mountpoint_mount_strategy_rs_to_js(cx, rs_obj.mountpoint_mount_strategy)?;
+    js_obj.set(cx, "mountpointMountStrategy", js_mountpoint_mount_strategy)?;
     let js_workspace_storage_cache_size =
         variant_workspace_storage_cache_size_rs_to_js(cx, rs_obj.workspace_storage_cache_size)?;
     js_obj.set(
@@ -4276,6 +4259,71 @@ fn variant_list_invitations_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// MountpointMountStrategy
+
+#[allow(dead_code)]
+fn variant_mountpoint_mount_strategy_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::MountpointMountStrategy> {
+    let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
+    match tag.as_str() {
+        "MountpointMountStrategyDirectory" => {
+            let base_dir = {
+                let js_val: Handle<JsString> = obj.get(cx, "baseDir")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::MountpointMountStrategy::Directory { base_dir })
+        }
+        "MountpointMountStrategyDisabled" => Ok(libparsec::MountpointMountStrategy::Disabled),
+        "MountpointMountStrategyDriveLetter" => Ok(libparsec::MountpointMountStrategy::DriveLetter),
+        _ => cx.throw_type_error("Object is not a MountpointMountStrategy"),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_mountpoint_mount_strategy_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::MountpointMountStrategy,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    match rs_obj {
+        libparsec::MountpointMountStrategy::Directory { base_dir, .. } => {
+            let js_tag = JsString::try_new(cx, "MountpointMountStrategyDirectory").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_base_dir = JsString::try_new(cx, {
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(base_dir) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "baseDir", js_base_dir)?;
+        }
+        libparsec::MountpointMountStrategy::Disabled => {
+            let js_tag = JsString::try_new(cx, "Disabled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::MountpointMountStrategy::DriveLetter => {
+            let js_tag = JsString::try_new(cx, "DriveLetter").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // MountpointToOsPathError
 
 #[allow(dead_code)]
@@ -5304,6 +5352,10 @@ fn variant_workspace_mount_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::WorkspaceMountError::Disabled { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceMountErrorDisabled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceMountError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceMountErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -8293,7 +8345,7 @@ fn fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::fd_write(workspace, fd, offset, data).await;
+            let ret = libparsec::fd_write(workspace, fd, offset, &data).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -8321,8 +8373,8 @@ fn fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// fd_write_with_constrained_io
-fn fd_write_with_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// fd_write_constrained_io
+fn fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8373,7 +8425,76 @@ fn fd_write_with_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> 
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::fd_write_with_constrained_io(workspace, fd, offset, data).await;
+            let ret = libparsec::fd_write_constrained_io(workspace, fd, offset, &data).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsNumber::new(&mut cx, ok as f64);
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_fd_write_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// fd_write_start_eof
+fn fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let fd = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            match custom_from_rs_u32(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let data = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(2)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::fd_write_start_eof(workspace, fd, &data).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -10671,7 +10792,8 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("fdRead", fd_read)?;
     cx.export_function("fdResize", fd_resize)?;
     cx.export_function("fdWrite", fd_write)?;
-    cx.export_function("fdWriteWithConstrainedIo", fd_write_with_constrained_io)?;
+    cx.export_function("fdWriteConstrainedIo", fd_write_constrained_io)?;
+    cx.export_function("fdWriteStartEof", fd_write_start_eof)?;
     cx.export_function("getDefaultConfigDir", get_default_config_dir)?;
     cx.export_function("getDefaultDataBaseDir", get_default_data_base_dir)?;
     cx.export_function(

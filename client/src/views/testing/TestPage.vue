@@ -19,6 +19,7 @@ import {
   ClientConfig,
   ClientEvent,
   DeviceSaveStrategyTag,
+  MountpointMountStrategyTag,
   WorkspaceStorageCacheSizeTag,
   libparsec,
 } from '@/plugins/libparsec';
@@ -87,11 +88,11 @@ async function testBootstrapOrganization(): Promise<void> {
   const config: ClientConfig = {
     configDir: configPath,
     dataBaseDir: configPath,
-    mountpointBaseDir: configPath,
+    mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
     workspaceStorageCacheSize: {
       tag: WorkspaceStorageCacheSizeTag.Default,
     },
-    withMonitors: true,
+    withMonitors: false,
   };
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

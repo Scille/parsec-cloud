@@ -67,8 +67,11 @@ pub async fn open_file(
     // 0) Access control
 
     if options.write || options.truncate || options.create || options.create_new {
-        let guard = ops.workspace_entry.lock().expect("mutex is poisoned");
-        if !guard.role.can_write() {
+        let guard = ops
+            .workspace_external_info
+            .lock()
+            .expect("mutex is poisoned");
+        if !guard.entry.role.can_write() {
             return Err(WorkspaceOpenFileError::ReadOnlyRealm);
         }
     }

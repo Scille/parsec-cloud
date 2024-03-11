@@ -23,7 +23,7 @@ libc = { workspace = true }
 [dependencies]
 libparsec_types = { workspace = true }
 libparsec_client = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [dev-dependencies]
 libparsec_client_connection = { workspace = true }
@@ -32,6 +32,7 @@ libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 env_logger = { workspace = true }
 ctrlc = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
+windows-sys = { workspace = true, features = ["Win32"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
-winfsp_build = { workspace = true }
+winfsp_wrs_build = { workspace = true }

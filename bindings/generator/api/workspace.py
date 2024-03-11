@@ -63,6 +63,9 @@ async def workspace_info(workspace: Handle) -> Result[StartedWorkspaceInfo, Work
 
 
 class WorkspaceMountError(ErrorVariant):
+    class Disabled:
+        pass
+
     class Internal:
         pass
 
@@ -482,12 +485,20 @@ class WorkspaceFdWriteError(ErrorVariant):
 
 
 async def fd_write(
-    workspace: Handle, fd: FileDescriptor, offset: U64, data: bytes
+    workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError
 
 
-async def fd_write_with_constrained_io(
-    workspace: Handle, fd: FileDescriptor, offset: U64, data: bytes
+async def fd_write_constrained_io(
+    workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
+) -> Result[U64, WorkspaceFdWriteError]:
+    raise NotImplementedError
+
+
+async def fd_write_start_eof(
+    workspace: Handle,
+    fd: FileDescriptor,
+    data: Ref[bytes],
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError

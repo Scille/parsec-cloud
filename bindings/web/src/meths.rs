@@ -347,19 +347,9 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
-    let mountpoint_base_dir = {
-        let js_val = Reflect::get(&obj, &"mountpointBaseDir".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
-            .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
-            })
-            .map_err(|_| TypeError::new("Not a valid Path"))?
+    let mountpoint_mount_strategy = {
+        let js_val = Reflect::get(&obj, &"mountpointMountStrategy".into())?;
+        variant_mountpoint_mount_strategy_js_to_rs(js_val)?
     };
     let workspace_storage_cache_size = {
         let js_val = Reflect::get(&obj, &"workspaceStorageCacheSize".into())?;
@@ -375,7 +365,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
-        mountpoint_base_dir,
+        mountpoint_mount_strategy,
         workspace_storage_cache_size,
         with_monitors,
     })
@@ -410,22 +400,12 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
         .as_ref()
     });
     Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
-    let js_mountpoint_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.mountpoint_base_dir) {
-            Ok(ok) => ok,
-            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-        }
-        .as_ref()
-    });
+    let js_mountpoint_mount_strategy =
+        variant_mountpoint_mount_strategy_rs_to_js(rs_obj.mountpoint_mount_strategy)?;
     Reflect::set(
         &js_obj,
-        &"mountpointBaseDir".into(),
-        &js_mountpoint_base_dir,
+        &"mountpointMountStrategy".into(),
+        &js_mountpoint_mount_strategy,
     )?;
     let js_workspace_storage_cache_size =
         variant_workspace_storage_cache_size_rs_to_js(rs_obj.workspace_storage_cache_size)?;
@@ -4712,6 +4692,79 @@ fn variant_list_invitations_error_rs_to_js(
     Ok(js_obj)
 }
 
+// MountpointMountStrategy
+
+#[allow(dead_code)]
+fn variant_mountpoint_mount_strategy_js_to_rs(
+    obj: JsValue,
+) -> Result<libparsec::MountpointMountStrategy, JsValue> {
+    let tag = Reflect::get(&obj, &"tag".into())?;
+    let tag = tag
+        .as_string()
+        .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
+    match tag.as_str() {
+        "MountpointMountStrategyDirectory" => {
+            let base_dir = {
+                let js_val = Reflect::get(&obj, &"baseDir".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
+                            Ok(std::path::PathBuf::from(s))
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid Path"))?
+            };
+            Ok(libparsec::MountpointMountStrategy::Directory { base_dir })
+        }
+        "MountpointMountStrategyDisabled" => Ok(libparsec::MountpointMountStrategy::Disabled),
+        "MountpointMountStrategyDriveLetter" => Ok(libparsec::MountpointMountStrategy::DriveLetter),
+        _ => Err(JsValue::from(TypeError::new(
+            "Object is not a MountpointMountStrategy",
+        ))),
+    }
+}
+
+#[allow(dead_code)]
+fn variant_mountpoint_mount_strategy_rs_to_js(
+    rs_obj: libparsec::MountpointMountStrategy,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    match rs_obj {
+        libparsec::MountpointMountStrategy::Directory { base_dir, .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"MountpointMountStrategyDirectory".into(),
+            )?;
+            let js_base_dir = JsValue::from_str({
+                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                    path.into_os_string()
+                        .into_string()
+                        .map_err(|_| "Path contains non-utf8 characters")
+                };
+                match custom_to_rs_string(base_dir) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"baseDir".into(), &js_base_dir)?;
+        }
+        libparsec::MountpointMountStrategy::Disabled => {
+            Reflect::set(&js_obj, &"tag".into(), &"Disabled".into())?;
+        }
+        libparsec::MountpointMountStrategy::DriveLetter => {
+            Reflect::set(&js_obj, &"tag".into(), &"DriveLetter".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // MountpointToOsPathError
 
 #[allow(dead_code)]
@@ -5950,6 +6003,13 @@ fn variant_workspace_mount_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::WorkspaceMountError::Disabled { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceMountErrorDisabled".into(),
+            )?;
+        }
         libparsec::WorkspaceMountError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -7730,13 +7790,9 @@ pub fn fdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promis
             custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let data = data
-            .to_vec()
-            .as_slice()
-            .try_into()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid bytes buffer")))?;
+        let data = data.to_vec();
 
-        let ret = libparsec::fd_write(workspace, fd, offset, data).await;
+        let ret = libparsec::fd_write(workspace, fd, offset, &data.to_vec()).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -7756,10 +7812,10 @@ pub fn fdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promis
     })
 }
 
-// fd_write_with_constrained_io
+// fd_write_constrained_io
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn fdWriteWithConstrainedIo(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
+pub fn fdWriteConstrainedIo(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
     future_to_promise(async move {
         let fd = {
             let custom_from_rs_u32 =
@@ -7767,13 +7823,42 @@ pub fn fdWriteWithConstrainedIo(workspace: u32, fd: u32, offset: u64, data: Uint
             custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        let data = data
-            .to_vec()
-            .as_slice()
-            .try_into()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid bytes buffer")))?;
+        let data = data.to_vec();
 
-        let ret = libparsec::fd_write_with_constrained_io(workspace, fd, offset, data).await;
+        let ret = libparsec::fd_write_constrained_io(workspace, fd, offset, &data.to_vec()).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// fd_write_start_eof
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn fdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let data = data.to_vec();
+
+        let ret = libparsec::fd_write_start_eof(workspace, fd, &data.to_vec()).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
