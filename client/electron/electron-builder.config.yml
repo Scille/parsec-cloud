@@ -5,7 +5,9 @@ directories:
 
 files:
   - assets/**/*
+  - "!assets/installer.nsh"
   - build/**/*
+  - "!build/**/*.msi"
   - app/**/*
 
 publish:
@@ -41,5 +43,7 @@ snap:
   stagePackages:
     - default
     - fuse3
+
+beforePack: ./scripts/before-pack.js
 
 extends: null
