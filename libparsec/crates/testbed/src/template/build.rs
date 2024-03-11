@@ -180,7 +180,7 @@ impl Default for TestbedTemplateBuilderCounters {
 
 impl TestbedTemplateBuilderCounters {
     pub fn next_timestamp(&mut self) -> DateTime {
-        self.current_timestamp += Duration::days(1);
+        self.current_timestamp += Duration::try_days(1).expect("Invalid duration");
         self.current_timestamp
     }
     pub fn current_timestamp(&self) -> DateTime {

@@ -14,8 +14,14 @@ use crate::{
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";
-const MIN_SYNC_WAIT: Duration = Duration::milliseconds(1000);
-const MAX_SYNC_WAIT: Duration = Duration::milliseconds(60_000);
+const MIN_SYNC_WAIT: Duration = match Duration::try_seconds(1) {
+    Some(v) => v,
+    None => panic!("Invalid duration"),
+};
+const MAX_SYNC_WAIT: Duration = match Duration::try_minutes(1) {
+    Some(v) => v,
+    None => panic!("Invalid duration"),
+};
 
 pub(crate) async fn start_workspace_outbound_sync_monitor(
     workspace_ops: Arc<WorkspaceOps>,
