@@ -10,6 +10,7 @@
     <user-avatar-name
       :user-avatar="name"
       class="avatar medium"
+      :class="{ online: isOnline, offline: !isOnline }"
     />
     <div class="text-icon">
       <ion-text class="body">
@@ -29,6 +30,7 @@ import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { logout as parsecLogout } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -36,15 +38,36 @@ import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
-import { inject, ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref } from 'vue';
 
+const isOnline = ref(true);
 const isPopoverOpen = ref(false);
+
 const informationManager: InformationManager = inject(InformationKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+
+let eventCbId: null | string = null;
 
 const props = defineProps<{
   name: string;
 }>();
+
+onMounted(async () => {
+  eventCbId = await eventDistributor.registerCallback(Events.Offline | Events.Online, async (event: Events, _data: EventData) => {
+    if (event === Events.Offline) {
+      isOnline.value = false;
+    } else if (event === Events.Online) {
+      isOnline.value = true;
+    }
+  });
+});
+
+onUnmounted(async () => {
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
+  }
+});
 
 async function openPopover(event: Event): Promise<void> {
   isPopoverOpen.value = !isPopoverOpen.value;
@@ -128,7 +151,7 @@ async function openPopover(event: Event): Promise<void> {
   margin: 0 0.75em 0 0;
   position: relative;
 
-  &::after {
+  &.online::after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -138,6 +161,18 @@ async function openPopover(event: Event): Promise<void> {
     border-radius: 50%;
     border: var(--parsec-color-light-secondary-white) solid 3px;
     background-color: var(--parsec-color-light-success-500);
+  }
+
+  &.offline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: -4px;
+    height: 0.625rem;
+    width: 0.625rem;
+    border-radius: 50%;
+    border: var(--parsec-color-light-secondary-white) solid 3px;
+    background-color: red;
   }
 }
 

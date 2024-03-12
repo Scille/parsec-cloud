@@ -16,6 +16,8 @@ import {
   ClientChangeAuthenticationError,
   ClientChangeAuthenticationErrorTag,
   ClientEvent,
+  ClientEventInvitationChanged,
+  ClientEventTag,
   ClientInfo,
   ClientInfoError,
   ClientStartError,
@@ -31,6 +33,7 @@ import {
   Result,
   UserProfile,
 } from '@/parsec/types';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
@@ -64,11 +67,29 @@ export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
 }
 
 export async function login(
+  eventDistributor: EventDistributor,
   device: AvailableDevice,
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
   function parsecEventCallback(event: ClientEvent): void {
-    console.log('Event received', event);
+    console.log(event);
+    switch (event.tag) {
+      case ClientEventTag.Online:
+        eventDistributor.dispatchEvent(Events.Online, {});
+        break;
+      case ClientEventTag.Offline:
+        eventDistributor.dispatchEvent(Events.Offline, {});
+        break;
+      case ClientEventTag.InvitationChanged:
+        eventDistributor.dispatchEvent(Events.InvitationUpdated, {
+          token: (event as ClientEventInvitationChanged).token,
+          status: (event as ClientEventInvitationChanged).status,
+        });
+        break;
+      default:
+        console.log(`Unhandled event ${event.tag}`);
+        break;
+    }
   }
 
   const info = loggedInDevices.find((info) => info.device.slug === device.slug);

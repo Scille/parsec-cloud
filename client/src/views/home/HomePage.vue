@@ -70,6 +70,7 @@ import {
   login as parsecLogin,
 } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, switchOrganization, watchRoute } from '@/router';
+import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -97,6 +98,8 @@ enum HomePageState {
 const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
@@ -224,7 +227,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 }
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
-  const result = await parsecLogin(device, access);
+  const result = await parsecLogin(eventDistributor, device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.slug]) {
       storedDeviceDataDict.value[device.slug] = {

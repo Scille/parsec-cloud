@@ -50,7 +50,23 @@ export async function inviteDevice(
   return { ok: true, value: ['1234', InvitationEmailSentStatus.Success] };
 }
 
-export async function listUserInvitations(): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
+export async function listUserInvitations(options?: {
+  includeCancelled?: boolean;
+  includeFinished?: boolean;
+}): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
+  function shouldIncludeInvitation(invite: InviteListItem): boolean {
+    if (invite.tag === InviteListItemTag.Device) {
+      return false;
+    }
+    if (invite.status === InvitationStatus.Cancelled && (!options || !options.includeCancelled)) {
+      return false;
+    }
+    if (invite.status === InvitationStatus.Finished && (!options || !options.includeFinished)) {
+      return false;
+    }
+    return true;
+  }
+
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -59,8 +75,9 @@ export async function listUserInvitations(): Promise<Result<Array<UserInvitation
     if (!result.ok) {
       return result;
     }
+
     // No need to add device invitations
-    result.value = result.value.filter((item: InviteListItem) => item.tag === InviteListItemTag.User);
+    result.value = result.value.filter((item: InviteListItem) => shouldIncludeInvitation(item));
     // Convert InviteListItemUser to UserInvitation
     result.value = result.value.map((item) => {
       item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);

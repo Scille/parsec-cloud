@@ -283,8 +283,8 @@
         "createWorkspace": "Nouvel espace de travail",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
-        "listError": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
-        "newWorkspaceError": "Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
+        "listError": "Impossible de lister les espaces de travail.",
+        "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",

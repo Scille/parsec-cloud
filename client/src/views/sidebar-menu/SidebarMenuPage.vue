@@ -220,6 +220,7 @@ import {
   switchOrganization,
   watchOrganizationSwitch,
 } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
 import {
@@ -246,10 +247,11 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { addCircle, business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
-import { Ref, WatchStopHandle, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, WatchStopHandle, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
-
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let eventDistributorCbId: string | null = null;
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -307,6 +309,11 @@ async function loadAll(): Promise<void> {
 }
 
 onMounted(async () => {
+  eventDistributorCbId = await eventDistributor.registerCallback(Events.WorkspaceCreated, async (event: Events, _data: EventData) => {
+    if (event === Events.WorkspaceCreated) {
+      await loadAll();
+    }
+  });
   await loadAll();
   if (divider.value) {
     const gesture = createGesture({
@@ -320,6 +327,9 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  if (eventDistributorCbId) {
+    eventDistributor.removeCallback(eventDistributorCbId);
+  }
   resetWatchCancel();
   organizationWatchCancel();
 });
