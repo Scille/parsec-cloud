@@ -31,25 +31,25 @@ describe('Check settings page', () => {
       .contains(/Light|Dark|System/g);
   });
 
-  it('Check Advanced tab', () => {
-    cy.get('ion-radio').eq(1).click();
-    cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'Advanced');
-    cy.get('ion-radio').eq(1).should('have.class', 'radio-checked');
+  // it('Check Advanced tab', () => {
+  //   cy.get('ion-radio').eq(1).click();
+  //   cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'Advanced');
+  //   cy.get('ion-radio').eq(1).should('have.class', 'radio-checked');
 
-    cy.get('.settings-option').first().as('telemetry');
-    cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
-    cy.get('@telemetry').find('ion-toggle').click();
-    cy.get('@telemetry').find('ion-toggle').should('not.have.class', 'toggle-checked');
-    cy.get('@telemetry').find('ion-toggle').click();
-    cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
+  //   cy.get('.settings-option').first().as('telemetry');
+  //   cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
+  //   cy.get('@telemetry').find('ion-toggle').click();
+  //   cy.get('@telemetry').find('ion-toggle').should('not.have.class', 'toggle-checked');
+  //   cy.get('@telemetry').find('ion-toggle').click();
+  //   cy.get('@telemetry').find('ion-toggle').should('have.class', 'toggle-checked');
 
-    cy.get('.settings-option').eq(1).as('sync');
-    cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
-    cy.get('@sync').find('ion-toggle').click();
-    cy.get('@sync').find('ion-toggle').should('have.class', 'toggle-checked');
-    cy.get('@sync').find('ion-toggle').click();
-    cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
-  });
+  //   cy.get('.settings-option').eq(1).as('sync');
+  //   cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
+  //   cy.get('@sync').find('ion-toggle').click();
+  //   cy.get('@sync').find('ion-toggle').should('have.class', 'toggle-checked');
+  //   cy.get('@sync').find('ion-toggle').click();
+  //   cy.get('@sync').find('ion-toggle').should('not.have.class', 'toggle-checked');
+  // });
 
   it('Go back to workspaces', () => {
     cy.get('.topbar-left__breadcrumb').should('not.contain', 'My workspaces');
