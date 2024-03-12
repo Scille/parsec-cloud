@@ -20,7 +20,6 @@ class InviteStep(Protocol):
         ...
 
 
-@dataclass
 class Config:
     private_key: PrivateKey
     invitation_token: InvitationToken
@@ -90,7 +89,6 @@ def run_order(
 async def test_invite_1_greeter_wait_peer_ok(
     run_order: RunOrder, coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
-    greeter_private_key = PrivateKey.generate()
     claimer_private_key = PrivateKey.generate()
     invitation_token = coolorg.invited_alice_dev3.token
 
@@ -109,3 +107,23 @@ async def test_invite_1_greeter_wait_peer_ok(
     assert config.rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepOk(
         claimer_public_key=claimer_private_key.public_key
     )
+
+
+async def test_invitation_not_found(
+    run_order: RunOrder, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    invitation_token = coolorg.invited_alice_dev3.token
+
+    config = run_order(
+        greeter_config=Config(invitation_token=InvitationToken.new()),
+        claimer_config=Config(invitation_token=invitation_token),
+    )
+
+    with backend.event_bus.spy() as spy:
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(config.first, tg.cancel_scope)
+            await spy.wait(EventEnrollmentConduit)
+
+            await config.second(tg.cancel_scope)
+
+    assert config.rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepInvitationNotFound()
