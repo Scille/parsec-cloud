@@ -27,6 +27,7 @@
             slot="start"
             :value="SettingsTabs.Advanced"
             class="menu-list__item"
+            v-show="false"
           >
             <div class="item-container">
               <ion-icon :icon="options" />
@@ -84,6 +85,7 @@
           <div
             v-if="settingTab === SettingsTabs.Advanced"
             class="settings-advanced"
+            v-show="false"
           >
             <ion-list class="settings-list">
               <!-- send error report -->
@@ -200,7 +202,7 @@ onUnmounted(async (): Promise<void> => {
 
 <style lang="scss" scoped>
 .page {
-  --border-radius: 8px;
+  --border-radius: var(--parsec-radius-8);
   --background: none;
 
   &-content {
@@ -223,15 +225,15 @@ onUnmounted(async (): Promise<void> => {
 
     // eslint-disable-next-line vue-scoped-css/no-unused-selector
     &__item {
-      color: var(--parsec-color-light-secondary-text);
-      border-radius: 4px;
+      color: var(--parsec-color-light-secondary-grey);
+      border-radius: var(--parsec-radius-6);
 
       .item-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0.75rem 0.5em;
-        gap: 0.5rem;
+        padding: 0.5rem 0.75em;
+        gap: 0.375rem;
       }
 
       &::part(container) {
@@ -244,12 +246,13 @@ onUnmounted(async (): Promise<void> => {
         box-shadow: inset 0px 0px 0px 1px var(--parsec-color-light-primary-600);
       }
 
-      &:hover {
-        background: var(--parsec-color-light-primary-30);
+      &:hover:not(.radio-checked) {
+        background: var(--parsec-color-light-secondary-premiere);
+        color: var(--parsec-color-light-secondary-text);
       }
 
       ion-icon {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
       }
     }
   }
