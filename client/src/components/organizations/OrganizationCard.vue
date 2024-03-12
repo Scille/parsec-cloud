@@ -9,7 +9,7 @@
         </ion-avatar>
         <div class="orga-text">
           <ion-card-title class="card-title">
-            <span class="subtitles-normal">{{ device.organizationId }}</span>
+            <span class="title-h4">{{ device.organizationId }}</span>
             <span class="subtitles-sm">{{ device.humanHandle.label }}</span>
           </ion-card-title>
         </div>
@@ -62,6 +62,7 @@ defineProps<{
     .card-title {
       display: flex;
       flex-direction: column;
+      gap: 0.375rem;
 
       span:first-child {
         color: var(--parsec-color-light-primary-700);

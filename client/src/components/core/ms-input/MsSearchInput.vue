@@ -84,13 +84,11 @@ function onChange(value: any): void {
 <style scoped lang="scss">
 .ms-search-input {
   border: 1px solid var(--parsec-color-light-secondary-light);
-  flex-grow: 0;
   margin-right: 1rem;
-  max-width: 30rem;
+  max-width: 20rem;
+  padding: 0.25rem 0 0.25rem 1rem;
+  flex-grow: 1;
 
-  &:focus-within {
-    flex-grow: 1;
-  }
   .input {
     --placeholder-color: var(--parsec-color-light-secondary-light);
     --placeholder-opacity: 0.8;
@@ -99,7 +97,7 @@ function onChange(value: any): void {
 
   .icon {
     font-size: 1.125em;
-    margin-inline-end: 0.5rem;
+    margin: 0 0.5rem 0 0;
     color: var(--parsec-color-light-secondary-light);
   }
 }

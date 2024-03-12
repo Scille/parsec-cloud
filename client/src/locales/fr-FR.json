@@ -92,7 +92,7 @@
         },
         "organizationList": {
             "title": "Vos organisations",
-            "lastLogin": "Dernière connexion sur cet appareil :",
+            "lastLogin": "Dernière connexion :",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
             "sortByOrganization": "Organisation",

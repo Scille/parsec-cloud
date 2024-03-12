@@ -48,7 +48,7 @@
               v-for="device in filteredDevices"
               :key="device.slug"
               class="organization-list-row__col"
-              size="2"
+              size="3"
             >
               <ion-card
                 button
@@ -56,7 +56,7 @@
                 @click="$emit('organizationSelect', device)"
               >
                 <ion-card-content class="card-content">
-                  <ion-grid>
+                  <ion-grid class="card-content-grid">
                     <organization-card
                       :device="device"
                       class="card-content-body"
@@ -65,6 +65,7 @@
                       <ion-col
                         size="auto"
                         v-show="!isDeviceLoggedIn(device)"
+                        class="card-content-footer-login"
                       >
                         <ion-text class="body-sm">
                           {{ $t('HomePage.organizationList.lastLogin') }}
@@ -294,7 +295,7 @@ const filteredDevices = computed(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 0;
+    margin-inline: 0.5rem;
 
     #organization-filter-select {
       margin-left: auto;
@@ -314,6 +315,7 @@ const filteredDevices = computed(() => {
     &__col {
       display: flex;
       align-items: center;
+      padding: 0.5rem;
     }
   }
 
@@ -328,31 +330,27 @@ const filteredDevices = computed(() => {
     margin-top: 0;
     margin-bottom: 0;
     width: 100%;
+    cursor: pointer;
 
     &:hover {
-      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+      box-shadow: var(--parsec-shadow-light);
     }
 
     .card-content {
-      padding-top: 0px;
-      padding-bottom: 0px;
-      padding-inline-end: 0px;
-      padding-inline-start: 0px;
+      padding: 1rem;
 
-      .card-content-body {
-        padding: 1.5em 0em 1.5rem 1rem;
+      &-body {
+        padding-bottom: 0.75rem;
       }
 
       &-footer {
-        padding: 0.5em 1em;
-        background: var(--parsec-color-light-secondary-medium);
-        border-top: 1px solid var(--parsec-color-light-secondary-disabled);
         color: var(--parsec-color-light-secondary-grey);
-        height: 4.6em;
 
-        ion-text {
+        &-login {
           display: flex;
           align-items: center;
+          gap: 0.5rem;
+          padding: 0;
         }
 
         .connected {
@@ -369,11 +367,9 @@ const filteredDevices = computed(() => {
 
       &:hover {
         background: var(--parsec-color-light-primary-50);
-        cursor: pointer;
 
         .card-content-footer {
           background: var(--parsec-color-light-primary-50);
-          border-top: 1px solid var(--parsec-color-light-primary-100);
         }
       }
     }

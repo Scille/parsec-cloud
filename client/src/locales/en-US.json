@@ -92,7 +92,7 @@
         },
         "organizationList": {
             "title": "Your organizations",
-            "lastLogin": "Last login on this device:",
+            "lastLogin": "Last login:",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization",
