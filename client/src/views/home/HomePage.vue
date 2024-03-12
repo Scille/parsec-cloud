@@ -27,6 +27,7 @@
                 @create-organization-click="openCreateOrganizationModal"
                 @organization-select="onOrganizationSelected"
                 @join-organization-click="onJoinOrganizationClicked"
+                @join-organization-with-link-click="openJoinByLinkModal"
               />
             </template>
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">

@@ -2,17 +2,66 @@
 
 <template>
   <ion-card class="organization">
-    <ion-text class="organization-title title-h1">
+    <ion-text
+      class="organization-title title-h1"
+      v-if="deviceList.length > 0"
+    >
       {{ $t('HomePage.organizationList.title') }}
     </ion-text>
     <template v-if="deviceList.length === 0 && !querying">
+      <!-- No organization -->
       <ion-card-content class="organization-content no-devices">
-        <ion-card-title class="title-h3">
-          {{ $t('HomePage.noDevices') }}
-        </ion-card-title>
-        <span class="body">{{ $t('HomePage.howToAddDevices') }}</span>
-        <home-page-buttons @click="onAction" />
+        <div class="create-orga">
+          <div class="create-orga-text">
+            <ion-card-title class="create-orga-text__title title-h3">
+              {{ $t('HomePage.noDevices.titleCreateOrga') }}
+            </ion-card-title>
+            <ion-text class="create-orga-text__subtitle body">{{ $t('HomePage.noDevices.subtitle') }}</ion-text>
+            <ion-button
+              @click="$emit('createOrganizationClick')"
+              size="default"
+              id="create-organization-button"
+              class="button-default"
+            >
+              <ion-icon
+                :icon="addCircle"
+                class="icon"
+              />
+              {{ $t('HomePage.noExistingOrganization.createOrganization') }}
+            </ion-button>
+          </div>
+          <ms-image
+            :image="NoOrganization"
+            class="create-orga-image"
+          />
+        </div>
+        <div class="invitation">
+          <ion-title class="invitation__title title-h4">
+            {{ $t('HomePage.noDevices.titleInvitation') }}
+          </ion-title>
+          <div class="invitation-link">
+            <ms-input
+              :label="$t('HomePage.noDevices.invitationLink')"
+              :placeholder="$t('JoinOrganization.linkFormPlaceholder')"
+              v-model="link"
+              @on-enter-keyup="$emit('joinOrganizationWithLinkClick', link)"
+              :validator="claimLinkValidator"
+              class="invitation-link__input"
+              ref="linkRef"
+            />
+            <ion-button
+              @click="$emit('joinOrganizationWithLinkClick', link)"
+              size="large"
+              fill="default"
+              id="join-organization-button"
+              :disabled="!linkRef || linkRef.validity !== Validity.Valid"
+            >
+              {{ $t('HomePage.noDevices.invitationJoin') }}
+            </ion-button>
+          </div>
+        </div>
       </ion-card-content>
+      <!-- enf of No organization -->
     </template>
     <template v-else>
       <ion-card-content class="organization-content">
@@ -100,15 +149,30 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
+import { Validity, claimLinkValidator } from '@/common/validators';
 import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
+import { MsImage, NoOrganization } from '@/components/core/ms-image';
+import { MsInput } from '@/components/core/ms-input';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
-import { IonButton, IonCard, IonCardContent, IonCardTitle, IonCol, IonGrid, IonIcon, IonRow, IonText, popoverController } from '@ionic/vue';
-import { ellipse } from 'ionicons/icons';
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonCardTitle,
+  IonCol,
+  IonGrid,
+  IonIcon,
+  IonRow,
+  IonText,
+  IonTitle,
+  popoverController,
+} from '@ionic/vue';
+import { addCircle, ellipse } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
@@ -116,6 +180,7 @@ const emits = defineEmits<{
   (e: 'organizationSelect', device: AvailableDevice): void;
   (e: 'createOrganizationClick'): void;
   (e: 'joinOrganizationClick'): void;
+  (e: 'joinOrganizationWithLinkClick', link: string): void;
 }>();
 
 const deviceList: Ref<AvailableDevice[]> = ref([]);
@@ -127,6 +192,8 @@ const sortByAsc = ref(true);
 const searchQuery = ref('');
 const querying = ref(true);
 const searchInputRef = ref();
+const linkRef = ref();
+const link = ref('');
 
 let hotkeys: Hotkeys | null = null;
 
@@ -283,14 +350,6 @@ const filteredDevices = computed(() => {
   border-radius: var(--parsec-radius-12);
   width: 100%;
 
-  &.no-devices {
-    min-height: 50vh;
-
-    ion-card-title {
-      color: var(--parsec-color-light-primary-700);
-    }
-  }
-
   .organization-filter {
     display: flex;
     justify-content: space-between;
@@ -371,6 +430,79 @@ const filteredDevices = computed(() => {
         .card-content-footer {
           background: var(--parsec-color-light-primary-50);
         }
+      }
+    }
+  }
+}
+
+.no-devices {
+  min-height: 50vh;
+  max-width: 45rem;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+
+  .create-orga {
+    display: flex;
+    align-items: center;
+    padding: 3rem 2rem;
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      max-width: 24rem;
+
+      &__title {
+        color: var(--parsec-color-light-primary-700);
+        margin-bottom: 1rem;
+      }
+
+      &__subtitle {
+        color: var(--parsec-color-light-secondary-grey);
+        margin-bottom: 1.5rem;
+      }
+
+      #create-organization-button {
+        width: fit-content;
+
+        ion-icon {
+          margin-inline-end: 0.5rem;
+        }
+      }
+    }
+
+    &-image {
+      width: 100%;
+      max-width: 10rem;
+      margin: auto;
+    }
+  }
+
+  .invitation {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem 2rem 3rem;
+    background: var(--parsec-color-light-secondary-background);
+
+    &__title {
+      color: var(--parsec-color-light-primary-800);
+      padding: 0;
+    }
+
+    .invitation-link {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+
+      &__input {
+        width: 100%;
+        max-width: 30rem;
+      }
+
+      #join-organization-button {
+        padding-bottom: 0.125rem;
+        color: var(--parsec-color-light-secondary-white);
       }
     }
   }

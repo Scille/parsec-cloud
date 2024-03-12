@@ -25,7 +25,7 @@
         :placeholder="$props.placeholder"
         :value="modelValue"
         @ion-input="onChange($event.detail.value || '')"
-        @keyup.enter="$emit('onEnterKeyup', $event.target.value)"
+        @keyup.enter="enterPressed($event.target.value)"
         :disabled="$props.disabled"
       />
     </ion-item>
@@ -69,6 +69,7 @@ const emits = defineEmits<{
 defineExpose({
   setFocus,
   selectText,
+  validity,
 });
 
 function setFocus(): void {
@@ -77,6 +78,12 @@ function setFocus(): void {
       inputRef.value.$el.setFocus();
     }
   }, 200);
+}
+
+async function enterPressed(value: string): Promise<void> {
+  if (!props.validator || validity.value === Validity.Valid) {
+    emits('onEnterKeyup', value);
+  }
 }
 
 async function selectText(range?: [number, number]): Promise<void> {
