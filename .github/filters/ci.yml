@@ -101,6 +101,7 @@ web: &web
   - client/resources/**
   - client/src/**
   - client/tests/**
+  - client/electron/**
 
 new-client-dependencies-project: &new-client-dependencies-project
   - client/*.ts
