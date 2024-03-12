@@ -12,7 +12,6 @@ repository.workspace = true
 workspace = true
 
 [features]
-test-unsecure-but-fast-secretkey-from-password = []
 vendored-openssl = ["openssl/vendored"]
 use-sodiumoxide = [
     "dep:sodiumoxide",
