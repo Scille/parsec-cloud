@@ -31,6 +31,7 @@ import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/valida
 import { Answer, askQuestion } from '@/components/core';
 import { getOrganizationHandles, initializeWorkspace, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
+import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -52,6 +53,7 @@ async function setupApp(): Promise<void> {
   const informationManager = new InformationManager();
   const importManager = new ImportManager();
   const hotkeyManager = new HotkeyManager();
+  const eventDistributor = new EventDistributor();
   const router = getRouter();
 
   const app = createApp(App)
@@ -66,6 +68,7 @@ async function setupApp(): Promise<void> {
   app.provide(InformationKey, informationManager);
   app.provide(ImportManagerKey, importManager);
   app.provide(HotkeyManagerKey, hotkeyManager);
+  app.provide(EventDistributorKey, eventDistributor);
 
   // We get the app element
   const appElem = document.getElementById('app');

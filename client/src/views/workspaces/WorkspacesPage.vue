@@ -156,6 +156,7 @@ import {
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
 import { Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
+import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -189,6 +190,7 @@ const displayView = ref(DisplayState.Grid);
 const informationManager: InformationManager = inject(InformationKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -291,6 +293,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
       PresentationMode.Toast,
     );
     await refreshWorkspacesList();
+    await eventDistributor.dispatchEvent(Events.WorkspaceCreated, { workspaceId: result.value });
   } else {
     informationManager.present(
       new Information({

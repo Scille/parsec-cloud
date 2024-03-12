@@ -19,19 +19,33 @@
 import { Answer, MsModalResult, askQuestion } from '@/components/core';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationsListPopover from '@/views/users/InvitationsListPopover.vue';
 import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
 import { mail } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const informationManager: InformationManager = inject(InformationKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 
 onMounted(async () => {
+  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data: EventData) => {
+    if (event === Events.InvitationUpdated) {
+      await updateInvitations();
+    }
+  });
   await updateInvitations();
+});
+
+onUnmounted(async () => {
+  if (eventCbId) {
+    await eventDistributor.removeCallback(eventCbId);
+  }
 });
 
 async function updateInvitations(): Promise<void> {
