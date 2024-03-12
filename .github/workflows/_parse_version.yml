@@ -71,7 +71,7 @@ jobs:
           PYTHONPATH=. python3
           misc/releaser.py version
           "${{ inputs.version || '--uniq-dev' }}"
-          | tee -a "$GITHUB_OUTPUT"
+          | tee ${{ runner.temp }}/version.ini "$GITHUB_OUTPUT"
         timeout-minutes: 2
 
       - name: Set version for patching
@@ -83,13 +83,15 @@ jobs:
         timeout-minutes: 2
 
       - name: Generate git patch
-        run: git diff | tee -a version.patch
+        run: git diff | tee ${{ runner.temp }}/version.patch
         timeout-minutes: 2
 
       - name: Upload patch
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
         with:
           name: version.patch
-          path: version.patch
+          path: |
+            ${{ runner.temp }}/version.patch
+            ${{ runner.temp }}/version.ini
           if-no-files-found: error
           retention-days: 1

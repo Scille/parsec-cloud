@@ -88,11 +88,9 @@ jobs:
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
-          cp -v artifacts/Linux-X64-electron-app/parsec-v3_${{ needs.version.outputs.no_local }}_amd64.snap release-files
-
-          cp -v artifacts/macOS-X64-electron-app/parsec-v3-${{ needs.version.outputs.no_local }}.dmg release-files
-
-          cp -v artifacts/Windows-X64-electron-app/'parsec-v3 Setup ${{ needs.version.outputs.no_local }}.exe' release-files
+          cp -v artifacts/Linux-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
+          cp -v artifacts/macOS-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg{,.blockmap} release-files
+          cp -v artifacts/Windows-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
         env:
           BASH_XTRACEFD: 1
 
@@ -164,14 +162,10 @@ jobs:
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: ${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
           files: |
-            release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl
-            release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl.sha256
-            release-files/parsec-v3_${{ needs.version.outputs.full }}_*.snap
-            release-files/parsec-v3_${{ needs.version.outputs.full }}_*.snap.sha256
-            release-files/parsec-v3 Setup ${{ needs.version.outputs.full }}.exe
-            release-files/parsec-v3 Setup ${{ needs.version.outputs.full }}.exe.sha256
-            release-files/parsec-v3-${{ needs.version.outputs.full }}.dmg
-            release-files/parsec-v3-${{ needs.version.outputs.full }}.dmg.sha256
+            release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl*
+            release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap*
+            release-files/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe*
+            release-files/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg*
             release-files/Parsec-SBOM-Wheel-linux.spdx.json
             release-files/Parsec-SBOM-Wheel-linux.spdx.json.sha256
             release-files/Parsec-SBOM-Wheel-windows.spdx.json
