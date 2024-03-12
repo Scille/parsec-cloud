@@ -117,23 +117,12 @@ jobs:
           - name: 🐧 Linux
             platform: linux
             os: ubuntu-20.04
-            paths: |
-              client/electron/dist/parsec-v3_*_*.snap
-              client/electron/dist/latest-linux.yml
           - name: 🏁 Windows
             platform: windows
             os: windows-2022
-            paths: |
-              client/electron/dist/parsec-v3 Setup *.exe
-              client/electron/dist/parsec-v3 Setup *.exe.blockmap
-              client/electron/dist/latest.yml
           - name: 🍎 macOS
             platform: macos
             os: macos-12
-            paths: |
-              client/electron/dist/parsec-v3-*.dmg
-              client/electron/dist/parsec-v3-*.dmg.blockmap
-              client/electron/dist/latest-mac.yml
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -154,6 +143,14 @@ jobs:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+
+      - name: Load version config
+        id: version
+        shell: bash
+        run: |
+          cat version.patch/version.ini > "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
 
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
@@ -216,9 +213,39 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
+      - name: Linux > rename artifacts
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          ARCH=$(uname -m)
+          mv -v parsec-v3_*_*.snap Parsec-v3_${{ steps.version.outputs.full }}_linux_$ARCH.snap
+        working-directory: client/electron/dist
+
+      - name: Windows > rename artifacts
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          ARCH=$(uname -m)
+          mv -v 'parsec-v3 Setup '*.exe Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe
+          mv -v 'parsec-v3 Setup '*.exe.blockmap Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe.blockmap
+        working-directory: client/electron/dist
+        env:
+          BASH_XTRACEFD: 1
+
+      - name: MacOS > rename artifacts
+        if: matrix.platform == 'macos'
+        shell: bash
+        run: |
+          ARCH=$(uname -m)
+          mv -v parsec-v3-*.dmg Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg
+          mv -v parsec-v3-*.dmg.blockmap Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg.blockmap
+        working-directory: client/electron/dist
+
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
-          path: client/electron/dist
+          path: |
+            client/electron/dist/Parsec-v3_${{ steps.version.outputs.full }}_*
+            client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
