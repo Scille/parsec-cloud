@@ -45,6 +45,11 @@ CREATE TABLE sequester_service(
     webhook_url TEXT, -- NULL if service_type != WEBHOOK;
     service_type sequester_service_type NOT NULL,
 
+
+    revoked_on TIMESTAMPTZ, -- NULL if not yet revoked
+    revoked_sequester_certificate BYTEA, -- NULL if not yet revoked
+    revoked_sequester_certifier INTEGER, -- NULL if not yet revoked
+
     UNIQUE(organization, service_id)
 );
 
@@ -78,7 +83,7 @@ CREATE TABLE user_ (
     revoked_on TIMESTAMPTZ,
     -- NULL if not yet revoked
     revoked_user_certificate BYTEA,
-    -- NULL if certifier is the Root Verify Key
+    -- NULL if not yet revoked
     revoked_user_certifier INTEGER,
     -- `human` field has been introduced in Parsec v1.14, hence it is basically always here.
     -- If it's not the case, we are in an exotic case (very old certificate) and use the redacted
@@ -119,6 +124,7 @@ ALTER TABLE user_
 ADD CONSTRAINT FK_user_device_user_certifier FOREIGN KEY (user_certifier) REFERENCES device (_id);
 ALTER TABLE user_
 ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
+ALTER TABLE sequester_service ADD FOREIGN KEY (revoked_sequester_certifier) REFERENCES device (_id);
 
 
 -------------------------------------------------------
@@ -183,17 +189,13 @@ CREATE TABLE invitation (
     token UUID NOT NULL,
     type invitation_type NOT NULL,
 
-    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
+    author INTEGER REFERENCES user_ (_id) NOT NULL,
     -- Required for when type=USER
     claimer_email VARCHAR(255),
 
     created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ,
     deleted_reason invitation_deleted_reason,
-
-    conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
-    conduit_greeter_payload BYTEA,
-    conduit_claimer_payload BYTEA,
 
     -- Required for when type=SHAMIR_RECOVERY
     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
@@ -202,7 +204,7 @@ CREATE TABLE invitation (
 );
 
 
-CREATE TABLE shamir_recovery_conduit (
+CREATE TABLE invitation_conduit (
     _id SERIAL PRIMARY KEY,
     invitation INTEGER REFERENCES invitation (_id) NOT NULL,
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
@@ -265,23 +267,6 @@ CREATE TABLE pki_enrollment (
     UNIQUE(organization, enrollment_id)
 );
 
-
--------------------------------------------------------
---  Message
--------------------------------------------------------
-
-
-CREATE TABLE message (
-    _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
-    recipient INTEGER REFERENCES user_ (_id) NOT NULL,
-    timestamp TIMESTAMPTZ NOT NULL,
-    index INTEGER NOT NULL,
-    sender INTEGER REFERENCES device (_id) NOT NULL,
-    body BYTEA NOT NULL
-);
-
-
 -------------------------------------------------------
 --  Realm
 -------------------------------------------------------
@@ -294,11 +279,7 @@ CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm_id UUID NOT NULL,
-    encryption_revision INTEGER NOT NULL,
-    -- NULL if not currently in maintenance
-    maintenance_started_by INTEGER REFERENCES device (_id),
-    maintenance_started_on TIMESTAMPTZ,
-    maintenance_type maintenance_type,
+    created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(organization, realm_id)
 );
@@ -332,7 +313,7 @@ CREATE TABLE realm_archiving (
 );
 
 
-
+-- TODO: Investigate which of those timestamp is really needed
 CREATE TABLE realm_user_change (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
@@ -347,25 +328,60 @@ CREATE TABLE realm_user_change (
     UNIQUE(realm, user_)
 );
 
+create TABLE realm_keys_bundle (
+    _id SERIAL PRIMARY KEY,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    key_index INTEGER NOT NULL,
+
+    realm_key_rotation_certificate BYTEA NOT NULL,
+    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL,
+    key_canary BYTEA NOT NULL,
+    keys_bundle BYTEA NOT NULL,
+
+    UNIQUE(realm, key_index)
+);
+
+create TABLE realm_keys_bundle_access (
+    _id SERIAL PRIMARY KEY,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+
+    access BYTEA NOT NULL,
+
+    UNIQUE(realm, user_, realm_keys_bundle)
+);
+
+
+create TABLE realm_sequester_keys_bundle_access (
+    _id SERIAL PRIMARY KEY,
+    sequester_service INTEGER REFERENCES sequester_service (_id) NOT NULL,
+    realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
+
+    access BYTEA NOT NULL,
+
+    UNIQUE(sequester_service, realm_keys_bundle)
+);
+
+create TABLE realm_name (
+    _id SERIAL PRIMARY KEY,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    realm_name_certificate BYTEA NOT NULL,
+    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL,
+    realm_name TEXT NOT NULL
+);
+
 
 -------------------------------------------------------
 --  Vlob
 -------------------------------------------------------
 
-
-CREATE TABLE vlob_encryption_revision (
-    _id SERIAL PRIMARY KEY,
-    realm INTEGER REFERENCES realm (_id),
-    encryption_revision INTEGER NOT NULL,
-
-    UNIQUE(realm, encryption_revision)
-);
-
-
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    vlob_encryption_revision INTEGER REFERENCES vlob_encryption_revision (_id) NOT NULL,
+    key_index INTEGER NOT NULL,
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
     blob BYTEA NOT NULL,
@@ -375,7 +391,7 @@ CREATE TABLE vlob_atom (
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
 
-    UNIQUE(vlob_encryption_revision, vlob_id, version)
+    UNIQUE(vlob_id, version)
 );
 
 
@@ -388,13 +404,6 @@ CREATE TABLE realm_vlob_update (
     UNIQUE(realm, index)
 );
 
-
-CREATE TABLE sequester_service_vlob_atom(
-    _id SERIAL PRIMARY KEY,
-    vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
-    service INTEGER REFERENCES sequester_service (_id) NOT NULL,
-    blob BYTEA NOT NULL
-);
 
 -------------------------------------------------------
 --  Block
@@ -426,6 +435,41 @@ CREATE TABLE block_data (
     data BYTEA NOT NULL,
 
     UNIQUE(organization_id, block_id)
+);
+
+
+-------------------------------------------------------
+-- Topic
+-------------------------------------------------------
+
+CREATE TABLE topic_common (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    last_timestamp TIMESTAMPTZ NOT NULL,
+    UNIQUE(organization)
+
+);
+
+CREATE TABLE topic_sequester (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    last_timestamp TIMESTAMPTZ NOT NULL,
+    UNIQUE(organization)
+);
+
+CREATE TABLE topic_shamir_recovery (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    last_timestamp TIMESTAMPTZ NOT NULL,
+    UNIQUE(organization)
+);
+
+CREATE TABLE topic_realm (
+    _id SERIAL PRIMARY KEY,
+    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+    last_timestamp TIMESTAMPTZ NOT NULL,
+    UNIQUE(organization, realm)
 );
 
 
