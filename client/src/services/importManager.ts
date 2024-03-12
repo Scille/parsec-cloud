@@ -98,6 +98,9 @@ class ImportManager {
   }
 
   async importFile(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
     const newData = new ImportData(workspaceHandle, workspaceId, file, path);
     // Sending the information before adding to the list, else the file may get imported before
     // we've even informed that it was added
