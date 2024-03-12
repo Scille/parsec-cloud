@@ -98,14 +98,12 @@ jobs:
         working-directory: client
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Web.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/dist/Parsec-SBOM-Web.spdx.json .
 
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
         with:
           name: webapp
-          path: |
-            client/dist/
-            Parsec-SBOM-Web.spdx.json
+          path: client/dist/
           if-no-files-found: error
 
   electron:
