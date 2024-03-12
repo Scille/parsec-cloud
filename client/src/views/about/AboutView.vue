@@ -132,7 +132,7 @@ import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
 
-const upToDate = ref(false);
+const upToDate = ref(true);
 
 async function update(): Promise<void> {
   console.log('update');
