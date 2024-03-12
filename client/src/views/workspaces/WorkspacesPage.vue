@@ -155,7 +155,7 @@ import {
   getPathLink as parsecGetPathLink,
   listWorkspaces as parsecListWorkspaces,
 } from '@/parsec';
-import { getCurrentRouteQuery, navigateToWorkspace, watchRoute } from '@/router';
+import { Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -200,6 +200,7 @@ const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
   if (query.workspaceName) {
     await createWorkspace(query.workspaceName);
+    await navigateTo(Routes.Workspaces, { query: {} });
   }
 });
 
