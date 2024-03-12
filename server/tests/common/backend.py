@@ -5,7 +5,7 @@ from typing import AsyncGenerator, Iterator
 
 import pytest
 
-from parsec._parsec import ParsecAddr
+from parsec._parsec import DateTime, ParsecAddr
 from parsec.asgi import AsgiApp
 from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
@@ -77,3 +77,8 @@ def testbed(backend: Backend) -> TestbedBackend:
 @pytest.fixture
 def ballpark_always_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("parsec.ballpark.BALLPARK_ALWAYS_OK", True)
+
+
+@pytest.fixture
+def timestamp_out_of_ballpark() -> DateTime:
+    return DateTime.now().subtract(seconds=3600)
