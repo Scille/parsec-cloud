@@ -107,6 +107,7 @@
                   class="list-workspaces-header__button"
                   id="new-workspace"
                   :icon="addCircle"
+                  v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
                   @click="createWorkspace"
                 />
               </ion-header>
