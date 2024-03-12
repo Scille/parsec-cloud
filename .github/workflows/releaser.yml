@@ -88,11 +88,11 @@ jobs:
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
-          cp -v artifacts/Linux-X64-electron-app/client/electron/dist/parsec-v3_${{ needs.version.outputs.no_local }}_amd64.snap release-files
+          cp -v artifacts/Linux-X64-electron-app/parsec-v3_${{ needs.version.outputs.no_local }}_amd64.snap release-files
 
-          cp -v artifacts/macOS-X64-electron-app/client/electron/dist/parsec-v3-${{ needs.version.outputs.no_local }}.dmg release-files
+          cp -v artifacts/macOS-X64-electron-app/parsec-v3-${{ needs.version.outputs.no_local }}.dmg release-files
 
-          cp -v artifacts/Windows-X64-electron-app/client/electron/dist/'parsec-v3 Setup ${{ needs.version.outputs.no_local }}.exe' release-files
+          cp -v artifacts/Windows-X64-electron-app/'parsec-v3 Setup ${{ needs.version.outputs.no_local }}.exe' release-files
         env:
           BASH_XTRACEFD: 1
 
