@@ -63,7 +63,7 @@ jobs:
       - package-parsec-server
       - package-parsec-client
     name: 🚛 Releaser
-    if: join(needs.*.result, '-') == 'success-success-success' && always()
+    if: needs.version.result == 'success' && needs.package-parsec-client.result == 'success' && needs.package-parsec-server.result && always()
     runs-on: ubuntu-22.04
     steps:
       - name: Download every artifact generated (and uploaded)
