@@ -95,7 +95,7 @@ jobs:
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
-        run: git apply ${{ runner.temp }}/version.patch/version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Build wheel
         uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # pin v2.16.5
