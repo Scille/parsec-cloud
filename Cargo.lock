@@ -2170,7 +2170,6 @@ name = "libparsec_tests_fixtures"
 version = "3.0.0-a.0+dev"
 dependencies = [
  "libparsec_client_connection",
- "libparsec_crypto",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
  "libparsec_testbed",

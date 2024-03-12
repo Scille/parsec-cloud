@@ -22,7 +22,6 @@ vendored-openssl = ["libparsec_crypto/vendored-openssl"]
 test-utils = [
     "dep:libparsec_testbed",
     "libparsec_types/test-mock-time",
-    "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
 ]
 
 [dependencies]

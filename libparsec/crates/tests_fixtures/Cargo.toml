@@ -16,7 +16,6 @@ default = [
     "test-with-client-connection-testbed",
     "test-with-platform-device-loader-testbed",
     "test-with-platform-storage-testbed",
-    "test-with-unsecure-but-fast-secretkey-from-password",
 ]
 test-with-client-connection-testbed = [
     "libparsec_client_connection",
@@ -30,10 +29,6 @@ test-with-platform-storage-testbed = [
     "libparsec_platform_storage",
     "libparsec_platform_storage/test-with-testbed",
 ]
-test-with-unsecure-but-fast-secretkey-from-password = [
-    "libparsec_crypto",
-    "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password",
-]
 
 [dependencies]
 libparsec_types = { workspace = true, features = [ "test-fixtures", "test-mock-time" ] }
@@ -43,7 +38,6 @@ libparsec_testbed = { workspace = true }
 libparsec_client_connection = { workspace = true, optional = true }
 libparsec_platform_device_loader = { workspace = true, optional = true }
 libparsec_platform_storage = { workspace = true, optional = true }
-libparsec_crypto = { workspace = true, optional = true }
 
 uuid = { workspace = true, features = ["v4", "fast-rng"] }
 # `assert_matches!()` requires `unstable` feature

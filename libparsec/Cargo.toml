@@ -20,7 +20,6 @@ test-utils = [
     "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_platform_storage/test-with-testbed",
     "libparsec_types/test-mock-time",
-    "libparsec_crypto/test-unsecure-but-fast-secretkey-from-password"
 ]
 cli-tests = ["dep:libparsec_tests_fixtures"]
 

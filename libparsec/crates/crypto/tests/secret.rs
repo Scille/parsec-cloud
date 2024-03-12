@@ -118,7 +118,6 @@ fn invalid_passphrase(#[case] bad_passphrase: &str, #[case] key_length: usize) {
     );
 }
 
-#[cfg_attr(feature = "test-unsecure-but-fast-secretkey-from-password", ignore)]
 #[test]
 fn from_password() {
     let password = "P@ssw0rd.".to_owned().into();
