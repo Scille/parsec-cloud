@@ -25,6 +25,7 @@ import EmptyFolder from '@/assets/images/no-file-imported.svg?raw';
 import NoImportInProgress from '@/assets/images/no-file-in-progress.svg?raw';
 import NoInvitation from '@/assets/images/no-invitation.svg?raw';
 import NoNotification from '@/assets/images/no-notification.svg?raw';
+import NoOrganization from '@/assets/images/no-organization.svg?raw';
 import NoRevokedUser from '@/assets/images/no-revoked-user.svg?raw';
 import NoWorkspace from '@/assets/images/no-workspace.svg?raw';
 import PasswordLock from '@/assets/images/password-lock.svg?raw';
@@ -82,6 +83,7 @@ export {
   NoImportInProgress,
   NoInvitation,
   NoNotification,
+  NoOrganization,
   NoRevokedUser,
   NoWorkspace,
   PasswordLock,

@@ -122,9 +122,15 @@
         },
         "organizationActionSheet": "Organisation",
         "loginNotification": "Le mot de passe est incorrect !",
-        "noDevices": "Vous n'avez pas d'organisation sur cet appareil.",
         "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
-        "keyringFailed": "Impossible de se connecter"
+        "keyringFailed": "Impossible de se connecter",
+        "noDevices": {
+            "titleCreateOrga": "Vous débutez sur Parsec Cloud ?",
+            "titleInvitation": "Vous avez reçu un lien d'invitation ?",
+            "invitationLink": "Saisissez le lien d'invitation",
+            "invitationJoin": "Rejoindre",
+            "subtitle": "Profitez d'une expérience du cloud avec la garantie que vos données vous appartiennent."
+        }
     },
     "CreateOrganization": {
         "fullname": "Nom complet",

@@ -193,6 +193,9 @@ async function confirm(): Promise<boolean> {
 }
 
 .ms-modal-footer {
+  position: relative;
+  z-index: 1;
+
   > :first-child:not([hidden]) {
     margin-top: 2.5rem;
   }
