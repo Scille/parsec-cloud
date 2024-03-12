@@ -78,7 +78,7 @@ jobs:
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
-        run: git apply ${{ runner.temp }}/version.patch/version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Install dependencies
         run: npm clean-install
@@ -158,7 +158,7 @@ jobs:
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
       - name: Apply version.patch
-        run: git apply ${{ runner.temp }}/version.patch/version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Linux > Install fuse devel
         if: matrix.platform == 'linux'
