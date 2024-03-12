@@ -7,9 +7,9 @@ from typing import Any, Protocol
 import anyio
 import pytest
 
-from parsec._parsec import InvitationToken, PrivateKey, authenticated_cmds
+from parsec._parsec import DateTime, InvitationToken, PrivateKey, authenticated_cmds
 from parsec.components.invite import ConduitState
-from parsec.events import EventEnrollmentConduit
+from parsec.events import EventEnrollmentConduit, EventInvitation
 from tests.common import Backend, CoolorgRpcClients
 
 Response = authenticated_cmds.v4.invite_1_greeter_wait_peer.Rep | None
@@ -127,3 +127,30 @@ async def test_invitation_not_found(
             await config.second(tg.cancel_scope)
 
     assert config.rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepInvitationNotFound()
+
+
+async def test_invitation_deleted(
+    run_order: RunOrder, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    invitation_token = coolorg.invited_alice_dev3.token
+
+    config = run_order(
+        greeter_config=Config(invitation_token=invitation_token),
+        claimer_config=Config(invitation_token=invitation_token),
+    )
+
+    with backend.event_bus.spy() as spy:
+        async with anyio.create_task_group() as tg:
+            await backend.invite.cancel(
+                now=DateTime.now(),
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.user_id,
+                token=invitation_token,
+            )
+
+            tg.start_soon(config.first, tg.cancel_scope)
+            await spy.wait(EventInvitation)
+
+            await config.second(tg.cancel_scope)
+
+    assert config.rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepInvitationDeleted()
