@@ -214,13 +214,11 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
       - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
-          path: |
-            ${{ matrix.paths }}
-            Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json
+          path: client/electron/dist
           if-no-files-found: error
         timeout-minutes: 10
