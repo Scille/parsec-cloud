@@ -190,3 +190,13 @@ jobs:
           fail_on_unmatched_files: true
           generate_release_notes: false
         timeout-minutes: 5
+
+  publish:
+    needs: releaser
+    if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
+      && needs.releaser.result == 'success'
+      && always()
+    uses: ./.github/workflows/publish.yml
+    with:
+      release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
