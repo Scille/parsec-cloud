@@ -21,9 +21,6 @@
                         "type": "PublicKey"
                     }
                 ]
-            },
-            {
-                "status": "enrollment_wrong_state"
             }
         ]
     }

@@ -128,8 +128,9 @@ impl BaseClaimInitialCtx {
                 .await?;
 
             match rep {
-                Rep::Ok { greeter_public_key } => Ok(greeter_public_key),
-                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
+                Rep::Ok { greeter_public_key } => {
+                    Result::<_, ClaimInProgressError>::Ok(greeter_public_key)
+                }
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
