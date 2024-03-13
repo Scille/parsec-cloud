@@ -5689,7 +5689,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         .to_inner(&mut cx)
                         .call_with(&cx)
                         .arg(js_event)
-                        .apply::<JsNull, _>(&mut cx)?;
+                        .apply::<JsValue, _>(&mut cx)?;
                 }
                 Ok(())
             });
@@ -6266,7 +6266,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         .to_inner(&mut cx)
                         .call_with(&cx)
                         .arg(js_event)
-                        .apply::<JsNull, _>(&mut cx)?;
+                        .apply::<JsValue, _>(&mut cx)?;
                 }
                 Ok(())
             });
@@ -7641,7 +7641,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         .to_inner(&mut cx)
                         .call_with(&cx)
                         .arg(js_event)
-                        .apply::<JsNull, _>(&mut cx)?;
+                        .apply::<JsValue, _>(&mut cx)?;
                 }
                 Ok(())
             });
