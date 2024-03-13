@@ -25,6 +25,7 @@
           v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.MoveTo)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="arrowRedo" />
           <ion-label class="body list-group-item__label">
@@ -37,6 +38,7 @@
           v-if="role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.MakeACopy)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="copy" />
           <ion-label class="body list-group-item__label">
@@ -70,9 +72,9 @@
 
         <ion-item
           button
-          v-show="false"
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">
@@ -85,6 +87,7 @@
           v-if="!isDesktop()"
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="download" />
           <ion-label class="body list-group-item__label">

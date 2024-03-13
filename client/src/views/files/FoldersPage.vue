@@ -32,21 +32,15 @@
             @click="renameEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
-            id="button-copy-link"
-            :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
-            :icon="link"
-            @click="copyLink(getSelectedEntries())"
-          />
-          <ms-action-bar-button
             id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
             :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
@@ -64,18 +58,24 @@
             :icon="informationCircle"
             @click="showDetails(getSelectedEntries())"
           />
+          <ms-action-bar-button
+            id="button-copy-link"
+            :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
+            :icon="link"
+            @click="copyLink(getSelectedEntries())"
+          />
         </div>
         <div v-else>
           <ms-action-bar-button
             id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
             :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
             :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"

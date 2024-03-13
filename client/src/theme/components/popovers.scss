@@ -166,6 +166,14 @@ ion-popover {
   }
 }
 
+// should be deleted when more then one item-group is present
+#file-context-menu {
+  .list-group:not(:last-child) {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
 /* --- dropdown outline popover --- */
 .dropdown-popover {
   --width: var(--popover-dropdown-width);
