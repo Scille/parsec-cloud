@@ -120,7 +120,7 @@ describe('User join an organization', () => {
     checkStepper(3);
 
     cy.get('@modalTitle').contains('Authentication');
-    cy.get('@modalSubtitle').contains('Choose an authentication method to complete the enrollment.');
+    cy.get('@modalSubtitle').contains('Choose an authentication method to complete the onboarding.');
     cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
     cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
@@ -151,11 +151,11 @@ describe('User join an organization', () => {
     cy.get('.join-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.join-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the joining process');
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the onboarding');
     cy.get('.question-modal')
       .find('.ms-modal-header__text')
-      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
-    cy.get('.question-modal').find('#next-button').contains('Cancel the process');
+      .contains('Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel process');
     cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 

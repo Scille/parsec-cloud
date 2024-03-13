@@ -28,7 +28,7 @@ describe('Check workspaces page', () => {
     cy.get('.card').eq(0).find('.card-option').click();
     cy.get('.popover-viewport').find('.menu-list').find('ion-item').as('items').should('have.length', 10);
     cy.get('@items').eq(0).contains('Offline');
-    cy.get('@items').eq(1).contains('Make it available offline');
+    cy.get('@items').eq(1).contains('Enable offline availability');
     cy.get('@items').eq(2).contains('Manage workspace');
     cy.get('@items').eq(3).contains('Rename');
     cy.get('@items').eq(4).contains('Open in explorer');
@@ -119,7 +119,7 @@ describe('Check workspaces page', () => {
     cy.get('.card').eq(0).find('.card-option').click();
     cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
 
-    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line

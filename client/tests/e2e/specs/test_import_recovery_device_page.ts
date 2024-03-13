@@ -37,11 +37,11 @@ describe('Display import recovery device page', () => {
   //     cy.get('@key-input').type('{backspace}O');
   //     cy.get('@key').find('#checkmark-icon').should('be.visible');
   //     cy.get('@r-content').find('#to-password-change-btn').as('toPassword').should('not.have.class', 'button-disabled').click();
-  //     cy.checkToastMessage('error', 'The given secret key does not match the recovery file.');
+  //     cy.checkToastMessage('error', 'The secret key does not match the recovery file.');
   //     // Input valid and expected secret key
   //     cy.get('@key-input').type('{backspace}P');
   //     cy.get('@toPassword').click();
-  //     cy.checkToastMessage('error', 'The recovery file is invalid.');
+  //     cy.checkToastMessage('error', 'Invalid recovery file.');
   //     // Replace uploaded file with valid one
   //     cy.get('@file').find('#browse-button').click();
   //     cy.get('input[type="file"]').attachFile('recoveryfile.psrk');
@@ -60,17 +60,17 @@ describe('Display import recovery device page', () => {
   //     // Input password first characters to test weak password recognition
   //     cy.get('@first-password-input').find('input').type('A583n.');
   //     cy.get('@password-containers').eq(1).should('contain', 'Confirm password').find('ion-input').find('input').type('A583n.x@f3.');
-  //     cy.get('@password-containers').eq(1).contains('Does not match');
+  //     cy.get('@password-containers').eq(1).contains('Do not match');
   //     cy.get('.password-level').find('.password-level-container').should('have.class', 'password-level-low');
   //     cy.get('#validate-password-btn').should('have.class', 'button-disabled');
   //     // Have same strong password in both input fields
   //     cy.get('@first-password-input').find('input').type('x@f3.');
-  //     cy.get('@password-containers').eq(1).should('not.contain', 'Does not match');
+  //     cy.get('@password-containers').eq(1).should('not.contain', 'Do not match');
   //     cy.get('.password-level').find('.password-level-container').should('have.class', 'password-level-high');
   //     cy.get('#validate-password-btn').should('not.have.class', 'button-disabled').click();
   //     // Third state: validation
   //     cy.get('#success-step')
-  //       .should('contain', 'The password was successfully changed!')
+  //       .should('contain', 'Password was successfully changed!')
   //       .and('contain', 'You can now login with your new password.');
   //     cy.get('#success-step').find('ion-button').contains('Go back to login').click();
   //     cy.get('#forgotten-password-button').should('exist');

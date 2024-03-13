@@ -34,15 +34,15 @@ describe('Check organization list', () => {
     cy.get('@input').type('Wr0ngP@ssw0rd.');
     cy.get('.login-button').should('not.have.class', 'button-disabled');
     cy.get('.login-button').click();
-    cy.get('#password-input').find('.form-error').as('formError').should('contain.text', 'The password is incorrect.');
+    cy.get('#password-input').find('.form-error').as('formError').should('contain.text', 'Incorrect password.');
     cy.get('@inputItem').should('have.class', 'input-invalid');
 
     cy.get('@input').type('{backspace}');
-    cy.get('@formError').should('not.contain.text', 'The password is incorrect.');
+    cy.get('@formError').should('not.contain.text', 'Incorrect password.');
     cy.get('@inputItem').should('have.class', 'input-invalid');
 
     cy.get('@input').clear();
-    cy.get('@formError').should('not.contain.text', 'The password is incorrect.');
+    cy.get('@formError').should('not.contain.text', 'Incorrect password.');
     cy.get('@inputItem').should('not.have.class', 'input-invalid');
   });
 
@@ -110,7 +110,7 @@ describe('Check organization list', () => {
     cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?token=47265123969c4d6584c2bc15960cf212', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
-    cy.get('@error').contains("Link doesn't include an action");
+    cy.get('@error').contains('Link does not include an action');
 
     cy.get('@input').find('input').clear();
     cy.get('@input')
@@ -124,7 +124,7 @@ describe('Check organization list', () => {
     cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?action=claim_user', { delay: 0 });
     cy.get('@okButton').should('have.class', 'button-disabled');
     cy.get('@error').should('be.visible');
-    cy.get('@error').contains("Link doesn't include a token");
+    cy.get('@error').contains('Link does not include a token');
 
     cy.get('@input').find('input').clear();
     cy.get('@input').find('input').type('parsec3://parsec.cloud/Test?action=claim_user&token=abcde', { delay: 0 });

@@ -105,7 +105,7 @@ describe('Greet user into an organization', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage('error', "You didn't select the correct code. Please restart the process.");
+    cy.checkToastMessage('error', 'You did not select the correct code. Please restart the onboarding process.');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Onboard a new user');
     cy.get('@nextButton').contains('Start');
@@ -124,7 +124,10 @@ describe('Greet user into an organization', () => {
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None shown').click();
-    cy.checkToastMessage('error', "If you didn't see the correct code, it could be a security concern.");
+    cy.checkToastMessage(
+      'error',
+      'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
+    );
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Onboard a new user');
     cy.get('@nextButton').contains('Start');
@@ -142,8 +145,8 @@ describe('Greet user into an organization', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the onboarding');
     cy.get('.question-modal')
       .find('.ms-modal-header__text')
-      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
-    cy.get('.question-modal').find('#next-button').contains('Cancel the process');
+      .contains('Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel process');
     cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 

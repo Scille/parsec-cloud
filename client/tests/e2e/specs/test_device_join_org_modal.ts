@@ -96,7 +96,7 @@ describe('Claim new device', () => {
     checkStepper(2);
 
     cy.get('@modalTitle').contains('Authentication');
-    cy.get('@modalSubtitle').contains('Finally, choose an authentication method for your new device.');
+    cy.get('@modalSubtitle').contains('Lastly, choose an authentication method for your new device.');
     cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
     cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
@@ -110,7 +110,7 @@ describe('Claim new device', () => {
     cy.get('#next-button').click();
 
     // Last page
-    cy.get('@modalTitle').contains('The device has been added!');
+    cy.get('@modalTitle').contains('Device has been added!');
 
     cy.get('#next-button').contains('Log in');
   });

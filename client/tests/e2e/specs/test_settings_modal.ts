@@ -24,11 +24,11 @@ describe('Check settings modal', () => {
     cy.get('ion-radio').first().should('have.class', 'radio-checked');
     cy.get('.settings-option').first().as('language');
     cy.get('@language').find('ion-text.title').contains('Language');
-    cy.get('@language').find('ion-text.description').contains('Choose the application language');
+    cy.get('@language').find('ion-text.description').contains('Choose application language');
     cy.get('@language').find('#dropdown-popover-button').contains('English');
     cy.get('.settings-option').eq(1).as('theme');
     cy.get('@theme').find('ion-text.title').contains('Theme');
-    cy.get('@theme').find('ion-text.description').contains('Choose the application appearance');
+    cy.get('@theme').find('ion-text.description').contains('Choose application theme');
     cy.get('@theme')
       .find('#dropdown-popover-button')
       .contains(/Light|Dark|System/g);
