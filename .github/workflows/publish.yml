@@ -44,7 +44,7 @@ jobs:
             download \
             ${{ env.RELEASE_TAG }} \
             --pattern=version \
-            --output=- | grep -e "full=" -e "pep440" | tee -a $GITHUB_OUTPUT
+            --output=- | tee -a $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
         timeout-minutes: 2
