@@ -66,6 +66,8 @@ jobs:
       - package-parsec-server
       - package-parsec-client
     name: 🚛 Releaser
+    permissions:
+      contents: write
     if: needs.version.result == 'success' && needs.package-parsec-client.result == 'success' && needs.package-parsec-server.result && always()
     runs-on: ubuntu-22.04
     steps:
@@ -151,6 +153,8 @@ jobs:
           else
             echo "No nightly release to remove"
           fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Create release
         if: github.event_name == 'schedule' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/'))
@@ -158,6 +162,7 @@ jobs:
         uses: FirelightFlagboy/action-gh-release@d9a17b2b70a11ff00e4a7d0be3ca04e74d66de24
         with:
           draft: ${{ env.NIGHTLY_RELEASE != 'true' }}
+          tag_name: ${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: ${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
