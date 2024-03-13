@@ -373,6 +373,7 @@
         "errors": {
             "deleteFailed": "Could not delete the file `{name}`, please try again.",
             "renameFailed": "Could not rename the file `{name}`, please try again.",
+            "renameFailedAlreadyExists": "A file with the same name already exists in this folder.",
             "createFolderFailed": "Could not create folder `{name}`, please try again.",
             "listFailed": "Could not list the content of the folder `{path}`",
             "deleteMultipleAllFailed": "Could not delete all entries.",

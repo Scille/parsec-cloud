@@ -81,7 +81,7 @@ export async function rename(
   const clientHandle = getParsecHandle();
 
   if (clientHandle && !needsMocks()) {
-    return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, true);
+    return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, false);
   } else {
     return { ok: true, value: null };
   }

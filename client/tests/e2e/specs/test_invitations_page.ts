@@ -33,7 +33,7 @@ describe('Check invitations page', () => {
 
   it('Check copy link button', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
-    cy.get('@invitations').first().realHover().find('.copy-link').click();
+    cy.get('@invitations').first().realHover().invoke('show').find('.copy-link').click();
     cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
