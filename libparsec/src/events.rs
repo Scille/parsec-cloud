@@ -8,6 +8,7 @@ use std::sync::Arc;
 use libparsec_client::EventBusConnectionLifetime;
 use libparsec_types::prelude::*;
 
+#[derive(Debug)]
 pub enum ClientEvent {
     // Dummy event for tests only
     Ping {
