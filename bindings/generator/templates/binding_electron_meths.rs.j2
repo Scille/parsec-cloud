@@ -261,7 +261,7 @@ std::sync::Arc::new(
                 js_fn.to_inner(&mut cx)
                 .call_with(&cx)
                 .arg(js_event)
-                .apply::<JsNull, _>(&mut cx)?;
+                .apply::<JsValue, _>(&mut cx)?;
             }
             Ok(())
         });
