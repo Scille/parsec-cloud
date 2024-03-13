@@ -18,8 +18,8 @@ describe('Check manage org page', () => {
     cy.get('.sidebar').find('.list-workspaces').should('not.be.visible');
     cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
     cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
-    cy.get('.sidebar').find('.storage').find('ion-item').first().contains('Storage');
-    cy.get('.sidebar').find('.storage').find('ion-item').first().should('have.class', 'item-not-selected');
+    // cy.get('.sidebar').find('.storage').find('ion-item').first().contains('Storage');
+    // cy.get('.sidebar').find('.storage').find('ion-item').first().should('have.class', 'item-not-selected');
     cy.get('.sidebar').find('.organization').find('ion-item').first().contains('Information');
     cy.get('.sidebar').find('.organization').find('ion-item').first().should('have.class', 'item-not-selected');
     cy.get('.topbar-left').find('.title-h2').contains('Users');
@@ -28,19 +28,19 @@ describe('Check manage org page', () => {
 
   it('Switch page', () => {
     cy.get('.sidebar').find('.users').find('ion-item').first().as('usersEl').should('have.class', 'item-selected');
-    cy.get('.sidebar').find('.storage').find('ion-item').first().as('storageEl').should('have.class', 'item-not-selected');
+    // cy.get('.sidebar').find('.storage').find('ion-item').first().as('storageEl').should('have.class', 'item-not-selected');
     cy.get('.sidebar').find('.organization').find('ion-item').first().as('orgEl').should('have.class', 'item-not-selected');
     cy.get('.topbar-left').find('.title-h2').as('title').contains('Users');
 
-    cy.get('@storageEl').click();
-    cy.get('@usersEl').should('have.class', 'item-not-selected');
-    cy.get('@storageEl').should('have.class', 'item-selected');
-    cy.get('@orgEl').should('have.class', 'item-not-selected');
-    cy.get('@title').contains('Storage');
+    // cy.get('@storageEl').click();
+    // cy.get('@usersEl').should('have.class', 'item-not-selected');
+    // cy.get('@storageEl').should('have.class', 'item-selected');
+    // cy.get('@orgEl').should('have.class', 'item-not-selected');
+    // cy.get('@title').contains('Storage');
 
     cy.get('@orgEl').click();
     cy.get('@usersEl').should('have.class', 'item-not-selected');
-    cy.get('@storageEl').should('have.class', 'item-not-selected');
+    // cy.get('@storageEl').should('have.class', 'item-not-selected');
     cy.get('@orgEl').should('have.class', 'item-selected');
     cy.get('@title').contains('Information');
   });

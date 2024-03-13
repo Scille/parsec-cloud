@@ -157,7 +157,7 @@
             <!-- storage -->
             <ion-list
               class="manage-organization-list storage"
-              v-show="userInfo && userInfo.currentProfile === UserProfile.Admin"
+              v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
             >
               <ion-item
                 lines="none"
