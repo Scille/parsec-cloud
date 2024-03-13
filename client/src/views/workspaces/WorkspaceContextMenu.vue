@@ -3,7 +3,10 @@
 <template>
   <ion-content id="workspace-context-menu">
     <ion-list class="menu-list">
-      <ion-item-group class="list-group">
+      <ion-item-group
+        class="list-group"
+        v-show="false"
+      >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
             {{ $t('WorkspacesPage.workspaceContextMenu.titleOffline') }}
@@ -32,6 +35,7 @@
           button
           @click="onClick(WorkspaceAction.Rename)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="pencil" />
           <ion-label class="body list-group-item__label">
@@ -54,6 +58,7 @@
           button
           @click="onClick(WorkspaceAction.ShowHistory)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">
@@ -63,7 +68,7 @@
 
         <ion-item
           button
-          v-show="clientProfile !== UserProfile.Outsider"
+          v-show="clientProfile !== UserProfile.Outsider && false"
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
