@@ -204,7 +204,7 @@ enum CreateOrganizationStep {
   FinishStep = 7,
 }
 
-const DEFAULT_SAAS_ADDR = 'parsec3://saas.parsec.cloud';
+const DEFAULT_SAAS_ADDR = 'parsec3://saas-demo-v3-fireraptor.parsec.cloud/ ';
 
 const informationManager: InformationManager = inject(InformationKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
