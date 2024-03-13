@@ -32,11 +32,11 @@
     >
       <ms-image
         :image="getFileIcon(notificationData.fileName)"
-        class="default-state file-icon"
+        class="default-state notification-icon"
       />
       <ms-image
         :image="Folder"
-        class="hover-state file-icon"
+        class="hover-state notification-icon"
       />
       <ion-text class="notification-file__name subtitles-sm">
         <span class="default-state">{{ notificationData.fileName }}</span>
@@ -108,7 +108,7 @@ const notificationData = props.notification.getData<UserSharedDocumentData>();
   border-radius: var(--parsec-radius-8);
   gap: 0.5rem;
 
-  .file-icon {
+  .notification-icon {
     width: 1.5rem;
     height: 1.5rem;
   }

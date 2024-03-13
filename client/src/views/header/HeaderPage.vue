@@ -125,7 +125,7 @@ import {
   watchRoute,
 } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { InformationKey, InformationManager } from '@/services/informationManager';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
@@ -153,7 +153,7 @@ const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarM
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const notificationCenterButton = ref();
 
 const routeWatchCancel = watchRoute(async () => {

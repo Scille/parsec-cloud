@@ -2,11 +2,11 @@
 
 <template>
   <notification-item :notification="notification">
-    <div class="notification-icon">
+    <div class="notification-icon-container">
       <!-- This icon is only a default placeholder, replace/add notification specific icons -->
       <ms-image
         :image="LogoIconGradient"
-        class="file-icon"
+        class="notification-icon"
       />
     </div>
     <div class="notification-details">
@@ -58,7 +58,7 @@ const notificationData = props.notification.getData<WorkspaceRoleChangedData>();
 </script>
 
 <style scoped lang="scss">
-.notification-icon {
+.notification-icon-container {
   background: var(--background-icon-info);
 }
 </style>

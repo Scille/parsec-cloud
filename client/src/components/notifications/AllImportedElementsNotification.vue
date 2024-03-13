@@ -3,9 +3,9 @@
 <template>
   <notification-item :notification="notification">
     <!-- @click="openImportedMenu" -->
-    <div class="notification-icon">
+    <div class="notification-icon-container">
       <ion-icon
-        class="file-icon"
+        class="notification-icon"
         :icon="checkmarkCircle"
       />
     </div>
@@ -56,7 +56,7 @@ async function openImportedMenu(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.notification-icon {
+.notification-icon-container {
   background: var(--background-icon-success);
   color: var(--color-icon-success);
 }

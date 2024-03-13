@@ -176,7 +176,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
@@ -200,8 +200,7 @@ const guestInfoPage = ref();
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const profileOptions: MsOptions = new MsOptions([
   {

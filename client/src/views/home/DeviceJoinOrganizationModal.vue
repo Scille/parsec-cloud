@@ -159,13 +159,13 @@ import {
   ParsedParsecAddrTag,
   parseBackendAddr,
 } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
 
-const informationManager = inject(InformationKey) as InformationManager;
+const informationManager = inject(InformationManagerKey) as InformationManager;
 
 enum DeviceJoinOrganizationStep {
   Information = 0,

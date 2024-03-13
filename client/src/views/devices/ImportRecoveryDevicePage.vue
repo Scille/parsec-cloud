@@ -152,7 +152,7 @@ import { Validity, secretKeyValidator } from '@/common/validators';
 import { MsChoosePasswordInput, MsInformativeText, MsInput, MsReportText, MsReportTheme } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
@@ -176,7 +176,7 @@ const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
 const recoveryFile: Ref<File | null> = ref(null);
 const newDeviceInfo: Ref<DeviceInfo | null> = ref(null);
 const isSecretKeyValid = ref(false);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const emits = defineEmits<{
   (e: 'organizationSelected', device: AvailableDevice): void;

@@ -92,7 +92,7 @@ import {
   getCurrentAvailableDevice,
   changePassword as parsecChangePassword,
 } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
@@ -104,7 +104,7 @@ enum ChangePasswordStep {
 }
 
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const informationManager = inject(InformationKey) as InformationManager;
+const informationManager = inject(InformationManagerKey) as InformationManager;
 const pageStep = ref(ChangePasswordStep.OldPassword);
 const choosePasswordInput = ref();
 const oldPassword = ref('');

@@ -199,7 +199,7 @@ import {
   ImportState,
   StateData,
 } from '@/services/importManager';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
@@ -247,7 +247,7 @@ const routeWatchCancel = watchRoute(async () => {
 
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';

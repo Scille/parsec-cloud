@@ -135,14 +135,14 @@ import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
 const passwordSaved = ref(false);
 

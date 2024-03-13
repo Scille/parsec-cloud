@@ -226,7 +226,7 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import {
   IonButton,
@@ -260,8 +260,7 @@ const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const isEmailSent = ref(false);
 const greeter = ref(new DeviceGreet());
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const linkCopiedToClipboard = ref(false);
 
 interface GreetDeviceTitle {

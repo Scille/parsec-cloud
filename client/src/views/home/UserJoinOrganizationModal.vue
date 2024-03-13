@@ -187,7 +187,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { AccessStrategy, DeviceSaveStrategy, DeviceSaveStrategyPassword, DeviceSaveStrategyTag, UserClaim } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { computed, inject, onMounted, ref } from 'vue';
@@ -201,7 +201,7 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const authChoice = ref();

@@ -52,7 +52,7 @@
 import { writeTextToClipboard } from '@/common/clipboard';
 import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
 import { inject } from 'vue';
@@ -66,7 +66,7 @@ defineEmits<{
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
