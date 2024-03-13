@@ -40,7 +40,7 @@
               class="body"
               v-show="users.selectedCount() === 0"
             >
-              {{ $t('UsersPage.itemCount', { count: users.usersCount() + 1 }, users.usersCount() + 1) }}
+              {{ $t('UsersPage.itemCount', { count: getUsersCount() }, getUsersCount()) }}
             </ion-text>
             <ion-text
               class="body item-selected"
@@ -218,6 +218,14 @@ async function revokeUser(user: UserInfo): Promise<void> {
     );
   }
   await refreshUserList();
+}
+
+function getUsersCount(): number {
+  if (users.value.usersCount() === 0 && !currentUser.value) {
+    return 0;
+  }
+  // + 1 for current user
+  return users.value.usersCount() + 1;
 }
 
 async function revokeSelectedUsers(): Promise<void> {
