@@ -6,6 +6,7 @@ from _pytest.logging import LogCaptureFixture as VanillaLogCaptureFixture
 from .backend import *  # noqa
 from .client import *  # noqa
 from .postgresql import *  # noqa
+from .realm import *  # noqa
 
 
 # customized in `tests/conftest.py`
