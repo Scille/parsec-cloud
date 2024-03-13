@@ -84,15 +84,6 @@ pub fn rep_invitation_deleted() {
     rep_helper(&raw, expected);
 }
 
-pub fn rep_enrollment_wrong_state() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   status: "enrollment_wrong_state"
-    let raw = hex!("81a6737461747573b6656e726f6c6c6d656e745f77726f6e675f7374617465");
-    let expected = authenticated_cmds::invite_1_greeter_wait_peer::Rep::EnrollmentWrongState;
-    rep_helper(&raw, expected);
-}
-
 fn rep_helper(raw: &[u8], expected: authenticated_cmds::invite_1_greeter_wait_peer::Rep) {
     let data = authenticated_cmds::invite_1_greeter_wait_peer::Rep::load(raw).unwrap();
 

@@ -281,7 +281,6 @@ impl BaseGreetInitialCtx {
             match rep {
                 Rep::Ok { claimer_public_key } => Ok(claimer_public_key),
                 Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
                 Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

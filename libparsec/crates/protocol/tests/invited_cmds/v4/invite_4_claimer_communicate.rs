@@ -76,16 +76,16 @@ pub fn rep_enrollment_wrong_state() {
     //   status: "enrollment_wrong_state"
     let raw = hex!("81a6737461747573b6656e726f6c6c6d656e745f77726f6e675f7374617465");
 
-    let expected = invited_cmds::invite_1_claimer_wait_peer::Rep::EnrollmentWrongState;
+    let expected = invited_cmds::invite_4_claimer_communicate::Rep::EnrollmentWrongState;
 
-    let data = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw).unwrap();
+    let data = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw).unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
     let raw2 = data.dump().unwrap();
 
-    let data2 = invited_cmds::invite_1_claimer_wait_peer::Rep::load(&raw2).unwrap();
+    let data2 = invited_cmds::invite_4_claimer_communicate::Rep::load(&raw2).unwrap();
 
     p_assert_eq!(data2, expected);
 }

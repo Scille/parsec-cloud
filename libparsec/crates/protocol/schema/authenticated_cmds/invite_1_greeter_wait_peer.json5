@@ -31,9 +31,6 @@
             },
             {
                 "status": "invitation_deleted"
-            },
-            {
-                "status": "enrollment_wrong_state"
             }
         ]
     }
