@@ -484,7 +484,8 @@
     },
     "common": {
         "date": {
-            "lastLoginSeconds": "il y a une seconde | il y a {seconds} secondes",
+            "fewSeconds": "à l'instant",
+            "lessThanAMinute": "< 1 minute",
             "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
             "lastLoginHours": "il y a une heure | il y a {hours} heures",
             "lastLoginDays": "Aujourd'hui | Hier | il y a {days} jours"

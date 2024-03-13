@@ -484,7 +484,8 @@
     },
     "common": {
         "date": {
-            "lastLoginSeconds": "one second ago | {seconds} seconds ago",
+            "fewSeconds": "now",
+            "lessThanAMinute": "< 1 minute",
             "lastLoginMinutes": "one minute ago | {minutes} minutes ago",
             "lastLoginHours": "one hour ago | {hours} hours ago",
             "lastLoginDays": "Today | Yesterday | {days} days ago"
