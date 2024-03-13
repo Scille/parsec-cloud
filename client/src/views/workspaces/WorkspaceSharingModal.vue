@@ -27,6 +27,7 @@
             :role="ownRole"
             :client-profile="ownProfile"
             :client-role="ownRole"
+            class="current-user"
           />
           <workspace-user-role
             :disabled="isSelectDisabled(entry[1])"
