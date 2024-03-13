@@ -29,6 +29,7 @@ import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { logout as parsecLogout } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
+import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
@@ -78,6 +79,8 @@ async function openPopover(event: Event): Promise<void> {
       );
 
       if (answer === Answer.Yes) {
+        const menuCtrls = useUploadMenu();
+        menuCtrls.hide();
         await importManager.stop();
         const result = await parsecLogout();
         if (!result.ok) {
