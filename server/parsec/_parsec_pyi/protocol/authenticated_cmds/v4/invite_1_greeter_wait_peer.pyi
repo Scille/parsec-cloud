@@ -40,8 +40,3 @@ class RepInvitationDeleted(Rep):
     def __init__(
         self,
     ) -> None: ...
-
-class RepEnrollmentWrongState(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
