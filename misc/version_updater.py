@@ -59,6 +59,7 @@ PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{
 TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*",', '"license": "{version}",')
 JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*",', '"version": "{version}",')
+CI_WINFSP_VERSION = ReplaceRegex(r"WINFSP_VERSION: .*", "WINFSP_VERSION: {version}")
 
 
 @enum.unique
@@ -72,6 +73,7 @@ class Tool(enum.Enum):
     Parsec = "parsec"
     License = "license"
     PostgreSQL = "postgres"
+    WinFSP = "winfsp"
 
     def post_update_hook(self, updated_files: set[Path]) -> None:
         match self:
@@ -134,6 +136,7 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
+    Tool.WinFSP: "2.0.23075",
 }
 
 
@@ -153,6 +156,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / ".github/workflows/ci-rust.yml": {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
+        Tool.WinFSP: [CI_WINFSP_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
@@ -174,11 +178,24 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / ".github/workflows/package-client.yml": {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
+        Tool.WinFSP: [CI_WINFSP_VERSION],
     },
     ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
     ROOT_DIR / "cli/src/tests.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
+    },
+    ROOT_DIR / "client/electron/assets/installer.nsh": {
+        Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],
+    },
+    ROOT_DIR / "client/electron/scripts/before-pack.js": {
+        Tool.WinFSP: [
+            ReplaceRegex(r"WINFSP_VERSION = '.*'", "WINFSP_VERSION = '{version}'"),
+            ReplaceRegex(
+                r"WINFSP_RELEASE_BRANCH = 'v.*'",
+                hide_patch_version("WINFSP_RELEASE_BRANCH = 'v{version}'"),
+            ),
+        ]
     },
     ROOT_DIR / "client/electron/package.json": {
         Tool.License: [JSON_LICENSE_FIELD],
@@ -257,6 +274,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [
             ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
         ],
+        Tool.WinFSP: [ReplaceRegex(r'Tool.WinFSP: "[0-9.]+"', 'Tool.WinFSP: "{version}"')],
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
