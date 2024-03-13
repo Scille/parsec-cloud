@@ -71,14 +71,14 @@ jobs:
             --repo=${{ github.server_url }}/${{ github.repository }} \
             download \
             ${{ env.RELEASE_TAG }} \
-            --pattern=parsec_v${{ steps.version.outputs.full }}_*.snap \
+            --pattern=Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap \
             --dir=snap
         env:
           GH_TOKEN: ${{ github.token }}
         timeout-minutes: 2
 
       - name: List downloaded files
-        run: tree dist
+        run: tree dist snap
 
       - name: Install Snapcraft
         if: false
@@ -87,7 +87,7 @@ jobs:
 
       - name: Upload Snap
         if: false
-        run: snapcraft upload --release=nightly/stable snap/parsec_v${{ steps.version.outputs.full }}_*.snap
+        run: snapcraft upload --release=nightly/stable snap/Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 2
