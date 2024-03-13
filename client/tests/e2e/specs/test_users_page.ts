@@ -174,7 +174,7 @@ describe('Check active users page', () => {
 
   it('Tests revoke one selected user', () => {
     cy.get('.users-container').find('.user-list-item').as('userItems').should('have.length', 8);
-    cy.get('@userItems').eq(1).realHover().find('.checkbox').click();
+    cy.get('@userItems').eq(1).realHover().find('.checkbox').click({ force: true });
     cy.get('@userItems').eq(1).find('ion-checkbox').should('have.class', 'checkbox-checked');
     cy.get('.counter').contains('One user selected');
     cy.get('.contextual-menu').find('#button-revoke-user').contains('Revoke this user').click();
