@@ -187,7 +187,7 @@ import {
   FolderModel,
   SortProperty,
 } from '@/components/files';
-import { EntryStatFile, StartedWorkspaceInfo, WorkspaceRole } from '@/parsec';
+import { EntryStatFile, StartedWorkspaceInfo, WorkspaceRenameEntryErrorTag, WorkspaceRole } from '@/parsec';
 import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -598,9 +598,13 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.rename(workspaceHandle, filePath, newName);
   if (!result.ok) {
+    let message = translate('FoldersPage.errors.renameFailed', { name: entry.name });
+    if (result.error.tag === WorkspaceRenameEntryErrorTag.DestinationExists) {
+      message = translate('FoldersPage.errors.renameFailedAlreadyExists');
+    }
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.renameFailed', { name: entry.name }),
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

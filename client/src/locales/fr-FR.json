@@ -369,6 +369,7 @@
         "errors": {
             "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",
             "renameFailed": "Le fichier `{name}` n'a pas pu être renommé, veuillez réessayer.",
+            "renameFailedAlreadyExists": "Un fichier du même nom existe déjà dans ce répertoire.",
             "createFolderFailed": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer.",
             "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
             "deleteMultipleAllFailed": "Les éléments n'ont pas pu être supprimés.",
