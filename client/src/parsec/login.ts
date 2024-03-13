@@ -122,8 +122,10 @@ export async function login(
   }
 }
 
-export async function logout(): Promise<Result<null, ClientStopError>> {
-  const handle = getParsecHandle();
+export async function logout(handle?: ConnectionHandle | undefined | null): Promise<Result<null, ClientStopError>> {
+  if (!handle) {
+    handle = getParsecHandle();
+  }
 
   if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientStop(handle);

@@ -187,7 +187,6 @@ import {
   FolderModel,
   SortProperty,
 } from '@/components/files';
-import { EntryStatFile, StartedWorkspaceInfo, WorkspaceRenameEntryErrorTag, WorkspaceRole } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -258,7 +257,7 @@ const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 
 // Replace by events when available
 let intervalId: any = null;
@@ -272,7 +271,7 @@ let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 
 const ownRole = computed(() => {
-  return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : WorkspaceRole.Reader;
+  return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
 });
 
 onMounted(async () => {
@@ -365,7 +364,7 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
           files.value.append(statResult.value as FileModel);
         } else {
           existing.name = statResult.value.name;
-          existing.size = (statResult.value as EntryStatFile).size;
+          existing.size = (statResult.value as parsec.EntryStatFile).size;
           existing.needSync = statResult.value.needSync;
           existing.updated = statResult.value.updated;
           existing.isSelected = false;
@@ -613,7 +612,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
   if (!result.ok) {
     let message = translate('FoldersPage.errors.renameFailed', { name: entry.name });
-    if (result.error.tag === WorkspaceRenameEntryErrorTag.DestinationExists) {
+    if (result.error.tag === parsec.WorkspaceRenameEntryErrorTag.DestinationExists) {
       message = translate('FoldersPage.errors.renameFailedAlreadyExists');
     }
     informationManager.present(
@@ -822,7 +821,8 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const result = await parsec.getAbsolutePath(workspaceInfo.value.handle, entry);
+  const entryPath = await parsec.Path.join(currentPath.value, entry.name);
+  const result = await parsec.getSystemPath(workspaceInfo.value.handle, entryPath);
 
   if (!result.ok) {
     await informationManager.present(

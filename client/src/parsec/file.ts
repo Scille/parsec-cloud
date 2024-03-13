@@ -12,8 +12,6 @@ import {
   FileID,
   FileType,
   FsPath,
-  GetAbsolutePathError,
-  GetAbsolutePathErrorTag,
   OpenOptions,
   OrganizationID,
   Result,
@@ -175,19 +173,6 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
         },
       };
     }
-  }
-}
-
-export async function getAbsolutePath(_workspaceHandle: WorkspaceHandle, entry: EntryStat): Promise<Result<FsPath, GetAbsolutePathError>> {
-  // Helps for tests, will be replaced with bindings
-  if (entry.name === 'f') {
-    return { ok: true, value: './tsconfig.json' };
-  } else if (entry.name === 'd') {
-    return { ok: true, value: './src' };
-  } else if (entry.name === 'e') {
-    return { ok: false, error: { tag: GetAbsolutePathErrorTag.NotFound } };
-  } else {
-    return { ok: true, value: '/unknown' };
   }
 }
 

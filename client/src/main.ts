@@ -29,7 +29,15 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
-import { getOrganizationHandles, initializeWorkspace, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
+import {
+  getLoggedInDevices,
+  getOrganizationHandles,
+  initializeWorkspace,
+  isElectron,
+  listAvailableDevices,
+  logout,
+  parseFileLink,
+} from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
@@ -144,6 +152,11 @@ async function setupApp(): Promise<void> {
         noText: t('quit.no'),
       });
       if (answer === Answer.Yes) {
+        const devices = await getLoggedInDevices();
+        await importManager.stop();
+        for (const device of devices) {
+          await logout(device.handle);
+        }
         window.electronAPI.closeApp();
       }
     });

@@ -107,8 +107,8 @@ export class ElectronCapacitorApp {
       new MenuItem({
         label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Quitter' : 'Quit',
         click: () => {
-          this.forceClose = true;
-          app.quit();
+          this.showMainWindow();
+          this.MainWindow.webContents.send('close-request');
         },
       }),
     ];
@@ -182,6 +182,12 @@ export class ElectronCapacitorApp {
       if (this.SplashScreen?.getSplashWindow() && !this.SplashScreen.getSplashWindow().isDestroyed()) {
         this.SplashScreen.getSplashWindow().close();
       }
+    });
+
+    this.MainWindow.on('show', () => {
+      setTimeout(() => {
+        this.MainWindow.focus();
+      }, 200);
     });
 
     this.MainWindow.on('close', (event) => {

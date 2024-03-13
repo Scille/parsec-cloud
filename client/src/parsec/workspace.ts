@@ -10,8 +10,11 @@ import {
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
+  FsPath,
   LinkError,
   MountpointHandle,
+  MountpointToOsPathError,
+  MountpointToOsPathErrorTag,
   ParsecOrganizationFileLinkAddr,
   Result,
   StartedWorkspaceInfo,
@@ -425,4 +428,22 @@ export async function getWorkspacesSharedWith(user: UserID): Promise<Result<Arra
     ok: true,
     value: retValue,
   };
+}
+
+export async function getSystemPath(
+  workspaceHandle: WorkspaceHandle,
+  entryPath: FsPath,
+): Promise<Result<SystemPath, MountpointToOsPathError>> {
+  const infoResult = await getWorkspaceInfo(workspaceHandle);
+
+  if (!infoResult.ok) {
+    return { ok: false, error: { tag: MountpointToOsPathErrorTag.Internal, error: 'internal' } };
+  }
+  if (infoResult.value.mountpoints.length === 0) {
+    return { ok: false, error: { tag: MountpointToOsPathErrorTag.Internal, error: 'not mounted' } };
+  }
+  if (!needsMocks()) {
+    return await libparsec.mountpointToOsPath(infoResult.value.mountpoints[0][0], entryPath);
+  }
+  return { ok: true, value: '/home' };
 }
