@@ -3,7 +3,8 @@ name: Publish package
 on:
   workflow_dispatch:
     inputs:
-      release:
+      release_tag:
+        type: string
         required: true
         description: The release tag to fetch the package to publish
 
@@ -32,7 +33,7 @@ jobs:
           set -eux -o pipefail
           case "${{ github.event_name }}" in
             workflow_dispatch)
-              raw_tag="${{ inputs.release}}"
+              raw_tag="${{ inputs.release_tag }}"
               ;;
             release)
               raw_tag="${{ github.ref_name }}"
