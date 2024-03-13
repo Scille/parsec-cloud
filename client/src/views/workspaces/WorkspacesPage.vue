@@ -157,6 +157,7 @@ import {
   WorkspaceInfo,
   WorkspaceName,
   getClientProfile,
+  getSystemPath,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
@@ -397,7 +398,25 @@ async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo):
       onWorkspaceShareClick(new Event('ignored'), workspace);
     } else if (data.action === WorkspaceAction.CopyLink) {
       await copyLinkToClipboard(workspace);
+    } else if (data.action === WorkspaceAction.OpenInExplorer) {
+      await openWorkspace(workspace);
     }
+  }
+}
+
+async function openWorkspace(workspace: WorkspaceInfo): Promise<void> {
+  const result = await getSystemPath(workspace.handle, '/');
+
+  if (!result.ok) {
+    await informationManager.present(
+      new Information({
+        message: translate('FoldersPage.open.folderFailed', { name: workspace.currentName }),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+  } else {
+    window.electronAPI.openFile(result.value);
   }
 }
 
