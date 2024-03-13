@@ -63,8 +63,6 @@ jobs:
         timeout-minutes: 2
 
       - name: Download snap from release
-        # FIXME: We currently don't provide a client, should use the one generated with the ionic project
-        if: false
         run: |
           mkdir snap
           gh release \
