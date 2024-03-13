@@ -7,7 +7,12 @@ on:
         type: string
         required: true
         description: The release tag to fetch the package to publish
-
+  workflow_call:
+    inputs:
+      release_tag:
+        type: string
+        required: true
+        description: The release tag to fetch the package to publish
   release:
     types:
       - published
@@ -23,6 +28,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  RELEASE_TAG: ${{ github.event_name == 'release' && github.ref_name || inputs.release_tag }}
+
 jobs:
   publish:
     runs-on: ubuntu-22.04
@@ -31,18 +39,10 @@ jobs:
         id: version
         run: |
           set -eux -o pipefail
-          case "${{ github.event_name }}" in
-            workflow_dispatch)
-              raw_tag="${{ inputs.release_tag }}"
-              ;;
-            release)
-              raw_tag="${{ github.ref_name }}"
-              ;;
-          esac
           gh release \
             --repo=${{ github.server_url }}/${{ github.repository }} \
             download \
-            $raw_tag \
+            ${{ env.RELEASE_TAG }} \
             --pattern=version \
             --output=- | grep -e "full=" -e "pep440" | tee -a $GITHUB_OUTPUT
         env:
@@ -55,7 +55,7 @@ jobs:
           gh release \
             --repo=${{ github.server_url }}/${{ github.repository }} \
             download \
-            v${{ steps.version.outputs.full }} \
+            ${{ env.RELEASE_TAG }} \
             --pattern=parsec_cloud-${{ steps.version.outputs.pep440 }}-*.whl \
             --dir=dist
         env:
@@ -70,7 +70,7 @@ jobs:
           gh release \
             --repo=${{ github.server_url }}/${{ github.repository }} \
             download \
-            v${{ steps.version.outputs.full }} \
+            ${{ env.RELEASE_TAG }} \
             --pattern=parsec_v${{ steps.version.outputs.full }}_*.snap \
             --dir=snap
         env:
