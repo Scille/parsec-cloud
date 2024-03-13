@@ -16,7 +16,7 @@
       class="form-input input"
       ref="inputRef"
       :value="modelValue"
-      :placeholder="label"
+      :placeholder="placeholder"
       :clear-input="true"
       @ion-input="onChange($event.target.value)"
       @keyup.enter="onEnterPress()"
@@ -32,8 +32,8 @@ import { search } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const props = defineProps<{
-  label: string;
   modelValue?: string;
+  placeholder?: string;
 }>();
 
 const inputRef = ref();

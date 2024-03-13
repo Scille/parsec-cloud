@@ -8,9 +8,8 @@
     >
       <!-- content -->
       <div class="modal-container">
-        <ms-input
+        <ms-search-input
           v-model="search"
-          :label="$t('WorkspaceSharing.searchLabel')"
           :placeholder="$t('WorkspaceSharing.searchPlaceholder')"
         />
         <ion-list class="user-list">
@@ -46,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsInput, MsModal } from '@/components/core';
+import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
 import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -218,5 +217,6 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   margin-top: 0.5rem;
   padding-right: 0.5rem;
   overflow-y: auto;
+  height: 100%;
 }
 </style>
