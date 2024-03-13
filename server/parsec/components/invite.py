@@ -766,8 +766,6 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_1_claimer_wait_peer.RepOk(
                     PublicKey(greeter_public_key)
                 )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_1_claimer_wait_peer.RepEnrollmentWrongState()
             case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
@@ -780,6 +778,7 @@ class BaseInviteComponent:
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
                     | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
+                    | InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
                 ) as unexpected
             ):
                 assert False, unexpected
@@ -804,10 +803,8 @@ class BaseInviteComponent:
                 return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepOk(
                     PublicKey(claimer_public_key_raw)
                 )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return (
-                    authenticated_cmds.latest.invite_1_greeter_wait_peer.RepEnrollmentWrongState()
-                )
+            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE as unexpected:
+                assert False, unexpected
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
                 return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvitationNotFound()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
