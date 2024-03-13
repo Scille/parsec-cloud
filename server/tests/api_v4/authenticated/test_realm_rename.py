@@ -271,7 +271,6 @@ async def test_authenticated_realm_rename_bad_key_index(
     certif = patch_realm_name_certificate(
         alice_name_certificate, realm_id=wksp_id, key_index=bad_key_index
     )
-    print(certif)
     rep = await coolorg.alice.realm_rename(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
