@@ -47,6 +47,7 @@ riri
 Roboto
 samuelmeuli
 Sanctorum
+scalingo
 Scille
 softprops
 titeuf

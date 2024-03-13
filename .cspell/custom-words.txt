@@ -169,6 +169,7 @@ fetchval
 fghij
 fileprovider
 firacode
+fireraptor
 fixturenames
 flate
 Flaticon
