@@ -23,7 +23,7 @@ describe('Check user details modal', () => {
     cy.get('@modal-content')
       .find('ion-text')
       .eq(3)
-      .contains(/^\w+ (seconds?|minute?s) ago$/);
+      .contains(/^now|< 1 minute$/);
     cy.get('@modal-content').find('ion-text').eq(4).contains('Shared workspaces');
     cy.get('@modal-content').find('.workspace-empty').should('not.be.visible');
     cy.get('@modal-content').find('ion-list').find('ion-card').as('workspace-cards').should('have.length', 3);
@@ -49,7 +49,7 @@ describe('Check user details modal', () => {
     cy.get('@modal-content')
       .find('ion-text')
       .eq(3)
-      .contains(/^\w+ (seconds?|minute?s) ago$/);
+      .contains(/^now|< 1 minute$/);
     cy.get('@modal-content').find('ion-text').eq(4).contains('Shared workspaces');
     cy.get('@modal-content').find('ion-list').find('ion-card').should('have.length', 0);
     cy.get('@modal-content').find('.workspace-empty').contains('You have no workspaces in common with this user.');

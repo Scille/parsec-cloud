@@ -14,8 +14,8 @@ describe('Date formatting', () => {
   });
 
   it.each([
-    [DateTime.utc(1988, 4, 7, 11, 59, 30), '30 seconds ago', 'long'],
-    [DateTime.utc(1988, 4, 7, 11, 59, 58), '2 seconds ago', 'long'],
+    [DateTime.utc(1988, 4, 7, 11, 59, 43), 'now', 'long'],
+    [DateTime.utc(1988, 4, 7, 11, 59, 20), '< 1 minute', 'long'],
     [DateTime.utc(1988, 4, 7, 11, 57, 0), '3 minutes ago', 'long'],
     [DateTime.utc(1988, 4, 7, 11, 57, 20), '2 minutes ago', 'long'],
     [DateTime.utc(1988, 4, 7, 10, 0, 0), '2 hours ago', 'long'],

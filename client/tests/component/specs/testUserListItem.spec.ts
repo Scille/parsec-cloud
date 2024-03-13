@@ -55,7 +55,7 @@ describe('User List Item', () => {
     expect(wrapper.get('.user-name__label').text()).to.equal('JoJohn Smith');
     expect(wrapper.get('.user-email__label').text()).to.equal('john.smith@gmail.com');
     expect(wrapper.get('.user-profile').text()).to.equal('UserProfileStandard');
-    expect(wrapper.get('.user-join-label').text()).to.equal('one second ago');
+    expect(wrapper.get('.user-join-label').text()).to.equal('now');
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);

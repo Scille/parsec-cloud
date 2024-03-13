@@ -26,12 +26,9 @@ export function formatTimeSince(
     return translate('common.date.lastLoginHours', { hours: diff.hours }, diff.hours);
   } else if (diff.minutes && diff.minutes > 0) {
     return translate('common.date.lastLoginMinutes', { minutes: diff.minutes }, diff.minutes);
+  } else if (diff.seconds && diff.seconds > 30) {
+    return translate('common.date.lessThanAMinute');
   } else {
-    // Math.trunc is needed because seconds returns a float (https://github.com/moment/luxon/issues/565)
-    if (!diff.seconds) {
-      diff.seconds = 1;
-    }
-    diff.seconds = Math.trunc(diff.seconds) || 1;
-    return translate('common.date.lastLoginSeconds', { seconds: diff.seconds }, diff.seconds);
+    return translate('common.date.fewSeconds');
   }
 }
