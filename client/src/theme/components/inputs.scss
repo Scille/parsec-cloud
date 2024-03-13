@@ -123,3 +123,10 @@
     border: 2px solid var(--parsec-color-light-primary-600);
   }
 }
+
+// Sharing Modal : remove currentUser icon in dropdown
+.current-user {
+  .ms-dropdown-icon {
+    display: none;
+  }
+}
