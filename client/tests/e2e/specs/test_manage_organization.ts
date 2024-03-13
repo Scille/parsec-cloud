@@ -67,24 +67,32 @@ describe('Check manage org page', () => {
     cy.get('@items').eq(2).find('ion-label').eq(1).contains('parsec3://example.com/MyOrg');
     // Global data
     cy.get('@items').eq(3).find('ion-label').eq(0).contains('Global data');
-    cy.get('@items').eq(3).find('ion-label').eq(1).contains('4.09 TB');
+    cy.get('@items')
+      .eq(3)
+      .find('ion-label')
+      .eq(1)
+      .contains(/^[\d.]+ [K|M|G|T]?B$/);
     // Meta data
     cy.get('@items').eq(4).find('ion-label').eq(0).contains('Meta-data');
-    cy.get('@items').eq(4).find('ion-label').eq(1).contains('40.5 MB');
+    cy.get('@items')
+      .eq(4)
+      .find('ion-label')
+      .eq(1)
+      .contains(/^[\d.]+ [K|M|G|T]?B$/);
     // Active users
     cy.get('@items').eq(5).find('ion-chip').contains('Active');
-    cy.get('@items').eq(5).find('ion-label').contains('10');
-    // Administrators
-    cy.get('@items').eq(6).find('ion-chip').contains('Administrators');
-    cy.get('@items').eq(6).find('ion-label').contains('2');
-    // Standards
-    cy.get('@items').eq(7).find('ion-chip').contains('Standards');
-    cy.get('@items').eq(7).find('ion-label').contains('5');
-    // Outsiders
-    cy.get('@items').eq(8).find('ion-chip').contains('Outsiders');
-    cy.get('@items').eq(8).find('ion-label').contains('3');
+    cy.get('@items').eq(5).find('ion-label').contains('5');
     // Revoked
-    cy.get('@items').eq(9).find('ion-chip').contains('Revoked');
+    cy.get('@items').eq(6).find('ion-chip').contains('Revoked');
+    cy.get('@items').eq(6).find('ion-label').contains('3');
+    // Administrators
+    cy.get('@items').eq(7).find('ion-chip').contains('Administrators');
+    cy.get('@items').eq(7).find('ion-label').contains('3');
+    // Standards
+    cy.get('@items').eq(8).find('ion-chip').contains('Standards');
+    cy.get('@items').eq(8).find('ion-label').contains('3');
+    // Outsiders
+    cy.get('@items').eq(9).find('ion-chip').contains('Outsiders');
     cy.get('@items').eq(9).find('ion-label').contains('2');
   });
 });

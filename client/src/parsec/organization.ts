@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
+import { ActiveUsersLimitLimitedTo, ActiveUsersLimitTag, WorkspaceStorageCacheSizeTag, libparsec } from '@/plugins/libparsec';
 
 import { needsMocks } from '@/parsec/environment';
 import { MOCK_WAITING_TIME, wait } from '@/parsec/internals';
-import { getParsecHandle } from '@/parsec/routing';
+import { getClientInfo } from '@/parsec/login';
 import {
   AvailableDevice,
   BootstrapOrganizationError,
@@ -16,11 +16,14 @@ import {
   OrganizationID,
   OrganizationInfo,
   OrganizationInfoError,
+  OrganizationInfoErrorTag,
   ParseBackendAddrError,
   ParsecAddr,
   ParsedParsecAddr,
   Result,
+  UserProfile,
 } from '@/parsec/types';
+import { listUsers } from '@/parsec/user';
 import { DateTime } from 'luxon';
 
 export async function createOrganization(
@@ -84,49 +87,36 @@ export async function parseBackendAddr(addr: string): Promise<Result<ParsedParse
 }
 
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {
-  const handle = getParsecHandle();
+  const usersResult = await listUsers(false);
+  const clientInfoResult = await getClientInfo();
 
-  if (handle !== null && !needsMocks()) {
-    return {
-      ok: true,
-      value: {
-        users: {
-          revoked: 2,
-          total: 12,
-          active: 10,
-          admins: 2,
-          standards: 5,
-          outsiders: 3,
-        },
-        size: {
-          metadata: 42_492_122,
-          data: 4_498_394_233_231,
-          total: 4_498_351_741_109,
-        },
-        outsidersAllowed: true,
-        userLimit: -1,
-      },
-    };
-  } else {
-    return {
-      ok: true,
-      value: {
-        users: {
-          revoked: 2,
-          total: 12,
-          active: 10,
-          admins: 2,
-          standards: 5,
-          outsiders: 3,
-        },
-        size: {
-          metadata: 42_492_122,
-          data: 4_498_394_233_231,
-          total: 4_498_351_741_109,
-        },
-        outsidersAllowed: true,
-        userLimit: -1,
-      },
-    };
+  if (!usersResult.ok || !clientInfoResult.ok) {
+    return { ok: false, error: { tag: OrganizationInfoErrorTag.Internal } };
   }
+
+  return {
+    ok: true,
+    value: {
+      users: {
+        revoked: usersResult.value.filter((user) => user.isRevoked()).length,
+        active: usersResult.value.filter((user) => !user.isRevoked()).length,
+        total: usersResult.value.length,
+        admins: usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin).length,
+        standards: usersResult.value.filter((user) => user.currentProfile === UserProfile.Standard).length,
+        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.Outsider).length,
+      },
+      size: {
+        metadata: 14_234_953,
+        data: 5_348_491_032,
+      },
+      outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
+      userLimit:
+        clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
+          ? (clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1
+          : undefined,
+      hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
+      organizationAddr: clientInfoResult.value.organizationAddr,
+      organizationId: clientInfoResult.value.organizationId,
+    },
+  };
 }

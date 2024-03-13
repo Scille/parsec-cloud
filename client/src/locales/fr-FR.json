@@ -480,7 +480,8 @@
             "size": {
                 "metadata": "Métadonnées",
                 "total": "Données totales",
-                "title": "Stockage"
+                "title": "Stockage",
+                "unavailable": "Non disponible"
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
