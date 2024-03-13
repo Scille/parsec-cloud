@@ -29,11 +29,11 @@
         },
         "reader": {
             "label": "Lecteur",
-            "description": "Voir et ouvrir les fichiers."
+            "description": "Peut voir et ouvrir les fichiers."
         },
         "contributor": {
             "label": "Contributeur",
-            "description": "Voir, ouvrir et ajouter des fichiers."
+            "description": "Peut voir, ouvrir et ajouter des fichiers."
         },
         "manager": {
             "label": "Gérant",
@@ -47,7 +47,7 @@
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
-        "orgNotFound": "Vous n'avez pas accès à l'organisation {organization} dans laquelle est hébergée ce fichier."
+        "orgNotFound": "Vous n'avez pas accès à l'organisation {organization} qui contient ce fichier."
     },
     "notificationCenter": {
         "title": "Notifications",
@@ -66,7 +66,7 @@
         "noInvitations": "Aucune invitation"
     },
     "notification": {
-        "changeRole": "Votre role a été modifié en tant que {role} dans l'espace de travail {workspace}",
+        "changeRole": "Votre rôle a été modifié en tant que {role} dans l'espace de travail {workspace}",
         "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
         "userJoinWorkspace": "{name} vient de rejoindre l'espace de travail {workspace}",
         "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
@@ -87,10 +87,10 @@
             "myDevices": "Mes appareils",
             "myContactDetails": "Mes coordonnées",
             "logoutConfirmTitle": "Déconnexion",
-            "logoutConfirmQuestion": "Êtes-vous sur(e) de vouloir vous déconnecter ?",
-            "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sur(e) de vouloir vous déconnecter ?",
+            "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
+            "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutYes": "Se déconnecter",
-            "logoutNo": "Rester connecté",
+            "logoutNo": "Rester connecté(e)",
             "logoutFailed": "Une erreur est survenue lors de la déconnexion."
         },
         "organizationList": {
@@ -117,13 +117,13 @@
         "organizationLogin": {
             "backToList": "Retour aux organisations",
             "forgottenPassword": "Mot de passe oublié ?",
-            "emailLabel": "E-mail",
+            "emailLabel": "Email",
             "passwordLabel": "Mot de passe",
-            "passwordError": "Le mot de passe est incorrect.",
+            "passwordError": "Le mot de passe est invalide.",
             "login": "Se connecter"
         },
         "organizationActionSheet": "Organisation",
-        "loginNotification": "Le mot de passe est incorrect !",
+        "loginNotification": "Le mot de passe est invalide !",
         "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
         "keyringFailed": "Impossible de se connecter",
         "noDevices": {
@@ -137,7 +137,7 @@
     "CreateOrganization": {
         "fullname": "Nom complet",
         "fullnamePlaceholder": "Jean Martin",
-        "email": "E-mail",
+        "email": "Email",
         "emailPlaceholder": "jean.martin{'@'}exemple.com",
         "organizationName": "Nom de l'organisation",
         "organizationNameCriteria": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles.",
@@ -169,7 +169,7 @@
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
-            "personalDetails": "Indiquez votre nom, votre e-mail et le nom de votre appareil.",
+            "personalDetails": "Renseignez votre nom, votre email et le nom de votre appareil.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
             "authentication": "Pour finir, choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
@@ -177,7 +177,7 @@
         "overview": {
             "organization": "Organisation",
             "fullname": "Nom complet",
-            "email": "E-mail",
+            "email": "Email",
             "server": "Choix du serveur",
             "authentication": "Méthode d'authentification"
         },
@@ -195,9 +195,9 @@
             "generic": "Impossible de créer l'organisation (raison: {reason})."
         },
         "cancelConfirm": "Annulation",
-        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+        "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le début.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Continuer"
+        "cancelNo": "Reprendre"
     },
     "JoinByLinkModal": {
         "pageTitle": "Rejoindre par lien",
@@ -237,7 +237,7 @@
     },
     "WorkspaceSharing": {
         "title": "Partager cet espace de travail",
-        "searchLabel": "Nom ou e-mail",
+        "searchLabel": "Nom ou email",
         "searchPlaceholder": "ex : Jean Martin",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
@@ -255,11 +255,11 @@
         "advanced": "Avancé",
         "enableTelemetry": {
             "label": "Activer la télémétrie",
-            "description": "Envoie automatiquement les rapports d’erreur"
+            "description": "Envoie automatiquement les rapports d'erreur"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",
-            "description": "Lorsque l'application est fermée, Parsec continuera à fonctionner en arrière-plan"
+            "description": "Lorsque la fenêtre est fermée, Parsec continuera à fonctionner en arrière-plan"
         },
         "unsyncFiles": {
             "label": "Afficher les fichiers exclus de la synchronisation",
@@ -267,7 +267,7 @@
         },
         "meteredConnection": {
             "label": "Connexion limitée",
-            "description": "L'application réduira la synchronisation des données lorsque vous êtes connecté à une connexion limitée"
+            "description": "L'application réduira la synchronisation des données si votre connexion est limitée"
         },
         "language": {
             "label": "Langue",
@@ -290,7 +290,7 @@
     "WorkspacesPage": {
         "createWorkspace": "Nouvel espace de travail",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
-        "noWorkspaces": "Vous n'avez pas encore créé d'espace de travail, et aucun espace de travail n'a été partagé avec vous.",
+        "noWorkspaces": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail que vous créerez ou qui vous seront partagés s'afficheront ici.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
@@ -330,11 +330,11 @@
         },
         "getLinkError": "Impossible de récupérer un lien vers l'espace de travail",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
-        "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller."
+        "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller."
     },
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
-        "import": "Import",
+        "import": "Importer",
         "itemCount": "Aucun élément | Un élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
@@ -370,13 +370,13 @@
         },
         "importModal": {
             "title": "Importer vos fichiers",
-            "dragAndDrop": "Glisser/Déposer vos fichiers à uploader",
+            "dragAndDrop": "Glisser/Déposer vos fichiers ici",
             "or": "ou",
             "browse": "Parcourir",
             "replaceTitle": "Remplacer ou ignorer le fichier | Remplacer ou ignorer les fichiers",
-            "replaceQuestion": "Le fichier `{file}` existe déjà. Souhaitez-vous le remplacer ? | {count} fichiers existent déjà. Souhaitez-vous les remplacer ?",
-            "skipText": "Ignorer | Ignorer tous",
-            "replaceText": "Remplacer | Replacer tous"
+            "replaceQuestion": "Un fichier avec le nom `{file}` existe déjà. Souhaitez-vous le remplacer ? | {count} fichiers existent déjà. Souhaitez-vous les remplacer ?",
+            "skipText": "Ignorer | Tout ignorer",
+            "replaceText": "Remplacer | Tout remplacer"
         },
         "errors": {
             "deleteFailed": "Le fichier `{name}` n'a pas pu être supprimé, veuillez réessayer.",
@@ -384,13 +384,13 @@
             "renameFailedAlreadyExists": "Un fichier du même nom existe déjà dans ce répertoire.",
             "createFolderFailed": "Le dossier `{name}` n'a pas pu être créé, veuillez réessayer.",
             "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
-            "deleteMultipleAllFailed": "Les éléments n'ont pas pu être supprimés.",
+            "deleteMultipleAllFailed": "Aucun élément n'a pu être supprimé.",
             "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
             "moveOneFailed": "Le fichier `{name}` n'a pas pu être déplacé.",
-            "moveMultipleAllFailed": "Les éléments n'ont pas pu être déplacés.",
-            "moveMultipleSomeFailed": "Certains éléments n'ont pas py être déplacés.",
+            "moveMultipleAllFailed": "Aucun élément n'a pu être déplacé.",
+            "moveMultipleSomeFailed": "Certains éléments n'ont pas pu être déplacés.",
             "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
-            "copyMultipleAllFailed": "Les éléments n'ont pas pu être copiés.",
+            "copyMultipleAllFailed": "Aucun élément n'a pu être copié.",
             "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés."
         },
         "CreateFolderModal": {
@@ -420,7 +420,7 @@
         "deleteOneFolderNo": "Conserver le dossier",
         "deleteMultipleYes": "Supprimer {count} éléments",
         "deleteMultipleNo": "Conserver les éléments",
-        "copySelectFolderTitle": "Copier un élément | Copier {count} elements",
+        "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
         "copySelectFolderSubtitle": "Emplacement actuel : {location}",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
         "moveSuccess": "L'élément a été déplacé dans le dossier choisi. | Tous les éléments ont été déplacés dans le dossier choisi.",
@@ -430,7 +430,7 @@
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",
             "unavailableOnWeb": "Cette fonctionnalité n'est pas encore disponible en mode web."
         },
-        "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller.",
+        "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
         "getLinkError": "Impossible de récupérer un lien vers le fichier",
         "ImportFile": {
@@ -472,11 +472,11 @@
             "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
             "title": "Informations sur {organizationName}",
             "users": {
-                "revokedUsers": "Révoqués",
-                "outsiderUsers": "Externes",
-                "standardUsers": "Standards",
-                "adminUsers": "Administrateurs",
-                "activeUsers": "Actifs",
+                "revokedUsers": "Révoqué",
+                "outsiderUsers": "Externe",
+                "standardUsers": "Standard",
+                "adminUsers": "Administrateur",
+                "activeUsers": "Actif",
                 "title": "Utilisateurs"
             },
             "size": {
@@ -487,10 +487,10 @@
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite d'utilisateur",
+                "userLimit": "Limite d'utilisateurs",
                 "unlimited": "Illimitée",
-                "allowed": "Autorisé",
-                "forbidden": "Interdit",
+                "allowed": "Activé",
+                "forbidden": "Désactivé",
                 "title": "Configuration",
                 "serverAddr": "Adresse du serveur"
             }
@@ -540,15 +540,15 @@
         "restorePassword": {
             "title": "Fichiers de récupération de mot de passe",
             "done": {
-                "subtitle": "Vous avez sauvegardé les fichiers de récupération de mot de passe.",
+                "subtitle": "Vous avez créé et sauvegardé les fichiers de récupération de mot de passe.",
                 "label": "Fichiers déjà téléchargés",
                 "button": "Re-télécharger les fichiers"
             },
             "notDone": {
                 "label": "Action requise",
-                "subtitle": "Parsec ne stocke pas votre mot de passe.",
-                "subtitle2": "Ces fichiers vous permettent de restaurer votre mot de passe sur un appareil en cas d’oublis.",
-                "button": "Sauvegarder mon mot de passe"
+                "subtitle": "Parsec ne garde pas votre mot de passe.",
+                "subtitle2": "Ces fichiers vous permettent de réinitialiser votre mot de passe sur un appareil en cas d'oubli.",
+                "button": "Créer des fichiers de récupération"
             }
         },
         "greet": {
@@ -566,10 +566,10 @@
             },
             "subtitles": {
                 "provideHostCode": "Cliquez sur le code ci-dessous sur l'appareil invité.",
-                "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché par l'invité.",
+                "getGuestCode": "Cliquez sur le code ci-dessous correspondant à celui affiché sur l'appareil invité.",
                 "summary": "L'appareil {label} a été ajouté à votre profil.",
-                "getDeviceInfo": "En attente des informations de l'invité.",
-                "waitForGuest": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l'inscription.",
+                "getDeviceInfo": "En attente des informations de l'appareil invité.",
+                "waitForGuest": "Vous devez avoir Parsec ouvert sur les deux appareils pendant la durée du processus d'ajout.",
                 "scanOrShare1": "Scanner le QR Code ",
                 "scanOrShare2": "ou ",
                 "scanOrShare3": "partager le lien",
@@ -582,17 +582,17 @@
                 "createDeviceFailed": "Impossible de créer l'appareil.",
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
                 "emailFailed": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet."
             },
             "actions": {
                 "finish": "Terminer",
                 "start": "Démarrer",
-                "sendEmail": "Envoyer le lien par mail",
-                "reSendEmail": "Renvoyer le mail",
+                "sendEmail": "Envoyer le lien par email",
+                "reSendEmail": "Renvoyer l'email",
                 "cancelGreet": {
                     "yes": "Annuler le processus",
-                    "no": "Continuer"
+                    "no": "Reprendre"
                 }
             },
             "success": "Vous pouvez vous connecter à cette organisation depuis votre nouvel appareil.",
@@ -673,7 +673,7 @@
             "understand": "J'ai compris",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
-            "backToDevices": "Retourner à mes appareils"
+            "backToDevices": "Retour à mes appareils"
         },
         "toasts": {
             "fileDownloadOk": "Le fichier de récupération a bien été téléchargé",
@@ -705,8 +705,8 @@
         },
         "instructions": {
             "start": {
-                "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée de l'inscription.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus d'invitation.",
+                "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée du processus d'accueil.",
+                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus.",
                 "greeter": "Vous serez accueilli(e) dans l'organisation par {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -727,13 +727,13 @@
             "getHostCode": "Sélectionnez le code que vous donne l'hôte.",
             "provideGuestCode": "Veuillez communiquer le code ci-dessous à l'hôte.",
             "getUserInfo": "Veuillez saisir vos coordonnées pour accéder à l'organisation.",
-            "getAuthentication": "Veuillez choisir une méthode d'authentification pour finaliser l'enrôlement.",
+            "getAuthentication": "Veuillez choisir une méthode d'authentification pour finaliser le processus.",
             "finish": ""
         },
         "errors": {
             "saveDeviceFailed": "Impossible de sauvegarder les informations",
             "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
-            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
             "startFailed": "Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
@@ -741,7 +741,7 @@
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Continuer"
+        "cancelNo": "Reprendre"
     },
     "UsersPage": {
         "listDisplayTitles": {
@@ -773,8 +773,8 @@
             "revoked": "Révoqué"
         },
         "success": {
-            "email": "Adresse mail :",
-            "profile": "Choix du profile :"
+            "email": "Adresse email :",
+            "profile": "Choix du profil :"
         },
         "emptyList": "Aucun utilisateur à afficher.",
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
@@ -785,7 +785,7 @@
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
             "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
-            "actionDetails": "Voir le détail"
+            "actionDetails": "Voir les détails"
         },
         "greet": {
             "titles": {
@@ -796,7 +796,7 @@
                 "summary": "L'utilisateur a bien été ajouté !"
             },
             "subtitles": {
-                "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée de l'inscription (environ 2 minutes).",
+                "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
                 "waitForGuest2": "Il ne faudra pas quitter la session.",
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
@@ -816,7 +816,7 @@
             "profileDropdownPlaceholder": "Choisissez un profil",
             "profileDropdownTitle": "Profil",
             "errors": {
-                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus.",
+                "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
@@ -824,9 +824,9 @@
             },
             "success": "{user} peut maintenant se connecter à l'organisation.",
             "cancelConfirm": "Annulation",
-            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus de création ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
+            "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus d'accueil ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
             "cancelYes": "Annuler le processus",
-            "cancelNo": "Continuer"
+            "cancelNo": "Reprendre"
         },
         "invitation": {
             "greetUser": "Accueillir",
@@ -846,7 +846,7 @@
             "cancelSuccess": "Le lien d'invitation n'est plus valide.",
             "cancelFailed": "Impossible d'annuler l'invitation",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
-            "linkNotCopiedToClipboard": "Impossible de copier le lien. Vérifiez que votre navigateur ou votre appareil autorise le copier/coller.",
+            "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "copyLink": "Copier le lien",
             "cancelInvitation": {
                 "title": "Annuler l'invitation",
@@ -863,7 +863,7 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouvel utilisateur",
-            "label": "E-mail de l'utilisateur",
+            "label": "Email de l'utilisateur",
             "placeholder": "jean.martin{'@'}exemple.com",
             "create": "Inviter"
         },
@@ -878,16 +878,16 @@
             "actions": {
                 "close": "Fermer"
             },
-            "noSharedWorkspaces": "Vous n'avez pas d'espaces de travail en commun avec cet utilisateur.",
+            "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
         "revocation": {
             "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
-            "revokeQuestion": "L'utilisateur {user} sera révoqué. Il ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
+            "revokeQuestion": "{user} sera révoqué(e) et ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
             "revokeYes": "Révoquer",
             "revokeNo": "Annuler",
             "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
-            "revokeSuccess": "L'utilisateur {user} a été révoqué(e), il ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
+            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
             "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
         },
         "sort": {
@@ -934,11 +934,11 @@
             "done": "L'appareil a bien été ajouté !"
         },
         "subtitles": {
-            "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée de l’inscription.",
-            "getCode": "Sélectionnez le code que vous apercevez sur l’appareil principal.",
-            "provideCode": "Sur l’appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
-            "authentication": "Pour terminer, choisissez une méthode d'authentification pour votre nouvel appareil.",
-            "done": "L’appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
+            "claimDevice": "Vous devez ouvrir Parsec sur les deux appareils pendant la durée du processus d'accueil.",
+            "getCode": "Sélectionnez le code que vous apercevez sur l'appareil principal.",
+            "provideCode": "Sur l'appareil principal, veuillez sélectionner le code que vous voyez ci-dessous.",
+            "authentication": "Pour finir, choisissez une méthode d'authentification pour votre nouvel appareil.",
+            "done": "L'appareil a bien été créé et ajouté à cette organisation. Vous pouvez maintenant vous connecter à Parsec avec celui-ci."
         },
         "buttons": {
             "understand": "J'ai compris !",
@@ -951,15 +951,15 @@
         "cancelConfirm": "Êtes-vous sûr(e) de vouloir annuler le processus ?",
         "cancelConfirmSubtitle": "Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
         "cancelYes": "Annuler le processus",
-        "cancelNo": "Continuer",
+        "cancelNo": "Reprendre",
         "successMessage": "Vous pouvez maintenant vous connecter à cette organisation depuis votre nouvel appareil.",
         "errors": {
             "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet.",
             "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
-            "saveDeviceFailed": "Impossible de sauvegarder les informations.Veuillez réessayer",
+            "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, il peut s'agir d'un souci de sécurité. Veuillez redémarrer le processus."
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus."
         }
     },
     "Changelog": {
@@ -976,7 +976,7 @@
         "titleNewPassword": "Choisissez un nouveau mot de passe",
         "validNewPassword": "Mettre à jour mon mot de passe",
         "keyring": "Cet appareil est authentifié par le système.",
-        "email": "Courriel",
+        "email": "Email",
         "password": "Mot de passe",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",

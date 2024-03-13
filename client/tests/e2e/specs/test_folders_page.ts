@@ -149,7 +149,7 @@ describe('Check folders page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
       .find('.ms-modal-header__text')
-      .contains(/Are you sure you want to delete the file `File_[a-z_]+`?/);
+      .contains(/Are you sure you want to delete file `File_[a-z_]+`?/);
 
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
@@ -163,7 +163,7 @@ describe('Check folders page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Delete one file');
     cy.get('.question-modal')
       .find('.ms-modal-header__text')
-      .contains(/Are you sure you want to delete the file `File_[a-z_]+`?/);
+      .contains(/Are you sure you want to delete file `File_[a-z_]+`?/);
 
     cy.get('.question-modal').find('#next-button').click();
     cy.get('.question-modal').should('not.exist');
@@ -226,7 +226,7 @@ describe('Check folders page', () => {
   it('Tests get file link', () => {
     cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
     cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
-    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'Link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line

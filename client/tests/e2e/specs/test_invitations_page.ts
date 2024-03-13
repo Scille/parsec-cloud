@@ -34,7 +34,7 @@ describe('Check invitations page', () => {
   it('Check copy link button', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
     cy.get('@invitations').first().realHover().invoke('show').find('.copy-link').click();
-    cy.checkToastMessage('info', 'The link has been copied to the clipboard.');
+    cy.checkToastMessage('info', 'Invitation link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         expect(text).to.eq('parsec3://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645');
@@ -45,7 +45,7 @@ describe('Check invitations page', () => {
   it('Reject invitation', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
     cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').first().contains('Cancel').click();
-    cy.get('.question-modal').find('#next-button').contains('Cancel the invitation').click();
-    cy.checkToastMessage('success', 'The invitation has been cancelled.');
+    cy.get('.question-modal').find('#next-button').contains('Cancel invitation').click();
+    cy.checkToastMessage('success', 'Invitation has been cancelled.');
   });
 });

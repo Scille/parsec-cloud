@@ -102,7 +102,7 @@ describe('Workspace role', () => {
       WorkspaceRole.Owner,
       WorkspaceRole.Contributor,
       false,
-      "Can't change the role of an Owner",
+      'Cannot change the role of an Owner',
     ],
     // client is outsider, can't do anything
     [

@@ -49,7 +49,7 @@ describe('Create a new organization', () => {
     cy.get('.popover-viewport').find('ion-item').first().click();
     cy.wait(200);
     cy.get('.modal-header__title').as('title').contains('Create an organization');
-    cy.get('.modal-header__text').as('subtitle').contains('Choose the name of your organization');
+    cy.get('.modal-header__text').as('subtitle').contains('Choose your organization name');
 
     // First page, org name
     cy.get('#next-button').should('have.class', 'button-disabled');
@@ -60,7 +60,7 @@ describe('Create a new organization', () => {
 
     // Second page, user info
     cy.get('@title').contains('Enter your personal information');
-    cy.get('@subtitle').contains('State your name, your email and your device name');
+    cy.get('@subtitle').contains('Fill in your name and email.');
     cy.get('#next-button').should('have.class', 'button-disabled');
     cy.get('#previous-button').should('be.visible');
     cy.get('.user-info').find('ion-input').eq(0).find('input').type('Banjo');
@@ -72,7 +72,7 @@ describe('Create a new organization', () => {
 
     // Third page, server
     cy.get('@title').contains('Choose the server you need');
-    cy.get('@subtitle').contains('Choose the type of server you need');
+    cy.get('@subtitle').contains('Choose your desired server type.');
     cy.get('#next-button').should('not.have.class', 'button-disabled');
     cy.get('#previous-button').should('be.visible');
 
@@ -96,7 +96,7 @@ describe('Create a new organization', () => {
 
     // Fourth page, password
     cy.get('@title').contains('Authentication');
-    cy.get('@subtitle').contains('Finally, choose an authentication method');
+    cy.get('@subtitle').contains('Lastly, choose an authentication method');
     cy.get('.choose-auth-page').find('ion-radio').first().contains('Unavailable on web');
     cy.get('.choose-auth-page').find('ion-radio').first().should('have.class', 'radio-disabled');
 
@@ -123,7 +123,7 @@ describe('Create a new organization', () => {
 
     // Fifth page, summary
     cy.get('@title').contains('Overview of your organization');
-    cy.get('@subtitle').contains('Check that the information is correct');
+    cy.get('@subtitle').contains('Verify that the information is correct');
     cy.get('.org-summary').find('.summary-item').as('summaryItems').should('have.length', 5);
     cy.get('@summaryItems').eq(0).find('.summary-item__text').contains('MyOrg');
     cy.get('@summaryItems').eq(1).find('.summary-item__text').contains('Banjo');
@@ -165,11 +165,11 @@ describe('Create a new organization', () => {
     cy.get('.create-organization-modal').find('.closeBtn').should('be.visible');
     cy.get('.create-organization-modal').find('.closeBtn').click();
 
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel the organization creation');
+    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel organization creation');
     cy.get('.question-modal')
       .find('.ms-modal-header__text')
       .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
-    cy.get('.question-modal').find('#next-button').contains('Cancel the process').click();
+    cy.get('.question-modal').find('#next-button').contains('Cancel process').click();
     cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
     cy.get('.question-modal').should('not.exist');
 
