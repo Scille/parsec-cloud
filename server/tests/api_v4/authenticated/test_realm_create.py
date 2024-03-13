@@ -15,32 +15,30 @@ from parsec._parsec import (
 )
 from parsec.events import EventRealmCertificate
 from tests.common import (
-    AuthenticatedRpcClient,
     Backend,
     CoolorgRpcClients,
     get_last_realm_certificate_timestamp,
+    patch_realm_role_certificate,
 )
 
 
-def realm_role_certificate(
-    author: AuthenticatedRpcClient,
-    timestamp: DateTime = DateTime.now(),
-    realm_id: VlobID = VlobID.new(),
-    role: RealmRole = RealmRole.OWNER,
-) -> RealmRoleCertificate:
-    """Utility function to create a RealmRoleCertificate"""
+@pytest.fixture
+def alice_owner_role_certificate(coolorg: CoolorgRpcClients) -> RealmRoleCertificate:
     return RealmRoleCertificate(
-        author=author.device_id,
-        timestamp=timestamp,
-        realm_id=realm_id,
-        role=role,
-        user_id=author.device_id.user_id,
+        author=coolorg.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=VlobID.new(),
+        user_id=coolorg.alice.user_id,
+        role=RealmRole.OWNER,
     )
 
 
-async def test_authenticated_realm_create_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
-    certif = realm_role_certificate(coolorg.alice)
-
+async def test_authenticated_realm_create_ok(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    alice_owner_role_certificate: RealmRoleCertificate,
+) -> None:
+    certif = patch_realm_role_certificate(alice_owner_role_certificate)
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.realm_create(
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
@@ -51,16 +49,17 @@ async def test_authenticated_realm_create_ok(coolorg: CoolorgRpcClients, backend
                 organization_id=coolorg.organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=coolorg.alice.device_id.user_id,
+                user_id=certif.user_id,
                 role_removed=False,
             )
         )
 
 
 async def test_authenticated_realm_create_already_exists(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients,
+    alice_owner_role_certificate: RealmRoleCertificate,
 ) -> None:
-    certif = realm_role_certificate(coolorg.alice, realm_id=coolorg.wksp1_id)
+    certif = patch_realm_role_certificate(alice_owner_role_certificate, realm_id=coolorg.wksp1_id)
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
@@ -80,27 +79,32 @@ async def test_authenticated_realm_create_already_exists(
     ),
 )
 async def test_authenticated_realm_create_invalid_certificate(
-    coolorg: CoolorgRpcClients, kind: str
+    coolorg: CoolorgRpcClients,
+    kind: str,
+    alice_owner_role_certificate: RealmRoleCertificate,
 ) -> None:
     match kind:
         case "dummy_data":
-            authenticated_client = coolorg.alice
             certif = b"<dummy data>"
         case "bad_author":
-            authenticated_client = coolorg.alice
-            certif = realm_role_certificate(coolorg.bob).dump_and_sign(coolorg.bob.signing_key)
+            certif = patch_realm_role_certificate(
+                alice_owner_role_certificate, author=coolorg.bob.device_id
+            ).dump_and_sign(coolorg.bob.signing_key)
         case unknown:
             assert False, unknown
 
-    rep = await authenticated_client.realm_create(realm_role_certificate=certif)
+    rep = await coolorg.alice.realm_create(realm_role_certificate=certif)
     assert rep == authenticated_cmds.v4.realm_create.RepInvalidCertificate()
 
 
 async def test_authenticated_realm_create_timestamp_out_of_ballpark(
     coolorg: CoolorgRpcClients,
     timestamp_out_of_ballpark: DateTime,
+    alice_owner_role_certificate: RealmRoleCertificate,
 ) -> None:
-    certif = realm_role_certificate(coolorg.alice, timestamp=timestamp_out_of_ballpark)
+    certif = patch_realm_role_certificate(
+        alice_owner_role_certificate, timestamp=timestamp_out_of_ballpark
+    )
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
@@ -117,6 +121,7 @@ async def test_authenticated_realm_create_timestamp_out_of_ballpark(
 async def test_authenticated_realm_create_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
+    alice_owner_role_certificate: RealmRoleCertificate,
     timestamp_offset: int,
 ) -> None:
     last_certificate_timestamp = DateTime.now()
@@ -148,7 +153,9 @@ async def test_authenticated_realm_create_require_greater_timestamp(
 
     # 2) Try to create a realm with same or previous timestamp
 
-    certif = realm_role_certificate(coolorg.alice, timestamp=same_or_previous_timestamp)
+    certif = patch_realm_role_certificate(
+        alice_owner_role_certificate, timestamp=same_or_previous_timestamp
+    )
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
