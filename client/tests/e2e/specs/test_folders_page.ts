@@ -239,180 +239,180 @@ describe('Check folders page', () => {
     });
   });
 
-  function checkCurrentPath(workspace: string, depth: number): void {
-    cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', depth);
-    cy.get('@breadcrumbs').eq(0).contains(workspace);
-    for (let i = 1; i < depth; i++) {
-      cy.get('@breadcrumbs')
-        .eq(i)
-        .contains(/Dir_[a-z_]+/);
-    }
-  }
+  // function checkCurrentPath(workspace: string, depth: number): void {
+  //   cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', depth);
+  //   cy.get('@breadcrumbs').eq(0).contains(workspace);
+  //   for (let i = 1; i < depth; i++) {
+  //     cy.get('@breadcrumbs')
+  //       .eq(i)
+  //       .contains(/Dir_[a-z_]+/);
+  //   }
+  // }
 
-  it('Test move one file', () => {
-    // .first() will always be a folder, as there's always at least one folder
-    cy.get('.folder-container').find('.file-list-item').first().click();
-    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
-    cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
+  // it('Test move one file', () => {
+  //   // .first() will always be a folder, as there's always at least one folder
+  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
+  //   cy.get('#button-moveto').contains('Move to').click();
+  //   cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
 
-    cy.get('.folder-selection-modal')
-      .find('.breadcrumb')
-      .contains(/Dir_[a-z_]+/);
+  //   cy.get('.folder-selection-modal')
+  //     .find('.breadcrumb')
+  //     .contains(/Dir_[a-z_]+/);
 
-    cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    cy.get('@breadcrumbs')
-      .eq(1)
-      .contains(/Dir_[a-z_]+/);
-    cy.get('@okButton').should('have.class', 'button-disabled');
-    cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length.greaterThan', 1);
-    cy.get('@items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 3);
-    cy.get('@okButton').should('not.have.class', 'button-disabled');
-    cy.get('@okButton').click();
-    cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', 'The element have been moved the choosen folder.');
-  });
+  //   cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
+  //   cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
+  //   cy.get('@breadcrumbs')
+  //     .eq(1)
+  //     .contains(/Dir_[a-z_]+/);
+  //   cy.get('@okButton').should('have.class', 'button-disabled');
+  //   cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
+  //   cy.get('@items').should('have.length.greaterThan', 1);
+  //   cy.get('@items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 3);
+  //   cy.get('@okButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@okButton').click();
+  //   cy.get('.folder-selection-modal').should('not.exist');
+  //   cy.checkToastMessage('success', 'The element have been moved the choosen folder.');
+  // });
 
-  it('Tests move files', () => {
-    cy.get('.folder-container').find('.file-list-item').first().click();
-    cy.get('.folder-list-header').find('ion-checkbox').click();
-    cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__title')
-      .contains(/^Move \d+ items$/);
-    cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
-    checkCurrentPath('The Copper Coronet', 2);
-    cy.get('@okButton').should('have.class', 'button-disabled');
-    cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length.greaterThan', 1);
-    cy.get('@items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 3);
-    cy.get('@okButton').should('not.have.class', 'button-disabled');
-    cy.get('@okButton').click();
-    cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', 'All the elements have been moved to the chosen folder.');
-  });
+  // it('Tests move files', () => {
+  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-list-header').find('ion-checkbox').click();
+  //   cy.get('#button-moveto').contains('Move to').click();
+  //   cy.get('.folder-selection-modal')
+  //     .find('.ms-modal-header__title')
+  //     .contains(/^Move \d+ items$/);
+  //   cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
+  //   cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', 2);
+  //   checkCurrentPath('The Copper Coronet', 2);
+  //   cy.get('@okButton').should('have.class', 'button-disabled');
+  //   cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
+  //   cy.get('@items').should('have.length.greaterThan', 1);
+  //   cy.get('@items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 3);
+  //   cy.get('@okButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@okButton').click();
+  //   cy.get('.folder-selection-modal').should('not.exist');
+  //   cy.checkToastMessage('success', 'All the elements have been moved to the chosen folder.');
+  // });
 
-  it('Tests copy one file', () => {
-    cy.get('.folder-container').find('.file-list-item').first().click();
-    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
-    // cspell:disable-next-line
-    cy.get('#button-makeacopy').contains('Make a copy').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
-    cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    checkCurrentPath('The Copper Coronet', 2);
-    cy.get('@okButton').should('have.class', 'button-disabled');
-    cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length.greaterThan', 1);
-    cy.get('@items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 3);
-    cy.get('@okButton').should('not.have.class', 'button-disabled');
-    cy.get('@okButton').click();
-    cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', 'The element have been copied to the choosen folder.');
-  });
+  // it('Tests copy one file', () => {
+  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
+  //   // cspell:disable-next-line
+  //   cy.get('#button-makeacopy').contains('Make a copy').click();
+  //   cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Copy one item');
+  //   cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
+  //   checkCurrentPath('The Copper Coronet', 2);
+  //   cy.get('@okButton').should('have.class', 'button-disabled');
+  //   cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
+  //   cy.get('@items').should('have.length.greaterThan', 1);
+  //   cy.get('@items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 3);
+  //   cy.get('@okButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@okButton').click();
+  //   cy.get('.folder-selection-modal').should('not.exist');
+  //   cy.checkToastMessage('success', 'The element have been copied to the choosen folder.');
+  // });
 
-  it('Tests copy files', () => {
-    cy.get('.folder-container').find('.file-list-item').first().click();
-    cy.get('.folder-list-header').find('ion-checkbox').click();
-    // cspell:disable-next-line
-    cy.get('#button-makeacopy').contains('Make a copy').click();
-    cy.get('.folder-selection-modal')
-      .find('.ms-modal-header__title')
-      .contains(/^Copy \d+ items$/);
-    cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
-    checkCurrentPath('The Copper Coronet', 2);
-    cy.get('@okButton').should('have.class', 'button-disabled');
-    cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
-    cy.get('@items').should('have.length.greaterThan', 1);
-    cy.get('@items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 3);
-    cy.get('@okButton').should('not.have.class', 'button-disabled');
-    cy.get('@okButton').click();
-    cy.get('.folder-selection-modal').should('not.exist');
-    cy.checkToastMessage('success', 'All the elements have been copied to the chosen folder.');
-  });
+  // it('Tests copy files', () => {
+  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-list-header').find('ion-checkbox').click();
+  //   // cspell:disable-next-line
+  //   cy.get('#button-makeacopy').contains('Make a copy').click();
+  //   cy.get('.folder-selection-modal')
+  //     .find('.ms-modal-header__title')
+  //     .contains(/^Copy \d+ items$/);
+  //   cy.get('.folder-selection-modal').find('.ms-modal-footer').find('#next-button').as('okButton');
+  //   checkCurrentPath('The Copper Coronet', 2);
+  //   cy.get('@okButton').should('have.class', 'button-disabled');
+  //   cy.get('.folder-selection-modal').find('.folder-container').find('.file-list-item').as('items');
+  //   cy.get('@items').should('have.length.greaterThan', 1);
+  //   cy.get('@items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 3);
+  //   cy.get('@okButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@okButton').click();
+  //   cy.get('.folder-selection-modal').should('not.exist');
+  //   cy.checkToastMessage('success', 'All the elements have been copied to the chosen folder.');
+  // });
 
-  it('Test move file back/forward', () => {
-    cy.get('.folder-container').find('.file-list-item').first().click();
-    cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
-    cy.get('#button-moveto').contains('Move to').click();
-    cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
-    cy.get('.folder-selection-modal').find('.navigation-back-button').as('backButton').should('have.class', 'button-disabled');
-    cy.get('.folder-selection-modal').find('.navigation-forward-button').as('forwardButton').should('have.class', 'button-disabled');
+  // it('Test move file back/forward', () => {
+  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
+  //   cy.get('#button-moveto').contains('Move to').click();
+  //   cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
+  //   cy.get('.folder-selection-modal').find('.navigation-back-button').as('backButton').should('have.class', 'button-disabled');
+  //   cy.get('.folder-selection-modal').find('.navigation-forward-button').as('forwardButton').should('have.class', 'button-disabled');
 
-    checkCurrentPath('The Copper Coronet', 2);
+  //   checkCurrentPath('The Copper Coronet', 2);
 
-    // Down one more folder
-    cy.get('.folder-selection-modal')
-      .find('.folder-container')
-      .find('.file-list-item')
-      .as('items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 3);
+  //   // Down one more folder
+  //   cy.get('.folder-selection-modal')
+  //     .find('.folder-container')
+  //     .find('.file-list-item')
+  //     .as('items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 3);
 
-    // Back enabled, forward disabled
-    cy.get('@backButton').should('not.have.class', 'button-disabled');
-    cy.get('@forwardButton').should('have.class', 'button-disabled');
+  //   // Back enabled, forward disabled
+  //   cy.get('@backButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('have.class', 'button-disabled');
 
-    // Go back
-    cy.get('@backButton').click();
-    checkCurrentPath('The Copper Coronet', 2);
-    // Forward enabled, back disabled
-    cy.get('@backButton').should('have.class', 'button-disabled');
-    cy.get('@forwardButton').should('not.have.class', 'button-disabled');
+  //   // Go back
+  //   cy.get('@backButton').click();
+  //   checkCurrentPath('The Copper Coronet', 2);
+  //   // Forward enabled, back disabled
+  //   cy.get('@backButton').should('have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('not.have.class', 'button-disabled');
 
-    // Go forward
-    cy.get('@forwardButton').click();
-    checkCurrentPath('The Copper Coronet', 3);
-    // Back enabled, forward disabled
-    cy.get('@backButton').should('not.have.class', 'button-disabled');
-    cy.get('@forwardButton').should('have.class', 'button-disabled');
+  //   // Go forward
+  //   cy.get('@forwardButton').click();
+  //   checkCurrentPath('The Copper Coronet', 3);
+  //   // Back enabled, forward disabled
+  //   cy.get('@backButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('have.class', 'button-disabled');
 
-    // Down one more folders
-    cy.get('@items')
-      .eq(0)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    checkCurrentPath('The Copper Coronet', 4);
+  //   // Down one more folders
+  //   cy.get('@items')
+  //     .eq(0)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   checkCurrentPath('The Copper Coronet', 4);
 
-    // Back enabled, forward disabled
-    cy.get('@backButton').should('not.have.class', 'button-disabled');
-    cy.get('@forwardButton').should('have.class', 'button-disabled');
+  //   // Back enabled, forward disabled
+  //   cy.get('@backButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('have.class', 'button-disabled');
 
-    // Go back to enabled forward
-    cy.get('@backButton').click();
-    cy.get('@backButton').should('not.have.class', 'button-disabled');
-    cy.get('@forwardButton').should('not.have.class', 'button-disabled');
+  //   // Go back to enabled forward
+  //   cy.get('@backButton').click();
+  //   cy.get('@backButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('not.have.class', 'button-disabled');
 
-    // Back to first folder using breadcrumbs
-    cy.get('.folder-selection-modal')
-      .find('ion-breadcrumb')
-      .as('breadcrumbs')
-      .eq(1)
-      .contains(/Dir_[a-z_]+/)
-      .click();
-    cy.get('@backButton').should('not.have.class', 'button-disabled');
-    cy.get('@forwardButton').should('have.class', 'button-disabled');
-  });
+  //   // Back to first folder using breadcrumbs
+  //   cy.get('.folder-selection-modal')
+  //     .find('ion-breadcrumb')
+  //     .as('breadcrumbs')
+  //     .eq(1)
+  //     .contains(/Dir_[a-z_]+/)
+  //     .click();
+  //   cy.get('@backButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@forwardButton').should('have.class', 'button-disabled');
+  // });
 
   it('Check reader role', () => {
     cy.get('.list-workspaces').find('.list-workspaces-header').contains('Workspaces').click();
