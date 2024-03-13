@@ -480,7 +480,8 @@
             "size": {
                 "metadata": "Meta-data",
                 "total": "Global data",
-                "title": "Storage"
+                "title": "Storage",
+                "unavailable": "Unavailable"
             },
             "configuration": {
                 "outsidersAllowed": "Outsider profile",

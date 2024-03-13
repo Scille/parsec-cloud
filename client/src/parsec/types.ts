@@ -96,7 +96,6 @@ export type {
   InvitationToken,
   ListInvitationsError,
   NewInvitationInfo,
-  OrganizationID,
   ParseBackendAddrError,
   ParsecAddr,
   ParsecOrganizationFileLinkAddr,
@@ -144,8 +143,10 @@ import type {
   EntryName,
   Handle,
   HumanHandle,
+  OrganizationID,
   EntryStatFile as ParsecEntryStatFile,
   EntryStatFolder as ParsecEntryStatFolder,
+  ParsecOrganizationAddr,
   StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
   WorkspaceInfo as ParsecWorkspaceInfo,
@@ -250,18 +251,13 @@ interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
 
 enum OrganizationInfoErrorTag {
   Internal = 'Internal',
-  Offline = 'Offline',
 }
 
 interface OrganizationInfoErrorInternal {
   tag: OrganizationInfoErrorTag.Internal;
 }
 
-interface OrganizationInfoErrorOffline {
-  tag: OrganizationInfoErrorTag.Offline;
-}
-
-type OrganizationInfoError = OrganizationInfoErrorOffline | OrganizationInfoErrorInternal;
+type OrganizationInfoError = OrganizationInfoErrorInternal;
 
 interface OrganizationInfo {
   users: {
@@ -275,10 +271,12 @@ interface OrganizationInfo {
   size: {
     metadata: number;
     data: number;
-    total: number;
   };
   outsidersAllowed: boolean;
-  userLimit: number;
+  userLimit?: number;
+  hasUserLimit: boolean;
+  organizationAddr: ParsecOrganizationAddr;
+  organizationId: OrganizationID;
 }
 
 export {
@@ -295,6 +293,7 @@ export {
   HumanHandle,
   MountpointHandle,
   OpenOptions,
+  OrganizationID,
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,

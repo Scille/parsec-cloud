@@ -5,13 +5,13 @@
     <ion-content :fullscreen="true">
       <div
         class="org-info-container"
-        v-if="orgInfo !== null && clientInfo !== null"
+        v-if="orgInfo"
       >
         <div class="title">
           <h1>
             {{
               $t('OrganizationPage.infoPage.title', {
-                organizationName: clientInfo.organizationId,
+                organizationName: orgInfo.organizationId,
               })
             }}
           </h1>
@@ -51,10 +51,10 @@
             <ion-chip
               class="organization-info-value"
               :outline="true"
-              :color="orgInfo.userLimit === -1 ? 'success' : 'warning'"
+              :color="orgInfo.hasUserLimit ? 'warning' : 'success'"
               slot="end"
             >
-              {{ orgInfo.userLimit === -1 ? $t('OrganizationPage.infoPage.configuration.unlimited') : orgInfo.userLimit }}
+              {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $t('OrganizationPage.infoPage.configuration.unlimited') }}
             </ion-chip>
           </ion-item>
           <!-- Backend addr -->
@@ -66,7 +66,7 @@
               class="organization-info-value"
               slot="end"
             >
-              {{ clientInfo.organizationAddr }}
+              {{ orgInfo.organizationAddr }}
             </ion-label>
           </ion-item>
         </ion-list>
@@ -86,9 +86,19 @@
             <ion-label
               class="organization-info-value"
               slot="end"
+              v-show="orgInfo.size.data + orgInfo.size.metadata > 0"
             >
-              {{ formatFileSize(orgInfo.size.total) }}
+              {{ formatFileSize(orgInfo.size.data + orgInfo.size.metadata) }}
             </ion-label>
+            <ion-chip
+              v-show="orgInfo.size.data + orgInfo.size.metadata === 0"
+              class="organization-info-value"
+              :outline="true"
+              :color="'warning'"
+              slot="end"
+            >
+              {{ $t('OrganizationPage.infoPage.size.unavailable') }}
+            </ion-chip>
           </ion-item>
           <!-- Meta data -->
           <ion-item class="organization-info">
@@ -98,9 +108,19 @@
             <ion-label
               class="organization-info-value"
               slot="end"
+              v-show="orgInfo.size.metadata > 0"
             >
               {{ formatFileSize(orgInfo.size.metadata) }}
             </ion-label>
+            <ion-chip
+              v-show="orgInfo.size.metadata === 0"
+              class="organization-info-value"
+              :outline="true"
+              :color="'warning'"
+              slot="end"
+            >
+              {{ $t('OrganizationPage.infoPage.size.unavailable') }}
+            </ion-chip>
           </ion-item>
         </ion-list>
 
@@ -126,6 +146,20 @@
               {{ orgInfo.users.active }}
             </ion-label>
           </ion-item>
+
+          <!-- Revoked -->
+          <ion-item class="organization-info">
+            <ion-chip color="danger">
+              {{ $t('OrganizationPage.infoPage.users.revokedUsers') }}
+            </ion-chip>
+            <ion-label
+              class="organization-info-value"
+              slot="end"
+            >
+              {{ orgInfo.users.revoked }}
+            </ion-label>
+          </ion-item>
+
           <!-- Admins -->
           <ion-item class="organization-info">
             <ion-chip color="primary">
@@ -167,19 +201,6 @@
               {{ orgInfo.users.outsiders }}
             </ion-label>
           </ion-item>
-
-          <!-- Revoked -->
-          <ion-item class="organization-info">
-            <ion-chip color="danger">
-              {{ $t('OrganizationPage.infoPage.users.revokedUsers') }}
-            </ion-chip>
-            <ion-label
-              class="organization-info-value"
-              slot="end"
-            >
-              {{ orgInfo.users.revoked }}
-            </ion-label>
-          </ion-item>
         </ion-list>
       </div>
       <div
@@ -194,22 +215,19 @@
 
 <script setup lang="ts">
 import { formatFileSize } from '@/common/file';
-import { ClientInfo, OrganizationInfo, getClientInfo, getOrganizationInfo } from '@/parsec';
+import { OrganizationInfo, getOrganizationInfo } from '@/parsec';
 import { IonChip, IonContent, IonItem, IonLabel, IonList, IonListHeader, IonPage, IonTitle } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
-const clientInfo: Ref<ClientInfo | null> = ref(null);
 
 onMounted(async () => {
-  const orgResult = await getOrganizationInfo();
-  const clientResult = await getClientInfo();
+  const result = await getOrganizationInfo();
 
-  if (!orgResult.ok || !clientResult.ok) {
+  if (!result.ok) {
     return;
   }
-  orgInfo.value = orgResult.value;
-  clientInfo.value = clientResult.value;
+  orgInfo.value = result.value;
 });
 </script>
 
