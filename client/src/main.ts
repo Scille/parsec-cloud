@@ -34,7 +34,7 @@ import { Platform, libparsec } from '@/plugins/libparsec';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
@@ -65,7 +65,7 @@ async function setupApp(): Promise<void> {
     .use(Vue3Lottie);
 
   app.provide(StorageManagerKey, storageManager);
-  app.provide(InformationKey, informationManager);
+  app.provide(InformationManagerKey, informationManager);
   app.provide(ImportManagerKey, importManager);
   app.provide(HotkeyManagerKey, hotkeyManager);
   app.provide(EventDistributorKey, eventDistributor);

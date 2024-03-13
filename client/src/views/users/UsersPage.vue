@@ -133,7 +133,7 @@ import {
 } from '@/parsec';
 import { getCurrentRouteQuery, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
@@ -147,7 +147,7 @@ import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
 const clientInfo: Ref<ClientInfo | null> = ref(null);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 

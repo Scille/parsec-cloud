@@ -187,7 +187,7 @@ import {
   DeviceSaveStrategyTag,
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
@@ -206,7 +206,7 @@ enum CreateOrganizationStep {
 
 const DEFAULT_SAAS_ADDR = 'parsec3://saas.parsec.cloud';
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();

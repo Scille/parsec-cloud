@@ -95,7 +95,7 @@
 import { MsInput } from '@/components/core';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import UpdatePasswordModal from '@/views/users/UpdatePasswordModal.vue';
 import { IonButton, IonContent, IonIcon, IonPage, IonText, modalController } from '@ionic/vue';
@@ -104,7 +104,7 @@ import { Ref, inject, onMounted, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 async function openChangePassword(): Promise<void> {
   const modal = await modalController.create({

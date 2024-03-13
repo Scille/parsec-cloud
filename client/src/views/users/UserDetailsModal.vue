@@ -87,14 +87,14 @@ import { formatTimeSince } from '@/common/date';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const props = defineProps<{
   user: UserInfo;

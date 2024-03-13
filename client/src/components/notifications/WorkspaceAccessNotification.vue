@@ -2,9 +2,9 @@
 
 <template>
   <notification-item :notification="notification">
-    <div class="notification-icon">
+    <div class="notification-icon-container">
       <ion-icon
-        class="file-icon"
+        class="notification-icon"
         :icon="business"
       />
     </div>
@@ -71,7 +71,7 @@ const notificationData = props.notification.getData<NewWorkspaceAccessData>();
 </script>
 
 <style scoped lang="scss">
-.notification-icon {
+.notification-icon-container {
   background: var(--background-icon-info);
   color: var(--color-icon-info);
 }

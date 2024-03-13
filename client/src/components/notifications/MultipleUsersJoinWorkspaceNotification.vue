@@ -2,9 +2,9 @@
 
 <template>
   <notification-item :notification="notification">
-    <div class="notification-icon">
+    <div class="notification-icon-container">
       <ion-icon
-        class="file-icon"
+        class="notification-icon"
         :icon="people"
       />
     </div>
@@ -77,7 +77,7 @@ async function openPopover(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.notification-icon {
+.notification-icon-container {
   background: var(--background-icon-info);
   color: var(--color-icon-info);
 }

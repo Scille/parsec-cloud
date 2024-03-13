@@ -48,12 +48,12 @@
 import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate, translateWorkspaceRole } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
 

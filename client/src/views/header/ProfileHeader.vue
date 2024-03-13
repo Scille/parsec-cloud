@@ -33,7 +33,7 @@ import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -43,7 +43,7 @@ import { inject, onMounted, onUnmounted, ref } from 'vue';
 const isOnline = ref(true);
 const isPopoverOpen = ref(false);
 
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 

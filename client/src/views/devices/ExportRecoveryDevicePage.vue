@@ -154,7 +154,7 @@ import { MsInformativeText, getPasswordFromUser } from '@/components/core';
 import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
-import { Information, InformationKey, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
@@ -171,7 +171,7 @@ let file = '';
 const downloadLink = ref();
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
-const informationManager: InformationManager = inject(InformationKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const orgId = ref('');
 
 onMounted(async (): Promise<void> => {

@@ -7,7 +7,7 @@ import { ToastManager } from '@/services/toastManager';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 
-export const InformationKey = 'information';
+export const InformationManagerKey = 'information';
 
 export enum InformationDataType {
   WorkspaceRoleChanged,

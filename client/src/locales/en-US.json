@@ -74,7 +74,9 @@
         "userSharedDocument": "{name} shared a new document",
         "revokedOrganizationAccess": "You no longer have access to organization {organization}",
         "allImportedElements": "All your elements have been imported",
-        "newDeviceAdded": "A new device has been added to the organization"
+        "newDeviceAdded": "A new device has been added to the organization",
+        "serverOnline": "You are connected to the Parsec server",
+        "serverOffline": "You are not connected to the Parsec server"
     },
     "HomePage": {
         "topbar": {

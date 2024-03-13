@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { HotkeyManagerKey } from '@/services/hotkeyManager';
-import { InformationKey } from '@/services/informationManager';
+import { InformationManagerKey } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
@@ -25,7 +25,7 @@ function mockGroupEnableDisable(_group: number): void {}
 function getDefaultProvideConfig(showToast = mockShowToast): any {
   const provide: any = {};
 
-  provide[InformationKey] = {
+  provide[InformationManagerKey] = {
     showToast: showToast,
   };
   provide[HotkeyManagerKey] = {
