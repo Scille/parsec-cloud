@@ -9,7 +9,7 @@ describe('Search Input', () => {
   beforeEach(() => {
     wrapper = mount(MsSearchInput, {
       props: {
-        label: 'A Label',
+        placeholder: 'A Label',
       },
     });
   });

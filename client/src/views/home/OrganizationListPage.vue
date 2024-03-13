@@ -19,7 +19,7 @@
         <ion-card-title class="organization-filter">
           <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
-            :label="$t('HomePage.organizationList.search')"
+            :placeholder="$t('HomePage.organizationList.search')"
             v-model="searchQuery"
             id="ms-search-input"
             ref="searchInputRef"
