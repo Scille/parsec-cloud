@@ -63,7 +63,7 @@ class JoinableTaskStatus(Generic[T]):
         await self.join()
 
     @classmethod
-    async def wrap_task(  # type: ignore[misc]
+    async def wrap_task(
         cls,
         corofn: Callable[..., Awaitable[T]],
         *args: Any,

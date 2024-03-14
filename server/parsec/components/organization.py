@@ -112,6 +112,8 @@ def organization_bootstrap_validate(
     match timestamps_in_the_ballpark(u_data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     if not ru_data.is_redacted:
         return OrganizationBootstrapValidateBadOutcome.INVALID_REDACTED
@@ -139,6 +141,8 @@ def organization_bootstrap_validate(
         match timestamps_in_the_ballpark(s_data.timestamp, now):
             case TimestampOutOfBallpark() as error:
                 return error
+            case _:
+                pass
 
         if s_data.timestamp != u_data.timestamp:
             return OrganizationBootstrapValidateBadOutcome.TIMESTAMP_MISMATCH

@@ -207,6 +207,8 @@ class PGVlobComponent(BaseVlobComponent):
         match timestamps_in_the_ballpark(timestamp, now):
             case TimestampOutOfBallpark() as error:
                 return error
+            case _:
+                pass
 
         # TODO: Fix causality
         # if timestamp < org.last_certificate_timestamp:
