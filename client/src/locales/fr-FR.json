@@ -457,14 +457,13 @@
             "file": "Fichier",
             "folder": "Dossier",
             "created": "Créé le",
-            "updated": "Mis à jour le",
+            "updated": "Mis à jour :",
             "version": "Version",
-            "isSynced": "Synchronisé",
-            "yes": "Oui",
-            "no": "Non",
             "id": "Id",
             "size": "Taille",
-            "path": "Emplacement"
+            "path": "Emplacement",
+            "copyLink": "Copier le lien",
+            "linkCopied": "Copié"
         }
     },
     "OrganizationPage": {

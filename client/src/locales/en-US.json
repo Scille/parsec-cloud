@@ -456,15 +456,14 @@
             "type": "Type",
             "file": "File",
             "folder": "Folder",
-            "created": "Created on",
-            "updated": "Updated on",
+            "created": "Created",
+            "updated": "Updated:",
             "version": "Version",
-            "isSynced": "Is synchronized",
-            "yes": "Yes",
-            "no": "No",
             "id": "Id",
             "size": "Size",
-            "path": "Path"
+            "path": "Path",
+            "copyLink": "Copy link",
+            "linkCopied": "Copied"
         }
     },
     "OrganizationPage": {
