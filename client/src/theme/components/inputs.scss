@@ -21,21 +21,20 @@
 .input-item {
   display: inline-flex;
   --background: none;
-  background: var(--parsec-color-light-secondary-white);
   flex-grow: 1;
   width: auto;
   --inner-padding-end: 0;
   --padding-start: 0;
+  padding: 0 1rem;
   border: 1px solid var(--parsec-color-light-primary-300);
   border-radius: var(--parsec-radius-8);
   color: var(--parsec-color-light-primary-800);
-  padding-left: 1rem;
   transition: outline 0.2s ease-in-out;
   position: relative;
 
   &:focus-within {
     border: 1px solid var(--parsec-color-light-primary-400);
-    --background: var(--parsec-color-light-secondary-white);
+    background: var(--parsec-color-light-secondary-white);
     outline: 0.25rem solid var(--parsec-color-light-outline);
   }
 }
@@ -47,6 +46,7 @@
   min-height: 1rem;
   width: auto;
   flex-grow: 1;
+  --placeholder-color: var(--parsec-color-light-secondary-grey);
 
   &-icon,
   &-clear-icon {
@@ -75,8 +75,6 @@
     border: 1px solid var(--parsec-color-light-primary-300);
 
     &:not(:focus-within) {
-      --background: var(--parsec-color-light-secondary-background);
-      outline: 2px solid var(--parsec-color-light-success-500);
       border: 1px solid var(--parsec-color-light-success-500);
     }
   }
@@ -84,14 +82,19 @@
   // invalid input
   &-invalid {
     border: 1px solid var(--parsec-color-light-danger-500);
+    transition: outline 0.2s ease-in-out;
 
     &:focus-within {
-      --background: none;
-      background: var(--parsec-color-light-secondary-background);
-      outline: 1px solid var(--parsec-color-light-danger-500);
+      outline: 0.5px solid var(--parsec-color-light-danger-500);
       border: 1px solid var(--parsec-color-light-danger-500);
     }
   }
+}
+
+.form-input-disabled {
+  --background: var(--parsec-color-light-secondary-disabled);
+  background: var(--parsec-color-light-secondary-disabled);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 // error message
