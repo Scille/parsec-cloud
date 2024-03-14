@@ -54,3 +54,10 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
             await second(tg.cancel_scope)
 
     assert rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepOk()
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.invited_alice_dev3.invite_2b_claimer_send_nonce(
+        claimer_nonce=b"claimer-hello-world",
+    )
+    assert rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepEnrollmentWrongState()
