@@ -17,6 +17,7 @@ from parsec.config import (
 
 # Must be done before the module has any chance to be imported
 pytest.register_assert_rewrite("tests.common.event_bus_spy")
+pytest.register_assert_rewrite("tests.common.invite")
 from tests.common import (
     LogCaptureFixture,
     asyncio_reset_postgresql_testbed,
