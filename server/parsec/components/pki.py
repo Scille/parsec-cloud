@@ -79,6 +79,8 @@ def pki_enrollment_accept_validate(
     match timestamps_in_the_ballpark(u_data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     if u_data.user_id != d_data.device_id.user_id:
         return PkiEnrollmentAcceptValidateBadOutcome.USER_ID_MISMATCH

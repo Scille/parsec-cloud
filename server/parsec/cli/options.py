@@ -161,7 +161,7 @@ def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R
         ),
         version_option,
     ):
-        fn = decorator(fn)  # type: ignore[operator]
+        fn = decorator(fn)
 
     return cast(Callable[Concatenate[bool, P], R], fn)
 

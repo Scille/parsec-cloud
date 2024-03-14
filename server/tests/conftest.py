@@ -103,7 +103,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 
 def _is_xdist_master(config: pytest.Config) -> bool:
-    return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")  # type: ignore
+    return config.getoption("dist") != "no" and not os.environ.get("PYTEST_XDIST_WORKER")
 
 
 def _patch_caplog() -> None:

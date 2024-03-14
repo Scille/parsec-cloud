@@ -141,6 +141,8 @@ class BaseAuthComponent:
                     for ((org_id, device_id), v) in self._device_cache.items()
                     if org_id != event.organization_id or device_id.user_id != event.user_id
                 }
+            case _:
+                pass
 
     #
     # Public methods
