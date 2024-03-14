@@ -9,8 +9,6 @@ from .common import (
     DeviceID,
     DeviceLabel,
     EntryName,
-    Enum,
-    EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,

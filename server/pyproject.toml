@@ -172,6 +172,7 @@ ignore = [
     "../misc/bench.py",
 ]
 stubPath = "parsec/stubs/"
+reportUnusedImport = true
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,
