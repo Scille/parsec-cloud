@@ -67,3 +67,11 @@ async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
         token=coolorg.invited_alice_dev3.token,
     )
     assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepInvitationDeleted()
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_2a_greeter_get_hashed_nonce(
+        token=coolorg.invited_alice_dev3.token,
+    )
+
+    assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepEnrollmentWrongState()
