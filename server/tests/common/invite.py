@@ -120,3 +120,49 @@ async def pass_state_2_2_greeter_nonce(
         rep = await claimer_step_2_2()
 
     assert rep == invited_cmds.v4.invite_2a_claimer_send_hashed_nonce.RepOk(greeter_nonce)
+
+
+async def pass_state_2_exchange_nonce(
+    claimer: InvitedRpcClient, greeter: AuthenticatedRpcClient
+) -> None:
+    invitation_token = claimer.token
+    claimer_nonce = b"pass_state_2-claimer-hello-world"
+    claimer_hashed_nonce = HashDigest.from_data(claimer_nonce)
+    greeter_nonce = b"pass_state_2-greeter-hello-world"
+
+    greeter_rep_send, greeter_rep_recv = anyio.create_memory_object_stream()
+    claimer_rep_send, claimer_rep_recv = anyio.create_memory_object_stream()
+
+    await pass_state_1_wait_peer(claimer, greeter)
+
+    async def claimer_step_2_nonce():
+        rep = await claimer.invite_2a_claimer_send_hashed_nonce(claimer_hashed_nonce)
+        assert rep == invited_cmds.v4.invite_2a_claimer_send_hashed_nonce.RepOk(greeter_nonce)
+        rep = await claimer.invite_2b_claimer_send_nonce(claimer_nonce)
+        await claimer_rep_send.send(rep)
+
+    async def greeter_step_2_nonce():
+        rep = await greeter.invite_2a_greeter_get_hashed_nonce(invitation_token)
+        assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepOk(
+            claimer_hashed_nonce
+        )
+        rep = await greeter.invite_2b_greeter_send_nonce(invitation_token, greeter_nonce)
+        await greeter_rep_send.send(rep)
+
+    async def wait_responses() -> (
+        tuple[
+            invited_cmds.v4.invite_2b_claimer_send_nonce.Rep,
+            authenticated_cmds.v4.invite_2b_greeter_send_nonce.Rep,
+        ]
+    ):
+        claimer_rep = await claimer_rep_recv.receive()
+        greeter_rep = await greeter_rep_recv.receive()
+        return (claimer_rep, greeter_rep)
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(claimer_step_2_nonce)
+        tg.start_soon(greeter_step_2_nonce)
+        claimer_rep, greeter_rep = await wait_responses()
+
+    assert claimer_rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepOk()
+    assert greeter_rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepOk(claimer_nonce)
