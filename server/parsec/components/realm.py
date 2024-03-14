@@ -90,6 +90,8 @@ def realm_create_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -129,6 +131,8 @@ def realm_share_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -168,6 +172,8 @@ def realm_unshare_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -205,6 +211,8 @@ def realm_rename_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     return data
 
@@ -233,6 +241,8 @@ def realm_rotate_key_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     return data
 

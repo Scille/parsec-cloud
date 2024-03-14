@@ -275,6 +275,8 @@ def transaction[**P, T, S: WithPool](
                 match result:
                     case BadOutcome():
                         await transaction.rollback()
+                    case _:
+                        pass
                 return result
 
     return wrapper

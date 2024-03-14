@@ -431,6 +431,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 assert False, "The organization is empty, user creation should always succeed"
             case UserCreateDeviceStoreBadOutcome():
                 assert False, "The organization is empty, device creation should always succeed"
+            case _:
+                pass
 
         # sequester_authority_certificate = None
         # sequester_authority_verify_key_der = None
