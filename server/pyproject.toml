@@ -176,6 +176,7 @@ reportUnusedImport = true
 reportUnusedClass = true
 reportUnusedFunction = true
 reportUnusedVariable = true
+reportUnusedCallResult = "none"
 reportUnusedCoroutine = true
 
 [build-system]
