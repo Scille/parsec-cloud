@@ -6,7 +6,7 @@ from collections import deque
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from enum import auto
-from typing import AsyncIterator, Callable, Iterator, Sequence, Type, TypeAlias, assert_never
+from typing import AsyncIterator, Callable, Iterator, Sequence, Type, TypeAlias
 from unittest.mock import ANY
 from uuid import UUID
 
@@ -355,8 +355,6 @@ class BaseEventsComponent:
                 pass
             case SseAPiEventsListenBadOutcome() as error:
                 return error
-            case unknown:
-                assert_never(unknown)
 
         # It is fine to stop listening for event here given there is no asynchronous
         # operation between here and the client registration in `self._registered_clients`

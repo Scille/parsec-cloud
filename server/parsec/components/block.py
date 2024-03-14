@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
 
 from parsec._parsec import (
     BlockID,
@@ -109,8 +108,6 @@ class BaseBlockComponent:
                 client_ctx.author_not_found_abort()
             case BlockReadBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_block_create(
@@ -150,5 +147,3 @@ class BaseBlockComponent:
                 client_ctx.author_not_found_abort()
             case BlockCreateBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)

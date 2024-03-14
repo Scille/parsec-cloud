@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 import asyncpg
 
@@ -441,8 +441,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -456,8 +454,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match realm_create_validate(
             now=now,
@@ -481,8 +477,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return outcome
             case None:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         await self.event_bus.send(
             EventRealmCertificate(
@@ -522,8 +516,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -537,8 +529,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmShareStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile() as current_profile:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match realm_share_validate(
             now=now,
@@ -558,8 +548,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if current_profile == UserProfile.OUTSIDER and certif.role in (
             RealmRole.MANAGER,
@@ -575,8 +563,6 @@ class PGRealmComponent(BaseRealmComponent):
             case (RealmRole() as role, KeyIndex() as realm_key_index):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER):
                     return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         existing_user_role = await self._get_current_role_for_user(
             conn, organization_id, certif.realm_id, certif.user_id
@@ -672,8 +658,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -687,8 +671,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match realm_unshare_validate(
             now=now,
@@ -708,8 +690,6 @@ class PGRealmComponent(BaseRealmComponent):
                 pass  # TODO: Is that OK to pass here?
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self._check_realm(conn, organization_id, certif.realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
@@ -721,8 +701,6 @@ class PGRealmComponent(BaseRealmComponent):
             case (RealmRole() as role, KeyIndex()):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER):
                     return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         existing_user_role = await self._get_current_role_for_user(
             conn, organization_id, certif.realm_id, certif.user_id
@@ -801,8 +779,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -816,8 +792,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match realm_rename_validate(
             now=now,
@@ -838,8 +812,6 @@ class PGRealmComponent(BaseRealmComponent):
             case (RealmRole() as role, KeyIndex() as realm_key_index):
                 if role != RealmRole.OWNER:
                     return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         if realm_key_index != certif.key_index:
             return BadKeyIndex(
@@ -901,8 +873,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -916,8 +886,6 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match realm_rotate_key_validate(
             now=now,
@@ -938,8 +906,6 @@ class PGRealmComponent(BaseRealmComponent):
             case (RealmRole() as role, KeyIndex() as realm_key_index):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         if certif.key_index != realm_key_index + 1:
             return BadKeyIndex(

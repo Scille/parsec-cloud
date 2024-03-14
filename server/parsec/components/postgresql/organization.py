@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal, assert_never, override
+from typing import Literal, override
 
 import asyncpg
 
@@ -568,8 +568,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unkown:
-                assert_never(unkown)
 
         if (
             not with_is_expired
@@ -649,8 +647,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                     continue
                 case Organization() as org:
                     pass
-                case unkown:
-                    assert_never(unkown)
 
             if org.organization_id.str.endswith("Template") and skip_templates:
                 continue

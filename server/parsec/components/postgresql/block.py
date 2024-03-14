@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 import asyncpg
 from asyncpg.exceptions import UniqueViolationError
@@ -187,8 +187,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
@@ -199,8 +197,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         row = await conn.fetchrow(
             *_q_get_block_info(organization_id=organization_id.str, block_id=block_id)
@@ -218,8 +214,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
             case (RealmRole(), _):
                 pass
-            case unknown:
-                assert_never(unknown)
 
         outcome = await self.blockstore.read(organization_id, block_id)
         match outcome:
@@ -234,8 +228,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadBadOutcome.STORE_UNAVAILABLE
             case BlockStoreReadBadOutcome.STORE_UNAVAILABLE:
                 return BlockReadBadOutcome.STORE_UNAVAILABLE
-            case unknown:
-                assert_never(unknown)
 
     @override
     @transaction
@@ -255,8 +247,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
@@ -267,8 +257,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self.realm._check_realm(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
@@ -282,8 +270,6 @@ class PGBlockComponent(BaseBlockComponent):
                     return BadKeyIndex(
                         last_realm_certificate_timestamp=DateTime.now(),  # TODO: fixme
                     )
-            case unknown:
-                assert_never(unknown)
 
         # Note it's important to check unicity here because blockstore create
         # overwrite existing data !
@@ -319,8 +305,6 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.STORE_UNAVAILABLE
             case None:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         # 3) Insert the block metadata into the database
         try:

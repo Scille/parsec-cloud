@@ -3,7 +3,7 @@
 from base64 import b64decode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncContextManager, AsyncGenerator, AsyncIterator, assert_never
+from typing import AsyncContextManager, AsyncGenerator, AsyncIterator
 
 import pytest
 from httpx import AsyncClient, Response
@@ -111,8 +111,6 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
                 return event.human_handle
             case tb.TestbedEventBootstrapOrganization() as event:
                 return event.first_user_human_handle
-            case unknown:
-                assert_never(unknown)
 
     async def _do_request(self, req: bytes) -> bytes:
         token = AuthenticatedToken.generate_raw(
@@ -484,6 +482,5 @@ def get_last_realm_certificate_timestamp(
                 | tb.TestbedEventCreateOpaqueBlock()
             ):
                 pass
-            case unknown:
-                assert_never(unknown)
+
     raise RuntimeError(f"Realm `{realm_id}` not found !")

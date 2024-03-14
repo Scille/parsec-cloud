@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 import asyncpg
 
@@ -479,8 +479,6 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
         if organization.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
@@ -491,8 +489,6 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
-            case unknown:
-                assert_never(unknown)
 
         row = await conn.fetchrow(
             *_q_info_invitation(organization_id=organization_id.str, token=token)
@@ -586,8 +582,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         if organization.is_expired:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
         row = await conn.fetchrow(

@@ -374,5 +374,3 @@ async def q_create_device(
             return bad_outcome
         case None:
             return None
-        case unknown:
-            assert_never(unknown)

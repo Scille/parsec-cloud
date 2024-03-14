@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 from parsec._parsec import (
     DateTime,
@@ -148,8 +148,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                                 pass
                             case error:
                                 return error
-                    case unknown:
-                        assert_never(unknown)
 
         else:
             if sequester_blob is not None:
@@ -282,8 +280,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                                 pass
                             case error:
                                 return error
-                    case unknown:
-                        assert_never(unknown)
 
         else:
             if sequester_blob is not None:

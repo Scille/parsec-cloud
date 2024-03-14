@@ -11,7 +11,6 @@ from typing import (
     Mapping,
     NoReturn,
     Sequence,
-    assert_never,
 )
 from uuid import UUID
 
@@ -402,8 +401,6 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
                 CustomHttpStatus.OrganizationNotFound,
                 api_version=parsed.settled_api_version,
             )
-        case unknown:
-            assert_never(unknown)
 
     # Handshake is done
 
@@ -475,8 +472,6 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
                 CustomHttpStatus.InvitationAlreadyUsedOrDeleted,
                 api_version=parsed.settled_api_version,
             )
-        case unknown:
-            assert_never(unknown)
 
     # Handshake is done
 
@@ -558,8 +553,6 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
                 CustomHttpStatus.UserFrozen,
                 api_version=parsed.settled_api_version,
             )
-        case unknown:
-            assert_never(unknown)
 
     # Handshake is done
 
@@ -639,8 +632,6 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
                 CustomHttpStatus.UserFrozen,
                 api_version=parsed.settled_api_version,
             )
-        case unknown:
-            assert_never(unknown)
 
     # Handshake is done
 
@@ -786,5 +777,3 @@ class StreamingResponseMiddleware(StreamingResponse):
                         api_version=self.settled_api_version,
                         **self.headers,
                     )
-                case unknown:
-                    assert_never(unknown)

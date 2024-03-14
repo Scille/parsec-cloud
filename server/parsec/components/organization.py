@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import Literal, assert_never
+from typing import Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -351,6 +351,3 @@ class BaseOrganizationComponent:
 
             case OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-
-            case unknown:
-                assert_never(unknown)

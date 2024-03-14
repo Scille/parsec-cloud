@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 from parsec._parsec import (
     DateTime,
@@ -56,8 +56,6 @@ def _cook_service(service: MemorySequesterService) -> BaseSequesterService:
                 revoked_on=service.cooked_revoked.timestamp if service.cooked_revoked else None,
                 webhook_url=service.webhook_url,
             )
-        case unknown:
-            assert_never(unknown)
 
 
 class MemorySequesterComponent(BaseSequesterComponent):

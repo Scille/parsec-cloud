@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmRole, VlobID
 from parsec.components.block import (
@@ -61,8 +61,6 @@ class MemoryBlockComponent(BaseBlockComponent):
                 | BlockStoreReadBadOutcome.STORE_UNAVAILABLE
             ):
                 return BlockReadBadOutcome.STORE_UNAVAILABLE
-            case unknown:
-                assert_never(unknown)
 
     @override
     async def create(

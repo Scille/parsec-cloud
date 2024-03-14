@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
 
 from parsec._parsec import (
     DateTime,
@@ -474,8 +473,6 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_user_create(
@@ -523,8 +520,6 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserCreateUserStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_device_create(
@@ -566,8 +561,6 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_user_update(
@@ -612,8 +605,6 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_user_revoke(
@@ -658,5 +649,3 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)

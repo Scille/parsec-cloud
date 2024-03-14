@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import TypeAlias, assert_never
+from typing import TypeAlias
 
 from parsec._parsec import (
     DateTime,
@@ -507,8 +507,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmCreateStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_share(
@@ -567,8 +565,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmShareStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_unshare(
@@ -617,8 +613,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmUnshareStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_rename(
@@ -670,8 +664,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmRenameStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_rotate_key(
@@ -722,8 +714,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_get_keys_bundle(
