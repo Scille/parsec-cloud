@@ -20,6 +20,10 @@ defineProps<{
 </script>
 
 <style scoped lang="scss">
+.label-status {
+  margin: 0;
+}
+
 .tag-status {
   padding: 0.125rem 0.5rem;
   margin: 0;
