@@ -10,7 +10,6 @@
         $t('JoinOrganization.stepTitles.ProvideGuestCode'),
         $t('JoinOrganization.stepTitles.ContactDetails'),
         $t('JoinOrganization.stepTitles.Authentication'),
-        $t('JoinOrganization.stepTitles.Validation'),
       ]"
     />
     <ion-buttons
