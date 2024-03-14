@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, assert_never, override
+from typing import Any, override
 
 from parsec._parsec import (
     DateTime,
@@ -55,8 +55,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                     return InvitationStatus.CANCELLED
                 case MemoryInvitationDeletedReason.FINISHED:
                     return InvitationStatus.FINISHED
-                case unknown:
-                    assert_never(unknown)
+
         elif invitation.token in self._claimers_ready[organization_id]:
             return InvitationStatus.READY
         else:

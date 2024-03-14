@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, assert_never, override
+from typing import TYPE_CHECKING, override
 
 import asyncpg
 
@@ -235,8 +235,6 @@ class PGUserComponent(BaseUserComponent):
                 return CheckDeviceBadOutcome.USER_REVOKED
             case UserProfile() as profile:
                 return profile
-            case unknown:
-                assert_never(unknown)
 
     async def _check_user(
         self,
@@ -280,8 +278,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -295,8 +292,6 @@ class PGUserComponent(BaseUserComponent):
             case UserProfile() as profile:
                 if profile != UserProfile.ADMIN:
                     return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         match user_create_user_validate(
             now=now,
@@ -328,8 +323,6 @@ class PGUserComponent(BaseUserComponent):
                 assert False, f"Unexpected {error}, the device creation should not fail"
             case None:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         await self.event_bus.send(
             EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
@@ -360,8 +353,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         if organization.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -374,8 +366,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match user_create_device_validate(
             now=now,
@@ -400,8 +390,6 @@ class PGUserComponent(BaseUserComponent):
                 return error
             case None:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         await self.event_bus.send(
             EventCommonCertificate(
@@ -434,8 +422,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
         if organization.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -449,8 +435,6 @@ class PGUserComponent(BaseUserComponent):
             case UserProfile() as profile:
                 if profile != UserProfile.ADMIN:
                     return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         match user_update_user_validate(
             now=now,
@@ -472,8 +456,6 @@ class PGUserComponent(BaseUserComponent):
                 if current_profile == certif.new_profile:
                     return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
                 pass
-            case unknown:
-                assert_never(unknown)
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -567,8 +549,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         return await query_list_users(conn, organization_id)
 
@@ -589,8 +569,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 assert organization.bootstrapped_on is not None
-            case unknown:
-                assert_never(unknown)
         if organization.is_expired:
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
@@ -601,8 +579,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED
             case UserProfile() as profile:
                 redacted = profile == UserProfile.OUTSIDER
-            case unknown:
-                assert_never(unknown)
 
         # 1) Common certificates (i.e. user/device/revoked/update)
 
@@ -766,8 +742,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
         if organization.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -781,8 +755,6 @@ class PGUserComponent(BaseUserComponent):
             case UserProfile() as profile:
                 if profile != UserProfile.ADMIN:
                     return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         match user_revoke_user_validate(
             now=now,
@@ -804,8 +776,6 @@ class PGUserComponent(BaseUserComponent):
                 )
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -868,8 +838,6 @@ class PGUserComponent(BaseUserComponent):
                 return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match (user_id, user_email):
             case (None, None):
@@ -880,16 +848,12 @@ class PGUserComponent(BaseUserComponent):
                         pass
                     case None:
                         return UserFreezeUserBadOutcome.USER_NOT_FOUND
-                    case unknown:
-                        assert_never(unknown)
             case (None, str() as user_email):
                 match await self.get_user_info_from_email(conn, organization_id, user_email):
                     case UserInfo() as info:
                         pass
                     case None:
                         return UserFreezeUserBadOutcome.USER_NOT_FOUND
-                    case unknown:
-                        assert_never(unknown)
             case (UserID(), str()):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
             case _:

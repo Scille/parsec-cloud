@@ -2,7 +2,7 @@
 
 import math
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, assert_never, override
+from typing import AsyncIterator, override
 
 import anyio
 import asyncpg
@@ -119,8 +119,6 @@ class PGEventsComponent(BaseEventsComponent):
                 return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if org.is_expired:
             return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
@@ -134,8 +132,6 @@ class PGEventsComponent(BaseEventsComponent):
                 return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
             case UserProfile() as profile:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         org_config = EventOrganizationConfig(
             organization_id=org.organization_id,

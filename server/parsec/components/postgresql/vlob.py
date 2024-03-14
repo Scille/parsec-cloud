@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import override
 
 import asyncpg
 
@@ -172,8 +172,6 @@ class PGVlobComponent(BaseVlobComponent):
                 return VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
@@ -184,8 +182,6 @@ class PGVlobComponent(BaseVlobComponent):
                 return VlobCreateBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
-            case unknown:
-                assert_never(unknown)
 
         match await self.realm._check_realm(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
@@ -195,8 +191,6 @@ class PGVlobComponent(BaseVlobComponent):
             case (RealmRole() as role, KeyIndex() as realm_key_index):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         # We only accept the last key
         if realm_key_index != key_index:

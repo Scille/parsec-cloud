@@ -150,8 +150,6 @@ class MemoryOrganization:
                 yield user
 
     def active_user_limit_reached(self) -> bool:
-        if self.active_users_limit is None:
-            return False
         active_users = sum(0 if u.is_revoked else 1 for u in self.users.values())
         return self.active_users_limit <= ActiveUsersLimit.limited_to(active_users)
 

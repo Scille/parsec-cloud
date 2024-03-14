@@ -77,8 +77,6 @@ class RAID1BlockStoreComponent(BaseBlockStoreComponent):
                     if not self._partial_create_ok:
                         # Early exit given the create cannot succeed
                         cancel_scope.cancel()
-                case _:
-                    assert False
 
         async with anyio.create_task_group() as task_group:
             for blockstore in self.blockstores:
