@@ -179,6 +179,7 @@ reportUnusedVariable = true
 reportUnusedCallResult = "none"
 reportUnusedCoroutine = true
 reportUnusedExcept = true
+reportUnusedExpression = true
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,
