@@ -787,6 +787,7 @@ def rollback_main(args: argparse.Namespace) -> None:
 
     # Retrieve `Bump version vX.Y.A+dev -> vX.Y.B` and `Bump version vX.Y.B -> vX.Y.B+dev` commits
     head, head_minus_1, head_minus_2 = run_git("rev-list", "-n", "3", "HEAD").strip().splitlines()
+    del head  # Unused
 
     tag_commit = run_git("rev-list", "-n", "1", "v" + str(version)).strip()
     if tag_commit != head_minus_1:

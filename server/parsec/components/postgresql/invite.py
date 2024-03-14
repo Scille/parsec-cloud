@@ -604,7 +604,7 @@ class PGInviteComponent(BaseInviteComponent):
             claimer_email,
             created_on,
             deleted_on,
-            deleted_reason,
+            _deleted_reason,
         ) = row
         greeter_user_id = UserID(greeter_user_id_str)
         if deleted_on:

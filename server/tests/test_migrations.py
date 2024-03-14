@@ -74,14 +74,14 @@ async def test_migrations(pg_cluster_url, pg_psql, pg_dump):
         cmd = [pg_dump, "--schema=public", "--schema-only", pg_cluster_url]
         print(f"run: {' '.join(cmd)}")
         process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE)
-        stdout, stderr = await process.communicate()
+        stdout, _stderr = await process.communicate()
         return stdout.decode()
 
     async def dump_data() -> str:
         cmd = [pg_dump, "--schema=public", "--data-only", pg_cluster_url]
         print(f"run: {' '.join(cmd)}")
         process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE)
-        stdout, stderr = await process.communicate()
+        stdout, _stderr = await process.communicate()
         return stdout.decode()
 
     async def restore_data(data: str) -> None:
