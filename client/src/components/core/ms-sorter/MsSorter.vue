@@ -5,12 +5,11 @@
     fill="clear"
     @click="openPopover($event)"
     id="select-popover-button"
-    class="filter-button button-small"
+    class="sorter-button button-small"
     :disabled="disabled"
   >
     <ion-icon
       class="ms-sorter-icon"
-      slot="end"
       :icon="swapVertical"
     />
     {{ labelRef }}
@@ -75,18 +74,22 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.filter-button {
-  background: none;
-  color: var(--parsec-color-light-primary-700);
-  height: fit-content;
-  margin-right: 1rem;
+.sorter-button {
+  --background: var(--parsec-color-light-secondary-white);
   --background-hover: var(--parsec-color-light-secondary-medium);
+  --color: var(--parsec-color-light-secondary-text);
 
   &::part(native) {
-    padding: 0.5rem;
+    padding: 0.375rem 0.625rem;
   }
-}
-.ms-sorter-icon {
-  margin-left: 0.5em;
+
+  ion-icon {
+    color: var(--parsec-color-light-secondary-grey);
+    margin-right: 0.5rem;
+  }
+
+  &:hover ion-icon {
+    color: var(--parsec-color-light-primary-700);
+  }
 }
 </style>
