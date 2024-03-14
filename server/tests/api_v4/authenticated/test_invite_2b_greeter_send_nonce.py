@@ -84,3 +84,12 @@ async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
     )
 
     assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationDeleted()
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_2b_greeter_send_nonce(
+        token=coolorg.invited_alice_dev3.token,
+        greeter_nonce=b"greeter-hello-world",
+    )
+
+    assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepEnrollmentWrongState()
