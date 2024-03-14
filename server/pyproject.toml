@@ -180,6 +180,7 @@ reportUnusedCallResult = "none"
 reportUnusedCoroutine = true
 reportUnusedExcept = true
 reportUnusedExpression = true
+reportUnnecessaryTypeIgnoreComment = "information"
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,
