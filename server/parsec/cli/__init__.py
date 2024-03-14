@@ -68,6 +68,6 @@ def patched_cli_main(args: Sequence[str] | None = None, **kwargs: Any) -> Any:
     return vanilla_cli_main(args=args_list[:], **kwargs)
 
 
-# Mypy: here we want to use the patched main instead of the provided one by `BaseCommand`
+# [pyright] here we want to use the patched main instead of the one provided by `BaseCommand`
 # Note: We could use monkeypatch instead :thinking:
-cli.main = patched_cli_main  # type: ignore[assignment]
+cli.main = patched_cli_main  # pyright: ignore[reportAttributeAccessIssue]
