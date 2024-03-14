@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
 
 from parsec._parsec import (
     DateTime,
@@ -299,8 +298,6 @@ class BasePkiEnrollmentComponent:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case unknown:
-                assert_never(unknown)
 
         return anonymous_cmds.latest.pki_enrollment_info.RepOk(unit)
 
@@ -344,8 +341,6 @@ class BasePkiEnrollmentComponent:
                 client_ctx.organization_not_found_abort()
             case PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_pki_enrollment_list(
@@ -381,8 +376,6 @@ class BasePkiEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case PkiEnrollmentListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_pki_enrollment_reject(
@@ -415,8 +408,6 @@ class BasePkiEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case PkiEnrollmentRejectBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_pki_enrollment_accept(
@@ -478,5 +469,3 @@ class BasePkiEnrollmentComponent:
                 client_ctx.author_not_found_abort()
             case PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)

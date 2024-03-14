@@ -9,7 +9,6 @@ from typing import (
     Annotated,
     Any,
     Literal,
-    assert_never,
 )
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -115,8 +114,6 @@ async def administration_create_organizations(
                 status_code=400,
                 detail="Organization already exists",
             )
-        case unknown:
-            assert_never(unknown)
 
     return CreateOrganizationOut(bootstrap_token=bootstrap_token.hex)
 
@@ -145,8 +142,6 @@ async def administration_get_organization(
             pass
         case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
-        case unknown:
-            assert_never(unknown)
 
     return GetOrganizationOut(
         is_bootstrapped=organization.is_bootstrapped,
@@ -207,8 +202,6 @@ async def administration_patch_organization(
             pass
         case OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
-        case unknown:
-            assert_never(unknown)
 
     return PatchOrganizationOut()
 
@@ -229,8 +222,6 @@ async def administration_organization_stat(
             pass
         case OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
-        case unknown:
-            assert_never(unknown)
 
     return JSONResponse(
         status_code=200,
@@ -351,9 +342,6 @@ async def administration_server_stats(
                 },
             )
 
-        case unknown:
-            assert_never(unknown)
-
 
 @administration_router.get("/administration/organizations/{raw_organization_id}/users")
 async def administration_organization_users(
@@ -371,8 +359,6 @@ async def administration_organization_users(
             pass
         case UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND:
             raise HTTPException(status_code=404, detail="Organization not found")
-        case unknown:
-            assert_never(unknown)
 
     return JSONResponse(
         status_code=200,
@@ -437,8 +423,6 @@ async def administration_organization_users_freeze(
             raise HTTPException(
                 status_code=400, detail="Missing either `user_id` or `user_email` field"
             )
-        case unknown:
-            assert_never(unknown)
 
     return JSONResponse(
         status_code=200,

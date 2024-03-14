@@ -12,7 +12,6 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum, auto
-from typing import assert_never
 
 import anyio
 from structlog.stdlib import get_logger
@@ -423,8 +422,6 @@ class BaseInviteComponent:
                     pass
                 case InviteConduitExchangeBadOutcome() as error:
                     return error
-                case unknown:
-                    assert_never(unknown)
 
             if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
                 await self._claimer_joined(
@@ -451,8 +448,6 @@ class BaseInviteComponent:
                             return error
                         case None:
                             continue
-                        case unknown:
-                            assert_never(unknown)
 
             finally:
                 if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
@@ -590,8 +585,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteNewForUserBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
         return authenticated_cmds.latest.invite_new_user.RepOk(
             token=token,
@@ -631,8 +624,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteNewForDeviceBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
         return authenticated_cmds.latest.invite_new_device.RepOk(
             token=token,
@@ -666,8 +657,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteCancelBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_list(
@@ -690,8 +679,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteListBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
         cooked_invitations = []
         for invitation in invitations:
@@ -709,8 +696,6 @@ class BaseInviteComponent:
                         created_on=invitation.created_on,
                         status=invitation.status,
                     )
-                case unknown:
-                    assert_never(unknown)
             cooked_invitations.append(cooked)
 
         return authenticated_cmds.latest.invite_list.RepOk(invitations=cooked_invitations)
@@ -746,8 +731,6 @@ class BaseInviteComponent:
                 return client_ctx.invitation_invalid_abort()
             case InviteAsInvitedInfoBadOutcome.INVITATION_DELETED:
                 return client_ctx.invitation_invalid_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_1_claimer_wait_peer(
@@ -783,8 +766,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_1_greeter_wait_peer(
@@ -818,8 +799,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_2a_claimer_send_hash_nonce(
@@ -854,8 +833,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
         outcome = await self.conduit_exchange(
             organization_id=client_ctx.organization_id,
@@ -884,8 +861,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_2a_greeter_get_hashed_nonce(
@@ -921,8 +896,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_2b_greeter_send_nonce(
@@ -958,8 +931,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
         outcome = await self.conduit_exchange(
             organization_id=client_ctx.organization_id,
@@ -989,8 +960,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_2b_claimer_send_nonce(
@@ -1025,8 +994,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_3a_greeter_wait_peer_trust(
@@ -1058,8 +1025,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_3b_claimer_wait_peer_trust(
@@ -1096,8 +1061,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_3b_greeter_signify_trust(
@@ -1131,8 +1094,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_3a_claimer_signify_trust(
@@ -1167,8 +1128,6 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_4_greeter_communicate(
@@ -1207,8 +1166,6 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_invite_4_claimer_communicate(
@@ -1245,5 +1202,3 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
-            case unknown:
-                assert_never(unknown)

@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import assert_never, override
+from typing import override
 
 import asyncpg
 
@@ -54,8 +54,6 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if organization.is_expired:
             return AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED
@@ -85,8 +83,7 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthInvitedAuthBadOutcome.INVITATION_ALREADY_USED
             case DeviceInvitation() | UserInvitation() as invitation:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         return InvitedAuthInfo(
             organization_id=organization_id,
             token=token,
@@ -108,8 +105,6 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         if organization.is_expired:
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
@@ -123,8 +118,6 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
             case DeviceCertificate() as certificate:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,

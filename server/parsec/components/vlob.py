@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
 
 import httpx
 from structlog.stdlib import get_logger
@@ -324,8 +323,6 @@ class BaseVlobComponent:
                 client_ctx.author_not_found_abort()
             case VlobCreateBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_vlob_update(
@@ -395,8 +392,6 @@ class BaseVlobComponent:
                 client_ctx.author_not_found_abort()
             case VlobUpdateBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_vlob_read_batch(
@@ -433,8 +428,6 @@ class BaseVlobComponent:
                 client_ctx.author_not_found_abort()
             case VlobReadAsUserBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_vlob_read_versions(
@@ -470,8 +463,6 @@ class BaseVlobComponent:
                 client_ctx.author_not_found_abort()
             case VlobReadAsUserBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_vlob_poll_changes(
@@ -502,5 +493,3 @@ class BaseVlobComponent:
                 client_ctx.author_not_found_abort()
             case VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
