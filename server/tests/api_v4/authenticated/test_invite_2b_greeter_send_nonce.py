@@ -3,7 +3,7 @@
 import anyio
 import pytest
 
-from parsec._parsec import authenticated_cmds
+from parsec._parsec import InvitationToken, authenticated_cmds
 from parsec.components.invite import ConduitState
 from parsec.events import EventEnrollmentConduit
 from tests.common import Backend, CoolorgRpcClients
@@ -64,3 +64,12 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepOk(
         claimer_nonce=b"claimer-hello-world"
     )
+
+
+async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_2b_greeter_send_nonce(
+        token=InvitationToken.new(),
+        greeter_nonce=b"greeter-hello-world",
+    )
+
+    assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationNotFound()
