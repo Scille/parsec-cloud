@@ -22,9 +22,9 @@ async def test_unknown_org(family: str, client: httpx.AsyncClient) -> None:
         case "anonymous":
             pass
         case "authenticated":
-            headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
         case "invited":
             headers["Authorization"] = "Bearer 6f56a8579fc4425c82a71f9fc8531b77"
         case unknown:
@@ -90,7 +90,7 @@ async def test_authenticated_bad_auth_cmd(coolorg: CoolorgRpcClients, kind: str)
             client.headers["Api-Version"] = "3.99"
             expected_status_code = 422
         case "organization_not_utf8":
-            client.url += "\xC0"
+            client.url += "\xc0"
             expected_status_code = 404
         case "organization_unknown":
             base_url = client.url.rsplit("/", 1)[0]
@@ -115,48 +115,48 @@ async def test_authenticated_bad_auth_cmd(coolorg: CoolorgRpcClients, kind: str)
             client.headers["Authorization"] = "<dummy>"
             expected_status_code = 401
         case "authorization_header_invalid_method":
-            client.headers[
-                "Authorization"
-            ] = "Dummy PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Dummy PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_invalid_token":
             client.headers["Authorization"] = "Bearer <dummy>"
             expected_status_code = 401
         case "authorization_header_author_unknown":
             b64_uknown_author = urlsafe_b64encode(b"dummy@dev1").decode()
-            client.headers[
-                "Authorization"
-            ] = f"Bearer PARSEC-SIGN-ED25519.{b64_uknown_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                f"Bearer PARSEC-SIGN-ED25519.{b64_uknown_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 403
         case "authorization_header_author_not_b64":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.<dummy>.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.<dummy>.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_author_not_utf8":
-            b64_bad_author = urlsafe_b64encode(b"alice\xC0@dev1").decode()
-            client.headers[
-                "Authorization"
-            ] = f"Bearer PARSEC-SIGN-ED25519.{b64_bad_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            b64_bad_author = urlsafe_b64encode(b"alice\xc0@dev1").decode()
+            client.headers["Authorization"] = (
+                f"Bearer PARSEC-SIGN-ED25519.{b64_bad_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_bad_timestamp":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.<dummy>.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.<dummy>.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_signature_not_b64":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.<dummy>"  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.<dummy>"  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_bad_signature":
             vanilla_post = client.raw_client.post
 
             async def wrapper_post(url, headers, content):
                 without_signature, _ = headers["Authorization"].rsplit(".", 1)
-                headers[
-                    "Authorization"
-                ] = f"{without_signature}.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+                headers["Authorization"] = (
+                    f"{without_signature}.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+                )
                 return await vanilla_post(url, headers=headers, content=content)
 
             client.raw_client.post = wrapper_post  # type: ignore
@@ -230,7 +230,7 @@ async def test_authenticated_bad_auth_sse(coolorg: CoolorgRpcClients, kind: str)
             client.headers["Accept"] = "application/json"
             expected_status_code = 406
         case "organization_not_utf8":
-            client.url += "\xC0"
+            client.url += "\xc0"
             expected_status_code = 404
         case "organization_unknown":
             base_url = client.url.rsplit("/", 1)[0]
@@ -249,48 +249,48 @@ async def test_authenticated_bad_auth_sse(coolorg: CoolorgRpcClients, kind: str)
             client.headers["Authorization"] = "<dummy>"
             expected_status_code = 401
         case "authorization_header_invalid_method":
-            client.headers[
-                "Authorization"
-            ] = "Dummy PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Dummy PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_invalid_token":
             client.headers["Authorization"] = "Bearer <dummy>"
             expected_status_code = 401
         case "authorization_header_author_unknown":
             b64_uknown_author = urlsafe_b64encode(b"dummy@dev1").decode()
-            client.headers[
-                "Authorization"
-            ] = f"Bearer PARSEC-SIGN-ED25519.{b64_uknown_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                f"Bearer PARSEC-SIGN-ED25519.{b64_uknown_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 403
         case "authorization_header_author_not_b64":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.<dummy>.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.<dummy>.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_author_not_utf8":
-            b64_bad_author = urlsafe_b64encode(b"alice\xC0@dev1").decode()
-            client.headers[
-                "Authorization"
-            ] = f"Bearer PARSEC-SIGN-ED25519.{b64_bad_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            b64_bad_author = urlsafe_b64encode(b"alice\xc0@dev1").decode()
+            client.headers["Authorization"] = (
+                f"Bearer PARSEC-SIGN-ED25519.{b64_bad_author}.1708687856.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_bad_timestamp":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.<dummy>.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.<dummy>.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_signature_not_b64":
-            client.headers[
-                "Authorization"
-            ] = "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.<dummy>"  # cspell:disable-line
+            client.headers["Authorization"] = (
+                "Bearer PARSEC-SIGN-ED25519.YWxpY2VAZGV2MQ==.1708687856.<dummy>"  # cspell:disable-line
+            )
             expected_status_code = 401
         case "authorization_header_bad_signature":
             vanilla_get = client.raw_client.get
 
             async def wrapper_get(url, headers):
                 without_signature, _ = headers["Authorization"].rsplit(".", 1)
-                headers[
-                    "Authorization"
-                ] = f"{without_signature}.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+                headers["Authorization"] = (
+                    f"{without_signature}.akCqHmz2O8bQzz7i0ECmH8F3_mD7pwDds1eW_NzatTHfvAuwr_7obK5qSrCHFlN0XtVAJKaIZWDFLKNf7iGOAg=="  # cspell:disable-line
+                )
                 return await vanilla_get(url, headers=headers)
 
             client.raw_client.get = wrapper_get  # type: ignore
@@ -346,7 +346,7 @@ async def test_invited_bad_auth(coolorg: CoolorgRpcClients, kind: str) -> None:
             client.headers["Api-Version"] = "3.99"
             expected_status_code = 422
         case "organization_not_utf8":
-            client.url += "\xC0"
+            client.url += "\xc0"
             expected_status_code = 404
         case "organization_unknown":
             base_url = client.url.rsplit("/", 1)[0]
@@ -406,7 +406,7 @@ async def test_anonymous_bad_auth(coolorg: CoolorgRpcClients, kind: str) -> None
             client.headers["Api-Version"] = "3.99"
             expected_status_code = 422
         case "organization_not_utf8":
-            client.url += "\xC0"
+            client.url += "\xc0"
             expected_status_code = 404
         case "organization_unknown":
             base_url = client.url.rsplit("/", 1)[0]

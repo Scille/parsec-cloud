@@ -26,9 +26,11 @@ def ssl_conf(request: pytest.FixtureRequest):
     else:
         ca = trustme.CA()
         server_cert = ca.issue_cert("127.0.0.1")
-        with ca.cert_pem.tempfile() as ca_certfile, server_cert.cert_chain_pems[
-            0
-        ].tempfile() as server_certfile, server_cert.private_key_pem.tempfile() as server_keyfile:
+        with (
+            ca.cert_pem.tempfile() as ca_certfile,
+            server_cert.cert_chain_pems[0].tempfile() as server_certfile,
+            server_cert.private_key_pem.tempfile() as server_keyfile,
+        ):
             yield SSLConf(
                 backend_opts=f" --ssl-keyfile={server_keyfile} --ssl-certfile={server_certfile} ",
                 # SSL_CERT_FILE is the env var used by default by ssl.SSLContext
