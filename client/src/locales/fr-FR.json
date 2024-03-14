@@ -528,7 +528,8 @@
         "invitations": "Invitations",
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
-        "organizationInfo": "Informations"
+        "organizationInfo": "Informations",
+        "back": "Retour"
     },
     "DevicesPage": {
         "title": "Vos appareils",
