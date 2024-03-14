@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from .common import Variant, VlobID, DateTime, InvitationToken, InvitationStatus
+from .common import Variant, DateTime, InvitationToken, InvitationStatus
 
 
 class ClientEvent(Variant):
