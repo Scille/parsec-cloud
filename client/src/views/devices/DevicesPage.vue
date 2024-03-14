@@ -48,81 +48,83 @@
         </div>
 
         <!-- restore password card -->
-        <!-- files not downloaded -->
-        <div
-          class="restore-password"
-          v-if="!passwordSaved"
-        >
-          <ion-label class="body-sm danger">
-            {{ $t('DevicesPage.restorePassword.notDone.label') }}
-          </ion-label>
-          <div class="restore-password-header">
-            <ms-image
-              :image="PasswordLock"
-              class="restore-password-header-img"
-            />
-            <h3 class="title-h3 restore-password-header__title">
-              {{ $t('DevicesPage.restorePassword.title') }}
-            </h3>
-          </div>
-          <div class="restore-password-subtitles">
-            <ion-text
-              class="body"
-              :show="passwordSaved"
-            >
-              {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
-            </ion-text>
-            <ion-text class="body">
-              {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
-            </ion-text>
-          </div>
-          <div class="restore-password-button">
-            <ion-button
-              class="button-default"
-              @click="goToExportRecoveryDevice()"
-            >
-              <ion-icon
-                :icon="sparkles"
-                class="icon"
+        <div v-show="false">
+          <!-- files not downloaded -->
+          <div
+            class="restore-password"
+            v-if="!passwordSaved"
+          >
+            <ion-label class="body-sm danger">
+              {{ $t('DevicesPage.restorePassword.notDone.label') }}
+            </ion-label>
+            <div class="restore-password-header">
+              <ms-image
+                :image="PasswordLock"
+                class="restore-password-header-img"
               />
-              {{ $t('DevicesPage.restorePassword.notDone.button') }}
-            </ion-button>
+              <h3 class="title-h3 restore-password-header__title">
+                {{ $t('DevicesPage.restorePassword.title') }}
+              </h3>
+            </div>
+            <div class="restore-password-subtitles">
+              <ion-text
+                class="body"
+                :show="passwordSaved"
+              >
+                {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
+              </ion-text>
+              <ion-text class="body">
+                {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
+              </ion-text>
+            </div>
+            <div class="restore-password-button">
+              <ion-button
+                class="button-default"
+                @click="goToExportRecoveryDevice()"
+              >
+                <ion-icon
+                  :icon="sparkles"
+                  class="icon"
+                />
+                {{ $t('DevicesPage.restorePassword.notDone.button') }}
+              </ion-button>
+            </div>
           </div>
-        </div>
-        <!-- files downloaded -->
-        <div
-          class="restore-password"
-          v-else
-        >
-          <ion-label class="body-sm done">
-            {{ $t('DevicesPage.restorePassword.done.label') }}
-          </ion-label>
-          <div class="restore-password-header">
-            <ms-image
-              :image="PasswordLock"
-              class="restore-password-header-img"
-            />
-            <h3 class="title-h3 restore-password-header__title">
-              {{ $t('DevicesPage.restorePassword.title') }}
-            </h3>
-          </div>
-          <div class="restore-password-subtitles">
-            <ion-text class="body">
-              {{ $t('DevicesPage.restorePassword.done.subtitle') }}
-            </ion-text>
-          </div>
-          <div class="restore-password-button">
-            <ion-button
-              @click="goToExportRecoveryDevice()"
-              class="button-default"
-              fill="clear"
-            >
-              <ion-icon
-                :icon="download"
-                class="icon"
+          <!-- files downloaded -->
+          <div
+            class="restore-password"
+            v-else
+          >
+            <ion-label class="body-sm done">
+              {{ $t('DevicesPage.restorePassword.done.label') }}
+            </ion-label>
+            <div class="restore-password-header">
+              <ms-image
+                :image="PasswordLock"
+                class="restore-password-header-img"
               />
-              {{ $t('DevicesPage.restorePassword.done.button') }}
-            </ion-button>
+              <h3 class="title-h3 restore-password-header__title">
+                {{ $t('DevicesPage.restorePassword.title') }}
+              </h3>
+            </div>
+            <div class="restore-password-subtitles">
+              <ion-text class="body">
+                {{ $t('DevicesPage.restorePassword.done.subtitle') }}
+              </ion-text>
+            </div>
+            <div class="restore-password-button">
+              <ion-button
+                @click="goToExportRecoveryDevice()"
+                class="button-default"
+                fill="clear"
+              >
+                <ion-icon
+                  :icon="download"
+                  class="icon"
+                />
+                {{ $t('DevicesPage.restorePassword.done.button') }}
+              </ion-button>
+            </div>
           </div>
         </div>
       </div>
