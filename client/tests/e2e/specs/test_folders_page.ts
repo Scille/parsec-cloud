@@ -190,19 +190,17 @@ describe('Check folders page', () => {
     cy.get('.file-details-modal')
       .find('.ms-modal-header__title')
       .contains(/Details on File_[a-z_]+/);
-    cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 8);
-    cy.get('@values').eq(0).contains('File');
-    cy.get('@values')
+    cy.get('.file-details-modal')
+      .find('.file-info-basic__name')
+      .contains(/File_[a-z_]+/);
+    cy.get('.file-info-container')
+      .find('.file-info-details-item__value')
       .eq(1)
-      .contains(/\/File_[a-z_]+/);
-    cy.get('@values')
-      .eq(2)
       .contains(/^\d+ B|KB|MB|GB$/);
-    cy.get('@values').eq(5).contains('1');
-    cy.get('@values')
-      .eq(6)
-      .contains(/^Yes|No$/);
-    cy.get('@values').eq(7).contains(/^\d+$/);
+    cy.get('.file-info-container').find('.file-info-details-item__value').eq(2).contains('1');
+    cy.get('.file-info-container')
+      .find('.file-info-path-value__text')
+      .contains(/^\/File_[a-z_.]+$/);
   });
 
   it('Tests folder details', () => {
@@ -211,16 +209,13 @@ describe('Check folders page', () => {
     cy.get('.file-details-modal')
       .find('.ms-modal-header__title')
       .contains(/Details on Dir_[a-z_]+/);
-    cy.get('.file-details-modal').find('.file-info-value').as('values').should('have.length', 7);
-    cy.get('@values').eq(0).contains('Folder');
-    cy.get('@values')
-      .eq(1)
-      .contains(/\/Dir_[a-z_]+/);
-    cy.get('@values').eq(4).contains('1');
-    cy.get('@values')
-      .eq(5)
-      .contains(/^Yes|No$/);
-    cy.get('@values').eq(6).contains(/^\d+$/);
+    cy.get('.file-details-modal')
+      .find('.file-info-basic__name')
+      .contains(/Dir_[a-z_]+/);
+    cy.get('.file-info-container').find('.file-info-details-item__value').eq(1).contains('1');
+    cy.get('.file-info-container')
+      .find('.file-info-path-value__text')
+      .contains(/^\/Dir_[a-z_]+$/);
   });
 
   it('Tests get file link', () => {
