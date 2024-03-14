@@ -210,7 +210,7 @@ _q_get_average_realm_creation_date = Q(
 
 
 @lru_cache()
-def _q_update_factory(
+def _q_update_factory(  # pyright: ignore[reportUnusedFunction]
     with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
 ) -> Q:
     fields = []
@@ -232,7 +232,7 @@ def _q_update_factory(
     )
 
 
-async def _organization_stats(
+async def _organization_stats(  # pyright: ignore[reportUnusedFunction]
     conn: asyncpg.Connection,
     id: OrganizationID,
     at: DateTime,
