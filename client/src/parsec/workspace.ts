@@ -103,7 +103,7 @@ export async function listWorkspaces(mount = false): Promise<Result<Array<Worksp
           sharing: [],
           size: 0,
           lastUpdated: DateTime.now(),
-          availableOffline: false,
+          availableOffline: true,
           mountpoints: mountResult && mountResult.ok ? [mountResult.value] : startedWorkspaceResult.value.mountpoints,
           handle: startResult.value,
         };
