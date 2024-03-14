@@ -25,8 +25,6 @@ concurrency:
   group: publish-package-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
 
 env:
   RELEASE_TAG: ${{ github.event_name == 'release' && github.ref_name || inputs.release_tag }}
@@ -34,6 +32,9 @@ env:
 jobs:
   publish:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Get tag version
         id: version
