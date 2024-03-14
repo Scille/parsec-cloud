@@ -12,6 +12,7 @@ on:
       - nightly
   schedule:
     - cron: 30 22 * * * # At 22:30
+
 permissions:
   contents: write
 
@@ -148,12 +149,13 @@ jobs:
       - name: Remove previous nightly release
         if: env.NIGHTLY_RELEASE == 'true'
         run: |
-          if gh release view nightly; then
-            gh release delete nightly
+          if gh release ${{ env.GH_ARGS }} view nightly; then
+            gh release ${{ env.GH_ARGS }} delete nightly
           else
             echo "No nightly release to remove"
           fi
         env:
+          GH_ARGS: --repo=${{ github.server_url}}/${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
 
       - name: Create release
