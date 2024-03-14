@@ -48,3 +48,12 @@ async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
         token=InvitationToken.new(),
     )
     assert rep == authenticated_cmds.v4.invite_3a_greeter_wait_peer_trust.RepInvitationNotFound()
+
+
+async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
+    await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
+
+    rep = await coolorg.alice.invite_3a_greeter_wait_peer_trust(
+        token=coolorg.invited_alice_dev3.token,
+    )
+    assert rep == authenticated_cmds.v4.invite_3a_greeter_wait_peer_trust.RepInvitationDeleted()
