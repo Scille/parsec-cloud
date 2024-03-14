@@ -312,10 +312,6 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 hide_patch_version('build = "cp{version}-{{manylinux,macos,win}}*"', separator=""),
             ),
             ReplaceRegex(r"py\d+", hide_patch_version("py{version}", separator="")),
-            ReplaceRegex(
-                r"python_version = \"\d.\d+\"",
-                hide_patch_version('python_version = "{version}"'),
-            ),
         ],
         Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
         Tool.License: [TOML_LICENSE_FIELD],

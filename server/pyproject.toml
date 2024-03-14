@@ -65,7 +65,6 @@ poetry-lock-package = ">=0.4.4,<0.6.0"
 Babel = "^2.10"
 
 ruff = "0.3.4"
-mypy = "1.9.0"
 
 setuptools = ">=63.1,<70.0"
 
@@ -154,28 +153,6 @@ known-first-party = ["parsec", "tests"]
 module-name = "parsec._parsec"
 bindings = "pyo3"
 
-[tool.mypy]
-mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/parsec/stubs"
-namespace_packages = true
-explicit_package_bases = true
-python_version = "3.12"
-ignore_errors = false
-show_error_codes = true
-warn_unused_ignores = true
-
-# Global configuration
-strict_optional = true
-strict_equality = true
-allow_redefinition = true
-no_implicit_optional = true
-disallow_untyped_defs = true
-disallow_any_unimported = true
-disallow_any_decorated = true
-disallow_any_generics = true
-disallow_subclassing_any = true
-disallow_incomplete_defs = true
-ignore_missing_imports = false
-
 # Per-module customization
 
 [tool.pyright]
@@ -205,49 +182,6 @@ ignore = [
     "../misc/bench.py",
 ]
 stubPath = "parsec/stubs/"
-
-# 3rd party libraries with missing typing
-
-[[tool.mypy.overrides]]
-module = "pbr.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "swiftclient.*"
-ignore_missing_imports = true
-
-# Ignore any python files not in the parsec module
-
-[[tool.mypy.overrides]]
-# TODO: PostgreSQL is currently broken
-module = "parsec.components.postgresql.*"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-# TODO: PostgreSQL is currently broken
-module = "parsec.cli.migration"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-# TODO: PostgreSQL is currently broken
-module = "tests.cli.test_migration"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "misc.*"
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = "misc.releaser"
-ignore_errors = false
-
-[[tool.mypy.overrides]]
-module = "misc.version_updater"
-ignore_errors = false
-
-[[tool.mypy.overrides]]
-module = "docs.*"
-ignore_errors = true
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,

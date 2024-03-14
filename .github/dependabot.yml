@@ -125,7 +125,6 @@ updates:
       pytools:
         patterns:
           - ruff
-          - mypy
           - maturin
           - editorconfig-checker
           - setuptools
@@ -139,7 +138,6 @@ updates:
           - pytest*
           - hypothesis
           - ruff
-          - mypy
           - maturin
           - editorconfig-checker
           - setuptools

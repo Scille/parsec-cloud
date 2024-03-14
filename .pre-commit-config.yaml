@@ -159,18 +159,6 @@ repos:
         types_or: [python, pyi]
         args: [--project=server/]
 
-  # - id: mypy
-  #   name: Mypy (using `poetry run mypy`)
-  #   entry: poetry --directory ./server run mypy
-  #   require_serial: true
-  #   language: system
-  #   types_or: [ python, pyi ]
-  #   args:
-  #     [
-  #       --config=server/pyproject.toml,
-  #     ]
-  #   files: ^(server|misc|bindings/generator)/
-
   ######
   # Rust
 
