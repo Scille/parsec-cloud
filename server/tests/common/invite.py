@@ -4,7 +4,7 @@ import anyio
 
 from parsec._parsec import HashDigest, PrivateKey, authenticated_cmds, invited_cmds
 from parsec.backend import Backend
-from parsec.components.invite import ConduitState
+from parsec.components.invite import ConduitState, InviteConduitExchangeBadOutcome
 
 from .client import AuthenticatedRpcClient, InvitedRpcClient
 
@@ -60,6 +60,7 @@ async def pass_state_2a_claimer_send_hashed_nonce(
 ) -> None:
     """Advance the invitation process past the state 2a (greeter get hashed nonce)"""
     invitation_token = claimer.token
+    claimer_hash_nonce = HashDigest.from_data(b"pass_state_2a-claimer-hello-world")
     await pass_state_1_wait_peer(claimer, greeter)
 
     async def claimer_step_2a():
@@ -68,7 +69,7 @@ async def pass_state_2a_claimer_send_hashed_nonce(
             greeter=None,
             token=invitation_token,
             state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-            payload=HashDigest.from_data(b"claimer-hello-world").digest,
+            payload=claimer_hash_nonce.digest,
         )
 
     async def greeter_step_2a():
@@ -81,5 +82,41 @@ async def pass_state_2a_claimer_send_hashed_nonce(
         greeter_rep = await greeter_step_2a()
 
     assert greeter_rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepOk(
-        claimer_hashed_nonce=HashDigest.from_data(b"claimer-hello-world")
+        claimer_hashed_nonce=claimer_hash_nonce
     )
+
+
+async def pass_state_2_2_greeter_nonce(
+    claimer: InvitedRpcClient, greeter: AuthenticatedRpcClient, backend: Backend
+) -> None:
+    """Advance the invitation process past the state 2-2 greeter send nonce"""
+    invitation_token = claimer.token
+    claimer_hashed_nonce = HashDigest.from_data(b"pass_state_2_2-claimer-hello-world")
+    greeter_nonce = b"pass_state_2_2-greeter-hello-world"
+
+    await pass_state_1_wait_peer(claimer, greeter)
+
+    async def claimer_step_2_2():
+        return await claimer.invite_2a_claimer_send_hashed_nonce(
+            claimer_hashed_nonce,
+        )
+
+    async def greeter_step_2_2():
+        rep = await greeter.invite_2a_greeter_get_hashed_nonce(invitation_token)
+        assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepOk(
+            claimer_hashed_nonce
+        )
+        rep = await backend.invite.conduit_exchange(
+            organization_id=claimer.organization_id,
+            greeter=greeter.user_id,
+            token=invitation_token,
+            state=ConduitState.STATE_2_2_GREETER_NONCE,
+            payload=greeter_nonce,
+        )
+        assert not isinstance(rep, InviteConduitExchangeBadOutcome)
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(greeter_step_2_2)
+        rep = await claimer_step_2_2()
+
+    assert rep == invited_cmds.v4.invite_2a_claimer_send_hashed_nonce.RepOk(greeter_nonce)
