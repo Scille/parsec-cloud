@@ -18,7 +18,8 @@ const config: CapacitorElectronConfig = {
   },
   electron: {
     trayIconAndMenuEnabled: true,
-    splashScreenEnabled: true,
+    splashScreenEnabled: false, // sadly we are forced to disable the splash screen because of capacitor-community/electron v5.0.1
+    // see: https://github.com/capacitor-community/electron/issues/280
     deepLinkingEnabled: true,
     deepLinkingCustomProtocol: 'parsec3',
   },
