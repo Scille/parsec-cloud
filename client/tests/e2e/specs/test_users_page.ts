@@ -12,7 +12,7 @@ describe('Check active users page', () => {
   });
 
   it('Checks initial status', () => {
-    cy.get('.back-organization').find('ion-label').contains('Manage my organization');
+    cy.get('.back-organization').contains('Back');
     cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
     cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
     cy.get('.topbar-left__title').find('.title-h2').contains('Users');

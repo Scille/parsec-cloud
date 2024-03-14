@@ -69,18 +69,9 @@
                 fill="clear"
                 class="back-button"
               >
-                <ion-icon
-                  slot="icon-only"
-                  :icon="chevronBack"
-                />
+                <ion-icon :icon="chevronBack" />
+                {{ $t('SideMenu.back') }}
               </ion-button>
-              <ion-label class="title-h3">
-                {{
-                  userInfo && userInfo.currentProfile === UserProfile.Admin
-                    ? $t('SideMenu.manageOrganization')
-                    : $t('SideMenu.organizationInfo')
-                }}
-              </ion-label>
             </div>
           </div>
         </ion-header>
@@ -106,7 +97,7 @@
                 <ion-icon
                   class="list-workspaces-header__button"
                   id="new-workspace"
-                  :icon="addCircle"
+                  :icon="add"
                   v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
                   @click="createWorkspace"
                 />
@@ -124,7 +115,7 @@
                 :key="workspace.handle"
                 @click="goToWorkspace(workspace.handle)"
                 :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-                class="sidebar-item"
+                class="sidebar-item menu-default"
               >
                 <ion-icon
                   :icon="business"
@@ -139,6 +130,13 @@
             v-show="currentRouteIsOrganizationManagementRoute()"
             class="manage-organization"
           >
+            <ion-label class="title-h4">
+              {{
+                userInfo && userInfo.currentProfile === UserProfile.Admin
+                  ? $t('SideMenu.manageOrganization')
+                  : $t('SideMenu.organizationInfo')
+              }}
+            </ion-label>
             <!-- user actions -->
             <ion-list class="manage-organization-list users">
               <ion-item
@@ -246,7 +244,7 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { addCircle, business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
+import { add, business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
 import { Ref, WatchStopHandle, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
@@ -405,6 +403,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   --background: var(--parsec-color-light-primary-800);
   --padding-end: 0;
   --padding-start: 0;
+  --padding-top: 0;
 }
 
 .sidebar {
@@ -531,17 +530,22 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   display: flex;
   align-items: center;
   align-self: stretch;
-  padding: 2rem 1.25rem;
+  padding: 1rem;
   color: var(--parsec-color-light-secondary-inversed-contrast);
   gap: 1rem;
-  cursor: pointer;
 
   .back-button {
+    --background: none;
+    --background-hover: var(--parsec-color-light-primary-30-opacity15);
     --color: var(--parsec-color-light-secondary-light);
-    margin: 0;
-
+    --color-hover: var(--parsec-color-light-secondary-light);
     &::part(native) {
-      padding: 0;
+      padding: 0.5rem;
+    }
+
+    & > ion-icon {
+      font-size: 1.25em;
+      margin-inline-end: 12px;
     }
   }
 
@@ -667,6 +671,11 @@ ion-menu {
   color: var(--parsec-color-light-secondary-inversed-contrast);
   padding: 0 1.25rem;
   gap: 0.5rem;
+
+  .title-h4 {
+    padding: 1.5em 0 1em;
+    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
+  }
 
   &-list {
     padding: 0;

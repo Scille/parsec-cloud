@@ -12,7 +12,7 @@ describe('Check manage org page', () => {
   });
 
   it('Checks initial status', () => {
-    cy.get('.back-organization').find('ion-label').contains('Manage my organization');
+    cy.get('.back-organization').contains('Back');
     cy.get('.organization-card-header').should('not.be.visible');
     cy.get('.organization-card-manageBtn').should('not.be.visible');
     cy.get('.sidebar').find('.list-workspaces').should('not.be.visible');
