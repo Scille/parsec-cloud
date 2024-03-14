@@ -3,7 +3,7 @@
 import anyio
 import pytest
 
-from parsec._parsec import HashDigest, authenticated_cmds
+from parsec._parsec import HashDigest, InvitationToken, authenticated_cmds
 from parsec.components.invite import ConduitState
 from tests.common import Backend, CoolorgRpcClients
 from tests.common.invite import pass_state_1_wait_peer
@@ -51,3 +51,10 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepOk(
         claimer_hashed_nonce=HashDigest.from_data(b"hello-world")
     )
+
+
+async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_2a_greeter_get_hashed_nonce(
+        token=InvitationToken.new(),
+    )
+    assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepInvitationNotFound()
