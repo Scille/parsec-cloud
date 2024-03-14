@@ -28,7 +28,7 @@ export class ToastManager {
     const toast = await toastController.create({
       header: toastConfig.title,
       message: toastConfig.message,
-      cssClass: ['notification-toast', toastConfig.theme],
+      cssClass: ['notification-toast body', toastConfig.theme],
       mode: 'ios',
       duration: duration,
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,

@@ -96,8 +96,6 @@ ion-toast.notification-toast {
 
   &::part(message) {
     color: var(--parsec-color-light-secondary-text);
-    font-size: 0.825rem;
-    padding-top: 0.25rem;
   }
 
   &::part(icon) {
