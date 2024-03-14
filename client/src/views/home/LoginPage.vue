@@ -31,6 +31,7 @@
             :password-is-invalid="passwordIsInvalid"
           />
           <ion-button
+            v-show="false"
             fill="clear"
             @click="$emit('forgottenPasswordClick', device)"
             id="forgotten-password-button"
