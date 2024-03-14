@@ -29,8 +29,8 @@
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
-        <span>{{ $t('WorkspacesPage.Workspace.lastUpdate') }}</span>
-        <span>{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
+        <span v-show="false">{{ $t('WorkspacesPage.Workspace.lastUpdate') }}</span>
+        <span v-show="false">{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
       </ion-text>
 
       <div
@@ -38,7 +38,9 @@
         v-show="clientProfile !== UserProfile.Outsider"
       >
         <ion-text class="label-file-size body-sm">
-          {{ formatFileSize(workspace.size) }}
+          <span v-show="false">
+            {{ formatFileSize(workspace.size) }}
+          </span>
         </ion-text>
         <avatar-group
           v-show="workspace.sharing.length > 0"

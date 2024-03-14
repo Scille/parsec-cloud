@@ -78,10 +78,16 @@
               >
                 {{ $t('WorkspacesPage.listDisplayTitles.sharedWith') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label cell-title label-update">
+              <ion-label
+                class="workspace-list-header__label cell-title label-update"
+                v-show="false"
+              >
                 {{ $t('WorkspacesPage.listDisplayTitles.lastUpdate') }}
               </ion-label>
-              <ion-label class="workspace-list-header__label cell-title label-size">
+              <ion-label
+                class="workspace-list-header__label cell-title label-size"
+                v-show="false"
+              >
                 {{ $t('WorkspacesPage.listDisplayTitles.size') }}
               </ion-label>
               <ion-label class="workspace-list-header__label cell-title label-space" />
@@ -440,7 +446,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
 
   .label-name {
     width: 100%;
-    max-width: 20vw;
+    max-width: 40vw;
     min-width: 11.25rem;
     white-space: nowrap;
     overflow: hidden;

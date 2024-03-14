@@ -53,14 +53,20 @@
     </div>
 
     <!-- last update -->
-    <div class="workspace-lastUpdate">
+    <div
+      class="workspace-lastUpdate"
+      v-show="false"
+    >
       <ion-label class="label-last-update cell">
         {{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}
       </ion-label>
     </div>
 
     <!-- workspace size -->
-    <div class="workspace-size">
+    <div
+      class="workspace-size"
+      v-show="false"
+    >
       <ion-label class="label-size cell">
         {{ formatFileSize(workspace.size) }}
       </ion-label>
@@ -112,7 +118,7 @@ defineEmits<{
 .workspace-name {
   padding: 0.75rem 1rem;
   width: 100%;
-  max-width: 20vw;
+  max-width: 40vw;
   white-space: nowrap;
   overflow: hidden;
 
