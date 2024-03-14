@@ -182,6 +182,7 @@ reportUnusedExcept = true
 reportUnusedExpression = true
 reportUnnecessaryTypeIgnoreComment = "information"
 reportMatchNotExhaustive = true
+reportAssertAlwaysTrue = "information"
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,
