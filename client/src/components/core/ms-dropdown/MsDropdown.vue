@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="dropdown-container">
+  <div class="dropdown-container large">
     <ion-text
       class="form-label"
       v-if="title && appearanceRef === MsAppearance.Outline"
@@ -100,19 +100,25 @@ function getIcon(): string {
   color: var(--parsec-color-light-primary-800);
   --border-color-hover: none;
   margin: 0;
-  // height: 100%;
 
   .input-text {
     width: 100%;
     text-align: left;
     pointer-events: none;
   }
+
+  &::part(native) {
+    border-radius: var(--parsec-radius-8);
+  }
 }
 
 .dropdown-container {
   // offset necessary to simulate border 3px on focus with outline (outline 2px + border 1px)
-  --offset: 2px;
-  --min-height: 3rem;
+  --offset: 4px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -125,6 +131,12 @@ function getIcon(): string {
 
   .form-label {
     color: var(--parsec-color-light-primary-700);
+  }
+
+  &.large {
+    .filter-button::part(native) {
+      padding: 0.75rem 1rem;
+    }
   }
 }
 

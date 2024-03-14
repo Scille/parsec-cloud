@@ -11,7 +11,7 @@
     </span>
 
     <ion-item
-      class="input-item"
+      class="input-item ion-no-padding"
       :class="{
         'form-input-disabled': $props.disabled,
         'input-valid': validity === Validity.Valid,
@@ -109,10 +109,4 @@ async function onChange(value: string): Promise<void> {
 }
 </script>
 
-<style lang="scss" scoped>
-.form-input-disabled {
-  --background: var(--parsec-color-light-secondary-disabled);
-  background: var(--parsec-color-light-secondary-disabled);
-  border: var(--parsec-color-light-secondary-disabled);
-}
-</style>
+<style lang="scss" scoped></style>
