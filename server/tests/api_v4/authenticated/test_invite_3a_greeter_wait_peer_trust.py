@@ -2,7 +2,7 @@
 import anyio
 import pytest
 
-from parsec._parsec import authenticated_cmds, invited_cmds
+from parsec._parsec import InvitationToken, authenticated_cmds, invited_cmds
 from tests.common import CoolorgRpcClients
 from tests.common.invite import pass_state_2_exchange_nonce
 
@@ -41,3 +41,10 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
         await second(tg.cancel_scope)
 
     assert rep == authenticated_cmds.v4.invite_3a_greeter_wait_peer_trust.RepOk()
+
+
+async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_3a_greeter_wait_peer_trust(
+        token=InvitationToken.new(),
+    )
+    assert rep == authenticated_cmds.v4.invite_3a_greeter_wait_peer_trust.RepInvitationNotFound()
