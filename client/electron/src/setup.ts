@@ -225,7 +225,7 @@ export class ElectronCapacitorApp {
      */
     if (this.CapacitorFileConfig.electron?.splashScreenEnabled) {
       this.SplashScreen = new CapacitorSplashScreen({
-        imageFilePath: join(app.getAppPath(), 'assets', this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash.png'),
+        imageFilePath: join(app.getAppPath(), 'assets', this.CapacitorFileConfig.electron?.splashScreenImageName ?? 'splash-screen.png'),
         windowWidth: 600,
         windowHeight: 400,
       });
