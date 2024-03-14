@@ -201,6 +201,7 @@ def _mocked_send_email(
     tmpfile_fd, tmpfile_path = tempfile.mkstemp(
         prefix="tmp-email-", suffix=".html", dir=email_config.tmpdir
     )
+    del tmpfile_fd  # Unused
     tmpfile = open(tmpfile_path, "w")
     tmpfile.write(message.as_string())
     print(
