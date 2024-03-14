@@ -173,6 +173,7 @@ ignore = [
 ]
 stubPath = "parsec/stubs/"
 reportUnusedImport = true
+reportUnusedClass = true
 
 [build-system]
 # Be careful `build-system` entry works out of poetry,
