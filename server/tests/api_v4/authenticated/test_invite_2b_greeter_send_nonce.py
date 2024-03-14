@@ -73,3 +73,14 @@ async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
     )
 
     assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationNotFound()
+
+
+async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
+    await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
+
+    rep = await coolorg.alice.invite_2b_greeter_send_nonce(
+        token=coolorg.invited_alice_dev3.token,
+        greeter_nonce=b"greeter-hello-world",
+    )
+
+    assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationDeleted()
