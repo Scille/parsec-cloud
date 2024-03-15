@@ -200,5 +200,8 @@ jobs:
       && needs.releaser.result == 'success'
       && always()
     uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: read
+      id-token: write
     with:
       release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
