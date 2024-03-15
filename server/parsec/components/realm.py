@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
+from typing import TypeAlias, assert_never
 
 from parsec._parsec import (
     DateTime,
@@ -26,6 +26,8 @@ from parsec.ballpark import (
 )
 from parsec.client_context import AuthenticatedClientContext
 from parsec.types import BadOutcomeEnum
+
+KeyIndex: TypeAlias = int
 
 
 @dataclass(slots=True)
@@ -235,6 +237,11 @@ def realm_rotate_key_validate(
             return error
 
     return data
+
+
+class RealmCheckBadOutcome(BadOutcomeEnum):
+    REALM_NOT_FOUND = auto()
+    USER_NOT_IN_REALM = auto()
 
 
 class RealmCreateStoreBadOutcome(BadOutcomeEnum):

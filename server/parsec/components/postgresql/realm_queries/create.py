@@ -19,11 +19,13 @@ _q_insert_realm = Q(
 INSERT INTO realm (
     organization,
     realm_id,
-    created_on
+    created_on,
+    key_index
 ) SELECT
     { q_organization_internal_id("$organization_id") },
     $realm_id,
-    $created_on
+    $created_on,
+    0
 ON CONFLICT (organization, realm_id) DO NOTHING
 RETURNING _id
 """
