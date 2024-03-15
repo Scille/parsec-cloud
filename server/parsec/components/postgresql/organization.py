@@ -44,6 +44,7 @@ from parsec.components.postgresql.test_queries import (
     q_test_drop_organization_from_realm_table,
     q_test_drop_organization_from_realm_user_role_table,
     q_test_drop_organization_from_user_table,
+    q_test_drop_organization_from_vlob_atom_table,
     q_test_duplicate_organization_from_device_table,
     q_test_duplicate_organization_from_human_table,
     q_test_duplicate_organization_from_invitation_table,
@@ -51,6 +52,7 @@ from parsec.components.postgresql.test_queries import (
     q_test_duplicate_organization_from_realm_table,
     q_test_duplicate_organization_from_realm_user_role_table,
     q_test_duplicate_organization_from_user_table,
+    q_test_duplicate_organization_from_vlob_atom_table,
 )
 from parsec.components.postgresql.user_queries.create import q_create_user
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, transaction
@@ -191,10 +193,12 @@ SELECT
     (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
+        LEFT JOIN realm
+        ON vlob_atom.realm = realm._id
         WHERE
-            organization = { q_organization_internal_id("$organization_id") }
-            AND created_on <= $at
-            AND (deleted_on IS NULL OR deleted_on > $at)
+            realm.organization = { q_organization_internal_id("$organization_id") }
+            AND vlob_atom.created_on <= $at
+            AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
     ) metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
@@ -636,6 +640,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def test_drop_organization(self, id: OrganizationID) -> None:
         async with self.pool.acquire() as conn:
             await conn.execute(
+                *q_test_drop_organization_from_vlob_atom_table(organization_id=id.str)
+            )
+            await conn.execute(
                 *q_test_drop_organization_from_realm_user_role_table(organization_id=id.str)
             )
             await conn.execute(*q_test_drop_organization_from_realm_table(organization_id=id.str))
@@ -685,6 +692,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             await conn.execute(
                 *q_test_duplicate_organization_from_realm_user_role_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
+                *q_test_duplicate_organization_from_vlob_atom_table(
                     source_id=source_id.str, target_id=target_id.str
                 )
             )

@@ -53,6 +53,16 @@ class Q:
             args.append(kwargs[variable])
         return args
 
+    def arg_only(self, **kwargs: Any) -> list[Any]:
+        if kwargs.keys() != self._variables.keys():
+            missing = self._variables.keys() - kwargs.keys()
+            unknown = kwargs.keys() - self._variables.keys()
+            raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
+        args = []
+        for variable in self._variables:
+            args.append(kwargs[variable])
+        return args
+
 
 def q_organization(
     organization_id: str | None = None,
