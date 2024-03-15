@@ -49,7 +49,7 @@
             v-model="orgName"
             ref="organizationNameInputRef"
             @on-enter-keyup="nextStep()"
-            :validator="organizationValidator"
+            :validator="organizationNameValidator"
           />
 
           <ion-text class="subtitles-sm org-name-criteria">
@@ -173,7 +173,7 @@
 <script setup lang="ts">
 import { asyncComputed } from '@/common/asyncComputed';
 import { getDefaultDeviceName } from '@/common/device';
-import { Validity, organizationValidator } from '@/common/validators';
+import { IValidator, Validity, organizationValidator } from '@/common/validators';
 import { Answer, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
@@ -281,6 +281,18 @@ onMounted(async () => {
   await organizationNameInputRef.value.setFocus();
 });
 
+const orgAlreadyExists = ref(false);
+const organizationNameValidator: IValidator = async function (value: string) {
+  const result = await organizationValidator(value);
+
+  if (result.validity === Validity.Valid && orgAlreadyExists.value) {
+    const ret = { validity: Validity.Invalid, reason: translate('CreateOrganization.errors.alreadyExists') };
+    orgAlreadyExists.value = false;
+    return ret;
+  }
+  return result;
+};
+
 function getNextButtonText(): string {
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
     return translate('CreateOrganization.button.create');
@@ -382,8 +394,11 @@ async function nextStep(): Promise<void> {
       let message = '';
       switch (result.error.tag) {
         case BootstrapOrganizationErrorTag.AlreadyUsedToken:
-          message = translate('AddCreateOrganization.errors.alreadyExists');
           pageStep.value = CreateOrganizationStep.OrgNameStep;
+          orgAlreadyExists.value = true;
+          await organizationNameInputRef.value.setFocus();
+          await organizationNameInputRef.value.selectText();
+          await organizationNameInputRef.value.validate(orgName.value);
           break;
 
         case BootstrapOrganizationErrorTag.Offline:
@@ -406,13 +421,15 @@ async function nextStep(): Promise<void> {
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
       }
-      informationManager.present(
-        new Information({
-          message: message,
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
+      if (message) {
+        informationManager.present(
+          new Information({
+            message: message,
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      }
     }
   }
 
