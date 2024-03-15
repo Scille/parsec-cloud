@@ -44,7 +44,27 @@
     />
   </head>
 
-  <body>
+  <style>
+    .loggedIn {
+      -webkit-animation: revoked 1s infinite;  /* Safari 4+ */
+      -moz-animation: revoked 1s infinite;  /* Fx 5+ */
+      -o-animation: revoked 1s infinite;  /* Opera 12+ */
+      animation: revoked 1s infinite;  /* IE 10+, Fx 29+ */
+    }
+
+    @keyframes revoked {
+      0%, 49% {
+        background-color: #700000;
+        border: 100px dashed #e50000;
+      }
+      50%, 100% {
+        background-color: #e50000;
+        border: 100px double #700000;
+      }
+    }
+  </style>
+
+  <body id="body">
     <div id="app"></div>
     <script
       type="module"

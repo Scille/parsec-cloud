@@ -248,6 +248,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       }
     } else {
       const options: NavigationOptions = { params: { handle: result.value }, replace: true };
+      const el = document.getElementById('body')?.classList.add('loggedIn');
       await navigateTo(Routes.Workspaces, options);
     }
     state.value = HomePageState.OrganizationList;
