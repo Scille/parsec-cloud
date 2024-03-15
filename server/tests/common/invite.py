@@ -188,3 +188,25 @@ async def pass_state_3a_claimer_signify_trust(
 
     assert claimer_response == invited_cmds.v4.invite_3a_claimer_signify_trust.RepOk()
     assert greeter_response == authenticated_cmds.v4.invite_3a_greeter_wait_peer_trust.RepOk()
+
+
+async def pass_state_3b_greeter_signify_trust(
+    claimer: InvitedRpcClient, greeter: AuthenticatedRpcClient
+) -> None:
+    invitation_token = claimer.token
+    greeter_response = None
+    await pass_state_3a_claimer_signify_trust(claimer, greeter)
+
+    async def claimer_step_3b():
+        return await claimer.invite_3b_claimer_wait_peer_trust()
+
+    async def greeter_step_3b():
+        nonlocal greeter_response
+        greeter_response = await greeter.invite_3b_greeter_signify_trust(invitation_token)
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(greeter_step_3b)
+        claimer_response = await claimer_step_3b()
+
+    assert claimer_response == invited_cmds.v4.invite_3b_claimer_wait_peer_trust.RepOk()
+    assert greeter_response == authenticated_cmds.v4.invite_3b_greeter_signify_trust.RepOk()
