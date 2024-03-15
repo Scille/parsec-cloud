@@ -67,7 +67,7 @@ export async function deleteFolder(workspaceHandle: WorkspaceHandle, path: FsPat
   const clientHandle = getParsecHandle();
 
   if (clientHandle && !needsMocks()) {
-    return await libparsec.workspaceRemoveFolder(workspaceHandle, path);
+    return await libparsec.workspaceRemoveFolderAll(workspaceHandle, path);
   } else {
     return { ok: true, value: null };
   }
