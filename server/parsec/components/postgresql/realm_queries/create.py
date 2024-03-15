@@ -19,11 +19,11 @@ _q_insert_realm = Q(
 INSERT INTO realm (
     organization,
     realm_id,
-    encryption_revision
+    created_on
 ) SELECT
     { q_organization_internal_id("$organization_id") },
     $realm_id,
-    1
+    $created_on
 ON CONFLICT (organization, realm_id) DO NOTHING
 RETURNING _id
 """
@@ -74,7 +74,9 @@ async def query_create(
 
     realm_internal_id = await conn.fetchval(
         *_q_insert_realm(
-            organization_id=organization_id.str, realm_id=realm_role_certificate_cooked.realm_id
+            organization_id=organization_id.str,
+            realm_id=realm_role_certificate_cooked.realm_id,
+            created_on=realm_role_certificate_cooked.timestamp,
         )
     )
     if not realm_internal_id:
@@ -109,5 +111,3 @@ async def query_create(
             certified_on=realm_role_certificate_cooked.timestamp,
         )
     )
-
-    await conn.execute(*_q_insert_realm_encryption_revision(_id=realm_internal_id))

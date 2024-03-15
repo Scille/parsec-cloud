@@ -5,7 +5,6 @@ from functools import lru_cache
 from typing import Literal, assert_never, override
 
 import asyncpg
-from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -288,20 +287,19 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
         async with self.pool.acquire() as conn:
-            try:
-                result = await conn.execute(
-                    *_q_insert_organization(
-                        organization_id=id.str,
-                        bootstrap_token=bootstrap_token.hex,
-                        active_users_limit=active_users_limit
-                        if active_users_limit is not ActiveUsersLimit.NO_LIMIT
-                        else None,
-                        user_profile_outsider_allowed=user_profile_outsider_allowed,
-                        created_on=now,
-                        minimum_archiving_period=minimum_archiving_period,
-                    )
+            result = await conn.execute(
+                *_q_insert_organization(
+                    organization_id=id.str,
+                    bootstrap_token=bootstrap_token.hex,
+                    active_users_limit=active_users_limit
+                    if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                    else None,
+                    user_profile_outsider_allowed=user_profile_outsider_allowed,
+                    created_on=now,
+                    minimum_archiving_period=minimum_archiving_period,
                 )
-            except UniqueViolationError:
+            )
+            if result == "INSERT 0 0":
                 return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
             if result != "INSERT 0 1":
                 assert False, f"Insertion error: {result}"

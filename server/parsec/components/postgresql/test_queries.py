@@ -187,27 +187,21 @@ INSERT INTO invitation (
     organization,
     token,
     type,
-    greeter,
+    author,
     claimer_email,
     created_on,
     deleted_on,
-    deleted_reason,
-    conduit_state,
-    conduit_greeter_payload,
-    conduit_claimer_payload
+    deleted_reason
 )
 SELECT
     { q_organization_internal_id("$target_id") },
     token,
     type,
-    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="invitation.greeter", select="user_id")) },
+    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="invitation.author", select="user_id")) },
     claimer_email,
     created_on,
     deleted_on,
-    deleted_reason,
-    conduit_state,
-    conduit_greeter_payload,
-    conduit_claimer_payload
+    deleted_reason
 FROM invitation
 WHERE organization = { q_organization_internal_id("$source_id") }
 """
@@ -219,12 +213,12 @@ q_test_duplicate_organization_from_realm_table = Q(
 INSERT INTO realm (
     organization,
     realm_id,
-    encryption_revision
+    created_on
 )
 SELECT
     { q_organization_internal_id("$target_id") },
     realm_id,
-    encryption_revision
+    created_on
 FROM realm
 WHERE organization = { q_organization_internal_id("$source_id") }
 """
