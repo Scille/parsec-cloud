@@ -43,22 +43,22 @@ function getIcon(): string {
 <style scoped lang="scss">
 .ms-info {
   --ms-alert-text-background-color: var(--parsec-color-light-primary-100);
-  --ms-alert-text-icon-color: var(--parsec-color-light-primary-500);
+  --ms-alert-text-icon-color: var(--parsec-color-light-primary-700);
 }
 
 .ms-success {
   --ms-alert-text-background-color: var(--parsec-color-light-success-100);
-  --ms-alert-text-icon-color: var(--parsec-color-light-success-500);
+  --ms-alert-text-icon-color: var(--parsec-color-light-success-700);
 }
 
 .ms-warning {
   --ms-alert-text-background-color: var(--parsec-color-light-warning-100);
-  --ms-alert-text-icon-color: var(--parsec-color-light-warning-500);
+  --ms-alert-text-icon-color: var(--parsec-color-light-warning-700);
 }
 
 .ms-error {
   --ms-alert-text-background-color: var(--parsec-color-light-danger-100);
-  --ms-alert-text-icon-color: var(--parsec-color-light-danger-500);
+  --ms-alert-text-icon-color: var(--parsec-color-light-danger-700);
 }
 
 .container-textinfo {
