@@ -43,7 +43,7 @@
       <!-- Can't get the information right now, maybe later -->
       <div
         class="file-updatedBy"
-        v-if="false"
+        v-show="false"
       >
         <user-avatar-name
           :user-avatar="entry.id"
@@ -138,12 +138,14 @@ async function onOptionsClick(event: Event): Promise<void> {
   &__label {
     color: var(--parsec-color-light-secondary-text);
     margin-left: 1em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
   }
 
   .cloud-overlay {
     font-size: 1rem;
-    // simulate the space taken by file-updatedBy
-    margin-right: 14rem;
+    flex-shrink: 0;
 
     &-ok {
       color: var(--parsec-color-light-primary-500);

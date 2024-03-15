@@ -21,17 +21,20 @@
       <ion-label class="user-list-header__label cell-title label-name">
         {{ $t('UsersPage.listDisplayTitles.name') }}
       </ion-label>
-      <ion-label class="user-list-header__label cell-title label-status">
-        {{ $t('UsersPage.listDisplayTitles.status') }}
+      <ion-label class="user-list-header__label cell-title label-profile">
+        {{ $t('UsersPage.listDisplayTitles.profile') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-email">
         {{ $t('UsersPage.listDisplayTitles.email') }}
       </ion-label>
-      <ion-label class="user-list-header__label cell-title label-profile">
-        {{ $t('UsersPage.listDisplayTitles.profile') }}
-      </ion-label>
-      <ion-label class="user-list-header__label cell-title label-joined-on">
+      <ion-label
+        class="user-list-header__label cell-title label-joined-on"
+        v-show="false"
+      >
         {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
+      </ion-label>
+      <ion-label class="user-list-header__label cell-title label-status">
+        {{ $t('UsersPage.listDisplayTitles.status') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-space" />
     </ion-list-header>
@@ -114,20 +117,10 @@ async function selectAll(selected: boolean): Promise<void> {
 
   .label-name {
     width: 100%;
-    max-width: 20vw;
+    max-width: 25rem;
     min-width: 11.25rem;
     white-space: nowrap;
     overflow: hidden;
-  }
-
-  .label-status {
-    min-width: 6rem;
-    flex-grow: 0;
-  }
-
-  .label-email {
-    min-width: 15.5rem;
-    flex-grow: 0;
   }
 
   .label-profile {
@@ -136,16 +129,29 @@ async function selectAll(selected: boolean): Promise<void> {
     flex-grow: 2;
   }
 
+  .label-email {
+    min-width: 20rem;
+    flex-grow: 0;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .label-status {
+    min-width: 7.5rem;
+    flex-grow: 0;
+  }
+
   .label-joined-on {
     min-width: 11.25rem;
     flex-grow: 0;
+    flex-shrink: 0;
   }
 
   .label-space {
     min-width: 4rem;
     flex-grow: 0;
     margin-left: auto;
-    margin-right: 1rem;
   }
 }
 </style>

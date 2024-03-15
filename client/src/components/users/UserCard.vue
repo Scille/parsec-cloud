@@ -103,7 +103,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 .user-card-item {
   --background: none;
   --background-hover: none;
-  background: var(--parsec-color-light-secondary-background);
+
   border: 1px solid var(--parsec-color-light-secondary-medium);
   width: 14rem;
   border-radius: var(--parsec-radius-12);
@@ -122,8 +122,13 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 
+  &.item-disabled {
+    &::after {
+      opacity: 0 !important;
+    }
+  }
+
   &.revoked {
-    background: var(--parsec-color-light-secondary-background);
     position: relative;
 
     .user-revoked {
@@ -200,6 +205,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     &__email {
       color: var(--parsec-color-light-secondary-grey);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
   }
 }
