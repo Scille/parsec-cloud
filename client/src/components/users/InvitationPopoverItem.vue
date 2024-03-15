@@ -118,18 +118,19 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
     .hover-state {
       display: block;
     }
-
-    .invitation-actions-buttons {
-      opacity: 1;
-    }
   }
 }
 
 .invitation-email {
   width: 100%;
-  white-space: nowrap;
   overflow: hidden;
   color: var(--parsec-color-light-secondary-text);
+
+  .invitation-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .invitation-actions {
@@ -173,7 +174,6 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   }
 
   &-buttons {
-    opacity: 0;
     gap: 1rem;
     margin-left: auto;
 
