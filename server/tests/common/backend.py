@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import asyncio
-from typing import AsyncGenerator, Iterator
+from typing import AsyncIterator, Awaitable, Callable, Iterator
 
 import pytest
 
@@ -10,14 +10,24 @@ from parsec.asgi import AsgiApp
 from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend
+from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 from parsec.config import BackendConfig, BaseBlockStoreConfig, MockedEmailConfig
+from tests.common.postgresql import reset_postgresql_testbed
 
 SERVER_DOMAIN = "parsec.invalid"
 
 
+@pytest.fixture(scope="session")
+def backend_mocked_data() -> dict[OrganizationID, MemoryOrganization]:
+    return {}
+
+
 @pytest.fixture
 def backend_config(
-    tmpdir: str, db_url: str, blockstore_config: BaseBlockStoreConfig
+    tmpdir: str,
+    db_url: str,
+    blockstore_config: BaseBlockStoreConfig,
+    backend_mocked_data: dict[OrganizationID, MemoryOrganization],
 ) -> BackendConfig:
     return BackendConfig(
         debug=True,
@@ -32,11 +42,14 @@ def backend_config(
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=False,
         organization_bootstrap_webhook_url=None,
+        backend_mocked_data=backend_mocked_data,
     )
 
 
 @pytest.fixture
-async def backend(backend_config: BackendConfig) -> AsyncGenerator[Backend, None]:
+async def backend(
+    backend_config: BackendConfig, reset_testbed: Callable[[], Awaitable[None]]
+) -> AsyncIterator[Backend]:
     # pytest-asyncio use different coroutines to run the init and teardown parts
     # of async generator fixtures.
     # However anyio's task group are required to run there async context manager init
@@ -51,7 +64,25 @@ async def backend(backend_config: BackendConfig) -> AsyncGenerator[Backend, None
         nonlocal backend
         async with backend_factory(config=backend_config) as backend:
             started.set()
-            await should_stop.wait()
+            try:
+                await should_stop.wait()
+            finally:
+                # Check that all non-template organizations have been dropped
+                try:
+                    organisations = await backend.organization.test_dump_organizations(
+                        skip_templates=True
+                    )
+                # The check cannot be performed, fully reset the testbed to avoid side effects
+                except Exception:
+                    await reset_testbed()
+                    raise
+                else:
+                    # A test that creates new organization should specifically use the `cleanup_organizations` fixture.
+                    # If organizations still exists at this point, it means the test did not properly performed its cleanup.
+                    # So we fully reset the testbed to avoid side effects.
+                    if organisations:
+                        await reset_testbed()
+                    assert organisations == {}, set(organisations)
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(_run_backend())
@@ -69,9 +100,15 @@ def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> Iterator[AsgiApp]:
     yield asgi_app
 
 
+@pytest.fixture(scope="session")
+def loaded_templates() -> dict[str, str]:
+    # Session cache for loaded templates
+    return {}
+
+
 @pytest.fixture
-def testbed(backend: Backend) -> TestbedBackend:
-    return TestbedBackend(backend)
+def testbed(backend: Backend, loaded_templates: dict) -> TestbedBackend:
+    return TestbedBackend(backend, loaded_templates)
 
 
 @pytest.fixture
@@ -82,3 +119,33 @@ def ballpark_always_ok(monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.fixture
 def timestamp_out_of_ballpark() -> DateTime:
     return DateTime.now().subtract(seconds=3600)
+
+
+@pytest.fixture
+async def reset_testbed(
+    request: pytest.FixtureRequest,
+    loaded_templates: dict[str, str],
+    backend_mocked_data: dict[OrganizationID, MemoryOrganization],
+) -> Callable[[], Awaitable[None]]:
+    """Fixture providing a helper to fully reset the testbed.
+
+    This is **not** done between all tests in order to speed up the test suite.
+    It is called by `backend` fixture in the case where the test did not properly
+    performed its cleanup.
+    """
+
+    async def _reset_testbed():
+        loaded_templates.clear()
+        backend_mocked_data.clear()
+        if request.config.getoption("--postgresql"):
+            await reset_postgresql_testbed()
+
+    return _reset_testbed
+
+
+@pytest.fixture
+async def cleanup_organizations(backend: Backend) -> AsyncIterator[None]:
+    """Fixture ensuring all non-template organizations are dropped after the test."""
+    yield
+    for org_id in await backend.organization.test_dump_organizations(skip_templates=True):
+        await backend.organization.test_drop_organization(org_id)

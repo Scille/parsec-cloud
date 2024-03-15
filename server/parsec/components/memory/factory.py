@@ -30,7 +30,7 @@ SSL_CONTEXT = ssl.create_default_context()
 
 @asynccontextmanager
 async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, Any], None]:
-    data = MemoryDatamodel()
+    data = MemoryDatamodel({} if config.backend_mocked_data is None else config.backend_mocked_data)
 
     async with event_bus_factory() as event_bus:
         async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:

@@ -69,6 +69,7 @@ async def test_ok(
     backend: Backend,
     coolorg: CoolorgRpcClients,
     minimalorg: MinimalorgRpcClients,
+    cleanup_organizations: None,
 ) -> None:
     not_bootstrapped_org_id = OrganizationID("NotBootstrappedOrg")
     await backend.organization.create(
@@ -245,14 +246,10 @@ async def test_ok(
 
 
 async def test_server_stats_format(
-    client: httpx.AsyncClient, backend: Backend, minimalorg: MinimalorgRpcClients
+    client: httpx.AsyncClient,
+    backend: Backend,
+    minimalorg: MinimalorgRpcClients,
 ) -> None:
-    def _strip_template_orgs(stats: dict) -> dict:
-        stats["stats"] = [
-            s for s in stats["stats"] if not s["organization_id"].endswith("Template")
-        ]
-        return stats
-
     async def server_stats(format: str):
         response = await client.get(
             f"http://parsec.invalid/administration/stats?format={format}",
@@ -283,14 +280,19 @@ async def test_server_stats_format(
     }
 
     response = await server_stats("csv")
+    filtered_response = [
+        line
+        for line in response.content.decode("utf8").split("\r\n")
+        if line and "Template" not in line
+    ]
     assert response.headers["Content-Type"] == "text/csv; charset=utf-8"
-    assert response.content.decode("utf8") == (
+    first_line, second_line = filtered_response
+    assert first_line == (
         "organization_id,data_size,metadata_size,realms,active_users,admin_users_active,"
         "admin_users_revoked,standard_users_active,standard_users_revoked,"
-        "outsider_users_active,outsider_users_revoked\r\n"
-        "MinimalOrgTemplate,0,0,0,1,1,0,0,0,0,0\r\n"
-        "Org1,0,0,0,1,1,0,0,0,0,0\r\n"
+        "outsider_users_active,outsider_users_revoked"
     )
+    assert second_line == "Org1,0,0,0,1,1,0,0,0,0,0"
 
 
 async def test_server_stats_at(
@@ -304,24 +306,11 @@ async def test_server_stats_at(
             },
         )
         assert response.status_code == 200, response.content
-        return response.json()
+        return _strip_template_orgs(response.json())
 
     response = await server_stats("1990-01-01T00:00:00Z")
     expected = {
         "stats": [
-            {
-                "organization_id": "MinimalOrgTemplate",
-                "data_size": 0,
-                "metadata_size": 0,
-                "realms": 0,
-                "users": 0,
-                "active_users": 0,
-                "users_per_profile_detail": {
-                    "ADMIN": {"active": 0, "revoked": 0},
-                    "STANDARD": {"active": 0, "revoked": 0},
-                    "OUTSIDER": {"active": 0, "revoked": 0},
-                },
-            },
             {
                 "organization_id": "Org1",
                 "data_size": 0,

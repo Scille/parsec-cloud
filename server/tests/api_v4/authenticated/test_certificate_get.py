@@ -31,7 +31,10 @@ from tests.common import AsyncClient, AuthenticatedRpcClient, Backend, CoolorgRp
 
 @pytest.mark.parametrize("redacted", (False, True))
 async def test_authenticated_certificate_get_ok_common_certificates(
-    backend: Backend, client: AsyncClient, redacted: bool
+    backend: Backend,
+    client: AsyncClient,
+    redacted: bool,
+    cleanup_organizations: None,
 ) -> None:
     org_id = OrganizationID("Org")
     root_key = SigningKey.generate()
