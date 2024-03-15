@@ -47,7 +47,7 @@ FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND type = $type
-    AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") }
     AND claimer_email = $claimer_email
     AND deleted_on IS NULL
 LIMIT 1
@@ -75,7 +75,7 @@ FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND type = $type
-    AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") }
     AND claimer_email IS NULL
     AND deleted_on IS NULL
 LIMIT 1
@@ -89,7 +89,7 @@ INSERT INTO invitation(
     organization,
     token,
     type,
-    greeter,
+    author,
     claimer_email,
     created_on
 )
@@ -97,7 +97,7 @@ VALUES (
     { q_organization_internal_id("$organization_id") },
     $token,
     $type,
-    { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") },
     $claimer_email,
     $created_on
 )
@@ -437,7 +437,7 @@ async def _conduit_listen(conn: asyncpg.Connection, ctx: ConduitListenCtx) -> by
 async def _do_new_user_or_device_invitation(
     conn: asyncpg.Connection,
     organization_id: OrganizationID,
-    greeter_user_id: UserID,
+    author_user_id: UserID,
     claimer_email: str | None,
     created_on: DateTime,
     invitation_type: InvitationType,
@@ -449,14 +449,14 @@ async def _do_new_user_or_device_invitation(
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
-                greeter_user_id=greeter_user_id.str,
+                author_user_id=author_user_id.str,
                 claimer_email=claimer_email,
             )
         case InvitationType.DEVICE:
             q = _q_retrieve_compatible_device_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
-                greeter_user_id=greeter_user_id.str,
+                author_user_id=author_user_id.str,
             )
         case _:
             assert False, "No other invitation type for the moment"
@@ -472,7 +472,7 @@ async def _do_new_user_or_device_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
                 token=token,
-                greeter_user_id=greeter_user_id.str,
+                author_user_id=author_user_id.str,
                 claimer_email=claimer_email,
                 created_on=created_on,
             )
@@ -482,7 +482,7 @@ async def _do_new_user_or_device_invitation(
         EventInvitation(
             organization_id=organization_id,
             token=token,
-            greeter=greeter_user_id,
+            greeter=author_user_id,
             status=InvitationStatus.IDLE,
         ),
     )
@@ -532,7 +532,7 @@ class PGInviteComponent(BaseInviteComponent):
         token = await _do_new_user_or_device_invitation(
             conn,
             organization_id=organization_id,
-            greeter_user_id=author,
+            author_user_id=author,
             claimer_email=claimer_email,
             created_on=now,
             invitation_type=InvitationType.USER,
@@ -570,7 +570,7 @@ class PGInviteComponent(BaseInviteComponent):
         token = await _do_new_user_or_device_invitation(
             conn,
             organization_id=organization_id,
-            greeter_user_id=author,
+            author_user_id=author,
             claimer_email=None,
             created_on=now,
             invitation_type=InvitationType.DEVICE,
@@ -578,12 +578,12 @@ class PGInviteComponent(BaseInviteComponent):
         )
 
         if send_email:
-            greeter_human_handle = await _human_handle_from_user_id(
+            human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author
             )
             send_email_outcome = await self._send_device_invitation_email(
                 organization_id=organization_id,
-                email=greeter_human_handle.email,
+                email=human_handle.email,
                 token=token,
             )
         else:
