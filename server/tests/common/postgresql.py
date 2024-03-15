@@ -58,36 +58,15 @@ def bootstrap_postgresql_testbed() -> str:
     return _pg_db_url
 
 
-async def asyncio_reset_postgresql_testbed() -> None:
+async def reset_postgresql_testbed() -> None:
     assert _pg_db_url is not None
     await _execute_pg_query(
         _pg_db_url,
         """
-TRUNCATE TABLE
-    organization,
-
-    user_,
-    device,
-    human,
-    invitation,
-
-    message,
-
-    realm,
-    realm_user_role,
-    vlob_encryption_revision,
-    vlob_atom,
-    realm_vlob_update,
-
-    block,
-    block_data
-RESTART IDENTITY CASCADE
+TRUNCATE TABLE organization
+RESTART IDENTITY CASCADE;
 """,
     )
-
-
-def reset_postgresql_testbed() -> None:
-    asyncio.run(asyncio_reset_postgresql_testbed())
 
 
 def get_postgresql_url() -> str | None:

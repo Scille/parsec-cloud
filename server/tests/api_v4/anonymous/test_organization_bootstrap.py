@@ -92,6 +92,7 @@ async def test_ok(
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
     anonymous_client: AnonymousRpcClient,
+    cleanup_organizations: None,
 ) -> None:
     config = await backend_bootstrap_config(organization_id)
 
