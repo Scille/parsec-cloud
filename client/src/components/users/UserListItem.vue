@@ -46,12 +46,9 @@
       </ion-label>
     </div>
 
-    <!-- user status -->
-    <div
-      class="user-status"
-      :class="user.isRevoked() ? 'user-revoked' : ''"
-    >
-      <user-status-tag :revoked="user.isRevoked()" />
+    <!-- user profile -->
+    <div class="user-profile">
+      <tag-profile :profile="user.currentProfile" />
     </div>
 
     <!-- user mail -->
@@ -61,13 +58,19 @@
       </ion-label>
     </div>
 
-    <!-- user profile -->
-    <div class="user-profile">
-      <tag-profile :profile="user.currentProfile" />
+    <!-- user status -->
+    <div
+      class="user-status"
+      :class="user.isRevoked() ? 'user-revoked' : ''"
+    >
+      <user-status-tag :revoked="user.isRevoked()" />
     </div>
 
     <!-- user joined on -->
-    <div class="user-join">
+    <div
+      class="user-join"
+      v-show="false"
+    >
       <ion-label class="user-join-label cell">
         {{ formatTimeSince(user.createdOn, '--', 'short') }}
       </ion-label>
@@ -139,13 +142,14 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 0.5rem 1rem;
   width: auto;
   flex-grow: 1;
-  max-width: 20vw;
   min-width: 11.25rem;
+  max-width: 25rem;
 
   &__label {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    overflow: hidden;
 
     .main-cell {
       white-space: nowrap;
@@ -158,20 +162,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.user-status {
-  min-width: 6rem;
-  width: auto;
-  flex-grow: 0;
-  color: var(--parsec-color-light-secondary-grey);
-}
-
-.user-email {
-  min-width: 14rem;
-  width: auto;
-  flex-grow: 0;
-  color: var(--parsec-color-light-secondary-grey);
-}
-
 .user-profile {
   min-width: 11.5rem;
   max-width: 10vw;
@@ -179,9 +169,29 @@ async function onOptionsClick(event: Event): Promise<void> {
   flex-grow: 2;
 }
 
-.user-join {
-  min-width: 11.25rem;
+.user-email {
+  max-width: 20rem;
+  min-width: 20rem;
+  flex-grow: 0;
+  color: var(--parsec-color-light-secondary-grey);
+  overflow: hidden;
+
+  &__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.user-status {
+  min-width: 7.5rem;
   width: auto;
+  flex-grow: 0;
+  color: var(--parsec-color-light-secondary-grey);
+}
+
+.user-join {
+  min-width: 7.5rem;
   flex-grow: 0;
   overflow: hidden;
   color: var(--parsec-color-light-secondary-grey);

@@ -19,7 +19,10 @@
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
           {{ $t('FoldersPage.listDisplayTitles.name') }}
         </ion-label>
-        <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy">
+        <ion-label
+          class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
+          v-show="false"
+        >
           {{ $t('FoldersPage.listDisplayTitles.updatedBy') }}
         </ion-label>
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">

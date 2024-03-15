@@ -47,6 +47,13 @@ defineProps<{
       margin-left: 0;
     }
   }
+
+  .person-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   &.medium {
     --width: 2.5rem;
     --height: 2.5rem;
@@ -69,9 +76,6 @@ defineProps<{
     .person-name {
       padding-top: 0;
       padding-left: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
 

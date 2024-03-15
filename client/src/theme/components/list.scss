@@ -17,6 +17,12 @@ ion-item:has(.file-list-item),
     width: 100%;
   }
 
+  &.item-disabled {
+    &::after {
+      opacity: 0 !important;
+    }
+  }
+
   &:not(.selected)::after {
     content: '';
     position: absolute;
@@ -92,11 +98,23 @@ ion-item:has(.file-list-item),
       z-index: 1;
     }
   }
+}
 
-  &.revoked {
-    div:not(.user-revoked) {
-      filter: grayscale(75%);
+.revoked {
+  --background: var(--parsec-color-light-secondary-premiere) !important;
+
+  .user-name,
+  .user-card-avatar {
+    filter: grayscale(100%);
+
+    .person-name,
+    .user-card-info__name {
+      color: var(--parsec-color-light-secondary-grey) !important;
     }
+  }
+  .tag {
+    background: var(--parsec-color-light-secondary-disabled) !important;
+    color: var(--parsec-color-light-secondary-grey) !important;
   }
 }
 
@@ -129,7 +147,6 @@ ion-item:has(.file-list-item),
     min-width: 16.25rem;
     width: 100%;
     padding: 0.5rem 1rem;
-    white-space: nowrap;
   }
 
   .label-updatedBy,
