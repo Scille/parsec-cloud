@@ -70,6 +70,7 @@ defineExpose({
   setFocus,
   selectText,
   validity,
+  validate,
 });
 
 function setFocus(): void {
@@ -98,14 +99,18 @@ async function selectText(range?: [number, number]): Promise<void> {
   input.setSelectionRange(begin, end);
 }
 
-async function onChange(value: string): Promise<void> {
-  emits('update:modelValue', value);
-  emits('change', value);
+async function validate(value: string): Promise<void> {
   if (props.validator) {
     const result = await props.validator(value);
     validity.value = result.validity;
     errorMessage.value = result.reason || '';
   }
+}
+
+async function onChange(value: string): Promise<void> {
+  emits('update:modelValue', value);
+  emits('change', value);
+  await validate(value);
 }
 </script>
 
