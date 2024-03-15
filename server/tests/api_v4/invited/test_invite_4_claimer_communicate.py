@@ -47,3 +47,8 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
     assert rep == invited_cmds.v4.invite_4_claimer_communicate.RepOk(
         payload=greeter_payload, last=True
     )
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.invited_alice_dev3.invite_4_claimer_communicate(b"payload")
+    assert rep == invited_cmds.v4.invite_4_claimer_communicate.RepEnrollmentWrongState()
