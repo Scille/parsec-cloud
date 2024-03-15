@@ -254,6 +254,9 @@ const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 
+// Replace by events when available
+let intervalId: any = null;
+
 // watching wasReset value
 const resetWatchCancel: WatchStopHandle = watch(wasReset, (value) => {
   if (value) {
@@ -322,6 +325,7 @@ onMounted(async () => {
     });
     gesture.enable();
   }
+  intervalId = setInterval(loadAll, 10000);
 });
 
 onUnmounted(() => {
@@ -330,6 +334,9 @@ onUnmounted(() => {
   }
   resetWatchCancel();
   organizationWatchCancel();
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 function onMove(detail: GestureDetail): void {

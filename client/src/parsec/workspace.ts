@@ -25,6 +25,7 @@ import {
   WorkspaceInfoError,
   WorkspaceInfoErrorTag,
   WorkspaceMountError,
+  WorkspaceMountErrorTag,
   WorkspaceName,
   WorkspaceRole,
 } from '@/parsec/types';
@@ -61,7 +62,7 @@ export async function initializeWorkspace(
   return startedWorkspaceResult;
 }
 
-export async function listWorkspaces(mount = false): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
+export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, ClientListWorkspacesError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
@@ -76,24 +77,6 @@ export async function listWorkspaces(mount = false): Promise<Result<Array<Worksp
           continue;
         }
 
-        const startedWorkspaceResult = await getWorkspaceInfo(startResult.value);
-        if (!startedWorkspaceResult.ok) {
-          console.error(`Failed to get started workspace info ${wkInfo.currentName}: ${startedWorkspaceResult.error}`);
-          continue;
-        }
-
-        let mountResult = undefined;
-        if (mount && startedWorkspaceResult.value.mountpoints.length === 0 && !isMacOS() && !isWindows()) {
-          mountResult = await mountWorkspace(startResult.value);
-          if (!mountResult.ok) {
-            console.error(`Failed to mount workspace ${wkInfo.currentName}`);
-          }
-        }
-        if (isMacOS() || isWindows()) {
-          console.warn('Mountpoints are not available yet');
-        }
-
-        const sharingResult = await getWorkspaceSharing(wkInfo.id, false);
         const info: WorkspaceInfo = {
           id: wkInfo.id,
           currentName: wkInfo.currentName,
@@ -104,12 +87,9 @@ export async function listWorkspaces(mount = false): Promise<Result<Array<Worksp
           size: 0,
           lastUpdated: DateTime.now(),
           availableOffline: true,
-          mountpoints: mountResult && mountResult.ok ? [mountResult.value] : startedWorkspaceResult.value.mountpoints,
+          mountpoints: [],
           handle: startResult.value,
         };
-        if (sharingResult.ok) {
-          info.sharing = sharingResult.value;
-        }
         returnValue.push(info);
       }
       return { ok: true, value: returnValue };
@@ -375,10 +355,19 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
 export async function mountWorkspace(
   workspaceHandle: WorkspaceHandle,
 ): Promise<Result<[MountpointHandle, SystemPath], WorkspaceMountError>> {
-  if (!needsMocks()) {
+  if (!needsMocks() && !isWindows() && !isMacOS()) {
+    const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
+    if (!startedWorkspaceResult.ok) {
+      console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
+      return { ok: false, error: { tag: WorkspaceMountErrorTag.Internal, error: '' } };
+    } else {
+      if (startedWorkspaceResult.value.mountpoints.length > 0) {
+        return { ok: true, value: startedWorkspaceResult.value.mountpoints[0] };
+      }
+    }
     return await libparsec.workspaceMount(workspaceHandle);
   }
-  return { ok: true, value: [42, '/home/a'] };
+  return { ok: true, value: [0, ''] };
 }
 
 export async function getPathLink(

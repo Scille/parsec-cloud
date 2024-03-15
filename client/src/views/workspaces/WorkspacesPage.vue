@@ -159,9 +159,11 @@ import {
   getClientProfile,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
+  getWorkspaceSharing as parsecGetWorkspaceSharing,
   listWorkspaces as parsecListWorkspaces,
+  mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
-import { Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
+import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -200,6 +202,9 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
+// Replace by events when available
+let intervalId: any = null;
+
 interface WorkspacesPageSavedData {
   displayState?: DisplayState;
 }
@@ -234,6 +239,8 @@ onMounted(async (): Promise<void> => {
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
+
+  intervalId = setInterval(refreshWorkspacesList, 10000);
 });
 
 onUnmounted(async () => {
@@ -241,6 +248,9 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 async function onDisplayStateChange(): Promise<void> {
@@ -248,9 +258,28 @@ async function onDisplayStateChange(): Promise<void> {
 }
 
 async function refreshWorkspacesList(): Promise<void> {
-  const result = await parsecListWorkspaces(true);
+  if (!currentRouteIs(Routes.Workspaces)) {
+    return;
+  }
+  const result = await parsecListWorkspaces();
   if (result.ok) {
     workspaceList.value = result.value;
+    for (const wk of result.value) {
+      const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
+      if (sharingResult.ok) {
+        wk.sharing = sharingResult.value;
+      } else {
+        console.warn(`Failed to get sharing for ${wk.currentName}`);
+      }
+      if (wk.mountpoints.length === 0) {
+        const mountResult = await parsecMountWorkspace(wk.handle);
+        if (mountResult.ok) {
+          wk.mountpoints.push(mountResult.value);
+        } else {
+          console.warn(`Failed to mount ${wk.currentName}`);
+        }
+      }
+    }
   } else {
     informationManager.present(
       new Information({

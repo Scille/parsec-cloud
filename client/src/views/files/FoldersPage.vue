@@ -188,7 +188,7 @@ import {
   SortProperty,
 } from '@/components/files';
 import { EntryStatFile, StartedWorkspaceInfo, WorkspaceRenameEntryErrorTag, WorkspaceRole } from '@/parsec';
-import { Routes, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
+import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
   FileProgressStateData,
@@ -260,6 +260,9 @@ const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 
+// Replace by events when available
+let intervalId: any = null;
+
 const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
 });
@@ -306,6 +309,7 @@ onMounted(async () => {
   callbackId = await importManager.registerCallback(onFileImportState);
   currentPath.value = getDocumentPath();
   await listFolder();
+  intervalId = setInterval(listFolder, 10000);
 });
 
 onUnmounted(async () => {
@@ -316,6 +320,9 @@ onUnmounted(async () => {
     importManager.removeCallback(callbackId);
   }
   routeWatchCancel();
+  if (intervalId) {
+    clearInterval(intervalId);
+  }
 });
 
 async function onDisplayStateChange(): Promise<void> {
@@ -387,6 +394,9 @@ const fileImportsCurrentDir = computed(() => {
 async function listFolder(): Promise<void> {
   const workspaceHandle = getWorkspaceHandle();
   if (!workspaceHandle) {
+    return;
+  }
+  if (!currentRouteIs(Routes.Documents)) {
     return;
   }
   const result = await parsec.entryStat(workspaceHandle, currentPath.value);
