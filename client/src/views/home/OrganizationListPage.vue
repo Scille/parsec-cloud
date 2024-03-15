@@ -422,6 +422,7 @@ const filteredDevices = computed(() => {
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          color: var(--parsec-color-light-success-700);
 
           .success {
             color: var(--parsec-color-light-success-700);
