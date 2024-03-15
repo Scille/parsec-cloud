@@ -279,6 +279,7 @@ CREATE TABLE realm (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm_id UUID NOT NULL,
+    key_index INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE(organization, realm_id)
@@ -380,7 +381,7 @@ create TABLE realm_name (
 
 CREATE TABLE vlob_atom (
     _id SERIAL PRIMARY KEY,
-    organization INTEGER REFERENCES organization (_id) NOT NULL,
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
     key_index INTEGER NOT NULL,
     vlob_id UUID NOT NULL,
     version INTEGER NOT NULL,
@@ -391,7 +392,7 @@ CREATE TABLE vlob_atom (
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
 
-    UNIQUE(vlob_id, version)
+    UNIQUE(realm, vlob_id, version)
 );
 
 

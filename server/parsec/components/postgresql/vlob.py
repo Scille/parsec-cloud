@@ -1,23 +1,41 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import override
+from typing import assert_never, override
 
 import asyncpg
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, SequesterServiceID, VlobID
-from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
+from parsec._parsec import (
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    SequesterServiceID,
+    VlobID,
+    UserProfile,
+    RealmRole,
+)
+from parsec.ballpark import (
+    RequireGreaterTimestamp,
+    TimestampOutOfBallpark,
+    timestamps_in_the_ballpark,
+)
+from parsec.components.events import EventBus
+from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql.handler import retry_on_unique_violation
+from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.sequester import get_sequester_authority, get_sequester_services
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import transaction
 from parsec.components.postgresql.vlob_queries import (
-    query_create,
     query_list_versions,
     query_poll_changes,
     query_update,
 )
-from parsec.components.realm import BadKeyIndex
+from parsec.components.postgresql.vlob_queries.write import _q_create
+from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
 from parsec.components.sequester import BaseSequesterService
+from parsec.components.user import CheckUserWithDeviceBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
@@ -25,6 +43,7 @@ from parsec.components.vlob import (
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
 )
+from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
 
 async def _check_sequestered_organization(
@@ -60,66 +79,81 @@ async def _check_sequestered_organization(
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
         self.pool = pool
-        self._sequester_organization_authority_cache: dict[
-            OrganizationID, SequesterAuthority | None
-        ] = {}
+        self.event_bus = event_bus
+        self.organization: PGOrganizationComponent
+        self.user: PGUserComponent
+        self.realm: PGRealmComponent
+        # TODO: Should this remain?
+        # self._sequester_organization_authority_cache: dict[
+        #     OrganizationID, SequesterAuthority | None
+        # ] = {}
 
-    async def _fetch_organization_sequester_authority(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID
-    ) -> None:
-        sequester_authority: SequesterAuthority | None
-        try:
-            sequester_authority = await get_sequester_authority(conn, organization_id)
-        except SequesterDisabledError:
-            sequester_authority = None
-        self._sequester_organization_authority_cache[organization_id] = sequester_authority
-
-    async def _get_sequester_organization_authority(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID
-    ) -> SequesterAuthority | None:
-        if organization_id not in self._sequester_organization_authority_cache:
-            await self._fetch_organization_sequester_authority(conn, organization_id)
-        return self._sequester_organization_authority_cache[organization_id]
-
-    async def _extract_sequestered_data_and_proceed_webhook(
+    def register_components(
         self,
-        conn: asyncpg.Connection,
-        organization_id: OrganizationID,
-        sequester_blob: dict[SequesterServiceID, bytes] | None,
-        author: DeviceID,
-        encryption_revision: int,
-        vlob_id: VlobID,
-        timestamp: DateTime,
-    ) -> dict[SequesterServiceID, bytes] | None:
-        sequester_authority = await self._get_sequester_organization_authority(
-            conn, organization_id
-        )
-        services = await _check_sequestered_organization(
-            conn,
-            organization_id=organization_id,
-            sequester_authority=sequester_authority,
-            sequester_blob=sequester_blob,
-        )
-        if not sequester_blob or not services:
-            return None
+        organization: PGOrganizationComponent,
+        user: PGUserComponent,
+        realm: PGRealmComponent,
+        **kwargs,
+    ) -> None:
+        self.organization = organization
+        self.user = user
+        self.realm = realm
 
-        sequestered_data = await extract_sequestered_data_and_proceed_webhook(
-            services,
-            organization_id,
-            author,
-            encryption_revision,
-            vlob_id,
-            timestamp,
-            sequester_blob,
-        )
+    # async def _fetch_organization_sequester_authority(
+    #     self, conn: asyncpg.Connection, organization_id: OrganizationID
+    # ) -> None:
+    #     sequester_authority: SequesterAuthority | None
+    #     try:
+    #         sequester_authority = await get_sequester_authority(conn, organization_id)
+    #     except SequesterDisabledError:
+    #         sequester_authority = None
+    #     self._sequester_organization_authority_cache[organization_id] = sequester_authority
 
-        return sequestered_data
+    # async def _get_sequester_organization_authority(
+    #     self, conn: asyncpg.Connection, organization_id: OrganizationID
+    # ) -> SequesterAuthority | None:
+    #     if organization_id not in self._sequester_organization_authority_cache:
+    #         await self._fetch_organization_sequester_authority(conn, organization_id)
+    #     return self._sequester_organization_authority_cache[organization_id]
+
+    # async def _extract_sequestered_data_and_proceed_webhook(
+    #     self,
+    #     conn: asyncpg.Connection,
+    #     organization_id: OrganizationID,
+    #     sequester_blob: dict[SequesterServiceID, bytes] | None,
+    #     author: DeviceID,
+    #     encryption_revision: int,
+    #     vlob_id: VlobID,
+    #     timestamp: DateTime,
+    # ) -> dict[SequesterServiceID, bytes] | None:
+    #     sequester_authority = await self._get_sequester_organization_authority(
+    #         conn, organization_id
+    #     )
+    #     services = await _check_sequestered_organization(
+    #         conn,
+    #         organization_id=organization_id,
+    #         sequester_authority=sequester_authority,
+    #         sequester_blob=sequester_blob,
+    #     )
+    #     if not sequester_blob or not services:
+    #         return None
+
+    #     sequestered_data = await extract_sequestered_data_and_proceed_webhook(
+    #         services,
+    #         organization_id,
+    #         author,
+    #         encryption_revision,
+    #         vlob_id,
+    #         timestamp,
+    #         sequester_blob,
+    #     )
+
+    #     return sequestered_data
 
     @override
     @transaction
-    # @retry_on_unique_violation: TODO: Should we retry on unique violation?
     async def create(
         self,
         conn: asyncpg.Connection,
@@ -142,30 +176,115 @@ class PGVlobComponent(BaseVlobComponent):
         | SequesterServiceNotAvailable
         | SequesterInconsistency
     ):
-        # TODO: we return None to use the CoolOrg template
-        return None
-        async with self.dbh.pool.acquire() as conn:
-            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
-                conn,
-                organization_id=organization_id,
-                sequester_blob=sequester_blob,
-                author=author,
-                encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
-                timestamp=timestamp,
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return VlobCreateBadOutcome.AUTHOR_REVOKED
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return VlobCreateBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole() as role, KeyIndex() as realm_key_index):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        # We only accept the last key
+        if realm_key_index != key_index:
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=timestamp  # TODO: this is not the right timestamp
             )
 
-            await query_create(
-                conn,
-                organization_id,
-                author,
-                realm_id,
-                encryption_revision,
-                vlob_id,
-                timestamp,
-                blob,
-                sequester_blob,
+        match timestamps_in_the_ballpark(timestamp, now):
+            case TimestampOutOfBallpark() as error:
+                return error
+
+        # TODO: Fix causality
+        # if timestamp < org.last_certificate_timestamp:
+        #     return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
+
+        if org.is_sequestered:
+            # TODO: Implement sequester
+            raise NotImplementedError
+            # assert org.sequester_services is not None
+            # if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
+            #     return SequesterInconsistency(
+            #         last_common_certificate_timestamp=org.last_common_certificate_timestamp
+            #     )
+
+            # blob_for_storage_sequester_services = {}
+            # for service_id, service in org.sequester_services.items():
+            #     match service.service_type:
+            #         case SequesterServiceType.STORAGE:
+            #             blob_for_storage_sequester_services[service_id] = sequester_blob[service_id]
+            #         case SequesterServiceType.WEBHOOK:
+            #             assert service.webhook_url is not None
+            #             match await self._sequester_service_send_webhook(
+            #                 webhook_url=service.webhook_url,
+            #                 organization_id=organization_id,
+            #                 service_id=service_id,
+            #                 sequester_blob=sequester_blob[service_id],
+            #             ):
+            #                 case None:
+            #                     pass
+            #                 case error:
+            #                     return error
+            #         case unknown:
+            #             assert_never(unknown)
+
+        else:
+            if sequester_blob is not None:
+                return VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+
+        # All checks are good, now we do the actual insertion
+
+        try:
+            vlob_atom_internal_id = await conn.fetchval(
+                *_q_create(
+                    organization_id=organization_id.str,
+                    realm_id=realm_id,
+                    author=author.str,
+                    key_index=key_index,
+                    vlob_id=vlob_id,
+                    blob=blob,
+                    blob_len=len(blob),
+                    timestamp=timestamp,
+                )
             )
+
+        except asyncpg.UniqueViolationError:
+            return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
+        await self.event_bus.send(
+            EventVlob(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                timestamp=timestamp,
+                vlob_id=vlob_id,
+                version=1,
+                blob=None,  # TODO: use `blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None`
+                last_common_certificate_timestamp=timestamp,  # TODO: this is not the right timestamp
+                last_realm_certificate_timestamp=timestamp,  # TODO: this is not the right timestamp
+            )
+        )
 
     async def read(
         self,
@@ -216,42 +335,4 @@ class PGVlobComponent(BaseVlobComponent):
                 timestamp,
                 blob,
                 sequester_blob,
-            )
-
-    async def poll_changes(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, checkpoint: int
-    ) -> tuple[int, dict[VlobID, int]]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_poll_changes(conn, organization_id, author, realm_id, checkpoint)
-
-    async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
-    ) -> dict[int, tuple[DateTime, DeviceID]]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_list_versions(conn, organization_id, author, vlob_id)
-
-    async def maintenance_get_reencryption_batch(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: VlobID,
-        encryption_revision: int,
-        size: int,
-    ) -> list[tuple[VlobID, int, bytes]]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_maintenance_get_reencryption_batch(
-                conn, organization_id, author, realm_id, encryption_revision, size
-            )
-
-    async def maintenance_save_reencryption_batch(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: VlobID,
-        encryption_revision: int,
-        batch: list[tuple[VlobID, int, bytes]],
-    ) -> tuple[int, int]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_maintenance_save_reencryption_batch(
-                conn, organization_id, author, realm_id, encryption_revision, batch
             )

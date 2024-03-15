@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from parsec.components.postgresql.utils import (
     Q,
+    q_device,
+    q_device_internal_id,
     q_human,
     q_human_internal_id,
     q_organization_internal_id,
@@ -64,6 +66,17 @@ WHERE organization = { q_organization_internal_id("$organization_id") }
 q_test_drop_organization_from_realm_user_role_table = Q(
     f"""
 DELETE FROM realm_user_role
+WHERE realm in (
+    SELECT _id
+    FROM realm
+    WHERE organization = { q_organization_internal_id("$organization_id") }
+)
+"""
+)
+
+q_test_drop_organization_from_vlob_atom_table = Q(
+    f"""
+DELETE FROM vlob_atom
 WHERE realm in (
     SELECT _id
     FROM realm
@@ -213,11 +226,13 @@ q_test_duplicate_organization_from_realm_table = Q(
 INSERT INTO realm (
     organization,
     realm_id,
+    key_index,
     created_on
 )
 SELECT
     { q_organization_internal_id("$target_id") },
     realm_id,
+    key_index,
     created_on
 FROM realm
 WHERE organization = { q_organization_internal_id("$source_id") }
@@ -243,6 +258,34 @@ SELECT
     certified_on
 FROM realm_user_role
 INNER JOIN realm ON realm._id = realm_user_role.realm
+WHERE realm.organization = { q_organization_internal_id("$source_id") }
+"""
+)
+
+
+q_test_duplicate_organization_from_vlob_atom_table = Q(
+    f"""
+INSERT INTO vlob_atom (
+    realm,
+    key_index,
+    vlob_id,
+    version,
+    blob,
+    size,
+    author,
+    created_on
+)
+SELECT
+    { q_realm_internal_id(organization_id="$target_id", realm_id=q_realm(_id="vlob_atom.realm", select="realm_id")) },
+    vlob_atom.key_index,
+    vlob_atom.vlob_id,
+    vlob_atom.version,
+    vlob_atom.blob,
+    vlob_atom.size,
+    { q_device_internal_id(organization_id="$target_id", device_id=q_device(_id="vlob_atom.author", select="device_id")) },
+    vlob_atom.created_on
+FROM vlob_atom
+INNER JOIN realm ON realm._id = vlob_atom.realm
 WHERE realm.organization = { q_organization_internal_id("$source_id") }
 """
 )

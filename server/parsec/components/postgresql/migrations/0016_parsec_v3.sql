@@ -42,8 +42,9 @@ DROP TABLE message;
 --  Realm
 -------------------------------------------------------
 
--- Remove encryption_revision column from realm table
-ALTER TABLE realm DROP COLUMN encryption_revision;
+-- Rename encryption_revision to key_index
+ALTER TABLE realm RENAME encryption_revision TO key_index;
+ALTER TABLE realm ALTER COLUMN key_index TYPE INTEGER;
 
 -- Remove maintenance column from realm table
 ALTER TABLE realm DROP COLUMN maintenance_started_by;
@@ -107,11 +108,19 @@ create TABLE realm_name (
 -------------------------------------------------------
 
 -- Rename vlob_encryption_revision to key_index
+ALTER TABLE vlob_atom RENAME organization TO realm;
+ALTER TABLE vlob_atom DROP CONSTRAINT vlob_atom_organization_fkey;
+ALTER TABLE vlob_atom ADD CONSTRAINT vlob_atom_realm_fkey FOREIGN KEY (realm) REFERENCES realm(_id);
+
+
+-- Rename vlob_encryption_revision to key_index
 ALTER TABLE vlob_atom RENAME vlob_encryption_revision TO key_index;
 ALTER TABLE vlob_atom ALTER COLUMN key_index TYPE INTEGER;
 ALTER TABLE vlob_atom DROP CONSTRAINT vlob_atom_vlob_encryption_revision_fkey;
 ALTER TABLE vlob_atom DROP CONSTRAINT vlob_atom_vlob_encryption_revision_vlob_id_version_key;
-ALTER TABLE vlob_atom ADD CONSTRAINT vlob_atom_vlob_id_version_key UNIQUE (vlob_id, version);
+
+-- Update unique contraint
+ALTER TABLE vlob_atom ADD CONSTRAINT vlob_atom_realm_vlob_id_version_key UNIQUE (realm, vlob_id, version);
 
 -- Remove vlob_encryption_revision table
 ALTER TABLE vlob_encryption_revision DROP CONSTRAINT vlob_encryption_revision_realm_fkey;

@@ -218,8 +218,8 @@ async def query_update(
 _q_create = Q(
     f"""
 INSERT INTO vlob_atom (
-    organization,
-    vlob_encryption_revision,
+    realm,
+    key_index,
     vlob_id,
     version,
     blob,
@@ -228,14 +228,8 @@ INSERT INTO vlob_atom (
     created_on
 )
 SELECT
-    { q_organization_internal_id("$organization_id") },
-    {
-        q_vlob_encryption_revision_internal_id(
-            organization_id="$organization_id",
-            realm_id="$realm_id",
-            encryption_revision="$encryption_revision"
-        )
-    },
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    $key_index,
     $vlob_id,
     1,
     $blob,
