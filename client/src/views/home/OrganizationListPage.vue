@@ -116,9 +116,10 @@
                         v-show="!isDeviceLoggedIn(device)"
                         class="card-content-footer-login"
                       >
-                        <ion-text class="body-sm">
-                          {{ $t('HomePage.organizationList.lastLogin') }}
-                        </ion-text>
+                        <ion-icon
+                          :icon="time"
+                          class="time"
+                        />
                         <ion-text class="body-sm">
                           {{
                             device.slug in storedDeviceDataDict ? formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
@@ -172,7 +173,7 @@ import {
   IonTitle,
   popoverController,
 } from '@ionic/vue';
-import { addCircle, ellipse } from 'ionicons/icons';
+import { addCircle, ellipse, time } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
@@ -410,6 +411,11 @@ const filteredDevices = computed(() => {
           align-items: center;
           gap: 0.5rem;
           padding: 0;
+
+          .time {
+            color: var(--parsec-color-light-secondary-light);
+            font-size: 1.125rem;
+          }
         }
 
         .connected {
