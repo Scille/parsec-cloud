@@ -204,4 +204,4 @@ jobs:
       contents: read
       id-token: write
     with:
-      release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref }}
+      release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref_name }}
