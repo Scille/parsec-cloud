@@ -40,3 +40,8 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
         await second(tg.cancel_scope)
 
     assert rep == invited_cmds.v4.invite_3b_claimer_wait_peer_trust.RepOk()
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.invited_alice_dev3.invite_3b_claimer_wait_peer_trust()
+    assert rep == invited_cmds.v4.invite_3b_claimer_wait_peer_trust.RepEnrollmentWrongState()
