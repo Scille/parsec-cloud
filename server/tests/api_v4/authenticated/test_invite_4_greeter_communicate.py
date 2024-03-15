@@ -60,3 +60,10 @@ async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
         coolorg.invited_alice_dev3.token, b"payload", True
     )
     assert rep == authenticated_cmds.v4.invite_4_greeter_communicate.RepInvitationDeleted()
+
+
+async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_4_greeter_communicate(
+        coolorg.invited_alice_dev3.token, b"payload", True
+    )
+    assert rep == authenticated_cmds.v4.invite_4_greeter_communicate.RepEnrollmentWrongState()
