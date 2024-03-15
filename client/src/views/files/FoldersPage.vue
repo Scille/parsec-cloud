@@ -374,13 +374,15 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
     }
   } else if (state === ImportState.FolderCreated) {
     const folderData = stateData as FolderCreatedStateData;
-    const parent = await parsec.Path.parent(folderData.path);
-    if (parsec.Path.areSame(parent, currentPath.value)) {
-      const statResult = await parsec.entryStat(folderData.workspaceHandle, folderData.path);
-      if (statResult.ok && !statResult.value.isFile()) {
-        if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
-          (statResult.value as FolderModel).isSelected = false;
-          folders.value.append(statResult.value as FolderModel);
+    if (folderData.workspaceHandle === workspaceInfo.value?.handle) {
+      const parent = await parsec.Path.parent(folderData.path);
+      if (parsec.Path.areSame(parent, currentPath.value)) {
+        const statResult = await parsec.entryStat(folderData.workspaceHandle, folderData.path);
+        if (statResult.ok && !statResult.value.isFile()) {
+          if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
+            (statResult.value as FolderModel).isSelected = false;
+            folders.value.append(statResult.value as FolderModel);
+          }
         }
       }
     }
@@ -388,18 +390,19 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
 }
 
 const fileImportsCurrentDir = computed(() => {
-  return fileImports.value.filter((item) => parsec.Path.areSame(item.data.path, currentPath.value));
+  return fileImports.value.filter(
+    (item) => parsec.Path.areSame(item.data.path, currentPath.value) && item.data.workspaceHandle === workspaceInfo.value?.handle,
+  );
 });
 
 async function listFolder(): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (!workspaceHandle) {
+  if (!workspaceInfo.value) {
     return;
   }
   if (!currentRouteIs(Routes.Documents)) {
     return;
   }
-  const result = await parsec.entryStat(workspaceHandle, currentPath.value);
+  const result = await parsec.entryStat(workspaceInfo.value.handle, currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
     const newFiles: FileModel[] = [];
@@ -409,7 +412,7 @@ async function listFolder(): Promise<void> {
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
         const childPath = await parsec.Path.join(currentPath.value, childName);
-        const fileResult = await parsec.entryStat(workspaceHandle, childPath);
+        const fileResult = await parsec.entryStat(workspaceInfo.value.handle, childPath);
         if (fileResult.ok) {
           if (fileResult.value.isFile()) {
             (fileResult.value as FileModel).isSelected = query.selectFile && query.selectFile === fileResult.value.name ? true : false;
@@ -440,15 +443,14 @@ async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<voi
   if (!entry.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
-      params: { workspaceHandle: getWorkspaceHandle() },
+      params: { workspaceHandle: workspaceInfo.value?.handle },
       query: { documentPath: newPath },
     });
   }
 }
 
 async function createFolder(): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (!workspaceHandle) {
+  if (!workspaceInfo.value) {
     return;
   }
   hotkeyManager.disableGroup(Groups.Documents);
@@ -466,7 +468,7 @@ async function createFolder(): Promise<void> {
     return;
   }
   const folderPath = await parsec.Path.join(currentPath.value, folderName);
-  const result = await parsec.createFolder(workspaceHandle, folderPath);
+  const result = await parsec.createFolder(workspaceInfo.value.handle, folderPath);
   if (!result.ok) {
     informationManager.present(
       new Information({
@@ -491,7 +493,7 @@ async function importFiles(): Promise<void> {
     cssClass: 'file-upload-modal',
     componentProps: {
       currentPath: currentPath.value.toString(),
-      workspaceHandle: getWorkspaceHandle(),
+      workspaceHandle: workspaceInfo.value?.handle,
       workspaceId: workspaceInfo.value?.id,
     },
   });
@@ -506,8 +508,7 @@ function getSelectedEntries(): parsec.EntryStat[] {
 }
 
 async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (entries.length === 0 || !workspaceHandle) {
+  if (entries.length === 0 || !workspaceInfo.value) {
     return;
   } else if (entries.length === 1) {
     const entry = entries[0];
@@ -529,7 +530,9 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       return;
     }
     const path = await parsec.Path.join(currentPath.value, entry.name);
-    const result = entry.isFile() ? await parsec.deleteFile(workspaceHandle, path) : await parsec.deleteFolder(workspaceHandle, path);
+    const result = entry.isFile()
+      ? await parsec.deleteFile(workspaceInfo.value.handle, path)
+      : await parsec.deleteFolder(workspaceInfo.value.handle, path);
     if (!result.ok) {
       informationManager.present(
         new Information({
@@ -559,7 +562,9 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     let errorsEncountered = 0;
     for (const entry of entries) {
       const path = await parsec.Path.join(currentPath.value, entry.name);
-      const result = entry.isFile() ? await parsec.deleteFile(workspaceHandle, path) : await parsec.deleteFolder(workspaceHandle, path);
+      const result = entry.isFile()
+        ? await parsec.deleteFile(workspaceInfo.value.handle, path)
+        : await parsec.deleteFolder(workspaceInfo.value.handle, path);
       if (!result.ok) {
         errorsEncountered += 1;
       }
@@ -581,8 +586,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (entries.length !== 1 || !workspaceHandle) {
+  if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
   const entry = entries[0];
@@ -606,7 +610,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.rename(workspaceHandle, filePath, newName);
+  const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
   if (!result.ok) {
     let message = translate('FoldersPage.errors.renameFailed', { name: entry.name });
     if (result.error.tag === WorkspaceRenameEntryErrorTag.DestinationExists) {
@@ -625,16 +629,12 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length !== 1) {
+  if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
   const entry = entries[0];
-  const workspaceHandle = getWorkspaceHandle();
-  if (!workspaceHandle) {
-    return;
-  }
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
-  const result = await parsec.getPathLink(workspaceHandle, filePath);
+  const result = await parsec.getPathLink(workspaceInfo.value.handle, filePath);
   if (result.ok) {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
@@ -665,15 +665,14 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (entries.length === 0 || !workspaceHandle) {
+  if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
   hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
     startingPath: currentPath.value,
-    workspaceHandle: workspaceHandle,
+    workspaceHandle: workspaceInfo.value.handle,
   });
   hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
@@ -739,8 +738,7 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (entries.length === 0 || !workspaceHandle) {
+  if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
   hotkeyManager.disableGroup(Groups.Documents);
@@ -748,7 +746,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
-    workspaceHandle: workspaceHandle,
+    workspaceHandle: workspaceInfo.value.handle,
   });
   hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
@@ -808,9 +806,7 @@ async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-
-  if (entries.length !== 1 || !workspaceHandle) {
+  if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
   if (parsec.isWeb()) {
@@ -826,7 +822,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  const result = await parsec.getAbsolutePath(workspaceHandle, entry);
+  const result = await parsec.getAbsolutePath(workspaceInfo.value.handle, entry);
 
   if (!result.ok) {
     await informationManager.present(
