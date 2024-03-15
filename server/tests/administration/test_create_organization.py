@@ -82,6 +82,7 @@ async def test_bad_method(
 async def test_ok(
     client: httpx.AsyncClient,
     backend: Backend,
+    cleanup_organizations: None,
     args: dict,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"

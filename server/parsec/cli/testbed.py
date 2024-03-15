@@ -43,14 +43,17 @@ class UnknownTemplateError(Exception):
 class TestbedBackend:
     __test__ = False  # Prevents Pytest from thinking this is a test class
 
-    def __init__(self, backend: Backend):
+    def __init__(
+        self,
+        backend: Backend,
+        loaded_templates: dict[str, tuple[OrganizationID, int, testbed.TestbedTemplateContent]]
+        | None = None,
+    ):
         self.backend = backend
         self._org_count = 0
         self._load_template_lock = anyio.Lock()
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
-        self._loaded_templates: dict[
-            str, tuple[OrganizationID, int, testbed.TestbedTemplateContent]
-        ] = {}
+        self._loaded_templates = {} if loaded_templates is None else loaded_templates
 
     async def get_template(
         self, template: str
