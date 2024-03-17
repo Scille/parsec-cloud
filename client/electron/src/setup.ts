@@ -105,6 +105,12 @@ export class ElectronCapacitorApp {
 
     this.TrayMenuTemplate = [
       new MenuItem({
+        label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Afficher Parsec' : 'Show Parsec',
+        click: () => {
+          this.showMainWindow();
+        },
+      }),
+      new MenuItem({
         label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Quitter' : 'Quit',
         click: () => {
           this.showMainWindow();
@@ -115,7 +121,7 @@ export class ElectronCapacitorApp {
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
   }
 
-  getTray(): boolean {
+  isTrayEnabled(): boolean {
     if ('minimizeToTray' in this.config) {
       return (this.config as any).minimizeToTray;
     }
@@ -123,27 +129,26 @@ export class ElectronCapacitorApp {
   }
 
   hideMainWindow(): void {
-    if (process.platform === 'win32') {
-      this.MainWindow.hide();
-    } else {
+    if (process.platform === 'darwin') {
       this.MainWindow.minimize();
+    } else {
+      this.MainWindow.hide();
     }
   }
 
   showMainWindow(): void {
-    if (process.platform === 'win32') {
-      this.MainWindow.show();
-    } else {
+    if (process.platform === 'darwin') {
       this.MainWindow.restore();
+    } else {
+      this.MainWindow.show();
     }
-    this.MainWindow.focus();
   }
 
   isMainWindowVisible(): boolean {
-    if (process.platform === 'win32') {
-      return this.MainWindow.isVisible();
+    if (process.platform === 'darwin') {
+      return this.MainWindow.isMinimized();
     } else {
-      return !this.MainWindow.isMinimized();
+      return !this.MainWindow.isVisible();
     }
   }
 
@@ -195,7 +200,7 @@ export class ElectronCapacitorApp {
         return;
       }
 
-      const tray = this.getTray();
+      const tray = this.isTrayEnabled();
       if (tray) {
         this.hideMainWindow();
       } else {
@@ -209,13 +214,10 @@ export class ElectronCapacitorApp {
       this.TrayIcon = new Tray(icon.resize({ width: 16, height: 16 }));
 
       const trayToggleVisibility = () => {
-        if (this.isMainWindowVisible()) {
-          this.MainWindow.minimize();
-        } else {
-          this.showMainWindow();
-        }
+        this.showMainWindow();
       };
 
+      // Does not seem to do anything, at least on Linux
       this.TrayIcon.on('double-click', trayToggleVisibility);
       this.TrayIcon.setToolTip(app.getName());
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
