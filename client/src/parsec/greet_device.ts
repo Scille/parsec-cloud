@@ -12,13 +12,14 @@ import {
   DeviceGreetInProgress3Info,
   DeviceGreetInProgress4Info,
   DeviceGreetInitialInfo,
+  DeviceInvitation,
   DeviceLabel,
   GreetInProgressError,
   InvitationEmailSentStatus,
   NewInvitationInfo,
   Result,
 } from '@/parsec/types';
-import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
+import { InvitationStatus, InvitationToken, InviteListItemTag, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
 
 export class DeviceGreet {
   handle: ConnectionHandle | null;
@@ -74,9 +75,31 @@ export class DeviceGreet {
   }
 
   async createInvitation(sendEmail = true): Promise<Result<NewInvitationInfo, ClientNewDeviceInvitationError>> {
+    async function getExistingInvitation(clientHandle: ConnectionHandle): Promise<DeviceInvitation | null> {
+      const invitationsResult = await libparsec.clientListInvitations(clientHandle);
+      if (invitationsResult.ok) {
+        const deviceInvitations = invitationsResult.value.filter(
+          (inv) => inv.tag === InviteListItemTag.Device && (inv.status === InvitationStatus.Idle || inv.status === InvitationStatus.Ready),
+        );
+        if (deviceInvitations.length > 0) {
+          return deviceInvitations[0] as DeviceInvitation;
+        }
+      }
+      return null;
+    }
+
     const clientHandle = getParsecHandle();
 
     if (clientHandle !== null && !needsMocks()) {
+      const existingInvitation = await getExistingInvitation(clientHandle);
+      if (existingInvitation) {
+        this.invitationLink = existingInvitation.addr;
+        this.token = existingInvitation.token;
+        return {
+          ok: true,
+          value: { addr: existingInvitation.addr, token: existingInvitation.token, emailSentStatus: InvitationEmailSentStatus.Success },
+        };
+      }
       const result = await libparsec.clientNewDeviceInvitation(clientHandle, sendEmail);
       if (result.ok) {
         this.invitationLink = result.value.addr;
@@ -100,13 +123,15 @@ export class DeviceGreet {
   }
 
   async sendEmail(): Promise<boolean> {
-    const clientHandle = getParsecHandle();
-    if (clientHandle !== null && !needsMocks()) {
-      const result = await libparsec.clientNewDeviceInvitation(clientHandle, true);
-      return result.ok;
-    } else {
-      return true;
-    }
+    return true;
+    // Do nothing for now, we don't have the right API
+    // const clientHandle = getParsecHandle();
+    // if (clientHandle !== null && !needsMocks()) {
+    //   const result = await libparsec.clientNewDeviceInvitation(clientHandle, true);
+    //   return result.ok;
+    // } else {
+    //   return true;
+    // }
   }
 
   async startGreet(): Promise<Result<DeviceGreetInitialInfo, ClientStartInvitationGreetError>> {

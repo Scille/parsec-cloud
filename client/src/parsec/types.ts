@@ -84,6 +84,7 @@ export type {
   DeviceGreetInProgress4Info,
   DeviceGreetInitialInfo,
   DeviceInfo,
+  InviteListItemDevice as DeviceInvitation,
   DeviceLabel,
   DeviceSaveStrategy,
   DeviceSaveStrategyKeyring,
