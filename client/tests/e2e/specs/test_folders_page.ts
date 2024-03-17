@@ -219,21 +219,22 @@ describe('Check folders page', () => {
       .contains(/^\/Dir_[a-z_]+$/);
   });
 
-  it('Tests get file link', () => {
-    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
-    cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
-    cy.checkToastMessage('info', 'Link has been copied to clipboard.');
-    cy.window().then((win) => {
-      win.navigator.clipboard.readText().then((text) => {
-        // cspell:disable-next-line
-        const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
-        // cspell:disable-next-line
-        const workspaceId = '94a350f2f629403db2269c44583f7aa1';
-        const expected = `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`;
-        expect(text).to.eq(expected);
-      });
-    });
-  });
+  // Disabled until we get the bindings for it
+  // it('Tests get file link', () => {
+  //   cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
+  //   cy.get('#file-context-menu').find('ion-item').eq(10).contains('Copy link').click();
+  //   cy.checkToastMessage('info', 'Link has been copied to clipboard.');
+  //   cy.window().then((win) => {
+  //     win.navigator.clipboard.readText().then((text) => {
+  //       // cspell:disable-next-line
+  //       const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+  //       // cspell:disable-next-line
+  //       const workspaceId = '94a350f2f629403db2269c44583f7aa1';
+  //       const expected = `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`;
+  //       expect(text).to.eq(expected);
+  //     });
+  //   });
+  // });
 
   // function checkCurrentPath(workspace: string, depth: number): void {
   //   cy.get('.folder-selection-modal').find('ion-breadcrumb').as('breadcrumbs').should('have.length', depth);

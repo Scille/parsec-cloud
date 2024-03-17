@@ -88,6 +88,7 @@
           button
           @click="onClick(WorkspaceAction.CopyLink)"
           class="ion-no-padding list-group-item"
+          v-show="false"
         >
           <ion-icon :icon="link" />
           <ion-label class="body list-group-item__label">
