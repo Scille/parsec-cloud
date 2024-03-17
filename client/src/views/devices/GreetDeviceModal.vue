@@ -122,6 +122,7 @@
                     class="email-button"
                     @click="sendEmail"
                     fill="outline"
+                    v-show="false"
                   >
                     <span v-if="!isEmailSent">
                       {{ $t('DevicesPage.greet.actions.sendEmail') }}
@@ -258,10 +259,11 @@ enum GreetDeviceStep {
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
-const isEmailSent = ref(false);
+const isEmailSent = ref(true);
 const greeter = ref(new DeviceGreet());
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const linkCopiedToClipboard = ref(false);
+const cancelled = ref(false);
 
 interface GreetDeviceTitle {
   title: string;
@@ -346,7 +348,7 @@ async function startProcess(): Promise<void> {
     return;
   }
   const waitResult = await greeter.value.initialWaitGuest();
-  if (!waitResult.ok) {
+  if (!waitResult.ok && !cancelled.value) {
     informationManager.present(
       new Information({
         message: translate('DevicesPage.greet.errors.startFailed'),
@@ -382,7 +384,12 @@ const nextButtonIsVisible = computed(() => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  if (pageStep.value === GreetDeviceStep.WaitForGuest || pageStep.value === GreetDeviceStep.Summary) {
+  cancelled.value = true;
+  if (pageStep.value === GreetDeviceStep.Summary) {
+    return await modalController.dismiss(null, MsModalResult.Cancel);
+  }
+  if (pageStep.value === GreetDeviceStep.WaitForGuest) {
+    await greeter.value.abort();
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
   const answer = await askQuestion(
