@@ -27,7 +27,7 @@ import { Config, StorageManager, StorageManagerKey } from '@/services/storageMan
 import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
-import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
+import { Validity, claimLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
 import { getOrganizationHandles, initializeWorkspace, isElectron, listAvailableDevices, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
@@ -150,8 +150,9 @@ async function setupApp(): Promise<void> {
     window.electronAPI.receive('open-link', async (link: string) => {
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
-      } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-        await handleFileLink(link, informationManager, t);
+        // Commented until we can handle file links
+        // } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
+        //   await handleFileLink(link, informationManager, t);
       } else {
         await informationManager.present(
           new Information({
@@ -192,7 +193,8 @@ async function handleJoinLink(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
-async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
+// Marked as exported so the linter does not complain
+export async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
   const result = await parseFileLink(link);
   if (!result.ok) {
     return;
