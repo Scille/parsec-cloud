@@ -48,7 +48,7 @@ jobs:
     # 20.04 is required to install PostgreSQL 12
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
         timeout-minutes: 5
 
       - name: Set apt mirror

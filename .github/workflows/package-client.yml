@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -86,7 +86,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@4abee32ddd6d3482e57ba21814317997e6268efe # pin v2.28.11
+      - uses: taiki-e/install-action@ffad14352befc011a07601bbf501b672acbc18e6 # pin v2.29.0
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -128,7 +128,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -207,7 +207,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@4abee32ddd6d3482e57ba21814317997e6268efe # pin v2.28.11
+      - uses: taiki-e/install-action@ffad14352befc011a07601bbf501b672acbc18e6 # pin v2.29.0
         with:
           tool: syft@0.84.0
 
