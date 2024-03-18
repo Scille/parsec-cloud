@@ -130,7 +130,7 @@ describe('Create a new organization', () => {
     cy.get('@summaryItems').eq(2).find('.summary-item__text').contains('banjo@rare.com');
     cy.get('@summaryItems').eq(3).find('.summary-item__text').contains('parsec3://localhost?no_ssl=true');
     cy.get('@summaryItems').eq(4).find('.summary-item__label').contains('Authentication method');
-    cy.get('@summaryItems').eq(4).find('.summary-item__text').contains('Custom password');
+    cy.get('@summaryItems').eq(4).find('.summary-item__text').contains('Password');
     cy.get('#next-button').contains('Create organization').click();
 
     // Sixth page, spinner, X button should be hidden

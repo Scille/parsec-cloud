@@ -146,8 +146,8 @@
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
         "saas": "Parsec SaaS",
-        "keyringChoice": "Device authentication",
-        "passwordChoice": "Custom password",
+        "keyringChoice": "System authentication",
+        "passwordChoice": "Password",
         "acceptTOS": {
             "label": "I accept PARSEC's ",
             "tos": "Terms and Conditions ",
@@ -617,8 +617,8 @@
     },
     "Authentication": {
         "keyringInfo": "Authentication will be handled through your system, so you do not have to remember an additional password. Just do not forget to lock your session when you are not in front of your computer!",
-        "useKeyring": "Use system",
-        "usePassword": "Use password",
+        "useKeyring": "Use System Authentication",
+        "usePassword": "Use Password",
         "description": "Authentication method",
         "keyringUnavailableOnSystem": "Unavailable on your system",
         "keyringUnavailableOnWeb": "Unavailable on web"
@@ -980,7 +980,7 @@
         "validNewPassword": "Change your password",
         "keyring": "This device is authenticated using the system.",
         "email": "Email",
-        "password": "Password",
+        "authenticationMethod": "Authentication method",
         "cancelButton": "Cancel",
         "nextButton": "Confirm",
         "changePasswordButton": "Update",
