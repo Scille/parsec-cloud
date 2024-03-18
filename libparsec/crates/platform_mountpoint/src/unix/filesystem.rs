@@ -29,9 +29,13 @@ const GENERATION: u64 = 0;
 const BLOCK_SIZE: u64 = 512;
 const PERMISSIONS: u16 = 0o700;
 
+// macro_rules! debug {
+//     (target: $target:expr, $($arg:tt)+) => { println!($target, $($arg)+) };
+//     ($($arg:tt)+) => { println!($($arg)+) };
+// }
 macro_rules! debug {
-    (target: $target:expr, $($arg:tt)+) => { println!($target, $($arg)+) };
-    ($($arg:tt)+) => { println!($($arg)+) };
+    (target: $target:expr, $($arg:tt)+) => {};
+    ($($arg:tt)+) => {};
 }
 
 fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {

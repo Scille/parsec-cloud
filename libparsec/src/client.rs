@@ -71,6 +71,7 @@ pub async fn client_start(
 
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
+    println!("client_start !");
     let config: Arc<libparsec_client::ClientConfig> = config.into();
 
     // 1) Load the device
@@ -113,6 +114,7 @@ pub async fn client_start(
             Ok(initializing) => break initializing,
             Err(RegisterFailed::AlreadyRegistered(handle)) => {
                 // Go idempotent here
+                println!("client_start already started !");
                 return Ok(handle);
             }
             // Wait for concurrent operation to finish before retrying
@@ -121,14 +123,17 @@ pub async fn client_start(
     };
 
     // 3) Actually start the client
+    println!("client_start starting !");
 
     let on_event = OnEventCallbackPlugged::new(on_event_callback);
     let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
         .map_err(ClientStartError::Internal)?;
 
+    println!("client_start initializing !");
     let handle = initializing.initialized(HandleItem::Client { client, on_event });
 
+    println!("client_start all done !");
     Ok(handle)
 }
 

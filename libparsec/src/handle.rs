@@ -85,6 +85,7 @@ fn get_handles<'a>() -> MutexGuard<'a, Vec<RegisteredHandleItem>> {
         .expect("Mutex is poisoned")
 }
 
+#[derive(Debug)]
 pub(crate) struct InitializingGuard {
     handle: Handle,
     started: bool,

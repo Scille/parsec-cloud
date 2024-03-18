@@ -53,12 +53,25 @@ pub async fn client_start_workspace(
     realm_id: VlobID,
 ) -> Result<Handle, ClientStartWorkspaceError> {
     // 1. Check if the workspace isn't already started (or starting)
+    println!(
+        "{:?} client_start_workspace client={:?} realm={:?} 1 start",
+        std::time::SystemTime::now(),
+        client,
+        realm_id.hex()
+    );
 
+    #[derive(Debug)]
     enum RegisterFailed {
         AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
     }
     let initializing = loop {
+        println!(
+            "{:?} client_start_workspace client={:?} realm={:?} 2 loop",
+            std::time::SystemTime::now(),
+            client,
+            realm_id.hex()
+        );
         let outcome = register_handle_with_init(
             HandleItem::StartingWorkspace {
                 client,
@@ -85,17 +98,44 @@ pub async fn client_start_workspace(
                 _ => Ok(()),
             },
         );
+        println!(
+            "{:?} client_start_workspace client={:?} realm={:?} 3 loop outcome={:?}",
+            std::time::SystemTime::now(),
+            client,
+            realm_id,
+            outcome
+        );
 
         match outcome {
             Ok(initializing) => break initializing,
             Err(RegisterFailed::AlreadyRegistered(handle)) => {
                 // Go idempotent here
+                println!(
+                    "{:?} client_start_workspace client={:?} realm={:?} 4 return idempotent ",
+                    std::time::SystemTime::now(),
+                    client,
+                    realm_id.hex()
+                );
                 return Ok(handle);
             }
             // Wait for concurrent operation to finish before retrying
-            Err(RegisterFailed::ConcurrentRegister(listener)) => listener.await,
+            Err(RegisterFailed::ConcurrentRegister(listener)) => {
+                listener.await;
+                println!(
+                    "{:?} client_start_workspace client={:?} realm={:?} 5 listener wait done",
+                    std::time::SystemTime::now(),
+                    client,
+                    realm_id.hex()
+                );
+            }
         }
     };
+    println!(
+        "{:?} client_start_workspace client={:?} realm={:?} 6 done loop",
+        std::time::SystemTime::now(),
+        client,
+        realm_id.hex()
+    );
 
     // 2. Actually start the workspace
 
@@ -104,8 +144,21 @@ pub async fn client_start_workspace(
         HandleItem::Client { client, .. } => Some(client.clone()),
         _ => None,
     })?;
+    println!(
+        "{:?} client_start_workspace client={:?} realm={:?} 7 borrow_from_handle done",
+        std::time::SystemTime::now(),
+        client_handle,
+        realm_id.hex()
+    );
 
     let workspace_ops = client.start_workspace(realm_id).await?;
+
+    println!(
+        "{:?} client_start_workspace client={:?} realm={:?} 8 start_workspace ",
+        std::time::SystemTime::now(),
+        client_handle,
+        realm_id.hex()
+    );
 
     // 3. Finally register the workspace to get a handle
 
@@ -113,6 +166,12 @@ pub async fn client_start_workspace(
         client: client_handle,
         workspace_ops,
     });
+    println!(
+        "{:?} client_start_workspace client={:?} realm={:?} 9 initialized done",
+        std::time::SystemTime::now(),
+        client_handle,
+        realm_id.hex()
+    );
 
     Ok(workspace_handle)
 }
