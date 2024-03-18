@@ -336,14 +336,6 @@ async function onJoinOrganizationClicked(): Promise<void> {
 }
 
 // login view
-
-.login-fullscreen {
-  width: 100%;
-  margin: auto;
-}
-
-// login view
-
 .login-fullscreen {
   width: 100%;
   margin: auto;
