@@ -5,7 +5,7 @@ from parsec.events import EventPinged
 from tests.common import Backend, MinimalorgRpcClients
 
 
-async def test_events_listen_ok(
+async def test_user_not_receive_event_before_listen(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
 ) -> None:
