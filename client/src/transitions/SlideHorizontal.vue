@@ -16,6 +16,7 @@ const props = defineProps<{
 }>();
 
 function getName(): string {
+  console.log(`slide-${props.appearFrom}-to-${props.disappearTo}`);
   return `slide-${props.appearFrom}-to-${props.disappearTo}`;
 }
 </script>

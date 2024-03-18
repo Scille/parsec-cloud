@@ -19,10 +19,10 @@
             :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
           />
           <slide-horizontal
-            :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
-            :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
+            :appear-from="checkCurrentPage() ? Position.Left : Position.Right"
+            :disappear-to="checkCurrentPage() ? Position.Right : Position.Left"
           >
-            <template v-if="state === HomePageState.OrganizationList">
+            <template v-if="state === HomePageState.OrganizationList && !selectedDevice">
               <organization-list-page
                 @create-organization-click="openCreateOrganizationModal"
                 @organization-select="onOrganizationSelected"
@@ -189,6 +189,12 @@ async function openJoinByLinkModal(link: string): Promise<void> {
     }
     await login(result.data.device, result.data.access);
   }
+}
+
+function checkCurrentPage(): boolean {
+  console.log('OrganizationList', state.value === HomePageState.OrganizationList && selectedDevice.value === null);
+  console.log('Login', state.value === HomePageState.Login && selectedDevice.value !== null);
+  return state.value === HomePageState.OrganizationList && selectedDevice.value === null;
 }
 
 async function backToOrganizations(): Promise<void> {
