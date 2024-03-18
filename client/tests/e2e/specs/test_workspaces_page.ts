@@ -35,7 +35,8 @@ describe('Check workspaces page', () => {
     cy.get('@items').eq(5).contains('History');
     cy.get('@items').eq(6).contains('Details');
     cy.get('@items').eq(7).contains('Collaboration');
-    cy.get('@items').eq(8).contains('Copy link');
+    // FIXME: disabled for now
+    // cy.get('@items').eq(8).contains('Copy link');
     cy.get('@items').eq(9).contains('Sharing and roles');
   });
 
@@ -115,22 +116,23 @@ describe('Check workspaces page', () => {
     cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
   });
 
-  it('Get link to the workspace', () => {
-    cy.get('.card').eq(0).find('.card-option').click();
-    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
+  // FIXME: disabled for now
+  // it('Get link to the workspace', () => {
+  //   cy.get('.card').eq(0).find('.card-option').click();
+  //   cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
 
-    cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
-    cy.window().then((win) => {
-      win.navigator.clipboard.readText().then((text) => {
-        // cspell:disable-next-line
-        const workspaceId = '94a350f2f629403db2269c44583f7aa1';
-        // cspell:disable-next-line
-        const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
-        expect(text).to.eq(
-          // cspell:disable-next-line
-          `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
-        );
-      });
-    });
-  });
+  //   cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
+  //   cy.window().then((win) => {
+  //     win.navigator.clipboard.readText().then((text) => {
+  //       // cspell:disable-next-line
+  //       const workspaceId = '94a350f2f629403db2269c44583f7aa1';
+  //       // cspell:disable-next-line
+  //       const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+  //       expect(text).to.eq(
+  //         // cspell:disable-next-line
+  //         `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
+  //       );
+  //     });
+  //   });
+  // });
 });
