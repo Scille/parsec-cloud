@@ -21,6 +21,7 @@ libparsec_testbed = { workspace = true, optional = true }
 
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
+log = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dirs = { workspace = true }

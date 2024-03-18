@@ -539,5 +539,12 @@ pub async fn save_recovery_device(
 pub fn is_keyring_available() -> bool {
     // Using "tmp" as user, because keyring-rs forbids the use of empty string
     // due to an issue in macOS. See: https://github.com/hwchen/keyring-rs/pull/87
-    KeyringEntry::new(KEYRING_SERVICE, "tmp").is_ok()
+    match KeyringEntry::new(KEYRING_SERVICE, "tmp").and_then(|x| x.get_password()) {
+        Ok(_) => true,
+        Err(keyring::error::Error::NoEntry) => true,
+        Err(err) => {
+            log::warn!("Keyring is not available: {err:?}");
+            false
+        }
+    }
 }
