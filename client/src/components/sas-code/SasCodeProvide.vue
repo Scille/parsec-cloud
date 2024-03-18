@@ -17,11 +17,11 @@ defineProps<{
   margin: auto;
   width: 8em;
   height: 4em;
-  background-color: var(--parsec-color-light-primary-50);
+  background-color: var(--parsec-color-light-secondary-background);
   color: var(--parsec-color-light-primary-600);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--parsec-radius-4);
+  border-radius: var(--parsec-radius-8);
 }
 </style>
