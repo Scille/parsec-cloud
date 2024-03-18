@@ -35,8 +35,7 @@ class BackendConfig:
 
 
 class ConfigureBackend(Protocol):
-    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]:
-        ...
+    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]: ...
 
 
 @pytest.fixture(
@@ -105,6 +104,72 @@ async def test_ok(
     )
 
     assert rep == anonymous_cmds.v4.organization_bootstrap.RepOk()
+
+
+@dataclass
+class OverrideCertifData:
+    user: bytes | None = None
+    device: bytes | None = None
+    abr_user: bytes | None = None
+    abr_device: bytes | None = None
+    sequester: bytes | None = None
+
+
+@pytest.mark.parametrize(
+    "override_certif_data",
+    [
+        pytest.param(OverrideCertifData(user=b"foobar"), id="user_certificate"),
+        pytest.param(OverrideCertifData(device=b"foobar"), id="device_certificate"),
+        pytest.param(OverrideCertifData(abr_user=b"foobar"), id="redacted_user_certificate"),
+        pytest.param(OverrideCertifData(abr_device=b"foobar"), id="redacted_device_certificate"),
+        pytest.param(OverrideCertifData(sequester=b"foobar"), id="sequester_certificate"),
+    ],
+)
+@pytest.mark.usefixtures("ballpark_always_ok")
+async def test_invalid_certificate(
+    override_certif_data: OverrideCertifData,
+    organization_id: OrganizationID,
+    backend_bootstrap_config: ConfigureBackend,
+    testbed: TestbedBackend,
+    anonymous_client: AnonymousRpcClient,
+) -> None:
+    config = await backend_bootstrap_config(organization_id)
+
+    # 1) To do the bootstrap we need certificates, so steal them from another organization
+    _, _, coolorg_content = await testbed.get_template("coolorg")
+    bootstrap_event = coolorg_content.events[0]
+    assert isinstance(bootstrap_event, tb.TestbedEventBootstrapOrganization)
+    user_certificate = override_certif_data.user or bootstrap_event.first_user_raw_certificate
+    redacted_user_certificate = (
+        override_certif_data.abr_user or bootstrap_event.first_user_raw_redacted_certificate
+    )
+    device_certificate = (
+        override_certif_data.device or bootstrap_event.first_user_first_device_raw_certificate
+    )
+    redacted_device_certificate = (
+        override_certif_data.abr_device
+        or bootstrap_event.first_user_first_device_raw_redacted_certificate
+    )
+    root_verify_key = bootstrap_event.root_signing_key.verify_key
+    if override_certif_data.sequester:
+        sequester_authority_certificate = override_certif_data.sequester
+    else:
+        if config.sequestered:
+            pytest.xfail(reason="TODO: no sequestered template so far !")
+        else:
+            sequester_authority_certificate = None
+
+    rep = await anonymous_client.organization_bootstrap(
+        bootstrap_token=config.bootstrap_token,
+        root_verify_key=root_verify_key,
+        user_certificate=user_certificate,
+        device_certificate=device_certificate,
+        redacted_user_certificate=redacted_user_certificate,
+        redacted_device_certificate=redacted_device_certificate,
+        sequester_authority_certificate=sequester_authority_certificate,
+    )
+
+    assert rep == anonymous_cmds.v4.organization_bootstrap.RepInvalidCertificate()
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
