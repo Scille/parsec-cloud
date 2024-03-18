@@ -90,7 +90,7 @@ libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features 
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.80", default-features = false }
+anyhow = { version = "1.0.81", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.14", default-features = false }
 async-lock = { version = "3.3.0", default-features = false }
@@ -100,7 +100,7 @@ base64 = { version = "0.21.7", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.5.0", default-features = false }
 chrono = { version = "0.4.35", default-features = false }
-clap = { version = "4.5.2", default-features = false }
+clap = { version = "4.5.3", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.0", default-features = false }
@@ -150,7 +150,7 @@ predicates = { version = "3.1.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proptest = { version = "1.4.0", default-features = false }
 proptest-state-machine = { version = "0.1.0", default-features = false }
-proc-macro2 = { version = "1.0.78", default-features = false }
+proc-macro2 = { version = "1.0.79", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
 quote = { version = "1.0.35", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
@@ -159,7 +159,7 @@ rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.10.3", default-features = false }
 regex-syntax = { version = "0.8.2", default-features = false }
 reqwest-eventsource = { version = "0.4.0", default-features = false }
-reqwest = { version = "0.11.25", default-features = false }
+reqwest = { version = "0.11.26", default-features = false }
 rmp-serde = { version = "1.1.2", default-features = false }
 rpassword = { version = "7.3.1", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
@@ -169,13 +169,13 @@ serde_bytes = { version = "0.11.14", default-features = false }
 serde_json = { version = "1.0.114", default-features = false }
 serde_test = { version = "1.0.176", default-features = false }
 serde = { version = "1.0.197", default-features = false }
-serde_with = { version = "3.6.1", default-features = false }
+serde_with = { version = "3.7.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
-syn = { version = "2.0.52", default-features = false }
+syn = { version = "2.0.53", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
-thiserror = { version = "1.0.57", default-features = false }
+thiserror = { version = "1.0.58", default-features = false }
 tokio = { version = "1.36.0", default-features = false }
 unicode-normalization = { version = "0.1.23", default-features = false }
 url = { version = "2.5.0", default-features = false }
