@@ -5,7 +5,7 @@
     <ion-item
       v-if="sorterLabels"
       id="sort-order-button"
-      class="order-button body-sm"
+      class="order-button body"
       button
       @click="onOptionClick()"
     >
@@ -19,6 +19,9 @@
       class="sorter-list"
       id="sort-item-list"
     >
+      <ion-label class="sorter-list__title body-sm">
+        {{ $t('common.sortBy') }}
+      </ion-label>
       <ion-item
         class="sorter-list-item body"
         :class="{ selected: selectedOption?.key === option.key }"
@@ -45,7 +48,7 @@
 <script setup lang="ts">
 import { MsSorterLabels } from '@/components/core/ms-sorter/types';
 import { MsOption, MsOptions } from '@/components/core/ms-types';
-import { IonIcon, IonItem, IonList, popoverController } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { arrowDown, arrowUp, checkmark } from 'ionicons/icons';
 import { Ref, ref } from 'vue';
 
@@ -77,7 +80,6 @@ function onOptionClick(option?: MsOption): void {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 #sort-order-button {
@@ -120,22 +122,31 @@ function onOptionClick(option?: MsOption): void {
 }
 
 .sorter-list {
-  padding: 0.25rem;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+
+  &__title {
+    color: var(--parsec-color-light-secondary-grey);
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+  }
 
   &-item {
-    --background-hover: var(--parsec-color-light-secondary-medium);
+    --background-hover: var(--parsec-color-light-primary-30);
     --background-hover-opacity: 1;
     --color: var(--parsec-color-light-secondary-grey);
-    --color-hover: var(--parsec-color-light-secondary-text);
+    --color-hover: var(--parsec-color-light-primary-600);
     --border-radius: var(--parsec-radius-4);
-    --padding-top: 0.25rem;
-    --padding-bottom: 0.25rem;
-    --padding-start: 0.75rem;
-    --padding-end: 0.75rem;
+    --padding-top: 0.375rem;
+    --padding-bottom: 0.375rem;
+    --padding-start: 0.5rem;
+    --padding-end: 0.5rem;
     --inner-padding-end: 0;
 
     &.selected {
       color: var(--parsec-color-light-primary-700);
+      --color-hover: var(--parsec-color-light-primary-700);
       --background-hover: none;
 
       span {

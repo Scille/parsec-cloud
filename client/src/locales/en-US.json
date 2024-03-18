@@ -345,9 +345,9 @@
             "size": "Size"
         },
         "sort": {
-            "byName": "By name",
-            "byLastUpdate": "By last update",
-            "bySize": "By size",
+            "byName": "Name",
+            "byLastUpdate": "Last update",
+            "bySize": "Size",
             "asc": "Ascending",
             "desc": "Descending"
         },
@@ -519,7 +519,8 @@
             "macos": "MacOS",
             "linux": "Linux",
             "android": "Android"
-        }
+        },
+        "sortBy": "Sort by:"
     },
     "SideMenu": {
         "workspaces": "Workspaces",
@@ -894,10 +895,10 @@
             "revokeSomeFailed": "Some users could not be revoked"
         },
         "sort": {
-            "byName": "By name",
-            "byJoined": "By date joined",
-            "byProfile": "By profile",
-            "byStatus": "By status",
+            "byName": "Name",
+            "byJoined": "Date joined",
+            "byProfile": "Profile",
+            "byStatus": "Status",
             "asc": "Ascending",
             "desc": "Descending"
         },
