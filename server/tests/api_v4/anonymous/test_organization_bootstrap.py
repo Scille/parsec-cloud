@@ -51,8 +51,7 @@ class BackendConfig:
 
 
 class ConfigureBackend(Protocol):
-    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]:
-        ...
+    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]: ...
 
 
 @pytest.fixture(

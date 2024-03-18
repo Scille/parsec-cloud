@@ -253,9 +253,9 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
     }
     match kind:
         case "additional_participant":
-            per_participant_keys_bundle_access[
-                coolorg.mallory.device_id.user_id
-            ] = b"<unexpected keys bundle access>"
+            per_participant_keys_bundle_access[coolorg.mallory.device_id.user_id] = (
+                b"<unexpected keys bundle access>"
+            )
         case "missing_participant":
             del per_participant_keys_bundle_access[coolorg.bob.device_id.user_id]
         case _:

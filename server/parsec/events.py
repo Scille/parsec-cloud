@@ -94,11 +94,9 @@ ActiveUsersLimitField = Annotated[
 class ClientBroadcastableEvent(ABC):
     event_id: UUID
 
-    def is_event_for_client(self, client: RegisteredClient) -> bool:
-        ...
+    def is_event_for_client(self, client: RegisteredClient) -> bool: ...
 
-    def dump_as_apiv4_sse_payload(self) -> bytes:
-        ...
+    def dump_as_apiv4_sse_payload(self) -> bytes: ...
 
     @staticmethod
     def _dump_as_apiv4_sse_payload(

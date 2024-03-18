@@ -266,9 +266,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             MemoryRealmUserRole(cooked=certif, realm_role_certificate=realm_role_certificate)
         )
 
-        last_key_rotation.per_participant_keys_bundle_access[
-            certif.user_id
-        ] = recipient_keys_bundle_access
+        last_key_rotation.per_participant_keys_bundle_access[certif.user_id] = (
+            recipient_keys_bundle_access
+        )
 
         await self._event_bus.send(
             EventRealmCertificate(
