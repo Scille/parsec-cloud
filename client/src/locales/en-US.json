@@ -476,7 +476,8 @@
                 "standardUsers": "Standard",
                 "adminUsers": "Administrator",
                 "activeUsers": "Active",
-                "title": "Users"
+                "title": "Users",
+                "seeUsers": "See users"
             },
             "size": {
                 "metadata": "Meta-data",
@@ -491,7 +492,9 @@
                 "allowed": "Enabled",
                 "forbidden": "Disabled",
                 "title": "Configuration",
-                "serverAddr": "Server address"
+                "serverAddr": "Server address",
+                "copyPath": "Copied",
+                "copyFailed": "Failed to copy the organization address. Your browser or device does not seem to support copy/paste."
             }
         }
     },
