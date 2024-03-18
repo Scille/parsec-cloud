@@ -1,12 +1,28 @@
 name: Parse Version
 
 on:
+  pull_request:
+    paths:
+      - misc/releaser.py
+      - misc/version_updater.py
+      - .github/workflows/_parse_version.yml
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to parse (will generate a new one if empty)
+        required: false
+        type: string
+        default: ""
+      commit_sha:
+        description: The commit SHA to use when checkout'ing the repository
+        required: false
+        type: string
   workflow_call:
     inputs:
       version:
         required: true
         type: string
-        description: The version to parse
+        description: The version to parse (will generate a new one if empty)
       commit_sha:
         required: true
         type: string
