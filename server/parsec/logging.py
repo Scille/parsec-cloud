@@ -11,9 +11,10 @@ from sentry_sdk import Hub as sentry_Hub
 from sentry_sdk import init as sentry_init
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.utils import event_from_exception
+from structlog._log_levels import NAME_TO_LEVEL
 from structlog.dev import ConsoleRenderer
 from structlog.processors import JSONRenderer
-from structlog.types import ExcInfo
+from structlog.types import EventDict, ExcInfo
 
 from parsec._version import __version__
 
@@ -81,13 +82,9 @@ def _cook_log_level(log_level: str | None) -> int:
     return getattr(logging, log_level)
 
 
-_SENTRY_BREADCRUMB_LEVELS = {"info", "warning", "error", "exception"}
-_SENTRY_EVENT_LEVELS = {"error", "exception"}
-
-
 def _structlog_to_sentry_processor(
-    logger: logging.Logger, method_name: str, event: dict[str, object]
-) -> dict[str, object]:
+    logger: logging.Logger, method_name: str, event: EventDict
+) -> EventDict:
     sentry_client = sentry_Hub.current.client
     if not sentry_client:
         return event
@@ -96,12 +93,13 @@ def _structlog_to_sentry_processor(
     # for each place a logger is created. This is fine given event message
     # should be unique enough.
     logger_name = "parsec.structlog"
-    data = event.copy()
+    data: EventDict = {**event}
     level = data.pop("level")
     msg = data.pop("event")
     timestamp = data.pop("timestamp")
 
-    if level in _SENTRY_EVENT_LEVELS:
+    std_level = NAME_TO_LEVEL.get(level, logging.NOTSET)
+    if std_level >= logging.ERROR:
         # Cook the exception as a (class, exc, traceback) tuple
         v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
         exc_info: ExcInfo | None
@@ -127,7 +125,7 @@ def _structlog_to_sentry_processor(
         else:
             sentry_event = {}
 
-        sentry_event["level"] = level
+        sentry_event["level"] = logging.getLevelName(std_level)
         sentry_event["logger"] = logger_name
         sentry_event["timestamp"] = timestamp
         # sentry_sdk's stdlib logging integration stores the message under
@@ -139,7 +137,7 @@ def _structlog_to_sentry_processor(
 
         sentry_Hub.current.capture_event(sentry_event)
 
-    if level in _SENTRY_BREADCRUMB_LEVELS:
+    if std_level >= logging.INFO:
         sentry_Hub.current.add_breadcrumb(
             {
                 "type": "log",
