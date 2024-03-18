@@ -106,6 +106,7 @@ const options = {
     grade: 'devel',
     allowNativeWayland: true,
     stagePackages: ['default', 'fuse3'],
+    confinement: 'classic',
   },
 
   beforePack: './scripts/before-pack.js',
