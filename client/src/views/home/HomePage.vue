@@ -40,7 +40,6 @@
             <template v-if="state === HomePageState.Login && selectedDevice">
               <login-page
                 :device="selectedDevice"
-                :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
                 @login-click="login"
                 @forgotten-password-click="onForgottenPasswordClicked"
                 @back-click="backToOrganizations"
