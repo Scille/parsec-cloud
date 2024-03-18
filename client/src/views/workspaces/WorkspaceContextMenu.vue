@@ -24,7 +24,10 @@
         </ion-item>
       </ion-item-group>
 
-      <ion-item-group class="list-group">
+      <ion-item-group
+        class="list-group"
+        v-show="isDesktop()"
+      >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
             {{ $t('WorkspacesPage.workspaceContextMenu.titleManage') }}
@@ -45,6 +48,7 @@
 
         <ion-item
           button
+          v-show="isDesktop()"
           @click="onClick(WorkspaceAction.OpenInExplorer)"
           class="ion-no-padding list-group-item"
         >
@@ -126,7 +130,7 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
-import { UserProfile } from '@/parsec';
+import { UserProfile, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
 

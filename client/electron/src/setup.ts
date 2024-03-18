@@ -146,9 +146,9 @@ export class ElectronCapacitorApp {
 
   isMainWindowVisible(): boolean {
     if (process.platform === 'darwin') {
-      return this.MainWindow.isMinimized();
+      return !this.MainWindow.isMinimized();
     } else {
-      return !this.MainWindow.isVisible();
+      return this.MainWindow.isVisible();
     }
   }
 
