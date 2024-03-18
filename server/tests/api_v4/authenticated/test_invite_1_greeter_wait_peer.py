@@ -16,8 +16,7 @@ Response = authenticated_cmds.v4.invite_1_greeter_wait_peer.Rep | None
 
 
 class InviteStep(Protocol):
-    def __call__(self, cancel_scope: anyio.CancelScope) -> Coroutine[Any, Any, None]:
-        ...
+    def __call__(self, cancel_scope: anyio.CancelScope) -> Coroutine[Any, Any, None]: ...
 
 
 class Config:
@@ -39,8 +38,7 @@ class RunOrderConfig:
 
 
 class RunOrder(Protocol):
-    def __call__(self, greeter_config: Config, claimer_config: Config) -> RunOrderConfig:
-        ...
+    def __call__(self, greeter_config: Config, claimer_config: Config) -> RunOrderConfig: ...
 
 
 @pytest.fixture(params=["greeter_first", "claimer_first"])
