@@ -169,7 +169,7 @@
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
-            "personalDetails": "Renseignez votre nom, votre email et le nom de votre appareil.",
+            "personalDetails": "Renseignez votre nom et votre email.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
             "authentication": "Pour finir, choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
@@ -1014,6 +1014,10 @@
             "invalidAction": "Le lien contient une action invalide.",
             "missingToken": "Le lien n'inclut pas de jeton.",
             "invalidToken": "Le lien contient un jeton invalide."
+        },
+        "userInfo": {
+            "name": "Le nom contient des caractères invalides.",
+            "email": "Le format de l'adresse email est invalide."
         }
     },
     "OrganizationSwitch": {

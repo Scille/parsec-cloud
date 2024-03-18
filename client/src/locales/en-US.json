@@ -1014,6 +1014,10 @@
             "invalidAction": "Link contains an invalid action.",
             "missingToken": "Link does not include a token.",
             "invalidToken": "Link contains an invalid token."
+        },
+        "userInfo": {
+            "name": "Name contains invalid characters.",
+            "email": "Wrong email address format."
         }
     },
     "OrganizationSwitch": {

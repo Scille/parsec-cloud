@@ -32,7 +32,9 @@ export const emailValidator: IValidator = async function (value: string) {
   if (!value.includes('@') || value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  return (await isValidEmail(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  return (await isValidEmail(value))
+    ? { validity: Validity.Valid }
+    : { validity: Validity.Invalid, reason: translate('validators.userInfo.email') };
 };
 
 export const deviceNameValidator: IValidator = async function (value: string) {
@@ -48,7 +50,9 @@ export const userNameValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  return (await isValidUserName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  return (await isValidUserName(value))
+    ? { validity: Validity.Valid }
+    : { validity: Validity.Invalid, reason: translate('validators.userInfo.name') };
 };
 
 export const workspaceNameValidator: IValidator = async function (value: string) {
