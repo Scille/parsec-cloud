@@ -76,7 +76,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # pin v4.1.1
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -98,7 +98,7 @@ jobs:
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@ce3fb7832089eb3e723a0a99cab7f3eaccf074fd  # pin v2.16.5
+        uses: pypa/cibuildwheel@8d945475ac4b1aac4ae08b2fd27db9917158b6ce  # pin v2.17.0
         with:
           package-dir: server
           output-dir: dist
@@ -135,7 +135,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@4abee32ddd6d3482e57ba21814317997e6268efe # pin v2.28.11
+      - uses: taiki-e/install-action@ffad14352befc011a07601bbf501b672acbc18e6 # pin v2.29.0
         with:
           tool: syft@0.84.0
 
