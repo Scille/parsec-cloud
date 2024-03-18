@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { isMacOS, isWindows, needsMocks } from '@/parsec/environment';
+import { isMacOS, needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -358,7 +358,7 @@ export async function stopWorkspace(workspaceHandle: WorkspaceHandle): Promise<R
 export async function mountWorkspace(
   workspaceHandle: WorkspaceHandle,
 ): Promise<Result<[MountpointHandle, SystemPath], WorkspaceMountError>> {
-  if (!needsMocks() && !isWindows() && !isMacOS()) {
+  if (!needsMocks() && !isMacOS()) {
     const startedWorkspaceResult = await getWorkspaceInfo(workspaceHandle);
     if (!startedWorkspaceResult.ok) {
       console.error(`Failed to get started workspace info: ${startedWorkspaceResult.error}`);
