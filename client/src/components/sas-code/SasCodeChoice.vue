@@ -76,20 +76,28 @@ defineEmits<{
 .button-choice {
   width: 8em;
   height: 4em;
-  background-color: var(--parsec-color-light-primary-30);
+  background-color: var(--parsec-color-light-secondary-medium);
+  overflow: hidden;
   margin: 0.75rem;
-  border-radius: var(--parsec-radius-4);
+  border-radius: var(--parsec-radius-8);
+  color: var(--parsec-color-light-primary-600);
+  border: 3px solid var(--parsec-color-light-secondary-medium);
+  transition: all 0.2s ease;
+  --background-focused: none;
+  --background-focused-opacity: 0;
 
   &::part(native) {
-    border: 2px solid var(--parsec-color-light-primary-200);
+    border: none;
+  }
+
+  &:focus-within {
+    background-color: var(--parsec-color-light-primary-100);
+    border-color: var(--parsec-color-light-primary-600);
   }
 
   &:hover {
     background-color: var(--parsec-color-light-primary-100);
-
-    &::part(native) {
-      border-color: var(--parsec-color-light-primary-600);
-    }
+    border-color: var(--parsec-color-light-primary-600);
   }
 }
 
