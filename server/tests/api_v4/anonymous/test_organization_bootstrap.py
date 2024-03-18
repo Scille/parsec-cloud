@@ -6,8 +6,24 @@ from typing import Protocol
 
 import pytest
 
-from parsec._parsec import BootstrapToken, DateTime, OrganizationID, anonymous_cmds
+from parsec._parsec import (
+    BootstrapToken,
+    DateTime,
+    DeviceCertificate,
+    DeviceID,
+    DeviceLabel,
+    HumanHandle,
+    OrganizationID,
+    PrivateKey,
+    SequesterAuthorityCertificate,
+    SequesterSigningKeyDer,
+    SigningKey,
+    UserCertificate,
+    UserProfile,
+    anonymous_cmds,
+)
 from parsec._parsec import testbed as tb
+from parsec.ballpark import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
 from tests.common import AnonymousRpcClient, AsyncClient, Backend, TestbedBackend
 
 
@@ -35,7 +51,8 @@ class BackendConfig:
 
 
 class ConfigureBackend(Protocol):
-    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]: ...
+    def __call__(self, organization_id: OrganizationID) -> Awaitable[BackendConfig]:
+        ...
 
 
 @pytest.fixture(
@@ -254,3 +271,104 @@ async def test_invalid_bootstrap_token(
     )
 
     assert rep == anonymous_cmds.v4.organization_bootstrap.RepInvalidBootstrapToken()
+
+
+@pytest.mark.parametrize(
+    [
+        "user_certif_late",
+        "device_certif_late",
+        "sequester_auth_certif_late",
+    ],
+    [
+        # User and device certificate should have the same timestamp
+        pytest.param(True, True, False, id="user_n_device_certificate_late"),
+        pytest.param(False, False, True, id="sequester_certificate_late"),
+    ],
+)
+@pytest.mark.parametrize(
+    "ballpark_offset",
+    [
+        pytest.param(BALLPARK_CLIENT_EARLY_OFFSET + 5, id="early"),
+        pytest.param(-BALLPARK_CLIENT_LATE_OFFSET - 5, id="late"),
+    ],
+)
+async def test_timestamp_out_of_ballpark(
+    user_certif_late: bool,
+    device_certif_late: bool,
+    sequester_auth_certif_late: bool,
+    ballpark_offset: int,
+    organization_id: OrganizationID,
+    backend_bootstrap_config: ConfigureBackend,
+    anonymous_client: AnonymousRpcClient,
+) -> None:
+    config = await backend_bootstrap_config(organization_id)
+
+    now = DateTime.now()
+    late = now.add(seconds=ballpark_offset)
+
+    root_signing_key = SigningKey.generate()
+    root_verify_key = root_signing_key.verify_key
+
+    device_id = DeviceID.new()
+    user_id = device_id.user_id
+    user_priv_key = PrivateKey.generate()
+    user_human_handle = HumanHandle("foo@bar.com", str(user_id))
+    device_label = DeviceLabel("device label")
+
+    user_certificate = UserCertificate(
+        author=None,
+        timestamp=late if user_certif_late else now,
+        user_id=user_id,
+        human_handle=user_human_handle,
+        public_key=user_priv_key.public_key,
+        profile=UserProfile.ADMIN,
+    )
+    redacted_user_certificate = UserCertificate(
+        author=user_certificate.author,
+        timestamp=user_certificate.timestamp,
+        user_id=user_certificate.user_id,
+        human_handle=None,
+        public_key=user_certificate.public_key,
+        profile=user_certificate.profile,
+    )
+    device_certificate = DeviceCertificate(
+        author=device_id,
+        timestamp=late if device_certif_late else now,
+        device_id=device_id,
+        device_label=device_label,
+        verify_key=root_verify_key,
+    )
+    redacted_device_certificate = DeviceCertificate(
+        author=device_certificate.author,
+        timestamp=device_certificate.timestamp,
+        device_id=device_certificate.device_id,
+        device_label=None,
+        verify_key=device_certificate.verify_key,
+    )
+
+    _, sequester_verify_key = SequesterSigningKeyDer.generate_pair(1024)
+
+    sequester_authority_certificate = SequesterAuthorityCertificate(
+        timestamp=late if sequester_auth_certif_late else now,
+        verify_key_der=sequester_verify_key,
+    )
+
+    rep = await anonymous_client.organization_bootstrap(
+        bootstrap_token=config.bootstrap_token,
+        root_verify_key=root_verify_key,
+        user_certificate=user_certificate.dump_and_sign(root_signing_key),
+        device_certificate=device_certificate.dump_and_sign(root_signing_key),
+        redacted_user_certificate=redacted_user_certificate.dump_and_sign(root_signing_key),
+        redacted_device_certificate=redacted_device_certificate.dump_and_sign(root_signing_key),
+        sequester_authority_certificate=sequester_authority_certificate.dump_and_sign(
+            root_signing_key
+        )
+        if sequester_authority_certificate
+        else None,
+    )
+
+    assert isinstance(rep, anonymous_cmds.v4.organization_bootstrap.RepTimestampOutOfBallpark)
+    assert rep.ballpark_client_early_offset == BALLPARK_CLIENT_EARLY_OFFSET
+    assert rep.ballpark_client_late_offset == BALLPARK_CLIENT_LATE_OFFSET
+    assert rep.client_timestamp == late
+    # We don't compare the server timestamp as it's not deterministic, should we freeze time ?
