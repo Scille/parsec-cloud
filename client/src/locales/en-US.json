@@ -9,9 +9,9 @@
         "history": "https://docs.parsec.cloud/en/stable/history.html"
     },
     "quit": {
-        "title": "Exit application",
-        "subtitle": "Are you sure you want to exit the application?",
-        "yes": "Quit",
+        "title": "Exit Parsec",
+        "subtitle": "Are you sure you want to exit the application? Mounted workspaces will be unmounted and any import in progress will be cancelled.",
+        "yes": "Exit",
         "no": "Cancel"
     },
     "openFile": {
