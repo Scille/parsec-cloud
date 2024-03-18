@@ -2064,6 +2064,7 @@ dependencies = [
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",
  "libparsec_types",
+ "log",
  "serde_json",
  "uuid",
  "web-sys",
