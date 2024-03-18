@@ -150,7 +150,7 @@ async function setupApp(): Promise<void> {
     window.electronAPI.receive('open-link', async (link: string) => {
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
-        // Commented until we can handle file links
+        // FIXME: Commented until we can handle file links
         // } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
         //   await handleFileLink(link, informationManager, t);
       } else {
