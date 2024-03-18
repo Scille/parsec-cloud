@@ -3,7 +3,7 @@
 <template>
   <ion-label class="label-profile profile">
     <ion-chip
-      class="caption-caption tag"
+      class="button-small tag"
       :class="getClassForProfile(profile)"
     >
       {{ translateProfile(profile) }}

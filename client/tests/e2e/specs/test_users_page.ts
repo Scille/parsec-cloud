@@ -212,11 +212,11 @@ describe('Check active users page', () => {
 
     cy.get('#select-popover-button').click();
     cy.get('ion-popover').find('#sort-item-list').find('ion-item').as('itemButtons').should('have.length', 4);
-    cy.get('@itemButtons').eq(0).contains('By name');
-    cy.get('@itemButtons').eq(1).contains('By date joined');
-    cy.get('@itemButtons').eq(2).contains('By profile');
+    cy.get('@itemButtons').eq(0).contains('Name');
+    cy.get('@itemButtons').eq(1).contains('Date joined');
+    cy.get('@itemButtons').eq(2).contains('Profile');
     cy.get('@itemButtons').eq(2).find('.checked');
-    cy.get('@itemButtons').eq(3).contains('By status');
+    cy.get('@itemButtons').eq(3).contains('Status');
 
     // Sort by name descending
     cy.get('@itemButtons').eq(0).click();
