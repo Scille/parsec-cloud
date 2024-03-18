@@ -254,7 +254,7 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     timestamp: DateTimeField
-    participants: tuple[UserID]
+    participants: tuple[UserID, ...]
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
