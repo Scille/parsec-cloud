@@ -371,6 +371,9 @@ function getStepperIndex(): number {
 }
 
 const nextButtonIsVisible = computed(() => {
+  if (cancelled.value) {
+    return false;
+  }
   if (pageStep.value === GreetDeviceStep.WaitForGuest && waitingForGuest.value) {
     return false;
   } else if (pageStep.value === GreetDeviceStep.ProvideHostSasCode) {
