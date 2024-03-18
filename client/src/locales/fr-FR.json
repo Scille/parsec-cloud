@@ -146,8 +146,8 @@
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
         "saas": "Parsec SaaS",
-        "keyringChoice": "Authentification de l'appareil",
-        "passwordChoice": "Mot de passe personnalisé",
+        "keyringChoice": "Authentification du système",
+        "passwordChoice": "Mot de passe",
         "acceptTOS": {
             "label": "En utilisant le serveur PARSEC, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
@@ -614,7 +614,7 @@
     },
     "Authentication": {
         "keyringInfo": "L'authentification sera gérée par votre système. Vous n'avez pas à retenir un mot de passe supplémentaire. N'oubliez pas de verrouiller votre session quand vous n'utilisez pas votre ordinateur !",
-        "useKeyring": "Utiliser le système",
+        "useKeyring": "Utiliser l'authentification du système",
         "usePassword": "Utiliser un mot de passe",
         "description": "Méthode d'authentification",
         "keyringUnavailableOnSystem": "Indisponible sur votre système",
@@ -977,7 +977,7 @@
         "validNewPassword": "Mettre à jour mon mot de passe",
         "keyring": "Cet appareil est authentifié par le système.",
         "email": "Email",
-        "password": "Mot de passe",
+        "authenticationMethod": "Méthode d'authentification",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
         "changePasswordButton": "Modifier",

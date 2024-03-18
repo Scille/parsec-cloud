@@ -29,7 +29,7 @@
               </div>
               <div class="user-info-inputs-item">
                 <ion-text class="user-info-inputs-item__label form-input">
-                  {{ $t('ContactDetailsPage.password') }}
+                  {{ $t('ContactDetailsPage.authenticationMethod') }}
                 </ion-text>
                 <div
                   class="user-info-inputs-item__password"
@@ -167,7 +167,7 @@ onMounted(async () => {
       gap: 0.5rem;
 
       &__label {
-        min-width: 12rem;
+        min-width: 14rem;
         color: var(--parsec-color-light-secondary-text);
       }
 
