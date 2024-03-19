@@ -16,9 +16,8 @@ from parsec.components.postgresql.handler import parse_signal, send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm_queries.get import query_get_realms_for_user
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.user_queries.get import query_check_user_with_device
 from parsec.components.postgresql.utils import transaction
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 
@@ -101,21 +100,21 @@ class PGEventsComponent(BaseEventsComponent):
     def __init__(self, pool: asyncpg.Pool, config: BackendConfig, event_bus: EventBus):
         super().__init__(config, event_bus)
         self.pool = pool
-        self._organization: PGOrganizationComponent
-        self._user: PGUserComponent
+        self.organization: PGOrganizationComponent
+        self.user: PGUserComponent
 
     def register_components(
         self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
     ) -> None:
-        self._organization = organization
-        self._user = user
+        self.organization = organization
+        self.user = user
 
     @override
     @transaction
     async def _get_registration_info_for_author(
         self, conn: asyncpg.Connection, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
@@ -126,12 +125,12 @@ class PGEventsComponent(BaseEventsComponent):
         if org.is_expired:
             return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
 
-        match await query_check_user_with_device(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
             case UserProfile() as profile:
                 pass

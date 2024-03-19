@@ -11,9 +11,11 @@ from parsec._parsec import (
     DeviceID,
     HumanHandle,
     OrganizationID,
+    RevokedUserCertificate,
     UserCertificate,
     UserID,
     UserProfile,
+    UserUpdateCertificate,
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
@@ -22,20 +24,29 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user_queries import (
     query_dump_users,
-    query_revoke_user,
 )
-from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
+from parsec.components.postgresql.user_queries.create import (
+    q_create_device,
+    q_create_user,
+    q_take_user_device_write_lock,
+)
 from parsec.components.postgresql.user_queries.get import (
+    _q_get_device,
+    _q_get_user,
     _q_get_user_info,
     _q_get_user_info_from_email,
-    query_check_user_with_device,
     query_list_users,
 )
-from parsec.components.postgresql.user_queries.revoke import q_freeze_user
+from parsec.components.postgresql.user_queries.revoke import (
+    _q_revoke_user,
+    q_freeze_user,
+)
 from parsec.components.postgresql.utils import transaction
+from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
     BaseUserComponent,
-    CheckUserWithDeviceBadOutcome,
+    CheckDeviceBadOutcome,
+    CheckUserBadOutcome,
     UserCreateDeviceStoreBadOutcome,
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
@@ -44,10 +55,21 @@ from parsec.components.user import (
     UserFreezeUserBadOutcome,
     UserInfo,
     UserListUsersBadOutcome,
+    UserRevokeUserStoreBadOutcome,
+    UserRevokeUserValidateBadOutcome,
+    UserUpdateUserStoreBadOutcome,
+    UserUpdateUserValidateBadOutcome,
     user_create_device_validate,
     user_create_user_validate,
+    user_revoke_user_validate,
+    user_update_user_validate,
 )
-from parsec.events import EventCommonCertificate, EventUserRevokedOrFrozen, EventUserUnfrozen
+from parsec.events import (
+    EventCommonCertificate,
+    EventUserRevokedOrFrozen,
+    EventUserUnfrozen,
+    EventUserUpdated,
+)
 
 
 class PGUserComponent(BaseUserComponent):
@@ -55,18 +77,48 @@ class PGUserComponent(BaseUserComponent):
         super().__init__()
         self.pool = pool
         self.event_bus = event_bus
-        self._organization: PGOrganizationComponent
+        self.organization: PGOrganizationComponent
 
     def register_components(self, organization: PGOrganizationComponent, **kwargs) -> None:
-        self._organization = organization
+        self.organization = organization
+
+    async def _check_device(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+    ) -> UserProfile | CheckDeviceBadOutcome:
+        d_row = await conn.fetchrow(
+            *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+        )
+        if not d_row:
+            return CheckDeviceBadOutcome.DEVICE_NOT_FOUND
+        match await self._check_user(conn, organization_id, device_id.user_id):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return CheckDeviceBadOutcome.USER_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return CheckDeviceBadOutcome.USER_REVOKED
+            case UserProfile() as profile:
+                return profile
+            case unknown:
+                assert_never(unknown)
 
     async def _check_user(
         self,
         conn: asyncpg.Connection,
         organization_id: OrganizationID,
-        author: DeviceID,
-    ) -> UserProfile | CheckUserWithDeviceBadOutcome:
-        return await query_check_user_with_device(conn, organization_id, author)
+        user_id: UserID,
+    ) -> UserProfile | CheckUserBadOutcome:
+        u_row = await conn.fetchrow(
+            *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
+        )
+        if not u_row:
+            return CheckUserBadOutcome.USER_NOT_FOUND
+        if u_row["revoked_on"] is not None:
+            return CheckUserBadOutcome.USER_REVOKED
+        initial_profile = UserProfile.from_str(u_row["profile"])
+        # TODO: return the actual profile
+        return initial_profile
 
     @override
     @transaction
@@ -88,7 +140,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
@@ -98,12 +150,12 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile() as profile:
                 if profile != UserProfile.ADMIN:
@@ -168,7 +220,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
@@ -178,17 +230,18 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        match await query_check_user_with_device(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
             case unknown:
                 assert_never(unknown)
+
         match user_create_device_validate(
             now=now,
             expected_author=author,
@@ -213,6 +266,121 @@ class PGUserComponent(BaseUserComponent):
             EventCommonCertificate(
                 organization_id=organization_id,
                 timestamp=certif.timestamp,
+            )
+        )
+
+        return certif
+
+    @override
+    @transaction
+    async def update_user(
+        self,
+        conn: asyncpg.Connection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        user_update_certificate: bytes,
+    ) -> (
+        UserUpdateCertificate
+        | UserUpdateUserValidateBadOutcome
+        | UserUpdateUserStoreBadOutcome
+        | TimestampOutOfBallpark
+        | RequireGreaterTimestamp
+    ):
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unknown:
+                assert_never(unknown)
+        if organization.is_expired:
+            return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as profile:
+                if profile != UserProfile.ADMIN:
+                    return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        match user_update_user_validate(
+            now=now,
+            expected_author=author,
+            author_verify_key=author_verify_key,
+            user_update_certificate=user_update_certificate,
+        ):
+            case UserUpdateCertificate() as certif:
+                pass
+            case error:
+                return error
+
+        match await self._check_user(conn, organization_id, certif.user_id):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return UserUpdateUserStoreBadOutcome.USER_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return UserUpdateUserStoreBadOutcome.USER_REVOKED
+            case UserProfile() as current_profile:
+                if current_profile == certif.new_profile:
+                    return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        # Ensure certificate consistency: our certificate must be the newest thing on the server.
+        #
+        # Strictly speaking consistency only requires to ensure the profile change didn't
+        # remove rights that have been used to add certificates/vlobs with posterior timestamp
+        # (e.g. switching from OWNER to READER while a vlob has been created).
+        #
+        # However doing such precise checks is complex and error prone, so we take a simpler
+        # approach by considering certificates don't change often so it's no big deal to
+        # have a much more coarse approach.
+
+        # TODO: implement consistency
+        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+        #     return RequireGreaterTimestamp(
+        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+        #     )
+
+        # TODO: validate it's okay not to check this
+        # All checks are good, now we do the actual insertion
+
+        # Note an OUTSIDER is not supposed to be OWNER/MANAGER of a shared realm. However this
+        # is possible if the user's profile is updated to OUTSIDER here.
+        # We don't try to prevent this given:
+        # - It is complex and error prone to check.
+        # - It is a very niche case.
+        # - It is puzzling for the end user to understand why he cannot change a profile,
+        #   and that he have to find somebody with access to a seemingly unrelated realm
+        #   to change a role in order to be able to do it !
+
+        # TODO: implement this
+        # target_user.profile_updates.append(
+        #     MemoryUserProfileUpdate(
+        #         cooked=certif,
+        #         user_update_certificate=user_update_certificate,
+        #     )
+        # )
+
+        await self.event_bus.send(
+            EventCommonCertificate(
+                organization_id=organization_id,
+                timestamp=certif.timestamp,
+            )
+        )
+        await self.event_bus.send(
+            EventUserUpdated(
+                organization_id=organization_id,
+                user_id=certif.user_id,
+                new_profile=certif.new_profile,
             )
         )
 
@@ -246,7 +414,7 @@ class PGUserComponent(BaseUserComponent):
     async def list_users(
         self, conn: asyncpg.Connection, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
@@ -305,24 +473,115 @@ class PGUserComponent(BaseUserComponent):
     #             omit_non_human=omit_non_human,
     #         )
 
+    @override
+    @transaction
     async def revoke_user(
         self,
+        conn: asyncpg.Connection,
+        now: DateTime,
         organization_id: OrganizationID,
-        user_id: UserID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
         revoked_user_certificate: bytes,
-        revoked_user_certifier: DeviceID,
-        revoked_on: DateTime | None = None,
-    ) -> None:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_revoke_user(
-                conn,
-                organization_id,
-                user_id,
-                revoked_user_certificate,
-                revoked_user_certifier,
-                revoked_on,
+    ) -> (
+        RevokedUserCertificate
+        | CertificateBasedActionIdempotentOutcome
+        | UserRevokeUserValidateBadOutcome
+        | UserRevokeUserStoreBadOutcome
+        | TimestampOutOfBallpark
+        | RequireGreaterTimestamp
+    ):
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unknown:
+                assert_never(unknown)
+        if organization.is_expired:
+            return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as profile:
+                if profile != UserProfile.ADMIN:
+                    return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        match user_revoke_user_validate(
+            now=now,
+            expected_author=author,
+            author_verify_key=author_verify_key,
+            revoked_user_certificate=revoked_user_certificate,
+        ):
+            case RevokedUserCertificate() as certif:
+                pass
+            case error:
+                return error
+
+        match await self._check_user(conn, organization_id, certif.user_id):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return CertificateBasedActionIdempotentOutcome(
+                    certificate_timestamp=certif.timestamp  # TODO: Wrong timestamp!
+                )
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        # Ensure certificate consistency: our certificate must be the newest thing on the server.
+        #
+        # Strictly speaking consistency only requires the certificate to be more recent than
+        # the the certificates involving the realm and/or the recipient user; and, similarly,
+        # the vlobs created/updated by the recipient.
+        #
+        # However doing such precise checks is complex and error prone, so we take a simpler
+        # approach by considering certificates don't change often so it's no big deal to
+        # have a much more coarse approach.
+
+        # TODO: implement consistency
+        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+        #     return RequireGreaterTimestamp(
+        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+        #     )
+
+        # All checks are good, now we do the actual insertion
+        await q_take_user_device_write_lock(conn, organization_id)
+        result = await conn.execute(
+            *_q_revoke_user(
+                organization_id=organization_id.str,
+                user_id=certif.user_id.str,
+                revoked_user_certificate=revoked_user_certificate,
+                revoked_user_certifier=author.str,
+                revoked_on=now,
             )
+        )
+
+        # This should not fail as the proper checks have already been performed
+        assert result == "UPDATE 1", f"Unexpected {result}"
+
+        await self.event_bus.send(
+            EventCommonCertificate(
+                organization_id=organization_id,
+                timestamp=certif.timestamp,
+            )
+        )
+        await self.event_bus.send(
+            EventUserRevokedOrFrozen(
+                organization_id=organization_id,
+                user_id=certif.user_id,
+            )
+        )
+
+        return certif
 
     @override
     @transaction
@@ -334,7 +593,7 @@ class PGUserComponent(BaseUserComponent):
         user_email: str | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():

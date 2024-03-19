@@ -52,7 +52,7 @@ from parsec.components.realm import (
     realm_rotate_key_validate,
     realm_share_validate,
 )
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 from parsec.events import EventRealmCertificate
 
 
@@ -158,8 +158,8 @@ class PGRealmComponent(BaseRealmComponent):
     def register_components(
         self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
     ) -> None:
-        self._organization = organization
-        self._user = user
+        self.organization = organization
+        self.user = user
 
     async def _check_realm(
         self,
@@ -199,7 +199,7 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmCreateStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
@@ -210,12 +210,12 @@ class PGRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self._user._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
@@ -348,7 +348,7 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
@@ -359,12 +359,12 @@ class PGRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self._user._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass
