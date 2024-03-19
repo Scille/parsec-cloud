@@ -431,6 +431,7 @@ class BaseEventsComponent:
             try:
                 yield outcome
             finally:
-                # It's vital to unregister the client here given the memory location of the
-                # client (and hence the id resulting of it) will most likely be re-used !
-                self._registered_clients.pop(id(client_ctx))
+                if not isinstance(outcome, SseAPiEventsListenBadOutcome):
+                    # It's vital to unregister the client here given the memory location of the
+                    # client (and hence the id resulting of it) will most likely be re-used !
+                    self._registered_clients.pop(id(client_ctx))
