@@ -2,11 +2,29 @@
 
 import enUS from '@/locales/en-US.json';
 import frFR from '@/locales/fr-FR.json';
-import { InvitationStatus, WorkspaceRole } from '@/parsec';
+import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
 import { DateTime } from 'luxon';
+import { App } from 'vue';
 import { createI18n } from 'vue-i18n';
 
 let i18n: any | null = null;
+
+export interface TranslationData {
+  key: string;
+  data?: object;
+  count?: number;
+}
+
+export type Translatable = string | TranslationData | undefined;
+
+export const TranslationPlugin = {
+  install: (app: App<any>): void => {
+    app.config.globalProperties.$msTranslate = (translatable: Translatable): string => {
+      return msTranslate(translatable);
+    };
+    app.provide('msTranslate', msTranslate);
+  },
+};
 
 export type Locale = 'fr-FR' | 'en-US';
 export type DateFormat = 'long' | 'short';
@@ -66,10 +84,14 @@ export function initTranslations(locale?: Locale): any {
   return i18n;
 }
 
-export function translate(key: string, attrs?: object, count?: number): string {
+export function msTranslate(content: Translatable): string {
+  if (typeof content === 'undefined' || content === '') {
+    return '';
+  }
+
   const { t } = i18n.global;
 
-  return t(key, attrs, count);
+  return typeof content === 'string' ? t(content) : t(content.key, content.data, content.count);
 }
 
 export function formatDate(date: DateTime, format: DateFormat = 'long'): string {
@@ -78,59 +100,70 @@ export function formatDate(date: DateTime, format: DateFormat = 'long'): string 
   return d(date.toJSDate(), format);
 }
 
+export function getLocale(): any {
+  return i18n.global.locale.value;
+}
+
 interface WorkspaceRoleTranslation {
   label: string;
   description?: string;
 }
 
-export function translateWorkspaceRole(role: WorkspaceRole | null): WorkspaceRoleTranslation {
-  const { t } = i18n.global;
+export function translateProfile(profile: UserProfile): string {
+  if (profile === UserProfile.Admin) {
+    return msTranslate('UsersPage.profile.admin.label');
+  } else if (profile === UserProfile.Standard) {
+    return msTranslate('UsersPage.profile.standard.label');
+  } else if (profile === UserProfile.Outsider) {
+    return msTranslate('UsersPage.profile.outsider.label');
+  }
+  return '';
+}
 
+export function translateWorkspaceRole(role: WorkspaceRole | null): WorkspaceRoleTranslation {
   switch (role) {
     case null: {
       return {
-        label: t('workspaceRoles.none'),
+        label: msTranslate('workspaceRoles.none'),
       };
     }
     case WorkspaceRole.Reader: {
       return {
-        label: t('workspaceRoles.reader.label'),
-        description: t('workspaceRoles.reader.description'),
+        label: msTranslate('workspaceRoles.reader.label'),
+        description: msTranslate('workspaceRoles.reader.description'),
       };
     }
     case WorkspaceRole.Contributor: {
       return {
-        label: t('workspaceRoles.contributor.label'),
-        description: t('workspaceRoles.contributor.description'),
+        label: msTranslate('workspaceRoles.contributor.label'),
+        description: msTranslate('workspaceRoles.contributor.description'),
       };
     }
     case WorkspaceRole.Manager: {
       return {
-        label: t('workspaceRoles.manager.label'),
-        description: t('workspaceRoles.manager.description'),
+        label: msTranslate('workspaceRoles.manager.label'),
+        description: msTranslate('workspaceRoles.manager.description'),
       };
     }
     case WorkspaceRole.Owner: {
       return {
-        label: t('workspaceRoles.owner.label'),
-        description: t('workspaceRoles.owner.description'),
+        label: msTranslate('workspaceRoles.owner.label'),
+        description: msTranslate('workspaceRoles.owner.description'),
       };
     }
   }
 }
 
 export function translateInvitationStatus(status: InvitationStatus): string {
-  const { t } = i18n.global;
-
   switch (status) {
     case InvitationStatus.Ready:
-      return t('UsersPage.invitation.status.ready');
+      return msTranslate('UsersPage.invitation.status.ready');
     case InvitationStatus.Idle:
-      return t('UsersPage.invitation.status.idle');
+      return msTranslate('UsersPage.invitation.status.idle');
     case InvitationStatus.Finished:
-      return t('UsersPage.invitation.status.finished');
+      return msTranslate('UsersPage.invitation.status.finished');
     case InvitationStatus.Cancelled:
-      return t('UsersPage.invitation.status.cancelled');
+      return msTranslate('UsersPage.invitation.status.cancelled');
   }
 }
 

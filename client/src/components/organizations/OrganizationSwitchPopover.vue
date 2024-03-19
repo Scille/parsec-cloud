@@ -2,7 +2,7 @@
 
 <template>
   <div class="popover-switch">
-    <ion-title class="popover-switch-title body">{{ $t('OrganizationSwitch.loggedInOrgs') }}</ion-title>
+    <ion-title class="popover-switch-title body">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
     <ion-list class="orga-list">
       <ion-item
         class="orga-list__item body"
@@ -35,7 +35,7 @@
             v-show="org.active"
             :outline="true"
           >
-            {{ $t('OrganizationSwitch.active') }}
+            {{ $msTranslate('OrganizationSwitch.active') }}
           </ion-text>
         </div>
       </ion-item>
@@ -53,7 +53,7 @@
           <div class="orga-text-content">
             <ion-label class="orga-text-content__name">
               <span class="body">
-                {{ $t('OrganizationSwitch.myOrgs') }}
+                {{ $msTranslate('OrganizationSwitch.myOrgs') }}
               </span>
             </ion-label>
           </div>

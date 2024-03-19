@@ -8,7 +8,7 @@
   >
     <div class="recovery-header">
       <ion-title class="recovery-header__title title-h1">
-        {{ $t('ImportRecoveryDevicePage.titles.forgottenPassword') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.titles.forgottenPassword') }}
       </ion-title>
     </div>
     <ion-card class="recovery-card">
@@ -18,14 +18,14 @@
           :theme="MsReportTheme.Warning"
           id="warning-text"
         >
-          {{ $t('ImportRecoveryDevicePage.subtitles.recoveryFilesMustExistWarning') }}
+          {{ $msTranslate('ImportRecoveryDevicePage.subtitles.recoveryFilesMustExistWarning') }}
         </ms-report-text>
         <div class="recovery-list">
           <!-- recovery item -->
           <div class="recovery-list-item">
             <div class="recovery-list-item__title subtitles-normal">
               <span class="number subtitles-normal">1</span>
-              {{ $t('ImportRecoveryDevicePage.titles.recoveryFile') }}
+              {{ $msTranslate('ImportRecoveryDevicePage.titles.recoveryFile') }}
             </div>
             <div class="recovery-list-item__button">
               <input
@@ -37,7 +37,7 @@
                 v-if="!recoveryFile"
                 class="body"
               >
-                {{ $t('ImportRecoveryDevicePage.subtitles.noFileSelected') }}
+                {{ $msTranslate('ImportRecoveryDevicePage.subtitles.noFileSelected') }}
               </div>
               <div
                 v-else
@@ -51,7 +51,7 @@
                 @click="importButtonClick()"
                 fill="outline"
               >
-                {{ $t('ImportRecoveryDevicePage.actions.browse') }}
+                {{ $msTranslate('ImportRecoveryDevicePage.actions.browse') }}
               </ion-button>
             </div>
           </div>
@@ -66,7 +66,7 @@
           >
             <div class="recovery-list-item__title subtitles-normal">
               <span class="number">2</span>
-              {{ $t('ImportRecoveryDevicePage.titles.recoveryKey') }}
+              {{ $msTranslate('ImportRecoveryDevicePage.titles.recoveryKey') }}
             </div>
             <div class="recovery-list-item__button">
               <ms-input
@@ -91,7 +91,7 @@
             @click="goToPasswordChange()"
             :disabled="!isSecretKeyValid || !recoveryFile"
           >
-            {{ $t('ImportRecoveryDevicePage.actions.next') }}
+            {{ $msTranslate('ImportRecoveryDevicePage.actions.next') }}
           </ion-button>
         </div>
       </ion-card-content>
@@ -104,12 +104,12 @@
   >
     <div class="recovery-header">
       <ion-title class="recovery-header__title title-h1">
-        {{ $t('ImportRecoveryDevicePage.titles.setNewPassword') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.titles.setNewPassword') }}
       </ion-title>
     </div>
     <ion-card class="recovery-card">
       <ms-choose-password-input
-        :password-label="$t('ImportRecoveryDevicePage.titles.setNewPassword')"
+        :password-label="$msTranslate('ImportRecoveryDevicePage.titles.setNewPassword')"
         @on-enter-keyup="createNewDevice()"
         ref="choosePasswordInput"
       />
@@ -119,7 +119,7 @@
         :disabled="!changeButtonIsEnabled"
         @click="createNewDevice()"
       >
-        {{ $t('ImportRecoveryDevicePage.actions.validatePassword') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.actions.validatePassword') }}
       </ion-button>
     </ion-card>
   </div>
@@ -131,16 +131,16 @@
   >
     <ion-card class="recovery-card success-card">
       <ion-card-title class="success-card__title title-h2">
-        {{ $t('ImportRecoveryDevicePage.titles.passwordChanged') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.titles.passwordChanged') }}
       </ion-card-title>
       <ms-informative-text>
-        {{ $t('ImportRecoveryDevicePage.subtitles.passwordModified') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.subtitles.passwordModified') }}
       </ms-informative-text>
       <ion-button
         class="success-card__button"
         @click="onLoginClick()"
       >
-        {{ $t('ImportRecoveryDevicePage.actions.goBackToLogin') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.actions.goBackToLogin') }}
       </ion-button>
     </ion-card>
   </div>
@@ -153,7 +153,6 @@ import { MsChoosePasswordInput, MsInformativeText, MsInput, MsReportText, MsRepo
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
@@ -217,13 +216,13 @@ async function goToPasswordChange(): Promise<void> {
 
     switch (result.error.tag) {
       case RecoveryImportErrorTag.KeyError:
-        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.keyErrorMessage');
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.keyErrorMessage';
         break;
       case RecoveryImportErrorTag.RecoveryFileError:
-        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.fileErrorMessage');
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.fileErrorMessage';
         break;
       case RecoveryImportErrorTag.Internal:
-        notificationInfo.message = translate('ImportRecoveryDevicePage.errors.internalErrorMessage');
+        notificationInfo.message = 'ImportRecoveryDevicePage.errors.internalErrorMessage';
         break;
     }
     informationManager.present(new Information(notificationInfo), PresentationMode.Toast);
@@ -235,7 +234,7 @@ async function createNewDevice(): Promise<void> {
   if (!choosePasswordInput.value || !(await choosePasswordInput.value.areFieldsCorrect())) {
     informationManager.present(
       new Information({
-        message: translate('ImportRecoveryDevicePage.errors.passwordErrorMessage'),
+        message: 'ImportRecoveryDevicePage.errors.passwordErrorMessage',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -246,7 +245,7 @@ async function createNewDevice(): Promise<void> {
   if (!newDeviceInfo.value) {
     informationManager.present(
       new Information({
-        message: translate('ImportRecoveryDevicePage.errors.internalErrorMessage'),
+        message: 'ImportRecoveryDevicePage.errors.internalErrorMessage',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -257,7 +256,7 @@ async function createNewDevice(): Promise<void> {
   if (!(await saveDevice(newDeviceInfo.value, 'newPassword')).ok) {
     informationManager.present(
       new Information({
-        message: translate('ImportRecoveryDevicePage.errors.saveDeviceErrorMessage'),
+        message: 'ImportRecoveryDevicePage.errors.saveDeviceErrorMessage',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

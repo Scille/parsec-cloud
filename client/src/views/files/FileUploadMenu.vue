@@ -7,7 +7,7 @@
     :class="menu.isMinimized() ? 'minimize' : ''"
   >
     <div class="upload-menu-header">
-      <ion-text class="title-h4">{{ $t('FoldersPage.ImportFile.title') }}</ion-text>
+      <ion-text class="title-h4">{{ $msTranslate('FoldersPage.ImportFile.title') }}</ion-text>
       <div class="menu-header-icons">
         <ion-icon
           class="menu-header-icons__item"
@@ -29,7 +29,7 @@
         @click="currentTab = Tabs.InProgress"
       >
         <div class="item-container">
-          <ion-text>{{ $t('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
+          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
           <span class="text-counter">{{ importingItems.length > 99 ? '+99' : importingItems.length }}</span>
         </div>
       </ion-item>
@@ -40,7 +40,7 @@
         @click="currentTab = Tabs.Done"
       >
         <div class="item-container">
-          <ion-text>{{ $t('FoldersPage.ImportFile.tabs.done') }}</ion-text>
+          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
           <span class="text-counter">{{ doneItems.length > 99 ? '+99' : doneItems.length }}</span>
         </div>
       </ion-item>
@@ -51,7 +51,7 @@
         @click="currentTab = Tabs.Error"
       >
         <div class="item-container">
-          <ion-text>{{ $t('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
+          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
           <span class="text-counter">{{ errorItems.length > 99 ? '+99' : errorItems.length }}</span>
         </div>
       </ion-item>
@@ -73,7 +73,7 @@
         >
           <ms-image :image="NoImportInProgress" />
           <ion-text class="body-lg">
-            {{ $t('FoldersPage.ImportFile.noImportInProgress') }}
+            {{ $msTranslate('FoldersPage.ImportFile.noImportInProgress') }}
           </ion-text>
         </div>
       </template>
@@ -93,7 +93,7 @@
         >
           <ms-image :image="NoImportDone" />
           <ion-text class="body-lg">
-            {{ $t('FoldersPage.ImportFile.noImportDone') }}
+            {{ $msTranslate('FoldersPage.ImportFile.noImportDone') }}
           </ion-text>
         </div>
       </template>
@@ -112,7 +112,7 @@
         >
           <ms-image :image="NoImportError" />
           <ion-text class="body-lg">
-            {{ $t('FoldersPage.ImportFile.noImportFailed') }}
+            {{ $msTranslate('FoldersPage.ImportFile.noImportFailed') }}
           </ion-text>
         </div>
       </template>

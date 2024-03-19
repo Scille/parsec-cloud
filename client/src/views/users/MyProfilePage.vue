@@ -18,7 +18,7 @@
               <div class="item-container">
                 <ion-icon :icon="phonePortrait" />
                 <ion-text class="body">
-                  {{ $t('MyProfilePage.tabs.devices') }}
+                  {{ $msTranslate('MyProfilePage.tabs.devices') }}
                 </ion-text>
               </div>
             </ion-radio>
@@ -30,7 +30,7 @@
               <div class="item-container">
                 <ion-icon :icon="lockClosed" />
                 <ion-text class="body">
-                  {{ $t('MyProfilePage.tabs.authentication') }}
+                  {{ $msTranslate('MyProfilePage.tabs.authentication') }}
                 </ion-text>
               </div>
             </ion-radio>
@@ -49,7 +49,7 @@
               <!-- inputs fields -->
               <div class="user-info">
                 <ion-text class="user-info__label body title">
-                  {{ $t('MyProfilePage.password') }}
+                  {{ $msTranslate('MyProfilePage.password') }}
                 </ion-text>
                 <div
                   class="user-info__password"
@@ -66,11 +66,11 @@
                     @click="openChangePassword()"
                     size="small"
                   >
-                    {{ $t('MyProfilePage.changePasswordButton') }}
+                    {{ $msTranslate('MyProfilePage.changePasswordButton') }}
                   </ion-button>
                 </div>
                 <div v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring">
-                  <ms-informative-text>{{ $t('MyProfilePage.systemAuthentication') }}</ms-informative-text>
+                  <ms-informative-text>{{ $msTranslate('MyProfilePage.systemAuthentication') }}</ms-informative-text>
                 </div>
               </div>
             </template>
@@ -81,7 +81,7 @@
                   size="large"
                 />
                 <ion-text class="body">
-                  {{ $t('MyProfilePage.errors.failedToRetrieveInformation') }}
+                  {{ $msTranslate('MyProfilePage.errors.failedToRetrieveInformation') }}
                 </ion-text>
               </div>
             </template>
@@ -96,7 +96,6 @@
 import { MsInformativeText, MsInput } from '@/components/core';
 import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
 import UpdatePasswordModal from '@/views/users/UpdatePasswordModal.vue';
 import { IonButton, IonContent, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
@@ -134,7 +133,7 @@ onMounted(async () => {
   if (!result.ok || !deviceResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('MyProfilePage.errors.failedToRetrieveInformation'),
+        message: 'MyProfilePage.errors.failedToRetrieveInformation',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

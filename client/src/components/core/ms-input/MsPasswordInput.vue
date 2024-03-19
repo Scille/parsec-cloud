@@ -44,13 +44,14 @@
         class="form-error-icon"
         :icon="warning"
       />
-      {{ errorMessage }}
+      {{ $msTranslate(errorMessage) }}
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Translatable } from '@/services/translation';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { eye, eyeOff, warning } from 'ionicons/icons';
 import { inject, ref } from 'vue';
@@ -64,7 +65,7 @@ const hasFocus = ref(false);
 const props = defineProps<{
   label?: string;
   modelValue?: string;
-  errorMessage?: string;
+  errorMessage?: Translatable;
   passwordIsInvalid?: boolean;
 }>();
 

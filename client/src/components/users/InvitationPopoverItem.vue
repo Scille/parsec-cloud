@@ -23,7 +23,7 @@
             class="hover-state copy-link"
             @click.stop="copyLink(invitation)"
           >
-            {{ $t('UsersPage.invitation.copyLink') }}
+            {{ $msTranslate('UsersPage.invitation.copyLink') }}
           </ion-button>
         </div>
 
@@ -33,14 +33,14 @@
             class="danger"
             @click.stop="$emit('cancel', invitation)"
           >
-            {{ $t('UsersPage.invitation.rejectUser') }}
+            {{ $msTranslate('UsersPage.invitation.rejectUser') }}
           </ion-button>
           <ion-button
             class="button-default"
             fill="solid"
             @click.stop="$emit('greetUser', invitation)"
           >
-            {{ $t('UsersPage.invitation.greetUser') }}
+            {{ $msTranslate('UsersPage.invitation.greetUser') }}
           </ion-button>
         </ion-buttons>
       </div>
@@ -53,7 +53,6 @@ import { writeTextToClipboard } from '@/common/clipboard';
 import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
 
 const props = defineProps<{
@@ -71,7 +70,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   if (result) {
     props.informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.linkCopiedToClipboard'),
+        message: 'UsersPage.invitation.linkCopiedToClipboard',
         level: InformationLevel.Info,
       }),
       PresentationMode.Toast,
@@ -79,7 +78,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
   } else {
     props.informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.linkNotCopiedToClipboard'),
+        message: 'UsersPage.invitation.linkNotCopiedToClipboard',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

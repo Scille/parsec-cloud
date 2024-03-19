@@ -2,8 +2,8 @@
 
 <template>
   <ms-input
-    :label="$t('CreateOrganization.fullname')"
-    :placeholder="$t('CreateOrganization.fullnamePlaceholder')"
+    :label="$msTranslate('CreateOrganization.fullname')"
+    :placeholder="$msTranslate('CreateOrganization.fullnamePlaceholder')"
     name="fullname"
     v-model="fullName"
     ref="firstInputFieldRef"
@@ -13,8 +13,8 @@
     :validator="userNameValidator"
   />
   <ms-input
-    :label="$t('CreateOrganization.email')"
-    :placeholder="$t('CreateOrganization.emailPlaceholder')"
+    :label="$msTranslate('CreateOrganization.email')"
+    :placeholder="$msTranslate('CreateOrganization.emailPlaceholder')"
     v-model="email"
     name="email"
     :disabled="!$props.emailEnabled"

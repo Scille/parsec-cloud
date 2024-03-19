@@ -19,22 +19,22 @@
         />
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-name">
-        {{ $t('UsersPage.listDisplayTitles.name') }}
+        {{ $msTranslate('UsersPage.listDisplayTitles.name') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-profile">
-        {{ $t('UsersPage.listDisplayTitles.profile') }}
+        {{ $msTranslate('UsersPage.listDisplayTitles.profile') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-email">
-        {{ $t('UsersPage.listDisplayTitles.email') }}
+        {{ $msTranslate('UsersPage.listDisplayTitles.email') }}
       </ion-label>
       <ion-label
         class="user-list-header__label cell-title label-joined-on"
         v-show="false"
       >
-        {{ $t('UsersPage.listDisplayTitles.joinedOn') }}
+        {{ $msTranslate('UsersPage.listDisplayTitles.joinedOn') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-status">
-        {{ $t('UsersPage.listDisplayTitles.status') }}
+        {{ $msTranslate('UsersPage.listDisplayTitles.status') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-space" />
     </ion-list-header>

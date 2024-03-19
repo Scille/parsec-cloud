@@ -4,6 +4,7 @@ import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/co
 import { EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
+import { Translatable, msTranslate } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 
@@ -92,7 +93,7 @@ export enum InformationLevel {
 }
 
 export interface InformationOptions {
-  message: string;
+  message: Translatable;
   level: InformationLevel;
   data?: InformationData;
 }
@@ -104,7 +105,7 @@ export class Information {
   data?: InformationData;
   constructor({ message, level, data }: InformationOptions) {
     this.id = uuid4();
-    this.message = message;
+    this.message = msTranslate(message);
     this.level = level;
     this.data = data;
   }

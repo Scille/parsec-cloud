@@ -20,7 +20,7 @@
           slot="start"
         />
         <ion-label class="body item-label">
-          {{ $t('HomePage.topbar.myProfile') }}
+          {{ $msTranslate('HomePage.topbar.myProfile') }}
         </ion-label>
       </ion-item>
       <ion-item
@@ -32,7 +32,7 @@
           slot="start"
         />
         <ion-label class="body item-label">
-          {{ $t('HomePage.topbar.settings') }}
+          {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-label>
       </ion-item>
       <ion-item
@@ -44,7 +44,7 @@
           slot="start"
         />
         <ion-label class="body item-label">
-          {{ $t('HomePage.topbar.logout') }}
+          {{ $msTranslate('HomePage.topbar.logout') }}
         </ion-label>
       </ion-item>
     </div>
@@ -53,13 +53,13 @@
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.Help)"
       >
-        <ion-text class="body-sm"> {{ $t('HomePage.topbar.help') }} </ion-text>
+        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.help') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.App)"
       >
-        <ion-text class="body-sm version"> {{ $t('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
+        <ion-text class="body-sm version"> {{ $msTranslate('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
     </div>
   </ion-list>

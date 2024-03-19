@@ -9,9 +9,9 @@
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
       :current-index="pageStep - 1"
       :titles="[
-        $t('ClaimDeviceModal.stepper.GetHostCode'),
-        $t('ClaimDeviceModal.stepper.ProvideGuestCode'),
-        $t('ClaimDeviceModal.stepper.Authentication'),
+        $msTranslate('ClaimDeviceModal.stepper.GetHostCode'),
+        $msTranslate('ClaimDeviceModal.stepper.ProvideGuestCode'),
+        $msTranslate('ClaimDeviceModal.stepper.Authentication'),
       ]"
     />
     <ion-buttons
@@ -38,13 +38,13 @@
     >
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitleAndSubtitle().title }}
+          {{ $msTranslate(getTitleAndSubtitle().title) }}
         </ion-title>
         <ion-text
           v-if="getTitleAndSubtitle().subtitle"
           class="modal-header__text body"
         >
-          {{ getTitleAndSubtitle().subtitle }}
+          {{ $msTranslate(getTitleAndSubtitle().subtitle) }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -91,7 +91,7 @@
           class="step"
         >
           <ms-informative-text :icon="checkmarkCircle">
-            {{ $t('ClaimDeviceModal.subtitles.done') }}
+            {{ $msTranslate('ClaimDeviceModal.subtitles.done') }}
           </ms-informative-text>
         </div>
       </div>
@@ -110,7 +110,7 @@
             @click="nextStep()"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $msTranslate(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -118,7 +118,7 @@
             class="spinner-container"
           >
             <ion-label class="label-waiting">
-              {{ $t('JoinOrganization.waitingForHost') }}
+              {{ $msTranslate('JoinOrganization.waitingForHost') }}
             </ion-label>
             <ion-spinner
               name="crescent"
@@ -164,7 +164,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
@@ -191,7 +191,7 @@ const props = defineProps<{
 const waitingForHost = ref(true);
 
 interface Title {
-  title: string;
+  title: Translatable;
   subtitle?: string;
 }
 
@@ -199,32 +199,35 @@ function getTitleAndSubtitle(): Title {
   switch (pageStep.value) {
     case DeviceJoinOrganizationStep.Information: {
       return {
-        title: translate('ClaimDeviceModal.titles.claimDevice'),
+        title: 'ClaimDeviceModal.titles.claimDevice',
       };
     }
     case DeviceJoinOrganizationStep.GetHostSasCode: {
       return {
-        title: translate('ClaimDeviceModal.titles.getCode'),
-        subtitle: translate('ClaimDeviceModal.subtitles.getCode'),
+        title: 'ClaimDeviceModal.titles.getCode',
+        subtitle: 'ClaimDeviceModal.subtitles.getCode',
       };
     }
     case DeviceJoinOrganizationStep.ProvideGuestCode: {
       return {
-        title: translate('ClaimDeviceModal.titles.provideCode'),
-        subtitle: translate('ClaimDeviceModal.subtitles.provideCode'),
+        title: 'ClaimDeviceModal.titles.provideCode',
+        subtitle: 'ClaimDeviceModal.subtitles.provideCode',
       };
     }
     case DeviceJoinOrganizationStep.Authentication: {
       return {
-        title: translate('ClaimDeviceModal.titles.authentication'),
-        subtitle: translate('ClaimDeviceModal.subtitles.authentication'),
+        title: 'ClaimDeviceModal.titles.authentication',
+        subtitle: 'ClaimDeviceModal.subtitles.authentication',
       };
     }
     case DeviceJoinOrganizationStep.Finish: {
       return {
-        title: translate('ClaimDeviceModal.titles.done', {
-          org: serverAddr?.organizationId || '',
-        }),
+        title: {
+          key: 'ClaimDeviceModal.titles.done',
+          data: {
+            org: serverAddr?.organizationId || '',
+          },
+        },
       };
     }
   }
@@ -232,7 +235,7 @@ function getTitleAndSubtitle(): Title {
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    await showErrorAndRestart(translate('ClaimDeviceModal.errors.noneCodeSelected'));
+    await showErrorAndRestart('ClaimDeviceModal.errors.noneCodeSelected');
     return;
   }
   if (selectedCode === claimer.value.correctSASCode) {
@@ -240,14 +243,14 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
     if (result.ok) {
       nextStep();
     } else {
-      await showErrorAndRestart(translate('ClaimDeviceModal.errors.unexpected'));
+      await showErrorAndRestart('ClaimDeviceModal.errors.unexpected');
     }
   } else {
-    await showErrorAndRestart(translate('ClaimDeviceModal.errors.invalidCodeSelected'));
+    await showErrorAndRestart('ClaimDeviceModal.errors.invalidCodeSelected');
   }
 }
 
-async function showErrorAndRestart(message: string): Promise<void> {
+async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(
     new Information({
       message: message,
@@ -260,11 +263,11 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === DeviceJoinOrganizationStep.Information) {
-    return translate('ClaimDeviceModal.buttons.understand');
+    return 'ClaimDeviceModal.buttons.understand';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    return translate('ClaimDeviceModal.buttons.password');
+    return 'ClaimDeviceModal.buttons.password';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return translate('ClaimDeviceModal.buttons.login');
+    return 'ClaimDeviceModal.buttons.login';
   }
 
   return '';
@@ -286,11 +289,11 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(translate('ClaimDeviceModal.cancelConfirm'), translate('ClaimDeviceModal.cancelConfirmSubtitle'), {
+  const answer = await askQuestion('ClaimDeviceModal.cancelConfirm', 'ClaimDeviceModal.cancelConfirmSubtitle', {
     yesIsDangerous: true,
     keepMainModalHiddenOnYes: true,
-    yesText: translate('ClaimDeviceModal.cancelYes'),
-    noText: translate('ClaimDeviceModal.cancelNo'),
+    yesText: 'ClaimDeviceModal.cancelYes',
+    noText: 'ClaimDeviceModal.cancelNo',
   });
 
   if (answer === Answer.Yes) {
@@ -316,7 +319,7 @@ async function nextStep(): Promise<void> {
       if (!result.ok) {
         props.informationManager.present(
           new Information({
-            message: translate('ClaimDeviceModal.errors.saveDeviceFailed'),
+            message: 'ClaimDeviceModal.errors.saveDeviceFailed',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -324,7 +327,7 @@ async function nextStep(): Promise<void> {
         return;
       }
     } else {
-      await showErrorAndRestart(translate('ClaimDeviceModal.errors.sendDeviceInfoFailed'));
+      await showErrorAndRestart('ClaimDeviceModal.errors.sendDeviceInfoFailed');
       return;
     }
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
@@ -332,7 +335,7 @@ async function nextStep(): Promise<void> {
       return;
     }
     const notification = new Information({
-      message: translate('ClaimDeviceModal.successMessage'),
+      message: 'ClaimDeviceModal.successMessage',
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
@@ -354,7 +357,7 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart(translate('ClaimDeviceModal.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'ClaimDeviceModal.errors.unexpected', data: { reason: result.error.tag } });
     }
   }
 }
@@ -368,17 +371,19 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    let message = translate('JoinOrganization.errors.unexpected', { reason: retrieveResult.error.tag });
+    let message;
     switch (retrieveResult.error.tag) {
       case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
-        message = translate('JoinOrganization.errors.tokenAlreadyUsed');
+        message = 'JoinOrganization.errors.tokenAlreadyUsed';
         break;
       case ClaimerRetrieveInfoErrorTag.NotFound:
-        message = translate('JoinOrganization.errors.invitationNotFound');
+        message = 'JoinOrganization.errors.invitationNotFound';
         break;
       case ClaimerRetrieveInfoErrorTag.Offline:
-        message = translate('JoinOrganization.errors.offline');
+        message = 'JoinOrganization.errors.offline';
         break;
+      default:
+        message = { key: 'JoinOrganization.errors.unexpected', data: { reason: retrieveResult.error.tag } };
     }
     await props.informationManager.present(
       new Information({
@@ -396,7 +401,7 @@ async function startProcess(): Promise<void> {
     await modalController.dismiss(null, MsModalResult.Cancel);
     await props.informationManager.present(
       new Information({
-        message: translate('ClaimDeviceModal.errors.unexpected', { reason: waitResult.error.tag }),
+        message: { key: 'ClaimDeviceModal.errors.unexpected', data: { reason: waitResult.error.tag } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

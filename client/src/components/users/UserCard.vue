@@ -49,7 +49,7 @@
             v-if="isCurrentUser"
             class="body name-you"
           >
-            {{ $t('UsersPage.currentUser') }}
+            {{ $msTranslate('UsersPage.currentUser') }}
           </span>
         </ion-text>
         <ion-text class="user-card-info__email body-sm">

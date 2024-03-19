@@ -11,7 +11,7 @@
           @click="onAddDeviceClick()"
         >
           <ion-icon :icon="add" />
-          <span>{{ $t('DevicesPage.addDevice') }}</span>
+          <span>{{ $msTranslate('DevicesPage.addDevice') }}</span>
         </ion-button>
       </div>
 
@@ -21,7 +21,7 @@
           class="no-device"
           v-if="devices.length === 0"
         >
-          {{ $t('DevicesPage.noDevices') }}
+          {{ $msTranslate('DevicesPage.noDevices') }}
         </ion-text>
         <ion-list
           class="devices-list"
@@ -50,7 +50,7 @@
         v-if="!passwordSaved"
       >
         <ion-label class="body-sm danger">
-          {{ $t('DevicesPage.restorePassword.notDone.label') }}
+          {{ $msTranslate('DevicesPage.restorePassword.notDone.label') }}
         </ion-label>
         <div class="restore-password-header">
           <ms-image
@@ -58,7 +58,7 @@
             class="restore-password-header-img"
           />
           <h3 class="title-h3 restore-password-header__title">
-            {{ $t('DevicesPage.restorePassword.title') }}
+            {{ $msTranslate('DevicesPage.restorePassword.title') }}
           </h3>
         </div>
         <div class="restore-password-subtitles">
@@ -66,10 +66,10 @@
             class="body"
             :show="passwordSaved"
           >
-            {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
+            {{ $msTranslate('DevicesPage.restorePassword.notDone.subtitle') }}
           </ion-text>
           <ion-text class="body">
-            {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
+            {{ $msTranslate('DevicesPage.restorePassword.notDone.subtitle2') }}
           </ion-text>
         </div>
         <div class="restore-password-button">
@@ -81,7 +81,7 @@
               :icon="sparkles"
               class="icon"
             />
-            {{ $t('DevicesPage.restorePassword.notDone.button') }}
+            {{ $msTranslate('DevicesPage.restorePassword.notDone.button') }}
           </ion-button>
         </div>
       </div>
@@ -91,7 +91,7 @@
         v-else
       >
         <ion-label class="body-sm done">
-          {{ $t('DevicesPage.restorePassword.done.label') }}
+          {{ $msTranslate('DevicesPage.restorePassword.done.label') }}
         </ion-label>
         <div class="restore-password-header">
           <ms-image
@@ -99,12 +99,12 @@
             class="restore-password-header-img"
           />
           <h3 class="title-h3 restore-password-header__title">
-            {{ $t('DevicesPage.restorePassword.title') }}
+            {{ $msTranslate('DevicesPage.restorePassword.title') }}
           </h3>
         </div>
         <div class="restore-password-subtitles">
           <ion-text class="body">
-            {{ $t('DevicesPage.restorePassword.done.subtitle') }}
+            {{ $msTranslate('DevicesPage.restorePassword.done.subtitle') }}
           </ion-text>
         </div>
         <div class="restore-password-button">
@@ -117,7 +117,7 @@
               :icon="download"
               class="icon"
             />
-            {{ $t('DevicesPage.restorePassword.done.button') }}
+            {{ $msTranslate('DevicesPage.restorePassword.done.button') }}
           </ion-button>
         </div>
       </div>
@@ -131,7 +131,6 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
@@ -159,7 +158,7 @@ async function refreshDevicesList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed'),
+        message: 'DevicesPage.greet.errors.retrieveDeviceInfoFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

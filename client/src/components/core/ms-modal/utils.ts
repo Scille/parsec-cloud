@@ -6,16 +6,17 @@ import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
 import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { Answer, FolderSelectionOptions, GetPasswordOptions, GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { FsPath } from '@/parsec';
+import { Translatable, msTranslate } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 
 export interface QuestionOptions {
-  yesText?: string;
-  noText?: string;
+  yesText?: Translatable;
+  noText?: Translatable;
   keepMainModalHiddenOnYes?: boolean;
   yesIsDangerous?: boolean;
 }
 
-export async function askQuestion(title: string, subtitle: string, options?: QuestionOptions): Promise<Answer> {
+export async function askQuestion(title: Translatable, subtitle: Translatable, options?: QuestionOptions): Promise<Answer> {
   const top = await modalController.getTop();
   if (top) {
     top.classList.add('overlapped-modal');
@@ -27,10 +28,10 @@ export async function askQuestion(title: string, subtitle: string, options?: Que
     backdropDismiss: false,
     cssClass: 'question-modal',
     componentProps: {
-      title: title,
-      subtitle: subtitle,
-      yesText: options?.yesText,
-      noText: options?.noText,
+      title: msTranslate(title),
+      subtitle: msTranslate(subtitle),
+      yesText: msTranslate(options?.yesText),
+      noText: msTranslate(options?.noText),
       yesIsDangerous: options?.yesIsDangerous,
     },
   });
@@ -73,13 +74,13 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
     canDismiss: true,
     cssClass: 'text-input-modal',
     componentProps: {
-      title: options.title,
-      subtitle: options.subtitle,
+      title: msTranslate(options.title),
+      subtitle: msTranslate(options.subtitle),
       trim: options.trim,
       validator: options.validator,
-      inputLabel: options.inputLabel,
-      placeholder: options.placeholder,
-      okButtonText: options.okButtonText,
+      inputLabel: msTranslate(options.inputLabel),
+      placeholder: msTranslate(options.placeholder),
+      okButtonText: msTranslate(options.okButtonText),
       defaultValue: options.defaultValue,
       selectionRange: options.selectionRange,
     },

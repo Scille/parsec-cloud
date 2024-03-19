@@ -10,25 +10,25 @@
           v-if="state === ExportDevicePageState.Start"
         >
           <ms-informative-text>
-            {{ $t('ExportRecoveryDevicePage.subtitles.newPassword') }}
+            {{ $msTranslate('ExportRecoveryDevicePage.subtitles.newPassword') }}
           </ms-informative-text>
 
           <div class="file">
             <ms-informative-text>
-              {{ $t('ExportRecoveryDevicePage.subtitles.twoFilesToKeep') }}
+              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.twoFilesToKeep') }}
             </ms-informative-text>
 
             <div class="file-list">
               <div class="file-item">
                 <div class="file-item__title subtitles-normal">
                   <ion-icon :icon="document" />
-                  {{ $t('ExportRecoveryDevicePage.titles.recoveryFile') }}
+                  {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}
                 </div>
               </div>
               <div class="file-item">
                 <div class="file-item__title subtitles-normal">
                   <ion-icon :icon="key" />
-                  {{ $t('ExportRecoveryDevicePage.titles.recoveryKey') }}
+                  {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}
                 </div>
               </div>
             </div>
@@ -38,7 +38,7 @@
             @click="exportDevice()"
             id="exportDevice"
           >
-            {{ $t('ExportRecoveryDevicePage.actions.understand') }}
+            {{ $msTranslate('ExportRecoveryDevicePage.actions.understand') }}
           </ion-button>
         </div>
 
@@ -48,18 +48,18 @@
           v-else-if="state === ExportDevicePageState.Download"
         >
           <ms-informative-text>
-            {{ $t('ExportRecoveryDevicePage.subtitles.keepFilesSeparate') }}
+            {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keepFilesSeparate') }}
           </ms-informative-text>
 
           <div class="file-list">
             <div class="file-item">
               <div class="file-item__title subtitles-normal">
                 <ion-icon :icon="document" />
-                {{ $t('ExportRecoveryDevicePage.titles.recoveryFile') }}
+                {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}
               </div>
               <div class="file-item__subtitle">
                 <ion-text class="file-item__description body">
-                  {{ $t('ExportRecoveryDevicePage.subtitles.fileExplanation') }}
+                  {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileExplanation') }}
                 </ion-text>
               </div>
               <div
@@ -70,7 +70,7 @@
                   :icon="checkmarkCircle"
                   class="checked"
                 />
-                {{ $t('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
+                {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
               </div>
               <div class="file-item__button">
                 <ion-button
@@ -82,8 +82,8 @@
                   <ion-icon :icon="recoveryFileDownloaded ? reload : download" />
                   {{
                     recoveryFileDownloaded
-                      ? $t('ExportRecoveryDevicePage.actions.downloadAgain')
-                      : $t('ExportRecoveryDevicePage.actions.download')
+                      ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
+                      : $msTranslate('ExportRecoveryDevicePage.actions.download')
                   }}
                 </ion-button>
               </div>
@@ -91,11 +91,11 @@
             <div class="file-item">
               <div class="file-item__title subtitles-normal">
                 <ion-icon :icon="key" />
-                {{ $t('ExportRecoveryDevicePage.titles.recoveryKey') }}
+                {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}
               </div>
               <div class="file-item__subtitle">
                 <ion-text class="file-item__description body">
-                  {{ $t('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
+                  {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
                 </ion-text>
               </div>
               <div
@@ -106,7 +106,7 @@
                   :icon="checkmarkCircle"
                   class="checked"
                 />
-                {{ $t('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
+                {{ $msTranslate('ExportRecoveryDevicePage.subtitles.fileDownloaded') }}
               </div>
               <div class="file-item__button">
                 <ion-button
@@ -118,8 +118,8 @@
                   <ion-icon :icon="recoveryKeyDownloaded ? reload : download" />
                   {{
                     recoveryKeyDownloaded
-                      ? $t('ExportRecoveryDevicePage.actions.downloadAgain')
-                      : $t('ExportRecoveryDevicePage.actions.download')
+                      ? $msTranslate('ExportRecoveryDevicePage.actions.downloadAgain')
+                      : $msTranslate('ExportRecoveryDevicePage.actions.download')
                   }}
                 </ion-button>
               </div>
@@ -140,7 +140,7 @@
                 :icon="home"
                 class="icon"
               />
-              {{ $t('ExportRecoveryDevicePage.actions.backToDevices') }}
+              {{ $msTranslate('ExportRecoveryDevicePage.actions.backToDevices') }}
             </ion-button>
           </div>
         </div>
@@ -155,7 +155,7 @@ import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
+import { Translatable, msTranslate } from '@/services/translation';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
@@ -181,10 +181,10 @@ onMounted(async (): Promise<void> => {
 
 async function exportDevice(): Promise<void> {
   const password = await getPasswordFromUser({
-    title: translate('PasswordInputModal.passwordNeeded'),
-    subtitle: translate('PasswordInputModal.enterPassword', { org: orgId.value }),
-    inputLabel: translate('PasswordInputModal.password'),
-    okButtonText: translate('PasswordInputModal.validate'),
+    title: 'PasswordInputModal.passwordNeeded',
+    subtitle: { key: 'PasswordInputModal.enterPassword', data: { org: orgId.value } },
+    inputLabel: 'PasswordInputModal.password',
+    okButtonText: 'PasswordInputModal.validate',
   });
   if (!password) {
     return;
@@ -192,9 +192,7 @@ async function exportDevice(): Promise<void> {
   const result = await exportRecoveryDevice(password);
   if (!result.ok) {
     const notificationMsg =
-      result.error.tag === RecoveryDeviceErrorTag.Invalid
-        ? translate('PasswordInputModal.invalid')
-        : translate('PasswordInputModal.otherError');
+      result.error.tag === RecoveryDeviceErrorTag.Invalid ? 'PasswordInputModal.invalid' : 'PasswordInputModal.otherError';
     // toast atm but to be changed
     informationManager.present(
       new Information({
@@ -211,12 +209,12 @@ async function exportDevice(): Promise<void> {
 }
 
 async function downloadRecoveryKey(): Promise<void> {
-  fileDownload(code, translate('ExportRecoveryDevicePage.filenames.recoveryKey', { org: orgId.value }));
+  fileDownload(code, msTranslate({ key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } }));
   setTimeout(() => {
     recoveryKeyDownloaded.value = true;
     informationManager.present(
       new Information({
-        message: translate('ExportRecoveryDevicePage.toasts.keyDownloadOk'),
+        message: 'ExportRecoveryDevicePage.toasts.keyDownloadOk',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -225,12 +223,12 @@ async function downloadRecoveryKey(): Promise<void> {
 }
 
 async function downloadRecoveryFile(): Promise<void> {
-  fileDownload(file, translate('ExportRecoveryDevicePage.filenames.recoveryFile', { org: orgId.value }));
+  fileDownload(file, msTranslate({ key: 'ExportRecoveryDevicePage.filenames.recoveryFile', data: { org: orgId.value } }));
   setTimeout(() => {
     recoveryFileDownloaded.value = true;
     informationManager.present(
       new Information({
-        message: translate('ExportRecoveryDevicePage.toasts.fileDownloadOk'),
+        message: 'ExportRecoveryDevicePage.toasts.fileDownloadOk',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -238,7 +236,7 @@ async function downloadRecoveryFile(): Promise<void> {
   }, 500);
 }
 
-async function fileDownload(data: string, fileName: string): Promise<void> {
+async function fileDownload(data: string, fileName: Translatable): Promise<void> {
   downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8, ${encodeURIComponent(data)}`);
   downloadLink.value.setAttribute('download', fileName);
   downloadLink.value.click();

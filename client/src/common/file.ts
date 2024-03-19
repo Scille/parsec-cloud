@@ -2,7 +2,7 @@
 
 import { File } from '@/components/core/ms-image';
 import { Path } from '@/parsec';
-import { translate } from '@/services/translation';
+import { msTranslate } from '@/services/translation';
 
 // Shorten a file name by adding ellipsis in the middle if it is above a certain length.
 // It may be a bit scuffed in some edge cases but the default config should work fine.
@@ -78,11 +78,11 @@ function size(bytes: number, system: [number, string][]): string {
 
 export function formatFileSize(bytesize: number): string {
   const SYSTEM: [number, string][] = [
-    [Math.pow(1024, 0), translate('common.filesize.bytes')],
-    [Math.pow(1024, 1), translate('common.filesize.kilobytes')],
-    [Math.pow(1024, 2), translate('common.filesize.megabytes')],
-    [Math.pow(1024, 3), translate('common.filesize.gigabytes')],
-    [Math.pow(1024, 4), translate('common.filesize.terabytes')],
+    [Math.pow(1024, 0), msTranslate('common.filesize.bytes')],
+    [Math.pow(1024, 1), msTranslate('common.filesize.kilobytes')],
+    [Math.pow(1024, 2), msTranslate('common.filesize.megabytes')],
+    [Math.pow(1024, 3), msTranslate('common.filesize.gigabytes')],
+    [Math.pow(1024, 4), msTranslate('common.filesize.terabytes')],
   ];
   return size(bytesize, SYSTEM);
 }

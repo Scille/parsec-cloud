@@ -3,17 +3,17 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$t('UsersPage.UserDetailsModal.title')"
+      :title="$msTranslate('UsersPage.UserDetailsModal.title')"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: $t('UsersPage.UserDetailsModal.actions.close'),
+        label: $msTranslate('UsersPage.UserDetailsModal.actions.close'),
         disabled: false,
       }"
     >
       <div class="details">
         <div class="details-item">
           <ion-text class="details-item__title subtitles-sm">
-            {{ $t('UsersPage.UserDetailsModal.subtitles.name') }}
+            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.name') }}
           </ion-text>
           <ion-text class="details-item__text subtitles-normal">
             {{ user.humanHandle.label }}
@@ -28,13 +28,13 @@
               :icon="ellipse"
             />
             <ion-label class="caption-caption">
-              {{ $t('UsersPage.UserDetailsModal.subtitles.revoked') }}
+              {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revoked') }}
             </ion-label>
           </ion-chip>
         </div>
         <div class="details-item">
           <ion-text class="details-item__title subtitles-sm">
-            {{ $t('UsersPage.UserDetailsModal.subtitles.joined') }}
+            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
           </ion-text>
           <ion-text class="details-item__text body-lg">
             {{ formatTimeSince(user.createdOn, '--', 'short') }}
@@ -44,7 +44,7 @@
 
       <ion-list class="workspace">
         <ion-text class="subtitles-sm workspace-title">
-          {{ $t('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}
+          {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.commonWorkspaces') }}
         </ion-text>
         <div
           class="workspace-list"
@@ -75,7 +75,7 @@
           class="workspace-empty body"
           v-show="sharedWorkspaces.length === 0"
         >
-          {{ $t('UsersPage.UserDetailsModal.noSharedWorkspaces') }}
+          {{ $msTranslate('UsersPage.UserDetailsModal.noSharedWorkspaces') }}
         </div>
       </ion-list>
     </ms-modal>
@@ -88,7 +88,6 @@ import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
@@ -108,7 +107,7 @@ onMounted(async () => {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.UserDetailsModal.failedToListWorkspaces'),
+        message: 'UsersPage.UserDetailsModal.failedToListWorkspaces',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

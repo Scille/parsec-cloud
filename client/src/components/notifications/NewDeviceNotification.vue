@@ -13,11 +13,11 @@
     </div>
     <div class="notification-details">
       <ion-text class="notification-details__message body">
-        {{ $t('notification.newDeviceAdded') }}
+        {{ $msTranslate('notification.newDeviceAdded') }}
       </ion-text>
       <ion-text class="notification-details__time body-sm">
         <span class="hover-state">
-          {{ $t('notificationCenter.goToDevices') }}
+          {{ $msTranslate('notificationCenter.goToDevices') }}
         </span>
         <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
         <ion-icon

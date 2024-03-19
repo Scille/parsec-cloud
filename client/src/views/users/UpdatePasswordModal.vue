@@ -27,7 +27,7 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitle() }}
+          {{ $msTranslate(getTitle()) }}
         </ion-title>
       </ion-header>
 
@@ -39,7 +39,7 @@
           <ms-password-input
             v-model="oldPassword"
             @change="updateError"
-            :label="$t('Password.currentPassword')"
+            :label="$msTranslate('Password.currentPassword')"
             @on-enter-keyup="nextStep()"
             :password-is-invalid="passwordIsInvalid"
             :error-message="errorMessage"
@@ -51,7 +51,7 @@
           class="step"
         >
           <ms-choose-password-input
-            :password-label="$t('Password.newPassword')"
+            :password-label="$msTranslate('Password.newPassword')"
             ref="choosePasswordInput"
           />
         </div>
@@ -67,7 +67,7 @@
             size="default"
             @click="cancel"
           >
-            {{ $t('MyProfilePage.cancelButton') }}
+            {{ $msTranslate('MyProfilePage.cancelButton') }}
           </ion-button>
           <ion-button
             fill="solid"
@@ -76,7 +76,7 @@
             @click="nextStep"
             :disabled="!canGoForward"
           >
-            {{ getNextButtonText() }}
+            {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
         </ion-buttons>
       </ion-footer>
@@ -96,7 +96,6 @@ import {
   changePassword as parsecChangePassword,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -126,7 +125,7 @@ onMounted(async () => {
   if (!currentDevice.value) {
     props.informationManager.present(
       new Information({
-        message: translate('MyProfilePage.errors.cannotChangePassword'),
+        message: 'MyProfilePage.errors.cannotChangePassword',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -168,7 +167,7 @@ async function changePassword(): Promise<void> {
   if (result.ok) {
     props.informationManager.present(
       new Information({
-        message: translate('MyProfilePage.passwordUpdated'),
+        message: 'MyProfilePage.passwordUpdated',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -179,13 +178,13 @@ async function changePassword(): Promise<void> {
       case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
         pageStep.value = ChangePasswordStep.OldPassword;
         passwordIsInvalid.value = true;
-        errorMessage.value = translate('MyProfilePage.errors.wrongPassword');
+        errorMessage.value = 'MyProfilePage.errors.wrongPassword';
         break;
       }
       default:
         props.informationManager.present(
           new Information({
-            message: translate('MyProfilePage.errors.cannotChangePassword'),
+            message: 'MyProfilePage.errors.cannotChangePassword',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -202,9 +201,9 @@ function updateError(): void {
 function getTitle(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('MyProfilePage.titleActualPassword');
+      return 'MyProfilePage.titleActualPassword';
     case ChangePasswordStep.NewPassword:
-      return translate('MyProfilePage.titleNewPassword');
+      return 'MyProfilePage.titleNewPassword';
     default:
       return '';
   }
@@ -217,9 +216,9 @@ async function cancel(): Promise<boolean> {
 function getNextButtonText(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('MyProfilePage.nextButton');
+      return 'MyProfilePage.nextButton';
     case ChangePasswordStep.NewPassword:
-      return translate('MyProfilePage.changePasswordButton');
+      return 'MyProfilePage.changePasswordButton';
     default:
       return '';
   }

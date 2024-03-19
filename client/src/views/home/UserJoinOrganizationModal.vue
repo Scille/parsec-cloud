@@ -6,10 +6,10 @@
       v-if="pageStep > UserJoinOrganizationStep.WaitForHost"
       :current-index="pageStep - 2"
       :titles="[
-        $t('JoinOrganization.stepTitles.GetHostCode'),
-        $t('JoinOrganization.stepTitles.ProvideGuestCode'),
-        $t('JoinOrganization.stepTitles.ContactDetails'),
-        $t('JoinOrganization.stepTitles.Authentication'),
+        $msTranslate('JoinOrganization.stepTitles.GetHostCode'),
+        $msTranslate('JoinOrganization.stepTitles.ProvideGuestCode'),
+        $msTranslate('JoinOrganization.stepTitles.ContactDetails'),
+        $msTranslate('JoinOrganization.stepTitles.Authentication'),
       ]"
     />
     <ion-buttons
@@ -40,13 +40,13 @@
           v-if="titles.get(pageStep)?.title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ titles.get(pageStep)?.title }}
+          {{ $msTranslate(titles.get(pageStep)?.title) }}
         </ion-title>
         <ion-text
           v-if="titles.get(pageStep)?.subtitle !== ''"
           class="modal-header__text body"
         >
-          {{ titles.get(pageStep)?.subtitle }}
+          {{ $msTranslate(titles.get(pageStep)?.subtitle) }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -58,16 +58,19 @@
         >
           <div class="orga-name-content">
             <ms-informative-text>
-              {{ $t('JoinOrganization.instructions.start.first') }}
+              {{ $msTranslate('JoinOrganization.instructions.start.first') }}
             </ms-informative-text>
             <ms-informative-text v-if="!claimer.greeter">
-              {{ $t('JoinOrganization.instructions.start.second') }}
+              {{ $msTranslate('JoinOrganization.instructions.start.second') }}
             </ms-informative-text>
             <ms-informative-text v-if="claimer.greeter">
               {{
-                $t('JoinOrganization.instructions.start.greeter', {
-                  greeter: claimer.greeter.label,
-                  greeterEmail: claimer.greeter.email,
+                $msTranslate({
+                  key: 'JoinOrganization.instructions.start.greeter',
+                  data: {
+                    greeter: claimer.greeter.label,
+                    greeterEmail: claimer.greeter.email,
+                  },
                 })
               }}
             </ms-informative-text>
@@ -121,10 +124,10 @@
           class="step"
         >
           <ms-informative-text>
-            {{ $t('JoinOrganization.instructions.finish.first') }}
+            {{ $msTranslate('JoinOrganization.instructions.finish.first') }}
           </ms-informative-text>
           <ms-informative-text>
-            {{ $t('JoinOrganization.instructions.finish.second') }}
+            {{ $msTranslate('JoinOrganization.instructions.finish.second') }}
           </ms-informative-text>
         </div>
       </div>
@@ -143,7 +146,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $msTranslate(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -151,7 +154,7 @@
             class="spinner-container"
           >
             <ion-label class="label-waiting">
-              {{ $t('JoinOrganization.waitingForHost') }}
+              {{ $msTranslate('JoinOrganization.waitingForHost') }}
             </ion-label>
             <ion-spinner
               name="crescent"
@@ -196,7 +199,7 @@ import {
   UserClaim,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 
@@ -225,7 +228,7 @@ const props = defineProps<{
 const waitingForHost = ref(true);
 
 interface Title {
-  title: string;
+  title: Translatable;
   subtitle: string;
 }
 
@@ -233,48 +236,48 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
   [
     UserJoinOrganizationStep.WaitForHost,
     {
-      title: translate('JoinOrganization.titles.waitForHost'),
-      subtitle: translate('JoinOrganization.subtitles.waitForHost'),
+      title: 'JoinOrganization.titles.waitForHost',
+      subtitle: 'JoinOrganization.subtitles.waitForHost',
     },
   ],
   [
     UserJoinOrganizationStep.GetHostSasCode,
     {
-      title: translate('JoinOrganization.titles.getHostCode'),
-      subtitle: translate('JoinOrganization.subtitles.getHostCode'),
+      title: 'JoinOrganization.titles.getHostCode',
+      subtitle: 'JoinOrganization.subtitles.getHostCode',
     },
   ],
   [
     UserJoinOrganizationStep.ProvideGuestCode,
     {
-      title: translate('JoinOrganization.titles.provideGuestCode'),
-      subtitle: translate('JoinOrganization.subtitles.provideGuestCode'),
+      title: 'JoinOrganization.titles.provideGuestCode',
+      subtitle: 'JoinOrganization.subtitles.provideGuestCode',
     },
   ],
   [
     UserJoinOrganizationStep.GetUserInfo,
     {
-      title: translate('JoinOrganization.titles.getUserInfo'),
-      subtitle: translate('JoinOrganization.subtitles.getUserInfo'),
+      title: 'JoinOrganization.titles.getUserInfo',
+      subtitle: 'JoinOrganization.subtitles.getUserInfo',
     },
   ],
   [
     UserJoinOrganizationStep.GetAuthentication,
     {
-      title: translate('JoinOrganization.titles.getAuthentication'),
-      subtitle: translate('JoinOrganization.subtitles.getAuthentication'),
+      title: 'JoinOrganization.titles.getAuthentication',
+      subtitle: 'JoinOrganization.subtitles.getAuthentication',
     },
   ],
   [
     UserJoinOrganizationStep.Finish,
     {
-      title: translate('JoinOrganization.titles.finish', { org: '' }),
-      subtitle: translate('JoinOrganization.subtitles.finish'),
+      title: { key: 'JoinOrganization.titles.finish', data: { org: '' } },
+      subtitle: 'JoinOrganization.subtitles.finish',
     },
   ],
 ]);
 
-async function showErrorAndRestart(message: string): Promise<void> {
+async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(
     new Information({
       message: message,
@@ -287,30 +290,30 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
-    await showErrorAndRestart(translate('JoinOrganization.errors.noneCodeSelected'));
+    await showErrorAndRestart('JoinOrganization.errors.noneCodeSelected');
   } else {
     if (selectedCode === claimer.value.correctSASCode) {
       const result = await claimer.value.signifyTrust();
       if (result.ok) {
         await nextStep();
       } else {
-        await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
+        await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
       }
     } else {
-      await showErrorAndRestart(translate('JoinOrganization.errors.invalidCodeSelected'));
+      await showErrorAndRestart('JoinOrganization.errors.invalidCodeSelected');
     }
   }
 }
 
 function getNextButtonText(): string {
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
-    return translate('JoinOrganization.validateUserInfo');
+    return 'JoinOrganization.validateUserInfo';
   } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
-    return translate('JoinOrganization.createDevice');
+    return 'JoinOrganization.createDevice';
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    return translate('JoinOrganization.logIn');
+    return 'JoinOrganization.logIn';
   } else if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
-    return translate('JoinOrganization.understand');
+    return 'JoinOrganization.understand';
   }
 
   return '';
@@ -338,10 +341,10 @@ const canGoForward = asyncComputed(async () => {
 });
 
 async function cancelModal(): Promise<boolean> {
-  const answer = await askQuestion(translate('JoinOrganization.cancelConfirm'), translate('JoinOrganization.cancelConfirmSubtitle'), {
+  const answer = await askQuestion('JoinOrganization.cancelConfirm', 'JoinOrganization.cancelConfirmSubtitle', {
     keepMainModalHiddenOnYes: true,
-    yesText: translate('JoinOrganization.cancelYes'),
-    noText: translate('JoinOrganization.cancelNo'),
+    yesText: 'JoinOrganization.cancelYes',
+    noText: 'JoinOrganization.cancelNo',
     yesIsDangerous: true,
   });
 
@@ -366,7 +369,7 @@ async function nextStep(): Promise<void> {
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
       props.informationManager.present(
         new Information({
-          message: translate('JoinOrganization.errors.saveDeviceFailed'),
+          message: 'JoinOrganization.errors.saveDeviceFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -378,7 +381,7 @@ async function nextStep(): Promise<void> {
     const deviceName = await getDefaultDeviceName();
     const result = await claimer.value.doClaim(deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
     if (!result.ok) {
-      await showErrorAndRestart(translate('JoinOrganization.errors.sendUserInfoFailed'));
+      await showErrorAndRestart('JoinOrganization.errors.sendUserInfoFailed');
       return;
     }
     waitingForHost.value = false;
@@ -387,7 +390,7 @@ async function nextStep(): Promise<void> {
       return;
     }
     const notification = new Information({
-      message: translate('JoinOrganization.successMessage'),
+      message: 'JoinOrganization.successMessage',
       level: InformationLevel.Success,
     });
     props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
@@ -410,7 +413,7 @@ async function nextStep(): Promise<void> {
       pageStep.value += 1;
       userInfoPage.value.setFocus();
     } else {
-      await showErrorAndRestart(translate('JoinOrganization.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
     }
   }
 }
@@ -423,17 +426,19 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    let message = translate('JoinOrganization.errors.unexpected', { reason: retrieveResult.error.tag });
+    let message;
     switch (retrieveResult.error.tag) {
       case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
-        message = translate('JoinOrganization.errors.tokenAlreadyUsed');
+        message = 'JoinOrganization.errors.tokenAlreadyUsed';
         break;
       case ClaimerRetrieveInfoErrorTag.NotFound:
-        message = translate('JoinOrganization.errors.invitationNotFound');
+        message = 'JoinOrganization.errors.invitationNotFound';
         break;
       case ClaimerRetrieveInfoErrorTag.Offline:
-        message = translate('JoinOrganization.errors.offline');
+        message = 'JoinOrganization.errors.offline';
         break;
+      default:
+        message = { key: 'JoinOrganization.errors.unexpected', data: { reason: retrieveResult.error.tag } };
     }
 
     await props.informationManager.present(
@@ -453,12 +458,13 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok && !cancelled.value) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    let message = translate('JoinOrganization.errors.unexpected', { reason: waitResult.error.tag });
-
+    let message;
     switch (waitResult.error.tag) {
       case ClaimInProgressErrorTag.ActiveUsersLimitReached:
-        message = translate('JoinOrganization.errors.usersLimitReached');
+        message = 'JoinOrganization.errors.usersLimitReached';
         break;
+      default:
+        message = { key: 'JoinOrganization.errors.unexpected', data: { reason: waitResult.error.tag } };
     }
 
     await props.informationManager.present(

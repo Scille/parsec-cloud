@@ -2,7 +2,7 @@
 
 <template>
   <ms-informative-text>
-    {{ $t('ClaimDeviceModal.subtitles.claimDevice') }}
+    {{ $msTranslate('ClaimDeviceModal.subtitles.claimDevice') }}
   </ms-informative-text>
   <div class="info-device">
     <div class="content">
@@ -11,10 +11,10 @@
         class="content__device"
       />
       <ion-text class="body content__text">
-        {{ $t('ClaimDeviceModal.currentDevice') }}
+        {{ $msTranslate('ClaimDeviceModal.currentDevice') }}
       </ion-text>
       <ion-text class="caption-caption content__subtext">
-        {{ $t('ClaimDeviceModal.connected') }}
+        {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
     <div>
@@ -26,10 +26,10 @@
         class="content__device"
       />
       <ion-text class="body content__text">
-        {{ $t('ClaimDeviceModal.newDevice') }}
+        {{ $msTranslate('ClaimDeviceModal.newDevice') }}
       </ion-text>
       <ion-text class="caption-caption content__subtext">
-        {{ $t('ClaimDeviceModal.connected') }}
+        {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
   </div>

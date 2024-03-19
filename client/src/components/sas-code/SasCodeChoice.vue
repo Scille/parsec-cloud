@@ -49,7 +49,7 @@
           fill="clear"
           @click="$emit('select', null)"
         >
-          {{ $t('SasCodeChoice.noneOfTheChoices') }}
+          {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
         </ion-button>
       </ion-col>
     </ion-row>

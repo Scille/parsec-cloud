@@ -12,7 +12,7 @@
       class="ms-sorter-icon"
       :icon="swapVertical"
     />
-    {{ labelRef }}
+    {{ $msTranslate(labelRef) }}
   </ion-button>
 </template>
 

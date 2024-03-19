@@ -36,7 +36,7 @@
           slot="start"
           :icon="arrowBack"
         />
-        {{ $t('HomePage.organizationLogin.backToList') }}
+        {{ $msTranslate('HomePage.organizationLogin.backToList') }}
       </ion-button>
     </div>
     <div class="topbar-right">
@@ -46,7 +46,7 @@
           :disabled="true"
         >
           <ion-icon :icon="chatbubbles" />
-          {{ $t('HomePage.topbar.contactUs') }}
+          {{ $msTranslate('HomePage.topbar.contactUs') }}
         </ion-button>
         <ion-button
           slot="icon-only"
@@ -55,7 +55,7 @@
           @click="$emit('settingsClick')"
         >
           <ion-icon :icon="cog" />
-          {{ $t('HomePage.topbar.settings') }}
+          {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-button>
       </ion-buttons>
     </div>

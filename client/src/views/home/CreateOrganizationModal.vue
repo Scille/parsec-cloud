@@ -28,13 +28,13 @@
           v-if="titles.get(pageStep)?.title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ titles.get(pageStep)?.title }}
+          {{ $msTranslate(titles.get(pageStep)?.title) }}
         </ion-title>
         <ion-text
           v-if="titles.get(pageStep)?.subtitle !== ''"
           class="modal-header__text body"
         >
-          {{ titles.get(pageStep)?.subtitle }}
+          {{ $msTranslate(titles.get(pageStep)?.subtitle) }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -45,8 +45,8 @@
           class="step org-name"
         >
           <ms-input
-            :label="$t('CreateOrganization.organizationName')"
-            :placeholder="$t('CreateOrganization.organizationNamePlaceholder')"
+            :label="$msTranslate('CreateOrganization.organizationName')"
+            :placeholder="$msTranslate('CreateOrganization.organizationNamePlaceholder')"
             name="organization"
             id="org-name-input"
             v-model="orgName"
@@ -56,7 +56,7 @@
           />
 
           <ion-text class="subtitles-sm org-name-criteria">
-            {{ $t('CreateOrganization.organizationNameCriteria') }}
+            {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
           </ion-text>
         </div>
 
@@ -111,7 +111,7 @@
           class="step org-loading"
           v-show="pageStep === CreateOrganizationStep.SpinnerStep"
         >
-          <ms-spinner :title="$t('CreateOrganization.loading')" />
+          <ms-spinner :title="$msTranslate('CreateOrganization.loading')" />
         </div>
 
         <!-- part 7 (loading) -->
@@ -120,7 +120,7 @@
           v-show="pageStep === CreateOrganizationStep.FinishStep"
         >
           <ms-informative-text>
-            {{ $t('CreateOrganization.organizationCreated') }}
+            {{ $msTranslate('CreateOrganization.organizationCreated') }}
           </ms-informative-text>
         </div>
       </div>
@@ -137,7 +137,7 @@
             @click="previousStep()"
             v-show="canGoBackward()"
           >
-            {{ $t('CreateOrganization.button.previous') }}
+            {{ $msTranslate('CreateOrganization.button.previous') }}
             <ion-icon
               slot="start"
               :icon="chevronBack"
@@ -153,7 +153,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $msTranslate(getNextButtonText()) }}
             </span>
             <ion-icon
               v-show="pageStep !== CreateOrganizationStep.SummaryStep"
@@ -192,7 +192,7 @@ import {
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { formatDate, translate } from '@/services/translation';
+import { formatDate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
@@ -244,42 +244,42 @@ const titles = new Map<CreateOrganizationStep, Title>([
   [
     CreateOrganizationStep.OrgNameStep,
     {
-      title: translate('CreateOrganization.title.create'),
-      subtitle: translate('CreateOrganization.subtitle.nameYourOrg'),
+      title: 'CreateOrganization.title.create',
+      subtitle: 'CreateOrganization.subtitle.nameYourOrg',
     },
   ],
   [
     CreateOrganizationStep.UserInfoStep,
     {
-      title: translate('CreateOrganization.title.personalDetails'),
-      subtitle: translate('CreateOrganization.subtitle.personalDetails'),
+      title: 'CreateOrganization.title.personalDetails',
+      subtitle: 'CreateOrganization.subtitle.personalDetails',
     },
   ],
   [
     CreateOrganizationStep.ServerStep,
     {
-      title: translate('CreateOrganization.title.server'),
-      subtitle: translate('CreateOrganization.subtitle.server'),
+      title: 'CreateOrganization.title.server',
+      subtitle: 'CreateOrganization.subtitle.server',
     },
   ],
   [
     CreateOrganizationStep.AuthenticationStep,
     {
-      title: translate('CreateOrganization.title.authentication'),
-      subtitle: translate('CreateOrganization.subtitle.authentication'),
+      title: 'CreateOrganization.title.authentication',
+      subtitle: 'CreateOrganization.subtitle.authentication',
     },
   ],
   [
     CreateOrganizationStep.SummaryStep,
     {
-      title: translate('CreateOrganization.title.overview'),
-      subtitle: translate('CreateOrganization.subtitle.overview'),
+      title: 'CreateOrganization.title.overview',
+      subtitle: 'CreateOrganization.subtitle.overview',
     },
   ],
   [
     CreateOrganizationStep.FinishStep,
     {
-      title: translate('CreateOrganization.title.done'),
+      title: 'CreateOrganization.title.done',
     },
   ],
 ]); // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -293,7 +293,7 @@ const organizationNameValidator: IValidator = async function (value: string) {
   const result = await organizationValidator(value);
 
   if (result.validity === Validity.Valid && orgAlreadyExists.value) {
-    const ret = { validity: Validity.Invalid, reason: translate('CreateOrganization.errors.alreadyExists') };
+    const ret = { validity: Validity.Invalid, reason: 'CreateOrganization.errors.alreadyExists' };
     orgAlreadyExists.value = false;
     return ret;
   }
@@ -302,11 +302,11 @@ const organizationNameValidator: IValidator = async function (value: string) {
 
 function getNextButtonText(): string {
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
-    return translate('CreateOrganization.button.create');
+    return 'CreateOrganization.button.create';
   } else if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    return translate('CreateOrganization.button.done');
+    return 'CreateOrganization.button.done';
   } else {
-    return translate('CreateOrganization.button.next');
+    return 'CreateOrganization.button.next';
   }
 }
 
@@ -353,10 +353,10 @@ async function cancelModal(): Promise<boolean> {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
 
-  const answer = await askQuestion(translate('CreateOrganization.cancelConfirm'), translate('CreateOrganization.cancelConfirmSubtitle'), {
+  const answer = await askQuestion('CreateOrganization.cancelConfirm', 'CreateOrganization.cancelConfirmSubtitle', {
     keepMainModalHiddenOnYes: true,
-    yesText: translate('CreateOrganization.cancelYes'),
-    noText: translate('CreateOrganization.cancelNo'),
+    yesText: 'CreateOrganization.cancelYes',
+    noText: 'CreateOrganization.cancelNo',
     yesIsDangerous: true,
   });
 
@@ -398,7 +398,7 @@ async function nextStep(): Promise<void> {
       device.value = result.value;
       await nextStep();
     } else {
-      let message = '';
+      let message;
       switch (result.error.tag) {
         case BootstrapOrganizationErrorTag.AlreadyUsedToken:
           pageStep.value = CreateOrganizationStep.OrgNameStep;
@@ -409,22 +409,28 @@ async function nextStep(): Promise<void> {
           break;
 
         case BootstrapOrganizationErrorTag.Offline:
-          message = translate('CreateOrganization.errors.offline');
+          message = 'CreateOrganization.errors.offline';
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
         case BootstrapOrganizationErrorTag.TimestampOutOfBallpark:
-          message = translate('CreateOrganization.errors.timestampOutOfBallpark', {
-            clientTime: formatDate(result.error.clientTimestamp, 'long'),
-            serverTime: formatDate(result.error.serverTimestamp, 'long'),
-          });
+          message = {
+            key: 'CreateOrganization.errors.timestampOutOfBallpark',
+            data: {
+              clientTime: formatDate(result.error.clientTimestamp, 'long'),
+              serverTime: formatDate(result.error.serverTimestamp, 'long'),
+            },
+          };
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
 
         default:
-          message = translate('CreateOrganization.errors.generic', {
-            reason: result.error.tag,
-          });
+          message = {
+            key: 'CreateOrganization.errors.generic',
+            data: {
+              reason: result.error.tag,
+            },
+          };
           pageStep.value = CreateOrganizationStep.SummaryStep;
           break;
       }

@@ -11,14 +11,14 @@
     </div>
     <div class="notification-details">
       <ion-text class="notification-details__message body">
-        {{ $t('notification.allImportedElements') }}
+        {{ $msTranslate('notification.allImportedElements') }}
       </ion-text>
       <ion-text class="notification-details__time body-sm">
         <span
           class="hover-state"
           @click="openImportedMenu"
         >
-          {{ $t('notificationCenter.openImportedMenu') }}
+          {{ $msTranslate('notificationCenter.openImportedMenu') }}
         </span>
         <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
         <ion-icon

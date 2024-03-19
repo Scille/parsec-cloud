@@ -2,7 +2,7 @@
 
 import { MsReportTheme } from '@/components/core';
 import { isLoggedIn } from '@/router';
-import { translate } from '@/services/translation';
+import { msTranslate } from '@/services/translation';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
 
@@ -37,7 +37,7 @@ export class ToastManager {
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,
       buttons: [
         {
-          text: toastConfig.confirmButtonLabel ?? translate('notification.nextButton'),
+          text: toastConfig.confirmButtonLabel ?? msTranslate('notification.nextButton'),
           role: 'confirm',
           side: 'end',
         },

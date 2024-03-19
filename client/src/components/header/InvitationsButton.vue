@@ -10,7 +10,7 @@
       unread: invitations,
     }"
   >
-    {{ $t('HeaderPage.invitations.title', { count: invitations.length }, invitations.length) }}
+    {{ $msTranslate({ key: 'HeaderPage.invitations.title', data: { count: invitations.length }, count: invitations.length }) }}
     <ion-icon :icon="mail" />
   </ion-button>
 </template>
@@ -21,7 +21,6 @@ import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listU
 import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
 import InvitationsListPopover from '@/views/users/InvitationsListPopover.vue';
 import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
@@ -84,11 +83,11 @@ async function openInvitationsPopover(event: Event): Promise<void> {
 
 async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
   const answer = await askQuestion(
-    translate('UsersPage.invitation.cancelInvitation.title'),
-    translate('UsersPage.invitation.cancelInvitation.message', { email: invitation.claimerEmail }),
+    'UsersPage.invitation.cancelInvitation.title',
+    { key: 'UsersPage.invitation.cancelInvitation.message', data: { email: invitation.claimerEmail } },
     {
-      yesText: translate('UsersPage.invitation.cancelInvitation.yes'),
-      noText: translate('UsersPage.invitation.cancelInvitation.no'),
+      yesText: 'UsersPage.invitation.cancelInvitation.yes',
+      noText: 'UsersPage.invitation.cancelInvitation.no',
       yesIsDangerous: true,
     },
   );
@@ -102,7 +101,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.invitation.cancelSuccess'),
+        message: 'UsersPage.invitation.cancelSuccess',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -119,7 +118,7 @@ async function cancelUserInvitation(invitation: UserInvitation): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.cancelFailed'),
+          message: 'UsersPage.invitation.cancelFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,

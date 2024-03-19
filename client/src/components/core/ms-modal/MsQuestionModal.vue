@@ -7,12 +7,12 @@
     :close-button="{ visible: false }"
     :cancel-button="{
       disabled: false,
-      label: noText || $t('QuestionModal.no'),
+      label: noText || $msTranslate('QuestionModal.no'),
       onClick: onNo,
     }"
     :confirm-button="{
       disabled: false,
-      label: yesText || $t('QuestionModal.yes'),
+      label: yesText || $msTranslate('QuestionModal.yes'),
       onClick: onYes,
       theme: yesIsDangerous ? MsReportTheme.Error : undefined,
     }"

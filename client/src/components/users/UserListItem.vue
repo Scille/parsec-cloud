@@ -41,7 +41,7 @@
           v-if="isCurrentUser"
           class="body user-name__you"
         >
-          {{ $t('UsersPage.currentUser') }}
+          {{ $msTranslate('UsersPage.currentUser') }}
         </span>
       </ion-label>
     </div>

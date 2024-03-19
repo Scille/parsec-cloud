@@ -26,7 +26,7 @@
                   </ion-avatar>
                   <div class="orga-text">
                     <ion-card-subtitle class="caption-info">
-                      {{ $t('HomePage.organizationActionSheet') }}
+                      {{ $msTranslate('HomePage.organizationActionSheet') }}
                     </ion-card-subtitle>
                     <ion-card-title class="title-h4">
                       {{ userInfo?.organizationId }}
@@ -52,8 +52,8 @@
                 >
                   {{
                     userInfo && userInfo.currentProfile === UserProfile.Admin
-                      ? $t('SideMenu.manageOrganization')
-                      : $t('SideMenu.organizationInfo')
+                      ? $msTranslate('SideMenu.manageOrganization')
+                      : $msTranslate('SideMenu.organizationInfo')
                   }}
                 </ion-text>
               </div>
@@ -70,7 +70,7 @@
                 class="back-button"
               >
                 <ion-icon :icon="chevronBack" />
-                {{ $t('SideMenu.back') }}
+                {{ $msTranslate('SideMenu.back') }}
               </ion-button>
             </div>
           </div>
@@ -92,7 +92,7 @@
                   @click="goToWorkspaceList()"
                   class="list-workspaces-header__title"
                 >
-                  {{ $t('SideMenu.workspaces') }}
+                  {{ $msTranslate('SideMenu.workspaces') }}
                 </span>
                 <ion-icon
                   class="list-workspaces-header__button"
@@ -106,7 +106,7 @@
                 class="body list-workspaces__no-workspace"
                 v-if="workspaces.length === 0"
               >
-                {{ $t('SideMenu.noWorkspace') }}
+                {{ $msTranslate('SideMenu.noWorkspace') }}
               </ion-text>
               <ion-item
                 lines="none"
@@ -133,8 +133,8 @@
             <ion-label class="title-h4">
               {{
                 userInfo && userInfo.currentProfile === UserProfile.Admin
-                  ? $t('SideMenu.manageOrganization')
-                  : $t('SideMenu.organizationInfo')
+                  ? $msTranslate('SideMenu.manageOrganization')
+                  : $msTranslate('SideMenu.organizationInfo')
               }}
             </ion-label>
             <!-- user actions -->
@@ -149,7 +149,7 @@
                   :icon="people"
                   slot="start"
                 />
-                <ion-label>{{ $t('SideMenu.users') }}</ion-label>
+                <ion-label>{{ $msTranslate('SideMenu.users') }}</ion-label>
               </ion-item>
             </ion-list>
             <!-- storage -->
@@ -167,7 +167,7 @@
                   :icon="pieChart"
                   slot="start"
                 />
-                <ion-label> {{ $t('SideMenu.storage') }}</ion-label>
+                <ion-label> {{ $msTranslate('SideMenu.storage') }}</ion-label>
               </ion-item>
             </ion-list>
             <!-- org info -->
@@ -182,7 +182,7 @@
                   :icon="informationCircle"
                   slot="start"
                 />
-                <ion-label>{{ $t('SideMenu.organizationInfo') }}</ion-label>
+                <ion-label>{{ $msTranslate('SideMenu.organizationInfo') }}</ion-label>
               </ion-item>
             </ion-list>
           </div>
@@ -219,7 +219,6 @@ import {
 } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { translate } from '@/services/translation';
 import {
   GestureDetail,
   IonAvatar,
@@ -276,12 +275,12 @@ async function goToWorkspaceList(): Promise<void> {
 
 async function createWorkspace(): Promise<void> {
   const workspaceName = await getTextInputFromUser({
-    title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
+    title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,
-    inputLabel: translate('WorkspacesPage.CreateWorkspaceModal.label'),
-    placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
-    okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
+    inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
+    placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
+    okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
   });
 
   if (workspaceName) {

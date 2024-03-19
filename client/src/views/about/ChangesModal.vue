@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$t('Changelog.title')"
+      :title="$msTranslate('Changelog.title')"
       :close-button="{ visible: true }"
     >
       <div>
@@ -13,7 +13,7 @@
           class="container"
         >
           <div class="version">
-            <ion-text class="version-title title-h3"> {{ $t('app.name') }} v{{ versionChange.version }} </ion-text>
+            <ion-text class="version-title title-h3"> {{ $msTranslate('app.name') }} v{{ versionChange.version }} </ion-text>
             <ion-text class="version-date body">
               {{ $d(versionChange.date.toJSDate(), 'short') }}
             </ion-text>
@@ -26,7 +26,7 @@
           >
             <ion-text class="categorie-title body-lg">
               <ion-icon :icon="sparkles" />
-              {{ $t('Changelog.features') }}
+              {{ $msTranslate('Changelog.features') }}
             </ion-text>
             <ion-list class="list">
               <ion-item
@@ -38,7 +38,7 @@
                   {{ change.description }}
                 </ion-text>
                 <a
-                  :href="$t('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"
@@ -56,7 +56,7 @@
           >
             <ion-text class="categorie-title body-lg">
               <ion-icon :icon="construct" />
-              {{ $t('Changelog.fixes') }}
+              {{ $msTranslate('Changelog.fixes') }}
             </ion-text>
             <ion-list class="list">
               <ion-item
@@ -68,7 +68,7 @@
                   {{ change.description }}
                 </ion-text>
                 <a
-                  :href="$t('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"
@@ -86,7 +86,7 @@
           >
             <ion-text class="categorie-title body-lg">
               <ion-icon :icon="infinite" />
-              {{ $t('Changelog.misc') }}
+              {{ $msTranslate('Changelog.misc') }}
             </ion-text>
             <ion-list class="list">
               <ion-item
@@ -98,7 +98,7 @@
                   {{ change.description }}
                 </ion-text>
                 <a
-                  :href="$t('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"

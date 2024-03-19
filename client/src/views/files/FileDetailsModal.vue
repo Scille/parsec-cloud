@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$t('FileDetails.title', { name: entry.name })"
+      :title="$msTranslate({ key: 'FileDetails.title', data: { name: entry.name } })"
       :close-button="{ visible: true }"
     >
       <div class="file-info-container">
@@ -23,8 +23,8 @@
               {{ entry.name }}
             </ion-text>
             <ion-label class="file-info-basic__edit body">
-              <span>{{ $t('FileDetails.stats.updated') }}</span>
-              <span>{{ $d(entry.updated.toJSDate(), 'short') }}</span>
+              <span>{{ $msTranslate('FileDetails.stats.updated') }}</span>
+              <!-- <span>{{ $d(entry.updated.toJSDate(), 'short') }}</span> -->
             </ion-label>
           </div>
         </div>
@@ -33,10 +33,10 @@
           <!-- Created -->
           <div class="file-info-details-item">
             <ion-label class="file-info-details-item__title caption-caption">
-              {{ $t('FileDetails.stats.created') }}
+              {{ $msTranslate('FileDetails.stats.created') }}
             </ion-label>
             <ion-text class="file-info-details-item__value body">
-              {{ $d(entry.created.toJSDate(), 'short') }}
+              <!-- {{ $d(entry.created.toJSDate(), 'short') }} -->
             </ion-text>
           </div>
           <!-- Size (only for files) -->
@@ -45,14 +45,14 @@
             v-if="entry.isFile()"
           >
             <ion-label class="file-info-details-item__title caption-caption">
-              {{ $t('FileDetails.stats.size') }}
+              {{ $msTranslate('FileDetails.stats.size') }}
             </ion-label>
             <span class="file-info-details-item__value body">{{ formatFileSize((entry as EntryStatFile).size) }}</span>
           </div>
           <!-- Version -->
           <div class="file-info-details-item">
             <ion-label class="file-info-details-item__title caption-caption">
-              {{ $t('FileDetails.stats.version') }}
+              {{ $msTranslate('FileDetails.stats.version') }}
             </ion-label>
             <ion-text class="file-info-details-item__value body">
               {{ entry.baseVersion }}
@@ -63,7 +63,8 @@
         <!-- Path -->
         <div class="file-info-path">
           <ion-label class="file-info-path__title caption-caption">
-            {{ $t('FileDetails.stats.path') }} {{ entry.isFile() ? $t('FileDetails.stats.file') : $t('FileDetails.stats.folder') }}
+            {{ $msTranslate('FileDetails.stats.path') }}
+            {{ entry.isFile() ? $msTranslate('FileDetails.stats.file') : $msTranslate('FileDetails.stats.folder') }}
           </ion-label>
           <div class="file-info-path-value">
             <ion-text class="file-info-path-value__text body">
@@ -85,7 +86,7 @@
               v-if="pathCopiedToClipboard"
               class="file-info-path-value__copied body copied"
             >
-              {{ $t('FileDetails.stats.linkCopied') }}
+              {{ $msTranslate('FileDetails.stats.linkCopied') }}
             </ion-text>
           </div>
         </div>

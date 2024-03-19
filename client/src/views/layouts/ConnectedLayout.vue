@@ -15,7 +15,6 @@ import { EventData, EventDistributor, EventDistributorKey, Events } from '@/serv
 import { ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { translate } from '@/services/translation';
 import { IonContent, IonPage, IonRouterOutlet } from '@ionic/vue';
 import { inject, onMounted, onUnmounted, provide, ref } from 'vue';
 
@@ -35,7 +34,7 @@ async function processEvents(): Promise<void> {
         case Events.Offline: {
           informationManager.present(
             new Information({
-              message: translate('notification.serverOffline'),
+              message: 'notification.serverOffline',
               level: InformationLevel.Warning,
             }),
             PresentationMode.Notification,
@@ -49,7 +48,7 @@ async function processEvents(): Promise<void> {
           }
           informationManager.present(
             new Information({
-              message: translate('notification.serverOnline'),
+              message: 'notification.serverOnline',
               level: InformationLevel.Info,
             }),
             PresentationMode.Notification,
@@ -59,14 +58,14 @@ async function processEvents(): Promise<void> {
         case Events.IncompatibleServer: {
           informationManager.present(
             new Information({
-              message: translate('notification.incompatibleServer'),
+              message: 'notification.incompatibleServer',
               level: InformationLevel.Error,
             }),
             PresentationMode.Notification,
           );
           await informationManager.present(
             new Information({
-              message: translate('globalErrors.incompatibleServer'),
+              message: 'globalErrors.incompatibleServer',
               level: InformationLevel.Error,
             }),
             PresentationMode.Modal,
@@ -76,14 +75,14 @@ async function processEvents(): Promise<void> {
         case Events.ExpiredOrganization: {
           informationManager.present(
             new Information({
-              message: translate('notification.expiredOrganization'),
+              message: 'notification.expiredOrganization',
               level: InformationLevel.Error,
             }),
             PresentationMode.Notification,
           );
           await informationManager.present(
             new Information({
-              message: translate('globalErrors.expiredOrganization'),
+              message: 'globalErrors.expiredOrganization',
               level: InformationLevel.Error,
             }),
             PresentationMode.Modal,
@@ -93,14 +92,14 @@ async function processEvents(): Promise<void> {
         case Events.ClientRevoked: {
           informationManager.present(
             new Information({
-              message: translate('notification.clientRevoked'),
+              message: 'notification.clientRevoked',
               level: InformationLevel.Error,
             }),
             PresentationMode.Notification,
           );
           await informationManager.present(
             new Information({
-              message: translate('globalErrors.clientRevoked'),
+              message: 'globalErrors.clientRevoked',
               level: InformationLevel.Error,
             }),
             PresentationMode.Modal,

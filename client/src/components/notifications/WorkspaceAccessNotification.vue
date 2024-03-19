@@ -24,7 +24,7 @@
           class="hover-state"
           @click="navigateToNewWorkspace"
         >
-          {{ $t('notificationCenter.goToWorkspace') }}
+          {{ $msTranslate('notificationCenter.goToWorkspace') }}
         </span>
         <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
         <ion-icon

@@ -44,7 +44,7 @@
       <!-- last update -->
       <div class="file-lastUpdate">
         <ion-label class="label-last-update cell">
-          {{ $t('FoldersPage.File.importing') }}
+          {{ $msTranslate('FoldersPage.File.importing') }}
         </ion-label>
       </div>
 

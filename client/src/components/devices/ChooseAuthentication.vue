@@ -6,7 +6,7 @@
       class="body choose-auth-page__label"
       v-show="showTitle"
     >
-      {{ $t('Authentication.description') }}
+      {{ $msTranslate('Authentication.description') }}
     </ion-text>
     <ion-radio-group
       v-model="authentication"
@@ -22,19 +22,19 @@
         :disabled="!keyringAvailable"
       >
         <ion-text class="body-lg item-radio__label">
-          {{ $t('Authentication.useKeyring') }}
+          {{ $msTranslate('Authentication.useKeyring') }}
         </ion-text>
         <ion-text
           v-show="!keyringAvailable && isDesktop()"
           class="body-sm item-radio__text"
         >
-          {{ $t('Authentication.keyringUnavailableOnSystem') }}
+          {{ $msTranslate('Authentication.keyringUnavailableOnSystem') }}
         </ion-text>
         <ion-text
           v-show="!keyringAvailable && isWeb()"
           class="body-sm item-radio__text"
         >
-          {{ $t('Authentication.keyringUnavailableOnWeb') }}
+          {{ $msTranslate('Authentication.keyringUnavailableOnWeb') }}
         </ion-text>
       </ion-radio>
       <ion-radio
@@ -44,7 +44,7 @@
         :value="DeviceSaveStrategyTag.Password"
       >
         <ion-text class="body-lg item-radio__label">
-          {{ $t('Authentication.usePassword') }}
+          {{ $msTranslate('Authentication.usePassword') }}
         </ion-text>
       </ion-radio>
     </ion-radio-group>

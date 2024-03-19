@@ -2,7 +2,7 @@
 
 <template>
   <ms-modal
-    :title="$t('FoldersPage.importModal.title')"
+    :title="$msTranslate('FoldersPage.importModal.title')"
     :close-button="{ visible: true }"
   >
     <div class="modal-content inner-content">
@@ -18,7 +18,6 @@ import { Answer, askQuestion, MsModal } from '@/components/core';
 import { FileDropZone, FileImport } from '@/components/files';
 import { entryStat, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
 import { ImportManager } from '@/services/importManager';
-import { translate } from '@/services/translation';
 
 const props = defineProps<{
   currentPath: string;
@@ -45,11 +44,11 @@ async function importFiles(imports: FileImportTuple[]): Promise<void> {
 
   if (existing.length > 0) {
     const answer = await askQuestion(
-      translate('FoldersPage.importModal.replaceTitle', {}, 1),
-      translate('FoldersPage.importModal.replaceQuestion', { file: existing[0].file.name, count: existing.length }),
+      { key: 'FoldersPage.importModal.replaceTitle', count: 1 },
+      { key: 'FoldersPage.importModal.replaceQuestion', data: { file: existing[0].file.name, count: existing.length } },
       {
-        yesText: translate('FoldersPage.importModal.replaceText', {}, 1),
-        noText: translate('FoldersPage.importModal.skipText', {}, 1),
+        yesText: { key: 'FoldersPage.importModal.replaceText', count: 1 },
+        noText: { key: 'FoldersPage.importModal.skipText', count: 1 },
       },
     );
     if (answer === Answer.No) {

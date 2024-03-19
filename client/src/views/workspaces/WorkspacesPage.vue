@@ -11,14 +11,14 @@
         <ms-action-bar-button
           v-show="clientProfile != UserProfile.Outsider"
           id="button-new-workspace"
-          :button-label="$t('WorkspacesPage.createWorkspace')"
+          :button-label="$msTranslate('WorkspacesPage.createWorkspace')"
           :icon="addCircle"
           @click="openCreateWorkspaceModal()"
         />
         <div class="right-side">
           <div class="counter">
             <ion-text class="body">
-              {{ $t('WorkspacesPage.itemCount', { count: workspaceList.length }, workspaceList.length) }}
+              {{ $msTranslate({ key: 'WorkspacesPage.itemCount', data: { count: workspaceList.length }, count: workspaceList.length }) }}
             </ion-text>
           </div>
           <ms-sorter
@@ -46,7 +46,7 @@
               class="no-workspaces-content__image"
             />
             <ion-text>
-              {{ $t('WorkspacesPage.noWorkspaces') }}
+              {{ $msTranslate('WorkspacesPage.noWorkspaces') }}
             </ion-text>
             <ion-button
               v-show="clientProfile != UserProfile.Outsider"
@@ -55,7 +55,7 @@
               @click="openCreateWorkspaceModal()"
             >
               <ion-icon :icon="addCircle" />
-              {{ $t('WorkspacesPage.createWorkspace') }}
+              {{ $msTranslate('WorkspacesPage.createWorkspace') }}
             </ion-button>
           </div>
         </div>
@@ -67,28 +67,28 @@
               lines="full"
             >
               <ion-label class="workspace-list-header__label cell-title label-name">
-                {{ $t('WorkspacesPage.listDisplayTitles.name') }}
+                {{ $msTranslate('WorkspacesPage.listDisplayTitles.name') }}
               </ion-label>
               <ion-label class="workspace-list-header__label cell-title label-role">
-                {{ $t('WorkspacesPage.listDisplayTitles.role') }}
+                {{ $msTranslate('WorkspacesPage.listDisplayTitles.role') }}
               </ion-label>
               <ion-label
                 class="workspace-list-header__label cell-title label-users"
                 v-show="clientProfile !== UserProfile.Outsider"
               >
-                {{ $t('WorkspacesPage.listDisplayTitles.sharedWith') }}
+                {{ $msTranslate('WorkspacesPage.listDisplayTitles.sharedWith') }}
               </ion-label>
               <ion-label
                 class="workspace-list-header__label cell-title label-update"
                 v-show="false"
               >
-                {{ $t('WorkspacesPage.listDisplayTitles.lastUpdate') }}
+                {{ $msTranslate('WorkspacesPage.listDisplayTitles.lastUpdate') }}
               </ion-label>
               <ion-label
                 class="workspace-list-header__label cell-title label-size"
                 v-show="false"
               >
-                {{ $t('WorkspacesPage.listDisplayTitles.size') }}
+                {{ $msTranslate('WorkspacesPage.listDisplayTitles.size') }}
               </ion-label>
               <ion-label class="workspace-list-header__label cell-title label-space" />
             </ion-list-header>
@@ -177,7 +177,6 @@ import { EventDistributor, EventDistributorKey, Events } from '@/services/eventD
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { translate } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import {
@@ -235,8 +234,8 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 const msSorterLabels = {
-  asc: translate('HomePage.organizationList.sortOrderAsc'),
-  desc: translate('HomePage.organizationList.sortOrderDesc'),
+  asc: 'HomePage.organizationList.sortOrderAsc',
+  desc: 'HomePage.organizationList.sortOrderDesc',
 };
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
@@ -290,7 +289,7 @@ async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise
   if (!parseResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('link.invalidFileLink'),
+        message: 'link.invalidFileLink',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -302,7 +301,7 @@ async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise
   if (!workspace) {
     informationManager.present(
       new Information({
-        message: translate('link.workspaceNotFound'),
+        message: 'link.workspaceNotFound',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -314,7 +313,7 @@ async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise
   if (!decryptResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('link.invalidFileLink'),
+        message: 'link.invalidFileLink',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -326,7 +325,7 @@ async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise
   if (!fileInfoResult.ok) {
     informationManager.present(
       new Information({
-        message: translate('link.fileNotFound'),
+        message: 'link.fileNotFound',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -378,7 +377,7 @@ async function refreshWorkspacesList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.listError'),
+        message: 'WorkspacesPage.listError',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -400,9 +399,9 @@ const filteredWorkspaces = computed(() => {
 });
 
 const msSorterOptions: MsOptions = new MsOptions([
-  { label: translate('WorkspacesPage.sort.sortByName'), key: 'name' },
-  { label: translate('WorkspacesPage.sort.sortBySize'), key: 'size' },
-  { label: translate('WorkspacesPage.sort.sortByLastUpdated'), key: 'lastUpdated' },
+  { label: 'WorkspacesPage.sort.sortByName', key: 'name' },
+  { label: 'WorkspacesPage.sort.sortBySize', key: 'size' },
+  { label: 'WorkspacesPage.sort.sortByLastUpdated', key: 'lastUpdated' },
 ]);
 
 function onMsSorterChange(event: MsSorterChangeEvent): void {
@@ -415,9 +414,12 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.newWorkspaceSuccess', {
-          workspace: name,
-        }),
+        message: {
+          key: 'WorkspacesPage.newWorkspaceSuccess',
+          data: {
+            workspace: name,
+          },
+        },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -427,7 +429,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.newWorkspaceError'),
+        message: 'WorkspacesPage.newWorkspaceError',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -437,12 +439,12 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 
 async function openCreateWorkspaceModal(): Promise<void> {
   const workspaceName = await getTextInputFromUser({
-    title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
+    title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,
-    inputLabel: translate('WorkspacesPage.CreateWorkspaceModal.label'),
-    placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
-    okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
+    inputLabel: 'WorkspacesPage.CreateWorkspaceModal.label',
+    placeholder: 'WorkspacesPage.CreateWorkspaceModal.placeholder',
+    okButtonText: 'WorkspacesPage.CreateWorkspaceModal.create',
   });
 
   if (workspaceName) {
@@ -510,7 +512,7 @@ async function openWorkspace(workspace: WorkspaceInfo): Promise<void> {
   if (!result.ok) {
     await informationManager.present(
       new Information({
-        message: translate('FoldersPage.open.folderFailed', { name: workspace.currentName }),
+        message: { key: 'FoldersPage.open.folderFailed', data: { name: workspace.currentName } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
@@ -526,27 +528,30 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName)
     await refreshWorkspacesList();
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.RenameWorkspaceModal.success', { newName: newName }),
+        message: { key: 'WorkspacesPage.RenameWorkspaceModal.success', data: { newName: newName } },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
     );
   } else {
-    let message = '';
+    let message;
     switch (result.error.tag) {
       case ClientRenameWorkspaceErrorTag.AuthorNotAllowed ||
         ClientRenameWorkspaceErrorTag.InvalidCertificate ||
         ClientRenameWorkspaceErrorTag.InvalidEncryptedRealmName ||
         ClientRenameWorkspaceErrorTag.InvalidKeysBundle:
-        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.permission');
+        message = 'WorkspacesPage.RenameWorkspaceModal.errors.permission';
         break;
       case ClientRenameWorkspaceErrorTag.Offline:
-        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.offline');
+        message = 'WorkspacesPage.RenameWorkspaceModal.errors.offline';
         break;
       default:
-        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.generic', {
-          reason: result.error.tag,
-        });
+        message = {
+          key: 'WorkspacesPage.RenameWorkspaceModal.errors.generic',
+          data: {
+            reason: result.error.tag,
+          },
+        };
         console.error(result.error.tag);
         break;
     }
@@ -562,12 +567,12 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName)
 
 async function openRenameWorkspaceModal(workspace: WorkspaceInfo): Promise<void> {
   const newWorkspaceName = await getTextInputFromUser({
-    title: translate('WorkspacesPage.RenameWorkspaceModal.pageTitle'),
+    title: 'WorkspacesPage.RenameWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,
-    inputLabel: translate('WorkspacesPage.RenameWorkspaceModal.label'),
-    placeholder: translate('WorkspacesPage.RenameWorkspaceModal.placeholder'),
-    okButtonText: translate('WorkspacesPage.RenameWorkspaceModal.rename'),
+    inputLabel: 'WorkspacesPage.RenameWorkspaceModal.label',
+    placeholder: 'WorkspacesPage.RenameWorkspaceModal.placeholder',
+    okButtonText: 'WorkspacesPage.RenameWorkspaceModal.rename',
     defaultValue: workspace.currentName,
     selectionRange: [0, workspace.currentName.length],
   });
@@ -584,7 +589,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
         new Information({
-          message: translate('WorkspacesPage.linkNotCopiedToClipboard'),
+          message: 'WorkspacesPage.linkNotCopiedToClipboard',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -592,7 +597,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('WorkspacesPage.linkCopiedToClipboard'),
+          message: 'WorkspacesPage.linkCopiedToClipboard',
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -601,7 +606,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('WorkspacesPage.getLinkError'),
+        message: 'WorkspacesPage.getLinkError',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

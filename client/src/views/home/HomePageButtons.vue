@@ -12,10 +12,10 @@
       />
       <div class="text-content">
         <ion-label class="body">
-          {{ $t('HomePage.noExistingOrganization.createOrganizationTitle') }}
+          {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationTitle') }}
         </ion-label>
         <ion-text class="body-sm sub-text">
-          {{ $t('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
+          {{ $msTranslate('HomePage.noExistingOrganization.createOrganizationSubtitle') }}
         </ion-text>
       </div>
     </ion-item>
@@ -29,10 +29,10 @@
       />
       <div class="text-content">
         <ion-label class="body">
-          {{ $t('HomePage.noExistingOrganization.joinOrganizationTitle') }}
+          {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationTitle') }}
         </ion-label>
         <ion-text class="body-sm sub-text">
-          {{ $t('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
+          {{ $msTranslate('HomePage.noExistingOrganization.joinOrganizationSubtitle') }}
         </ion-text>
       </div>
     </ion-item>

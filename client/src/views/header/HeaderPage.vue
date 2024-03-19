@@ -36,7 +36,7 @@
               class="title-h2"
               :class="hasHistory() ? 'align-center' : 'align-left'"
             >
-              {{ getTitleForRoute() }}
+              {{ $msTranslate(getTitleForRoute()) }}
             </ion-label>
           </div>
 
@@ -129,7 +129,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { translate } from '@/services/translation';
+import { msTranslate } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import {
@@ -182,7 +182,7 @@ async function updateRoute(): Promise<void> {
     fullPath.value = [
       {
         id: 0,
-        display: translate('HeaderPage.titles.workspaces'),
+        display: msTranslate('HeaderPage.titles.workspaces'),
         icon: home,
         name: Routes.Workspaces,
         params: {},
@@ -269,19 +269,19 @@ onUnmounted(async () => {
 function getTitleForRoute(): string {
   switch (getCurrentRouteName()) {
     case Routes.Settings:
-      return translate('HeaderPage.titles.settings');
+      return 'HeaderPage.titles.settings';
     case Routes.Users:
-      return translate('HeaderPage.titles.users');
+      return 'HeaderPage.titles.users';
     case Routes.Storage:
-      return translate('HeaderPage.titles.organization.storage');
+      return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:
-      return translate('HeaderPage.titles.organization.information');
+      return 'HeaderPage.titles.organization.information';
     case Routes.About:
-      return translate('HeaderPage.titles.about');
+      return 'HeaderPage.titles.about';
     case Routes.MyProfile:
-      return translate('HeaderPage.titles.myProfile');
+      return 'HeaderPage.titles.myProfile';
     case Routes.RecoveryExport:
-      return translate('HeaderPage.titles.recoveryExport');
+      return 'HeaderPage.titles.recoveryExport';
     case null:
       return '';
   }

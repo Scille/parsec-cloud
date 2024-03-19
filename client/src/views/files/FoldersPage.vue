@@ -11,14 +11,14 @@
           <ms-action-bar-button
             id="button-new-folder"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$t('FoldersPage.createFolder')"
+            :button-label="$msTranslate('FoldersPage.createFolder')"
             :icon="folderOpen"
             @click="createFolder()"
           />
           <ms-action-bar-button
             id="button-import"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$t('FoldersPage.import')"
+            :button-label="$msTranslate('FoldersPage.import')"
             :icon="document"
             @click="importFiles()"
           />
@@ -27,40 +27,40 @@
           <ms-action-bar-button
             id="button-rename"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$t('FoldersPage.fileContextMenu.actionRename')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionRename')"
             :icon="pencil"
             @click="renameEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-details"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDetails')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDetails')"
             :icon="informationCircle"
             @click="showDetails(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-copy-link"
-            :button-label="$t('FoldersPage.fileContextMenu.actionCopyLink')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionCopyLink')"
             :icon="link"
             @click="copyLink(getSelectedEntries())"
           />
@@ -69,21 +69,21 @@
           <ms-action-bar-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMoveTo')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMoveTo')"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$t('FoldersPage.fileContextMenu.actionMakeACopy')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMakeACopy')"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$t('FoldersPage.fileContextMenu.actionDelete')"
+            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDelete')"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />
@@ -95,23 +95,23 @@
               v-if="selectedFilesCount === 0"
             >
               {{
-                $t(
-                  'FoldersPage.itemCount',
-                  { count: folders.entriesCount() + files.entriesCount() },
-                  folders.entriesCount() + files.entriesCount(),
-                )
+                $msTranslate({
+                  key: 'FoldersPage.itemCount',
+                  data: { count: folders.entriesCount() + files.entriesCount() },
+                  count: folders.entriesCount() + files.entriesCount(),
+                })
               }}
             </ion-text>
             <ion-text
               class="body item-selected"
               v-if="selectedFilesCount > 0"
             >
-              {{ $t('FoldersPage.itemSelectedCount', { count: selectedFilesCount }, selectedFilesCount) }}
+              {{ $msTranslate({ key: 'FoldersPage.itemSelectedCount', data: { count: selectedFilesCount }, count: selectedFilesCount }) }}
             </ion-text>
           </div>
 
           <ms-sorter
-            :label="$t('FoldersPage.sort.byName')"
+            :label="'FoldersPage.sort.byName'"
             :options="msSorterOptions"
             :default-option="SortProperty.Name"
             :sorter-labels="msSorterLabels"
@@ -132,7 +132,7 @@
           <div class="no-files-content">
             <ms-image :image="EmptyFolder" />
             <ion-text>
-              {{ $t('FoldersPage.emptyFolder') }}
+              {{ $msTranslate('FoldersPage.emptyFolder') }}
             </ion-text>
           </div>
         </div>
@@ -200,7 +200,6 @@ import {
 } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { translate } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
@@ -214,16 +213,16 @@ interface FoldersPageSavedData {
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
-    label: translate('FoldersPage.sort.byName'),
+    label: 'FoldersPage.sort.byName',
     key: SortProperty.Name,
   },
-  { label: translate('FoldersPage.sort.byLastUpdate'), key: SortProperty.LastUpdate },
-  { label: translate('FoldersPage.sort.bySize'), key: SortProperty.Size },
+  { label: 'FoldersPage.sort.byLastUpdate', key: SortProperty.LastUpdate },
+  { label: 'FoldersPage.sort.bySize', key: SortProperty.Size },
 ]);
 
 const msSorterLabels = {
-  asc: translate('FoldersPage.sort.asc'),
-  desc: translate('FoldersPage.sort.desc'),
+  asc: 'FoldersPage.sort.asc',
+  desc: 'FoldersPage.sort.desc',
 };
 
 const routeWatchCancel = watchRoute(async () => {
@@ -467,9 +466,12 @@ async function listFolder(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.listFailed', {
-          path: currentPath.value,
-        }),
+        message: {
+          key: 'FoldersPage.errors.listFailed',
+          data: {
+            path: currentPath.value,
+          },
+        },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -494,12 +496,12 @@ async function createFolder(): Promise<void> {
     return;
   }
   const folderName = await getTextInputFromUser({
-    title: translate('FoldersPage.CreateFolderModal.title'),
+    title: 'FoldersPage.CreateFolderModal.title',
     trim: true,
     validator: entryNameValidator,
-    inputLabel: translate('FoldersPage.CreateFolderModal.label'),
-    placeholder: translate('FoldersPage.CreateFolderModal.placeholder'),
-    okButtonText: translate('FoldersPage.CreateFolderModal.create'),
+    inputLabel: 'FoldersPage.CreateFolderModal.label',
+    placeholder: 'FoldersPage.CreateFolderModal.placeholder',
+    okButtonText: 'FoldersPage.CreateFolderModal.create',
   });
 
   if (!folderName) {
@@ -510,9 +512,12 @@ async function createFolder(): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.errors.createFolderFailed', {
-          name: folderName,
-        }),
+        message: {
+          key: 'FoldersPage.errors.createFolderFailed',
+          data: {
+            name: folderName,
+          },
+        },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -549,16 +554,14 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   } else if (entries.length === 1) {
     const entry = entries[0];
-    const title = entry.isFile()
-      ? translate('FoldersPage.deleteOneFileQuestionTitle')
-      : translate('FoldersPage.deleteOneFolderQuestionTitle');
+    const title = entry.isFile() ? 'FoldersPage.deleteOneFileQuestionTitle' : 'FoldersPage.deleteOneFolderQuestionTitle';
     const subtitle = entry.isFile()
-      ? translate('FoldersPage.deleteOneFileQuestionSubtitle', { name: entry.name })
-      : translate('FoldersPage.deleteOneFolderQuestionSubtitle', { name: entry.name });
+      ? { key: 'FoldersPage.deleteOneFileQuestionSubtitle', data: { name: entry.name } }
+      : { key: 'FoldersPage.deleteOneFolderQuestionSubtitle', data: { name: entry.name } };
     const answer = await askQuestion(title, subtitle, {
       yesIsDangerous: true,
-      yesText: entry.isFile() ? translate('FoldersPage.deleteOneFileYes') : translate('FoldersPage.deleteOneFolderYes'),
-      noText: entry.isFile() ? translate('FoldersPage.deleteOneFileNo') : translate('FoldersPage.deleteOneFolderNo'),
+      yesText: entry.isFile() ? 'FoldersPage.deleteOneFileYes' : 'FoldersPage.deleteOneFolderYes',
+      noText: entry.isFile() ? 'FoldersPage.deleteOneFileNo' : 'FoldersPage.deleteOneFolderNo',
     });
 
     if (answer === Answer.No) {
@@ -571,7 +574,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (!result.ok) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.deleteFailed', { name: entry.name }),
+          message: { key: 'FoldersPage.errors.deleteFailed', data: { name: entry.name } },
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -579,14 +582,17 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     }
   } else {
     const answer = await askQuestion(
-      translate('FoldersPage.deleteMultipleQuestionTitle'),
-      translate('FoldersPage.deleteMultipleQuestionSubtitle', {
-        count: entries.length,
-      }),
+      'FoldersPage.deleteMultipleQuestionTitle',
+      {
+        key: 'FoldersPage.deleteMultipleQuestionSubtitle',
+        data: {
+          count: entries.length,
+        },
+      },
       {
         yesIsDangerous: true,
-        yesText: translate('FoldersPage.deleteMultipleYes', { count: entries.length }),
-        noText: translate('FoldersPage.deleteMultipleNo', { count: entries.length }),
+        yesText: { key: 'FoldersPage.deleteMultipleYes', data: { count: entries.length } },
+        noText: { key: 'FoldersPage.deleteMultipleNo', data: { count: entries.length } },
       },
     );
     if (answer === Answer.No) {
@@ -607,8 +613,8 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
         new Information({
           message:
             errorsEncountered === entries.length
-              ? translate('FoldersPage.errors.deleteMultipleAllFailed')
-              : translate('FoldersPage.errors.deleteMultipleSomeFailed'),
+              ? 'FoldersPage.errors.deleteMultipleAllFailed'
+              : 'FoldersPage.errors.deleteMultipleSomeFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -625,14 +631,12 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const entry = entries[0];
   const ext = parsec.Path.getFileExtension(entry.name);
   const newName = await getTextInputFromUser({
-    title: entry.isFile() ? translate('FoldersPage.RenameModal.fileTitle') : translate('FoldersPage.RenameModal.folderTitle'),
+    title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
     trim: true,
     validator: entryNameValidator,
-    inputLabel: entry.isFile() ? translate('FoldersPage.RenameModal.fileLabel') : translate('FoldersPage.RenameModal.folderLabel'),
-    placeholder: entry.isFile()
-      ? translate('FoldersPage.RenameModal.filePlaceholder')
-      : translate('FoldersPage.RenameModal.folderPlaceholder'),
-    okButtonText: translate('FoldersPage.RenameModal.rename'),
+    inputLabel: entry.isFile() ? 'FoldersPage.RenameModal.fileLabel' : 'FoldersPage.RenameModal.folderLabel',
+    placeholder: entry.isFile() ? 'FoldersPage.RenameModal.filePlaceholder' : 'FoldersPage.RenameModal.folderPlaceholder',
+    okButtonText: 'FoldersPage.RenameModal.rename',
     defaultValue: entry.name,
     selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
   });
@@ -643,9 +647,13 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
   if (!result.ok) {
-    let message = translate('FoldersPage.errors.renameFailed', { name: entry.name });
-    if (result.error.tag === parsec.WorkspaceRenameEntryErrorTag.DestinationExists) {
-      message = translate('FoldersPage.errors.renameFailedAlreadyExists');
+    let message;
+    switch (result.error.tag) {
+      case parsec.WorkspaceRenameEntryErrorTag.DestinationExists:
+        message = 'FoldersPage.errors.renameFailedAlreadyExists';
+        break;
+      default:
+        message = { key: 'FoldersPage.errors.renameFailed', data: { name: entry.name } };
     }
     informationManager.present(
       new Information({
@@ -670,7 +678,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     if (!(await writeTextToClipboard(result.value))) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.linkNotCopiedToClipboard'),
+          message: 'FoldersPage.linkNotCopiedToClipboard',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -678,7 +686,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.linkCopiedToClipboard'),
+          message: 'FoldersPage.linkCopiedToClipboard',
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -687,7 +695,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.getLinkError', { reason: result.error.tag }),
+        message: { key: 'FoldersPage.getLinkError', data: { reason: result.error.tag } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -700,7 +708,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const folder = await selectFolder({
-    title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
+    title: { key: 'FoldersPage.moveSelectFolderTitle', data: { count: entries.length }, count: entries.length },
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
   });
@@ -718,7 +726,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.moveOneFailed', { name: entries[0].name }),
+          message: { key: 'FoldersPage.errors.moveOneFailed', data: { name: entries[0].name } },
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -726,10 +734,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message:
-            errorCount === entries.length
-              ? translate('FoldersPage.errors.moveMultipleAllFailed')
-              : translate('FoldersPage.errors.moveMultipleSomeFailed'),
+          message: errorCount === entries.length ? 'FoldersPage.errors.moveMultipleAllFailed' : 'FoldersPage.errors.moveMultipleSomeFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -738,7 +743,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.moveSuccess', { count: entries.length }, entries.length),
+        message: { key: 'FoldersPage.moveSuccess', data: { count: entries.length }, count: entries.length },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -769,8 +774,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const folder = await selectFolder({
-    title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
-    subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
+    title: { key: 'FoldersPage.copySelectFolderTitle', data: { count: entries.length }, count: entries.length },
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
   });
@@ -788,7 +792,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     if (entries.length === 1) {
       informationManager.present(
         new Information({
-          message: translate('FoldersPage.errors.copyOneFailed', { name: entries[0].name }),
+          message: { key: 'FoldersPage.errors.copyOneFailed', data: { name: entries[0].name } },
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -796,10 +800,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message:
-            errorCount === entries.length
-              ? translate('FoldersPage.errors.copyMultipleAllFailed')
-              : translate('FoldersPage.errors.copyMultipleSomeFailed'),
+          message: errorCount === entries.length ? 'FoldersPage.errors.copyMultipleAllFailed' : 'FoldersPage.errors.copyMultipleSomeFailed',
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -808,7 +809,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('FoldersPage.copySuccess', {}, entries.length),
+        message: { key: 'FoldersPage.copySuccess', count: entries.length },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -835,7 +836,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (parsec.isWeb()) {
     await informationManager.present(
       new Information({
-        message: translate('FoldersPage.open.unavailableOnWeb'),
+        message: 'FoldersPage.open.unavailableOnWeb',
         level: InformationLevel.Warning,
       }),
       PresentationMode.Modal,
@@ -850,8 +851,8 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     await informationManager.present(
       new Information({
         message: entry.isFile()
-          ? translate('FoldersPage.open.fileFailed', { name: entry.name })
-          : translate('FoldersPage.open.folderFailed', { name: entry.name }),
+          ? { key: 'FoldersPage.open.fileFailed', data: { name: entry.name } }
+          : { key: 'FoldersPage.open.folderFailed', data: { name: entry.name } },
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

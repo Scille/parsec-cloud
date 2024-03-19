@@ -29,7 +29,7 @@
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
-        <span v-show="false">{{ $t('WorkspacesPage.Workspace.lastUpdate') }}</span>
+        <span v-show="false">{{ $msTranslate('WorkspacesPage.Workspace.lastUpdate') }}</span>
         <span v-show="false">{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
       </ion-text>
 
@@ -54,7 +54,7 @@
           @click.stop="$emit('shareClick', $event, workspace)"
           class="body-sm not-shared-label"
         >
-          {{ $t('WorkspacesPage.Workspace.notShared') }}
+          {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
         </ion-label>
       </div>
     </div>

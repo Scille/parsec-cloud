@@ -49,7 +49,7 @@
         v-show="workspace.sharing.length !== 0"
         @click.stop="$emit('shareClick', $event, workspace)"
       >
-        {{ $t('WorkspacesPage.Workspace.notShared') }}
+        {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
       </ion-label>
     </div>
 

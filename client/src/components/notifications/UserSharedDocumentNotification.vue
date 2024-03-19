@@ -40,7 +40,7 @@
       />
       <ion-text class="notification-file__name subtitles-sm">
         <span class="default-state">{{ notificationData.fileName }}</span>
-        <span class="hover-state">{{ $t('notificationCenter.openEnclosingFolder') }}</span>
+        <span class="hover-state">{{ $msTranslate('notificationCenter.openEnclosingFolder') }}</span>
       </ion-text>
       <ion-text class="notification-file__size default-state subtitles-sm">
         {{ formatFileSize(notificationData.fileSize) }}

@@ -74,7 +74,6 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
 import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
@@ -240,7 +239,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
   } else if (device.ty === DeviceFileType.Keyring) {
     informationManager.present(
       new Information({
-        message: translate('HomePage.keyringFailed'),
+        message: 'HomePage.keyringFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -309,13 +308,13 @@ async function openSettingsModal(): Promise<void> {
 
 async function onJoinOrganizationClicked(): Promise<void> {
   const link = await getTextInputFromUser({
-    title: translate('JoinByLinkModal.pageTitle'),
-    subtitle: translate('JoinByLinkModal.pleaseEnterUrl'),
+    title: 'JoinByLinkModal.pageTitle',
+    subtitle: 'JoinByLinkModal.pleaseEnterUrl',
     trim: true,
     validator: claimLinkValidator,
-    inputLabel: translate('JoinOrganization.linkFormLabel'),
-    placeholder: translate('JoinOrganization.linkFormPlaceholder'),
-    okButtonText: translate('JoinByLinkModal.join'),
+    inputLabel: 'JoinOrganization.linkFormLabel',
+    placeholder: 'JoinOrganization.linkFormPlaceholder',
+    okButtonText: 'JoinByLinkModal.join',
   });
 
   if (link) {

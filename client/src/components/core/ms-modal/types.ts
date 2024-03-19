@@ -3,6 +3,7 @@
 import { IValidator } from '@/common/validators';
 import { MsReportTheme } from '@/components/core/ms-types';
 import { FsPath, WorkspaceHandle } from '@/parsec';
+import { Translatable } from '@/services/translation';
 
 export enum Answer {
   No = 0,
@@ -10,8 +11,8 @@ export enum Answer {
 }
 
 export interface FolderSelectionOptions {
-  title: string;
-  subtitle?: string;
+  title: Translatable;
+  subtitle?: Translatable;
   startingPath: FsPath;
   workspaceHandle: WorkspaceHandle;
 }
@@ -29,10 +30,10 @@ export interface GetTextOptions {
 }
 
 export interface GetPasswordOptions {
-  title: string;
-  subtitle?: string;
-  inputLabel?: string;
-  okButtonText?: string;
+  title: Translatable;
+  subtitle?: Translatable;
+  inputLabel?: Translatable;
+  okButtonText?: Translatable;
 }
 
 export interface MsAlertModalConfig {

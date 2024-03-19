@@ -6,7 +6,7 @@
     <ion-item class="ion-no-padding">
       <div class="summary-item">
         <ion-label class="summary-item__label subtitles-sm">
-          {{ $t('CreateOrganization.overview.organization') }}
+          {{ $msTranslate('CreateOrganization.overview.organization') }}
         </ion-label>
         <ion-text class="summary-item__text body">
           {{ organization }}
@@ -16,7 +16,7 @@
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.Organization)"
         >
-          {{ $t('CreateOrganization.button.modify') }}
+          {{ $msTranslate('CreateOrganization.button.modify') }}
         </ion-button>
       </div>
     </ion-item>
@@ -25,7 +25,7 @@
     <ion-item class="ion-no-padding">
       <div class="summary-item">
         <ion-label class="summary-item__label subtitles-sm">
-          {{ $t('CreateOrganization.overview.fullname') }}
+          {{ $msTranslate('CreateOrganization.overview.fullname') }}
         </ion-label>
         <ion-text class="summary-item__text body">
           {{ fullname }}
@@ -35,7 +35,7 @@
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.UserInfo)"
         >
-          {{ $t('CreateOrganization.button.modify') }}
+          {{ $msTranslate('CreateOrganization.button.modify') }}
         </ion-button>
       </div>
     </ion-item>
@@ -44,7 +44,7 @@
     <ion-item class="ion-no-padding">
       <div class="summary-item">
         <ion-label class="summary-item__label subtitles-sm">
-          {{ $t('CreateOrganization.overview.email') }}
+          {{ $msTranslate('CreateOrganization.overview.email') }}
         </ion-label>
         <ion-text class="summary-item__text body">
           {{ email }}
@@ -54,7 +54,7 @@
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.UserInfo)"
         >
-          {{ $t('CreateOrganization.button.modify') }}
+          {{ $msTranslate('CreateOrganization.button.modify') }}
         </ion-button>
       </div>
     </ion-item>
@@ -63,17 +63,17 @@
     <ion-item class="ion-no-padding">
       <div class="summary-item">
         <ion-label class="summary-item__label subtitles-sm">
-          {{ $t('CreateOrganization.overview.server') }}
+          {{ $msTranslate('CreateOrganization.overview.server') }}
         </ion-label>
         <ion-text class="summary-item__text body">
-          {{ serverMode === ServerMode.SaaS ? $t('CreateOrganization.saas') : serverAddr }}
+          {{ serverMode === ServerMode.SaaS ? $msTranslate('CreateOrganization.saas') : serverAddr }}
         </ion-text>
         <ion-button
           fill="clear"
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.ServerMode)"
         >
-          {{ $t('CreateOrganization.button.modify') }}
+          {{ $msTranslate('CreateOrganization.button.modify') }}
         </ion-button>
       </div>
     </ion-item>
@@ -82,13 +82,13 @@
     <ion-item class="ion-no-padding">
       <div class="summary-item">
         <ion-label class="summary-item__label subtitles-sm">
-          {{ $t('CreateOrganization.overview.authentication') }}
+          {{ $msTranslate('CreateOrganization.overview.authentication') }}
         </ion-label>
         <ion-text class="summary-item__text body">
           {{
             authentication === DeviceSaveStrategyTag.Keyring
-              ? $t('CreateOrganization.keyringChoice')
-              : $t('CreateOrganization.passwordChoice')
+              ? $msTranslate('CreateOrganization.keyringChoice')
+              : $msTranslate('CreateOrganization.passwordChoice')
           }}
         </ion-text>
         <ion-button
@@ -96,7 +96,7 @@
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.AuthenticationMode)"
         >
-          {{ $t('CreateOrganization.button.modify') }}
+          {{ $msTranslate('CreateOrganization.button.modify') }}
         </ion-button>
       </div>
     </ion-item>

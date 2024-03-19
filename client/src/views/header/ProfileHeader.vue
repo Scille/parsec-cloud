@@ -35,7 +35,7 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { translate } from '@/services/translation';
+import { msTranslate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
@@ -96,13 +96,11 @@ async function openPopover(event: Event): Promise<void> {
   }
   if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
-      translate('HomePage.topbar.logoutConfirmTitle'),
-      importManager.isImporting()
-        ? translate('HomePage.topbar.logoutImportsConfirmQuestion')
-        : translate('HomePage.topbar.logoutConfirmQuestion'),
+      'HomePage.topbar.logoutConfirmTitle',
+      importManager.isImporting() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
       {
-        yesText: translate('HomePage.topbar.logoutYes'),
-        noText: translate('HomePage.topbar.logoutNo'),
+        yesText: 'HomePage.topbar.logoutYes',
+        noText: 'HomePage.topbar.logoutNo',
       },
     );
 
@@ -116,7 +114,7 @@ async function openPopover(event: Event): Promise<void> {
       if (!result.ok) {
         informationManager.present(
           new Information({
-            message: translate('HomePage.topbar.logoutFailed'),
+            message: 'HomePage.topbar.logoutFailed',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -131,7 +129,7 @@ async function openPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.Settings) {
     await navigateTo(Routes.Settings);
   } else if (data.option === ProfilePopoverOption.Help) {
-    window.open(translate('MenuPage.helpLink'), '_blank');
+    window.open(msTranslate('MenuPage.helpLink'), '_blank');
   } else if (data.option === ProfilePopoverOption.App) {
     await navigateTo(Routes.About);
   } else if (data.option === ProfilePopoverOption.MyProfile) {

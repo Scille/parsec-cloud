@@ -2,17 +2,17 @@
 
 <template>
   <ms-modal
-    :title="title"
-    :subtitle="subtitle"
+    :title="$msTranslate(title)"
+    :subtitle="$msTranslate(subtitle)"
     :close-button="{ visible: true }"
     :confirm-button="{
-      label: okButtonText || $t('PasswordInputModal.ok'),
+      label: $msTranslate(okButtonText) || $msTranslate('PasswordInputModal.ok'),
       disabled: password.length === 0,
       onClick: confirm,
     }"
   >
     <ms-password-input
-      :label="inputLabel || ''"
+      :label="$msTranslate(inputLabel)"
       ref="passwordInputRef"
       v-model="password"
       @on-enter-keyup="confirm()"
