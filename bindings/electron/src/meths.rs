@@ -4907,6 +4907,29 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// TestbedError
+
+#[allow(dead_code)]
+fn variant_testbed_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::TestbedError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::TestbedError::Disabled { .. } => {
+            let js_tag = JsString::try_new(cx, "TestbedErrorDisabled").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::TestbedError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "TestbedErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
@@ -9637,10 +9660,31 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            libparsec::test_drop_testbed(&path).await;
+            let ret = libparsec::test_drop_testbed(&path).await;
 
             deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = cx.null();
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
                 Ok(js_ret)
             });
         });
@@ -9663,19 +9707,33 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     };
     let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
     let js_ret = match ret {
-        Some(elem) => JsString::try_new(&mut cx, {
-            let custom_to_rs_string =
-                |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
-                    Ok(addr.to_url().into())
-                };
-            match custom_to_rs_string(elem) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        })
-        .or_throw(&mut cx)?
-        .as_value(&mut cx),
-        None => JsNull::new(&mut cx).as_value(&mut cx),
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = match ok {
+    Some(elem) => {
+        JsString::try_new(&mut cx,{
+    let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    match custom_to_rs_string(elem) {
+        Ok(ok) => ok,
+        Err(err) => return cx.throw_type_error(err),
+    }
+}).or_throw(&mut cx)?.as_value(&mut cx)
+    }
+    None => JsNull::new(&mut cx).as_value(&mut cx),
+};
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
@@ -9697,10 +9755,27 @@ fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromi
     };
     let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
     let js_ret = match ret {
-        Some(elem) => JsString::try_new(&mut cx, elem)
-            .or_throw(&mut cx)?
-            .as_value(&mut cx),
-        None => JsNull::new(&mut cx).as_value(&mut cx),
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = match ok {
+                Some(elem) => JsString::try_new(&mut cx, elem)
+                    .or_throw(&mut cx)?
+                    .as_value(&mut cx),
+                None => JsNull::new(&mut cx).as_value(&mut cx),
+            };
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
     };
     let (deferred, promise) = cx.promise();
     deferred.resolve(&mut cx, js_ret);
@@ -9739,18 +9814,35 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
 
             deferred.settle_with(&channel, move |mut cx| {
-                let js_ret = JsString::try_new(&mut cx, {
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(ret) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                                path.into_os_string()
+                                    .into_string()
+                                    .map_err(|_| "Path contains non-utf8 characters")
+                            };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
                     }
-                })
-                .or_throw(&mut cx)?;
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_testbed_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
                 Ok(js_ret)
             });
         });

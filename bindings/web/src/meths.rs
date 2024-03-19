@@ -5447,6 +5447,24 @@ fn variant_parsed_parsec_addr_rs_to_js(
     Ok(js_obj)
 }
 
+// TestbedError
+
+#[allow(dead_code)]
+fn variant_testbed_error_rs_to_js(rs_obj: libparsec::TestbedError) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::TestbedError::Disabled { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"TestbedErrorDisabled".into())?;
+        }
+        libparsec::TestbedError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"TestbedErrorInternal".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // UserOrDeviceClaimInitialInfo
 
 #[allow(dead_code)]
@@ -8513,8 +8531,26 @@ pub fn testDropTestbed(path: String) -> Promise {
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
-        libparsec::test_drop_testbed(&path).await;
-        Ok(JsValue::NULL)
+        let ret = libparsec::test_drop_testbed(&path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     })
 }
 
@@ -8530,15 +8566,30 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
         }?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
         Ok(match ret {
-            Some(val) => JsValue::from_str({
-                let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
-                match custom_to_rs_string(val) {
-                    Ok(ok) => ok,
-                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
-                }
-                .as_ref()
-            }),
-            None => JsValue::NULL,
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => JsValue::from_str({
+                        let custom_to_rs_string = |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                        match custom_to_rs_string(val) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    }),
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     })
 }
@@ -8555,8 +8606,23 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
         }?;
         let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
         Ok(match ret {
-            Some(val) => JsValue::from_str(val.as_ref()),
-            None => JsValue::NULL,
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = match value {
+                    Some(val) => JsValue::from_str(val.as_ref()),
+                    None => JsValue::NULL,
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     })
 }
@@ -8581,18 +8647,33 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
         };
 
         let ret = libparsec::test_new_testbed(&template, test_server.as_ref()).await;
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
-                Ok(ok) => ok,
-                Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
+                        path.into_os_string()
+                            .into_string()
+                            .map_err(|_| "Path contains non-utf8 characters")
+                    };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
             }
-            .as_ref()
-        }))
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_testbed_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     })
 }
 

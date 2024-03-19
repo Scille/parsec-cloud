@@ -1368,6 +1368,24 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
 
+// TestbedError
+export enum TestbedErrorTag {
+    Disabled = 'TestbedErrorDisabled',
+    Internal = 'TestbedErrorInternal',
+}
+
+export interface TestbedErrorDisabled {
+    tag: TestbedErrorTag.Disabled
+    error: string
+}
+export interface TestbedErrorInternal {
+    tag: TestbedErrorTag.Internal
+    error: string
+}
+export type TestbedError =
+  | TestbedErrorDisabled
+  | TestbedErrorInternal
+
 // UserOrDeviceClaimInitialInfo
 export enum UserOrDeviceClaimInitialInfoTag {
     Device = 'UserOrDeviceClaimInitialInfoDevice',
@@ -2288,17 +2306,17 @@ export interface LibParsecPlugin {
     ): Promise<Array<EntryName>>
     testDropTestbed(
         path: Path
-    ): Promise<null>
+    ): Promise<Result<null, TestbedError>>
     testGetTestbedBootstrapOrganizationAddr(
         discriminant_dir: Path
-    ): Promise<ParsecOrganizationBootstrapAddr | null>
+    ): Promise<Result<ParsecOrganizationBootstrapAddr | null, TestbedError>>
     testGetTestbedOrganizationId(
         discriminant_dir: Path
-    ): Promise<OrganizationID | null>
+    ): Promise<Result<OrganizationID | null, TestbedError>>
     testNewTestbed(
         template: string,
         test_server: ParsecAddr | null
-    ): Promise<Path>
+    ): Promise<Result<Path, TestbedError>>
     validateDeviceLabel(
         raw: string
     ): Promise<boolean>
