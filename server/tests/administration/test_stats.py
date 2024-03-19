@@ -130,14 +130,6 @@ async def test_ok(
     expected_server_stats = {
         "stats": [
             {
-                **expected_coolorg_stats,
-                "organization_id": coolorg.organization_id.str,
-            },
-            {
-                **expected_minimal_stats,
-                "organization_id": minimalorg.organization_id.str,
-            },
-            {
                 "organization_id": "NotBootstrappedOrg",
                 "users": 0,
                 "active_users": 0,
@@ -150,8 +142,19 @@ async def test_ok(
                     "STANDARD": {"active": 0, "revoked": 0},
                 },
             },
+            {
+                **expected_coolorg_stats,
+                "organization_id": coolorg.organization_id.str,
+            },
+            {
+                **expected_minimal_stats,
+                "organization_id": minimalorg.organization_id.str,
+            },
         ]
     }
+    expected_coolorg_server_stats = expected_server_stats["stats"][1]
+    assert expected_coolorg_server_stats["organization_id"] == coolorg.organization_id.str
+
     stats = await server_stats()
     assert stats == expected_server_stats
 
@@ -178,7 +181,7 @@ async def test_ok(
         blob=b"0" * 20,
     )
     expected_coolorg_stats["metadata_size"] += 30
-    expected_server_stats["stats"][0]["metadata_size"] += 30
+    expected_coolorg_server_stats["metadata_size"] += 30
 
     await backend.block.create(
         now=DateTime.now(),
@@ -199,8 +202,7 @@ async def test_ok(
         block=b"0" * 20,
     )
     expected_coolorg_stats["data_size"] += 30
-    expected_server_stats["stats"][0]["data_size"] += 30
-
+    expected_coolorg_server_stats["data_size"] += 30
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         new_profile=UserProfile.ADMIN,
@@ -232,7 +234,7 @@ async def test_ok(
     expected_coolorg_stats["active_users"] -= 1
     expected_coolorg_stats["users_per_profile_detail"]["OUTSIDER"]["active"] -= 1
     expected_coolorg_stats["users_per_profile_detail"]["OUTSIDER"]["revoked"] += 1
-    expected_server_stats["stats"][0]["active_users"] -= 1
+    expected_coolorg_server_stats["active_users"] -= 1
 
     # ...and ensure stats reflect that
     stats = await org_stats(coolorg.organization_id)

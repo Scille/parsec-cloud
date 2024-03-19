@@ -22,9 +22,9 @@ async def test_authenticated_block_create_ok(coolorg: CoolorgRpcClients, backend
     )
     assert rep == authenticated_cmds.v4.block_create.RepOk()
 
-    content = await backend.block.read_as_user(
+    content = await backend.block.read(
         organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id.user_id,
+        author=coolorg.alice.device_id,
         block_id=block_id,
     )
     assert isinstance(content, BlockReadResult)
@@ -73,9 +73,9 @@ async def test_authenticated_block_create_realm_not_found(
     # This check is not strictly needed since the block existence
     # is already checked below with the test_dump_blocks call.
     # Anyway, let's leave it as an extra cheap check.
-    content = await backend.block.read_as_user(
+    content = await backend.block.read(
         organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id.user_id,
+        author=coolorg.alice.device_id,
         block_id=block_id,
     )
     assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND
@@ -150,9 +150,9 @@ async def test_authenticated_block_create_store_unavailable(
     # This check is not strictly needed since the block existence
     # is already checked below with the test_dump_blocks call.
     # Anyway, let's leave it as an extra cheap check.
-    content = await backend.block.read_as_user(
+    content = await backend.block.read(
         organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id.user_id,
+        author=coolorg.alice.device_id,
         block_id=block_id,
     )
     assert content == BlockReadBadOutcome.BLOCK_NOT_FOUND

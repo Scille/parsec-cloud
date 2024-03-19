@@ -11,7 +11,6 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    UserID,
     VlobID,
     authenticated_cmds,
 )
@@ -54,8 +53,8 @@ class BaseBlockComponent:
     # Public methods
     #
 
-    async def read_as_user(
-        self, organization_id: OrganizationID, author: UserID, block_id: BlockID
+    async def read(
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> BlockReadResult | BlockReadBadOutcome:
         raise NotImplementedError
 
@@ -84,9 +83,9 @@ class BaseBlockComponent:
     async def api_block_read(
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.block_read.Req
     ) -> authenticated_cmds.latest.block_read.Rep:
-        outcome = await self.read_as_user(
+        outcome = await self.read(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
             block_id=req.block_id,
         )
         match outcome:
