@@ -11,6 +11,7 @@
   --popover-dropdown-settings-width: 9rem;
   --popover-dropdown-sort-width: 12.5rem;
   --popover-dropdown-filter-width: 14rem;
+  --popover-dropdown-view-width: 10rem;
 }
 
 // Global popover style
@@ -68,17 +69,6 @@ ion-popover {
   --width: var(--popover-notification-center-width);
   --offset-y: 0.5rem;
   --offset-x: -5%;
-}
-
-/* --- sorter, dropdown popover --- */
-.sorter-popover,
-.dropdown-popover {
-  --width: fit-content;
-}
-
-/* --- filter, dropdown popover --- */
-.filter-popover {
-  --width: var(--popover-dropdown-filter-width);
 }
 
 /* --- dropdown option popover --- */
@@ -184,12 +174,19 @@ ion-popover {
 .sorter-popover {
   --width: var(--popover-dropdown-sort-width);
   --offset-x: 1em;
-  --offset-y: 0.5em;
+  --offset-y: 0.25em;
 }
 
 /* --- Filter popover --- */
 .filter-popover {
   --width: var(--popover-dropdown-filter-width);
   --offset-x: 1em;
-  --offset-y: 0.5em;
+  --offset-y: 0.25em;
+}
+
+/* --- View popover --- */
+.ms-grid-list-toggle-popover {
+  --width: var(--popover-dropdown-view-width);
+  --offset-x: 1em;
+  --offset-y: 0.25em;
 }

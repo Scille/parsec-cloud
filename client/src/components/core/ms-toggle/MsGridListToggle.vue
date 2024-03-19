@@ -1,42 +1,61 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="ms-grid-list-toggle">
-    <!-- grid -->
+  <div
+    class="ms-grid-list-toggle"
+    @update:modelValue="updateModelValue"
+  >
     <ion-button
       fill="clear"
-      class="button-view"
-      id="grid-view"
-      :disabled="modelValue === DisplayState.Grid"
-      @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
+      id="button-view"
+      class="view-button"
+      @click="openPopover($event)"
     >
-      <ion-icon :icon="grid" />
-    </ion-button>
-    <!-- list -->
-    <ion-button
-      fill="clear"
-      class="button-view"
-      id="list-view"
-      :disabled="modelValue === DisplayState.List"
-      @click="$emit('update:modelValue', modelValue === DisplayState.Grid ? DisplayState.List : DisplayState.Grid)"
-    >
-      <ion-icon :icon="list" />
+      <ion-icon
+        class="view-icon"
+        :icon="modelValue === DisplayState.Grid ? grid : list"
+      />
+      <ion-icon
+        class="chevron-icon"
+        :icon="chevronDown"
+      />
     </ion-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { DisplayState } from '@/components/core/ms-toggle/types';
-import { IonButton, IonIcon } from '@ionic/vue';
-import { grid, list } from 'ionicons/icons';
+import { IonButton, IonIcon, popoverController } from '@ionic/vue';
+import { grid, list, chevronDown } from 'ionicons/icons';
+import { DisplayState, MsGridListTogglePopover } from '@/components/core';
+import { defineProps, defineExpose, defineEmits } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   modelValue: DisplayState;
 }>();
 
-defineEmits<{
+async function openPopover(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: MsGridListTogglePopover,
+    cssClass: 'ms-grid-list-toggle-popover',
+    componentProps: {
+      modelValue: props.modelValue,
+    },
+    event: event,
+    alignment: 'end',
+    showBackdrop: false,
+  });
+  await popover.present();
+  await popover.onDidDismiss();
+  await popover.dismiss();
+}
+
+const emit = defineEmits<{
   (e: 'update:modelValue', value: DisplayState): void;
 }>();
+
+function updateModelValue(value: any) : void{
+  emit('update:modelValue', value);
+}
 
 defineExpose({
   DisplayState,
@@ -51,40 +70,28 @@ defineExpose({
   gap: 0.25rem;
 }
 
-.button-view {
-  color: var(--parsec-color-light-secondary-light);
-  margin: 0;
-  border-radius: var(--parsec-radius-8);
-  border: 1px solid var(--parsec-color-light-secondary-background);
-  height: auto;
-
-  &:not(.button-disabled) {
-    cursor: pointer;
-    --background-hover: none;
-
-    &:hover {
-      color: var(--parsec-color-light-secondary-grey);
-    }
-  }
+.view-button {
+  --background: var(--parsec-color-light-secondary-white);
+  --background-hover: var(--parsec-color-light-secondary-medium);
+  --color: var(--parsec-color-light-secondary-text);
 
   &::part(native) {
-    padding-inline-start: 0px;
-    padding-inline-end: 0px;
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding: 0.375rem 0.625rem;
   }
 
-  ion-icon {
-    font-size: 1.25rem;
-    padding: 0.25rem;
+  &:hover ion-icon {
+    color: var(--parsec-color-light-primary-700);
   }
 }
 
-// eslint-disable-next-line vue-scoped-css/no-unused-selector
-.button-disabled {
-  border: 1px solid var(--parsec-color-light-primary-700);
-  background: var(--parsec-color-light-secondary-premiere);
+.view-icon {
   color: var(--parsec-color-light-primary-700);
-  opacity: 1;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+}
+
+.chevron-icon {
+  color: var(--parsec-color-light-secondary-grey);
+  font-size: 1rem;
 }
 </style>
