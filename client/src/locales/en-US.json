@@ -519,6 +519,11 @@
             "macos": "MacOS",
             "linux": "Linux",
             "android": "Android"
+        },
+        "view": {
+            "display": "Display",
+            "list": "List",
+            "grid": "Grid"
         }
     },
     "SideMenu": {
