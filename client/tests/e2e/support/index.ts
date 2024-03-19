@@ -70,7 +70,11 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
       window.indexedDB.deleteDatabase('_ionicstorage');
 
       const [libparsec, nextStage] = window.nextStageHook();
-      const configPath = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
+      const configResult = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
+      if (!configResult.ok) {
+        throw new Error('Failed to init testbed');
+      }
+      const configPath = configResult.value;
       assert.isDefined(configPath);
       // Force locale to en-US
       await nextStage(configPath, 'en-US');
