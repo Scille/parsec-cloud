@@ -38,14 +38,15 @@
       v-show="clientProfile !== UserProfile.Outsider"
     >
       <avatar-group
-        v-show="workspace.sharing.length > 0"
+        v-show="workspace.sharing.length === 0"
         class="shared-group"
         :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
         :max-display="2"
         @click.stop="$emit('shareClick', $event, workspace)"
       />
       <ion-label
-        v-show="workspace.sharing.length === 0"
+        class="label-not-shared cell"
+        v-show="workspace.sharing.length !== 0"
         @click.stop="$emit('shareClick', $event, workspace)"
       >
         {{ $t('WorkspacesPage.Workspace.notShared') }}
@@ -167,6 +168,31 @@ defineEmits<{
 .workspace-users {
   min-width: 14.5rem;
   flex-grow: 0;
+  overflow: visible;
+
+  .shared-group {
+    padding: 0.25rem;
+    transition: background 0.2s ease-in-out;
+
+    &:hover {
+      background: var(--parsec-color-light-primary-100);
+    }
+  }
+
+  .label-not-shared {
+    color: var(--parsec-color-light-secondary-grey);
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--parsec-radius-6);
+    transition: background 0.15s ease-in-out;
+    flex-grow: 0 !important;
+    position: relative;
+    z-index: 2;
+
+    &:hover {
+      background: var(--parsec-color-light-primary-100);
+      color: var(--parsec-color-light-primary-700) !important;
+    }
+  }
 }
 
 .workspace-lastUpdate {
