@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 pub type Handle = u32;
 const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 
-pub(crate) enum RegisteredHandleItem {
+enum RegisteredHandleItem {
     Open(HandleItem),
     Closed,
 }
@@ -72,6 +72,12 @@ pub(crate) enum HandleItem {
     DeviceClaimFinalize(libparsec_client::DeviceClaimFinalizeCtx),
 }
 
+/// Store the resources in a vector with index as handle, as it is simple and fast.
+/// Note we never re-use a handle once it corresponding resource is closed (given
+/// it prevents hard to track bugs). However the downside is the vector is always
+/// growing, but this is not a big deal given the number of resources opened
+/// in the application lifetime is limited (e.g. the most demanding is greeter/claimer
+/// invitation which uses around 20 resources to complete).
 static HANDLES: OnceLock<Mutex<Vec<RegisteredHandleItem>>> = OnceLock::new();
 
 fn get_handles<'a>() -> MutexGuard<'a, Vec<RegisteredHandleItem>> {
@@ -91,12 +97,12 @@ pub(crate) struct InitializingGuard {
 }
 
 impl InitializingGuard {
-    pub fn initialized(mut self, initialized: HandleItem) -> Handle {
+    pub fn initialized(mut self, mark_initialized_cb: impl FnOnce(&mut HandleItem)) -> Handle {
         let mut guard = get_handles();
 
         // Replace the handle item by the new one
         if let Some(RegisteredHandleItem::Open(item)) = guard.get_mut(self.handle as usize) {
-            *item = initialized;
+            mark_initialized_cb(item);
         }
 
         // Prevent the drop from closing our handle !

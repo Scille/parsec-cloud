@@ -109,9 +109,24 @@ pub async fn client_start_workspace(
 
     // 3. Finally register the workspace to get a handle
 
-    let workspace_handle = initializing.initialized(HandleItem::Workspace {
-        client: client_handle,
-        workspace_ops,
+    let workspace_handle = initializing.initialized(move |item: &mut HandleItem| {
+        let starting = std::mem::replace(
+            item,
+            HandleItem::Workspace {
+                client: client_handle,
+                workspace_ops,
+            },
+        );
+        match starting {
+            HandleItem::StartingWorkspace {
+                to_wake_on_done, ..
+            } => {
+                for event in to_wake_on_done {
+                    event.notify(usize::MAX);
+                }
+            }
+            _ => unreachable!(),
+        }
     });
 
     Ok(workspace_handle)
@@ -345,13 +360,28 @@ pub async fn workspace_mount(
     // 3. Finally register the mountpoint to get a handle
 
     let mountpoint_path = mountpoint.path().to_owned();
-    let handle = initializing.initialized(HandleItem::Mountpoint {
-        client: client_handle,
-        workspace: workspace_handle,
-        mountpoint,
+    let mountpoint_handle = initializing.initialized(move |item: &mut HandleItem| {
+        let starting = std::mem::replace(
+            item,
+            HandleItem::Mountpoint {
+                client: client_handle,
+                workspace: workspace_handle,
+                mountpoint,
+            },
+        );
+        match starting {
+            HandleItem::StartingMountpoint {
+                to_wake_on_done, ..
+            } => {
+                for event in to_wake_on_done {
+                    event.notify(usize::MAX);
+                }
+            }
+            _ => unreachable!(),
+        }
     });
 
-    Ok((handle, mountpoint_path))
+    Ok((mountpoint_handle, mountpoint_path))
 }
 
 /*
