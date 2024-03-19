@@ -28,12 +28,16 @@ impl TestbedScope {
             },
             Run::WithoutServer => None,
         };
-        let env = test_new_testbed(template, server_addr).await;
+        let env = test_new_testbed(template, server_addr)
+            .await
+            .expect("cannot start testbed scope");
         Some(Self { env })
     }
 
     pub async fn stop(self) {
-        test_drop_testbed(&self.env.discriminant_dir).await;
+        test_drop_testbed(&self.env.discriminant_dir)
+            .await
+            .expect("cannot stop testbed scope");
     }
 
     pub async fn run_with_server<F, Fut>(template: &str, cb: F)

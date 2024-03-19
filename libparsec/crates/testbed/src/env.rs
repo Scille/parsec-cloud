@@ -725,9 +725,13 @@ impl TestbedEnv {
 
 /// `test_new_testbed` should be called when a test starts (and be followed
 /// by a `test_drop_testbed` call at it end)
-pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) -> Arc<TestbedEnv> {
+pub async fn test_new_testbed(
+    template: &str,
+    server_addr: Option<&ParsecAddr>,
+) -> anyhow::Result<Arc<TestbedEnv>> {
     // 1) Retrieve the template
-    let template = test_get_template(template).expect("Testbed template not found");
+    let template =
+        test_get_template(template).ok_or(anyhow::anyhow!("Testbed template not found"))?;
 
     let (kind, server_addr, organization_id) = if let Some(server_addr) = server_addr {
         // 2) Call the test server to setup the env on it side
@@ -736,21 +740,23 @@ pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) 
             .post(url)
             .send()
             .await
-            .expect("Cannot communicate with testbed server");
+            .map_err(|e| anyhow::anyhow!("Cannot communicate with testbed server: {}", e))?;
         if response.status() != StatusCode::OK {
             let url = response.url().to_owned();
             let status = response.status();
             let body = response.text().await.unwrap_or("".to_owned());
-            panic!(
+            return Err(anyhow::anyhow!(
                 "POST {}: bad response from testbed server: {}\n{}",
-                url, status, body
-            );
+                url,
+                status,
+                body
+            ));
         }
         let (organization_id, server_template_crc) = {
             let response_body = response
                 .text()
                 .await
-                .expect("Bad response body from testbed server");
+                .map_err(|e| anyhow::anyhow!("Bad response body from testbed server: {}", e))?;
 
             // Body should be something like `CoolOrg\n12345`
             let mut s = response_body.split('\n');
@@ -760,16 +766,24 @@ pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) 
                 s.next(),
             ) {
                 (Some(Ok(org_id)), Some(Ok(crc)), None) => (org_id, crc),
-                _ => panic!("Bad response body from testbed server"),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Bad response body from testbed server: {:?}",
+                        response_body
+                    ))
+                }
             }
         };
 
         // Ensure there is not inconsistency in the template's data with the server
         let template_crc = template.compute_crc();
-        assert_eq!(
-            template_crc, server_template_crc,
-            "CRC mismatch in template ! Check your server version. Maybe run `./make.py python-dev-rebuild` ?"
-        );
+        if template_crc != server_template_crc {
+            return Err(anyhow::anyhow!(
+                "CRC mismatch in template ({} vs {}) ! Check your server version. Maybe run `./make.py python-dev-rebuild` ?",
+                template_crc,
+                server_template_crc,
+            ));
+        }
 
         (
             TestbedKind::ClientServer,
@@ -804,7 +818,8 @@ pub async fn test_new_testbed(template: &str, server_addr: Option<&ParsecAddr>) 
         cache: Mutex::default(),
     });
     envs.push(env.clone());
-    env
+
+    Ok(env)
 }
 
 /// `test_get_testbed` should be used by components (e.g. local storage) as a hook
@@ -862,7 +877,7 @@ where
 /// Nothing wrong will occur if `test_drop_testbed` is not called at the end of a test.
 /// Only resources won't be freed, which builds up ram consumption (especially on the
 /// test server if it is shared between test runs !)
-pub async fn test_drop_testbed(discriminant_dir: &Path) {
+pub async fn test_drop_testbed(discriminant_dir: &Path) -> anyhow::Result<()> {
     // 1) Unregister the testbed env
     let env = {
         let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
@@ -871,7 +886,12 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) {
             .position(|x| x.discriminant_dir == discriminant_dir);
         match index {
             Some(index) => envs.swap_remove(index),
-            None => panic!("No testbed with path `{:?}`", discriminant_dir),
+            None => {
+                return Err(anyhow::anyhow!(
+                    "No testbed with path `{:?}`",
+                    discriminant_dir
+                ))
+            }
         }
     };
 
@@ -885,9 +905,14 @@ pub async fn test_drop_testbed(discriminant_dir: &Path) {
             .post(url)
             .send()
             .await
-            .expect("Cannot communicate with testbed server");
+            .map_err(|e| anyhow::anyhow!("Cannot communicate with testbed server: {}", e))?;
         if response.status() != StatusCode::OK {
-            panic!("Bad response status from testbed server: {:?}", response);
+            return Err(anyhow::anyhow!(
+                "Bad response status from testbed server: {:?}",
+                response
+            ));
         }
     }
+
+    Ok(())
 }
