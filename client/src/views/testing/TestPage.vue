@@ -86,7 +86,7 @@ async function testBootstrapOrganization(): Promise<void> {
   });
 
   if (!configResult.ok) {
-    throw new Error("Failed to init testbed");
+    throw new Error('Failed to init testbed');
   }
 
   const configPath = configResult.value;
