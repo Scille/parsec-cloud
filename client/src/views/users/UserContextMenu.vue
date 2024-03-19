@@ -9,7 +9,7 @@
       >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('UsersPage.userContextMenu.titleRemove') }}
+            {{ $msTranslate('UsersPage.userContextMenu.titleRemove') }}
           </ion-label>
         </ion-item>
 
@@ -20,7 +20,7 @@
         >
           <ion-icon :icon="personRemove" />
           <ion-label class="body list-group-item__label">
-            {{ $t('UsersPage.userContextMenu.actionRevoke') }}
+            {{ $msTranslate('UsersPage.userContextMenu.actionRevoke') }}
           </ion-label>
         </ion-item>
       </ion-item-group>
@@ -28,7 +28,7 @@
       <ion-item-group class="list-group">
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('UsersPage.userContextMenu.titleDetails') }}
+            {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -38,7 +38,7 @@
         >
           <ion-icon :icon="informationCircle" />
           <ion-label class="body list-group-item__label">
-            {{ $t('UsersPage.userContextMenu.actionDetails') }}
+            {{ $msTranslate('UsersPage.userContextMenu.actionDetails') }}
           </ion-label>
         </ion-item>
       </ion-item-group>

@@ -8,14 +8,14 @@
           <!-- ------------- Configuration list ------------- -->
           <div class="org-config">
             <ion-title class="org-info-title title-h3">
-              {{ $t('OrganizationPage.infoPage.configuration.title') }}
+              {{ $msTranslate('OrganizationPage.infoPage.configuration.title') }}
             </ion-title>
 
             <div class="org-config-list">
               <!-- Outsider profile -->
               <div class="org-config-list-item">
                 <ion-label class="org-info-item-title body">
-                  {{ $t('OrganizationPage.infoPage.configuration.outsidersAllowed') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.configuration.outsidersAllowed') }}
                 </ion-label>
                 <div
                   class="org-config-list-item__value body-sm"
@@ -23,27 +23,27 @@
                 >
                   {{
                     orgInfo.outsidersAllowed
-                      ? $t('OrganizationPage.infoPage.configuration.allowed')
-                      : $t('OrganizationPage.infoPage.configuration.forbidden')
+                      ? $msTranslate('OrganizationPage.infoPage.configuration.allowed')
+                      : $msTranslate('OrganizationPage.infoPage.configuration.forbidden')
                   }}
                 </div>
               </div>
               <!-- User limit -->
               <div class="org-config-list-item">
                 <ion-text class="org-info-item-title body">
-                  {{ $t('OrganizationPage.infoPage.configuration.userLimit') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.configuration.userLimit') }}
                 </ion-text>
                 <div
                   class="org-config-list-item__value body-sm"
                   :class="orgInfo.hasUserLimit ? 'warning' : 'success'"
                 >
-                  {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $t('OrganizationPage.infoPage.configuration.unlimited') }}
+                  {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $msTranslate('OrganizationPage.infoPage.configuration.unlimited') }}
                 </div>
               </div>
               <!-- Server addr -->
               <div class="org-config-list-item server-address">
                 <ion-text class="org-info-item-title server-address__title body">
-                  {{ $t('OrganizationPage.infoPage.configuration.serverAddr') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.configuration.serverAddr') }}
                 </ion-text>
                 <div class="server-address-value">
                   <ion-text class="server-address-value__text body">
@@ -65,7 +65,7 @@
                     v-if="addressCopiedToClipboard"
                     class="server-address-value__copied body copied"
                   >
-                    {{ $t('OrganizationPage.infoPage.configuration.copyPath') }}
+                    {{ $msTranslate('OrganizationPage.infoPage.configuration.copyPath') }}
                   </ion-text>
                 </div>
               </div>
@@ -78,12 +78,12 @@
             v-show="false"
           >
             <ion-title class="org-info-title title-h3">
-              {{ $t('OrganizationPage.infoPage.size.title') }}
+              {{ $msTranslate('OrganizationPage.infoPage.size.title') }}
             </ion-title>
             <div class="org-storage-list">
               <div class="org-storage-list-item">
                 <ion-label class="org-info-item-title body">
-                  {{ $t('OrganizationPage.infoPage.size.total') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.size.total') }}
                 </ion-label>
                 <ion-text
                   class="org-storage-list-item__value title-h5"
@@ -96,13 +96,13 @@
                   v-show="orgInfo.size.data + orgInfo.size.metadata === 0"
                   class="warning body-sm"
                 >
-                  {{ $t('OrganizationPage.infoPage.size.unavailable') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.size.unavailable') }}
                 </div>
               </div>
               <!-- Meta data -->
               <div class="org-storage-list-item">
                 <ion-label class="org-info-item-title body">
-                  {{ $t('OrganizationPage.infoPage.size.metadata') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.size.metadata') }}
                 </ion-label>
                 <ion-text
                   class="org-storage-list-item__value title-h5"
@@ -114,7 +114,7 @@
                   v-show="orgInfo.size.metadata === 0"
                   class="warning body-sm"
                 >
-                  {{ $t('OrganizationPage.infoPage.size.unavailable') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.size.unavailable') }}
                 </div>
               </div>
             </div>
@@ -123,7 +123,7 @@
           <!-- ------------- User list ------------- -->
           <div class="org-user">
             <ion-title class="org-info-title title-h3">
-              {{ $t('OrganizationPage.infoPage.users.title') }}
+              {{ $msTranslate('OrganizationPage.infoPage.users.title') }}
             </ion-title>
 
             <div class="org-user-list">
@@ -131,7 +131,7 @@
               <div class="org-user-list-item user-active">
                 <div class="user-active-header">
                   <ion-title class="user-active-header__title title-h5">
-                    {{ $t('OrganizationPage.infoPage.users.activeUsers') }}
+                    {{ $msTranslate('OrganizationPage.infoPage.users.activeUsers') }}
                   </ion-title>
                   <span class="title-h4">{{ orgInfo.users.active }}</span>
                   <!-- if we decide to show a modal with the active users list -->
@@ -141,7 +141,7 @@
                     class="show-users-button"
                     v-show="false"
                   >
-                    {{ $t('OrganizationPage.infoPage.users.seeUsers') }}
+                    {{ $msTranslate('OrganizationPage.infoPage.users.seeUsers') }}
                   </ion-button>
                 </div>
                 <div class="user-active-list">
@@ -176,7 +176,7 @@
               <div class="org-user-list-item user-revoked">
                 <div class="user-revoked-header">
                   <ion-title class="user-revoked-header__title title-h5">
-                    {{ $t('OrganizationPage.infoPage.users.revokedUsers') }}
+                    {{ $msTranslate('OrganizationPage.infoPage.users.revokedUsers') }}
                   </ion-title>
                   <span class="title-h4">{{ orgInfo.users.revoked }}</span>
                   <!-- if we decide to show a modal with the revoked users list -->
@@ -186,7 +186,7 @@
                     class="show-users-button"
                     v-show="false"
                   >
-                    {{ $t('OrganizationPage.infoPage.users.seeUsers') }}
+                    {{ $msTranslate('OrganizationPage.infoPage.users.seeUsers') }}
                   </ion-button>
                 </div>
               </div>
@@ -201,7 +201,7 @@
             size="large"
           />
           <ion-text class="body">
-            {{ $t('OrganizationPage.infoPage.getInfoFailed') }}
+            {{ $msTranslate('OrganizationPage.infoPage.getInfoFailed') }}
           </ion-text>
         </div>
       </template>
@@ -215,7 +215,6 @@ import { formatFileSize } from '@/common/file';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { OrganizationInfo, UserProfile, getOrganizationInfo } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
 import { IonButton, IonContent, IonIcon, IonLabel, IonPage, IonText, IonTitle } from '@ionic/vue';
 import { copy, warning } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
@@ -234,7 +233,7 @@ async function copyAddress(address: string): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('OrganizationPage.infoPage.configuration.copyFailed'),
+        message: 'OrganizationPage.infoPage.configuration.copyFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

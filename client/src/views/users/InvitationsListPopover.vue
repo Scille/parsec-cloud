@@ -5,7 +5,7 @@
     <div class="invitations-list">
       <div class="invitations-list-header">
         <ion-text class="invitations-list-header__title title-h4">
-          {{ $t('invitationList.title') }}
+          {{ $msTranslate('invitationList.title') }}
         </ion-text>
         <span class="invitations-list-header__counter body-sm">
           {{ invitations.length }}
@@ -21,7 +21,7 @@
             :icon="personAdd"
             class="button-icon"
           />
-          {{ $t('invitationList.invite') }}
+          {{ $msTranslate('invitationList.invite') }}
         </ion-button>
       </div>
       <ion-list class="invitations-list-content">
@@ -30,7 +30,7 @@
           v-if="invitations.length === 0"
         >
           <ion-text class="body-lg">
-            {{ $t('invitationList.noInvitations') }}
+            {{ $msTranslate('invitationList.noInvitations') }}
           </ion-text>
         </div>
         <invitation-popover-item

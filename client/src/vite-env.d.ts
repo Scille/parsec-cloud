@@ -8,6 +8,9 @@ declare module '*.vue' {
   // eslint-disable-next-line @typescript-eslint/ban-types
   const component: DefineComponent<{}, {}, any>;
   export default component;
+  interface ComponentCustomProperties {
+    $tr: { tr: (Translatable) => string };
+  }
 }
 
 declare module '@libparsec_trampoline' {

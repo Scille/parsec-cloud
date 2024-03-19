@@ -3,14 +3,14 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$t('WorkspaceSharing.title')"
+      :title="$msTranslate('WorkspaceSharing.title')"
       :close-button="{ visible: true }"
     >
       <!-- content -->
       <div class="modal-container">
         <ms-search-input
           v-model="search"
-          :placeholder="$t('WorkspaceSharing.searchPlaceholder')"
+          :placeholder="$msTranslate('WorkspaceSharing.searchPlaceholder')"
         />
         <ion-list class="user-list">
           <workspace-user-role
@@ -18,7 +18,7 @@
             :user="{
               id: 'FAKE',
               humanHandle: {
-                label: $t('WorkspaceSharing.currentUserLabel'),
+                label: $msTranslate('WorkspaceSharing.currentUserLabel'),
                 email: '',
               },
               profile: UserProfile.Outsider,
@@ -49,7 +49,7 @@ import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate, translateWorkspaceRole } from '@/services/translation';
+import { translateWorkspaceRole } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -111,7 +111,7 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
   } else {
     props.informationManager.present(
       new Information({
-        message: translate('WorkspaceSharing.listFailure.message'),
+        message: 'WorkspaceSharing.listFailure.message',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -136,7 +136,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (role === null) {
       props.informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.listFailure.alreadyNotShared', { user: user.humanHandle.label }),
+          message: { key: 'WorkspaceSharing.listFailure.alreadyNotShared', data: { user: user.humanHandle.label } },
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -144,10 +144,13 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     } else {
       props.informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.listFailure.alreadyHasRole', {
-            user: user.humanHandle.label,
-            role: translateWorkspaceRole(role).label,
-          }),
+          message: {
+            key: 'WorkspaceSharing.listFailure.alreadyHasRole',
+            data: {
+              user: user.humanHandle.label,
+              role: translateWorkspaceRole(role).label,
+            },
+          },
           level: InformationLevel.Info,
         }),
         PresentationMode.Toast,
@@ -160,9 +163,12 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     if (!role) {
       props.informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.unshareSuccess', {
-            user: user.humanHandle.label,
-          }),
+          message: {
+            key: 'WorkspaceSharing.unshareSuccess',
+            data: {
+              user: user.humanHandle.label,
+            },
+          },
           level: InformationLevel.Success,
         }),
         PresentationMode.Toast,
@@ -170,10 +176,13 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     } else {
       props.informationManager.present(
         new Information({
-          message: translate('WorkspaceSharing.updateRoleSuccess', {
-            user: user.humanHandle.label,
-            role: translateWorkspaceRole(role).label,
-          }),
+          message: {
+            key: 'WorkspaceSharing.updateRoleSuccess',
+            data: {
+              user: user.humanHandle.label,
+              role: translateWorkspaceRole(role).label,
+            },
+          },
           level: InformationLevel.Success,
         }),
         PresentationMode.Toast,
@@ -182,9 +191,12 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   } else {
     props.informationManager.present(
       new Information({
-        message: translate('WorkspaceSharing.updateRoleFailure', {
-          user: user.humanHandle.label,
-        }),
+        message: {
+          key: 'WorkspaceSharing.updateRoleFailure',
+          data: {
+            user: user.humanHandle.label,
+          },
+        },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

@@ -5,12 +5,12 @@
     <div class="import-drag-drop">
       <ms-image :image="FileImportImage" />
       <ion-text class="import-drag-drop__title title-h3">
-        {{ $t('FoldersPage.importModal.dragAndDrop') }}
+        {{ $msTranslate('FoldersPage.importModal.dragAndDrop') }}
       </ion-text>
     </div>
     <div class="divider">
       <ion-text class="title-h3">
-        {{ $t('FoldersPage.importModal.or') }}
+        {{ $msTranslate('FoldersPage.importModal.or') }}
       </ion-text>
     </div>
     <div class="import-button">
@@ -30,7 +30,7 @@
           slot="start"
           id="browse-icon"
         />
-        {{ $t('FoldersPage.importModal.browse') }}
+        {{ $msTranslate('FoldersPage.importModal.browse') }}
       </ion-button>
     </div>
   </div>
@@ -41,6 +41,7 @@ import { FileImport as FileImportImage, MsImage } from '@/components/core';
 import { IonButton, IonIcon, IonText } from '@ionic/vue';
 import { ellipsisHorizontalCircle } from 'ionicons/icons';
 import { onMounted, onUnmounted, ref } from 'vue';
+
 const emits = defineEmits<{
   (e: 'filesImport', entries: File[]): void;
 }>();

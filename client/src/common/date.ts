@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { formatDate, translate } from '@/services/translation';
+import { formatDate, msTranslate } from '@/services/translation';
 import { DateTime } from 'luxon';
 
 export function formatTimeSince(
@@ -19,17 +19,17 @@ export function formatTimeSince(
   if (!diff || (diff.years && diff.years > 0) || (diff.months && diff.months > 0) || (diff.days && diff.days > 6)) {
     return formatDate(date, format);
   } else if (roundDays) {
-    return translate('common.date.lastLoginDays', { days: diff.days || 0 }, diff.days || 0);
+    return msTranslate({ key: 'common.date.lastLoginDays', data: { days: diff.days || 0 }, count: diff.days || 0 });
   } else if (diff.days && diff.days > 0) {
-    return translate('common.date.lastLoginDays', { days: diff.days }, diff.days);
+    return msTranslate({ key: 'common.date.lastLoginDays', data: { days: diff.days }, count: diff.days });
   } else if (diff.hours && diff.hours > 0) {
-    return translate('common.date.lastLoginHours', { hours: diff.hours }, diff.hours);
+    return msTranslate({ key: 'common.date.lastLoginHours', data: { hours: diff.hours }, count: diff.hours });
   } else if (diff.minutes && diff.minutes > 0) {
-    return translate('common.date.lastLoginMinutes', { minutes: diff.minutes }, diff.minutes);
+    return msTranslate({ key: 'common.date.lastLoginMinutes', data: { minutes: diff.minutes }, count: diff.minutes });
   } else if (diff.seconds && diff.seconds > 30) {
-    return translate('common.date.lessThanAMinute');
+    return msTranslate('common.date.lessThanAMinute');
   } else {
-    return translate('common.date.fewSeconds');
+    return msTranslate('common.date.fewSeconds');
   }
 }
 

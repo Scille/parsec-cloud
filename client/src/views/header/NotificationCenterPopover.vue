@@ -5,7 +5,7 @@
     <div class="notification-center">
       <div class="notification-center-header">
         <ion-text class="notification-center-header__title title-h4">
-          {{ $t('notificationCenter.title') }}
+          {{ $msTranslate('notificationCenter.title') }}
         </ion-text>
         <span class="notification-center-header__counter body-sm">
           {{ unreadCount > 99 ? '+99' : unreadCount }}
@@ -14,7 +14,7 @@
           class="notification-center-header__toggle dark small body-sm"
           @ion-change="onlyReadToggle = !onlyReadToggle"
         >
-          {{ $t('notificationCenter.readOnly') }}
+          {{ $msTranslate('notificationCenter.readOnly') }}
         </ion-toggle>
       </div>
       <ion-list class="notification-center-content">
@@ -24,7 +24,7 @@
         >
           <ms-image :image="NoNotification" />
           <ion-text class="body-lg">
-            {{ $t('notificationCenter.noNotification') }}
+            {{ $msTranslate('notificationCenter.noNotification') }}
           </ion-text>
         </div>
         <component

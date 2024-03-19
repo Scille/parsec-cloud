@@ -22,7 +22,7 @@
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
-        <span>{{ $t('FoldersPage.File.importing') }}</span>
+        <span>{{ $msTranslate('FoldersPage.File.importing') }}</span>
       </ion-text>
     </div>
   </ion-item>

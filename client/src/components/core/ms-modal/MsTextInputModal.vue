@@ -6,12 +6,12 @@
     :subtitle="subtitle"
     :close-button="{ visible: true }"
     :cancel-button="{
-      label: $t('TextInputModal.cancel'),
+      label: $msTranslate('TextInputModal.cancel'),
       disabled: false,
       onClick: cancel,
     }"
     :confirm-button="{
-      label: okButtonText || $t('TextInputModal.ok'),
+      label: okButtonText || $msTranslate('TextInputModal.ok'),
       disabled: !textIsValid,
       onClick: confirm,
     }"

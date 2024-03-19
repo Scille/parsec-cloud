@@ -9,7 +9,7 @@
             :image="LogoIconGradient"
             class="logo-img"
           />
-          <ms-spinner :title="$t('HomePage.organizationLogin.loading')" />
+          <ms-spinner :title="$msTranslate('HomePage.organizationLogin.loading')" />
         </div>
       </div>
     </ion-content>

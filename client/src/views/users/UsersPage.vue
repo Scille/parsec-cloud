@@ -12,7 +12,7 @@
           <ms-action-bar-button
             :icon="personAdd"
             id="button-invite-user"
-            :button-label="$t('UsersPage.inviteUser')"
+            :button-label="$msTranslate('UsersPage.inviteUser')"
             @click="inviteUser()"
           />
         </div>
@@ -22,7 +22,7 @@
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
-            :button-label="$t('UsersPage.userContextMenu.actionRevoke', users.selectedCount())"
+            :button-label="$msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: users.selectedCount() })"
             @click="revokeSelectedUsers"
           />
         </div>
@@ -30,7 +30,7 @@
           <ms-action-bar-button
             :icon="informationCircle"
             id="button-common-workspaces"
-            :button-label="$t('UsersPage.userContextMenu.actionDetails')"
+            :button-label="$msTranslate('UsersPage.userContextMenu.actionDetails')"
             @click="openSelectedUserDetails"
           />
         </div>
@@ -40,19 +40,21 @@
               class="body"
               v-show="users.selectedCount() === 0"
             >
-              {{ $t('UsersPage.itemCount', { count: getUsersCount() }, getUsersCount()) }}
+              {{ $msTranslate({ key: 'UsersPage.itemCount', data: { count: getUsersCount() }, count: getUsersCount() }) }}
             </ion-text>
             <ion-text
               class="body item-selected"
               v-show="users.selectedCount() > 0"
             >
-              {{ $t('UsersPage.userSelectedCount', { count: users.selectedCount() }, users.selectedCount()) }}
+              {{
+                $msTranslate({ key: 'UsersPage.userSelectedCount', data: { count: users.selectedCount() }, count: users.selectedCount() })
+              }}
             </ion-text>
           </div>
           <!-- prettier-ignore -->
           <user-filter :users="(users as UserCollection)" />
           <ms-sorter
-            :label="$t('UsersPage.sort.byName')"
+            :label="'UsersPage.sort.byName'"
             :options="msSorterOptions"
             :default-option="SortProperty.Profile"
             :sorter-labels="msSorterLabels"
@@ -73,7 +75,7 @@
           <div class="no-active-content">
             <ms-image :image="NoActiveUser" />
             <ion-text>
-              {{ $t('UsersPage.emptyList') }}
+              {{ $msTranslate('UsersPage.emptyList') }}
             </ion-text>
           </div>
         </div>
@@ -135,7 +137,6 @@ import { Routes, getCurrentRouteQuery, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { translate } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
@@ -168,15 +169,15 @@ async function onDisplayStateChange(): Promise<void> {
 }
 
 const msSorterOptions: MsOptions = new MsOptions([
-  { label: translate('UsersPage.sort.byName'), key: SortProperty.Name },
-  { label: translate('UsersPage.sort.byJoined'), key: SortProperty.JoinedDate },
-  { label: translate('UsersPage.sort.byProfile'), key: SortProperty.Profile },
-  { label: translate('UsersPage.sort.byStatus'), key: SortProperty.Status },
+  { label: 'UsersPage.sort.byName', key: SortProperty.Name },
+  { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
+  { label: 'UsersPage.sort.byProfile', key: SortProperty.Profile },
+  { label: 'UsersPage.sort.byStatus', key: SortProperty.Status },
 ]);
 
 const msSorterLabels = {
-  asc: translate('UsersPage.sort.asc'),
-  desc: translate('UsersPage.sort.desc'),
+  asc: 'UsersPage.sort.asc',
+  desc: 'UsersPage.sort.desc',
 };
 
 function onSortChange(event: MsSorterChangeEvent): void {
@@ -187,12 +188,12 @@ function onSortChange(event: MsSorterChangeEvent): void {
 
 async function revokeUser(user: UserInfo): Promise<void> {
   const answer = await askQuestion(
-    translate('UsersPage.revocation.revokeTitle', {}, 1),
-    translate('UsersPage.revocation.revokeQuestion', { user: user.humanHandle.label }, 1),
+    { key: 'UsersPage.revocation.revokeTitle', count: 1 },
+    { key: 'UsersPage.revocation.revokeQuestion', data: { user: user.humanHandle.label }, count: 1 },
     {
       yesIsDangerous: true,
-      yesText: translate('UsersPage.revocation.revokeYes'),
-      noText: translate('UsersPage.revocation.revokeNo'),
+      yesText: 'UsersPage.revocation.revokeYes',
+      noText: 'UsersPage.revocation.revokeNo',
     },
   );
   if (answer === Answer.No) {
@@ -203,7 +204,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeFailed', {}, 1),
+        message: { key: 'UsersPage.revocation.revokeFailed', count: 1 },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -211,7 +212,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSuccess', { user: user.humanHandle.label }, 1),
+        message: { key: 'UsersPage.revocation.revokeSuccess', data: { user: user.humanHandle.label }, count: 1 },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -236,12 +237,12 @@ async function revokeSelectedUsers(): Promise<void> {
   }
 
   const answer = await askQuestion(
-    translate('UsersPage.revocation.revokeTitle', {}, selectedUsers.length),
-    translate('UsersPage.revocation.revokeQuestion', { count: selectedUsers.length }, selectedUsers.length),
+    { key: 'UsersPage.revocation.revokeTitle', count: selectedUsers.length },
+    { key: 'UsersPage.revocation.revokeQuestion', data: { count: selectedUsers.length }, count: selectedUsers.length },
     {
       yesIsDangerous: true,
-      yesText: translate('UsersPage.revocation.revokeYes'),
-      noText: translate('UsersPage.revocation.revokeNo'),
+      yesText: 'UsersPage.revocation.revokeYes',
+      noText: 'UsersPage.revocation.revokeNo',
     },
   );
   if (answer === Answer.No) {
@@ -258,7 +259,11 @@ async function revokeSelectedUsers(): Promise<void> {
   if (errorCount === 0) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSuccess', { count: selectedUsers.length }, selectedUsers.length),
+        message: {
+          key: 'UsersPage.revocation.revokeSuccess',
+          data: { count: selectedUsers.length },
+          count: selectedUsers.length,
+        },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -266,7 +271,7 @@ async function revokeSelectedUsers(): Promise<void> {
   } else if (errorCount < selectedUsers.length) {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeSomeFailed'),
+        message: 'UsersPage.revocation.revokeSomeFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -274,7 +279,7 @@ async function revokeSelectedUsers(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.revocation.revokeFailed', {}, selectedUsers.length),
+        message: { key: 'UsersPage.revocation.revokeFailed', count: selectedUsers.length },
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -348,12 +353,12 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
 
 async function inviteUser(): Promise<void> {
   const email = await getTextInputFromUser({
-    title: translate('UsersPage.CreateUserInvitationModal.pageTitle'),
+    title: 'UsersPage.CreateUserInvitationModal.pageTitle',
     trim: true,
     validator: emailValidator,
-    inputLabel: translate('UsersPage.CreateUserInvitationModal.label'),
-    placeholder: translate('UsersPage.CreateUserInvitationModal.placeholder'),
-    okButtonText: translate('UsersPage.CreateUserInvitationModal.create'),
+    inputLabel: 'UsersPage.CreateUserInvitationModal.label',
+    placeholder: 'UsersPage.CreateUserInvitationModal.placeholder',
+    okButtonText: 'UsersPage.CreateUserInvitationModal.create',
   });
   if (!email) {
     return;
@@ -363,9 +368,12 @@ async function inviteUser(): Promise<void> {
     if (result.value.emailSentStatus === InvitationEmailSentStatus.Success) {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.inviteSuccessMailSent', {
-            email: email,
-          }),
+          message: {
+            key: 'UsersPage.invitation.inviteSuccessMailSent',
+            data: {
+              email: email,
+            },
+          },
           level: InformationLevel.Success,
         }),
         PresentationMode.Toast,
@@ -373,30 +381,36 @@ async function inviteUser(): Promise<void> {
     } else {
       informationManager.present(
         new Information({
-          message: translate('UsersPage.invitation.inviteSuccessNoMail', {
-            email: email,
-          }),
+          message: {
+            key: 'UsersPage.invitation.inviteSuccessNoMail',
+            data: {
+              email: email,
+            },
+          },
           level: InformationLevel.Success,
         }),
         PresentationMode.Toast,
       );
     }
   } else {
-    let message = '';
+    let message;
     switch (result.error.tag) {
       case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = translate('UsersPage.invitation.inviteFailedAlreadyMember');
+        message = 'UsersPage.invitation.inviteFailedAlreadyMember';
         break;
       case ClientNewUserInvitationErrorTag.Offline:
-        message = translate('UsersPage.invitation.inviteFailedOffline');
+        message = 'UsersPage.invitation.inviteFailedOffline';
         break;
       case ClientNewUserInvitationErrorTag.NotAllowed:
-        message = translate('UsersPage.invitation.inviteFailedNotAllowed');
+        message = 'UsersPage.invitation.inviteFailedNotAllowed';
         break;
       default:
-        message = translate('UsersPage.invitation.inviteFailedUnknown', {
-          reason: result.error.tag,
-        });
+        message = {
+          key: 'UsersPage.invitation.inviteFailedUnknown',
+          data: {
+            reason: result.error.tag,
+          },
+        };
         break;
     }
     informationManager.present(
@@ -425,7 +439,7 @@ async function refreshUserList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('UsersPage.listUsersFailed'),
+        message: 'UsersPage.listUsersFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

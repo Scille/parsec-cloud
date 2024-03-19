@@ -17,19 +17,19 @@
           />
         </ion-label>
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-name">
-          {{ $t('FoldersPage.listDisplayTitles.name') }}
+          {{ $msTranslate('FoldersPage.listDisplayTitles.name') }}
         </ion-label>
         <ion-label
           class="folder-list-header__label cell-title ion-text-nowrap label-updatedBy"
           v-show="false"
         >
-          {{ $t('FoldersPage.listDisplayTitles.updatedBy') }}
+          {{ $msTranslate('FoldersPage.listDisplayTitles.updatedBy') }}
         </ion-label>
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-lastUpdate">
-          {{ $t('FoldersPage.listDisplayTitles.lastUpdate') }}
+          {{ $msTranslate('FoldersPage.listDisplayTitles.lastUpdate') }}
         </ion-label>
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-size">
-          {{ $t('FoldersPage.listDisplayTitles.size') }}
+          {{ $msTranslate('FoldersPage.listDisplayTitles.size') }}
         </ion-label>
         <ion-label class="folder-list-header__label cell-title ion-text-nowrap label-space" />
       </ion-list-header>

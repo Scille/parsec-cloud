@@ -2,7 +2,7 @@
 
 <template>
   <ms-modal
-    :title="$t('SettingsPage.pageTitle')"
+    :title="$msTranslate('SettingsPage.pageTitle')"
     :close-button="{ visible: true }"
   >
     <settings-view />

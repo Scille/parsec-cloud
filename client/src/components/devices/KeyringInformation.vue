@@ -3,7 +3,7 @@
 <template>
   <div class="keyring-info">
     <ms-report-text :theme="MsReportTheme.Info">
-      {{ translate('Authentication.keyringInfo') }}
+      {{ $msTranslate('Authentication.keyringInfo') }}
     </ms-report-text>
   </div>
 </template>
@@ -11,7 +11,6 @@
 <script setup lang="ts">
 import { MsReportText } from '@/components/core/ms-text';
 import { MsReportTheme } from '@/components/core/ms-types';
-import { translate } from '@/services/translation';
 </script>
 
 <style scoped lang="scss">

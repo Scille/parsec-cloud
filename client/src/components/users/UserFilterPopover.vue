@@ -12,7 +12,7 @@
           class="body-sm list-group-title"
           id="filter-title-status"
         >
-          {{ $t('UsersPage.filter.status') }}
+          {{ $msTranslate('UsersPage.filter.status') }}
         </ion-text>
         <ion-item
           class="list-group-item ion-no-padding"
@@ -44,13 +44,13 @@
           class="body-sm list-group-title"
           id="filter-title-role"
         >
-          {{ $t('UsersPage.filter.role') }}
+          {{ $msTranslate('UsersPage.filter.role') }}
         </ion-text>
         <ion-item
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <span class="body">{{ $t('UsersPage.filter.admin') }}</span>
+          <span class="body">{{ $msTranslate('UsersPage.filter.admin') }}</span>
           <ion-checkbox
             aria-label=""
             class="checkbox"
@@ -62,7 +62,7 @@
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <span class="body">{{ $t('UsersPage.filter.standard') }}</span>
+          <span class="body">{{ $msTranslate('UsersPage.filter.standard') }}</span>
           <ion-checkbox
             aria-label=""
             class="checkbox"
@@ -74,7 +74,7 @@
           class="list-group-item ion-no-padding"
           id="filter-check-outsider"
         >
-          <span class="body">{{ $t('UsersPage.filter.outsider') }}</span>
+          <span class="body">{{ $msTranslate('UsersPage.filter.outsider') }}</span>
           <ion-checkbox
             aria-label=""
             class="checkbox"
@@ -89,8 +89,8 @@
 </template>
 
 <script setup lang="ts">
-import { UserCollection } from '@/components/users/types';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
+import { UserCollection } from '@/components/users/types';
 import { IonCheckbox, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
 
 defineProps<{

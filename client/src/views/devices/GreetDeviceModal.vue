@@ -8,7 +8,7 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetDeviceStep.WaitForGuest && pageStep < GreetDeviceStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[$t('DevicesPage.greet.steps.hostCode'), $t('DevicesPage.greet.steps.guestCode')]"
+      :titles="[$msTranslate('DevicesPage.greet.steps.hostCode'), $msTranslate('DevicesPage.greet.steps.guestCode')]"
     />
     <ion-buttons
       slot="end"
@@ -29,13 +29,13 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitleAndSubtitle().title }}
+          {{ $msTranslate(getTitleAndSubtitle().title) }}
         </ion-title>
         <ion-text
           class="modal-header__text body"
           v-show="getTitleAndSubtitle().subtitle"
         >
-          {{ getTitleAndSubtitle().subtitle }}
+          {{ $msTranslate(getTitleAndSubtitle().subtitle) }}
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
@@ -45,19 +45,19 @@
           class="first-step"
         >
           <ms-informative-text>
-            {{ $t('DevicesPage.greet.subtitles.waitForGuest') }}
+            {{ $msTranslate('DevicesPage.greet.subtitles.waitForGuest') }}
           </ms-informative-text>
           <div class="first-step-content">
             <!-- title -->
             <ion-text class="content-title">
               <span class="content-title__blue">
-                {{ $t('DevicesPage.greet.subtitles.scanOrShare1') }}
+                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare1') }}
               </span>
               <span class="content-title__grey">
-                {{ $t('DevicesPage.greet.subtitles.scanOrShare2') }}
+                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare2') }}
               </span>
               <span class="content-title__blue">
-                {{ $t('DevicesPage.greet.subtitles.scanOrShare3') }}
+                {{ $msTranslate('DevicesPage.greet.subtitles.scanOrShare3') }}
               </span>
             </ion-text>
             <!-- qr code, link and button -->
@@ -82,7 +82,7 @@
               </figure>
               <div class="divider">
                 <ion-text class="title-h4">
-                  {{ $t('FoldersPage.importModal.or') }}
+                  {{ $msTranslate('FoldersPage.importModal.or') }}
                 </ion-text>
               </div>
               <!-- right element: invite link, copy button, email button -->
@@ -99,7 +99,7 @@
                       v-else
                       class="card-content__text body copied"
                     >
-                      {{ $t('DevicesPage.greet.subtitles.copiedToClipboard') }}
+                      {{ $msTranslate('DevicesPage.greet.subtitles.copiedToClipboard') }}
                     </ion-text>
                     <ion-button
                       fill="clear"
@@ -128,20 +128,20 @@
                     :disabled="elapsedCount > 0"
                   >
                     <span v-show="!isEmailSent">
-                      {{ $t('DevicesPage.greet.actions.sendEmail') }}
+                      {{ $msTranslate('DevicesPage.greet.actions.sendEmail') }}
                     </span>
                     <span v-show="isEmailSent && elapsedCount === 0">
-                      {{ $t('DevicesPage.greet.actions.reSendEmail') }}
+                      {{ $msTranslate('DevicesPage.greet.actions.reSendEmail') }}
                     </span>
                     <span v-show="elapsedCount > 0">
-                      {{ $t('DevicesPage.greet.actions.waitBeforeResending', { seconds: elapsedCount }) }}
+                      {{ $msTranslate({ key: 'DevicesPage.greet.actions.waitBeforeResending', data: { seconds: elapsedCount } }) }}
                     </span>
                   </ion-button>
                   <ion-text
                     v-if="elapsedCount > 0"
                     class="small-text subtitles-sm"
                   >
-                    {{ $t('DevicesPage.greet.emailSent') }}
+                    {{ $msTranslate('DevicesPage.greet.emailSent') }}
                     <ion-icon
                       class="email-button__icon"
                       :icon="checkmarkCircle"
@@ -178,7 +178,7 @@
           class="step"
         >
           <ms-informative-text>
-            {{ $t('DevicesPage.greet.subtitles.getDeviceInfo') }}
+            {{ $msTranslate('DevicesPage.greet.subtitles.getDeviceInfo') }}
           </ms-informative-text>
         </div>
 
@@ -207,7 +207,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $msTranslate(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -235,7 +235,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import {
   IonButton,
   IonButtons,
@@ -278,27 +278,30 @@ const cancelled = ref(false);
 
 interface GreetDeviceTitle {
   title: string;
-  subtitle?: string;
+  subtitle?: Translatable;
 }
 
 function getTitleAndSubtitle(): GreetDeviceTitle {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return { title: translate('DevicesPage.greet.titles.waitForGuest') };
+    return { title: 'DevicesPage.greet.titles.waitForGuest' };
   } else if (pageStep.value === GreetDeviceStep.ProvideHostSasCode) {
     return {
-      title: translate('DevicesPage.greet.titles.provideHostCode'),
-      subtitle: translate('DevicesPage.greet.subtitles.provideHostCode'),
+      title: 'DevicesPage.greet.titles.provideHostCode',
+      subtitle: 'DevicesPage.greet.subtitles.provideHostCode',
     };
   } else if (pageStep.value === GreetDeviceStep.GetGuestSasCode) {
-    return { title: translate('DevicesPage.greet.titles.getGuestCode'), subtitle: translate('DevicesPage.greet.subtitles.getGuestCode') };
+    return { title: 'DevicesPage.greet.titles.getGuestCode', subtitle: 'DevicesPage.greet.subtitles.getGuestCode' };
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
-    return { title: translate('DevicesPage.greet.titles.deviceDetails') };
+    return { title: 'DevicesPage.greet.titles.deviceDetails' };
   } else if (pageStep.value === GreetDeviceStep.Summary) {
     return {
-      title: translate('DevicesPage.greet.titles.summary'),
-      subtitle: translate('DevicesPage.greet.subtitles.summary', {
-        label: greeter.value.requestedDeviceLabel,
-      }),
+      title: 'DevicesPage.greet.titles.summary',
+      subtitle: {
+        key: 'DevicesPage.greet.subtitles.summary',
+        data: {
+          label: greeter.value.requestedDeviceLabel,
+        },
+      },
     };
   }
   return { title: '' };
@@ -314,16 +317,16 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return translate('DevicesPage.greet.actions.start');
+    return 'DevicesPage.greet.actions.start';
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return translate('DevicesPage.greet.actions.finish');
+    return 'DevicesPage.greet.actions.finish';
   }
   return '';
 }
 
 async function selectGuestSas(code: string | null): Promise<void> {
   if (!code) {
-    await showErrorAndRestart(translate('DevicesPage.greet.errors.noneCodeSelected'));
+    await showErrorAndRestart('DevicesPage.greet.errors.noneCodeSelected');
     return;
   }
   if (code === greeter.value.correctSASCode) {
@@ -331,10 +334,10 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
     }
   } else {
-    await showErrorAndRestart(translate('DevicesPage.greet.errors.invalidCodeSelected'));
+    await showErrorAndRestart('DevicesPage.greet.errors.invalidCodeSelected');
   }
 }
 
@@ -350,7 +353,7 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     props.informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.startFailed'),
+        message: 'DevicesPage.greet.errors.startFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -362,7 +365,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok && !cancelled.value) {
     props.informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.startFailed'),
+        message: 'DevicesPage.greet.errors.startFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -406,16 +409,12 @@ async function cancelModal(): Promise<boolean> {
     await greeter.value.abort();
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(
-    translate('DevicesPage.greet.titles.cancelGreet'),
-    translate('DevicesPage.greet.subtitles.cancelGreet'),
-    {
-      keepMainModalHiddenOnYes: true,
-      yesIsDangerous: true,
-      yesText: translate('DevicesPage.greet.actions.cancelGreet.yes'),
-      noText: translate('DevicesPage.greet.actions.cancelGreet.no'),
-    },
-  );
+  const answer = await askQuestion('DevicesPage.greet.titles.cancelGreet', 'DevicesPage.greet.subtitles.cancelGreet', {
+    keepMainModalHiddenOnYes: true,
+    yesIsDangerous: true,
+    yesText: 'DevicesPage.greet.actions.cancelGreet.yes',
+    noText: 'DevicesPage.greet.actions.cancelGreet.no',
+  });
 
   if (answer === Answer.Yes) {
     await greeter.value.abort();
@@ -424,7 +423,7 @@ async function cancelModal(): Promise<boolean> {
   return false;
 }
 
-async function showErrorAndRestart(message: string): Promise<void> {
+async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(
     new Information({
       message: message,
@@ -443,7 +442,7 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetDeviceStep.Summary) {
     props.informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.success'),
+        message: 'DevicesPage.greet.success',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -463,7 +462,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('DevicesPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -472,12 +471,12 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       const createResult = await greeter.value.createDevice();
       if (!createResult.ok) {
-        await showErrorAndRestart(translate('DevicesPage.greet.errors.createDeviceFailed'));
+        await showErrorAndRestart('DevicesPage.greet.errors.createDeviceFailed');
         return;
       }
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed'));
+      await showErrorAndRestart('DevicesPage.greet.errors.retrieveDeviceInfoFailed');
     }
   }
 }
@@ -490,7 +489,7 @@ async function copyLink(): Promise<void> {
   }, 5000);
   props.informationManager.present(
     new Information({
-      message: translate('DevicesPage.greet.linkCopiedToClipboard'),
+      message: 'DevicesPage.greet.linkCopiedToClipboard',
       level: InformationLevel.Info,
     }),
     PresentationMode.Toast,
@@ -512,7 +511,7 @@ async function sendEmail(): Promise<void> {
   } else {
     props.informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.emailFailed'),
+        message: 'DevicesPage.greet.errors.emailFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

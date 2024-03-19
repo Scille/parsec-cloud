@@ -9,7 +9,7 @@
       >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.titleOffline') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleOffline') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -19,7 +19,7 @@
         >
           <ion-icon :icon="cloudy" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionOffline') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOffline') }}
           </ion-label>
         </ion-item>
       </ion-item-group>
@@ -30,7 +30,7 @@
       >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.titleManage') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleManage') }}
           </ion-label>
         </ion-item>
 
@@ -42,7 +42,7 @@
         >
           <ion-icon :icon="pencil" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionRename') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionRename') }}
           </ion-label>
         </ion-item>
 
@@ -54,7 +54,7 @@
         >
           <ion-icon :icon="open" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionOpenInExplorer') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionOpenInExplorer') }}
           </ion-label>
         </ion-item>
 
@@ -66,7 +66,7 @@
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionHistory') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionHistory') }}
           </ion-label>
         </ion-item>
 
@@ -78,14 +78,14 @@
         >
           <ion-icon :icon="informationCircle" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionDetails') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionDetails') }}
           </ion-label>
         </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.titleCollaboration') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleCollaboration') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -95,7 +95,7 @@
         >
           <ion-icon :icon="link" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionCopyLink') }}
           </ion-label>
         </ion-item>
 
@@ -107,7 +107,7 @@
         >
           <ion-icon :icon="shareSocial" />
           <ion-label class="body list-group-item__label">
-            {{ $t('WorkspacesPage.workspaceContextMenu.actionShare') }}
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.actionShare') }}
           </ion-label>
         </ion-item>
       </ion-item-group>

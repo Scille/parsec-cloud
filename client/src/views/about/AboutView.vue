@@ -9,9 +9,9 @@
       class="update-container body"
     >
       <ion-text class="update-container__text title-h5">
-        {{ $t('app.name') }} v.{{ APP_VERSION }}
+        {{ $msTranslate('app.name') }} v.{{ APP_VERSION }}
         <span class="body-sm">
-          {{ $t('AboutPage.update.notUpToDate') }}
+          {{ $msTranslate('AboutPage.update.notUpToDate') }}
         </span>
       </ion-text>
 
@@ -19,7 +19,7 @@
         @click="update"
         class="update-container__btn"
       >
-        {{ $t('AboutPage.update.update') }}
+        {{ $msTranslate('AboutPage.update.update') }}
       </ion-button>
     </div>
 
@@ -27,16 +27,16 @@
       <!-- version -->
       <ion-item class="body info-list__item">
         <ion-label class="app-info-key">
-          {{ $t('AboutPage.appInfo.version') }}
+          {{ $msTranslate('AboutPage.appInfo.version') }}
         </ion-label>
         <div class="text-btn">
           <ion-text class="app-info-value"> v{{ APP_VERSION }} </ion-text>
           <ion-button
             class="changelog-btn button-outline"
             target="_blank"
-            :href="$t('app.history')"
+            :href="$msTranslate('app.history')"
           >
-            {{ $t('AboutPage.update.showChangelog') }}
+            {{ $msTranslate('AboutPage.update.showChangelog') }}
           </ion-button>
         </div>
       </ion-item>
@@ -44,15 +44,15 @@
       <!-- developper -->
       <ion-item class="body info-list__item">
         <ion-label class="app-info-key">
-          {{ $t('AboutPage.appInfo.developer') }}
+          {{ $msTranslate('AboutPage.appInfo.developer') }}
         </ion-label>
         <ion-text class="app-info-value">
           <a
-            :href="$t('app.developerLink')"
+            :href="$msTranslate('app.developerLink')"
             target="_blank"
             class="link"
           >
-            <span>{{ $t('app.developer') }}</span>
+            <span>{{ $msTranslate('app.developer') }}</span>
           </a>
         </ion-text>
       </ion-item>
@@ -60,15 +60,15 @@
       <!-- license -->
       <ion-item class="body info-list__item">
         <ion-label class="app-info-key">
-          {{ $t('AboutPage.appInfo.license') }}
+          {{ $msTranslate('AboutPage.appInfo.license') }}
         </ion-label>
         <ion-text class="app-info-value">
           <a
-            :href="$t('app.licenseLink')"
+            :href="$msTranslate('app.licenseLink')"
             target="_blank"
             class="link"
           >
-            {{ $t('app.license') }}
+            {{ $msTranslate('app.license') }}
           </a>
         </ion-text>
       </ion-item>
@@ -76,12 +76,12 @@
       <!-- github -->
       <ion-item class="body info-list__item">
         <ion-label class="app-info-key">
-          {{ $t('AboutPage.appInfo.project') }}
+          {{ $msTranslate('AboutPage.appInfo.project') }}
         </ion-label>
         <ion-text class="app-info-value">
           <a
             target="_blank"
-            :href="$t('app.projectSources')"
+            :href="$msTranslate('app.projectSources')"
             class="link"
           >
             <ion-icon :icon="logoGithub" />

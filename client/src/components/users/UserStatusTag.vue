@@ -6,7 +6,7 @@
       class="button-small tag-status"
       :class="{ revoked: revoked, active: !revoked }"
     >
-      {{ revoked ? $t('UsersPage.status.revoked') : $t('UsersPage.status.active') }}
+      {{ revoked ? $msTranslate('UsersPage.status.revoked') : $msTranslate('UsersPage.status.active') }}
     </ion-chip>
   </ion-label>
 </template>

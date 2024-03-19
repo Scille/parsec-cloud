@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { UserProfile, WorkspaceRole } from '@/parsec';
-import { translate } from '@/services/translation';
+import { msTranslate } from '@/services/translation';
 
 interface RoleUpdateAuthorization {
   authorized: boolean;
@@ -17,31 +17,31 @@ export function canChangeRole(
 ): RoleUpdateAuthorization {
   // Outsiders cannot do anything
   if (clientProfile === UserProfile.Outsider) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.outsiderProfile') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.outsiderProfile') };
   }
   // Outsiders cannot be set to Managers or Owners
   if (userProfile === UserProfile.Outsider && (targetRole === WorkspaceRole.Manager || targetRole === WorkspaceRole.Owner)) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.outsiderLimitedRole') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.outsiderLimitedRole') };
   }
   // Contributors or Readers cannot update roles
   if (clientRole === null || clientRole === WorkspaceRole.Contributor || clientRole === WorkspaceRole.Reader) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.insufficientRole') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.insufficientRole') };
   }
   // Cannot change role of an Owner
   if (userRole === WorkspaceRole.Owner) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.ownerImmunity') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.ownerImmunity') };
   }
   // Managers cannot update the role of other Managers
   if (clientRole === WorkspaceRole.Manager && userRole === WorkspaceRole.Manager) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.managerCannotUpdateManagers') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.managerCannotUpdateManagers') };
   }
   // Managers cannot promote to Managers
   if (clientRole === WorkspaceRole.Manager && targetRole === WorkspaceRole.Manager) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.managerCannotPromoteToManager') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.managerCannotPromoteToManager') };
   }
   // Managers cannot promote to Owners
   if (clientRole === WorkspaceRole.Manager && targetRole === WorkspaceRole.Owner) {
-    return { authorized: false, reason: translate('workspaceRoles.updateRejectedReasons.managerCannotPromoteToOwner') };
+    return { authorized: false, reason: msTranslate('workspaceRoles.updateRejectedReasons.managerCannotPromoteToOwner') };
   }
 
   return { authorized: true };

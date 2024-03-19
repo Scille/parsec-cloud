@@ -43,7 +43,7 @@ import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { initTranslations } from '@/services/translation';
+import { TranslationPlugin, initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
 import { Base64 } from '@/common/base64';
@@ -57,8 +57,6 @@ async function setupApp(): Promise<void> {
 
   const i18n = initTranslations(config.locale);
 
-  const { t } = i18n.global;
-
   const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
@@ -71,7 +69,7 @@ async function setupApp(): Promise<void> {
       rippleEffect: false,
     })
     .use(router)
-    .use(i18n)
+    .use(TranslationPlugin)
     .use(Vue3Lottie);
 
   app.provide(StorageManagerKey, storageManager);
@@ -155,9 +153,9 @@ async function setupApp(): Promise<void> {
 
   if (isElectron()) {
     window.electronAPI.receive('close-request', async () => {
-      const answer = await askQuestion(t('quit.title'), t('quit.subtitle'), {
-        yesText: t('quit.yes'),
-        noText: t('quit.no'),
+      const answer = await askQuestion('quit.title', 'quit.subtitle', {
+        yesText: 'quit.yes',
+        noText: 'quit.no',
       });
       if (answer === Answer.Yes) {
         const devices = await getLoggedInDevices();
@@ -172,7 +170,7 @@ async function setupApp(): Promise<void> {
       if (await modalController.getTop()) {
         informationManager.present(
           new Information({
-            message: t('link.appIsBusy'),
+            message: 'link.appIsBusy',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -182,11 +180,11 @@ async function setupApp(): Promise<void> {
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
       } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-        await handleFileLink(link, informationManager, t);
+        await handleFileLink(link, informationManager);
       } else {
         await informationManager.present(
           new Information({
-            message: t('link.invalid'),
+            message: 'link.invalid',
             level: InformationLevel.Error,
           }),
           PresentationMode.Modal,
@@ -196,7 +194,7 @@ async function setupApp(): Promise<void> {
     window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
       informationManager.present(
         new Information({
-          message: t('globalErrors.openFileFailed', { path: path }),
+          message: { key: 'globalErrors.openFileFailed', data: { path: path } },
           level: InformationLevel.Error,
         }),
         PresentationMode.Toast,
@@ -223,12 +221,12 @@ async function handleJoinLink(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
-async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
+async function handleFileLink(link: string, informationManager: InformationManager): Promise<void> {
   const result = await parseFileLink(link);
   if (!result.ok) {
     informationManager.present(
       new Information({
-        message: t('link.invalidFileLink'),
+        message: 'link.invalidFileLink',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -262,7 +260,7 @@ async function handleFileLink(link: string, informationManager: InformationManag
     if (!matchingDevice) {
       await informationManager.present(
         new Information({
-          message: t('link.orgNotFound', { organization: linkData.organizationId }),
+          message: { key: 'link.orgNotFound', data: { organization: linkData.organizationId } },
           level: InformationLevel.Error,
         }),
         PresentationMode.Modal,

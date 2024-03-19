@@ -5,7 +5,11 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[$t('UsersPage.greet.steps.hostCode'), $t('UsersPage.greet.steps.guestCode'), $t('UsersPage.greet.steps.contactDetails')]"
+      :titles="[
+        $msTranslate('UsersPage.greet.steps.hostCode'),
+        $msTranslate('UsersPage.greet.steps.guestCode'),
+        $msTranslate('UsersPage.greet.steps.contactDetails'),
+      ]"
     />
     <ion-buttons
       slot="end"
@@ -26,10 +30,10 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitleAndSubtitle()[0] }}
+          {{ $msTranslate(getTitleAndSubtitle()[0]) }}
         </ion-title>
         <ion-text class="modal-header__text body">
-          {{ getTitleAndSubtitle()[1] }}
+          {{ $msTranslate(getTitleAndSubtitle()[1]) }}
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
@@ -39,10 +43,10 @@
           class="step"
         >
           <ms-informative-text>
-            {{ $t('UsersPage.greet.subtitles.waitForGuest1') }}
+            {{ $msTranslate('UsersPage.greet.subtitles.waitForGuest1') }}
           </ms-informative-text>
           <ms-informative-text>
-            {{ $t('UsersPage.greet.subtitles.waitForGuest2') }}
+            {{ $msTranslate('UsersPage.greet.subtitles.waitForGuest2') }}
           </ms-informative-text>
         </div>
 
@@ -71,7 +75,7 @@
           class="step"
         >
           <ms-informative-text>
-            {{ $t('UsersPage.greet.subtitles.getUserInfo') }}
+            {{ $msTranslate('UsersPage.greet.subtitles.getUserInfo') }}
           </ms-informative-text>
         </div>
 
@@ -90,8 +94,8 @@
           />
           <ms-dropdown
             class="dropdown"
-            :title="$t('UsersPage.greet.profileDropdownTitle')"
-            :label="$t('UsersPage.greet.profileDropdownPlaceholder')"
+            :title="$msTranslate('UsersPage.greet.profileDropdownTitle')"
+            :label="$msTranslate('UsersPage.greet.profileDropdownPlaceholder')"
             :options="profileOptions"
             @change="setUserProfile($event.option.key)"
           />
@@ -110,11 +114,11 @@
           />
           <div class="user-info">
             <div class="user-info__email">
-              <ion-text class="body">{{ $t('UsersPage.success.email') }}</ion-text>
+              <ion-text class="body">{{ $msTranslate('UsersPage.success.email') }}</ion-text>
               <ion-text class="cell">{{ guestInfoPage.email }}</ion-text>
             </div>
             <div class="user-info__role">
-              <ion-text class="body">{{ $t('UsersPage.success.profile') }}</ion-text>
+              <ion-text class="body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
               <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
             </div>
           </div>
@@ -134,7 +138,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $msTranslate(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -177,7 +181,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import { close } from 'ionicons/icons';
 import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -205,34 +209,34 @@ const greeter = ref(new UserGreet());
 const profileOptions: MsOptions = new MsOptions([
   {
     key: UserProfile.Admin,
-    label: translate('UsersPage.profile.admin.label'),
-    description: translate('UsersPage.profile.admin.description'),
+    label: 'UsersPage.profile.admin.label',
+    description: 'UsersPage.profile.admin.description',
   },
   {
     key: UserProfile.Standard,
-    label: translate('UsersPage.profile.standard.label'),
-    description: translate('UsersPage.profile.standard.description'),
+    label: 'UsersPage.profile.standard.label',
+    description: 'UsersPage.profile.standard.description',
   },
   {
     key: UserProfile.Outsider,
-    label: translate('UsersPage.profile.outsider.label'),
-    description: translate('UsersPage.profile.outsider.description'),
+    label: 'UsersPage.profile.outsider.label',
+    description: 'UsersPage.profile.outsider.description',
   },
 ]);
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return [translate('UsersPage.greet.titles.waitForGuest'), ''];
+    return ['UsersPage.greet.titles.waitForGuest', ''];
   } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
-    return [translate('UsersPage.greet.titles.provideHostCode'), translate('UsersPage.greet.subtitles.provideHostCode')];
+    return ['UsersPage.greet.titles.provideHostCode', 'UsersPage.greet.subtitles.provideHostCode'];
   } else if (pageStep.value === GreetUserStep.GetGuestSasCode) {
-    return [translate('UsersPage.greet.titles.getGuestCode'), translate('UsersPage.greet.subtitles.getGuestCode')];
+    return ['UsersPage.greet.titles.getGuestCode', 'UsersPage.greet.subtitles.getGuestCode'];
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
-    return [translate('UsersPage.greet.titles.contactDetails'), ''];
+    return ['UsersPage.greet.titles.contactDetails', ''];
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return [translate('UsersPage.greet.titles.contactDetails'), translate('UsersPage.greet.subtitles.checkUserInfo')];
+    return ['UsersPage.greet.titles.contactDetails', 'UsersPage.greet.subtitles.checkUserInfo'];
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return [translate('UsersPage.greet.titles.summary'), ''];
+    return ['UsersPage.greet.titles.summary', ''];
   }
   return ['', ''];
 }
@@ -257,18 +261,18 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return translate('UsersPage.greet.actions.start');
+    return 'UsersPage.greet.actions.start';
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return translate('UsersPage.greet.actions.finish');
+    return 'UsersPage.greet.actions.finish';
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return translate('UsersPage.greet.actions.approve');
+    return 'UsersPage.greet.actions.approve';
   }
   return '';
 }
 
 async function selectGuestSas(code: string | null): Promise<void> {
   if (!code) {
-    await showErrorAndRestart(translate('UsersPage.greet.errors.noneCodeSelected'));
+    await showErrorAndRestart('UsersPage.greet.errors.noneCodeSelected');
     return;
   }
   if (code === greeter.value.correctSASCode) {
@@ -276,10 +280,10 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
     }
   } else {
-    await showErrorAndRestart(translate('UsersPage.greet.errors.invalidCodeSelected'));
+    await showErrorAndRestart('UsersPage.greet.errors.invalidCodeSelected');
   }
 }
 
@@ -295,7 +299,7 @@ async function startProcess(): Promise<void> {
   if (!result.ok) {
     props.informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.errors.startFailed'),
+        message: 'UsersPage.greet.errors.startFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -307,7 +311,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     props.informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.errors.startFailed'),
+        message: 'UsersPage.greet.errors.startFailed',
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -346,11 +350,11 @@ async function cancelModal(): Promise<boolean> {
   if (pageStep.value === GreetUserStep.Summary || pageStep.value === GreetUserStep.WaitForGuest) {
     return await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  const answer = await askQuestion(translate('UsersPage.greet.cancelConfirm'), translate('UsersPage.greet.cancelConfirmSubtitle'), {
+  const answer = await askQuestion('UsersPage.greet.cancelConfirm', 'UsersPage.greet.cancelConfirmSubtitle', {
     yesIsDangerous: true,
     keepMainModalHiddenOnYes: true,
-    yesText: translate('UsersPage.greet.cancelYes'),
-    noText: translate('UsersPage.greet.cancelNo'),
+    yesText: 'UsersPage.greet.cancelYes',
+    noText: 'UsersPage.greet.cancelNo',
   });
 
   if (answer === Answer.Yes) {
@@ -360,7 +364,7 @@ async function cancelModal(): Promise<boolean> {
   return false;
 }
 
-async function showErrorAndRestart(message: string): Promise<void> {
+async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(
     new Information({
       message: message,
@@ -379,9 +383,12 @@ async function nextStep(): Promise<void> {
   if (pageStep.value === GreetUserStep.Summary) {
     props.informationManager.present(
       new Information({
-        message: translate('UsersPage.greet.success', {
-          user: guestInfoPage.value.fullName,
-        }),
+        message: {
+          key: 'UsersPage.greet.success',
+          data: {
+            user: guestInfoPage.value.fullName,
+          },
+        },
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -396,7 +403,7 @@ async function nextStep(): Promise<void> {
       profile.value,
     );
     if (!result.ok) {
-      await showErrorAndRestart(translate('UsersPage.greet.errors.createUserFailed'));
+      await showErrorAndRestart('UsersPage.greet.errors.createUserFailed');
       return;
     }
   }
@@ -412,7 +419,7 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('UsersPage.greet.errors.unexpected', { reason: result.error.tag }));
+      await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
@@ -423,7 +430,7 @@ async function nextStep(): Promise<void> {
       guestInfoPage.value.email = greeter.value.requestedHumanHandle?.email;
       await nextStep();
     } else {
-      await showErrorAndRestart(translate('UsersPage.greet.errors.retrieveUserInfoFailed'));
+      await showErrorAndRestart('UsersPage.greet.errors.retrieveUserInfoFailed');
     }
   }
 }

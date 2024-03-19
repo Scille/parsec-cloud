@@ -3,7 +3,7 @@
 <template>
   <ion-list class="choose-server-page">
     <ion-text class="body choose-server-page__label">
-      {{ $t('CreateOrganization.serverDescription') }}
+      {{ $msTranslate('CreateOrganization.serverDescription') }}
     </ion-text>
     <ion-radio-group
       v-model="mode"
@@ -18,26 +18,26 @@
         @click="$event.preventDefault()"
       >
         <ion-text class="body-lg item-radio__label">
-          {{ $t('CreateOrganization.useParsecServer') }}
+          {{ $msTranslate('CreateOrganization.useParsecServer') }}
         </ion-text>
         <ion-text class="body-sm item-radio__text ion-text-wrap">
-          {{ $t('CreateOrganization.acceptTOS.label') }}
+          {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
           <a
             class="link"
             target="_blank"
             @click="$event.stopPropagation()"
-            :href="$t('CreateOrganization.acceptTOS.tosLink')"
+            :href="$msTranslate('CreateOrganization.acceptTOS.tosLink')"
           >
-            {{ $t('CreateOrganization.acceptTOS.tos') }}
+            {{ $msTranslate('CreateOrganization.acceptTOS.tos') }}
           </a>
-          {{ $t('CreateOrganization.acceptTOS.and') }}
+          {{ $msTranslate('CreateOrganization.acceptTOS.and') }}
           <a
             class="link"
             target="_blank"
             @click="$event.stopPropagation()"
-            :href="$t('CreateOrganization.acceptTOS.privacyPolicyLink')"
+            :href="$msTranslate('CreateOrganization.acceptTOS.privacyPolicyLink')"
           >
-            {{ $t('CreateOrganization.acceptTOS.privacyPolicy') }}
+            {{ $msTranslate('CreateOrganization.acceptTOS.privacyPolicy') }}
           </a>
         </ion-text>
       </ion-radio>
@@ -48,13 +48,13 @@
         :value="ServerMode.Custom"
       >
         <ion-text class="body-lg item-radio__label">
-          {{ $t('CreateOrganization.useMyOwnServer') }}
+          {{ $msTranslate('CreateOrganization.useMyOwnServer') }}
         </ion-text>
       </ion-radio>
     </ion-radio-group>
     <ms-input
       class="item-radio__input"
-      :placeholder="$t('CreateOrganization.parsecServerUrl')"
+      :placeholder="$msTranslate('CreateOrganization.parsecServerUrl')"
       v-model="serverAddr"
       name="serverUrl"
       v-show="mode === ServerMode.Custom"

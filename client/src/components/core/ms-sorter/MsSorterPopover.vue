@@ -9,7 +9,7 @@
       button
       @click="onOptionClick()"
     >
-      {{ sortByAsc ? sorterLabels.asc : sorterLabels.desc }}
+      {{ sortByAsc ? $msTranslate(sorterLabels.asc) : $msTranslate(sorterLabels.desc) }}
       <ion-icon
         :icon="sortByAsc ? arrowUp : arrowDown"
         slot="end"
@@ -20,7 +20,7 @@
       id="sort-item-list"
     >
       <ion-label class="sorter-list__title body-sm">
-        {{ $t('common.sortBy') }}
+        {{ $msTranslate('common.sortBy') }}
       </ion-label>
       <ion-item
         class="sorter-list-item body"
@@ -32,7 +32,7 @@
         :key="option.key"
         @click="onOptionClick(option)"
       >
-        <span class="body">{{ option.label }}</span>
+        <span class="body">{{ $msTranslate(option.label) }}</span>
         <ion-icon
           slot="end"
           :icon="checkmark"

@@ -6,7 +6,7 @@
       class="organization-title title-h1"
       v-if="deviceList.length > 0"
     >
-      {{ $t('HomePage.organizationList.title') }}
+      {{ $msTranslate('HomePage.organizationList.title') }}
     </ion-text>
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
@@ -14,9 +14,9 @@
         <div class="create-orga">
           <div class="create-orga-text">
             <ion-card-title class="create-orga-text__title title-h3">
-              {{ $t('HomePage.noDevices.titleCreateOrga') }}
+              {{ $msTranslate('HomePage.noDevices.titleCreateOrga') }}
             </ion-card-title>
-            <ion-text class="create-orga-text__subtitle body">{{ $t('HomePage.noDevices.subtitle') }}</ion-text>
+            <ion-text class="create-orga-text__subtitle body">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
             <ion-button
               @click="$emit('createOrganizationClick')"
               size="default"
@@ -27,7 +27,7 @@
                 :icon="addCircle"
                 class="icon"
               />
-              {{ $t('HomePage.noExistingOrganization.createOrganization') }}
+              {{ $msTranslate('HomePage.noExistingOrganization.createOrganization') }}
             </ion-button>
           </div>
           <ms-image
@@ -37,12 +37,12 @@
         </div>
         <div class="invitation">
           <ion-title class="invitation__title title-h4">
-            {{ $t('HomePage.noDevices.titleInvitation') }}
+            {{ $msTranslate('HomePage.noDevices.titleInvitation') }}
           </ion-title>
           <div class="invitation-link">
             <ms-input
-              :label="$t('HomePage.noDevices.invitationLink')"
-              :placeholder="$t('JoinOrganization.linkFormPlaceholder')"
+              :label="$msTranslate('HomePage.noDevices.invitationLink')"
+              :placeholder="$msTranslate('JoinOrganization.linkFormPlaceholder')"
               v-model="link"
               @on-enter-keyup="$emit('joinOrganizationWithLinkClick', link)"
               :validator="claimLinkValidator"
@@ -56,7 +56,7 @@
               id="join-organization-button"
               :disabled="!linkRef || linkRef.validity !== Validity.Valid"
             >
-              {{ $t('HomePage.noDevices.invitationJoin') }}
+              {{ $msTranslate('HomePage.noDevices.invitationJoin') }}
             </ion-button>
           </div>
         </div>
@@ -68,7 +68,7 @@
         <ion-card-title class="organization-filter">
           <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
-            :placeholder="$t('HomePage.organizationList.search')"
+            :placeholder="$msTranslate('HomePage.organizationList.search')"
             v-model="searchQuery"
             id="ms-search-input"
             ref="searchInputRef"
@@ -76,7 +76,7 @@
           <ms-sorter
             v-show="deviceList.length > 1"
             id="organization-filter-select"
-            label="t('HomePage.organizationList.labelSortBy')"
+            :label="'HomePage.organizationList.labelSortBy'"
             :options="msSorterOptions"
             default-option="organization"
             :sorter-labels="msSorterLabels"
@@ -88,7 +88,7 @@
             id="create-organization-button"
             class="button-default"
           >
-            {{ $t('HomePage.noExistingOrganization.createOrJoin') }}
+            {{ $msTranslate('HomePage.noExistingOrganization.createOrJoin') }}
           </ion-button>
         </ion-card-title>
         <ion-grid class="organization-list">
@@ -135,7 +135,7 @@
                           class="success"
                         />
                         <ion-text class="body-sm">
-                          {{ $t('HomePage.organizationList.loggedIn') }}
+                          {{ $msTranslate('HomePage.organizationList.loggedIn') }}
                         </ion-text>
                       </ion-col>
                     </ion-row>
@@ -161,7 +161,6 @@ import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parse
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
 import {
   IonButton,
@@ -203,16 +202,16 @@ let hotkeys: HotkeyGroup | null = null;
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
-    label: translate('HomePage.organizationList.sortByOrganization'),
+    label: 'HomePage.organizationList.sortByOrganization',
     key: 'organization',
   },
-  { label: translate('HomePage.organizationList.sortByUserName'), key: 'user_name' },
-  { label: translate('HomePage.organizationList.sortByLastLogin'), key: 'last_login' },
+  { label: 'HomePage.organizationList.sortByUserName', key: 'user_name' },
+  { label: 'HomePage.organizationList.sortByLastLogin', key: 'last_login' },
 ]);
 
 const msSorterLabels = {
-  asc: translate('HomePage.organizationList.sortOrderAsc'),
-  desc: translate('HomePage.organizationList.sortOrderDesc'),
+  asc: 'HomePage.organizationList.sortOrderAsc',
+  desc: 'HomePage.organizationList.sortOrderDesc',
 };
 
 const isPopoverOpen = ref(false);

@@ -13,23 +13,12 @@
 
 <script setup lang="ts">
 import { UserProfile } from '@/parsec';
-import { translate } from '@/services/translation';
+import { translateProfile } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 
 defineProps<{
   profile: UserProfile;
 }>();
-
-function translateProfile(profile: UserProfile): string {
-  if (profile === UserProfile.Admin) {
-    return translate('UsersPage.profile.admin.label');
-  } else if (profile === UserProfile.Standard) {
-    return translate('UsersPage.profile.standard.label');
-  } else if (profile === UserProfile.Outsider) {
-    return translate('UsersPage.profile.outsider.label');
-  }
-  return '';
-}
 
 function getClassForProfile(profile: UserProfile): string {
   switch (profile) {

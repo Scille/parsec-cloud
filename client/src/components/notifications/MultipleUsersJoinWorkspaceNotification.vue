@@ -15,7 +15,7 @@
           scope="global"
         >
           <template #count>
-            <strong> {{ notificationData.roles.length }} {{ $t('notification.users') }} </strong>
+            <strong> {{ notificationData.roles.length }} {{ $msTranslate('notification.users') }} </strong>
           </template>
           <template #workspace>
             <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
@@ -27,7 +27,7 @@
           class="hover-state"
           @click="openPopover($event)"
         >
-          {{ $t('notificationCenter.viewJoinedUsers') }}
+          {{ $msTranslate('notificationCenter.viewJoinedUsers') }}
         </span>
         <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
       </ion-text>

@@ -19,7 +19,7 @@
             <div class="item-container">
               <ion-icon :icon="cog" />
               <ion-text class="body">
-                {{ $t('SettingsPage.general') }}
+                {{ $msTranslate('SettingsPage.general') }}
               </ion-text>
             </div>
           </ion-radio>
@@ -32,7 +32,7 @@
             <div class="item-container">
               <ion-icon :icon="options" />
               <ion-text class="body">
-                {{ $t('SettingsPage.advanced') }}
+                {{ $msTranslate('SettingsPage.advanced') }}
               </ion-text>
             </div>
           </ion-radio>
@@ -47,21 +47,21 @@
             <ion-list class="settings-list">
               <!-- change lang -->
               <settings-option
-                :title="$t('SettingsPage.language.label')"
-                :description="$t('SettingsPage.language.description')"
+                :title="$msTranslate('SettingsPage.language.label')"
+                :description="$msTranslate('SettingsPage.language.description')"
               >
                 <ms-dropdown
                   class="dropdown"
                   :options="languageOptions"
-                  :default-option-key="$i18n.locale"
+                  :default-option-key="getLocale()"
                   @change="changeLang($event.option.key)"
                 />
               </settings-option>
               <!-- change theme -->
               <!-- TODO: REMOVE "'light' ? 'light' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
               <settings-option
-                :title="$t('SettingsPage.theme.label')"
-                :description="$t('SettingsPage.theme.description')"
+                :title="$msTranslate('SettingsPage.theme.label')"
+                :description="$msTranslate('SettingsPage.theme.description')"
               >
                 <ms-dropdown
                   class="dropdown"
@@ -74,8 +74,8 @@
               <!-- minimize in status bar -->
               <settings-option
                 v-if="isPlatform('electron')"
-                :title="$t('SettingsPage.minimizeToSystemTray.label')"
-                :description="$t('SettingsPage.minimizeToSystemTray.description')"
+                :title="$msTranslate('SettingsPage.minimizeToSystemTray.label')"
+                :description="$msTranslate('SettingsPage.minimizeToSystemTray.description')"
               >
                 <ion-toggle v-model="config.minimizeToTray" />
               </settings-option>
@@ -90,23 +90,23 @@
             <ion-list class="settings-list">
               <!-- send error report -->
               <settings-option
-                :title="$t('SettingsPage.enableTelemetry.label')"
-                :description="$t('SettingsPage.enableTelemetry.description')"
+                :title="$msTranslate('SettingsPage.enableTelemetry.label')"
+                :description="$msTranslate('SettingsPage.enableTelemetry.description')"
               >
                 <ion-toggle v-model="config.enableTelemetry" />
               </settings-option>
               <!-- display unsync files -->
               <settings-option
-                :title="$t('SettingsPage.unsyncFiles.label')"
-                :description="$t('SettingsPage.unsyncFiles.description')"
+                :title="$msTranslate('SettingsPage.unsyncFiles.label')"
+                :description="$msTranslate('SettingsPage.unsyncFiles.description')"
               >
                 <ion-toggle v-model="config.unsyncFiles" />
               </settings-option>
               <!-- synchro wifi -->
               <settings-option
                 v-if="false"
-                :title="$t('SettingsPage.meteredConnection.label')"
-                :description="$t('SettingsPage.meteredConnection.description')"
+                :title="$msTranslate('SettingsPage.meteredConnection.label')"
+                :description="$msTranslate('SettingsPage.meteredConnection.description')"
               >
                 <ion-toggle v-model="config.meteredConnection" />
               </settings-option>
@@ -122,7 +122,7 @@
 import { MsDropdown, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Locale, changeLocale, translate } from '@/services/translation';
+import { Locale, changeLocale, getLocale } from '@/services/translation';
 import { toggleDarkMode } from '@/states/darkMode';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
@@ -135,26 +135,26 @@ let justLoaded = false;
 const languageOptions: MsOptions = new MsOptions([
   {
     key: 'en-US',
-    label: translate('SettingsPage.language.values.enUS'),
+    label: 'SettingsPage.language.values.enUS',
   },
   {
     key: 'fr-FR',
-    label: translate('SettingsPage.language.values.frFR'),
+    label: 'SettingsPage.language.values.frFR',
   },
 ]);
 
 const themeOptions: MsOptions = new MsOptions([
   {
     key: 'dark',
-    label: translate('SettingsPage.theme.values.dark'),
+    label: 'SettingsPage.theme.values.dark',
   },
   {
     key: 'light',
-    label: translate('SettingsPage.theme.values.light'),
+    label: 'SettingsPage.theme.values.light',
   },
   {
     key: 'system',
-    label: translate('SettingsPage.theme.values.system'),
+    label: 'SettingsPage.theme.values.system',
   },
 ]);
 

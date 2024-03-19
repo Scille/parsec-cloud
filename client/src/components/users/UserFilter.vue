@@ -8,7 +8,7 @@
     class="filter-button button-small"
   >
     <ion-icon :icon="filter" />
-    {{ $t('UsersPage.filter.title') }}
+    {{ $msTranslate('UsersPage.filter.title') }}
   </ion-button>
 </template>
 

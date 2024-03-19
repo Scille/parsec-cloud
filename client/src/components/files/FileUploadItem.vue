@@ -39,7 +39,7 @@
             class="hover-state"
             v-show="[ImportState.FileImported].includes(state)"
           >
-            {{ $t('FoldersPage.ImportFile.browse') }}
+            {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
         </ion-label>
       </div>
@@ -50,7 +50,7 @@
           class="waiting-text body"
           v-if="state === ImportState.FileAdded"
         >
-          {{ $t('FoldersPage.ImportFile.waiting') }}
+          {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
         </ion-text>
         <ion-button
           fill="clear"
@@ -99,7 +99,7 @@
         class="cancel-text body"
         v-if="state === ImportState.Cancelled"
       >
-        {{ $t('FoldersPage.ImportFile.cancelled') }}
+        {{ $msTranslate('FoldersPage.ImportFile.cancelled') }}
       </ion-text>
 
       <!-- failed -->
@@ -108,10 +108,10 @@
         v-if="state === ImportState.CreateFailed"
       >
         <ion-text class="failed-text body">
-          {{ $t('FoldersPage.ImportFile.failed') }}
+          {{ $msTranslate('FoldersPage.ImportFile.failed') }}
         </ion-text>
         <ms-information-tooltip
-          :text="$t('FoldersPage.ImportFile.failedDetails')"
+          :text="$msTranslate('FoldersPage.ImportFile.failedDetails')"
           class="information-icon"
           slot="end"
         />

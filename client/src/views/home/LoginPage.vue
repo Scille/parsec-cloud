@@ -5,7 +5,7 @@
     <!-- login -->
     <div class="login-header">
       <ion-title class="login-header__title title-h1">
-        {{ $t('HomePage.organizationLogin.login') }}
+        {{ $msTranslate('HomePage.organizationLogin.login') }}
       </ion-title>
     </div>
     <ion-card class="login-card">
@@ -14,14 +14,14 @@
       </ion-card-header>
       <ion-card-content class="login-card-content">
         <ms-input
-          :label="$t('HomePage.organizationLogin.emailLabel')"
+          :label="$msTranslate('HomePage.organizationLogin.emailLabel')"
           :placeholder="device.humanHandle.email"
           id="ms-input"
           :disabled="true"
         />
         <div class="login-card-content__password">
           <ms-password-input
-            :label="$t('HomePage.organizationLogin.passwordLabel')"
+            :label="$msTranslate('HomePage.organizationLogin.passwordLabel')"
             ref="passwordInputRef"
             v-model="password"
             @on-enter-keyup="onLoginClick()"
@@ -36,7 +36,7 @@
             @click="$emit('forgottenPasswordClick', device)"
             id="forgotten-password-button"
           >
-            {{ $t('HomePage.organizationLogin.forgottenPassword') }}
+            {{ $msTranslate('HomePage.organizationLogin.forgottenPassword') }}
           </ion-button>
         </div>
       </ion-card-content>
@@ -51,7 +51,7 @@
             slot="start"
             :icon="logIn"
           />
-          {{ $t('HomePage.organizationLogin.login') }}
+          {{ $msTranslate('HomePage.organizationLogin.login') }}
         </ion-button>
       </ion-footer>
     </ion-card>
@@ -63,7 +63,6 @@
 import { MsInput, MsPasswordInput } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
-import { translate } from '@/services/translation';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
@@ -91,7 +90,7 @@ async function onLoginClick(): Promise<void> {
 }
 
 async function setLoginError(_error?: ClientStartError): Promise<void> {
-  errorMessage.value = translate('HomePage.organizationLogin.passwordError');
+  errorMessage.value = 'HomePage.organizationLogin.passwordError';
   passwordIsInvalid.value = true;
 }
 

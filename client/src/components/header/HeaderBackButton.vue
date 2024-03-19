@@ -13,7 +13,7 @@
         v-if="!short"
         class="back-button__label"
       >
-        {{ $t('HeaderPage.previous') }}
+        {{ $msTranslate('HeaderPage.previous') }}
       </ion-label>
     </ion-button>
 

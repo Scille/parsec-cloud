@@ -6,7 +6,7 @@
       <ion-item-group class="list-group">
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('FoldersPage.fileContextMenu.titleManage') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.titleManage') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -17,7 +17,7 @@
         >
           <ion-icon :icon="pencil" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionRename') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionRename') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -29,7 +29,7 @@
         >
           <ion-icon :icon="arrowRedo" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionMoveTo') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionMoveTo') }}
           </ion-label>
         </ion-item>
 
@@ -42,7 +42,7 @@
         >
           <ion-icon :icon="copy" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionMakeACopy') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionMakeACopy') }}
           </ion-label>
         </ion-item>
 
@@ -54,7 +54,7 @@
         >
           <ion-icon :icon="trashBin" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionDelete') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionDelete') }}
           </ion-label>
         </ion-item>
 
@@ -66,7 +66,7 @@
         >
           <ion-icon :icon="open" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionOpen') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionOpen') }}
           </ion-label>
         </ion-item>
 
@@ -78,7 +78,7 @@
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionHistory') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionHistory') }}
           </ion-label>
         </ion-item>
 
@@ -91,7 +91,7 @@
         >
           <ion-icon :icon="download" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionDownload') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionDownload') }}
           </ion-label>
         </ion-item>
 
@@ -102,14 +102,14 @@
         >
           <ion-icon :icon="informationCircle" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionDetails') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionDetails') }}
           </ion-label>
         </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
-            {{ $t('FoldersPage.fileContextMenu.titleCollaboration') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.titleCollaboration') }}
           </ion-label>
         </ion-item>
         <ion-item
@@ -119,7 +119,7 @@
         >
           <ion-icon :icon="link" />
           <ion-label class="body list-group-item__label">
-            {{ $t('FoldersPage.fileContextMenu.actionCopyLink') }}
+            {{ $msTranslate('FoldersPage.fileContextMenu.actionCopyLink') }}
           </ion-label>
         </ion-item>
       </ion-item-group>

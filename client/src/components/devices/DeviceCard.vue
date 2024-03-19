@@ -14,13 +14,13 @@
         {{ label }}
       </ion-text>
       <ion-text class="join-date body-sm">
-        {{ $t('DevicesPage.joinedOn') }}
+        {{ $msTranslate('DevicesPage.joinedOn') }}
         <span v-if="date">{{ formatTimeSince(date, '--', 'short', true) }}</span>
         <span
           v-if="!date"
           class="join-date-now"
         >
-          {{ $t('DevicesPage.now') }}
+          {{ $msTranslate('DevicesPage.now') }}
         </span>
       </ion-text>
     </div>
@@ -30,7 +30,7 @@
       v-show="isCurrent"
       :outline="true"
     >
-      {{ $t('DevicesPage.activeDeviceBadge') }}
+      {{ $msTranslate('DevicesPage.activeDeviceBadge') }}
     </ion-text>
   </div>
 </template>
