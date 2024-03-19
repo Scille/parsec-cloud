@@ -14,102 +14,59 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
 )
 
-# q_test_drop_organization_from_organization_table
-# q_test_drop_organization_from_user_table
-# q_test_drop_organization_from_device_table
-# q_test_duplicate_organization_from_organization_table
-# q_test_duplicate_organization_from_user_table
-# q_test_duplicate_organization_from_device_table
-
-q_test_drop_organization_from_organization_table = Q(
+q_test_drop_organization = Q(
     """
-DELETE FROM organization
-WHERE organization_id = $organization_id
-"""
-)
-
-q_test_drop_organization_from_human_table = Q(
-    f"""
-DELETE FROM human
-WHERE organization = { q_organization_internal_id("$organization_id") }
-"""
-)
-
-q_test_drop_organization_from_user_table = Q(
-    f"""
-DELETE FROM user_
-WHERE organization = { q_organization_internal_id("$organization_id") }
-"""
-)
-
-q_test_drop_organization_from_profile_table = Q(
-    f"""
-DELETE FROM profile
-WHERE user_ in (
-    SELECT _id
-    FROM user_
-    WHERE organization = { q_organization_internal_id("$organization_id") }
-)
-"""
-)
-
-q_test_drop_organization_from_device_table = Q(
-    f"""
-WITH deleted_users AS (
+WITH deleted_organizations AS (
+    DELETE FROM organization
+    WHERE organization_id = $organization_id
+    RETURNING _id
+),
+deleted_human AS (
+    DELETE FROM human
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_users AS (
     DELETE FROM user_
-    WHERE organization = { q_organization_internal_id("$organization_id") }
+    WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
 deleted_devices AS (
     DELETE FROM device
-    WHERE user_ IN (SELECT _id FROM deleted_users)
+    WHERE user_ in (select * from deleted_users)
+    RETURNING _id
+),
+deleted_profiles AS (
+    DELETE FROM profile
+    WHERE user_ in (select * from deleted_users)
+    RETURNING _id
+),
+deleted_invitations AS (
+    DELETE FROM invitation
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_realms AS (
+    DELETE FROM realm
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_realm_user_roles AS (
+    DELETE FROM realm_user_role
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_vlob_atoms AS (
+    DELETE FROM vlob_atom
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_blocks AS (
+    DELETE FROM block
+    WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 )
-DELETE FROM profile
-WHERE user_ IN (SELECT _id FROM deleted_users)
-"""
-)
-
-q_test_drop_organization_from_invitation_table = Q(
-    f"""
-DELETE FROM invitation
-WHERE organization = { q_organization_internal_id("$organization_id") }
-"""
-)
-
-q_test_drop_organization_from_realm_table = Q(
-    f"""
-DELETE FROM realm
-WHERE organization = { q_organization_internal_id("$organization_id") }
-"""
-)
-
-q_test_drop_organization_from_realm_user_role_table = Q(
-    f"""
-DELETE FROM realm_user_role
-WHERE realm in (
-    SELECT _id
-    FROM realm
-    WHERE organization = { q_organization_internal_id("$organization_id") }
-)
-"""
-)
-
-q_test_drop_organization_from_vlob_atom_table = Q(
-    f"""
-DELETE FROM vlob_atom
-WHERE realm in (
-    SELECT _id
-    FROM realm
-    WHERE organization = { q_organization_internal_id("$organization_id") }
-)
-"""
-)
-
-q_test_drop_organization_from_block_table = Q(
-    f"""
-DELETE FROM block
-WHERE organization = { q_organization_internal_id("$organization_id") }
+SELECT 1
 """
 )
 
