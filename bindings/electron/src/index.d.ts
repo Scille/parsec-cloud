@@ -1160,6 +1160,20 @@ export type ParsedParsecAddr =
   | ParsedParsecAddrServer
 
 
+// TestbedError
+export interface TestbedErrorDisabled {
+    tag: "Disabled"
+    error: string
+}
+export interface TestbedErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type TestbedError =
+  | TestbedErrorDisabled
+  | TestbedErrorInternal
+
+
 // UserOrDeviceClaimInitialInfo
 export interface UserOrDeviceClaimInitialInfoDevice {
     tag: "Device"
@@ -1956,17 +1970,17 @@ export function pathSplit(
 ): Promise<Array<string>>
 export function testDropTestbed(
     path: string
-): Promise<null>
+): Promise<Result<null, TestbedError>>
 export function testGetTestbedBootstrapOrganizationAddr(
     discriminant_dir: string
-): Promise<string | null>
+): Promise<Result<string | null, TestbedError>>
 export function testGetTestbedOrganizationId(
     discriminant_dir: string
-): Promise<string | null>
+): Promise<Result<string | null, TestbedError>>
 export function testNewTestbed(
     template: string,
     test_server: string | null
-): Promise<string>
+): Promise<Result<string, TestbedError>>
 export function validateDeviceLabel(
     raw: string
 ): Promise<boolean>
