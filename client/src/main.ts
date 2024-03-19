@@ -128,8 +128,16 @@ async function setupApp(): Promise<void> {
     };
   } else if (import.meta.env.VITE_TESTBED_SERVER_URL) {
     // Dev mode, provide a default testbed
-    const configPath = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
-    nextStage(configPath); // Fire-and-forget call
+    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
+    if (configResult.ok) {
+      nextStage(configResult.value); // Fire-and-forget call
+    } else {
+      // eslint-disable-next-line no-alert
+      alert('TESTBED_SERVER_URL is set but failed to reach the testbed server.');
+      if (isElectron()) {
+        (window as any).electronAPI.closeApp();
+      }
+    }
   } else {
     // Prod or using devices in local storage
     nextStage(); // Fire-and-forget call
