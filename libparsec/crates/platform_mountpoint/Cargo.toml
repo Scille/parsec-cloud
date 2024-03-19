@@ -12,7 +12,7 @@ repository.workspace = true
 workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winfsp_wrs = { workspace = true }
+# winfsp_wrs = { workspace = true }
 once_cell = { workspace = true }
 regex = { workspace = true }
 
@@ -34,5 +34,5 @@ ctrlc = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 windows-sys = { workspace = true, features = ["Win32"] }
 
-[target.'cfg(target_os = "windows")'.build-dependencies]
-winfsp_wrs_build = { workspace = true }
+# [target.'cfg(target_os = "windows")'.build-dependencies]
+# winfsp_wrs_build = { workspace = true }
