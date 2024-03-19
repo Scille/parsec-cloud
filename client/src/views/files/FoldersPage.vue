@@ -354,7 +354,7 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
     if (index !== -1) {
       fileImports.value.splice(index, 1);
     }
-    if (parsec.Path.areSame(importData.path, currentPath.value)) {
+    if (importData.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(importData.path, currentPath.value)) {
       const importedFilePath = await parsec.Path.join(importData.path, importData.file.name);
       const statResult = await parsec.entryStat(importData.workspaceHandle, importedFilePath);
       if (statResult.ok && statResult.value.isFile()) {
