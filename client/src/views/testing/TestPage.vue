@@ -81,9 +81,15 @@ onMounted(async () => {
  */
 
 async function testBootstrapOrganization(): Promise<void> {
-  const configPath = await testCase('Init empty testbed', async () => {
+  const configResult = await testCase('Init empty testbed', async () => {
     return await libparsec.testNewTestbed('empty', import.meta.env.VITE_TESTBED_SERVER_URL);
   });
+
+  if (!configResult.ok) {
+    throw new Error("Failed to init testbed");
+  }
+
+  const configPath = configResult.value;
 
   const config: ClientConfig = {
     configDir: configPath,
@@ -99,10 +105,12 @@ async function testBootstrapOrganization(): Promise<void> {
   const onEventCallback = (e: ClientEvent) => {
     console.log(`Event received from libparsec: ${e}`);
   };
-  const bootstrapAddr = await libparsec.testGetTestbedBootstrapOrganizationAddr(configPath);
-  if (bootstrapAddr === null) {
+  const bootstrapAddrResult = await libparsec.testGetTestbedBootstrapOrganizationAddr(configPath);
+  if (!bootstrapAddrResult.ok || bootstrapAddrResult.value === null) {
     throw new Error("Couldn't retrieve bootstrap organization addr");
   }
+
+  const bootstrapAddr = bootstrapAddrResult.value;
 
   const humanHandle = { label: 'John', email: 'john@example.com' };
   const availableDevice = await testCase('Bootstrap organization', async () => {
