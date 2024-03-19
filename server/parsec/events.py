@@ -357,7 +357,7 @@ class EventUserUpdated(BaseModel):
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     user_id: UserIDField
-    new_profile: UserProfile
+    new_profile: UserProfileField
 
 
 # TODO: Replace with `type` once the linter supports it

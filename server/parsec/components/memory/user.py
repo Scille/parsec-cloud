@@ -224,6 +224,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return certif
 
+    @override
     async def revoke_user(
         self,
         now: DateTime,
