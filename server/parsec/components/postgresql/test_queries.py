@@ -42,10 +42,31 @@ WHERE organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
+q_test_drop_organization_from_profile_table = Q(
+    f"""
+DELETE FROM profile
+WHERE user_ in (
+    SELECT _id
+    FROM user_
+    WHERE organization = { q_organization_internal_id("$organization_id") }
+)
+"""
+)
+
 q_test_drop_organization_from_device_table = Q(
     f"""
-DELETE FROM device
-WHERE organization = { q_organization_internal_id("$organization_id") }
+WITH deleted_users AS (
+    DELETE FROM user_
+    WHERE organization = { q_organization_internal_id("$organization_id") }
+    RETURNING _id
+),
+deleted_devices AS (
+    DELETE FROM device
+    WHERE user_ IN (SELECT _id FROM deleted_users)
+    RETURNING _id
+)
+DELETE FROM profile
+WHERE user_ IN (SELECT _id FROM deleted_users)
 """
 )
 
@@ -82,6 +103,13 @@ WHERE realm in (
     FROM realm
     WHERE organization = { q_organization_internal_id("$organization_id") }
 )
+"""
+)
+
+q_test_drop_organization_from_block_table = Q(
+    f"""
+DELETE FROM block
+WHERE organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -148,7 +176,7 @@ INSERT INTO user_ (
     revoked_user_certifier,
     human,
     redacted_user_certificate,
-    profile
+    initial_profile
 )
 SELECT
     { q_organization_internal_id("$target_id") },
@@ -161,11 +189,34 @@ SELECT
     revoked_user_certifier,
     { q_human_internal_id(organization_id="$target_id", email=q_human(_id="user_.human", select="email")) },
     redacted_user_certificate,
-    profile
+    initial_profile
 FROM user_
 WHERE organization = { q_organization_internal_id("$source_id") }
 """
+)  # TODO: fix wrong revoked_user_certifier
+
+
+q_test_duplicate_organization_from_profile_table = Q(
+    f"""
+INSERT INTO profile (
+    user_,
+    profile,
+    profile_certificate,
+    certified_by,
+    certified_on
 )
+SELECT
+    { q_user_internal_id(organization_id="$target_id", user_id=q_user(_id="profile.user_", select="user_id")) },
+    profile,
+    profile_certificate,
+    certified_by,
+    certified_on
+FROM profile
+INNER JOIN user_ ON profile.user_ = user_._id
+WHERE user_.organization = { q_organization_internal_id("$source_id") }
+"""
+)  # TODO: fix wrong revoked_user_certifier
+
 
 q_test_duplicate_organization_from_device_table = Q(
     f"""
@@ -287,5 +338,29 @@ SELECT
 FROM vlob_atom
 INNER JOIN realm ON realm._id = vlob_atom.realm
 WHERE realm.organization = { q_organization_internal_id("$source_id") }
+"""
+)
+
+q_test_duplicate_organization_from_block_table = Q(
+    f"""
+INSERT INTO block (
+    organization,
+    block_id,
+    realm,
+    author,
+    size,
+    created_on,
+    deleted_on
+)
+SELECT
+    { q_organization_internal_id("$target_id") },
+    block_id,
+    { q_realm_internal_id(organization_id="$target_id", realm_id=q_realm(_id="block.realm", select="realm_id")) },
+    { q_device_internal_id(organization_id="$target_id", device_id=q_device(_id="block.author", select="device_id"))},
+    size,
+    created_on,
+    deleted_on
+FROM block
+WHERE organization = { q_organization_internal_id("$source_id") }
 """
 )
