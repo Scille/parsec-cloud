@@ -22,7 +22,7 @@
         slot="end"
         :icon="getIcon()"
       />
-      <span class="input-text">{{ labelRef }}</span>
+      <span class="input-text">{{ $t(labelRef || '') }}</span>
     </ion-button>
   </div>
 </template>

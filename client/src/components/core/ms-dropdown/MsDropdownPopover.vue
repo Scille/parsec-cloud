@@ -13,13 +13,13 @@
     >
       <ion-label class="option-text">
         <span class="option-text__label body">
-          {{ option.label }}
+          {{ $t(option.label) }}
         </span>
         <span
           v-if="option.description"
           class="option-text__description body-sm"
         >
-          {{ option.description }}
+          {{ $t(option.description) }}
         </span>
       </ion-label>
       <ion-icon
