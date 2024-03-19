@@ -508,15 +508,15 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @override
     @transaction
     async def server_stats(
-        self, connection: asyncpg.Connection, at: DateTime | None = None
+        self, conn: asyncpg.Connection, at: DateTime | None = None
     ) -> dict[OrganizationID, OrganizationStats]:
-        raise NotImplementedError
-        # for org in await conn.fetch(*_q_get_organizations()):
-        #     org_id = OrganizationID(org["id"])
-        #     org_stats = await _organization_stats(conn, org_id, at)
-        #     if org_stats:
-        #         results[org_id] = org_stats
-        # return results
+        results = {}
+        for org in await conn.fetch(*_q_get_organizations()):
+            org_id = OrganizationID(org["id"])
+            org_stats = await self._get_organization_stats(conn, org_id, at=at)
+            if org_stats:
+                results[org_id] = org_stats
+        return results
 
     @override
     @transaction

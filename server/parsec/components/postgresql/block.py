@@ -1,25 +1,34 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from typing import assert_never, override
+
 import asyncpg
 from asyncpg.exceptions import UniqueViolationError
 
-from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, VlobID
+from parsec._parsec import (
+    BlockID,
+    DateTime,
+    DeviceID,
+    OrganizationID,
+    RealmRole,
+    UserProfile,
+    VlobID,
+)
 from parsec.components.block import (
     BaseBlockComponent,
-    BlockAccessError,
-    BlockAlreadyExistsError,
-    BlockError,
-    BlockInMaintenanceError,
-    BlockNotFoundError,
-    BlockStoreError,
+    BlockCreateBadOutcome,
+    BlockReadBadOutcome,
 )
-from parsec.components.blockstore import BaseBlockStoreComponent
-from parsec.components.postgresql.handler import PGHandler
-from parsec.components.postgresql.realm_queries.maintenance import (
-    RealmNotFoundError,
-    get_realm_status,
+from parsec.components.blockstore import (
+    BaseBlockStoreComponent,
+    BlockStoreCreateBadOutcome,
+    BlockStoreReadBadOutcome,
 )
+from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import (
     Q,
     q_block,
@@ -30,8 +39,10 @@ from parsec.components.postgresql.utils import (
     q_user_can_read_vlob,
     q_user_can_write_vlob,
     q_user_internal_id,
+    transaction,
 )
-from parsec.types import OperationKind
+from parsec.components.realm import RealmCheckBadOutcome
+from parsec.components.user import CheckUserWithDeviceBadOutcome
 
 _q_get_realm_id_from_block_id = Q(
     f"""
@@ -101,125 +112,206 @@ VALUES (
 )
 
 
-async def _check_realm(
-    conn: asyncpg.Connection,
-    organization_id: OrganizationID,
-    realm_id: VlobID,
-    operation_kind: OperationKind,
-) -> None:
-    # Fetch the realm status maintenance type
-    try:
-        status = await get_realm_status(conn, organization_id, realm_id)
-    except RealmNotFoundError as exc:
-        raise BlockNotFoundError(*exc.args) from exc
+# async def _check_realm(
+#     conn: asyncpg.Connection,
+#     organization_id: OrganizationID,
+#     realm_id: VlobID,
+#     operation_kind: OperationKind,
+# ) -> None:
+#     # Fetch the realm status maintenance type
+#     try:
+#         status = await get_realm_status(conn, organization_id, realm_id)
+#     except RealmNotFoundError as exc:
+#         raise BlockNotFoundError(*exc.args) from exc
 
-    # Special case of reading while in reencryption is authorized
-    if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
-        pass
+#     # Special case of reading while in reencryption is authorized
+#     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
+#         pass
 
-    # Access is not allowed while in maintenance
-    elif status.in_maintenance:
-        raise BlockInMaintenanceError("Data realm is currently under maintenance")
+#     # Access is not allowed while in maintenance
+#     elif status.in_maintenance:
+#         raise BlockInMaintenanceError("Data realm is currently under maintenance")
 
 
 class PGBlockComponent(BaseBlockComponent):
-    def __init__(self, dbh: PGHandler, blockstore_component: BaseBlockStoreComponent):
-        self.dbh = dbh
-        self._blockstore_component = blockstore_component
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
+        self.blockstore: BaseBlockStoreComponent
+        self.user: PGUserComponent
+        self.organization: PGOrganizationComponent
+        self.realm: PGRealmComponent
 
+    def register_components(
+        self,
+        blockstore: BaseBlockStoreComponent,
+        user: PGUserComponent,
+        organization: PGOrganizationComponent,
+        realm: PGRealmComponent,
+        **kwargs: object,
+    ) -> None:
+        self.blockstore = blockstore
+        self.user = user
+        self.organization = organization
+        self.realm = realm
+
+    @override
+    @transaction
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
-    ) -> bytes:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            realm_id_uuid = await conn.fetchval(
-                *_q_get_realm_id_from_block_id(
-                    organization_id=organization_id.str, block_id=block_id
-                )
-            )
-            if not realm_id_uuid:
-                raise BlockNotFoundError()
-            realm_id = VlobID.from_hex(realm_id_uuid)
-            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_READ)
-            ret = await conn.fetchrow(
-                *_q_get_block_meta(
-                    organization_id=organization_id.str,
-                    block_id=block_id,
-                    user_id=author.user_id.str,
-                )
-            )
-            if not ret or ret["deleted_on"]:
-                raise BlockNotFoundError()
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        block_id: BlockID,
+    ) -> bytes | BlockReadBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization():
+                pass
+            case unknown:
+                assert_never(unknown)
 
-            elif not ret["has_access"]:
-                raise BlockAccessError()
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
 
-        # We can do the blockstore read outside of the transaction given the block
-        # are never modified/removed
-        return await self._blockstore_component.read(organization_id, block_id)
+        realm_id_uuid = await conn.fetchval(
+            *_q_get_realm_id_from_block_id(organization_id=organization_id.str, block_id=block_id)
+        )
 
+        if not realm_id_uuid:
+            return BlockReadBadOutcome.BLOCK_NOT_FOUND
+        realm_id = VlobID.from_hex(realm_id_uuid)
+
+        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                assert False, f"Realm not found: {realm_id}"
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole(), _):
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        outcome = await self.blockstore.read(organization_id, block_id)
+        match outcome:
+            case bytes() | bytearray() | memoryview() as block:
+                return block
+            case BlockStoreReadBadOutcome.BLOCK_NOT_FOUND:
+                # Weird, the block exists in the database but not in the blockstore
+                return BlockReadBadOutcome.STORE_UNAVAILABLE
+            case BlockStoreReadBadOutcome.STORE_UNAVAILABLE:
+                return BlockReadBadOutcome.STORE_UNAVAILABLE
+            case unknown:
+                assert_never(unknown)
+
+    @override
+    @transaction
     async def create(
         self,
+        conn: asyncpg.Connection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
         realm_id: VlobID,
         block: bytes,
-        created_on: DateTime | None = None,
-    ) -> None:
-        created_on = created_on or DateTime.now()
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
-            await _check_realm(conn, organization_id, realm_id, OperationKind.DATA_WRITE)
+    ) -> None | BlockCreateBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization():
+                pass
+            case unknown:
+                assert_never(unknown)
 
-            # 1) Check access rights and block unicity
-            # Note it's important to check unicity here because blockstore create
-            # overwrite existing data !
-            ret = await conn.fetchrow(
-                *_q_get_block_write_right_and_unicity(
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                assert False, f"Realm not found: {realm_id}"
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole() as role, _):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        # Note it's important to check unicity here because blockstore create
+        # overwrite existing data !
+        ret = await conn.fetchrow(
+            *_q_get_block_write_right_and_unicity(
+                organization_id=organization_id.str,
+                user_id=author.user_id.str,
+                realm_id=realm_id,
+                block_id=block_id,
+            )
+        )
+
+        # TODO: this check is performed twice, which one do we want to remove?
+        if ret is None or not ret["has_access"]:
+            return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
+
+        elif ret["exists"]:
+            return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
+
+        # 2) Upload block data in blockstore under an arbitrary id
+        # Given block metadata and block data are stored on different storages,
+        # being atomic is not easy here :(
+        # For instance step 2) can be successful (or can be successful on *some*
+        # blockstores in case of a RAID blockstores configuration) but step 4) fails.
+        # This is solved by the fact blockstores are considered idempotent and two
+        # create operations with the same orgID/ID couple are expected to have the
+        # same block data.
+        # Hence any blockstore create failure result in postgres transaction
+        # cancellation, and blockstore create success can be overwritten by another
+        # create in case the postgres transaction was cancelled in step 3)
+        match await self.blockstore.create(organization_id, block_id, block):
+            case BlockStoreCreateBadOutcome.STORE_UNAVAILABLE:
+                return BlockCreateBadOutcome.STORE_UNAVAILABLE
+            case None:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        # 3) Insert the block metadata into the database
+        try:
+            ret = await conn.execute(
+                *_q_insert_block(
                     organization_id=organization_id.str,
-                    user_id=author.user_id.str,
-                    realm_id=realm_id,
                     block_id=block_id,
+                    realm_id=realm_id,
+                    author=author.str,
+                    size=len(block),
+                    created_on=now,
                 )
             )
+        except UniqueViolationError:
+            # Given step 1) hasn't locked anything in the database, concurrent block
+            # create operations may end up with one of them in unique violation error
+            return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
 
-            if not ret["has_access"]:
-                raise BlockAccessError()
-
-            elif ret["exists"]:
-                raise BlockAlreadyExistsError()
-
-            # 2) Upload block data in blockstore under an arbitrary id
-            # Given block metadata and block data are stored on different storages,
-            # being atomic is not easy here :(
-            # For instance step 2) can be successful (or can be successful on *some*
-            # blockstores in case of a RAID blockstores configuration) but step 4) fails.
-            # This is solved by the fact blockstores are considered idempotent and two
-            # create operations with the same orgID/ID couple are expected to have the
-            # same block data.
-            # Hence any blockstore create failure result in postgres transaction
-            # cancellation, and blockstore create success can be overwritten by another
-            # create in case the postgres transaction was cancelled in step 3)
-            await self._blockstore_component.create(organization_id, block_id, block)
-
-            # 3) Insert the block metadata into the database
-            try:
-                ret = await conn.execute(
-                    *_q_insert_block(
-                        organization_id=organization_id.str,
-                        block_id=block_id,
-                        realm_id=realm_id,
-                        author=author.str,
-                        size=len(block),
-                        created_on=created_on,
-                    )
-                )
-            except UniqueViolationError as exc:
-                # Given step 1) hasn't locked anything in the database, concurrent block
-                # create operations may end up with one of them in unique violation error
-                raise BlockAlreadyExistsError() from exc
-
-            if ret != "INSERT 0 1":
-                raise BlockError(f"Insertion error: {ret}")
+        else:
+            assert ret == "INSERT 0 1", f"Insertion error: {ret}"
 
 
 _q_get_block_data = Q(
@@ -243,23 +335,25 @@ VALUES ($organization_id, $block_id, $data)
 
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, dbh: PGHandler):
-        self.dbh = dbh
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
 
-    async def read(self, organization_id: OrganizationID, block_id: BlockID) -> bytes:
-        async with self.dbh.pool.acquire() as conn:
+    async def read(
+        self, organization_id: OrganizationID, block_id: BlockID
+    ) -> bytes | BlockStoreReadBadOutcome:
+        async with self.pool.acquire() as conn:
             ret = await conn.fetchrow(
                 *_q_get_block_data(organization_id=organization_id.str, block_id=block_id)
             )
             if not ret:
-                raise BlockStoreError("Block not found")
+                return BlockStoreReadBadOutcome.BLOCK_NOT_FOUND
 
             return ret[0]
 
     async def create(
         self, organization_id: OrganizationID, block_id: BlockID, block: bytes
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
+    ) -> None | BlockStoreCreateBadOutcome:
+        async with self.pool.acquire() as conn:
             try:
                 ret = await conn.execute(
                     *_q_insert_block_data(
@@ -267,7 +361,7 @@ class PGBlockStoreComponent(BaseBlockStoreComponent):
                     )
                 )
                 if ret != "INSERT 0 1":
-                    raise BlockStoreError(f"Insertion error: {ret}")
+                    return BlockStoreCreateBadOutcome.STORE_UNAVAILABLE
 
             except UniqueViolationError:
                 # Keep calm and stay idempotent

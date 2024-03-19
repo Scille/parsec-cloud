@@ -33,7 +33,7 @@ def backend_config(
         debug=True,
         db_url=db_url,
         db_min_connections=1,
-        db_max_connections=1,
+        db_max_connections=2,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),

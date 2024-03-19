@@ -301,8 +301,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         at = at or DateTime.now()
 
         result = {}
-        for org in self._data.organizations.values():
-            result[org.organization_id] = self._stats(org, at)
+        for org_id, org in sorted(self._data.organizations.items()):
+            result[org_id] = self._stats(org, at)
 
         return result
 

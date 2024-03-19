@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import assert_never, override
 
-from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmRole, UserID, VlobID
+from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmRole, VlobID
 from parsec.components.block import (
     BadKeyIndex,
     BaseBlockComponent,
@@ -25,15 +25,15 @@ class MemoryBlockComponent(BaseBlockComponent):
         self._blockstore_component = blockstore
 
     @override
-    async def read_as_user(
-        self, organization_id: OrganizationID, author: UserID, block_id: BlockID
+    async def read(
+        self, organization_id: OrganizationID, author: DeviceID, block_id: BlockID
     ) -> BlockReadResult | BlockReadBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if author not in org.users:
+        if author.user_id not in org.users:
             return BlockReadBadOutcome.AUTHOR_NOT_FOUND
 
         try:
@@ -44,7 +44,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm = org.realms.get(block_info.realm_id)
         assert realm is not None  # Sanity check, this consistency is enforced by the database
 
-        current_role = realm.get_current_role_for(author)
+        current_role = realm.get_current_role_for(author.user_id)
         if current_role is None:
             return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
 
