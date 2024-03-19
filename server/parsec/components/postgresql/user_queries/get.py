@@ -34,7 +34,7 @@ SELECT
     user_id,
     { q_human(_id="user_.human", select="email") } as human_email,
     { q_human(_id="user_.human", select="label") } as human_label,
-    profile,
+    initial_profile,
     user_certificate,
     redacted_user_certificate,
     { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
@@ -55,19 +55,21 @@ _q_get_user = Q(
 SELECT
     { q_human(_id="user_.human", select="email") } as human_email,
     { q_human(_id="user_.human", select="label") } as human_label,
-    profile,
-    user_certificate,
-    redacted_user_certificate,
+    COALESCE(profile.profile, user_.initial_profile) as profile,
+    user_.user_certificate,
+    user_.redacted_user_certificate,
     { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
-    created_on,
-    revoked_on,
-    revoked_user_certificate,
+    user_.created_on,
+    user_.revoked_on,
+    user_.revoked_user_certificate,
     { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
-    frozen
+    user_.frozen
 FROM user_
+LEFT JOIN profile ON user_._id = profile.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
+ORDER BY profile.certified_on DESC LIMIT 1
 """
 )
 
@@ -512,7 +514,7 @@ async def query_dump_users(
             User(
                 user_id=UserID(row["user_id"]),
                 human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
-                initial_profile=UserProfile.from_str(row["profile"]),
+                initial_profile=UserProfile.from_str(row["initial_profile"]),
                 user_certificate=row["user_certificate"],
                 redacted_user_certificate=row["redacted_user_certificate"],
                 user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,
