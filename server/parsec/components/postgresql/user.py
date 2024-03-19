@@ -9,12 +9,12 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
+    HumanHandle,
     OrganizationID,
     UserCertificate,
     UserID,
     UserProfile,
     VerifyKey,
-    HumanHandle,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
@@ -22,21 +22,15 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user_queries import (
     query_dump_users,
-    query_find_humans,
-    query_get_user,
-    query_get_user_with_device,
-    query_get_user_with_device_and_trustchain,
-    query_get_user_with_devices_and_trustchain,
-    query_get_user_with_trustchain,
     query_revoke_user,
 )
+from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
 from parsec.components.postgresql.user_queries.get import (
     _q_get_user_info,
     _q_get_user_info_from_email,
+    query_check_user_with_device,
     query_list_users,
 )
-from parsec.components.postgresql.user_queries.create import q_create_device, q_create_user
-from parsec.components.postgresql.user_queries.get import query_check_user_with_device
 from parsec.components.postgresql.user_queries.revoke import q_freeze_user
 from parsec.components.postgresql.utils import transaction
 from parsec.components.user import (
@@ -191,7 +185,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserWithDeviceBadOutcome.USER_REVOKED:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case UserProfile():
                 pass
             case unknown:
                 assert_never(unknown)
@@ -262,54 +256,54 @@ class PGUserComponent(BaseUserComponent):
 
         return await query_list_users(conn, organization_id)
 
-    async def get_user_with_trustchain(
-        self, organization_id: OrganizationID, user_id: UserID
-    ) -> tuple[User, Trustchain]:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_with_trustchain(conn, organization_id, user_id)
+    # async def get_user_with_trustchain(
+    #     self, organization_id: OrganizationID, user_id: UserID
+    # ) -> tuple[User, Trustchain]:
+    #     raise NotImplementedError
+    #     async with self.dbh.pool.acquire() as conn:
+    #         return await query_get_user_with_trustchain(conn, organization_id, user_id)
 
-    async def get_user_with_device_and_trustchain(
-        self, organization_id: OrganizationID, device_id: DeviceID
-    ) -> tuple[User, Device, Trustchain]:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_with_device_and_trustchain(conn, organization_id, device_id)
+    # async def get_user_with_device_and_trustchain(
+    #     self, organization_id: OrganizationID, device_id: DeviceID
+    # ) -> tuple[User, Device, Trustchain]:
+    #     raise NotImplementedError
+    #     async with self.dbh.pool.acquire() as conn:
+    #         return await query_get_user_with_device_and_trustchain(conn, organization_id, device_id)
 
-    async def get_user_with_devices_and_trustchain(
-        self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
-    ) -> GetUserAndDevicesResult:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await query_get_user_with_devices_and_trustchain(
-                conn, organization_id, user_id, redacted=redacted
-            )
+    # async def get_user_with_devices_and_trustchain(
+    #     self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
+    # ) -> GetUserAndDevicesResult:
+    #     raise NotImplementedError
+    #     async with self.dbh.pool.acquire() as conn:
+    #         return await query_get_user_with_devices_and_trustchain(
+    #             conn, organization_id, user_id, redacted=redacted
+    #         )
 
-    async def _get_user_with_device(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
-    ) -> tuple[User, Device]:
-        raise NotImplementedError
-        return await query_get_user_with_device(conn, organization_id, device_id)
+    # async def _get_user_with_device(
+    #     self, conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
+    # ) -> tuple[User, Device]:
+    #     raise NotImplementedError
+    #     return await query_get_user_with_device(conn, organization_id, device_id)
 
-    async def find_humans(
-        self,
-        organization_id: OrganizationID,
-        query: str | None = None,
-        page: int = 1,
-        per_page: int = 100,
-        omit_revoked: bool = False,
-        omit_non_human: bool = False,
-    ) -> tuple[list[HumanFindResultItem], int]:
-        async with self.dbh.pool.acquire() as conn:
-            return await query_find_humans(
-                conn,
-                organization_id=organization_id,
-                query=query,
-                page=page,
-                per_page=per_page,
-                omit_revoked=omit_revoked,
-                omit_non_human=omit_non_human,
-            )
+    # async def find_humans(
+    #     self,
+    #     organization_id: OrganizationID,
+    #     query: str | None = None,
+    #     page: int = 1,
+    #     per_page: int = 100,
+    #     omit_revoked: bool = False,
+    #     omit_non_human: bool = False,
+    # ) -> tuple[list[HumanFindResultItem], int]:
+    #     async with self.dbh.pool.acquire() as conn:
+    #         return await query_find_humans(
+    #             conn,
+    #             organization_id=organization_id,
+    #             query=query,
+    #             page=page,
+    #             per_page=per_page,
+    #             omit_revoked=omit_revoked,
+    #             omit_non_human=omit_non_human,
+    #         )
 
     async def revoke_user(
         self,
@@ -343,7 +337,7 @@ class PGUserComponent(BaseUserComponent):
         match await self._organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
+            case Organization():
                 pass
             case unknown:
                 assert_never(unknown)
