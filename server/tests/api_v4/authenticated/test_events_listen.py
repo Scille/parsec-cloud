@@ -18,8 +18,10 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
+from parsec.components.memory.events import MemoryEventsComponent
 from parsec.events import Event, EventPinged
 from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
+from tests.common.client import AuthenticatedRpcClient
 
 
 class GenerateEvent(Protocol):
@@ -202,6 +204,53 @@ async def test_user_not_receive_event_before_listen(
         )
 
 
+async def test_http_error_404_not_found(backend: Backend, coolorg: CoolorgRpcClients) -> None:
+    import httpx_sse
+
+    mod_alice = AuthenticatedRpcClient(
+        coolorg.alice.raw_client,
+        OrganizationID("foobar"),
+        coolorg.alice.device_id,
+        coolorg.alice.signing_key,
+        coolorg.alice.event,
+    )
+
+    with pytest.raises(httpx_sse.SSEError) as exception:
+        async with mod_alice.events_listen() as mod_alice_sse:
+            await mod_alice_sse.next_event()
+
+    assert exception.traceback.pop().frame.f_locals["self"].response.status_code == 404
+
+
+async def test_conn_closed_on_bad_outcome(
+    backend: Backend, minimalorg: MinimalorgRpcClients
+) -> None:
+    async with minimalorg.alice.events_listen() as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+    memory_events = backend.events
+    assert isinstance(memory_events, MemoryEventsComponent)
+    del memory_events._data.organizations[minimalorg.organization_id]
+
+    with pytest.raises(StopAsyncIteration):
+        async with minimalorg.alice.events_listen() as alice_sse:
+            backend.event_bus._dispatch_incoming_event(
+                events.EventPinged(
+                    organization_id=minimalorg.organization_id,
+                    ping="event2",
+                )
+            )
+
+            assert await alice_sse.next_event(), "The connection should have been closed"
+
+
 async def test_non_sse_request(minimalorg: MinimalorgRpcClients) -> None:
     alice = minimalorg.alice
     alice_client = alice.raw_client
@@ -352,7 +401,6 @@ async def test_receive_event_of_newly_shared_realm(
 
 
 # TODO: test `Last-Event-ID`
-# TODO: test connection gets closed due to SseAPiEventsListenBadOutcome
 
 
 @pytest.mark.timeout(2)
