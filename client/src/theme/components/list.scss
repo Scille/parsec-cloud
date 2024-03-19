@@ -2,7 +2,7 @@
 
 /* **** List of workspaces, files/folder, users **** */
 
-ion-item:has(.workspace-list-item),
+.workspace-list-item,
 ion-item:has(.file-list-item),
 .user-list-item {
   border-radius: var(--parsec-radius-4);
@@ -125,6 +125,8 @@ ion-item:has(.file-list-item),
   display: flex;
   align-items: center;
   overflow: hidden;
+  --background-hover-opacity: 1;
+  --background-hover: var(--parsec-color-light-primary-30);
 }
 
 // List of files/folders

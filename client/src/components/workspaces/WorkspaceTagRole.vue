@@ -3,7 +3,7 @@
 <template>
   <ion-label class="label-role">
     <ion-chip
-      class="caption-caption tag"
+      class="button-small tag"
       :class="role !== null ? getClassForProfile(role) : ''"
     >
       {{ translateWorkspaceRole(role).label }}
