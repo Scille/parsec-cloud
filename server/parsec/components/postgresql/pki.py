@@ -36,7 +36,7 @@ class PkiEnrollmentStatus(Enum):
     CANCELLED = "CANCELLED"
 
 
-_q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
+_q_get_last_pki_enrollment_from_certificate_sha256_for_update = Q(
     f"""
     SELECT
         enrollment_id,
@@ -48,7 +48,7 @@ _q_get_last_pki_enrollment_from_certificate_sha1_for_update = Q(
         pki_enrollment
     WHERE (
         organization = { q_organization_internal_id("$organization_id") }
-        AND submitter_der_x509_certificate_sha1=$submitter_der_x509_certificate_sha1
+        AND submitter_der_x509_certificate_sha256=$submitter_der_x509_certificate_sha256
     )
     ORDER BY _id DESC LIMIT 1
     FOR UPDATE
@@ -116,7 +116,7 @@ _q_submit_pki_enrollment = Q(
         organization,
         enrollment_id,
         submitter_der_x509_certificate,
-        submitter_der_x509_certificate_sha1,
+        submitter_der_x509_certificate_sha256,
         submit_payload_signature,
         submit_payload,
         enrollment_state,
@@ -126,7 +126,7 @@ _q_submit_pki_enrollment = Q(
         { q_organization_internal_id("$organization_id") },
         $enrollment_id,
         $submitter_der_x509_certificate,
-        $submitter_der_x509_certificate_sha1,
+        $submitter_der_x509_certificate_sha256,
         $submit_payload_signature,
         $submit_payload,
         $enrollment_state,
@@ -266,7 +266,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             PkiEnrollmentAlreadyEnrolledError
             PkiEnrollmentIdAlreadyUsedError
         """
-        submitter_der_x509_certificate_sha1 = hashlib.sha1(submitter_der_x509_certificate).digest()
+        submitter_der_x509_certificate_sha256 = hashlib.sha256(
+            submitter_der_x509_certificate
+        ).digest()
         async with self.dbh.pool.acquire() as conn, conn.transaction():
             # Hold the user/device write lock before any check in the enrollment
             # table to ensure it is going to be done without concurrency issues
@@ -283,9 +285,9 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
             # Try to retrieve the last attempt with this x509 certificate
             row = await conn.fetchrow(
-                *_q_get_last_pki_enrollment_from_certificate_sha1_for_update(
+                *_q_get_last_pki_enrollment_from_certificate_sha256_for_update(
                     organization_id=organization_id.str,
-                    submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                    submitter_der_x509_certificate_sha256=submitter_der_x509_certificate_sha256,
                 )
             )
             if row:
@@ -353,7 +355,7 @@ class PGPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         organization_id=organization_id.str,
                         enrollment_id=enrollment_id,
                         submitter_der_x509_certificate=submitter_der_x509_certificate,
-                        submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                        submitter_der_x509_certificate_sha256=submitter_der_x509_certificate_sha256,
                         submit_payload_signature=submit_payload_signature,
                         submit_payload=submit_payload,
                         enrollment_state=PkiEnrollmentStatus.SUBMITTED.value,

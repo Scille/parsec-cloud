@@ -103,7 +103,7 @@ pub struct DeviceFileSmartcard {
 
     pub encrypted_key: Bytes,
     pub certificate_id: String,
-    pub certificate_sha1: Option<Bytes>,
+    pub certificate_sha256: Option<Bytes>,
 }
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
@@ -119,7 +119,7 @@ impl_transparent_data_format_conversion!(
     slug,
     encrypted_key,
     certificate_id,
-    certificate_sha1,
+    certificate_sha256,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

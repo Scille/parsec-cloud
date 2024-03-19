@@ -35,7 +35,7 @@
             "type": "String"
         },
         {
-            "name": "certificate_sha1",
+            "name": "certificate_sha256",
             "type": "RequiredOption<Bytes>"
         }
     ]

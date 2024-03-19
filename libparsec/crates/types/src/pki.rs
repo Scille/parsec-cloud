@@ -116,7 +116,7 @@ pub struct X509Certificate {
     pub issuer: HashMap<String, String>,
     pub subject: HashMap<String, String>,
     pub der_x509_certificate: Bytes,
-    pub certificate_sha1: Bytes,
+    pub certificate_sha256: Bytes,
     pub certificate_id: Option<String>,
 }
 
@@ -147,7 +147,7 @@ impl_transparent_data_format_conversion!(
     issuer,
     subject,
     der_x509_certificate,
-    certificate_sha1,
+    certificate_sha256,
     certificate_id,
 );
 

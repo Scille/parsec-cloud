@@ -269,7 +269,7 @@ class MemoryPkiEnrollmentInfoCancelled:
 class MemoryPkiEnrollment:
     enrollment_id: EnrollmentID
     submitter_der_x509_certificate: bytes = field(repr=False)
-    submitter_der_x509_certificate_sha1: bytes = field(repr=False)
+    submitter_der_x509_certificate_sha256: bytes = field(repr=False)
 
     submit_payload_signature: bytes = field(repr=False)
     submit_payload: bytes = field(repr=False)
