@@ -423,8 +423,8 @@ async function listFolder(): Promise<void> {
         }
       }
     }
-    folders.value.replace(newFolders);
-    files.value.replace(newFiles);
+    folders.value.smartUpdate(newFolders);
+    files.value.smartUpdate(newFiles);
   } else {
     informationManager.present(
       new Information({
