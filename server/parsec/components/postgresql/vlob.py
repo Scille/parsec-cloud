@@ -9,10 +9,10 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    SequesterServiceID,
-    VlobID,
-    UserProfile,
     RealmRole,
+    SequesterServiceID,
+    UserProfile,
+    VlobID,
 )
 from parsec.ballpark import (
     RequireGreaterTimestamp,
@@ -21,20 +21,12 @@ from parsec.ballpark import (
 )
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
-from parsec.components.postgresql.handler import retry_on_unique_violation
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
-from parsec.components.postgresql.sequester import get_sequester_authority, get_sequester_services
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import transaction
-from parsec.components.postgresql.vlob_queries import (
-    query_list_versions,
-    query_poll_changes,
-    query_update,
-)
 from parsec.components.postgresql.vlob_queries.write import _q_create
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
-from parsec.components.sequester import BaseSequesterService
 from parsec.components.user import CheckUserWithDeviceBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
@@ -43,39 +35,38 @@ from parsec.components.vlob import (
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
 )
-from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
+from parsec.events import EventVlob
 
+# async def _check_sequestered_organization(
+#     conn: asyncpg.Connection,
+#     organization_id: OrganizationID,
+#     sequester_authority: SequesterAuthority | None,
+#     sequester_blob: dict[SequesterServiceID, bytes] | None,
+# ) -> dict[SequesterServiceID, BaseSequesterService] | None:
+#     if sequester_blob is None and sequester_authority is None:
+#         # Sequester is disable, fetching sequester services is pointless
+#         return None
 
-async def _check_sequestered_organization(
-    conn: asyncpg.Connection,
-    organization_id: OrganizationID,
-    sequester_authority: SequesterAuthority | None,
-    sequester_blob: dict[SequesterServiceID, bytes] | None,
-) -> dict[SequesterServiceID, BaseSequesterService] | None:
-    if sequester_blob is None and sequester_authority is None:
-        # Sequester is disable, fetching sequester services is pointless
-        return None
+#     if sequester_authority is None:
+#         raise VlobSequesterDisabledError()
 
-    if sequester_authority is None:
-        raise VlobSequesterDisabledError()
+#     configured_services = {
+#         s.service_id: s
+#         for s in await get_sequester_services(
+#             conn=conn, organization_id=organization_id, with_disabled=False
+#         )
+#     }
+#     requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
 
-    configured_services = {
-        s.service_id: s
-        for s in await get_sequester_services(
-            conn=conn, organization_id=organization_id, with_disabled=False
-        )
-    }
-    requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
+#     if configured_services.keys() != requested_sequester_services:
+#         raise VlobSequesterServiceInconsistencyError(
+#             sequester_authority_certificate=sequester_authority.certificate,
+#             sequester_services_certificates=[
+#                 s.service_certificate for s in configured_services.values()
+#             ],
+#         )
 
-    if configured_services.keys() != requested_sequester_services:
-        raise VlobSequesterServiceInconsistencyError(
-            sequester_authority_certificate=sequester_authority.certificate,
-            sequester_services_certificates=[
-                s.service_certificate for s in configured_services.values()
-            ],
-        )
-
-    return configured_services
+#     return configured_services
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -272,6 +263,9 @@ class PGVlobComponent(BaseVlobComponent):
 
         except asyncpg.UniqueViolationError:
             return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
+
+        assert vlob_atom_internal_id is not None
+
         await self.event_bus.send(
             EventVlob(
                 organization_id=organization_id,
@@ -302,37 +296,37 @@ class PGVlobComponent(BaseVlobComponent):
         #     conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
         # )
 
-    @retry_on_unique_violation
-    async def update(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        encryption_revision: int,
-        vlob_id: VlobID,
-        version: int,
-        timestamp: DateTime,
-        blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
-    ) -> None:
-        async with self.dbh.pool.acquire() as conn:
-            sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
-                conn,
-                organization_id=organization_id,
-                sequester_blob=sequester_blob,
-                author=author,
-                encryption_revision=encryption_revision,
-                vlob_id=vlob_id,
-                timestamp=timestamp,
-            )
+    # @retry_on_unique_violation
+    # async def update(
+    #     self,
+    #     organization_id: OrganizationID,
+    #     author: DeviceID,
+    #     encryption_revision: int,
+    #     vlob_id: VlobID,
+    #     version: int,
+    #     timestamp: DateTime,
+    #     blob: bytes,
+    #     sequester_blob: dict[SequesterServiceID, bytes] | None = None,
+    # ) -> None:
+    #     async with self.dbh.pool.acquire() as conn:
+    #         sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
+    #             conn,
+    #             organization_id=organization_id,
+    #             sequester_blob=sequester_blob,
+    #             author=author,
+    #             encryption_revision=encryption_revision,
+    #             vlob_id=vlob_id,
+    #             timestamp=timestamp,
+    #         )
 
-            return await query_update(
-                conn,
-                organization_id,
-                author,
-                encryption_revision,
-                vlob_id,
-                version,
-                timestamp,
-                blob,
-                sequester_blob,
-            )
+    #         return await query_update(
+    #             conn,
+    #             organization_id,
+    #             author,
+    #             encryption_revision,
+    #             vlob_id,
+    #             version,
+    #             timestamp,
+    #             blob,
+    #             sequester_blob,
+    #         )
