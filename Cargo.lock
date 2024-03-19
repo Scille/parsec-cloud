@@ -1847,7 +1847,6 @@ dependencies = [
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_types",
- "winfsp_wrs_build",
 ]
 
 [[package]]
@@ -1870,6 +1869,7 @@ dependencies = [
  "libparsec",
  "neon",
  "tokio",
+ "winfsp_wrs_build",
 ]
 
 [[package]]
@@ -2716,6 +2716,7 @@ dependencies = [
  "tokio",
  "url",
  "uuid",
+ "winfsp_wrs_build",
 ]
 
 [[package]]
