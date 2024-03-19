@@ -27,7 +27,7 @@ from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import transaction
 from parsec.components.postgresql.vlob_queries.write import _q_create
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
@@ -175,12 +175,12 @@ class PGVlobComponent(BaseVlobComponent):
             case unknown:
                 assert_never(unknown)
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobCreateBadOutcome.AUTHOR_REVOKED
             case UserProfile():
                 pass

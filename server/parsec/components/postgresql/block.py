@@ -42,7 +42,7 @@ from parsec.components.postgresql.utils import (
     transaction,
 )
 from parsec.components.realm import RealmCheckBadOutcome
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 
 _q_get_realm_id_from_block_id = Q(
     f"""
@@ -171,12 +171,12 @@ class PGBlockComponent(BaseBlockComponent):
             case unknown:
                 assert_never(unknown)
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
             case UserProfile():
                 pass
@@ -233,12 +233,12 @@ class PGBlockComponent(BaseBlockComponent):
             case unknown:
                 assert_never(unknown)
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_NOT_FOUND:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserWithDeviceBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
             case UserProfile():
                 pass
