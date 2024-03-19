@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EntryStatFile, EntryStatFolder } from '@/parsec';
+import { EntryID, EntryStatFile, EntryStatFolder } from '@/parsec';
 import { ImportData } from '@/services/importManager';
 
 export enum SortProperty {
@@ -90,5 +90,43 @@ export class EntryCollection<Model extends EntryModel> {
   replace(entries: Model[]): void {
     this.clear();
     this.entries = entries;
+  }
+
+  smartUpdate(entries: Model[]): void {
+    const toAdd: Model[] = [];
+    const updated: EntryID[] = [];
+    // First, iter on newly listed entries
+    for (const entry of entries) {
+      const existing = this.entries.find((e) => e.id === entry.id);
+      if (existing) {
+        // entry is already listed, updated it
+        existing.baseVersion = entry.baseVersion;
+        existing.confinementPoint = entry.confinementPoint;
+        existing.created = entry.created;
+        existing.name = entry.name;
+        existing.needSync = entry.needSync;
+        existing.tag = entry.tag;
+        existing.updated = entry.updated;
+        updated.push(existing.id);
+      } else {
+        // entry is not yet listed, mark it as to be added
+        toAdd.push(entry);
+      }
+    }
+    // removing entries that are not newly listed
+    for (const entry of this.entries.slice()) {
+      const wasUpdated = updated.find((u) => u === entry.id);
+      if (!wasUpdated) {
+        // entry was not updated, delete it
+        const index = this.entries.findIndex((e) => e.id === entry.id);
+        if (index !== -1) {
+          this.entries.splice(index, 1);
+        }
+      }
+    }
+    // add the missing entries
+    for (const entry of toAdd) {
+      this.entries.push(entry);
+    }
   }
 }
