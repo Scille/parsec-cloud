@@ -102,6 +102,7 @@
             @update-request="onUpdateRequested"
           />
         </div>
+
         <!-- part 6 (loading)-->
         <div
           class="step org-loading"
