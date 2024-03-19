@@ -127,7 +127,19 @@ pub async fn client_start(
         .await
         .map_err(ClientStartError::Internal)?;
 
-    let handle = initializing.initialized(HandleItem::Client { client, on_event });
+    let handle = initializing.initialized(move |item: &mut HandleItem| {
+        let starting = std::mem::replace(item, HandleItem::Client { client, on_event });
+        match starting {
+            HandleItem::StartingClient {
+                to_wake_on_done, ..
+            } => {
+                for event in to_wake_on_done {
+                    event.notify(usize::MAX);
+                }
+            }
+            _ => unreachable!(),
+        }
+    });
 
     Ok(handle)
 }
