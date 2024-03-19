@@ -3,92 +3,102 @@
 <template>
   <ion-list class="summary-list">
     <!-- organization name -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.organization') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{ organization }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.Organization)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
+    <ion-item class="ion-no-padding">
+      <div class="summary-item">
+        <ion-label class="summary-item__label subtitles-sm">
+          {{ $t('CreateOrganization.overview.organization') }}
+        </ion-label>
+        <ion-text class="summary-item__text body">
+          {{ organization }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          class="summary-item__button"
+          @click="$emit('update-request', OrgInfo.Organization)"
+        >
+          {{ $t('CreateOrganization.button.modify') }}
+        </ion-button>
+      </div>
     </ion-item>
 
     <!-- fullname -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.fullname') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{ fullname }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.UserInfo)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
+    <ion-item class="ion-no-padding">
+      <div class="summary-item">
+        <ion-label class="summary-item__label subtitles-sm">
+          {{ $t('CreateOrganization.overview.fullname') }}
+        </ion-label>
+        <ion-text class="summary-item__text body">
+          {{ fullname }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          class="summary-item__button"
+          @click="$emit('update-request', OrgInfo.UserInfo)"
+        >
+          {{ $t('CreateOrganization.button.modify') }}
+        </ion-button>
+      </div>
     </ion-item>
 
     <!-- Email -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.email') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{ email }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.UserInfo)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
+    <ion-item class="ion-no-padding">
+      <div class="summary-item">
+        <ion-label class="summary-item__label subtitles-sm">
+          {{ $t('CreateOrganization.overview.email') }}
+        </ion-label>
+        <ion-text class="summary-item__text body">
+          {{ email }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          class="summary-item__button"
+          @click="$emit('update-request', OrgInfo.UserInfo)"
+        >
+          {{ $t('CreateOrganization.button.modify') }}
+        </ion-button>
+      </div>
     </ion-item>
 
     <!-- serverMode -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.server') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{ serverMode === ServerMode.SaaS ? $t('CreateOrganization.saas') : serverAddr }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.ServerMode)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
+    <ion-item class="ion-no-padding">
+      <div class="summary-item">
+        <ion-label class="summary-item__label subtitles-sm">
+          {{ $t('CreateOrganization.overview.server') }}
+        </ion-label>
+        <ion-text class="summary-item__text body">
+          {{ serverMode === ServerMode.SaaS ? $t('CreateOrganization.saas') : serverAddr }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          class="summary-item__button"
+          @click="$emit('update-request', OrgInfo.ServerMode)"
+        >
+          {{ $t('CreateOrganization.button.modify') }}
+        </ion-button>
+      </div>
     </ion-item>
 
     <!-- authentication mode -->
-    <ion-item class="summary-item">
-      <ion-label class="summary-item__label subtitles-sm">
-        {{ $t('CreateOrganization.overview.authentication') }}
-      </ion-label>
-      <ion-text class="summary-item__text body">
-        {{
-          authentication === DeviceSaveStrategyTag.Keyring
-            ? $t('CreateOrganization.keyringChoice')
-            : $t('CreateOrganization.passwordChoice')
-        }}
-      </ion-text>
-      <ion-button
-        fill="clear"
-        class="summary-item__button"
-        @click="$emit('update-request', OrgInfo.AuthenticationMode)"
-      >
-        {{ $t('CreateOrganization.button.modify') }}
-      </ion-button>
+    <ion-item class="ion-no-padding">
+      <div class="summary-item">
+        <ion-label class="summary-item__label subtitles-sm">
+          {{ $t('CreateOrganization.overview.authentication') }}
+        </ion-label>
+        <ion-text class="summary-item__text body">
+          {{
+            authentication === DeviceSaveStrategyTag.Keyring
+              ? $t('CreateOrganization.keyringChoice')
+              : $t('CreateOrganization.passwordChoice')
+          }}
+        </ion-text>
+        <ion-button
+          fill="clear"
+          class="summary-item__button"
+          @click="$emit('update-request', OrgInfo.AuthenticationMode)"
+        >
+          {{ $t('CreateOrganization.button.modify') }}
+        </ion-button>
+      </div>
     </ion-item>
   </ion-list>
 </template>
@@ -128,37 +138,39 @@ defineProps<{
 <style scoped lang="scss">
 .summary-list {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .summary-item {
   display: flex;
+  align-items: center;
+  flex: 1;
   position: relative;
-  flex-direction: column;
-
-  &::part(native) {
-    padding: 0;
-  }
-
-  & > *:not(:last-child) {
-    margin-right: 0.5rem;
-  }
+  gap: 1rem;
+  width: -webkit-fill-available;
 
   &::after {
     content: '';
-    position: relative;
+    position: absolute;
     width: 100%;
     height: 1px;
-    margin: 0.5rem 0;
+    bottom: -0.5rem;
     background: var(--parsec-color-light-secondary-disabled);
+    z-index: 2;
   }
 
   &__label {
-    max-width: 10rem;
+    min-width: 8rem;
     color: var(--parsec-color-light-secondary-grey);
   }
 
   &__text {
-    max-width: 20rem;
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--parsec-color-light-secondary-text);
   }
   &__button {
