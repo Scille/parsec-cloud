@@ -37,18 +37,22 @@ from parsec.components.organization import (
     organization_bootstrap_validate,
 )
 from parsec.components.postgresql.test_queries import (
+    q_test_drop_organization_from_block_table,
     q_test_drop_organization_from_device_table,
     q_test_drop_organization_from_human_table,
     q_test_drop_organization_from_invitation_table,
     q_test_drop_organization_from_organization_table,
+    q_test_drop_organization_from_profile_table,
     q_test_drop_organization_from_realm_table,
     q_test_drop_organization_from_realm_user_role_table,
     q_test_drop_organization_from_user_table,
     q_test_drop_organization_from_vlob_atom_table,
+    q_test_duplicate_organization_from_block_table,
     q_test_duplicate_organization_from_device_table,
     q_test_duplicate_organization_from_human_table,
     q_test_duplicate_organization_from_invitation_table,
     q_test_duplicate_organization_from_organization_table,
+    q_test_duplicate_organization_from_profile_table,
     q_test_duplicate_organization_from_realm_table,
     q_test_duplicate_organization_from_realm_user_role_table,
     q_test_duplicate_organization_from_user_table,
@@ -176,7 +180,18 @@ SELECT
     ) exist,
     (
         SELECT ARRAY(
-            SELECT (revoked_on, profile::text)
+            SELECT (
+                revoked_on,
+                COALESCE (
+                    (
+                        SELECT profile.profile::text
+                        FROM profile
+                        WHERE profile.user_ = user_._id
+                        ORDER BY profile.certified_on DESC LIMIT 1
+                    ),
+                    user_.initial_profile::text
+                )
+            )
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
             AND created_on <= $at
@@ -639,6 +654,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def test_drop_organization(self, id: OrganizationID) -> None:
         async with self.pool.acquire() as conn:
+            await conn.execute(*q_test_drop_organization_from_block_table(organization_id=id.str))
             await conn.execute(
                 *q_test_drop_organization_from_vlob_atom_table(organization_id=id.str)
             )
@@ -650,6 +666,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 *q_test_drop_organization_from_invitation_table(organization_id=id.str)
             )
             await conn.execute(*q_test_drop_organization_from_device_table(organization_id=id.str))
+            await conn.execute(*q_test_drop_organization_from_profile_table(organization_id=id.str))
             await conn.execute(*q_test_drop_organization_from_user_table(organization_id=id.str))
             await conn.execute(*q_test_drop_organization_from_human_table(organization_id=id.str))
             await conn.execute(
@@ -676,6 +693,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 )
             )
             await conn.execute(
+                *q_test_duplicate_organization_from_profile_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
                 *q_test_duplicate_organization_from_device_table(
                     source_id=source_id.str, target_id=target_id.str
                 )
@@ -697,6 +719,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             await conn.execute(
                 *q_test_duplicate_organization_from_vlob_atom_table(
+                    source_id=source_id.str, target_id=target_id.str
+                )
+            )
+            await conn.execute(
+                *q_test_duplicate_organization_from_block_table(
                     source_id=source_id.str, target_id=target_id.str
                 )
             )

@@ -41,7 +41,12 @@ from parsec.components.postgresql.user_queries.revoke import (
     _q_revoke_user,
     q_freeze_user,
 )
-from parsec.components.postgresql.utils import transaction
+from parsec.components.postgresql.utils import (
+    Q,
+    q_device_internal_id,
+    q_user_internal_id,
+    transaction,
+)
 from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
     BaseUserComponent,
@@ -69,6 +74,19 @@ from parsec.events import (
     EventUserRevokedOrFrozen,
     EventUserUnfrozen,
     EventUserUpdated,
+)
+
+_q_update_user = Q(
+    f"""
+INSERT INTO profile (user_, profile, profile_certificate, certified_by, certified_on)
+VALUES (
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    $profile,
+    $profile_certificate,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$certified_by") },
+    $certified_on
+)
+"""
 )
 
 
@@ -362,13 +380,20 @@ class PGUserComponent(BaseUserComponent):
         #   and that he have to find somebody with access to a seemingly unrelated realm
         #   to change a role in order to be able to do it !
 
-        # TODO: implement this
-        # target_user.profile_updates.append(
-        #     MemoryUserProfileUpdate(
-        #         cooked=certif,
-        #         user_update_certificate=user_update_certificate,
-        #     )
-        # )
+        await q_take_user_device_write_lock(conn, organization_id)
+        result = await conn.execute(
+            *_q_update_user(
+                organization_id=organization_id.str,
+                user_id=certif.user_id.str,
+                profile=certif.new_profile.str,
+                profile_certificate=user_update_certificate,
+                certified_by=author.str,
+                certified_on=now,
+            )
+        )
+
+        # This should not fail as the proper checks have already been performed
+        assert result == "INSERT 0 1", f"Unexpected {result}"
 
         await self.event_bus.send(
             EventCommonCertificate(

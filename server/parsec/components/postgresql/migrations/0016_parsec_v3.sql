@@ -1,6 +1,22 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 -------------------------------------------------------
+-- User
+-------------------------------------------------------
+
+ALTER TABLE user_ RENAME COLUMN profile TO initial_profile;
+
+CREATE TABLE profile (
+    _id SERIAL PRIMARY KEY,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    profile user_profile NOT NULL,
+    profile_certificate BYTEA NOT NULL,
+    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL
+);
+
+
+-------------------------------------------------------
 -- Sequester
 -------------------------------------------------------
 

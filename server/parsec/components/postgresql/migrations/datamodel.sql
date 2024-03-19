@@ -90,13 +90,22 @@ CREATE TABLE user_ (
     -- system to obtain a device label (i.e. label is user_id, email is `<user_id>@redacted.invalid`).
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
-    profile user_profile NOT NULL,
+    initial_profile user_profile NOT NULL,
     -- This field is altered in an `ALTER TABLE` statement below
     -- in order to avoid cross-reference issues
     shamir_recovery INTEGER,
     frozen BOOLEAN NOT NULL DEFAULT False,
 
     UNIQUE(organization, user_id)
+);
+
+CREATE TABLE profile (
+    _id SERIAL PRIMARY KEY,
+    user_ INTEGER REFERENCES user_ (_id) NOT NULL,
+    profile user_profile NOT NULL,
+    profile_certificate BYTEA NOT NULL,
+    certified_by INTEGER NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL
 );
 
 
@@ -126,6 +135,7 @@ ALTER TABLE user_
 ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
 ALTER TABLE sequester_service ADD FOREIGN KEY (revoked_sequester_certifier) REFERENCES device (_id);
 
+ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
 
 -------------------------------------------------------
 --  Shamir recovery
