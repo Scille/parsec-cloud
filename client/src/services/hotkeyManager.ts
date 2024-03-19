@@ -87,7 +87,7 @@ export class HotkeyManager {
 
       if (!hkGroup) {
         hkGroup = { group: group, hotkeys: [], disabledCount: 0 };
-        this.groups.push(hkGroup);
+        this.groups.unshift(hkGroup);
       }
       // Insert at the beginning so it will have the priority
       hkGroup.hotkeys.unshift(keys);
