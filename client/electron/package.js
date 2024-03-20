@@ -105,7 +105,7 @@ const options = {
     base: 'core22',
     grade: 'devel',
     allowNativeWayland: true,
-    stagePackages: ['default', 'fuse3'],
+    stagePackages: ['default', 'fuse3', 'libssl3'],
     confinement: 'classic',
   },
 
