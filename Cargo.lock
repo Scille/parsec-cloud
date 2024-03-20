@@ -2009,7 +2009,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_test",
- "sha1",
  "sha2",
  "sodiumoxide",
  "thiserror",

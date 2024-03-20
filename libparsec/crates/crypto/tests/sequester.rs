@@ -317,13 +317,27 @@ fn sign_compat() {
 fn encrypt_compat() {
     let priv_key = SequesterPrivateKeyDer::try_from(PRIVATE_KEY_DER_1024).unwrap();
 
+    // Generated with parsec 3.0.0-a.0 2024-03-19:
+    //
+    // ```rust
+    // let pubkey = SequesterPublicKeyDer::try_from(PUBLIC_KEY_DER_1024).unwrap();
+    // let encrypted = pubkey.encrypt(b"Hello world");
+    // std::fs::write("./test.enc", &encrypted).unwrap();
+    // ```
+    //
+    // Then:
+    //
+    // ```shell
+    // xxd -c 32 -g 32 test.enc | cut -f 2 -d ' '
+    // ```
     let encrypted = hex!(
-        "52534145532d4f4145502d5853414c534132302d504f4c59313330353a278b9346743cc609"
-        "258a4a82023059411d78c29aed9cf9893dc36b1f1f0055e3db8fa3624b4e3ced4fa1d3683b"
-        "97cff2694ddbebeb9a59d1533e9b4dba005958f70a1b7b4b54fef420fb200146a73ac0f457"
-        "168e71decb50d98af9332da36b5143e3470f7858a1a43f0f7ffff6e98e2487579d96a3791d"
-        "69d48ba307e9984dad42781a567fa27e74e9ee88fd945736968855588eec48f43faa396464"
-        "d9a5e8cfd5326ea0193ff5732b51423146d683b74870ed"
+        "52534145532d4f4145502d5348413235362d5853414c534132302d504f4c5931"
+        "3330353a1746e89540d079567e6868b01e4ecbccd821a8c56c8ef1b9d01998db"
+        "a701add9a8fa22786fe35c5e1214c850b35e0751d06b4fcf39207bc8d02088ef"
+        "09ce159aa941d319c6248e7059965058f50ee651df6fd8c6e64256d0384eb66e"
+        "4008de12158bb7258f09db26ef9e2387f5a9bb460332b1815650596c688b5f3b"
+        "ec88a056fe68817b81a6fa4525b6e66eafd10790ce7862ac5a77f01950a7c93c"
+        "6ab7bb1ad0dc325a34552ec93311f7e9573a40bdc72362"
     );
 
     assert_eq!(priv_key.decrypt(&encrypted).unwrap(), b"Hello world");
