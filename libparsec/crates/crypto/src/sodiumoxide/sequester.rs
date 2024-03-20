@@ -20,20 +20,28 @@ use crate::{
  */
 
 #[derive(Clone)]
-pub struct SequesterPrivateKeyDer(Rsa<Private>);
+pub struct SequesterPrivateKeyDer(PKey<Private>);
 
 crate::impl_key_debug!(SequesterPrivateKeyDer);
 
 impl PartialEq for SequesterPrivateKeyDer {
     fn eq(&self, other: &Self) -> bool {
-        self.0.n() == other.0.n()
-            && self.0.e() == other.0.e()
-            && self.0.d() == other.0.d()
-            && self.0.p() == other.0.p()
-            && self.0.q() == other.0.q()
-            && self.0.dmp1() == other.0.dmp1()
-            && self.0.dmq1() == other.0.dmq1()
-            && self.0.iqmp() == other.0.iqmp()
+        let privkey = self
+            .0
+            .rsa()
+            .expect("Should have been initialized with a RSA key");
+        let other_privkey = other
+            .0
+            .rsa()
+            .expect("Should have been initialized with a RSA key");
+        privkey.n() == other_privkey.n()
+            && privkey.e() == other_privkey.e()
+            && privkey.d() == other_privkey.d()
+            && privkey.p() == other_privkey.p()
+            && privkey.q() == other_privkey.q()
+            && privkey.dmp1() == other_privkey.dmp1()
+            && privkey.dmq1() == other_privkey.dmq1()
+            && privkey.iqmp() == other_privkey.iqmp()
     }
 }
 
@@ -46,6 +54,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
         PKey::private_key_from_der(bytes)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))?
             .rsa()
+            .and_then(PKey::from_rsa)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
@@ -60,7 +69,9 @@ impl SequesterPrivateKeyDer {
             priv_key.n().to_owned().expect("Unreachable"),
             priv_key.e().to_owned().expect("Unreachable"),
         )
+        .and_then(PKey::from_rsa)
         .expect("Unreachable");
+        let priv_key = PKey::from_rsa(priv_key).expect("Unreachable");
 
         (Self(priv_key), SequesterPublicKeyDer(pub_key))
     }
@@ -74,10 +85,7 @@ impl SequesterPrivateKeyDer {
     }
 
     pub fn dump_pem(&self) -> Zeroizing<String> {
-        let pkey_pem = PKey::from_rsa(self.0.to_owned())
-            .expect("Unreachable")
-            .private_key_to_pem_pkcs8()
-            .expect("Unreachable");
+        let pkey_pem = self.0.private_key_to_pem_pkcs8().expect("Unreachable");
 
         Zeroizing::new(String::from_utf8(pkey_pem).expect("Unreachable"))
     }
@@ -86,6 +94,7 @@ impl SequesterPrivateKeyDer {
         PKey::private_key_from_pem(s.as_bytes())
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))?
             .rsa()
+            .and_then(PKey::from_rsa)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPrivateKeyDer(err.to_string()))
     }
@@ -95,9 +104,17 @@ impl SequesterPrivateKeyDer {
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
 
         let mut decrypted_key_der = vec![0; cipherkey.len()];
-        let decrypted_key_bytecount = self
-            .0
-            .private_decrypt(cipherkey, &mut decrypted_key_der, Padding::PKCS1_OAEP)
+        let mut decrypter =
+            openssl::encrypt::Decrypter::new(&self.0).expect("Cannot create decrypter");
+        decrypter
+            .set_rsa_padding(Padding::PKCS1_OAEP)
+            .expect("Cannot set RSA padding to OAEP");
+        decrypter
+            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha1())
+            .expect("Cannot set RSA OAEP MD to SHA1");
+
+        let decrypted_key_bytecount = decrypter
+            .decrypt(cipherkey, &mut decrypted_key_der)
             .map_err(|_| CryptoError::Decryption)?;
 
         let clearkey = SecretKey::try_from(&decrypted_key_der[..decrypted_key_bytecount])?;
@@ -112,7 +129,7 @@ impl SequesterPrivateKeyDer {
 
 #[derive(Clone, Deserialize)]
 #[serde(try_from = "&Bytes")]
-pub struct SequesterPublicKeyDer(Rsa<Public>);
+pub struct SequesterPublicKeyDer(PKey<Public>);
 
 crate::impl_key_debug!(SequesterPublicKeyDer);
 
@@ -124,7 +141,15 @@ impl PartialEq for SequesterPublicKeyDer {
         // we can't do because we take a reference to both the keys we want to compare.
         // We could also clone the keys, but that would mean having an allocation in the
         // comparison method.
-        self.0.n() == other.0.n() && self.0.e() == other.0.e()
+        let pubkey = self
+            .0
+            .rsa()
+            .expect("Should have been initialized with a RSA key");
+        let other_pubkey = other
+            .0
+            .rsa()
+            .expect("Should have been initialized with a RSA key");
+        pubkey.n() == other_pubkey.n() && pubkey.e() == other_pubkey.e()
     }
 }
 
@@ -135,6 +160,7 @@ impl TryFrom<&[u8]> for SequesterPublicKeyDer {
 
     fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
         Rsa::public_key_from_der(bytes)
+            .and_then(PKey::from_rsa)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
@@ -176,6 +202,7 @@ impl SequesterPublicKeyDer {
 
     pub fn load_pem(s: &str) -> CryptoResult<Self> {
         Rsa::public_key_from_pem(s.as_bytes())
+            .and_then(PKey::from_rsa)
             .map(Self)
             .map_err(|err| CryptoError::SequesterPublicKeyDer(err.to_string()))
     }
@@ -187,14 +214,18 @@ impl SequesterPublicKeyDer {
 
         let mut encrypted_secret_key = vec![0; self.0.size() as usize];
 
-        let encrypted_key_bytes = self
-            .0
-            .public_encrypt(
-                secret_key.as_ref(),
-                &mut encrypted_secret_key,
-                Padding::PKCS1_OAEP,
-            )
-            .expect("Unable to decrypt a secret key");
+        let mut encrypter =
+            openssl::encrypt::Encrypter::new(&self.0).expect("Cannot create encrypter");
+        encrypter
+            .set_rsa_padding(Padding::PKCS1_OAEP)
+            .expect("Cannot set RSA padding to OAEP");
+        encrypter
+            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha1())
+            .expect("Cannot set RSA OAEP MD to SHA1");
+
+        let encrypted_key_bytes = encrypter
+            .encrypt(secret_key.as_ref(), &mut encrypted_secret_key)
+            .expect("Unable to encrypt a secret key");
 
         // RSAES-OAEP uses 42 bytes for padding, hence even with an insecure
         // 1024 bits RSA key there is still 86 bytes available for payload
@@ -247,8 +278,8 @@ impl SequesterSigningKeyDer {
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterVerifyKeyDer) {
         let (priv_key, pub_key) = SequesterPrivateKeyDer::generate_pair(size_in_bits);
-        let signing_key = PKey::from_rsa(priv_key.0).expect("Unreachable");
-        let verify_key = PKey::from_rsa(pub_key.0).expect("Unreachable");
+        let signing_key = priv_key.0;
+        let verify_key = pub_key.0;
 
         (Self(signing_key), SequesterVerifyKeyDer(verify_key))
     }
