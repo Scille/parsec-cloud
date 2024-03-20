@@ -739,7 +739,7 @@
             "saveDeviceFailed": "Impossible de sauvegarder les informations",
             "tokenAlreadyUsed": "Ce lien d'invitation a déjà été utilisé et n'est plus valide.",
             "invitationNotFound": "Aucune invitation trouvée, veuillez vous assurer que le lien est correct.",
-            "offline": "Impossible de contacter le serveur. Veuilelz vérifier que vous êtes connecté(e) à Internet.",
+            "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
             "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
