@@ -189,6 +189,8 @@ async function openJoinByLinkModal(link: string): Promise<void> {
       state.value = HomePageState.Login;
     }
     await login(result.data.device, result.data.access);
+  } else {
+    await navigateTo(Routes.Home);
   }
 }
 
