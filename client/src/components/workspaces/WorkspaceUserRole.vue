@@ -43,7 +43,7 @@ const NOT_SHARED_KEY = 'not_shared';
 
 const options = computed((): MsOptions => {
   return new MsOptions(
-    [WorkspaceRole.Reader, WorkspaceRole.Contributor, WorkspaceRole.Manager, WorkspaceRole.Owner, null].map(
+    [WorkspaceRole.Owner, WorkspaceRole.Manager, WorkspaceRole.Contributor, WorkspaceRole.Reader, null].map(
       (role: WorkspaceRole | null) => {
         return {
           key: role === null ? NOT_SHARED_KEY : role,
