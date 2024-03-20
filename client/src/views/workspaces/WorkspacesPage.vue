@@ -264,7 +264,6 @@ async function refreshWorkspacesList(): Promise<void> {
   }
   const result = await parsecListWorkspaces();
   if (result.ok) {
-    workspaceList.value = result.value;
     for (const wk of result.value) {
       const sharingResult = await parsecGetWorkspaceSharing(wk.id, false);
       if (sharingResult.ok) {
@@ -281,6 +280,7 @@ async function refreshWorkspacesList(): Promise<void> {
         }
       }
     }
+    workspaceList.value = result.value;
   } else {
     informationManager.present(
       new Information({

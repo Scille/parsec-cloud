@@ -116,6 +116,12 @@ describe('Check workspaces page', () => {
     cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
   });
 
+  it('Check workspace sharing', () => {
+    cy.get('.card').first().find('.shared-group').find('ion-avatar').as('avatars').should('have.length', 2);
+    cy.get('@avatars').eq(0).contains('Ko');
+    cy.get('@avatars').eq(1).contains('Ce');
+  });
+
   // FIXME: disabled for now
   // it('Get link to the workspace', () => {
   //   cy.get('.card').eq(0).find('.card-option').click();
