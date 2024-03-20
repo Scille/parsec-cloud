@@ -47,7 +47,7 @@ describe('File List Item', () => {
     expect(wrapper.get('.file-name__label').text()).to.equal('A File.txt');
     expect(wrapper.get('.label-last-update').text()).to.equal('now');
     expect(wrapper.get('.label-size').text()).to.equal('40.3 GB');
-    wrapper.trigger('click');
+    wrapper.trigger('dblclick');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(FILE);
     wrapper.get('.options-button').trigger('click');
@@ -87,7 +87,7 @@ describe('File List Item', () => {
     expect(wrapper.get('.file-name__label').text()).to.equal('A Folder');
     expect(wrapper.get('.label-last-update').text()).to.equal('now');
     // expect(wrapper.get('.label-size')).not.to.be.visible;
-    wrapper.trigger('click');
+    wrapper.trigger('dblclick');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(FOLDER);
     wrapper.get('.options-button').trigger('click');
