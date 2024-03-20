@@ -539,10 +539,21 @@ pub async fn save_recovery_device(
 pub fn is_keyring_available() -> bool {
     // Using "tmp" as user, because keyring-rs forbids the use of empty string
     // due to an issue in macOS. See: https://github.com/hwchen/keyring-rs/pull/87
-    match KeyringEntry::new(KEYRING_SERVICE, "tmp").and_then(|x| x.get_password()) {
-        Ok(_) => true,
-        Err(keyring::error::Error::NoEntry) => true,
-        Err(err) => {
+    let result = KeyringEntry::new(KEYRING_SERVICE, "tmp");
+    let error = if cfg!(target_os = "macos") {
+        // On macOS, trying to access the entry password prompts the user for their session password.
+        // We don't want that here, so we simply check that the keyring is available.
+        result.err()
+    } else {
+        // On other platforms, accessing the entry password is a good way to avoid false positives.
+        // For instance, an isolated snap package may have access to the keyring API but would fail
+        // when trying to access the password.
+        result.and_then(|x| x.get_password()).err()
+    };
+    match error {
+        None => true,
+        Some(keyring::error::Error::NoEntry) => true,
+        Some(err) => {
             log::warn!("Keyring is not available: {err:?}");
             false
         }
