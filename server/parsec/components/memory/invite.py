@@ -312,6 +312,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             ):
                 # An invitation already exists for what the user has asked for
                 token = invitation.token
+                break
 
         else:
             # Must create a new invitation
@@ -379,6 +380,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             ):
                 # An invitation already exists for what the user has asked for
                 token = invitation.token
+                break
 
         else:
             # Must create a new invitation
