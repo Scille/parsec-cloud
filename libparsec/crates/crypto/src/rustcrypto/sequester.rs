@@ -12,7 +12,6 @@ use rsa::{
 };
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
-use sha1::Sha1;
 use sha2::Sha256;
 
 use crate::{
@@ -40,7 +39,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
 }
 
 impl SequesterPrivateKeyDer {
-    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
         let priv_key = RsaPrivateKey::new(&mut rand_08::thread_rng(), size_in_bits as usize)
@@ -73,7 +72,7 @@ impl SequesterPrivateKeyDer {
     pub fn decrypt(&self, data: &[u8]) -> CryptoResult<Vec<u8>> {
         let (cipherkey, ciphertext) =
             deserialize_with_armor(data, self.size_in_bytes(), Self::ALGORITHM)?;
-        let padding = Oaep::new::<Sha1>();
+        let padding = Oaep::new::<Sha256>();
 
         let clearkey = SecretKey::try_from(
             &self
@@ -124,7 +123,7 @@ impl Serialize for SequesterPublicKeyDer {
 }
 
 impl SequesterPublicKeyDer {
-    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
         self.0.n().bits() / 8
@@ -150,8 +149,7 @@ impl SequesterPublicKeyDer {
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
         let mut rng = rand_08::thread_rng();
-        // No choice but to use SHA1 here: this is the default in PKCS#1 OAEP standard
-        let padding = Oaep::new::<Sha1>();
+        let padding = Oaep::new::<Sha256>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
             .0
