@@ -186,7 +186,15 @@ import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue'
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { AccessStrategy, DeviceSaveStrategy, DeviceSaveStrategyPassword, DeviceSaveStrategyTag, UserClaim } from '@/parsec';
+import {
+  AccessStrategy,
+  ClaimInProgressErrorTag,
+  ClaimerRetrieveInfoErrorTag,
+  DeviceSaveStrategy,
+  DeviceSaveStrategyPassword,
+  DeviceSaveStrategyTag,
+  UserClaim,
+} from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
@@ -206,6 +214,7 @@ const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const authChoice = ref();
 const fieldsUpdated = ref(false);
+const cancelled = ref(false);
 
 const claimer = ref(new UserClaim());
 
@@ -337,6 +346,7 @@ async function cancelModal(): Promise<boolean> {
   });
 
   if (answer === Answer.Yes) {
+    cancelled.value = true;
     await claimer.value.abort();
     return modalController.dismiss(null, MsModalResult.Cancel);
   }
@@ -411,29 +421,54 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
+    await claimer.value.abort();
+    await modalController.dismiss(null, MsModalResult.Cancel);
+    let message = translate('JoinOrganization.errors.unexpected', { reason: retrieveResult.error.tag });
+    switch (retrieveResult.error.tag) {
+      case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
+        message = translate('JoinOrganization.errors.tokenAlreadyUsed');
+        break;
+      case ClaimerRetrieveInfoErrorTag.NotFound:
+        message = translate('JoinOrganization.errors.invitationNotFound');
+        break;
+      case ClaimerRetrieveInfoErrorTag.Offline:
+        message = translate('JoinOrganization.errors.offline');
+        break;
+    }
+
     await informationManager.present(
       new Information({
-        message: translate('JoinOrganization.errors.startFailed'),
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
     );
-    await cancelModal();
     return;
   }
+
   if (userInfoPage.value) {
     userInfoPage.value.email = retrieveResult.value.claimerEmail;
   }
   const waitResult = await claimer.value.initialWaitHost();
-  if (!waitResult.ok) {
+  if (!waitResult.ok && !cancelled.value) {
+    await claimer.value.abort();
+    await modalController.dismiss(null, MsModalResult.Cancel);
+    let message = translate('JoinOrganization.errors.unexpected', { reason: waitResult.error.tag });
+
+    switch (waitResult.error.tag) {
+      case ClaimInProgressErrorTag.ActiveUsersLimitReached:
+        message = translate('JoinOrganization.errors.usersLimitReached');
+        break;
+    }
+
     await informationManager.present(
       new Information({
-        message: translate('JoinOrganization.errors.startFailed.message'),
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
     );
-    await cancelModal();
+
     return;
   }
 
