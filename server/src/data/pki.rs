@@ -149,15 +149,15 @@ impl X509Certificate {
         issuer: HashMap<String, String>,
         subject: HashMap<String, String>,
         der_x509_certificate: BytesWrapper,
-        certificate_sha1: BytesWrapper,
+        certificate_sha256: BytesWrapper,
         certificate_id: Option<String>,
     ) -> Self {
-        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
+        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha256);
         Self(libparsec_types::X509Certificate {
             issuer,
             subject,
             der_x509_certificate,
-            certificate_sha1,
+            certificate_sha256,
             certificate_id,
         })
     }
@@ -169,10 +169,10 @@ impl X509Certificate {
             [issuer: HashMap<String, String>, "issuer"],
             [subject: HashMap<String, String>, "subject"],
             [der_x509_certificate: BytesWrapper, "der_x509_certificate"],
-            [certificate_sha1: BytesWrapper, "certificate_sha1"],
+            [certificate_sha256: BytesWrapper, "certificate_sha256"],
             [certificate_id: Option<String>, "certificate_id"],
         );
-        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha1);
+        crate::binding_utils::unwrap_bytes!(der_x509_certificate, certificate_sha256);
 
         let mut r = self.0.clone();
 
@@ -185,8 +185,8 @@ impl X509Certificate {
         if let Some(v) = der_x509_certificate {
             r.der_x509_certificate = v;
         }
-        if let Some(v) = certificate_sha1 {
-            r.certificate_sha1 = v;
+        if let Some(v) = certificate_sha256 {
+            r.certificate_sha256 = v;
         }
         if let Some(v) = certificate_id {
             r.certificate_id = v
@@ -230,8 +230,8 @@ impl X509Certificate {
     }
 
     #[getter]
-    fn certificate_sha1<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.certificate_sha1)
+    fn certificate_sha256<'py>(&self, py: Python<'py>) -> &'py PyBytes {
+        PyBytes::new(py, &self.0.certificate_sha256)
     }
 
     #[getter]

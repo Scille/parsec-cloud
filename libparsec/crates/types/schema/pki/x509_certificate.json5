@@ -15,7 +15,7 @@
             "type": "Bytes"
         },
         {
-            "name": "certificate_sha1",
+            "name": "certificate_sha256",
             "type": "Bytes"
         },
         {
