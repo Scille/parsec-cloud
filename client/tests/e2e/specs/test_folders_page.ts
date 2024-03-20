@@ -248,7 +248,7 @@ describe('Check folders page', () => {
 
   // it('Test move one file', () => {
   //   // .first() will always be a folder, as there's always at least one folder
-  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').first().dblclick();
   //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
   //   cy.get('#button-moveto').contains('Move to').click();
   //   cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
@@ -277,7 +277,7 @@ describe('Check folders page', () => {
   // });
 
   // it('Tests move files', () => {
-  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').first().dblclick();
   //   cy.get('.folder-list-header').find('ion-checkbox').click();
   //   cy.get('#button-moveto').contains('Move to').click();
   //   cy.get('.folder-selection-modal')
@@ -301,7 +301,7 @@ describe('Check folders page', () => {
   // });
 
   // it('Tests copy one file', () => {
-  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').first().dblclick();
   //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
   //   // cspell:disable-next-line
   //   cy.get('#button-makeacopy').contains('Make a copy').click();
@@ -323,7 +323,7 @@ describe('Check folders page', () => {
   // });
 
   // it('Tests copy files', () => {
-  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').first().dblclick();
   //   cy.get('.folder-list-header').find('ion-checkbox').click();
   //   // cspell:disable-next-line
   //   cy.get('#button-makeacopy').contains('Make a copy').click();
@@ -347,7 +347,7 @@ describe('Check folders page', () => {
   // });
 
   // it('Test move file back/forward', () => {
-  //   cy.get('.folder-container').find('.file-list-item').first().click();
+  //   cy.get('.folder-container').find('.file-list-item').first().dblclick();
   //   cy.get('.folder-container').find('.file-list-item').last().find('ion-checkbox').invoke('show').click();
   //   cy.get('#button-moveto').contains('Move to').click();
   //   cy.get('.folder-selection-modal').find('.ms-modal-header__title').contains('Move one item');
