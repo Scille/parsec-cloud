@@ -25,12 +25,12 @@ describe('Check workspace sharing modal', () => {
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor');
 
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').click();
-    cy.get('.popover-viewport').find('ion-item').eq(0).contains('Reader');
-    cy.get('.popover-viewport').find('ion-item').eq(1).contains('Contributor');
-    cy.get('.popover-viewport').find('ion-item').eq(2).contains('Manager');
-    cy.get('.popover-viewport').find('ion-item').eq(2).should('have.class', 'item-disabled');
-    cy.get('.popover-viewport').find('ion-item').eq(3).contains('Owner');
-    cy.get('.popover-viewport').find('ion-item').eq(3).should('have.class', 'item-disabled');
+    cy.get('.popover-viewport').find('ion-item').eq(3).contains('Reader');
+    cy.get('.popover-viewport').find('ion-item').eq(2).contains('Contributor');
+    cy.get('.popover-viewport').find('ion-item').eq(1).contains('Manager');
+    cy.get('.popover-viewport').find('ion-item').eq(1).should('have.class', 'item-disabled');
+    cy.get('.popover-viewport').find('ion-item').eq(0).contains('Owner');
+    cy.get('.popover-viewport').find('ion-item').eq(0).should('have.class', 'item-disabled');
     cy.get('.popover-viewport').find('ion-item').eq(4).contains('Not shared');
     cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'checked');
     cy.get('.popover-viewport').find('ion-item').eq(4).find('ion-icon').should('have.class', 'selected');
@@ -39,8 +39,8 @@ describe('Check workspace sharing modal', () => {
   it('Change user role', () => {
     // the click is force because the span inside the button get the css property pointer-events: none
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Not shared').click({ force: true });
-    cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__description').contains('Can view and open files');
-    cy.get('.popover-viewport').find('ion-item').eq(0).find('.option-text__label').contains('Reader').click();
+    cy.get('.popover-viewport').find('ion-item').eq(3).find('.option-text__description').contains('Can view and open files');
+    cy.get('.popover-viewport').find('ion-item').eq(3).find('.option-text__label').contains('Reader').click();
     cy.get('ion-list').find('.content').eq(3).find('.filter-button').contains('Reader');
     // cspell:disable-next-line
     cy.checkToastMessageWithSidebar('success', "Jaheira's role has been updated to Reader.");
@@ -53,7 +53,7 @@ describe('Check workspace sharing modal', () => {
 
   it('Set the same role', () => {
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor').click({ force: true });
-    cy.get('.popover-viewport').find('ion-item').eq(1).find('.option-text__label').contains('Contributor').click();
+    cy.get('.popover-viewport').find('ion-item').eq(2).find('.option-text__label').contains('Contributor').click();
     cy.get('ion-list').find('.content').eq(2).find('.filter-button').contains('Contributor');
     // cspell:disable-next-line
     cy.checkToastMessageWithSidebar('info', 'Cernd is already Contributor on this workspace.');
