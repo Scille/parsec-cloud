@@ -38,6 +38,6 @@ describe('Display client info', () => {
     cy.get('@changePasswordModal').find('ion-input').eq(1).find('input').type('New-P@ssw0rd.6786?6786');
     cy.get('@changePasswordModal').find('ion-input').eq(2).find('input').type('New-P@ssw0rd.6786?6786');
     cy.get('@changePasswordModal').find('#next-button').click();
-    cy.checkToastMessage('success', 'You can log in with your new password.');
+    cy.checkToastMessageWithSidebar('success', 'You can log in with your new password.');
   });
 });

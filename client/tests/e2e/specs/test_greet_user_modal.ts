@@ -105,7 +105,7 @@ describe('Greet user into an organization', () => {
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
-    cy.checkToastMessage('error', 'You did not select the correct code. Please restart the onboarding process.');
+    cy.checkToastMessageWithSidebar('error', 'You did not select the correct code. Please restart the onboarding process.');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Onboard a new user');
     cy.get('@nextButton').contains('Start');
@@ -124,7 +124,7 @@ describe('Greet user into an organization', () => {
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
     cy.get('.greet-organization-modal').find('ion-grid').find('.button-clear').contains('None shown').click();
-    cy.checkToastMessage(
+    cy.checkToastMessageWithSidebar(
       'error',
       'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
     );

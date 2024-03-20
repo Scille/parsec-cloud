@@ -40,6 +40,7 @@ declare global {
       dropTestbed(): Chainable<null>;
       login(userName: string, password: string): Chainable<null>;
       checkToastMessage(level: 'error' | 'warning' | 'info' | 'success', message: string | RegExp): Chainable<null>;
+      checkToastMessageWithSidebar(level: 'error' | 'warning' | 'info' | 'success', message: string | RegExp): Chainable<null>;
     }
   }
 }
@@ -105,4 +106,10 @@ Cypress.Commands.add('checkToastMessage', (level, message: string | RegExp) => {
   cy.get('.notification-toast').should('have.class', `ms-${level}`);
   cy.get('.notification-toast').shadow().find('.toast-message').contains(message);
   cy.get('.notification-toast').shadow().find('.toast-button-confirm').first().click();
+});
+
+Cypress.Commands.add('checkToastMessageWithSidebar', (level, message: string | RegExp) => {
+  cy.get('.notification-toast--with-sidebar').should('have.class', `ms-${level}`);
+  cy.get('.notification-toast--with-sidebar').shadow().find('.toast-message').contains(message);
+  cy.get('.notification-toast--with-sidebar').shadow().find('.toast-button-confirm').first().click();
 });
