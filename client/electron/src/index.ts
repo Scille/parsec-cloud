@@ -72,6 +72,16 @@ if (!lock) {
   });
 }
 
+// Protocol handler for osx
+app.on('open-url', function (_event, url) {
+  if (url.length > 0) {
+    // We're only interested in potential Parsec links
+    if (url.startsWith('parsec3://')) {
+      myCapacitorApp.getMainWindow().webContents.send('open-link', url);
+    }
+  }
+});
+
 // Handle when all of our windows are close (platforms have their own expectations).
 app.on('window-all-closed', function () {
   // On OS X it is common for applications and their menu bar
