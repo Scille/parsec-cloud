@@ -132,6 +132,7 @@ ignorePaths:
   - "**/gradle/verification-metadata.xml"
   - "**/*.icns"
   - "**/.git"
+  - "**/*.der"
 import:
   - "@cspell/dict-fr-fr/cspell-ext.json"
   - "@cspell/dict-fr-reforme/cspell-ext.json"

@@ -12,155 +12,29 @@ use libparsec_crypto::{
     SequesterSigningKeyDer, SequesterVerifyKeyDer,
 };
 
-/// Generated with `openssl genrsa -out pkey-1024.pem 1024`
-const PRIVATE_KEY_PEM_1024: &str = r#"-----BEGIN PRIVATE KEY-----
-MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBALLcAKPDtcaJsGnz
-9AxJTSpb4xOxA0+/Hf4O7uDzbPvPYkQAJWzGYNUIR4JzijBF11tYTBlDvATHEj1o
-rAzvJTtO6Neb0J2hkWLcwINmImm3tiyzhYL4owIZBHsIfBG2AYSwST4MHIsdEPnX
-5qLrWv9m9+4YMDGV87zHKrVyB+v9AgMBAAECgYBBfQRO8g3QkAGkCcrF5OD4LYTL
-ZPjNbjDRIS6d9wNkf95+/360gT5bQhjMzvk+C5R6wa27Ym2pYipvia/VXIrIuwoP
-GDKyUg/B2SrDIBgLlleosVmOZwERnY939ShaxXA/TAqT4eXr5uwXm8z/YkledzTV
-iZ2G0ty962SJI9KbEQJBAOsrXVrVvCjK4WVFBcFqKw2Cz6I3+PEPcOXnozMwKKre
-XeT54rPoqfkkoFOPcRngiPPBHxJYMZxZ2gPWN6MkxmMCQQDCs8SRRd/XkwrH9Wga
-+kO3sY9pcWNGnHq5psqOEhaOqxozzE5ztT9FCcSAUqMf8onnNXpU+I4o7lQwQACZ
-dmIfAkAmtgiz/yLuBBd+OBJueC+GFdZf+Z6877HB5pNyxaasGdaS7p9mxhHUtTa/
-ComvnMpudYfL2UCxYAkHQKf/7vnJAkEAk1Zqd+zCmWXikLK7Fz8vo4CwoAB4OeUM
-UhVPzvcNLuV4LJ58976+pEXh96GRZAmsJdUoP8jf+0VvXBvy2C7nzQJAGLjFefMr
-vXTMHxDHhuHg4ZJSbJ5BNMZb/HZ5m4KQCt9Gelx/sxZOt3VlCrquCFALxmkeYMhX
-W1pav08hVpEcTg==
------END PRIVATE KEY-----
-"#;
+/// Generated with `openssl genrsa -out sequester-privkey-1024.pem 1024`
+const PRIVATE_KEY_PEM_1024: &str = std::include_str!("./files/sequester-privkey-1024.pem");
 
-/// Generated with `openssl rsa -in pkey-1024.pem -outform der -out pkey-1024.der`.
-/// Formatted with `xxd -c 32 -g 32 pkey-1024.der | cut -f 2 -d ' '`.
-const PRIVATE_KEY_DER_1024: &[u8] = &hex!(
-    "30820276020100300d06092a864886f70d0101010500048202603082025c0201"
-    "0002818100b2dc00a3c3b5c689b069f3f40c494d2a5be313b1034fbf1dfe0eee"
-    "e0f36cfbcf624400256cc660d5084782738a3045d75b584c1943bc04c7123d68"
-    "ac0cef253b4ee8d79bd09da19162dcc083662269b7b62cb38582f8a30219047b"
-    "087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195f3bcc72a"
-    "b57207ebfd0203010001028180417d044ef20dd09001a409cac5e4e0f82d84cb"
-    "64f8cd6e30d1212e9df703647fde7eff7eb4813e5b4218cccef93e0b947ac1ad"
-    "bb626da9622a6f89afd55c8ac8bb0a0f1832b2520fc1d92ac320180b9657a8b1"
-    "598e6701119d8f77f5285ac5703f4c0a93e1e5ebe6ec179bccff62495e7734d5"
-    "899d86d2dcbdeb648923d29b11024100eb2b5d5ad5bc28cae1654505c16a2b0d"
-    "82cfa237f8f10f70e5e7a3333028aade5de4f9e2b3e8a9f924a0538f7119e088"
-    "f3c11f1258319c59da03d637a324c663024100c2b3c49145dfd7930ac7f5681a"
-    "fa43b7b18f697163469c7ab9a6ca8e12168eab1a33cc4e73b53f4509c48052a3"
-    "1ff289e7357a54f88e28ee543040009976621f024026b608b3ff22ee04177e38"
-    "126e782f8615d65ff99ebcefb1c1e69372c5a6ac19d692ee9f66c611d4b536bf"
-    "0a89af9cca6e7587cbd940b160090740a7ffeef9c902410093566a77ecc29965"
-    "e290b2bb173f2fa380b0a0007839e50c52154fcef70d2ee5782c9e7cf7bebea4"
-    "45e1f7a1916409ac25d5283fc8dffb456f5c1bf2d82ee7cd024018b8c579f32b"
-    "bd74cc1f10c786e1e0e192526c9e4134c65bfc76799b82900adf467a5c7fb316"
-    "4eb775650abaae08500bc6691e60c8575b5a5abf4f2156911c4e"
-);
+/// Generated with `openssl rsa -in sequester-privkey-1024.pem -outform der -out sequester-privkey-1024.der`.
+const PRIVATE_KEY_DER_1024: &[u8] = std::include_bytes!("./files/sequester-privkey-1024.der");
 
-/// Generated with `openssl rsa -in pkey-1024.pem -pubout -out pubkey-1024.pem`
-const PUBLIC_KEY_PEM_1024: &str = r#"-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCy3ACjw7XGibBp8/QMSU0qW+MT
-sQNPvx3+Du7g82z7z2JEACVsxmDVCEeCc4owRddbWEwZQ7wExxI9aKwM7yU7TujX
-m9CdoZFi3MCDZiJpt7Yss4WC+KMCGQR7CHwRtgGEsEk+DByLHRD51+ai61r/Zvfu
-GDAxlfO8xyq1cgfr/QIDAQAB
------END PUBLIC KEY-----
-"#;
+/// Generated with `openssl rsa -in sequester-privkey-1024.pem -pubout -out sequester-pubkey-1024.pem`
+const PUBLIC_KEY_PEM_1024: &str = std::include_str!("./files/sequester-pubkey-1024.pem");
 
-/// Generated with `openssl rsa -in pkey-1024.pem -pubout -outform der -out pubkey-1024.der`
-const PUBLIC_KEY_DER_1024: &[u8] = &hex!(
-    "30819f300d06092a864886f70d010101050003818d0030818902818100b2dc00a3c3b5c689"
-    "b069f3f40c494d2a5be313b1034fbf1dfe0eeee0f36cfbcf624400256cc660d5084782738a"
-    "3045d75b584c1943bc04c7123d68ac0cef253b4ee8d79bd09da19162dcc083662269b7b62c"
-    "b38582f8a30219047b087c11b60184b0493e0c1c8b1d10f9d7e6a2eb5aff66f7ee18303195"
-    "f3bcc72ab57207ebfd0203010001"
-);
+/// Generated with `openssl rsa -in sequester-privkey-1024.pem -pubout -outform der -out sequester-pubkey-1024.der`
+const PUBLIC_KEY_DER_1024: &[u8] = std::include_bytes!("./files/sequester-pubkey-1024.der");
 
-const PRIVATE_KEY_PEM_2048: &str = r#"-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCnDVsZGa7iu45E
-2d++JupEgmdlo8EGFjfXJzVgXduWT42rmxGEKCARzHt5RK0EjSsfmLg4uQqvVlEc
-lUtN4HR466nU6tqnf+PLjYJNVQQVh1rRM27N97gfRxuOVwkb6tAMIFUytWRyQd9C
-FEzMpLJebFeZc/dWQ76gOXhBY71L5/7O+m8xugwIpex8qvao+aVgHaQqGNHJN+CB
-Zys2/GzMO/6ypbbhy6nr/OSknvc00I7XiQDynq77fciZNuqPIa7Za+N14rIrUsyK
-bCEc8RH0sn2wcdieVXHPdvF3ZasFbD5tNJOHo//SplOLEwhdYAGs7NEcjEOmXksk
-8t0gCJcxAgMBAAECggEAfJIqF6qeTnd8XP13qo3MbnAr+JBHdWmGFIwpcoYrJIiI
-ZaqKQlnFqGAqx0CeIOHAgZxZ6/qY7C1a6QyvjhBN6ooaKCtGCFgHH5iTzWUTWZaI
-863999u9Up2s/9UJducAY7qMrfa0Q7u5Z8ZJiuVaGa2DGWxvycVU1phkg6aD16Cg
-nZ3+9oWbaBfELPEFdktYwa5fwflOMN6+Fw7isIVlOC4tvGpiR1scXKEwjr2P5a0P
-D0s6ca4D9xlCrlJ6CpdyKbLwz5ya+gBwjW3OJYI8+NzIw5SwmnnZoP3MqI96ME70
-RGBfyqPs4DZjEaqWSSiaDMu10nndEvdakFwgCBzCAQKBgQDeIAouUgnG53RCjukN
-mLTHLDpuQk7yycmVcjqWgq2Dkg2FxGbl7f9p6vLDicbMieXYbSTbt5rYTnU6c5j0
-o2uAiGsUK8E7JsD8qid7XV7M6r0mTCAqP16SEcf9oSureYFXIWq6pkgnQLS6LVw6
-rWwG+uaaCw3qjQvlPk17pvKGYQKBgQDAhzf5EJG3LICmgSKsz6qS/G82N8gxqCwC
-Gf8egXGweQSSYrUaemtsAHHbVNIxEqPoedpj+ErofvYo2exNbQVyp33rC1kGNqqT
-YTzsV83jp0vv9cn6LwgeK+5mfuNTs13H/YfKpdfJRgoo78Ot7c//FpcM4iwtcFEm
-CDhD7DAi0QKBgCSBmYrBWvAAzD/AIxdj+Jofb779UOJgPaw9KNnhwki0cVqBy/OQ
-KQEsZxeyBiVJqKfoUD14MI/KXUPtCb9zOFDYmtim1Ew3c1JTWMfSsaj2D35C1qp6
-3b0eBQNvQLEe+B3s1RC2EXe6D7nliJnwNKf1Bn9cv73DzqevlKZ06rkhAoGBAJAF
-VuCw/WAaIU7s8QR3AHGd9o+HYPGMjQcxbT/jsylBDiN3RWS+SRdsqb9aDzZ4bDae
-2LjJ5zdOqlPa2UL+GAIxuycVwQ293RIMvmdKM5Fl949UvTey8Q6o7Fit+N4HIlNV
-m7wDHY3KIBWJbkbwzBRVUL9pfYSsLXgW1AgzabrRAoGAUW82mYl9HAwQOBPb40OK
-j2qKisC4VA8vR/Uco9yda5XT7iqG3htvUa+Ugj5r4XFRJvOyQG2WUiOWwGYlzfz2
-1Ogu8O8RHcaJafAIMTJJtjsO8pIf6Y7aWHA3Ze3to+01fTkGB2I8tDKc3fn+iKlX
-z0mxbH0U7CoeRzfgJ6UmIio=
------END PRIVATE KEY-----
-"#;
+/// Generated with `openssl genrsa -out sequester-privkey-2048.pem 2048`
+const PRIVATE_KEY_PEM_2048: &str = std::include_str!("./files/sequester-privkey-2048.pem");
 
-const PRIVATE_KEY_DER_2048: &[u8] = &hex!(
-    "308204bd020100300d06092a864886f70d0101010500048204a7308204a302010002820101"
-    "00a70d5b1919aee2bb8e44d9dfbe26ea44826765a3c1061637d72735605ddb964f8dab9b11"
-    "84282011cc7b7944ad048d2b1f98b838b90aaf56511c954b4de07478eba9d4eadaa77fe3cb"
-    "8d824d550415875ad1336ecdf7b81f471b8e57091bead00c205532b5647241df42144ccca4"
-    "b25e6c579973f75643bea039784163bd4be7fecefa6f31ba0c08a5ec7caaf6a8f9a5601da4"
-    "2a18d1c937e081672b36fc6ccc3bfeb2a5b6e1cba9ebfce4a49ef734d08ed78900f29eaefb"
-    "7dc89936ea8f21aed96be375e2b22b52cc8a6c211cf111f4b27db071d89e5571cf76f17765"
-    "ab056c3e6d349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203"
-    "010001028201007c922a17aa9e4e777c5cfd77aa8dcc6e702bf89047756986148c2972862b"
-    "24888865aa8a4259c5a8602ac7409e20e1c0819c59ebfa98ec2d5ae90caf8e104dea8a1a28"
-    "2b460858071f9893cd6513599688f3adfdf7dbbd529dacffd50976e70063ba8cadf6b443bb"
-    "b967c6498ae55a19ad83196c6fc9c554d6986483a683d7a0a09d9dfef6859b6817c42cf105"
-    "764b58c1ae5fc1f94e30debe170ee2b08565382e2dbc6a62475b1c5ca1308ebd8fe5ad0f0f"
-    "4b3a71ae03f71942ae527a0a977229b2f0cf9c9afa00708d6dce25823cf8dcc8c394b09a79"
-    "d9a0fdcca88f7a304ef444605fcaa3ece0366311aa9649289a0ccbb5d279dd12f75a905c20"
-    "081cc20102818100de200a2e5209c6e774428ee90d98b4c72c3a6e424ef2c9c995723a9682"
-    "ad83920d85c466e5edff69eaf2c389c6cc89e5d86d24dbb79ad84e753a7398f4a36b80886b"
-    "142bc13b26c0fcaa277b5d5ecceabd264c202a3f5e9211c7fda12bab798157216abaa64827"
-    "40b4ba2d5c3aad6c06fae69a0b0dea8d0be53e4d7ba6f2866102818100c08737f91091b72c"
-    "80a68122accfaa92fc6f3637c831a82c0219ff1e8171b079049262b51a7a6b6c0071db54d2"
-    "3112a3e879da63f84ae87ef628d9ec4d6d0572a77deb0b590636aa93613cec57cde3a74bef"
-    "f5c9fa2f081e2bee667ee353b35dc7fd87caa5d7c9460a28efc3adedcfff16970ce22c2d70"
-    "5126083843ec3022d10281802481998ac15af000cc3fc0231763f89a1f6fbefd50e2603dac"
-    "3d28d9e1c248b4715a81cbf39029012c6717b2062549a8a7e8503d78308fca5d43ed09bf73"
-    "3850d89ad8a6d44c3773525358c7d2b1a8f60f7e42d6aa7addbd1e05036f40b11ef81decd5"
-    "10b61177ba0fb9e58899f034a7f5067f5cbfbdc3cea7af94a674eab92102818100900556e0"
-    "b0fd601a214eecf1047700719df68f8760f18c8d07316d3fe3b329410e23774564be49176c"
-    "a9bf5a0f36786c369ed8b8c9e7374eaa53dad942fe180231bb2715c10dbddd120cbe674a33"
-    "9165f78f54bd37b2f10ea8ec58adf8de072253559bbc031d8dca2015896e46f0cc145550bf"
-    "697d84ac2d7816d4083369bad1028180516f3699897d1c0c103813dbe3438a8f6a8a8ac0b8"
-    "540f2f47f51ca3dc9d6b95d3ee2a86de1b6f51af94823e6be1715126f3b2406d96522396c0"
-    "6625cdfcf6d4e82ef0ef111dc68969f008313249b63b0ef2921fe98eda58703765ededa3ed"
-    "357d390607623cb4329cddf9fe88a957cf49b16c7d14ec2a1e4737e027a526222a"
-);
+/// Generated with `openssl rsa -in sequester-privkey-2048.pem -outform der -out sequester-privkey-2048.der`
+const PRIVATE_KEY_DER_2048: &[u8] = std::include_bytes!("./files/sequester-privkey-2048.der");
 
-const PUBLIC_KEY_PEM_2048: &str = r#"-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApw1bGRmu4ruORNnfvibq
-RIJnZaPBBhY31yc1YF3blk+Nq5sRhCggEcx7eUStBI0rH5i4OLkKr1ZRHJVLTeB0
-eOup1Orap3/jy42CTVUEFYda0TNuzfe4H0cbjlcJG+rQDCBVMrVkckHfQhRMzKSy
-XmxXmXP3VkO+oDl4QWO9S+f+zvpvMboMCKXsfKr2qPmlYB2kKhjRyTfggWcrNvxs
-zDv+sqW24cup6/zkpJ73NNCO14kA8p6u+33ImTbqjyGu2WvjdeKyK1LMimwhHPER
-9LJ9sHHYnlVxz3bxd2WrBWw+bTSTh6P/0qZTixMIXWABrOzRHIxDpl5LJPLdIAiX
-MQIDAQAB
------END PUBLIC KEY-----
-"#;
+/// Generated with `openssl rsa -in sequester-privkey-2048.pem -pubout -out sequester-pubkey-2048.pem`
+const PUBLIC_KEY_PEM_2048: &str = std::include_str!("./files/sequester-pubkey-2048.pem");
 
-const PUBLIC_KEY_DER_2048: &[u8] = &hex!(
-    "30820122300d06092a864886f70d01010105000382010f003082010a0282010100a70d5b19"
-    "19aee2bb8e44d9dfbe26ea44826765a3c1061637d72735605ddb964f8dab9b1184282011cc"
-    "7b7944ad048d2b1f98b838b90aaf56511c954b4de07478eba9d4eadaa77fe3cb8d824d5504"
-    "15875ad1336ecdf7b81f471b8e57091bead00c205532b5647241df42144ccca4b25e6c5799"
-    "73f75643bea039784163bd4be7fecefa6f31ba0c08a5ec7caaf6a8f9a5601da42a18d1c937"
-    "e081672b36fc6ccc3bfeb2a5b6e1cba9ebfce4a49ef734d08ed78900f29eaefb7dc89936ea"
-    "8f21aed96be375e2b22b52cc8a6c211cf111f4b27db071d89e5571cf76f17765ab056c3e6d"
-    "349387a3ffd2a6538b13085d6001acecd11c8c43a65e4b24f2dd200897310203010001"
-);
+/// Generated with `openssl rsa -in sequester-privkey-2048.pem -pubout -outform der -out sequester-pubkey-2048.der`
+const PUBLIC_KEY_DER_2048: &[u8] = std::include_bytes!("./files/sequester-pubkey-2048.der");
 
 #[test]
 fn only_rsa_is_supported() {
