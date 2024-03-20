@@ -736,11 +736,14 @@
         },
         "errors": {
             "saveDeviceFailed": "Failed to save device",
+            "tokenAlreadyUsed": "This invitation link has already been used and is no longer valid.",
+            "invitationNotFound": "No invitation found, make sure the link is correct.",
+            "offline": "Failed to contact the server. Make sure that you are online.",
             "sendUserInfoFailed": "Failed to send information to the host, please restart the onboarding process.",
             "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
-            "startFailed": "Please make sure the link is correct and that you are online."
+            "usersLimitReached": "The user limit for this organization has been reached."
         },
         "cancelConfirm": "Cancel the onboarding",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",

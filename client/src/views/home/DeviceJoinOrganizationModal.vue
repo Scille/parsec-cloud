@@ -151,6 +151,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import {
   AccessStrategy,
+  ClaimerRetrieveInfoErrorTag,
   DeviceClaim,
   DeviceSaveStrategy,
   DeviceSaveStrategyPassword,
@@ -179,6 +180,7 @@ const pageStep = ref(DeviceJoinOrganizationStep.Information);
 let backendAddr: ParsedParsecAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
 const authChoice = ref();
+const cancelled = ref(false);
 
 const props = defineProps<{
   invitationLink: string;
@@ -290,6 +292,7 @@ async function cancelModal(): Promise<boolean> {
   });
 
   if (answer === Answer.Yes) {
+    cancelled.value = true;
     await claimer.value.abort();
     return modalController.dismiss(null, MsModalResult.Cancel);
   }
@@ -327,7 +330,7 @@ async function nextStep(): Promise<void> {
       return;
     }
     const notification = new Information({
-      message: translate('ClaimDeviceModal.successMessage.message'),
+      message: translate('ClaimDeviceModal.successMessage'),
       level: InformationLevel.Success,
     });
     informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
@@ -361,27 +364,41 @@ async function startProcess(): Promise<void> {
   const retrieveResult = await claimer.value.retrieveInfo(props.invitationLink);
 
   if (!retrieveResult.ok) {
+    await claimer.value.abort();
+    await modalController.dismiss(null, MsModalResult.Cancel);
+    let message = translate('JoinOrganization.errors.unexpected', { reason: retrieveResult.error.tag });
+    switch (retrieveResult.error.tag) {
+      case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
+        message = translate('JoinOrganization.errors.tokenAlreadyUsed');
+        break;
+      case ClaimerRetrieveInfoErrorTag.NotFound:
+        message = translate('JoinOrganization.errors.invitationNotFound');
+        break;
+      case ClaimerRetrieveInfoErrorTag.Offline:
+        message = translate('JoinOrganization.errors.offline');
+        break;
+    }
     await informationManager.present(
       new Information({
-        message: translate('ClaimDeviceModal.errors.startFailed.message'),
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
     );
-    await cancelModal();
     return;
   }
 
   const waitResult = await claimer.value.initialWaitHost();
-  if (!waitResult.ok) {
+  if (!waitResult.ok && !cancelled.value) {
+    await claimer.value.abort();
+    await modalController.dismiss(null, MsModalResult.Cancel);
     await informationManager.present(
       new Information({
-        message: translate('ClaimDeviceModal.errors.startFailed.message'),
+        message: translate('ClaimDeviceModal.errors.unexpected', { reason: waitResult.error.tag }),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
     );
-    await cancelModal();
     return;
   }
 

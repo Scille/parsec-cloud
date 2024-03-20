@@ -736,11 +736,14 @@
         },
         "errors": {
             "saveDeviceFailed": "Impossible de sauvegarder les informations",
+            "tokenAlreadyUsed": "Ce lien d'invitation a déjà été utilisé et n'est plus valide.",
+            "invitationNotFound": "Aucune invitation trouvé, veuillez vous assurer que le lien est correct.",
+            "offline": "Impossible de contacter le serveur. Veuilelz vérifier que vous êtes connecté(e) à Internet.",
             "sendUserInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "startFailed": "Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet."
+            "usersLimitReached": "La limite d'utilisateurs pour cette organisation a été atteinte."
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
