@@ -43,7 +43,7 @@
         {{ entry.name }}
       </ion-title>
 
-      <ion-text class="card-content-last-update caption-caption">
+      <ion-text class="card-content-last-update body-sm">
         <span>{{ $t('FoldersPage.File.lastUpdate') }}</span>
         <span>{{ formatTimeSince(entry.updated, '--', 'short') }}</span>
       </ion-text>
@@ -92,7 +92,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 <style lang="scss" scoped>
 .file-card-item {
   position: relative;
-  cursor: pointer;
+  cursor: default;
   text-align: center;
   --background: var(--parsec-color-light-secondary-background);
   background: var(--parsec-color-light-secondary-background);

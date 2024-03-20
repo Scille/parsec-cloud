@@ -7,7 +7,6 @@ ion-item:has(.file-list-item),
 .user-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
-  width: 100%;
   display: flex;
   --padding-start: 0px;
   --inner-padding-end: 0px;
@@ -15,6 +14,7 @@ ion-item:has(.file-list-item),
   &::part(native) {
     border: none;
     width: 100%;
+    cursor: default;
   }
 
   &.item-disabled {
@@ -32,6 +32,7 @@ ion-item:has(.file-list-item),
     height: 1px;
     background: var(--parsec-color-light-secondary-medium);
     z-index: 1;
+    cursor: default;
   }
 
   &:hover:not(.revoked) {
@@ -127,6 +128,7 @@ ion-item:has(.file-list-item),
   overflow: hidden;
   --background-hover-opacity: 1;
   --background-hover: var(--parsec-color-light-primary-30);
+  cursor: default !important;
 }
 
 // List of files/folders
@@ -184,4 +186,9 @@ ion-item:has(.file-list-item),
     flex-shrink: 0;
     margin-left: auto;
   }
+}
+
+.workspace-list-item > [class^='workspace-'],
+.workspace-list-item::part(native) {
+  cursor: pointer !important;
 }
