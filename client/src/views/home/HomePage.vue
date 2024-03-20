@@ -40,11 +40,8 @@
             <template v-if="state === HomePageState.Login && selectedDevice">
               <login-page
                 :device="selectedDevice"
-                :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
                 @login-click="login"
                 @forgotten-password-click="onForgottenPasswordClicked"
-                @back-click="backToOrganizations"
-                @settings-click="openSettingsModal"
                 ref="loginPageRef"
               />
             </template>
@@ -148,10 +145,6 @@ async function openCreateOrganizationModal(): Promise<void> {
   hotkeyManager.enableGroup(Groups.Home);
 
   if (role === MsModalResult.Confirm) {
-    if (data.device.ty === DeviceFileType.Password) {
-      selectedDevice.value = data.device;
-      state.value = HomePageState.Login;
-    }
     await login(data.device, data.access);
   }
 }
@@ -184,10 +177,6 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   await modal.dismiss();
   hotkeyManager.enableGroup(Groups.Home);
   if (result.role === MsModalResult.Confirm) {
-    if (result.data.device.ty === DeviceFileType.Password) {
-      selectedDevice.value = result.data.device;
-      state.value = HomePageState.Login;
-    }
     await login(result.data.device, result.data.access);
   } else {
     await navigateTo(Routes.Home);
@@ -215,6 +204,8 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
 
 async function handleLoginError(device: AvailableDevice, error: ClientStartError): Promise<void> {
   if (device.ty === DeviceFileType.Password) {
+    selectedDevice.value = device;
+    state.value = HomePageState.Login;
     loginPageRef.value.setLoginError(error);
   } else if (device.ty === DeviceFileType.Keyring) {
     informationManager.present(
