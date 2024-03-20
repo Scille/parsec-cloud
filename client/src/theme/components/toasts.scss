@@ -5,8 +5,12 @@
 ion-toast.notification-toast {
   --background: none;
   --box-shadow: none;
-  --start: var(--parsec-sidebar-menu-width);
   position: relative;
+
+  &--with-sidebar {
+    @extend ion-toast, .notification-toast;
+    --start: var(--parsec-sidebar-menu-width);
+  }
 
   &.ms-info {
     --ms-notification-toast-text-color: var(--parsec-color-light-info-700);

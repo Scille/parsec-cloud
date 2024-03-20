@@ -169,7 +169,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', 'Jaheira has been revoked. They can no longer access this organization.');
+    cy.checkToastMessageWithSidebar('success', 'Jaheira has been revoked. They can no longer access this organization.');
   });
 
   it('Tests revoke one selected user', () => {
@@ -181,7 +181,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke this user?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', 'Jaheira has been revoked. They can no longer access this organization.');
+    cy.checkToastMessageWithSidebar('success', 'Jaheira has been revoked. They can no longer access this organization.');
     // Ultimately, they probably should not appear anymore
     cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
   });
@@ -197,7 +197,7 @@ describe('Check active users page', () => {
     cy.get('.question-modal').find('.ms-modal-header__title').contains('Revoke these users?');
     cy.get('.question-modal').find('#next-button').click();
     // cspell:disable-next-line
-    cy.checkToastMessage('success', '4 users have been revoked, they can no longer access this organization.');
+    cy.checkToastMessageWithSidebar('success', '4 users have been revoked, they can no longer access this organization.');
     // Ultimately, they probably should not appear anymore
     cy.get('@userItems').eq(1).find('ion-checkbox').should('not.have.class', 'checkbox-checked');
     cy.get('@userItems').eq(3).find('ion-checkbox').should('not.have.class', 'checkbox-checked');

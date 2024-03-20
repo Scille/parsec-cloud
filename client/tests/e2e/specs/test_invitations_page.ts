@@ -28,13 +28,13 @@ describe('Check invitations page', () => {
     cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
     cy.get('@inviteButton').should('not.have.class', 'button-disabled');
     cy.get('@inviteButton').click();
-    cy.checkToastMessage('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
+    cy.checkToastMessageWithSidebar('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
   });
 
   it('Check copy link button', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
     cy.get('@invitations').first().realHover().invoke('show').find('.copy-link').click();
-    cy.checkToastMessage('info', 'Invitation link has been copied to clipboard.');
+    cy.checkToastMessageWithSidebar('info', 'Invitation link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         expect(text).to.eq('parsec3://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645');
@@ -46,6 +46,6 @@ describe('Check invitations page', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
     cy.get('@invitations').first().realHover().find('.invitation-actions-buttons').first().contains('Cancel').click();
     cy.get('.question-modal').find('#next-button').contains('Cancel invitation').click();
-    cy.checkToastMessage('success', 'Invitation has been cancelled.');
+    cy.checkToastMessageWithSidebar('success', 'Invitation has been cancelled.');
   });
 });

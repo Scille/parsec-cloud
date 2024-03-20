@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsReportTheme } from '@/components/core';
+import { isLoggedIn } from '@/router';
 import { translate } from '@/services/translation';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
@@ -28,7 +29,9 @@ export class ToastManager {
     const toast = await toastController.create({
       header: toastConfig.title,
       message: toastConfig.message,
-      cssClass: ['notification-toast body', toastConfig.theme],
+      cssClass: isLoggedIn()
+        ? ['notification-toast--with-sidebar body', toastConfig.theme]
+        : ['notification-toast body', toastConfig.theme],
       mode: 'ios',
       duration: duration,
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,
