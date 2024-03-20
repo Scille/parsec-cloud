@@ -61,7 +61,7 @@ impl TryFrom<&[u8]> for SequesterPrivateKeyDer {
 }
 
 impl SequesterPrivateKeyDer {
-    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
         let priv_key = Rsa::generate(size_in_bits as u32).expect("Cannot generate the RSA key");
@@ -110,8 +110,8 @@ impl SequesterPrivateKeyDer {
             .set_rsa_padding(Padding::PKCS1_OAEP)
             .expect("Cannot set RSA padding to OAEP");
         decrypter
-            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha1())
-            .expect("Cannot set RSA OAEP MD to SHA1");
+            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha256())
+            .expect("Cannot set RSA OAEP MD to SHA256");
 
         let decrypted_key_bytecount = decrypter
             .decrypt(cipherkey, &mut decrypted_key_der)
@@ -184,7 +184,7 @@ impl Serialize for SequesterPublicKeyDer {
 }
 
 impl SequesterPublicKeyDer {
-    const ALGORITHM: &'static str = "RSAES-OAEP-XSALSA20-POLY1305";
+    const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn size_in_bytes(&self) -> usize {
         self.0.size() as usize
@@ -220,8 +220,8 @@ impl SequesterPublicKeyDer {
             .set_rsa_padding(Padding::PKCS1_OAEP)
             .expect("Cannot set RSA padding to OAEP");
         encrypter
-            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha1())
-            .expect("Cannot set RSA OAEP MD to SHA1");
+            .set_rsa_oaep_md(openssl::hash::MessageDigest::sha256())
+            .expect("Cannot set RSA OAEP MD to SHA256");
 
         let encrypted_key_bytes = encrypter
             .encrypt(secret_key.as_ref(), &mut encrypted_secret_key)
