@@ -5,7 +5,7 @@ import { createApp } from 'vue';
 import App from '@/App.vue';
 import { Routes, currentRouteIs, getConnectionHandle, getRouter, navigateTo, navigateToWorkspace, switchOrganization } from '@/router';
 
-import { IonicVue } from '@ionic/vue';
+import { IonicVue, modalController } from '@ionic/vue';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -169,6 +169,16 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('open-link', async (link: string) => {
+      if (await modalController.getTop()) {
+        informationManager.present(
+          new Information({
+            message: t('link.appIsBusy'),
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+        return;
+      }
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
         // FIXME: Commented until we can handle file links

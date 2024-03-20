@@ -47,7 +47,8 @@
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
-        "orgNotFound": "Vous n'avez pas accès à l'organisation {organization} qui contient ce fichier."
+        "orgNotFound": "Vous n'avez pas accès à l'organisation {organization} qui contient ce fichier.",
+        "appIsBusy": "Parsec est occupé. Veuillez fermer toutes les fenêtres ouvertes avant de re-cliquer sur le lien."
     },
     "notificationCenter": {
         "title": "Notifications",

@@ -47,7 +47,8 @@
     },
     "link": {
         "invalid": "The provided link is invalid.",
-        "orgNotFound": "You do not have access to the organization {organization} in which this file is stored."
+        "orgNotFound": "You do not have access to the organization {organization} in which this file is stored.",
+        "appIsBusy": "Parsec is busy. Please close any opened window before clicking on the link again."
     },
     "notificationCenter": {
         "title": "Notifications",
