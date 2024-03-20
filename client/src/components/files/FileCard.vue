@@ -4,7 +4,7 @@
   <ion-item
     class="file-card-item ion-no-padding"
     :class="{ selected: entry.isSelected }"
-    @click="$emit('click', $event, entry)"
+    @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
