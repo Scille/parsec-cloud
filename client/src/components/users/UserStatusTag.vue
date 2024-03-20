@@ -33,6 +33,7 @@ defineProps<{
   width: 5.5rem;
   display: flex;
   justify-content: center;
+  cursor: default;
 }
 
 .revoked {

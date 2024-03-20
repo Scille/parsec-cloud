@@ -590,11 +590,11 @@ ion-menu {
     color: var(--parsec-color-light-primary-100);
     margin-bottom: 0.5rem;
     transition: border 0.2s ease-in-out;
-    cursor: pointer;
 
     &__title {
       position: relative;
       opacity: 0.6;
+      cursor: pointer;
 
       &::after {
         content: '';
