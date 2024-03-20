@@ -327,7 +327,7 @@ async function nextStep(): Promise<void> {
       return;
     }
     const notification = new Information({
-      message: translate('ClaimDeviceModal.successMessage.message'),
+      message: translate('ClaimDeviceModal.successMessage'),
       level: InformationLevel.Success,
     });
     informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
@@ -363,7 +363,7 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await informationManager.present(
       new Information({
-        message: translate('ClaimDeviceModal.errors.startFailed.message'),
+        message: translate('ClaimDeviceModal.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
@@ -376,7 +376,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await informationManager.present(
       new Information({
-        message: translate('ClaimDeviceModal.errors.startFailed.message'),
+        message: translate('ClaimDeviceModal.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,

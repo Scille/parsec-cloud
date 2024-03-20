@@ -428,7 +428,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok) {
     await informationManager.present(
       new Information({
-        message: translate('JoinOrganization.errors.startFailed.message'),
+        message: translate('JoinOrganization.errors.startFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Modal,
