@@ -124,7 +124,7 @@ import {
   routerGoBack,
   watchRoute,
 } from '@/router';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { translate } from '@/services/translation';
@@ -147,7 +147,7 @@ import { home, menu, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
@@ -231,11 +231,23 @@ async function updateRoute(): Promise<void> {
 }
 
 onMounted(async () => {
-  hotkeys = hotkeyManager.newHotkeys(Groups.Global);
-  hotkeys.add(',', Modifiers.Ctrl, Platforms.Desktop, async () => await navigateTo(Routes.Settings));
-  hotkeys.add('arrowup', Modifiers.Ctrl, Platforms.Desktop, async () => await routerGoBack());
-  hotkeys.add('arrowleft', Modifiers.Ctrl, Platforms.Desktop, async () => await routerGoBack());
-  hotkeys.add('n', Modifiers.Ctrl | Modifiers.Shift, Platforms.Desktop, async () => await notificationCenterButton.value.$el.click());
+  hotkeys = hotkeyManager.newHotkeys();
+  hotkeys.add(
+    { key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
+    async () => await navigateTo(Routes.Settings),
+  );
+  hotkeys.add(
+    { key: 'arrowup', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
+    async () => await routerGoBack(),
+  );
+  hotkeys.add(
+    { key: 'arrowleft', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
+    async () => await routerGoBack(),
+  );
+  hotkeys.add(
+    { key: 'n', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true },
+    async () => await notificationCenterButton.value.$el.click(),
+  );
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
@@ -277,7 +289,6 @@ function getTitleForRoute(): string {
 }
 
 async function openNotificationCenter(event: Event): Promise<void> {
-  hotkeyManager.disableGroup(Groups.Global);
   event.stopPropagation();
   notificationPopoverIsVisible.value = true;
   const popover = await popoverController.create({
@@ -291,7 +302,6 @@ async function openNotificationCenter(event: Event): Promise<void> {
   await popover.onWillDismiss();
   notificationPopoverIsVisible.value = false;
   await popover.dismiss();
-  hotkeyManager.enableGroup(Groups.Global);
 }
 </script>
 

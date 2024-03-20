@@ -131,8 +131,8 @@ import {
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
 } from '@/parsec';
-import { getCurrentRouteQuery, watchRoute } from '@/router';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Routes, getCurrentRouteQuery, watchRoute } from '@/router';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -151,7 +151,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
 const currentSortProperty = ref();
@@ -447,10 +447,16 @@ onMounted(async (): Promise<void> => {
   if (savedData && savedData.displayState !== undefined) {
     displayView.value = savedData.displayState;
   }
-  hotkeys = hotkeyManager.newHotkeys(Groups.Users);
-  hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
-    displayView.value = displayView.value === DisplayState.List ? DisplayState.Grid : DisplayState.List;
-  });
+  hotkeys = hotkeyManager.newHotkeys();
+  hotkeys.add(
+    { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users },
+    async () => {
+      displayView.value = displayView.value === DisplayState.List ? DisplayState.Grid : DisplayState.List;
+    },
+  );
+  hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
+    users.value.selectAll(true),
+  );
 
   currentSortProperty.value = SortProperty.Profile;
   currentSortOrder.value = true;

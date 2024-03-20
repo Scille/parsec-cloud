@@ -166,7 +166,7 @@ import {
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { translate } from '@/services/translation';
@@ -223,7 +223,7 @@ const msSorterLabels = {
   desc: translate('HomePage.organizationList.sortOrderDesc'),
 };
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 
 onMounted(async (): Promise<void> => {
   const savedData = await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY);
@@ -232,11 +232,17 @@ onMounted(async (): Promise<void> => {
     displayView.value = savedData.displayState;
   }
 
-  hotkeys = hotkeyManager.newHotkeys(Groups.Workspaces);
-  hotkeys.add('n', Modifiers.Ctrl, Platforms.Desktop, openCreateWorkspaceModal);
-  hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
-    displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
-  });
+  hotkeys = hotkeyManager.newHotkeys();
+  hotkeys.add(
+    { key: 'n', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
+    openCreateWorkspaceModal,
+  );
+  hotkeys.add(
+    { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Workspaces },
+    async () => {
+      displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
+    },
+  );
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
@@ -342,7 +348,6 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  hotkeyManager.disableGroup(Groups.Workspaces);
   const workspaceName = await getTextInputFromUser({
     title: translate('WorkspacesPage.CreateWorkspaceModal.pageTitle'),
     trim: true,
@@ -351,8 +356,6 @@ async function openCreateWorkspaceModal(): Promise<void> {
     placeholder: translate('WorkspacesPage.CreateWorkspaceModal.placeholder'),
     okButtonText: translate('WorkspacesPage.CreateWorkspaceModal.create'),
   });
-
-  hotkeyManager.enableGroup(Groups.Workspaces);
 
   if (workspaceName) {
     await createWorkspace(workspaceName);

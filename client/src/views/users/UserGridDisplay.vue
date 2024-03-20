@@ -21,10 +21,9 @@
 <script setup lang="ts">
 import { UserCard, UserCollection, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 
-const props = defineProps<{
+defineProps<{
   users: UserCollection;
   currentUser: UserInfo;
 }>();
@@ -33,23 +32,10 @@ defineEmits<{
   (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
 }>();
 
-const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-let hotkeys: Hotkeys | null = null;
 const selectedCount = ref(0);
 
 const someSelected = computed(() => {
   return selectedCount.value > 0;
-});
-
-onMounted(async () => {
-  hotkeys = hotkeyManager.newHotkeys(Groups.Users);
-  hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop, async () => props.users.selectAll(true));
-});
-
-onUnmounted(async () => {
-  if (hotkeys) {
-    hotkeyManager.unregister(hotkeys);
-  }
 });
 </script>
 
