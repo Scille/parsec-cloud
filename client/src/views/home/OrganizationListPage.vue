@@ -156,7 +156,8 @@ import { MsImage, NoOrganization } from '@/components/core/ms-image';
 import { MsInput } from '@/components/core/ms-input';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { Routes } from '@/router';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import HomePageButtons, { HomePageAction } from '@/views/home/HomePageButtons.vue';
@@ -196,7 +197,7 @@ const searchInputRef = ref();
 const linkRef = ref();
 const link = ref('');
 
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 
 const msSorterOptions: MsOptions = new MsOptions([
   {
@@ -252,8 +253,11 @@ async function onAction(action: HomePageAction): Promise<void> {
 }
 
 onMounted(async (): Promise<void> => {
-  hotkeys = hotkeyManager.newHotkeys(Groups.Home);
-  hotkeys.add('f', Modifiers.Ctrl, Platforms.Web | Platforms.Desktop, searchInputRef.value.setFocus);
+  hotkeys = hotkeyManager.newHotkeys();
+  hotkeys.add(
+    { key: 'f', modifiers: Modifiers.Ctrl, platforms: Platforms.Web | Platforms.Desktop, disableIfModal: true, route: Routes.Home },
+    searchInputRef.value.setFocus,
+  );
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
   await refreshDeviceList();
 });

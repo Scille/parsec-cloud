@@ -188,7 +188,7 @@ import {
   SortProperty,
 } from '@/components/files';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
   FileProgressStateData,
   FolderCreatedStateData,
@@ -266,7 +266,7 @@ const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
 });
 
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 let callbackId: string | null = null;
 let fileUploadModal: HTMLIonModalElement | null = null;
 
@@ -280,23 +280,58 @@ onMounted(async () => {
   if (savedData && savedData.displayState !== undefined) {
     displayView.value = savedData.displayState;
   }
-  hotkeys = hotkeyManager.newHotkeys(Groups.Documents);
-  hotkeys.add('o', Modifiers.Ctrl, Platforms.Desktop | Platforms.Web, importFiles);
-  hotkeys.add('enter', Modifiers.None, Platforms.MacOS, async () => await renameEntries(getSelectedEntries()));
-  hotkeys.add('f2', Modifiers.None, Platforms.Windows | Platforms.Linux, async () => await renameEntries(getSelectedEntries()));
-  hotkeys.add('i', Modifiers.Ctrl | Modifiers.Shift, Platforms.Desktop, async () => await showDetails(getSelectedEntries()));
-  hotkeys.add('c', Modifiers.Ctrl, Platforms.Desktop, async () => await moveEntriesTo(getSelectedEntries()));
-  hotkeys.add('l', Modifiers.Ctrl, Platforms.Desktop, async () => await copyLink(getSelectedEntries()));
+  hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
-    'delete',
-    Modifiers.None,
-    Platforms.Windows | Platforms.Linux | Platforms.Web,
+    { key: 'o', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
+    importFiles,
+  );
+  hotkeys.add(
+    { key: 'enter', modifiers: Modifiers.None, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
+    async () => await renameEntries(getSelectedEntries()),
+  );
+  hotkeys.add(
+    { key: 'f2', modifiers: Modifiers.None, platforms: Platforms.Windows | Platforms.Linux, disableIfModal: true, route: Routes.Documents },
+    async () => await renameEntries(getSelectedEntries()),
+  );
+  hotkeys.add(
+    { key: 'i', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => await showDetails(getSelectedEntries()),
+  );
+  hotkeys.add(
+    { key: 'c', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => await moveEntriesTo(getSelectedEntries()),
+  );
+  hotkeys.add(
+    { key: 'l', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
+    async () => await copyLink(getSelectedEntries()),
+  );
+  hotkeys.add(
+    {
+      key: 'delete',
+      modifiers: Modifiers.None,
+      platforms: Platforms.Windows | Platforms.Linux | Platforms.Web,
+      disableIfModal: true,
+      route: Routes.Documents,
+    },
     async () => await deleteEntries(getSelectedEntries()),
   );
-  hotkeys.add('backspace', Modifiers.Ctrl, Platforms.MacOS, async () => await deleteEntries(getSelectedEntries()));
-  hotkeys.add('g', Modifiers.Ctrl, Platforms.Desktop, async () => {
-    displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
-  });
+  hotkeys.add(
+    { key: 'backspace', modifiers: Modifiers.Ctrl, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
+    async () => await deleteEntries(getSelectedEntries()),
+  );
+  hotkeys.add(
+    { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => {
+      displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
+    },
+  );
+  hotkeys.add(
+    { key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+    async () => {
+      folders.value.selectAll(true);
+      files.value.selectAll(true);
+    },
+  );
 
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
@@ -452,7 +487,6 @@ async function createFolder(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-  hotkeyManager.disableGroup(Groups.Documents);
   const folderName = await getTextInputFromUser({
     title: translate('FoldersPage.CreateFolderModal.title'),
     trim: true,
@@ -461,7 +495,6 @@ async function createFolder(): Promise<void> {
     placeholder: translate('FoldersPage.CreateFolderModal.placeholder'),
     okButtonText: translate('FoldersPage.CreateFolderModal.create'),
   });
-  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!folderName) {
     return;
@@ -486,7 +519,6 @@ async function importFiles(): Promise<void> {
   if (fileUploadModal) {
     return;
   }
-  hotkeyManager.disableGroup(Groups.Documents);
   fileUploadModal = await modalController.create({
     component: FileUploadModal,
     cssClass: 'file-upload-modal',
@@ -498,7 +530,6 @@ async function importFiles(): Promise<void> {
   });
   await fileUploadModal.present();
   await fileUploadModal.onDidDismiss();
-  hotkeyManager.enableGroup(Groups.Documents);
   fileUploadModal = null;
 }
 
@@ -517,13 +548,11 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
     const subtitle = entry.isFile()
       ? translate('FoldersPage.deleteOneFileQuestionSubtitle', { name: entry.name })
       : translate('FoldersPage.deleteOneFolderQuestionSubtitle', { name: entry.name });
-    hotkeyManager.disableGroup(Groups.Documents);
     const answer = await askQuestion(title, subtitle, {
       yesIsDangerous: true,
       yesText: entry.isFile() ? translate('FoldersPage.deleteOneFileYes') : translate('FoldersPage.deleteOneFolderYes'),
       noText: entry.isFile() ? translate('FoldersPage.deleteOneFileNo') : translate('FoldersPage.deleteOneFolderNo'),
     });
-    hotkeyManager.enableGroup(Groups.Documents);
 
     if (answer === Answer.No) {
       return;
@@ -542,7 +571,6 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
       );
     }
   } else {
-    hotkeyManager.disableGroup(Groups.Documents);
     const answer = await askQuestion(
       translate('FoldersPage.deleteMultipleQuestionTitle'),
       translate('FoldersPage.deleteMultipleQuestionSubtitle', {
@@ -554,7 +582,6 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
         noText: translate('FoldersPage.deleteMultipleNo', { count: entries.length }),
       },
     );
-    hotkeyManager.enableGroup(Groups.Documents);
     if (answer === Answer.No) {
       return;
     }
@@ -590,7 +617,6 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
   const entry = entries[0];
   const ext = parsec.Path.getFileExtension(entry.name);
-  hotkeyManager.disableGroup(Groups.Documents);
   const newName = await getTextInputFromUser({
     title: entry.isFile() ? translate('FoldersPage.RenameModal.fileTitle') : translate('FoldersPage.RenameModal.folderTitle'),
     trim: true,
@@ -603,7 +629,6 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
     defaultValue: entry.name,
     selectionRange: [0, entry.name.length - (ext.length > 0 ? ext.length + 1 : 0)],
   });
-  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!newName) {
     return;
@@ -667,13 +692,11 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
-  hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.moveSelectFolderTitle', { count: entries.length }, entries.length),
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
   });
-  hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
     return;
   }
@@ -722,7 +745,6 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   const entry = entries[0];
-  hotkeyManager.disableGroup(Groups.Documents);
   const modal = await modalController.create({
     component: FileDetailsModal,
     cssClass: 'file-details-modal',
@@ -733,21 +755,18 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
   });
   await modal.present();
   await modal.onWillDismiss();
-  hotkeyManager.enableGroup(Groups.Documents);
 }
 
 async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
-  hotkeyManager.disableGroup(Groups.Documents);
   const folder = await selectFolder({
     title: translate('FoldersPage.copySelectFolderTitle', { count: entries.length }, entries.length),
     subtitle: translate('FoldersPage.copySelectFolderSubtitle', { location: currentPath.value }),
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
   });
-  hotkeyManager.enableGroup(Groups.Documents);
   if (!folder) {
     return;
   }
@@ -799,9 +818,7 @@ async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
-  hotkeyManager.disableGroup(Groups.Documents);
   console.log('Show history', entries[0]);
-  hotkeyManager.enableGroup(Groups.Documents);
 }
 
 async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
@@ -809,7 +826,6 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
     return;
   }
   if (parsec.isWeb()) {
-    hotkeyManager.disableGroup(Groups.Documents);
     await informationManager.present(
       new Information({
         message: translate('FoldersPage.open.unavailableOnWeb'),
@@ -817,7 +833,6 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
       }),
       PresentationMode.Modal,
     );
-    hotkeyManager.enableGroup(Groups.Documents);
     return;
   }
   const entry = entries[0];
@@ -840,7 +855,6 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFinished?: () => void): Promise<void> {
-  hotkeyManager.disableGroup(Groups.Documents);
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -856,7 +870,6 @@ async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFin
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
-  hotkeyManager.enableGroup(Groups.Documents);
 
   if (!data) {
     if (onFinished) {

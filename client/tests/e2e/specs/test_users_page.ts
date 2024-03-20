@@ -120,8 +120,6 @@ describe('Check active users page', () => {
 
     // Re-select all
     cy.get('.user-list-header').find('ion-checkbox').click();
-    checkChecked(false);
-    cy.get('.user-list-header').find('ion-checkbox').click();
     checkChecked(true);
     cy.get('.counter').contains('4 users selected');
 

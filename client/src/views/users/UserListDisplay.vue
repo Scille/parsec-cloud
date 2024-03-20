@@ -13,7 +13,7 @@
         <ion-checkbox
           aria-label=""
           class="checkbox"
-          @ion-change="selectAll($event.detail.checked)"
+          @ion-change="users.selectAll($event.detail.checked)"
           :checked="allSelected"
           :indeterminate="someSelected && !allSelected"
         />
@@ -58,9 +58,8 @@
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, inject, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
   users: UserCollection;
@@ -71,31 +70,13 @@ defineEmits<{
   (e: 'menuClick', event: Event, user: UserModel, onFinished: () => void): void;
 }>();
 
-const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-let hotkeys: Hotkeys | null = null;
-
 const allSelected = computed(() => {
-  return props.users.selectedCount() > 0 && props.users.selectedCount() === props.users.usersCount();
+  return props.users.selectedCount() > 0 && props.users.selectedCount() === props.users.selectableUsersCount();
 });
 
 const someSelected = computed(() => {
   return props.users.selectedCount() > 0;
 });
-
-onMounted(async () => {
-  hotkeys = hotkeyManager.newHotkeys(Groups.Users);
-  hotkeys.add('a', Modifiers.Ctrl, Platforms.Desktop, async () => await selectAll(true));
-});
-
-onUnmounted(async () => {
-  if (hotkeys) {
-    hotkeyManager.unregister(hotkeys);
-  }
-});
-
-async function selectAll(selected: boolean): Promise<void> {
-  props.users.selectAll(selected);
-}
 </script>
 
 <style scoped lang="scss">

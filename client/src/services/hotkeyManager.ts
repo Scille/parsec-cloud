@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { isDesktop, isLinux, isMacOS, isMobile, isWeb, isWindows, needsMocks } from '@/parsec/environment';
+import { Routes, currentRouteIs } from '@/router';
+import { modalController } from '@ionic/vue';
 
 export const HotkeyManagerKey = 'hotkey';
 
@@ -21,137 +23,99 @@ export enum Platforms {
   All = Desktop | Web | Mobile,
 }
 
-export enum Groups {
-  Home = 1,
-  Workspaces,
-  Documents,
-  Users,
-  Global,
-  Unique,
-}
-
 interface Hotkey {
   key: string;
   modifiers: number;
   platforms: number;
+  disableIfModal: boolean;
+  route?: Routes;
   callback: () => Promise<void>;
 }
 
-export class Hotkeys {
-  currentHotkeys: Hotkey[];
-  id: number;
-  group: Groups;
-
-  constructor(id: number, group: Groups) {
-    this.currentHotkeys = [];
-    this.id = id;
-    this.group = group;
-  }
-
-  add(key: string, modifiers: number, platforms: number, callback: () => Promise<void>): void {
-    if (needsMocks()) {
-      platforms |= Platforms.Web;
-    }
-    this.currentHotkeys.push({ key: key, modifiers: modifiers, platforms: platforms, callback: callback });
-  }
+interface HotkeyOptions {
+  key: string;
+  modifiers: number;
+  platforms: number;
+  disableIfModal?: boolean;
+  route?: Routes;
 }
 
-interface HotkeyGroup {
-  group: Groups;
-  hotkeys: Hotkeys[];
-  disabledCount: number;
+export class HotkeyGroup {
+  hotkeys: Hotkey[];
+  id: number;
+
+  constructor(id: number) {
+    this.hotkeys = [];
+    this.id = id;
+  }
+
+  add(options: HotkeyOptions, callback: () => Promise<void>): void {
+    if (needsMocks()) {
+      options.platforms |= Platforms.Web;
+    }
+    this.hotkeys.push({
+      key: options.key,
+      modifiers: options.modifiers,
+      platforms: options.platforms,
+      callback: callback,
+      disableIfModal: options.disableIfModal === true,
+      route: options.route,
+    });
+  }
 }
 
 export class HotkeyManager {
   groups: HotkeyGroup[];
-  uniqueGroup: Hotkeys[];
   index: number;
 
   constructor() {
     this.groups = [];
-    this.uniqueGroup = [];
     this.index = 0;
-    window.addEventListener(
-      'keydown',
-      async (event: KeyboardEvent): Promise<void> => await this.onKeyPress(event, this.groups, this.uniqueGroup),
-    );
+    window.addEventListener('keydown', async (event: KeyboardEvent): Promise<void> => await this.onKeyPress(event, this.groups));
   }
 
-  newHotkeys(group: Groups): Hotkeys {
-    const keys = new Hotkeys(this.index, group);
+  newHotkeys(): HotkeyGroup {
+    const group = new HotkeyGroup(this.index);
 
-    if (group === Groups.Unique) {
-      this.uniqueGroup.unshift(keys);
-    } else {
-      let hkGroup = this.groups.find((item) => item.group === group);
-
-      if (!hkGroup) {
-        hkGroup = { group: group, hotkeys: [], disabledCount: 0 };
-        this.groups.push(hkGroup);
-      }
-      // Insert at the beginning so it will have the priority
-      hkGroup.hotkeys.unshift(keys);
-    }
+    this.groups.unshift(group);
 
     this.index++;
-    return keys;
+    return group;
   }
 
-  unregister(toRemove: Hotkeys): void {
-    if (toRemove.group === Groups.Unique) {
-      this.uniqueGroup = this.uniqueGroup.filter((item) => item.id !== toRemove.id);
-    } else {
-      const hkGroup = this.groups.find((item) => item.group === toRemove.group);
-
-      if (!hkGroup) {
-        return;
-      }
-      hkGroup.hotkeys = hkGroup.hotkeys.filter((item) => item.id !== toRemove.id);
+  unregister(toRemove: HotkeyGroup): void {
+    const index = this.groups.findIndex((item) => item.id === toRemove.id);
+    if (index !== -1) {
+      this.groups.splice(index, 1);
     }
   }
 
-  enableGroup(group: Groups): void {
-    const hkGroup = this.groups.find((item) => item.group === group);
-
-    if (hkGroup) {
-      hkGroup.disabledCount = hkGroup.disabledCount < 1 ? 0 : hkGroup.disabledCount - 1;
-    }
-  }
-
-  disableGroup(group: Groups): void {
-    const hkGroup = this.groups.find((item) => item.group === group);
-
-    if (hkGroup) {
-      hkGroup.disabledCount += 1;
-    }
-  }
-
-  private async checkKey(event: KeyboardEvent, groupIsDisabled: boolean, key: Hotkey): Promise<boolean> {
-    if (!this.doPlatformsMatch(key.platforms)) {
+  private async checkKey(event: KeyboardEvent, hotkey: Hotkey): Promise<boolean> {
+    // Checking the platform
+    if (!this.doPlatformsMatch(hotkey.platforms)) {
       return false;
     }
-    if (event.key.toLowerCase() === key.key) {
-      if (!this.doModifiersMatch(event, key.modifiers)) {
-        return false;
-      }
-      event.preventDefault();
-      // Only checking if the group is disabled here,
-      // because we still want to prevent the default behavior
-      // if we handle this hotkey
-      if (groupIsDisabled) {
-        return false;
-      }
-      await key.callback();
-      return true;
+    if (event.key.toLowerCase() !== hotkey.key) {
+      return false;
     }
-    return false;
+    // Checking the current route (current displayed page)
+    if (hotkey.route && !currentRouteIs(hotkey.route)) {
+      return false;
+    }
+    // Disable the hotkey if a modal is opened
+    if (hotkey.disableIfModal && (await modalController.getTop())) {
+      return false;
+    }
+    if (!this.doModifiersMatch(event, hotkey.modifiers)) {
+      return false;
+    }
+    event.preventDefault();
+    await hotkey.callback();
+    return true;
   }
 
-  private async onKeyPress(event: KeyboardEvent, groups: HotkeyGroup[], uniqueGroup: Hotkeys[]): Promise<void> {
+  private async onKeyPress(event: KeyboardEvent, groups: HotkeyGroup[]): Promise<void> {
     if (!event.key || ['control', 'shift', 'alt'].includes(event.key.toLowerCase())) {
-      return;
-    }
-    if (['control', 'shift', 'alt'].includes(event.key.toLowerCase())) {
       return;
     }
     if (event.repeat) {
@@ -161,19 +125,11 @@ export class HotkeyManager {
     if (!isDesktop() && !isWeb()) {
       return;
     }
-    // Unique take priority
-    for (const keyPresses of uniqueGroup) {
-      for (const keyPress of keyPresses.currentHotkeys) {
-        await this.checkKey(event, false, keyPress);
-      }
-    }
 
     for (const group of groups) {
-      for (const keyPresses of group.hotkeys) {
-        for (const keyPress of keyPresses.currentHotkeys) {
-          if (await this.checkKey(event, group.disabledCount > 0, keyPress)) {
-            return;
-          }
+      for (const hotkey of group.hotkeys) {
+        if (await this.checkKey(event, hotkey)) {
+          return;
         }
       }
     }

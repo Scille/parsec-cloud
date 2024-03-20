@@ -22,8 +22,8 @@
         :value="modelValue"
         id="ms-password-input"
         :clear-on-edit="false"
-        @ion-focus="hasFocus = true"
-        @ion-blur="hasFocus = false"
+        @ion-focus="onFocus"
+        @ion-blur="onFocusLost"
         @keyup.enter="onEnterPress()"
       />
       <div
@@ -50,14 +50,14 @@
 </template>
 
 <script setup lang="ts">
-import { Groups, HotkeyManager, HotkeyManagerKey, Hotkeys, Modifiers, Platforms } from '@/services/hotkeyManager';
+import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { eye, eyeOff, warning } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, ref } from 'vue';
+import { inject, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const inputRef = ref();
-let hotkeys: Hotkeys | null = null;
+let hotkeys: HotkeyGroup | null = null;
 const passwordVisible = ref(false);
 const hasFocus = ref(false);
 
@@ -78,21 +78,23 @@ defineExpose({
   setFocus,
 });
 
-onMounted(async () => {
-  hotkeys = hotkeyManager.newHotkeys(Groups.Unique);
+async function onFocus(): Promise<void> {
+  hasFocus.value = true;
+  hotkeys = hotkeyManager.newHotkeys();
 
-  hotkeys.add('/', Modifiers.Ctrl, Platforms.Desktop, async () => {
+  hotkeys.add({ key: '/', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop }, async () => {
     if (hasFocus.value) {
       passwordVisible.value = !passwordVisible.value;
     }
   });
-});
+}
 
-onUnmounted(async () => {
+async function onFocusLost(): Promise<void> {
+  hasFocus.value = false;
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
   }
-});
+}
 
 function setFocus(): void {
   setTimeout(() => {
