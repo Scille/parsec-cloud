@@ -205,6 +205,8 @@ jobs:
         run: npm run electron:release
         working-directory: client
         timeout-minutes: 5
+        env:
+          SNAPCRAFT_BUILD_ENVIRONMENT: lxd
 
       # Install syft
       - uses: taiki-e/install-action@ffad14352befc011a07601bbf501b672acbc18e6 # pin v2.29.0
