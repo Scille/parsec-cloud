@@ -202,6 +202,21 @@ async def test_user_not_receive_event_before_listen(
         )
 
 
+async def test_non_sse_request(minimalorg: MinimalorgRpcClients) -> None:
+    alice = minimalorg.alice
+    alice_client = alice.raw_client
+    res = await alice_client.get(
+        f"{alice.url}/events",
+        headers={
+            **alice.headers,
+            "Accept": "application/json",
+        },
+    )
+
+    assert res.status_code == 406
+    assert res.json() == {"detail": "Bad accept type"}
+
+
 async def test_receive_event_of_newly_shared_realm(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
