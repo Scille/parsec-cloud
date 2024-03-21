@@ -51,6 +51,7 @@ if (electronIsDev) {
 })();
 
 const lock = app.requestSingleInstanceLock();
+let secondInstanceRecently = false;
 
 if (!lock) {
   app.quit();
@@ -62,12 +63,18 @@ if (!lock) {
       myCapacitorApp.getMainWindow().focus();
     }
 
-    if (commandLine.length > 0) {
+    if (!secondInstanceRecently && commandLine.length > 0) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
       if (lastArg.startsWith('parsec3://')) {
         myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
       }
+      // I could not found any explanation on why second-instance gets called multiple times
+      // when I'm only starting the app once.
+      secondInstanceRecently = true;
+      setTimeout(() => {
+        secondInstanceRecently = false;
+      }, 1000);
     }
   });
 }
