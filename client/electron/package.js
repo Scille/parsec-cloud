@@ -106,6 +106,9 @@ const options = {
     grade: 'devel',
     allowNativeWayland: true,
     stagePackages: ['default', 'fuse3', 'libssl1.1'],
+    environment: {
+      LD_LIBRARY_PATH: '$SNAP/app:$SNAP/lib/x86_64-linux-gnu:$SNAP/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH',
+    },
     confinement: 'classic',
   },
 
