@@ -1557,3 +1557,8 @@ impl UnsecureShamirRecoveryTopicCertificate {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/certif.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

@@ -3,12 +3,17 @@
 #[macro_use]
 extern crate lazy_static;
 
+// See https://github.com/la10736/rstest/tree/v0.18.2/rstest_reuse#cavelets
+#[allow(clippy::single_component_path_imports)]
+#[cfg(test)]
+use rstest_reuse;
+
 // Convenient dependencies we are going to need everywhere
 /// ThisError vs Anyhow ?
-/// `anyhow::Error` is your friend: the idea is when call a function we can have 3 outcomes:
+/// `anyhow::Error` is your friend: the idea is when calling a function we can have 3 outcomes:
 /// - success, wrap it with `Result::Ok` and you're good ^^
-/// - error we care about, your function should have a dedicated error listing those
-///   errors so that caller can do pattern matching on the result
+/// - error we care about, your function should have a dedicated error for each one of those,
+///   so that the caller can do pattern matching on the result
 /// - error we don't care about, that's where we want to use anyhow !
 ///
 /// Typically you should end-up with something like:
@@ -52,6 +57,7 @@ mod pki;
 mod protocol;
 mod realm;
 mod regex;
+mod sas_code;
 mod time;
 
 pub use crate::regex::*;
@@ -70,6 +76,7 @@ pub use organization::*;
 pub use pki::*;
 pub use protocol::*;
 pub use realm::*;
+pub use sas_code::*;
 pub use time::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

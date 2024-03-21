@@ -3,8 +3,9 @@
 use std::{collections::HashMap, str::FromStr};
 
 use libparsec_tests_lite::prelude::*;
-use libparsec_types::fixtures::{alice, Device};
-use libparsec_types::prelude::*;
+
+use crate::fixtures::{alice, Device};
+use crate::prelude::*;
 
 #[test]
 fn serde_pki_enrollment_answer_payload() {

@@ -1,15 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use std::collections::HashMap;
 
 use libparsec_tests_lite::prelude::*;
 
-use libparsec_types::fixtures::{alice, bob, timestamp, Device};
-use libparsec_types::prelude::*;
+use crate::fixtures::{alice, bob, timestamp, Device};
+use crate::prelude::*;
 
 // TODO: check serde output to ensure handling of Option<T> depending of
 // default/missing policy

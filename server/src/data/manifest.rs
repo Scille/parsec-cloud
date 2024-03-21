@@ -50,17 +50,18 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl BlockAccess {
     #[new]
-    #[pyo3(signature = (id, key, offset, size, digest))]
+    #[pyo3(signature = (id, key_index, offset, size, digest))]
     fn new(
         id: BlockID,
-        key: SecretKey,
+        key_index: u64,
         offset: u64,
         size: u64,
         digest: HashDigest,
     ) -> PyResult<Self> {
         Ok(Self(libparsec_types::BlockAccess {
             id: id.0,
-            key: key.0,
+            key_index,
+            key: None,
             offset,
             size: NonZeroU64::try_from(size)
                 .map_err(|_| PyValueError::new_err("Invalid `size` field"))?,
@@ -73,7 +74,7 @@ impl BlockAccess {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [id: BlockID, "id"],
-            [key: SecretKey, "key"],
+            [key_index: u64, "key"],
             [offset: u64, "offset"],
             [size: u64, "size"],
             [digest: HashDigest, "digest"],
@@ -83,8 +84,9 @@ impl BlockAccess {
         if let Some(v) = id {
             r.id = v.0;
         }
-        if let Some(v) = key {
-            r.key = v.0;
+        if let Some(v) = key_index {
+            r.key = None;
+            r.key_index = v;
         }
         if let Some(v) = offset {
             r.offset = v;
@@ -106,8 +108,13 @@ impl BlockAccess {
     }
 
     #[getter]
-    fn key(&self) -> PyResult<SecretKey> {
-        Ok(SecretKey(self.0.key.clone()))
+    fn key(&self) -> PyResult<Option<SecretKey>> {
+        Ok(self.0.key.as_ref().map(|key| SecretKey(key.to_owned())))
+    }
+
+    #[getter]
+    fn key_index(&self) -> PyResult<u64> {
+        Ok(self.0.key_index)
     }
 
     #[getter]

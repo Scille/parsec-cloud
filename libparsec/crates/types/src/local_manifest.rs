@@ -15,7 +15,8 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest, DEFAULT_BLOCK_SIZE,
+    FolderManifest, IndexInt, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest,
+    DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -143,7 +144,11 @@ impl Chunk {
         }
     }
 
-    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), &'static str> {
+    pub fn promote_as_block(
+        &mut self,
+        data: &[u8],
+        key_index: IndexInt,
+    ) -> Result<(), &'static str> {
         // No-op
         if self.is_block() {
             return Err("already a block");
@@ -157,7 +162,8 @@ impl Chunk {
         // Craft access
         self.access = Some(BlockAccess {
             id: BlockID::from(*self.id),
-            key: SecretKey::generate(),
+            key_index,
+            key: None,
             offset: self.start,
             size: self.size().try_into().expect("size must be > 0"),
             digest: HashDigest::from_data(data),
@@ -1204,3 +1210,8 @@ impl From<LocalFolderManifest> for LocalChildManifest {
         Self::Folder(value)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/local_manifest.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

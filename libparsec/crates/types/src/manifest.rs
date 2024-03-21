@@ -16,7 +16,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
+    DataError, DataResult, DateTime, DeviceID, EntryName, IndexInt, SizeInt, VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -153,7 +153,14 @@ macro_rules! impl_manifest_dump_load {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct BlockAccess {
     pub id: BlockID,
-    pub key: SecretKey,
+    /// In Parsec >= v3, all blocks are encrypted by the workspace keys
+    // TODO: key index starts at 1, should we use NonZeroU64 here ?
+    #[serde(default)]
+    pub key_index: IndexInt,
+    /// In Parsec < v3, each block was encrypted by it own dedicated key
+    ///
+    /// If this field is defined, then `key_index` should just be ignored
+    pub key: Option<SecretKey>,
     pub offset: SizeInt,
     pub size: NonZeroU64,
     pub digest: HashDigest,

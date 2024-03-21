@@ -2576,7 +2576,8 @@ no_certificate_event!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
-        block_key: SecretKey,
+        key_index: IndexInt,
+        key: SecretKey,
         cleartext: Bytes,
     ],
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateBlockCache>>>,
@@ -2598,10 +2599,13 @@ impl TestbedEventCreateBlock {
             utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
         }
 
+        let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
+            "Realm must have had at least one key rotation before vlob create/update is possible !",
+        );
+
         // 2) Actual creation
 
         let block_id = BlockID::from(*builder.counters.next_entry_id());
-        let block_key = builder.counters.next_secret_key();
 
         let timestamp = builder.counters.next_timestamp();
         Self {
@@ -2609,7 +2613,8 @@ impl TestbedEventCreateBlock {
             author,
             realm,
             block_id,
-            block_key,
+            key_index,
+            key: key.to_owned(),
             cleartext,
             cache: Arc::default(),
         }
@@ -2617,7 +2622,7 @@ impl TestbedEventCreateBlock {
 
     pub fn encrypted(&self, _template: &TestbedTemplate) -> Bytes {
         let populate = || {
-            let encrypted = self.block_key.encrypt(&self.cleartext).into();
+            let encrypted = self.key.encrypt(&self.cleartext).into();
             TestbedEventCreateBlockCache { encrypted }
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
