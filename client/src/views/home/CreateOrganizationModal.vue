@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal-stepper">
+  <ion-page
+    class="modal-stepper"
+    :class="CreateOrganizationStep[pageStep]"
+  >
     <div class="modal">
       <ion-buttons
         slot="end"

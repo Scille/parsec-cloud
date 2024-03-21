@@ -29,6 +29,7 @@ defineProps<{
   flex-wrap: nowrap;
   align-items: center;
   gap: 0.5rem;
+  overflow: hidden;
 
   --width: 2rem;
   --height: 2rem;
