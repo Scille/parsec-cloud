@@ -154,10 +154,15 @@ async function confirm(): Promise<boolean> {
 .ms-modal-header {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  padding-bottom: 0.5rem;
+
+  &:has(.ms-modal-header__text) {
+    padding-bottom: 1.5rem;
+  }
 
   &__title {
     padding: 0;
+    margin-bottom: 1rem;
     color: var(--parsec-color-light-primary-800);
     display: flex;
     align-items: center;
@@ -186,10 +191,6 @@ async function confirm(): Promise<boolean> {
 .ms-modal-content {
   --background: transparent;
   overflow: visible;
-
-  > :first-child {
-    padding-top: 2rem;
-  }
 }
 
 .ms-modal-footer {

@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="modal-stepper">
+  <ion-page
+    class="modal-stepper"
+    :class="DeviceJoinOrganizationStep[pageStep]"
+  >
     <ms-wizard-stepper
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
       :current-index="pageStep - 1"

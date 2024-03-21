@@ -1,16 +1,20 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
 /* **** Parsec modal **** */
+:root {
+  --parsec-modal-width-sm: 33.125rem;
+  --parsec-modal-width-md: 42rem;
+  --parsec-modal-width-lg: 43.75rem;
+  --parsec-modal-max-height: 35rem;
+}
 
 ion-modal::part(content) {
   border-radius: var(--parsec-radius-8);
-  min-width: var(--parsec-min-content-width);
+  min-width: var(--parsec-modal-width-sm);
   width: fit-content;
 }
 
 ion-modal {
-  --width: var(--parsec-modal-width);
-  --max-width: var(--parsec-modal-width);
   --height: auto;
   --max-height: auto;
 }
@@ -89,8 +93,8 @@ ion-modal .inner-content {
     padding: 2.5rem;
 
     .closeBtn-container {
-      top: 2rem;
-      right: 2rem;
+      top: 1rem;
+      right: 1rem;
     }
 
     &.wizardTrue {
@@ -98,16 +102,20 @@ ion-modal .inner-content {
     }
 
     &-header {
-      margin-bottom: 2rem;
+      padding-bottom: 0.5rem;
+
+      &:has(.modal-header__text) {
+        padding-bottom: 1.5rem;
+      }
 
       &__title {
         padding: 0;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         color: var(--parsec-color-light-primary-800);
         display: flex;
         align-items: center;
         gap: 1rem;
-        max-width: var(--parsec-modal-width);
+        max-width: var(--parsec-modal-width-sm);
       }
 
       &__text {
@@ -139,27 +147,11 @@ ion-modal .inner-content {
     }
   }
 
-  // specific step
-  .orga-name {
-    display: flex;
-    flex-direction: column;
-
-    &-content {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-  }
-
   .label-waiting {
     color: var(--parsec-color-light-secondary-grey);
     font-style: italic;
     padding-left: 2em;
     padding-right: 2em;
-  }
-
-  .guest-code {
-    margin: 4.7rem auto;
   }
 
   .spinner-container {
@@ -168,14 +160,6 @@ ion-modal .inner-content {
     align-items: center;
     height: 100%;
   }
-}
-
-/* --join by link modal -- */
-ion-modal.join-by-link-modal::part(content) {
-  min-height: 300px;
-  position: relative;
-  display: block;
-  contain: content;
 }
 
 /* -- settings modal -- */
@@ -188,52 +172,40 @@ ion-modal.join-by-link-modal::part(content) {
   }
 }
 
-.settings-modal {
-  --width: 842px;
+.join-organization-modal::part(content) {
+  max-width: var(--parsec-modal-width-lg);
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+.create-organization-modal {
+  &::part(content) {
+    min-width: var(--parsec-modal-width-md);
+    max-width: var(--parsec-modal-width-md);
+  }
+
+  &:has(.OrgNameStep)::part(content),
+  &:has(.UserInfoStep)::part(content) {
+    min-width: var(--parsec-modal-width-sm);
+    max-width: var(--parsec-modal-width-sm);
+  }
+}
+
+.settings-modal::part(content) {
+  min-width: var(--parsec-modal-width-lg);
   --height: 600px;
-}
-
-.workspace-sharing-modal {
-  --width: 642px;
-  --height: 636px;
-  --max-height: var(--parsec-modal-max-height);
-
-  &::part(content) {
-    height: 100%;
-  }
-
-  .ion-page {
-    position: absolute;
-    display: flex;
-  }
-}
-
-.user-details-modal {
-  --width: 642px;
-  --max-height: var(--parsec-modal-max-height);
-
-  &::part(content) {
-    height: 100%;
-  }
-}
-
-.file-upload-modal {
-  --width: 842px;
-}
-
-.changes-modal {
-  --width: 842px;
-
-  //required to scroll to the edge of the bottom (override --offset-top: 0px)
-  .content-ltr {
-    --offset-top: -20px !important;
-  }
 }
 
 .greet-organization-modal {
   &::part(content) {
-    width: var(--parsec-max-content-width);
+    min-width: var(--parsec-modal-width-md);
+    max-width: var(--parsec-modal-width-md);
     --height: fit-content;
+  }
+
+  &:has(.Summary)::part(content) {
+    min-width: var(--parsec-modal-width-sm);
   }
 
   // manage the two columns on Contact details step
@@ -264,8 +236,34 @@ ion-modal.join-by-link-modal::part(content) {
   }
 }
 
-.file-upload-modal {
-  --width: 842px;
+.workspace-sharing-modal {
+  --max-height: var(--parsec-modal-max-height);
+
+  &::part(content) {
+    height: 100%;
+  }
+
+  .ion-page {
+    position: absolute;
+    display: flex;
+  }
+}
+
+.user-details-modal {
+  --width: 642px;
+  --max-height: var(--parsec-modal-max-height);
+
+  &::part(content) {
+    height: 100%;
+  }
+}
+
+.file-upload-modal::part(content) {
+  max-width: var(--parsec-modal-width-lg);
+}
+
+.changes-modal::part(content) {
+  max-width: var(--parsec-modal-width-sm);
 }
 
 .overlapped-modal {
@@ -278,8 +276,8 @@ ion-modal.join-by-link-modal::part(content) {
 
 .folder-selection-modal {
   &::part(content) {
-    width: 782px;
     height: 615px;
+    max-width: var(--parsec-modal-width-sm);
   }
 
   .modal,
@@ -296,5 +294,25 @@ ion-modal.join-by-link-modal::part(content) {
 
   .ms-modal-footer {
     margin-top: auto;
+  }
+}
+
+.change-password-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  &:has(.NewPassword)::part(content) {
+    min-width: var(--parsec-modal-width-md);
+  }
+}
+
+.question-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  .ms-modal-header {
+    padding-bottom: 0rem !important;
   }
 }

@@ -119,16 +119,9 @@ async function areFieldsCorrect(): Promise<boolean> {
   border-radius: var(--parsec-radius-6);
   width: 100%;
   z-index: 2;
+
   &:hover {
     background: var(--parsec-color-light-secondary-background);
-  }
-
-  &:nth-child(2) {
-    border-radius: var(--parsec-radius-6) var(--parsec-radius-6) 0 0;
-
-    &:hover {
-      border-radius: var(--parsec-radius-6);
-    }
   }
 
   &.radio-checked {
@@ -192,8 +185,7 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 
 .item-radio__input {
-  background: var(--parsec-color-light-secondary-medium);
-  padding: 0 1rem 1rem 1rem;
-  border-radius: 0 0 var(--parsec-radius-6) var(--parsec-radius-6);
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1rem;
 }
 </style>
