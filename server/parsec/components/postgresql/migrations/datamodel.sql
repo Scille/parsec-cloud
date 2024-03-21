@@ -16,7 +16,7 @@
 CREATE TABLE organization (
     _id SERIAL PRIMARY KEY,
     organization_id VARCHAR(32) UNIQUE NOT NULL,
-    bootstrap_token TEXT NOT NULL,
+    bootstrap_token TEXT,
     root_verify_key BYTEA,
     _expired_on TIMESTAMPTZ,
     user_profile_outsider_allowed BOOLEAN NOT NULL,
