@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 <template>
   <div class="slider-container">
-    <transition :name="getName()">
+    <transition
+      :name="getName()"
+      :mode="'out-in'"
+    >
       <slot />
     </transition>
   </div>
