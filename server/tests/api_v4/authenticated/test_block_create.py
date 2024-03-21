@@ -6,7 +6,7 @@ import pytest
 
 from parsec._parsec import BlockID, DateTime, VlobID, authenticated_cmds
 from parsec.components.block import BlockReadBadOutcome, BlockReadResult
-from parsec.components.blockstore import BlockStoreReadBadOutcome
+from parsec.components.blockstore import BlockStoreCreateBadOutcome
 from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
 
 
@@ -135,10 +135,13 @@ async def test_authenticated_block_create_store_unavailable(
     block = b"<block content>"
 
     async def mocked_blockstore_create(*args, **kwargs):
-        return BlockStoreReadBadOutcome.STORE_UNAVAILABLE
+        return BlockStoreCreateBadOutcome.STORE_UNAVAILABLE
 
     monkeypatch.setattr(
         "parsec.components.memory.MemoryBlockStoreComponent.create", mocked_blockstore_create
+    )
+    monkeypatch.setattr(
+        "parsec.components.postgresql.block.PGBlockStoreComponent.create", mocked_blockstore_create
     )
 
     rep = await coolorg.alice.block_create(

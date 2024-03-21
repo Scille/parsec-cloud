@@ -91,6 +91,9 @@ async def test_authenticated_block_read_store_unavailable(
     monkeypatch.setattr(
         "parsec.components.memory.MemoryBlockStoreComponent.read", mocked_blockstore_read
     )
+    monkeypatch.setattr(
+        "parsec.components.postgresql.block.PGBlockStoreComponent.read", mocked_blockstore_read
+    )
 
     rep = await coolorg.alice.block_read(block_id)
     assert rep == authenticated_cmds.v4.block_read.RepStoreUnavailable()
