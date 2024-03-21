@@ -45,7 +45,7 @@ defineProps<{
     gap: 0.5rem;
 
     .orga-avatar {
-      background-color: white;
+      background-color: var(--parsec-color-light-secondary-white);
       color: var(--parsec-color-light-primary-600);
       width: 3.25rem;
       height: 3.25rem;

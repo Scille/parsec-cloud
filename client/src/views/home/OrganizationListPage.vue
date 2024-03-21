@@ -128,13 +128,15 @@
                       </ion-col>
                       <ion-col
                         v-show="isDeviceLoggedIn(device)"
-                        class="body connected"
+                        class="card-content-footer-login connected"
                       >
                         <ion-icon
                           :icon="ellipse"
                           class="success"
                         />
-                        {{ $t('HomePage.organizationList.loggedIn') }}
+                        <ion-text class="body-sm">
+                          {{ $t('HomePage.organizationList.loggedIn') }}
+                        </ion-text>
                       </ion-col>
                     </ion-row>
                   </ion-grid>
