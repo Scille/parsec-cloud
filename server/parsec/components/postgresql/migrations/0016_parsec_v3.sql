@@ -1,6 +1,13 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 -------------------------------------------------------
+-- Organization
+-------------------------------------------------------
+
+ALTER TABLE organization ALTER COLUMN bootstrap_token DROP NOT NULL;
+
+
+-------------------------------------------------------
 -- User
 -------------------------------------------------------
 

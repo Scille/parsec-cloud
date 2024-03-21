@@ -154,7 +154,7 @@ SET
     _bootstrapped_on = $bootstrapped_on
 WHERE
     organization_id = $organization_id
-    AND bootstrap_token = $bootstrap_token
+    AND bootstrap_token IS NOT DISTINCT FROM $bootstrap_token
     AND root_verify_key IS NULL
 """
 )
@@ -274,8 +274,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.event_bus = event_bus
 
     @override
+    @transaction
     async def create(
         self,
+        conn: asyncpg.Connection,
         now: DateTime,
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
@@ -296,24 +298,49 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if minimum_archiving_period is Unset:
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
-        async with self.pool.acquire() as conn:
-            result = await conn.execute(
-                *_q_insert_organization(
-                    organization_id=id.str,
-                    bootstrap_token=bootstrap_token.hex,
-                    active_users_limit=active_users_limit
-                    if active_users_limit is not ActiveUsersLimit.NO_LIMIT
-                    else None,
-                    user_profile_outsider_allowed=user_profile_outsider_allowed,
-                    created_on=now,
-                    minimum_archiving_period=minimum_archiving_period,
-                )
+        result = await conn.execute(
+            *_q_insert_organization(
+                organization_id=id.str,
+                bootstrap_token=bootstrap_token.hex,
+                active_users_limit=active_users_limit
+                if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                else None,
+                user_profile_outsider_allowed=user_profile_outsider_allowed,
+                created_on=now,
+                minimum_archiving_period=minimum_archiving_period,
             )
-            if result == "INSERT 0 0":
-                return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
-            if result != "INSERT 0 1":
-                assert False, f"Insertion error: {result}"
-            return bootstrap_token
+        )
+        if result == "INSERT 0 0":
+            return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
+        return bootstrap_token
+
+    async def spontaneous_create(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> None:
+        active_users_limit = self._config.organization_initial_active_users_limit
+        user_profile_outsider_allowed = (
+            self._config.organization_initial_user_profile_outsider_allowed
+        )
+        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        result = await conn.execute(
+            *_q_insert_organization(
+                organization_id=organization_id.str,
+                bootstrap_token=None,
+                active_users_limit=active_users_limit
+                if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                else None,
+                user_profile_outsider_allowed=user_profile_outsider_allowed,
+                created_on=now,
+                minimum_archiving_period=minimum_archiving_period,
+            )
+        )
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
 
     @override
     @transaction
@@ -351,10 +378,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_services_certificates = tuple(
                 service["service_certificate"] for service in services
             )
+        raw_bootstrap_token = row["bootstrap_token"]
+        bootstrap_token = (
+            None if raw_bootstrap_token is None else BootstrapToken.from_hex(raw_bootstrap_token)
+        )
 
         return Organization(
             organization_id=id,
-            bootstrap_token=BootstrapToken.from_hex(row["bootstrap_token"]),
+            bootstrap_token=bootstrap_token,
             root_verify_key=rvk,
             is_expired=row["is_expired"],
             created_on=row["created_on"],
@@ -439,18 +470,18 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         sequester_authority_verify_key_der = (
             None if s_certif is None else s_certif.verify_key_der.dump()
         )
-        bootstrap_token_string = bootstrap_token.hex if bootstrap_token is not None else ""
+        print(f"{bootstrap_token=}")
         result = await conn.execute(
             *_q_bootstrap_organization(
                 organization_id=id.str,
-                bootstrap_token=bootstrap_token_string,
+                bootstrap_token=None if bootstrap_token is None else bootstrap_token.hex,
                 bootstrapped_on=now,
                 root_verify_key=root_verify_key.encode(),
                 sequester_authority_certificate=s_certif,
                 sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             )
         )
-        assert result == "UPDATE 1"
+        assert result == "UPDATE 1", result
 
         return u_certif, d_certif, s_certif
 

@@ -31,14 +31,14 @@ class PGAuthComponent(BaseAuthComponent):
     def __init__(self, pool: asyncpg.Pool, event_bus: EventBus, config: BackendConfig) -> None:
         super().__init__(event_bus, config)
         self.pool = pool
-        self._organization: PGOrganizationComponent
-        self._invite: PGInviteComponent
+        self.organization: PGOrganizationComponent
+        self.invite: PGInviteComponent
 
     def register_components(
         self, organization: PGOrganizationComponent, invite: PGInviteComponent, **kwargs
     ) -> None:
-        self._organization = organization
-        self._invite = invite
+        self.organization = organization
+        self.invite = invite
 
     @override
     @transaction
@@ -49,17 +49,18 @@ class PGAuthComponent(BaseAuthComponent):
         organization_id: OrganizationID,
         spontaneous_bootstrap: bool,
     ) -> AnonymousAuthInfo | AuthAnonymousAuthBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                if spontaneous_bootstrap:
-                    raise NotImplementedError
-                return AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND
+                if not spontaneous_bootstrap:
+                    return AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND
+                await self.organization.spontaneous_create(conn, organization_id, now=now)
+                is_expired = False
             case Organization() as organization:
-                pass
+                is_expired = organization.is_expired
             case unknown:
                 assert_never(unknown)
 
-        if organization.is_expired:
+        if is_expired:
             return AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED
 
         return AnonymousAuthInfo(
@@ -76,7 +77,7 @@ class PGAuthComponent(BaseAuthComponent):
         organization_id: OrganizationID,
         token: InvitationToken,
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
-        match await self._invite._info_as_invited(conn, organization_id, token):
+        match await self.invite._info_as_invited(conn, organization_id, token):
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND:
                 return AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED:
@@ -105,7 +106,7 @@ class PGAuthComponent(BaseAuthComponent):
         organization_id: OrganizationID,
         device_id: DeviceID,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
