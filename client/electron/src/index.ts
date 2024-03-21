@@ -26,36 +26,35 @@ const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig(
 // const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
 
-// If deep linking is enabled then we will set it up here.
-if (capacitorFileConfig.electron?.deepLinkingEnabled) {
-  setupElectronDeepLinking(myCapacitorApp, {
-    customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'parsec3',
-  });
-}
-
-// If we are in Dev mode, use the file watcher components.
-if (electronIsDev) {
-  setupReloadWatcher(myCapacitorApp);
-}
-
-// Run Application
-(async (): Promise<any> => {
-  // Wait for electron app to be ready.
-  await app.whenReady();
-  // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
-  setupContentSecurityPolicy(myCapacitorApp.getCustomURLScheme());
-  // Initialize our app, build windows, and load content.
-  await myCapacitorApp.init();
-  // Check for updates if we are in a packaged app.
-  // autoUpdater.checkForUpdatesAndNotify();
-})();
-
 const lock = app.requestSingleInstanceLock();
-let secondInstanceRecently = false;
 
 if (!lock) {
   app.quit();
 } else {
+  // If deep linking is enabled then we will set it up here.
+  if (capacitorFileConfig.electron?.deepLinkingEnabled) {
+    setupElectronDeepLinking(myCapacitorApp, {
+      customProtocol: capacitorFileConfig.electron.deepLinkingCustomProtocol ?? 'parsec3',
+    });
+  }
+
+  // If we are in Dev mode, use the file watcher components.
+  if (electronIsDev) {
+    setupReloadWatcher(myCapacitorApp);
+  }
+
+  // Run Application
+  (async (): Promise<any> => {
+    // Wait for electron app to be ready.
+    await app.whenReady();
+    // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
+    setupContentSecurityPolicy(myCapacitorApp.getCustomURLScheme());
+    // Initialize our app, build windows, and load content.
+    await myCapacitorApp.init();
+    // Check for updates if we are in a packaged app.
+    // autoUpdater.checkForUpdatesAndNotify();
+  })();
+
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     if (!myCapacitorApp.isMainWindowVisible()) {
       myCapacitorApp.showMainWindow();
@@ -63,18 +62,12 @@ if (!lock) {
       myCapacitorApp.getMainWindow().focus();
     }
 
-    if (!secondInstanceRecently && commandLine.length > 0) {
+    if (commandLine.length > 0) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
       if (lastArg.startsWith('parsec3://')) {
         myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
       }
-      // I could not found any explanation on why second-instance gets called multiple times
-      // when I'm only starting the app once.
-      secondInstanceRecently = true;
-      setTimeout(() => {
-        secondInstanceRecently = false;
-      }, 1000);
     }
   });
 }
