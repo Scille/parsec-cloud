@@ -117,7 +117,7 @@ jobs:
         include:
           - name: 🐧 Linux
             platform: linux
-            os: ubuntu-22.04
+            os: ubuntu-20.04
           - name: 🏁 Windows
             platform: windows
             os: windows-2022
@@ -174,11 +174,6 @@ jobs:
         if: matrix.platform == 'linux'
         uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
         timeout-minutes: 2
-
-      - name: Linux > Debug installed packages
-        if: matrix.platform == 'linux'
-        run: apt-cache policy snapd fuse3 libfuse3-dev libssl libssl-dev
-        continue-on-error: true
 
       - name: Windows > Install WinFSP
         if: matrix.platform == 'windows'
