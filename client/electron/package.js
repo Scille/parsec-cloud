@@ -102,10 +102,10 @@ const options = {
   },
 
   snap: {
-    base: 'core22',
+    base: 'core20',
     grade: 'devel',
     allowNativeWayland: true,
-    stagePackages: ['default', 'fuse3'],
+    stagePackages: ['default', 'fuse3', 'libssl1.1'],
     confinement: 'classic',
   },
 
