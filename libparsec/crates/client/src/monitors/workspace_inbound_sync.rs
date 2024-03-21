@@ -139,6 +139,8 @@ fn task_future_factory(
                                 // Other errors are unexpected ones
                                 | WorkspaceSyncError::NoKey
                                 | WorkspaceSyncError::NoRealm
+                                | WorkspaceSyncError::InvalidManifest(_)
+                                | WorkspaceSyncError::InvalidBlockAccess(_)
                                 | WorkspaceSyncError::InvalidKeysBundle(_)
                                 | WorkspaceSyncError::InvalidCertificate(_)
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }

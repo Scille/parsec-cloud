@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 use std::sync::Arc;
 
 use libparsec_types::prelude::*;
@@ -102,6 +100,7 @@ pub(super) async fn force_reshape_and_flush(
             opened_file.manifest.clone(),
             &opened_file.new_chunks,
             &opened_file.removed_chunks,
+            &[],
         )
         .await
         .map_err(|err| match err {
@@ -125,6 +124,10 @@ async fn reshape(
 ) -> Result<(), ReshapeAndFlushError> {
     let manifest: &mut LocalFileManifest = Arc::make_mut(&mut opened_file.manifest);
     for reshape in prepare_reshape(manifest) {
+        if reshape.is_pseudo_block() {
+            continue;
+        }
+
         // Build the chunk of data resulting of the reshape...
         let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
         let mut buf_size = 0;
@@ -140,7 +143,7 @@ async fn reshape(
                 }
                 Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
                     // ...if some data are missing in local, this reshape operation is not possible
-                    // so we simply ignore it by rollback its corresponding changes in the manifest.
+                    // so we simply ignore it by not committing the changes in the manifest.
                     reshape_ok = false;
                     break;
                 }
@@ -150,40 +153,44 @@ async fn reshape(
                 }
             }
         }
+
+        if !reshape_ok {
+            continue;
+        }
+
         if buf_size < buf.len() {
             buf.extend_from_slice(&vec![0; buf.len() - buf_size]);
         }
-        if reshape_ok {
-            let new_chunk_id = reshape.destination().id;
-            // Remove old chunks
-            for to_remove_chunk_id in reshape.cleanup_ids() {
-                let found = opened_file
-                    .new_chunks
-                    .iter()
-                    .position(|(id, _)| *id == to_remove_chunk_id);
-                match found {
-                    Some(index) => {
-                        opened_file.new_chunks.remove(index);
-                    }
-                    None => {
-                        opened_file.removed_chunks.push(to_remove_chunk_id);
-                    }
+
+        let new_chunk_id = reshape.destination().id;
+        // Remove old chunks
+        for to_remove_chunk_id in reshape.cleanup_ids() {
+            let found = opened_file
+                .new_chunks
+                .iter()
+                .position(|(id, _)| *id == to_remove_chunk_id);
+            match found {
+                Some(index) => {
+                    opened_file.new_chunks.remove(index);
+                }
+                None => {
+                    opened_file.removed_chunks.push(to_remove_chunk_id);
                 }
             }
-            // Add new chunk
-            let buf_ref = if reshape.write_back() {
-                opened_file.new_chunks.push((new_chunk_id, buf));
-                &opened_file
-                    .new_chunks
-                    .last()
-                    .expect("An item has just been pushed")
-                    .1
-            } else {
-                &buf
-            };
-            // Commit the changes
-            reshape.commit(buf_ref);
         }
+        // Add new chunk
+        let buf_ref = if reshape.write_back() {
+            opened_file.new_chunks.push((new_chunk_id, buf));
+            &opened_file
+                .new_chunks
+                .last()
+                .expect("An item has just been pushed")
+                .1
+        } else {
+            &buf
+        };
+        // Commit the changes
+        reshape.commit(buf_ref);
     }
 
     Ok(())

@@ -230,9 +230,50 @@ impl PlatformWorkspaceStorage {
         manifest: &UpdateManifestData,
         new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
+        mut chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         // Note transaction automatically rollbacks on drop
         let mut transaction = self.conn.begin().await?;
+
+        // TODO: promoting chunk to block would be much more efficient once we have
+        // merged cache and data storage into a single DB
+        let mut cache_transaction = match chunks_promoted_to_block.next() {
+            None => None,
+            Some(first) => {
+                let mut cache_transaction = self.cache_conn.begin().await?;
+                let mut next = first;
+                loop {
+                    let (to_promote_chunk_id, promoted_block_id, accessed_on) = next;
+
+                    let maybe_encrypted =
+                        db_get_chunk(&mut *transaction, to_promote_chunk_id).await?;
+                    let encrypted = match maybe_encrypted {
+                        Some(encrypted) => encrypted,
+                        None => {
+                            return Err(anyhow::anyhow!(
+                                "Cannot promote chunk {} to block: not found",
+                                to_promote_chunk_id
+                            ))
+                        }
+                    };
+
+                    db_insert_block(
+                        &mut *cache_transaction,
+                        promoted_block_id,
+                        &encrypted,
+                        accessed_on,
+                    )
+                    .await?;
+                    db_remove_chunk(&mut *transaction, to_promote_chunk_id).await?;
+
+                    next = match chunks_promoted_to_block.next() {
+                        None => break,
+                        Some(next) => next,
+                    };
+                }
+                Some(cache_transaction)
+            }
+        };
 
         db_update_manifest(&mut *transaction, manifest).await?;
         for (new_chunk_id, new_chunk_data) in new_chunks {
@@ -242,6 +283,9 @@ impl PlatformWorkspaceStorage {
             db_remove_chunk(&mut *transaction, removed_chunk_id).await?;
         }
 
+        if let Some(cache_transaction) = cache_transaction.take() {
+            cache_transaction.commit().await?;
+        }
         transaction.commit().await?;
         Ok(())
     }

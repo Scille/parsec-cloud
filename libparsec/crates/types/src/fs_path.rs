@@ -56,6 +56,14 @@ impl EntryName {
     pub fn extension(&self) -> Option<&str> {
         self.0.split_once('.').map(|(_, ext)| ext)
     }
+
+    // TODO: Handle case of hidden UNIX file (e.g. `.foo`) ?
+    pub fn base_and_extension(&self) -> (&str, Option<&str>) {
+        match self.0.split_once('.') {
+            Some((base, ext)) => (base, Some(ext)),
+            None => (self.0.as_str(), None),
+        }
+    }
 }
 
 impl std::convert::AsRef<str> for EntryName {

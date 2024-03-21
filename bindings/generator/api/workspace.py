@@ -446,6 +446,18 @@ class WorkspaceFdReadError(ErrorVariant):
     class NotInReadMode:
         pass
 
+    class NoRealmAccess:
+        pass
+
+    class InvalidBlockAccess:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
     class Internal:
         pass
 

@@ -170,6 +170,8 @@ impl SendHookConfig {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
+        println!("[Testbed] high_level_send({:?})", request);
+
         // Given mutex is synchronous, we must release it before any await
         let custom_hook_future = {
             let mut guard = self.0.strategy.lock().expect("Mutex is poisoned");

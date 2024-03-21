@@ -15,6 +15,7 @@ enum RemoteModification {
     Rename,
     // A given entry name is overwritten by a new entry ID
     Replace,
+    // TODO: New vlob contains corrupted data
 }
 
 enum LocalModification {

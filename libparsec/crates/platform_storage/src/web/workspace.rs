@@ -79,6 +79,7 @@ impl PlatformWorkspaceStorage {
         _manifest: &UpdateManifestData,
         _new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         _removed_chunks: impl Iterator<Item = ChunkID>,
+        _chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         todo!()
     }

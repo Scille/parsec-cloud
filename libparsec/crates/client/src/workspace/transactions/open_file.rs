@@ -24,6 +24,28 @@ pub struct OpenOptions {
     pub create_new: bool,
 }
 
+impl OpenOptions {
+    pub fn read_only() -> Self {
+        Self {
+            read: true,
+            write: false,
+            truncate: false,
+            create: false,
+            create_new: false,
+        }
+    }
+
+    pub fn read_write() -> Self {
+        Self {
+            read: true,
+            write: true,
+            truncate: false,
+            create: false,
+            create_new: false,
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceOpenFileError {
     #[error("Cannot reach the server")]
@@ -152,6 +174,14 @@ pub async fn open_file(
         }
     };
 
+    open_file_by_id(ops, entry_id, options).await
+}
+
+pub async fn open_file_by_id(
+    ops: &WorkspaceOps,
+    entry_id: VlobID,
+    options: OpenOptions,
+) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
     // Handling of truncate-on-open, will be done in the next step
 
     let maybe_truncate_on_open =

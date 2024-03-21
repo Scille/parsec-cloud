@@ -10,11 +10,11 @@ use super::utils::workspace_ops_factory;
 
 enum RemoteModification {
     Nothing,
-    Create,
-    Remove,
-    Rename,
+    CreateChild,
+    RemoveChild,
+    RenameChild,
     // A given entry name is overwritten by a new entry ID
-    Replace,
+    ReplaceChild,
 }
 
 enum LocalModification {
@@ -27,10 +27,12 @@ enum LocalModification {
 async fn non_placeholder(
     #[values(
         RemoteModification::Nothing,
-        RemoteModification::Create,
-        RemoteModification::Remove,
-        RemoteModification::Rename,
-        RemoteModification::Replace
+        RemoteModification::CreateChild,
+        RemoteModification::RemoveChild,
+        RemoteModification::RenameChild,
+        RemoteModification::ReplaceChild
+        // TODO: New vlob contains corrupted data
+        // TODO: New vlob contains a file manifest instead of the expected folder
     )]
     remote_modification: RemoteModification,
     #[values(
@@ -61,7 +63,7 @@ async fn non_placeholder(
 
         match remote_modification {
             RemoteModification::Nothing => (),
-            RemoteModification::Create => {
+            RemoteModification::CreateChild => {
                 let entry_id = builder
                     .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
                     .map(|e| e.manifest.id);
@@ -70,19 +72,19 @@ async fn non_placeholder(
                     .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
                     .customize_children([("new", Some(entry_id))].into_iter());
             }
-            RemoteModification::Remove => {
+            RemoteModification::RemoveChild => {
                 builder
                     .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
                     .customize_children([("spam", None)].into_iter());
             }
-            RemoteModification::Rename => {
+            RemoteModification::RenameChild => {
                 builder
                     .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
                     .customize_children(
                         [("spam", None), ("spam_renamed", Some(wksp1_foo_spam_id))].into_iter(),
                     );
             }
-            RemoteModification::Replace => {
+            RemoteModification::ReplaceChild => {
                 let entry_id = builder
                     .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
                     .map(|e| e.manifest.id);
@@ -113,7 +115,7 @@ async fn non_placeholder(
                     )
                     .customize_children([("dont_mind_me.txt", Some(id))].into_iter());
             }
-            (LocalModification::Conflicting, RemoteModification::Create) => {
+            (LocalModification::Conflicting, RemoteModification::CreateChild) => {
                 // Use the same entry name for a local change
                 let local_new_id = builder
                     .workspace_data_storage_local_file_manifest_create_or_update(
@@ -131,7 +133,7 @@ async fn non_placeholder(
                     )
                     .customize_children([("new", Some(local_new_id))].into_iter());
             }
-            (LocalModification::Conflicting, RemoteModification::Remove) => {
+            (LocalModification::Conflicting, RemoteModification::RemoveChild) => {
                 // The entry is rename in local and removed on remote !
                 builder
                     .workspace_data_storage_local_folder_manifest_create_or_update(
@@ -143,7 +145,7 @@ async fn non_placeholder(
                         [("spam", None), ("spam_renamed", Some(wksp1_foo_spam_id))].into_iter(),
                     );
             }
-            (LocalModification::Conflicting, RemoteModification::Rename) => {
+            (LocalModification::Conflicting, RemoteModification::RenameChild) => {
                 // Use the same entry name for a local change
                 let local_foo_spam_renamed_id = builder
                     .workspace_data_storage_local_file_manifest_create_or_update(
@@ -166,7 +168,7 @@ async fn non_placeholder(
                         [("spam_renamed", Some(local_foo_spam_renamed_id))].into_iter(),
                     );
             }
-            (LocalModification::Conflicting, RemoteModification::Replace) => {
+            (LocalModification::Conflicting, RemoteModification::ReplaceChild) => {
                 // Use the same entry name for a local change
                 let local_foo_spam_replaced_id = builder
                     .workspace_data_storage_local_file_manifest_create_or_update(
@@ -286,19 +288,19 @@ async fn non_placeholder(
                 children.push(("egg.txt", get_id("wksp1_foo_egg_txt_id")));
                 children.push(("spam", get_id("wksp1_foo_spam_id")));
             }
-            RemoteModification::Create => {
+            RemoteModification::CreateChild => {
                 children.push(("egg.txt", get_id("wksp1_foo_egg_txt_id")));
                 children.push(("spam", get_id("wksp1_foo_spam_id")));
                 children.push(("new", get_id("wksp1_foo_new_id")));
             }
-            RemoteModification::Remove => {
+            RemoteModification::RemoveChild => {
                 children.push(("egg.txt", get_id("wksp1_foo_egg_txt_id")));
             }
-            RemoteModification::Rename => {
+            RemoteModification::RenameChild => {
                 children.push(("egg.txt", get_id("wksp1_foo_egg_txt_id")));
                 children.push(("spam_renamed", get_id("wksp1_foo_spam_id")));
             }
-            RemoteModification::Replace => {
+            RemoteModification::ReplaceChild => {
                 children.push(("egg.txt", get_id("wksp1_foo_egg_txt_id")));
                 children.push(("spam", get_id("wksp1_foo_spam_replaced_id")));
             }
@@ -313,22 +315,22 @@ async fn non_placeholder(
                 ));
             }
 
-            (LocalModification::Conflicting, RemoteModification::Create) => {
+            (LocalModification::Conflicting, RemoteModification::CreateChild) => {
                 children.push((
                     "new (Parsec - name conflict)",
                     get_id("wksp1_local_foo_new_id"),
                 ));
             }
-            (LocalModification::Conflicting, RemoteModification::Remove) => {
+            (LocalModification::Conflicting, RemoteModification::RemoveChild) => {
                 children.push(("spam_renamed", get_id("wksp1_foo_spam_id")));
             }
-            (LocalModification::Conflicting, RemoteModification::Rename) => {
+            (LocalModification::Conflicting, RemoteModification::RenameChild) => {
                 children.push((
                     "spam_renamed (Parsec - name conflict)",
                     get_id("wksp1_local_foo_spam_renamed_id"),
                 ));
             }
-            (LocalModification::Conflicting, RemoteModification::Replace) => {
+            (LocalModification::Conflicting, RemoteModification::ReplaceChild) => {
                 children.push((
                     "spam (Parsec - name conflict)",
                     get_id("wksp1_local_foo_spam_replaced_id"),

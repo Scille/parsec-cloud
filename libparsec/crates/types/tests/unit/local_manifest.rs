@@ -1290,7 +1290,7 @@ fn chunk_promote_as_block() {
     let id = chunk.id;
     let block = {
         let mut block = chunk.clone();
-        block.promote_as_block(b"<data>", 1).unwrap();
+        block.promote_as_block(b"<data>").unwrap();
         block
     };
 
@@ -1302,7 +1302,7 @@ fn chunk_promote_as_block() {
     p_assert_eq!(*block.access.as_ref().unwrap().id, *id);
     p_assert_eq!(block.access.as_ref().unwrap().offset, 1);
     p_assert_eq!(block.access.as_ref().unwrap().key, None);
-    p_assert_eq!(block.access.as_ref().unwrap().key_index, 1);
+    p_assert_eq!(block.access.as_ref().unwrap().key_index, 0);
     p_assert_eq!(
         block.access.as_ref().unwrap().size,
         NonZeroU64::try_from(4).unwrap()
@@ -1322,7 +1322,7 @@ fn chunk_promote_as_block() {
     };
 
     let mut block = Chunk::from_block_access(block_access);
-    let err = block.promote_as_block(b"<data>", 1).unwrap_err();
+    let err = block.promote_as_block(b"<data>").unwrap_err();
     p_assert_eq!(err, "already a block");
 
     let mut chunk = Chunk {
@@ -1334,7 +1334,7 @@ fn chunk_promote_as_block() {
         access: None,
     };
 
-    let err = chunk.promote_as_block(b"<data>", 1).unwrap_err();
+    let err = chunk.promote_as_block(b"<data>").unwrap_err();
     p_assert_eq!(err, "not aligned");
 }
 
@@ -1354,7 +1354,7 @@ fn chunk_is_block() {
 
     let mut block = {
         let mut block = chunk.clone();
-        block.promote_as_block(b"<data>", 1).unwrap();
+        block.promote_as_block(b"<data>").unwrap();
         block
     };
 
@@ -1436,7 +1436,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
             raw_size: NonZeroU64::try_from(1).unwrap(),
             access: None,
         };
-        block.promote_as_block(b"<data>", 1).unwrap();
+        block.promote_as_block(b"<data>").unwrap();
         block
     };
 
@@ -1523,7 +1523,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
             raw_size: NonZeroU64::try_from(1).unwrap(),
             access: None,
         };
-        block.promote_as_block(b"<data>", 1).unwrap();
+        block.promote_as_block(b"<data>").unwrap();
         block
     };
 

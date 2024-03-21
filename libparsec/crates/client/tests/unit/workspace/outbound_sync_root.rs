@@ -426,7 +426,8 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
         },
     );
 
-    wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
+    let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
+    p_assert_matches!(outcome, OutboundSyncOutcome::Done);
 
     // Check the workspace manifest is no longer need sync
     let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
@@ -438,3 +439,5 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
 
     wksp1_ops.stop().await.unwrap();
 }
+
+// TODO: test `OutboundSyncOutcome::EntryIsBusy`

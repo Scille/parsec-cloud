@@ -5,9 +5,12 @@ use libparsec_client_connection::{
 };
 use libparsec_types::prelude::*;
 
-use crate::certif::{
-    CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
-    InvalidManifestError,
+use crate::{
+    certif::{
+        CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
+        InvalidManifestError,
+    },
+    CertifValidateBlockError, InvalidBlockAccessError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -176,6 +179,8 @@ async fn fetch_vlob(
 
 #[derive(Debug, thiserror::Error)]
 pub enum FetchRemoteBlockError {
+    #[error("Component has stopped")]
+    Stopped,
     #[error("Cannot reach the server")]
     Offline,
     #[error("The block doesn't exist on the server")]
@@ -184,8 +189,12 @@ pub enum FetchRemoteBlockError {
     NoRealmAccess,
     #[error("Block access is temporary unavailable on the server")]
     StoreUnavailable,
-    #[error("Block cannot be decrypted")]
-    BadDecryption,
+    #[error(transparent)]
+    InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -201,27 +210,54 @@ impl From<ConnectionError> for FetchRemoteBlockError {
 
 pub(super) async fn fetch_block(
     cmds: &AuthenticatedCmds,
-    block_id: BlockID,
-    key: &SecretKey,
-) -> Result<Vec<u8>, FetchRemoteBlockError> {
-    use authenticated_cmds::latest::block_read::{Rep, Req};
+    certificates_ops: &CertifOps,
+    realm_id: VlobID,
+    manifest: &FileManifest,
+    access: &BlockAccess,
+) -> Result<Bytes, FetchRemoteBlockError> {
+    let encrypted = {
+        use authenticated_cmds::latest::block_read::{Rep, Req};
 
-    let req = Req { block_id };
+        let req = Req {
+            block_id: access.id,
+        };
 
-    let rep = cmds.send(req).await?;
+        let rep = cmds.send(req).await?;
 
-    let block = match rep {
-        Rep::Ok { block } => Ok(block),
-        // Expected errors
-        Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
-        Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
-        Rep::BlockNotFound => Err(FetchRemoteBlockError::BlockNotFound),
-        // Unexpected errors :(
-        rep @ Rep::UnknownStatus { .. } => {
-            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
-        }
-    }?;
+        match rep {
+            Rep::Ok { block } => Ok(block),
+            // Expected errors
+            Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
+            Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
+            Rep::BlockNotFound => Err(FetchRemoteBlockError::BlockNotFound),
+            // Unexpected errors :(
+            rep @ Rep::UnknownStatus { .. } => {
+                Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+            }
+        }?
+    };
 
-    key.decrypt(&block)
-        .map_err(|_| FetchRemoteBlockError::BadDecryption)
+    let data: Bytes = certificates_ops
+        .validate_block(realm_id, manifest, access, &encrypted)
+        .await
+        .map_err(|err| match err {
+            CertifValidateBlockError::Offline => FetchRemoteBlockError::Offline,
+            CertifValidateBlockError::Stopped => FetchRemoteBlockError::Stopped,
+            CertifValidateBlockError::NotAllowed => FetchRemoteBlockError::NoRealmAccess,
+            CertifValidateBlockError::InvalidBlockAccess(err) => {
+                FetchRemoteBlockError::InvalidBlockAccess(err)
+            }
+            CertifValidateBlockError::InvalidCertificate(err) => {
+                FetchRemoteBlockError::InvalidCertificate(err)
+            }
+            CertifValidateBlockError::InvalidKeysBundle(err) => {
+                FetchRemoteBlockError::InvalidKeysBundle(err)
+            }
+            CertifValidateBlockError::Internal(err) => {
+                err.context("cannot validate block from server").into()
+            }
+        })?
+        .into();
+
+    Ok(data)
 }

@@ -15,8 +15,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, IndexInt, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest,
-    DEFAULT_BLOCK_SIZE,
+    FolderManifest, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest, DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -144,11 +143,7 @@ impl Chunk {
         }
     }
 
-    pub fn promote_as_block(
-        &mut self,
-        data: &[u8],
-        key_index: IndexInt,
-    ) -> Result<(), &'static str> {
+    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), &'static str> {
         // No-op
         if self.is_block() {
             return Err("already a block");
@@ -162,7 +157,15 @@ impl Chunk {
         // Craft access
         self.access = Some(BlockAccess {
             id: BlockID::from(*self.id),
-            key_index,
+            // TODO: this is a hack ! We should have a dedicated "LocalBlockAccess" type instead.
+            // `key_index` (and `key` in with legacy data) is only used when communicating
+            // with the server. However a chunk is a purely local concept, and promoting
+            // it to block means the resulting block will be stored locally.
+            // Hence the `key_index` set to 0 (which is always an invalid key index)
+            // given this field is never going to be used.
+            // Later on, the local-only blocks are going to be uploaded to the server, and
+            // at this point we will update the block access with the actual key index.
+            key_index: 0,
             key: None,
             offset: self.start,
             size: self.size().try_into().expect("size must be > 0"),

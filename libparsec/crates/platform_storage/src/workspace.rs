@@ -113,9 +113,15 @@ impl WorkspaceStorage {
         manifest: &UpdateManifestData,
         new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
+        chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         self.platform
-            .update_manifest_and_chunks(manifest, new_chunks, removed_chunks)
+            .update_manifest_and_chunks(
+                manifest,
+                new_chunks,
+                removed_chunks,
+                chunks_promoted_to_block,
+            )
             .await
     }
 

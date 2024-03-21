@@ -512,10 +512,14 @@ impl FileSystemContext for ParsecFileSystemContext {
                     .await
                     .map_err(|err| match err {
                         WorkspaceFdReadError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceFdReadError::NoRealmAccess => STATUS_ACCESS_DENIED,
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdReadError::NotInReadMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdReadError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdReadError::InvalidBlockAccess(_)
+                        | WorkspaceFdReadError::InvalidKeysBundle(_)
+                        | WorkspaceFdReadError::InvalidCertificate(_)
+                        | WorkspaceFdReadError::Internal(_) => STATUS_ACCESS_DENIED,
                     })
                     .map(|read| read as usize)
             } else {

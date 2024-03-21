@@ -7,8 +7,9 @@ use std::{
 
 use libparsec_client::workspace::{
     EntryStat, FileStat, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdCloseError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceOpenFileError,
-    WorkspaceOps, WorkspaceRemoveEntryError, WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceOpenFileError, WorkspaceOps, WorkspaceRemoveEntryError, WorkspaceRenameEntryError,
+    WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -1014,12 +1015,16 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
-                    libparsec_client::workspace::WorkspaceFdReadError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    libparsec_client::workspace::WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
-                    libparsec_client::workspace::WorkspaceFdReadError::Stopped
+                    WorkspaceFdReadError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
+                    WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceFdReadError::Stopped
+                    | WorkspaceFdReadError::InvalidBlockAccess(_)
+                    | WorkspaceFdReadError::InvalidKeysBundle(_)
+                    | WorkspaceFdReadError::InvalidCertificate(_)
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                    | libparsec_client::workspace::WorkspaceFdReadError::BadFileDescriptor
-                    | libparsec_client::workspace::WorkspaceFdReadError::Internal(_)
+                    | WorkspaceFdReadError::BadFileDescriptor
+                    | WorkspaceFdReadError::Internal(_)
                     => reply.manual().error(libc::EIO),
                 },
             }
