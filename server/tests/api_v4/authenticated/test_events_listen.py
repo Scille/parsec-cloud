@@ -154,6 +154,19 @@ async def test_ok(
         assert event == authenticated_cmds.v4.events_listen.RepOk(expected)
 
 
+async def test_receive_server_config_as_first_event(
+    minimalorg: MinimalorgRpcClients, backend: Backend
+) -> None:
+    async with minimalorg.alice.events_listen() as alice_sse:
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+
 async def test_user_not_receive_event_before_listen(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
