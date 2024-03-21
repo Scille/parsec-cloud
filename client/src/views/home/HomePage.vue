@@ -85,7 +85,7 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import SettingsModal from '@/views/settings/SettingsModal.vue';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Ref, inject, onMounted, onUnmounted, ref, toRaw } from 'vue';
+import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -215,6 +215,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
   if (device.ty === DeviceFileType.Password) {
     selectedDevice.value = device;
     state.value = HomePageState.Login;
+    await nextTick();
     loginPageRef.value.setLoginError(error);
   } else if (device.ty === DeviceFileType.Keyring) {
     informationManager.present(
