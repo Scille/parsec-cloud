@@ -32,6 +32,7 @@ from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import (
     Q,
     q_block,
+    q_device,
     q_device_internal_id,
     q_organization_internal_id,
     q_realm,
@@ -108,6 +109,20 @@ VALUES (
     $size,
     $created_on
 )
+"""
+)
+
+_q_get_all_block_meta = Q(
+    f"""
+SELECT
+    block_id,
+    { q_realm(_id="realm", select="realm.realm_id") } as realm_id,
+    { q_device(_id="author", select="device_id") } as author,
+    size,
+    created_on
+FROM block
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -247,7 +262,7 @@ class PGBlockComponent(BaseBlockComponent):
 
         match await self.realm._check_realm(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
-                assert False, f"Realm not found: {realm_id}"
+                return BlockCreateBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
             case (RealmRole() as role, _):
@@ -312,6 +327,25 @@ class PGBlockComponent(BaseBlockComponent):
 
         else:
             assert ret == "INSERT 0 1", f"Insertion error: {ret}"
+
+    @override
+    @transaction
+    async def test_dump_blocks(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID
+    ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int]]:
+        ret = await conn.fetch(*_q_get_all_block_meta(organization_id=organization_id.str))
+
+        items = {}
+        for item in ret:
+            block_id = BlockID.from_hex(item["block_id"])
+            items[block_id] = (
+                item["created_on"],
+                DeviceID(item["author"]),
+                VlobID.from_hex(item["realm_id"]),
+                int(item["size"]),
+            )
+
+        return items
 
 
 _q_get_block_data = Q(
