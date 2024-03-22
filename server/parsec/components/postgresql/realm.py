@@ -202,6 +202,22 @@ WHERE
 """
 )
 
+_q_rename_realm = Q(
+    f"""
+INSERT INTO realm_name (
+    realm,
+    realm_name_certificate,
+    certified_by,
+    certified_on
+) VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    $realm_name_certificate,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$certified_by") },
+    $certified_on
+)
+"""
+)
+
 
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
@@ -314,6 +330,18 @@ class PGRealmComponent(BaseRealmComponent):
 
         realm_items.sort()
         return [certificate for _, _, certificate in realm_items]
+
+    async def _has_realm_name_certificate(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID, realm_id: VlobID
+    ) -> bool:
+        ret = await conn.fetchrow(
+            *_q_get_realm_name_certificates(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                after=None,
+            )
+        )
+        return ret is not None
 
     @override
     @transaction
@@ -448,7 +476,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmRenameStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        # TODO: we pretend that the realm has been renamed to use the CoolOrg template
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        if org.is_expired:
+            return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
 
         match realm_rename_validate(
             now=now,
@@ -460,6 +509,51 @@ class PGRealmComponent(BaseRealmComponent):
                 pass
             case error:
                 return error
+
+        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole() as role, KeyIndex() as realm_key_index):
+                if role != RealmRole.OWNER:
+                    return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        if realm_key_index != certif.key_index:
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
+            )
+
+        if initial_name_or_fail and await self._has_realm_name_certificate(
+            conn, organization_id, certif.realm_id
+        ):
+            return CertificateBasedActionIdempotentOutcome(
+                certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
+            )
+
+        ret = await conn.execute(
+            *_q_rename_realm(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                realm_name_certificate=realm_name_certificate,
+                certified_by=author.str,
+                certified_on=certif.timestamp,
+            )
+        )
+        assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        await self.event_bus.send(
+            EventRealmCertificate(
+                organization_id=organization_id,
+                timestamp=certif.timestamp,
+                realm_id=certif.realm_id,
+                user_id=author.user_id,
+                role_removed=False,
+            )
+        )
+
         return certif
 
     @override
