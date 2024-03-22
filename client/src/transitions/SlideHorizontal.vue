@@ -3,7 +3,7 @@
   <div class="slider-container">
     <transition
       :name="getName()"
-      :mode="'out-in'"
+      mode="out-in"
     >
       <slot />
     </transition>
@@ -35,7 +35,6 @@ function getName(): string {
 .slide-left-to-right-enter-active,
 .slide-right-to-left-enter-active {
   transition: 0.4s ease-in-out;
-  transition-delay: 0.4s;
 }
 
 .slide-left-to-left-leave-active,

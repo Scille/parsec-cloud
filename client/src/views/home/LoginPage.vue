@@ -136,7 +136,7 @@ defineExpose({
     border: 1px solid var(--parsec-color-light-secondary-medium);
     padding: 2em;
     margin: 0;
-    border-radius: var(--parsec-radius-8);
+    border-radius: var(--parsec-radius-12);
     box-shadow: none;
     display: flex;
     flex-direction: column;
