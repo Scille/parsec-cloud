@@ -73,12 +73,16 @@ if (!lock) {
 }
 
 // Protocol handler for osx
-app.on('open-url', function (_event, url) {
-  if (url.length > 0) {
-    // We're only interested in potential Parsec links
-    if (url.startsWith('parsec3://')) {
-      myCapacitorApp.getMainWindow().webContents.send('open-link', url);
-    }
+app.on('open-url', (_event, url) => {
+  if (url.length > 0 && url.startsWith('parsec3://')) {
+    // Timeout is set if the app is opened with a link, in which case we
+    // wait for it to load
+    setTimeout(
+      () => {
+        myCapacitorApp.getMainWindow().webContents.send('open-link', url);
+      },
+      app.isReady() ? 0 : 1000,
+    );
   }
 });
 
