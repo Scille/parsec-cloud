@@ -32,3 +32,18 @@ export function formatTimeSince(
     return translate('common.date.fewSeconds');
   }
 }
+
+export async function startCounter(ms: number, step: number, callback: (elapsed: number) => Promise<void>): Promise<void> {
+  await callback(0);
+  let count = 0;
+  const interval = setInterval(async () => {
+    count += 1;
+    if (count * step > ms) {
+      clearInterval(interval);
+      await callback(ms);
+    } else {
+      await callback(count * step);
+    }
+  }, step);
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

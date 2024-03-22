@@ -595,6 +595,7 @@
                 "start": "Démarrer",
                 "sendEmail": "Envoyer le lien par email",
                 "reSendEmail": "Renvoyer l'email",
+                "waitBeforeResending": "Attendez {seconds}s",
                 "cancelGreet": {
                     "yes": "Annuler le processus",
                     "no": "Reprendre"

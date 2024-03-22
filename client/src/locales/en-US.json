@@ -595,6 +595,7 @@
                 "start": "Start",
                 "sendEmail": "Send link by email",
                 "reSendEmail": "Resend email",
+                "waitBeforeResending": "Wait {seconds}s",
                 "cancelGreet": {
                     "yes": "Cancel process",
                     "no": "Resume"
