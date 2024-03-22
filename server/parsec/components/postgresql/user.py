@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import assert_never, override
+from typing import TYPE_CHECKING, assert_never, override
 
 import asyncpg
 
@@ -17,11 +17,11 @@ from parsec._parsec import (
     UserProfile,
     UserUpdateCertificate,
     VerifyKey,
+    VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
-from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user_queries import (
     query_dump_users,
 )
@@ -44,12 +44,14 @@ from parsec.components.postgresql.user_queries.revoke import (
 from parsec.components.postgresql.utils import (
     Q,
     q_device_internal_id,
+    q_organization_internal_id,
     q_user_internal_id,
     transaction,
 )
 from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
     BaseUserComponent,
+    CertificatesBundle,
     CheckDeviceBadOutcome,
     CheckUserBadOutcome,
     UserCreateDeviceStoreBadOutcome,
@@ -58,6 +60,7 @@ from parsec.components.user import (
     UserCreateUserValidateBadOutcome,
     UserDump,
     UserFreezeUserBadOutcome,
+    UserGetCertificatesAsUserBadOutcome,
     UserInfo,
     UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
@@ -76,6 +79,10 @@ from parsec.events import (
     EventUserUpdated,
 )
 
+if TYPE_CHECKING:
+    from parsec.components.postgresql.organization import PGOrganizationComponent
+    from parsec.components.postgresql.realm import PGRealmComponent
+
 _q_update_user = Q(
     f"""
 INSERT INTO profile (user_, profile, profile_certificate, certified_by, certified_on)
@@ -89,6 +96,74 @@ VALUES (
 """
 )
 
+_q_get_user_certificates = Q(
+    f"""
+SELECT
+    created_on,
+    user_certificate
+FROM user_
+WHERE organization = { q_organization_internal_id("$organization_id") }
+AND COALESCE(created_on > $after, TRUE)
+"""
+)
+
+_q_get_redacted_user_certificates = Q(
+    f"""
+SELECT
+    created_on,
+    redacted_user_certificate as user_certificate
+FROM user_
+WHERE organization = { q_organization_internal_id("$organization_id") }
+AND COALESCE(created_on > $after, TRUE)
+"""
+)
+
+_q_get_user_revoked_certificates = Q(
+    f"""
+SELECT
+    revoked_on,
+    revoked_user_certificate
+FROM user_
+WHERE organization = { q_organization_internal_id("$organization_id") }
+AND revoked_on IS NOT NULL
+AND COALESCE(revoked_on > $after, TRUE)
+"""
+)
+
+_q_get_user_update_certificates = Q(
+    f"""
+SELECT
+    certified_on,
+    profile_certificate
+FROM profile
+INNER JOIN user_ ON profile.user_ = user_._id
+WHERE user_.organization = { q_organization_internal_id("$organization_id") }
+AND COALESCE(certified_on > $after, TRUE)
+"""
+)
+
+_q_get_device_certificates = Q(
+    f"""
+SELECT
+    created_on,
+    device_certificate
+FROM device
+WHERE organization = { q_organization_internal_id("$organization_id") }
+AND COALESCE(created_on > $after, TRUE)
+"""
+)
+
+_q_get_device_redacted_certificates = Q(
+    f"""
+SELECT
+    created_on,
+    redacted_device_certificate as device_certificate
+FROM device
+WHERE organization = { q_organization_internal_id("$organization_id") }
+AND COALESCE(created_on > $after, TRUE)
+"""
+)
+
 
 class PGUserComponent(BaseUserComponent):
     def __init__(self, pool: asyncpg.Pool, event_bus: EventBus) -> None:
@@ -96,9 +171,13 @@ class PGUserComponent(BaseUserComponent):
         self.pool = pool
         self.event_bus = event_bus
         self.organization: PGOrganizationComponent
+        self.realm: PGRealmComponent
 
-    def register_components(self, organization: PGOrganizationComponent, **kwargs) -> None:
+    def register_components(
+        self, organization: PGOrganizationComponent, realm: PGRealmComponent, **kwargs
+    ) -> None:
         self.organization = organization
+        self.realm = realm
 
     async def _check_device(
         self,
@@ -448,6 +527,128 @@ class PGUserComponent(BaseUserComponent):
                 assert_never(unknown)
 
         return await query_list_users(conn, organization_id)
+
+    @override
+    @transaction
+    async def get_certificates_as_user(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        author: UserID,
+        common_after: DateTime | None,
+        sequester_after: DateTime | None,
+        shamir_recovery_after: DateTime | None,
+        realm_after: dict[VlobID, DateTime],
+    ) -> CertificatesBundle | UserGetCertificatesAsUserBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                assert organization.bootstrapped_on is not None
+            case unknown:
+                assert_never(unknown)
+        if organization.is_expired:
+            return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self._check_user(conn, organization_id, author):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as profile:
+                redacted = profile == UserProfile.OUTSIDER
+            case unknown:
+                assert_never(unknown)
+
+        # 1) Common certificates (i.e. user/device/revoked/update)
+
+        # Certificates must be returned ordered by timestamp, however there is a trick
+        # for the common certificates: when a new user is created, the corresponding
+        # user and device certificates have the same timestamp, but we must return
+        # the user certificate first (given device references the user).
+        # So to achieve this we use a tuple (timestamp, priority, certificate) where
+        # only the first two field should be used for sorting (the priority field
+        # handling the case where user and device have the same timestamp).
+
+        common_items: list[tuple[DateTime, int, bytes]] = []
+        user_priority = 0
+        revoked_priority = 1
+        update_priority = 2
+        device_priority = 3
+
+        query = _q_get_redacted_user_certificates if redacted else _q_get_user_certificates
+        for row in await conn.fetch(
+            *query(organization_id=organization_id.str, after=common_after)
+        ):
+            user_item = (
+                row["created_on"],
+                user_priority,
+                row["user_certificate"],
+            )
+            common_items.append(user_item)
+
+        for row in await conn.fetch(
+            *_q_get_user_revoked_certificates(
+                organization_id=organization_id.str, after=common_after
+            )
+        ):
+            if row["revoked_on"] is not None:
+                revoked_item = (
+                    row["revoked_on"],
+                    revoked_priority,
+                    row["revoked_user_certificate"],
+                )
+                common_items.append(revoked_item)
+
+        for row in await conn.fetch(
+            *_q_get_user_update_certificates(
+                organization_id=organization_id.str, after=common_after
+            )
+        ):
+            update_item = (
+                row["certified_on"],
+                update_priority,
+                row["profile_certificate"],
+            )
+            common_items.append(update_item)
+
+        query = _q_get_device_redacted_certificates if redacted else _q_get_device_certificates
+        for row in await conn.fetch(
+            *query(organization_id=organization_id.str, after=common_after)
+        ):
+            device_item = (
+                row["created_on"],
+                device_priority,
+                row["device_certificate"],
+            )
+            common_items.append(device_item)
+
+        # Sort certificates
+        common_items.sort()
+        common_certificates = [certificate for _, _, certificate in common_items]
+
+        # 2) Sequester certificates
+
+        # TODO: implement sequester certificates
+        sequester_certificates: list[bytes] = []
+
+        # 3) Realm certificates
+
+        realm_items = await self.realm._get_realm_certificates_for_user(
+            conn, organization_id, author, realm_after
+        )
+
+        # 4) Shamir certificates
+
+        # TODO: Shamir not currently implemented !
+        shamir_recovery_certificates: list[bytes] = []
+
+        return CertificatesBundle(
+            common=common_certificates,
+            sequester=sequester_certificates,
+            shamir_recovery=shamir_recovery_certificates,
+            realm=realm_items,
+        )
 
     # async def get_user_with_trustchain(
     #     self, organization_id: OrganizationID, user_id: UserID

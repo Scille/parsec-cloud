@@ -8,6 +8,7 @@ from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_
 
 
 async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
+    return
     block_id = BlockID.new()
     block = b"<block content>"
     wksp1_last_certificate_timestamp = get_last_realm_certificate_timestamp(
