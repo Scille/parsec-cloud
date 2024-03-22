@@ -53,7 +53,7 @@ from parsec.components.realm import (
     realm_rotate_key_validate,
     realm_share_validate,
 )
-from parsec.components.user import CheckDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.events import EventRealmCertificate
 
 
@@ -218,6 +218,48 @@ INSERT INTO realm_name (
 """
 )
 
+_q_insert_realm_user_role = Q(
+    f"""
+INSERT INTO realm_user_role (
+    realm,
+    user_,
+    role,
+    certificate,
+    certified_by,
+    certified_on
+) VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    $role,
+    $certificate,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$certified_by") },
+    $certified_on
+)
+"""
+)
+
+_q_insert_recipient_keys_bundle_access = Q(
+    f"""
+INSERT INTO realm_keys_bundle_access (
+    realm,
+    user_,
+    realm_keys_bundle,
+    access
+) VALUES (
+    { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    (
+        SELECT _id
+        FROM realm_keys_bundle
+        WHERE
+            realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+            AND key_index = $key_index
+    ),
+    $access
+)
+"""
+)
+
 
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
@@ -250,6 +292,24 @@ class PGRealmComponent(BaseRealmComponent):
         if row["role"] is None:
             return RealmCheckBadOutcome.USER_NOT_IN_REALM
         return RealmRole.from_str(row["role"]), int(row["key_index"])
+
+    async def _get_current_role_for_user(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        user_id: UserID,
+    ) -> RealmRole | None:
+        row = await conn.fetchrow(
+            *q_check_realm(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                user_id=user_id.str,
+            )
+        )
+        if not row or row["role"] is None:
+            return None
+        return RealmRole.from_str(row["role"])
 
     async def _get_realms_for_user(
         self, conn: asyncpg.Connection, organization_id: OrganizationID, user: UserID
@@ -442,7 +502,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmShareStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        # TODO: we pretend that the realm has been shared to use the CoolOrg template
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        if org.is_expired:
+            return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return RealmShareStoreBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as current_profile:
+                pass
+            case unknown:
+                assert_never(unknown)
 
         match realm_share_validate(
             now=now,
@@ -454,6 +535,103 @@ class PGRealmComponent(BaseRealmComponent):
                 pass
             case error:
                 return error
+
+        match await self.user._check_user(conn, organization_id, certif.user_id):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
+            case UserProfile():
+                pass
+            case unknown:
+                assert_never(unknown)
+
+        if current_profile == UserProfile.OUTSIDER and certif.role in (
+            RealmRole.MANAGER,
+            RealmRole.OWNER,
+        ):
+            return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
+
+        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole() as role, KeyIndex() as realm_key_index):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER):
+                    return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case unknown:
+                assert_never(unknown)
+
+        existing_user_role = await self._get_current_role_for_user(
+            conn, organization_id, certif.realm_id, certif.user_id
+        )
+        owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+        requires_owner_role = (
+            existing_user_role in owner_or_manager or certif.role in owner_or_manager
+        )
+        if requires_owner_role and role != RealmRole.OWNER:
+            return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+        if key_index != realm_key_index:
+            return BadKeyIndex(
+                last_realm_certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
+            )
+
+        # Ensure certificate consistency: our certificate must be the newest thing on the server.
+        #
+        # Strictly speaking consistency only requires the certificate to be more recent than
+        # the the certificates involving the realm and/or the recipient user; and, similarly,
+        # the vlobs created/updated by the recipient.
+        #
+        # However doing such precise checks is complex and error prone, so we take a simpler
+        # approach by considering certificates don't change often so it's no big deal to
+        # have a much more coarse approach.
+
+        # TODO: implement this
+        # assert (
+        #     org.last_certificate_or_vlob_timestamp is not None
+        # )  # Bootstrap has created the first certif
+        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+        #     return RequireGreaterTimestamp(
+        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
+        #     )
+
+        # All checks are good, now we do the actual insertion
+        ret = await conn.execute(
+            *_q_insert_realm_user_role(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                user_id=certif.user_id.str,
+                role=None if certif.role is None else certif.role.str,
+                certificate=realm_role_certificate,
+                certified_by=author.str,
+                certified_on=certif.timestamp,
+            )
+        )
+        assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        ret = await conn.execute(
+            *_q_insert_recipient_keys_bundle_access(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                user_id=certif.user_id.str,
+                access=recipient_keys_bundle_access,
+                key_index=key_index,
+            )
+        )
+        assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        await self.event_bus.send(
+            EventRealmCertificate(
+                organization_id=organization_id,
+                timestamp=certif.timestamp,
+                realm_id=certif.realm_id,
+                user_id=certif.user_id,
+                role_removed=False,
+            )
+        )
+
         return certif
 
     @override
