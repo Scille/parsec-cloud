@@ -38,16 +38,7 @@ from parsec.components.organization import (
 )
 from parsec.components.postgresql.test_queries import (
     q_test_drop_organization,
-    q_test_duplicate_organization_from_block_table,
-    q_test_duplicate_organization_from_device_table,
-    q_test_duplicate_organization_from_human_table,
-    q_test_duplicate_organization_from_invitation_table,
-    q_test_duplicate_organization_from_organization_table,
-    q_test_duplicate_organization_from_profile_table,
-    q_test_duplicate_organization_from_realm_table,
-    q_test_duplicate_organization_from_realm_user_role_table,
-    q_test_duplicate_organization_from_user_table,
-    q_test_duplicate_organization_from_vlob_atom_table,
+    q_test_duplicate_organization,
 )
 from parsec.components.postgresql.user_queries.create import q_create_user
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, transaction
@@ -673,61 +664,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
         return items
 
-    async def test_drop_organization(self, id: OrganizationID) -> None:
-        async with self.pool.acquire() as conn:
-            await conn.execute(*q_test_drop_organization(organization_id=id.str))
+    @transaction
+    async def test_drop_organization(self, conn: asyncpg.Connection, id: OrganizationID) -> None:
+        await conn.execute(*q_test_drop_organization(organization_id=id.str))
 
+    @transaction
     async def test_duplicate_organization(
-        self, source_id: OrganizationID, target_id: OrganizationID
+        self, conn: asyncpg.Connection, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                *q_test_duplicate_organization_from_organization_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_human_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_user_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_profile_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_device_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_invitation_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_realm_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_realm_user_role_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_vlob_atom_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_block_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
+        await conn.execute(
+            *q_test_duplicate_organization(source_id=source_id.str, target_id=target_id.str)
+        )
