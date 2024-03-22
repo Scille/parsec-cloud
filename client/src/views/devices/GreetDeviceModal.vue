@@ -122,17 +122,20 @@
                     class="email-button"
                     @click="sendEmail"
                     fill="outline"
-                    v-show="false"
+                    :disabled="elapsedCount > 0"
                   >
-                    <span v-if="!isEmailSent">
+                    <span v-show="!isEmailSent">
                       {{ $t('DevicesPage.greet.actions.sendEmail') }}
                     </span>
-                    <span v-if="isEmailSent">
+                    <span v-show="isEmailSent && elapsedCount === 0">
                       {{ $t('DevicesPage.greet.actions.reSendEmail') }}
+                    </span>
+                    <span v-show="elapsedCount > 0">
+                      {{ $t('DevicesPage.greet.actions.waitBeforeResending', { seconds: elapsedCount }) }}
                     </span>
                   </ion-button>
                   <ion-text
-                    v-if="isEmailSent"
+                    v-if="elapsedCount > 0"
                     class="small-text subtitles-sm"
                   >
                     {{ $t('DevicesPage.greet.emailSent') }}
@@ -222,6 +225,7 @@
 
 <script setup lang="ts">
 import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
+import { startCounter } from '@/common/date';
 import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
@@ -259,7 +263,8 @@ enum GreetDeviceStep {
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
-const isEmailSent = ref(true);
+const isEmailSent = ref(false);
+const elapsedCount = ref(0);
 const greeter = ref(new DeviceGreet());
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const linkCopiedToClipboard = ref(false);
@@ -487,8 +492,17 @@ async function copyLink(): Promise<void> {
 }
 
 async function sendEmail(): Promise<void> {
+  async function updateCounter(elapsed: number): Promise<void> {
+    if (elapsed === 5000) {
+      elapsedCount.value = 0;
+    } else {
+      elapsedCount.value = Math.round((5000 - elapsed) / 1000);
+    }
+  }
+
   if (await greeter.value.sendEmail()) {
     isEmailSent.value = true;
+    startCounter(5000, 1000, updateCounter);
   } else {
     informationManager.present(
       new Information({
@@ -501,7 +515,7 @@ async function sendEmail(): Promise<void> {
 }
 
 onMounted(async () => {
-  await greeter.value.createInvitation(true);
+  await greeter.value.createInvitation(false);
   await startProcess();
 });
 </script>
