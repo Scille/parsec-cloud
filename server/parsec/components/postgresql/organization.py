@@ -457,7 +457,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             id,
             u_certif,
             user_certificate,
-            redacted_device_certificate,
+            redacted_user_certificate,
             d_certif,
             device_certificate,
             redacted_device_certificate,
@@ -470,7 +470,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         sequester_authority_verify_key_der = (
             None if s_certif is None else s_certif.verify_key_der.dump()
         )
-        print(f"{bootstrap_token=}")
         result = await conn.execute(
             *_q_bootstrap_organization(
                 organization_id=id.str,

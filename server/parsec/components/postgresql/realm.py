@@ -28,6 +28,7 @@ from parsec.components.postgresql.utils import (
     Q,
     q_device_internal_id,
     q_organization_internal_id,
+    q_realm,
     q_realm_internal_id,
     q_user,
     q_user_internal_id,
@@ -148,6 +149,59 @@ WHERE
 """
 )
 
+_q_get_realms_for_user = Q(
+    f"""
+SELECT DISTINCT ON(realm)
+    { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id,
+    role
+FROM realm_user_role
+WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+ORDER BY realm, certified_on DESC
+"""
+)
+
+_q_get_realm_role_certificates = Q(
+    f"""
+SELECT
+    realm_user_role.certified_on,
+    realm_user_role.certificate
+FROM realm_user_role
+INNER JOIN realm ON realm_user_role.realm = realm._id
+WHERE
+    realm.organization = { q_organization_internal_id("$organization_id") }
+    AND realm.realm_id = $realm_id
+    AND COALESCE(realm_user_role.certified_on > $after, TRUE)
+"""
+)
+
+_q_get_key_rotation_certificates = Q(
+    f"""
+SELECT
+    realm_keys_bundle.certified_on,
+    realm_keys_bundle.realm_key_rotation_certificate
+FROM realm_keys_bundle
+INNER JOIN realm ON realm_keys_bundle.realm = realm._id
+WHERE
+    realm.organization = { q_organization_internal_id("$organization_id") }
+    AND realm.realm_id = $realm_id
+    AND COALESCE(realm_keys_bundle.certified_on > $after, TRUE)
+"""
+)
+
+_q_get_realm_name_certificates = Q(
+    f"""
+SELECT
+    realm_name.certified_on,
+    realm_name.realm_name_certificate
+FROM realm_name
+INNER JOIN realm ON realm_name.realm = realm._id
+WHERE
+    realm.organization = { q_organization_internal_id("$organization_id") }
+    AND realm.realm_id = $realm_id
+    AND COALESCE(realm_name.certified_on > $after, TRUE)
+"""
+)
+
 
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
@@ -180,6 +234,86 @@ class PGRealmComponent(BaseRealmComponent):
         if row["role"] is None:
             return RealmCheckBadOutcome.USER_NOT_IN_REALM
         return RealmRole.from_str(row["role"]), int(row["key_index"])
+
+    async def _get_realms_for_user(
+        self, conn: asyncpg.Connection, organization_id: OrganizationID, user: UserID
+    ) -> dict[VlobID, RealmRole]:
+        rep = await conn.fetch(
+            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+        )
+        return {
+            VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+            for row in rep
+            if row["role"] is not None
+        }
+
+    async def _get_realm_certificates_for_user(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        user: UserID,
+        after: dict[VlobID, DateTime],
+    ) -> dict[VlobID, list[bytes]]:
+        result = {}
+        realms = await self._get_realms_for_user(conn, organization_id, user)
+        for realm_id in realms:
+            realm_certificates = await self._get_realm_certificates_for_realm(
+                conn, organization_id, realm_id, after.get(realm_id)
+            )
+            if realm_certificates:
+                result[realm_id] = realm_certificates
+        return result
+
+    async def _get_realm_certificates_for_realm(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        after: DateTime | None,
+    ) -> list[bytes]:
+        realm_items = []
+        realm_role_priority = 0
+        key_rotation_priority = 1
+        realm_name_priority = 2
+        rep = await conn.fetch(
+            *_q_get_realm_role_certificates(
+                organization_id=organization_id.str, realm_id=realm_id, after=after
+            )
+        )
+        for row in rep:
+            realm_item = (
+                row["certified_on"],
+                realm_role_priority,
+                row["certificate"],
+            )
+            realm_items.append(realm_item)
+        rep = await conn.fetch(
+            *_q_get_key_rotation_certificates(
+                organization_id=organization_id.str, realm_id=realm_id, after=after
+            )
+        )
+        for row in rep:
+            realm_item = (
+                row["certified_on"],
+                key_rotation_priority,
+                row["realm_key_rotation_certificate"],
+            )
+            realm_items.append(realm_item)
+        rep = await conn.fetch(
+            *_q_get_realm_name_certificates(
+                organization_id=organization_id.str, realm_id=realm_id, after=after
+            )
+        )
+        for row in rep:
+            realm_item = (
+                row["certified_on"],
+                realm_name_priority,
+                row["realm_name_certificate"],
+            )
+            realm_items.append(realm_item)
+
+        realm_items.sort()
+        return [certificate for _, _, certificate in realm_items]
 
     @override
     @transaction
