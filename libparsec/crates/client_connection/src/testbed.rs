@@ -153,10 +153,13 @@ impl Drop for SendHookConfig {
         if matches!(
             &*guard,
             SendHookStrategy::LowLevelOnce(_) | SendHookStrategy::HighLevelOnce(_)
-        ) {
+        ) && std::env::var("TESTBED_NO_CLEANUP").is_err()
+        {
             panic!(
                 "Client connection is being destroyed while configured with a mock \
-                 expected to be trigger once !"
+                expected to be trigger once !\n\
+                You can set `TESTBED_NO_CLEANUP=1` environ variable to disable this \
+                sanity check in case it is hidding the actual error..."
             );
         }
     }
