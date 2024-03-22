@@ -121,8 +121,7 @@ create TABLE realm_name (
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     realm_name_certificate BYTEA NOT NULL,
     certified_by INTEGER REFERENCES device(_id) NOT NULL,
-    certified_on TIMESTAMPTZ NOT NULL,
-    realm_name TEXT NOT NULL
+    certified_on TIMESTAMPTZ NOT NULL
 );
 
 
