@@ -65,6 +65,21 @@ deleted_blocks AS (
     DELETE FROM block
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
+),
+deleted_realm_keys_bundle AS (
+    DELETE FROM realm_keys_bundle
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_realm_keys_bundle_access AS (
+    DELETE FROM realm_keys_bundle_access
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_realm_names AS (
+    DELETE FROM realm_name
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
 )
 SELECT 1
 """
