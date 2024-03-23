@@ -23,6 +23,7 @@ arrowleft
 arrowright
 arrowup
 arwx
+asar
 Asas
 asend
 asgi
