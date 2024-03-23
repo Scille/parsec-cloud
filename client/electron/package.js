@@ -75,6 +75,14 @@ const options = {
     provider: 'github',
   },
 
+  // Asar is the electron archive format to bundle all the resources together.
+  // Node files are shared library, hence keeping them unpacked avoid weird trick
+  // when they must be loaded by the OS.
+  // This is especially important on Snap given there the shared library rpath
+  // gets patched to load it dependencies (e.g. the libssl bundled in the snap,
+  // not the one on the host system).
+  asarUnpack: ['**/*.node'],
+
   win: {
     target: 'nsis',
   },
