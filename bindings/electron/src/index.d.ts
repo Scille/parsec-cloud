@@ -1363,6 +1363,22 @@ export interface WorkspaceFdReadErrorInternal {
     tag: "Internal"
     error: string
 }
+export interface WorkspaceFdReadErrorInvalidBlockAccess {
+    tag: "InvalidBlockAccess"
+    error: string
+}
+export interface WorkspaceFdReadErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceFdReadErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceFdReadErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
 export interface WorkspaceFdReadErrorNotInReadMode {
     tag: "NotInReadMode"
     error: string
@@ -1378,6 +1394,10 @@ export interface WorkspaceFdReadErrorStopped {
 export type WorkspaceFdReadError =
   | WorkspaceFdReadErrorBadFileDescriptor
   | WorkspaceFdReadErrorInternal
+  | WorkspaceFdReadErrorInvalidBlockAccess
+  | WorkspaceFdReadErrorInvalidCertificate
+  | WorkspaceFdReadErrorInvalidKeysBundle
+  | WorkspaceFdReadErrorNoRealmAccess
   | WorkspaceFdReadErrorNotInReadMode
   | WorkspaceFdReadErrorOffline
   | WorkspaceFdReadErrorStopped

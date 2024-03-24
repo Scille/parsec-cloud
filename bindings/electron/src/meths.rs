@@ -5271,6 +5271,25 @@ fn variant_workspace_fd_read_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::WorkspaceFdReadError::InvalidBlockAccess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdReadErrorInvalidBlockAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::InvalidCertificate { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdReadErrorInvalidCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::InvalidKeysBundle { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceFdReadErrorInvalidKeysBundle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceFdReadError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::WorkspaceFdReadError::NotInReadMode { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceFdReadErrorNotInReadMode").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
