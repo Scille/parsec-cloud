@@ -1865,6 +1865,7 @@ dependencies = [
 name = "libparsec_bindings_electron"
 version = "3.0.0-a.0+dev"
 dependencies = [
+ "env_logger",
  "lazy_static",
  "libparsec",
  "neon",
