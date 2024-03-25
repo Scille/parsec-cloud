@@ -374,7 +374,7 @@ const filteredDevices = computed(() => {
     overflow-y: auto;
     --ion-grid-columns: 6;
     max-height: 50vh;
-    min-height: 50vh;
+    min-height: 45vh;
   }
 
   .organization-list-row {
@@ -449,7 +449,6 @@ const filteredDevices = computed(() => {
 }
 
 .no-devices {
-  min-height: 50vh;
   max-width: 45rem;
   gap: 0;
   padding: 0;

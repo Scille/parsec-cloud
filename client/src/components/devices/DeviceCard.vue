@@ -26,7 +26,7 @@
     </div>
 
     <ion-text
-      class="badge caption-caption"
+      class="badge body-sm"
       v-show="isCurrent"
       :outline="true"
     >
@@ -103,7 +103,7 @@ defineProps<{
 .badge {
   margin: auto 0 auto auto;
   border-radius: var(--parsec-radius-32);
-  padding: 0.25em 0.5em;
+  padding: 0.125em 0.365em;
   color: var(--parsec-color-light-success-700);
   border: 1px solid var(--parsec-color-light-success-500);
   background: var(--parsec-color-light-success-100);

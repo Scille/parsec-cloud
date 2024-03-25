@@ -10,6 +10,8 @@ ion-item:has(.file-list-item),
   display: flex;
   --padding-start: 0px;
   --inner-padding-end: 0px;
+  --background-hover: var(--parsec-color-light-primary-30);
+  --background-hover-opacity: 1;
 
   &::part(native) {
     border: none;
@@ -35,38 +37,21 @@ ion-item:has(.file-list-item),
     cursor: default;
   }
 
-  &:hover:not(.revoked) {
-    --background-hover: var(--parsec-color-light-primary-30);
-    --background-hover-opacity: 1;
-    --background: var(--parsec-color-light-primary-30);
-
-    &.selected {
-      --background-hover-opacity: 0;
-    }
-  }
-
-  &:hover,
   &.selected {
-    .cell,
-    .options-button__icon,
-    .person-name {
-      color: var(--parsec-color-light-secondary-text) !important;
-    }
-    &::part(native) {
-      --padding-start: 0px;
-    }
-  }
-
-  &:active,
-  &.selected {
-    --background-focused: var(--parsec-color-light-primary-100);
     --background: var(--parsec-color-light-primary-100);
-    --background-focused-opacity: 1;
-  }
-
-  &.selected,
-  &:focus {
+    --background-hover: var(--parsec-color-light-primary-100);
     --border-width: 0;
+
+    &:hover {
+      .cell,
+      .options-button__icon,
+      .person-name {
+        color: var(--parsec-color-light-secondary-text) !important;
+      }
+      &::part(native) {
+        --padding-start: 0px;
+      }
+    }
   }
 
   &.item-checkbox-checked {
@@ -99,6 +84,17 @@ ion-item:has(.file-list-item),
       z-index: 1;
     }
   }
+}
+
+.user-list-item:nth-child(2)::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--parsec-color-light-secondary-medium);
+  z-index: 2;
 }
 
 .revoked {

@@ -51,7 +51,7 @@
                   </ion-button>
                 </div>
                 <div v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring">
-                  {{ $t('ContactDetailsPage.keyring') }}
+                  <span class="body">{{ $t('ContactDetailsPage.keyring') }}</span>
                 </div>
               </div>
             </div>
@@ -165,6 +165,10 @@ onMounted(async () => {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+
+      span {
+        color: var(--parsec-color-light-secondary-text);
+      }
 
       &__label {
         min-width: 14rem;
