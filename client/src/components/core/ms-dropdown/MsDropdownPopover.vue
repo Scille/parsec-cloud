@@ -4,7 +4,7 @@
   <ion-list class="container">
     <ion-item
       class="option body"
-      :class="{ selected: selectedOption?.key === option.key, 'item-disabled': option.disabled }"
+      :class="{ selected: defaultOptionKey === option.key, 'item-disabled': option.disabled }"
       button
       lines="none"
       v-for="option in options.set"
@@ -26,8 +26,8 @@
         slot="end"
         :icon="checkmark"
         class="icon checked"
-        :class="{ selected: selectedOption?.key === option.key }"
-        v-if="selectedOption?.key === option.key"
+        :class="{ selected: defaultOptionKey === option.key }"
+        v-if="defaultOptionKey === option.key"
       />
       <ms-information-tooltip
         v-if="option.disabled && option.disabledReason"
@@ -44,21 +44,15 @@ import { MsInformationTooltip } from '@/components/core/ms-tooltip';
 import { MsOption, MsOptions } from '@/components/core/ms-types';
 import { IonIcon, IonItem, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { checkmark } from 'ionicons/icons';
-import { ref } from 'vue';
 
-const props = defineProps<{
-  defaultOption?: any;
+defineProps<{
+  defaultOptionKey?: any;
   options: MsOptions;
 }>();
 
-const selectedOption = ref(props.defaultOption ? props.options.get(props.defaultOption) : props.options.at(0));
-
-async function onOptionClick(option?: MsOption): Promise<void> {
-  if (option) {
-    selectedOption.value = option;
-  }
+async function onOptionClick(option: MsOption): Promise<void> {
   await popoverController.dismiss({
-    option: selectedOption.value,
+    option: option,
   });
 }
 </script>

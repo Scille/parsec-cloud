@@ -53,7 +53,7 @@
                 <ms-dropdown
                   class="dropdown"
                   :options="languageOptions"
-                  :default-option="$i18n.locale"
+                  :default-option-key="$i18n.locale"
                   @change="changeLang($event.option.key)"
                 />
               </settings-option>
@@ -66,7 +66,7 @@
                 <ms-dropdown
                   class="dropdown"
                   :options="themeOptions"
-                  :default-option="'light' ? 'light' : config.theme"
+                  :default-option-key="'light' ? 'light' : config.theme"
                   @change="changeTheme($event.option.key)"
                   :disabled="true"
                 />
