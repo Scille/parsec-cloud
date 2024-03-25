@@ -156,7 +156,8 @@ _q_get_realms_for_user = Q(
     f"""
 SELECT DISTINCT ON(realm)
     { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id,
-    role
+    role,
+    certified_on
 FROM realm_user_role
 WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
 ORDER BY realm, certified_on DESC
@@ -174,6 +175,7 @@ WHERE
     realm.organization = { q_organization_internal_id("$organization_id") }
     AND realm.realm_id = $realm_id
     AND COALESCE(realm_user_role.certified_on > $after, TRUE)
+    AND COALESCE(realm_user_role.certified_on <= $before, TRUE)
 """
 )
 
@@ -188,6 +190,7 @@ WHERE
     realm.organization = { q_organization_internal_id("$organization_id") }
     AND realm.realm_id = $realm_id
     AND COALESCE(realm_keys_bundle.certified_on > $after, TRUE)
+    AND COALESCE(realm_keys_bundle.certified_on <= $before, TRUE)
 """
 )
 
@@ -202,6 +205,7 @@ WHERE
     realm.organization = { q_organization_internal_id("$organization_id") }
     AND realm.realm_id = $realm_id
     AND COALESCE(realm_name.certified_on > $after, TRUE)
+    AND COALESCE(realm_name.certified_on <= $before, TRUE)
 """
 )
 
@@ -316,15 +320,17 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _get_realms_for_user(
         self, conn: asyncpg.Connection, organization_id: OrganizationID, user: UserID
-    ) -> dict[VlobID, RealmRole]:
+    ) -> dict[VlobID, tuple[RealmRole | None, DateTime]]:
         rep = await conn.fetch(
             *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
         )
-        return {
-            VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
-            for row in rep
-            if row["role"] is not None
-        }
+        result = {}
+        for row in rep:
+            key = VlobID.from_hex(row["realm_id"])
+            role = RealmRole.from_str(row["role"]) if row["role"] is not None else None
+            value = (role, row["certified_on"])
+            result[key] = value
+        return result
 
     async def _get_realm_certificates_for_user(
         self,
@@ -335,9 +341,14 @@ class PGRealmComponent(BaseRealmComponent):
     ) -> dict[VlobID, list[bytes]]:
         result = {}
         realms = await self._get_realms_for_user(conn, organization_id, user)
-        for realm_id in realms:
+        for realm_id, (role, certified_on) in realms.items():
+            before = certified_on if role is None else None
             realm_certificates = await self._get_realm_certificates_for_realm(
-                conn, organization_id, realm_id, after.get(realm_id)
+                conn,
+                organization_id,
+                realm_id,
+                after.get(realm_id),
+                before,
             )
             if realm_certificates:
                 result[realm_id] = realm_certificates
@@ -349,6 +360,7 @@ class PGRealmComponent(BaseRealmComponent):
         organization_id: OrganizationID,
         realm_id: VlobID,
         after: DateTime | None,
+        before: DateTime | None,
     ) -> list[bytes]:
         realm_items = []
         realm_role_priority = 0
@@ -356,7 +368,7 @@ class PGRealmComponent(BaseRealmComponent):
         realm_name_priority = 2
         rep = await conn.fetch(
             *_q_get_realm_role_certificates(
-                organization_id=organization_id.str, realm_id=realm_id, after=after
+                organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
         for row in rep:
@@ -368,7 +380,7 @@ class PGRealmComponent(BaseRealmComponent):
             realm_items.append(realm_item)
         rep = await conn.fetch(
             *_q_get_key_rotation_certificates(
-                organization_id=organization_id.str, realm_id=realm_id, after=after
+                organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
         for row in rep:
@@ -380,7 +392,7 @@ class PGRealmComponent(BaseRealmComponent):
             realm_items.append(realm_item)
         rep = await conn.fetch(
             *_q_get_realm_name_certificates(
-                organization_id=organization_id.str, realm_id=realm_id, after=after
+                organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
         for row in rep:
