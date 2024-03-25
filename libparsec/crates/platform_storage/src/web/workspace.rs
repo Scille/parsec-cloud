@@ -79,7 +79,6 @@ impl PlatformWorkspaceStorage {
         _manifest: &UpdateManifestData,
         _new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         _removed_chunks: impl Iterator<Item = ChunkID>,
-        _chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         todo!()
     }
@@ -92,6 +91,14 @@ impl PlatformWorkspaceStorage {
         &mut self,
         _block_id: BlockID,
         _encrypted: &[u8],
+        _now: DateTime,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        _chunk_id: ChunkID,
         _now: DateTime,
     ) -> anyhow::Result<()> {
         todo!()

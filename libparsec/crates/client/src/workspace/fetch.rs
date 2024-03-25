@@ -215,7 +215,7 @@ pub(super) async fn fetch_block(
     manifest: &FileManifest,
     access: &BlockAccess,
 ) -> Result<Bytes, FetchRemoteBlockError> {
-    let encrypted = {
+    let (needed_realm_certificate_timestamp, key_index, encrypted) = {
         use authenticated_cmds::latest::block_read::{Rep, Req};
 
         let req = Req {
@@ -225,7 +225,11 @@ pub(super) async fn fetch_block(
         let rep = cmds.send(req).await?;
 
         match rep {
-            Rep::Ok { block } => Ok(block),
+            Rep::Ok {
+                needed_realm_certificate_timestamp,
+                key_index,
+                block,
+            } => Ok((needed_realm_certificate_timestamp, key_index, block)),
             // Expected errors
             Rep::StoreUnavailable => Err(FetchRemoteBlockError::StoreUnavailable),
             Rep::AuthorNotAllowed => Err(FetchRemoteBlockError::NoRealmAccess),
@@ -238,7 +242,14 @@ pub(super) async fn fetch_block(
     };
 
     let data: Bytes = certificates_ops
-        .validate_block(realm_id, manifest, access, &encrypted)
+        .validate_block(
+            needed_realm_certificate_timestamp,
+            realm_id,
+            key_index,
+            manifest,
+            access,
+            &encrypted,
+        )
         .await
         .map_err(|err| match err {
             CertifValidateBlockError::Offline => FetchRemoteBlockError::Offline,

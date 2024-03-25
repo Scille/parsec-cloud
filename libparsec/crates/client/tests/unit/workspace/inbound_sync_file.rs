@@ -64,9 +64,9 @@ async fn non_placeholder(
             RemoteModification::Nothing => (),
             RemoteModification::Overwritten => {
                 let block_data = b"abc";
-                let (wksp1_bar_txt_new_block_id, wksp1_bar_txt_new_block_key_index) = builder
+                let wksp1_bar_txt_new_block_id = builder
                     .create_block("alice@dev2", wksp1_id, block_data.as_ref())
-                    .map(|e| (e.block_id, e.key_index));
+                    .map(|e| e.block_id);
                 builder.store_stuff("wksp1_bar_txt_new_block_id", &wksp1_bar_txt_new_block_id);
                 builder
                     .create_or_update_file_manifest_vlob("alice@dev2", wksp1_id, wksp1_bar_txt_id)
@@ -76,7 +76,6 @@ async fn non_placeholder(
                         manifest.size = block_data.len() as u64;
                         manifest.blocks.push(BlockAccess {
                             id: wksp1_bar_txt_new_block_id,
-                            key_index: wksp1_bar_txt_new_block_key_index,
                             key: None,
                             offset: 0,
                             size: manifest.size.try_into().unwrap(),

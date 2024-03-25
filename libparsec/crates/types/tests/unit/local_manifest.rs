@@ -36,14 +36,12 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //       {
     //         id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
     //         digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //         key_index: 1
     //         offset: 0
     //         size: 512
     //       }
     //       {
     //         id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
     //         digest: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
-    //         key_index: 2
     //         offset: 512
     //         size: 188
     //       }
@@ -59,7 +57,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //         access: {
     //           id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
     //           digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //           key_index: 1
     //           offset: 0
     //           size: 512
     //         }
@@ -82,26 +79,25 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //   need_sync: true
     //   size: 500
     let data = hex!(
-        "cd971dec5dd721e2076b27814baa4550480519e7b91e15ebf88c132f3e80e1e4b1fd1449c8"
-        "94ccfb835efbd1b2da9a1357ef710454da0a1f393fb5a48a58d8a3decb6239f9e09cf8b8a7"
-        "129f73834d56f96d50dfc27e193ba53c21bfb759045d0495ce3f7b93325cb56d7d696205cc"
-        "43e6d9655bb09fa5f76237ab34ec7547bf04eb9a5a6529984636c571588ba241a0cfcecd4e"
-        "16c885071046b0fdf4ea5b6c05ff03d075082c81e5f0bdc3970c26f7c4e64046a3a2d49ab6"
-        "c6c072924223690bf55a788d4b33b3d4638449350d9442bb6962fd3c1cdcdd119d3eca7e5c"
-        "eb156222c070b6e7f5604c77b0552e121b74cbe4bc89d58b1616bd39607bf80a020cac5e31"
-        "39293d1ad8210a85d18cfd65bdedefd9047bf33c4ae400aaa07c9e556c074ba822a3a2498e"
-        "aeda6c3011b94291b89807427e537fdb48f1d27eb31ad92894f9d7300cc345934d546773bf"
-        "332eca860bed84688f6302215c9d06e476aa37f49a787755f029a128af1fa1a42d6ca747e7"
-        "f6d63939b610ea0cc60d937861ad73a6a34b4e8d3ae692a9dadb52c34c51b17f55ef262134"
-        "9eaa93c93accee580e8eb1745720bba854710187ae23c405585713c1d4ba0eb5c960835286"
-        "262cca4f9e2900a8bda692f1d16ce16f31cd65aa00c0b14d7c40e66fc997cc706af6aeb324"
-        "4577f5b4e57643ace812173358783172bee2466a93144b5dac837278fa27e60423f51cb4ee"
-        "54a196b40e0b0c64760de96937bc747a18994dec0da8ac6a6d261a91758641cee8c958bbd6"
-        "27fd020cbcccc303ab121fe5c6f49d90b4cc74ce35d1ccf77044fa9efb417b8496b73c4d42"
-        "6806d1d7b6000a86cc50947a86cca18cd9344a65b637398db1abdef522b7c7eb4af769a111"
-        "fdcdd92f8b66aa653cb72e25b666d23f52ff2f94fe85fffe43d817108fe87a732190cff606"
-        "448c7c348386381eadaaecc295c63f4723d9adb5cc7bef7b0622c2a1e66a8eab8374496ae0"
-        "d85ee5b6fca95ccc93efc237fd941c52bbe3c18137cf2c31d772"
+        "a4c84fa2b11cbdf2f60a8da8c04c17fb2a23f854d6018f07d19ed6aff2e8d22c15f3c8402a"
+        "318c53b21a9a12b9f3d7ede7080ed07bc93237ce18358962a3f10f4733e050294883baaa9a"
+        "4074696adfc8377f9590f0e94bc9f81d785a1d9d4f1ae631d43ae9e730fe2f90705ce3337c"
+        "5bf993133504a507f9abeb428a70c4d26e86afd3b0b581067d8690b144e94e82c45ae08f79"
+        "a9a7a91aa0d29eec3be9c3760deda111797428755a76950fd9d801931df08f815aa58afc35"
+        "5ef119e4e0efbebd66794327ff6823d84bbd2324f28fc84d269ce07a5786395bf239ee45d0"
+        "ca50c023f8e06f440521595b667507a1610cb42a4c61d2778134a0c86a399a8a18e688d814"
+        "e9a416ba8160550ab517627bca81e40466e1c1c318468d20e9b0f6ba7ac58a3072e123ee80"
+        "7e66c75f770a78d85088cac2b0a4d2fc6103dc38518c08f9774053e9843576e0359e29b1d2"
+        "ab2f01f9306c22841f2343c6cfa2e74378867ac7158459c30886bcfdb28111799e36838867"
+        "76e6c9ca87e79bf1b77b86b75aac5199ca3523a5b5a28cc029e9ab2adfaa67352956efe7b7"
+        "27f7b6ad741c067679a07a59e3a80dfdf35f21329e0622d509ebb751cbb8ed07cbcbe305ff"
+        "dd0257cfe7754d2c64716e0c2d0094b347efe79838c33b3675aac3a2388839c02af48ee0ec"
+        "925fa22e8a261491d289e1eb8acae69d2933ffe13ac9ab327ee4f34b2cb679d2c6e8fcf0e6"
+        "96e1b783b0152bd311ebca0f98f66e28ad4f65df7d8e28a1c82ebac3d7e1c4b9838b7ddbe7"
+        "85f72cf0412268b76d2a28b65df23bbc6480785ce1d083d5050af337efd352c43bdf062c4e"
+        "0836247a72368396c0776afdd96a3dcbcd52ab63a84762a55c84386abe455ba4859414f185"
+        "6b1ac07e419a279094e24dac07cd374b1a08706f296a6b00eb0bd95898ae073705206ae6da"
+        "7e4495f6bf06ed49c56d77c2721e5014fabef7a3db98cceda96bf5615c2e"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
@@ -122,7 +118,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
                     )),
-                    key_index: 1,
                     key: None,
                     offset: 0,
                     size: NonZeroU64::try_from(512).unwrap(),
@@ -132,7 +127,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
                     )),
-                    key_index: 2,
                     key: None,
                     offset: 512,
                     size: NonZeroU64::try_from(188).unwrap(),
@@ -151,7 +145,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                         "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f3"
                         "6560"
                     )),
-                    key_index: 1,
                     key: None,
                     offset: 0,
                     size: NonZeroU64::try_from(512).unwrap(),
@@ -293,8 +286,7 @@ fn serde_local_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
                     )),
-                    key_index: 0,
-                    // In Parsec < v3, acess block access has a dedicated key instead of a key index
+                    // In Parsec < v3, access block access has a dedicated key instead of a key index
                     key: Some(SecretKey::from(hex!(
                         "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                     ))),
@@ -306,7 +298,6 @@ fn serde_local_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
                     )),
-                    key_index: 0,
                     key: Some(SecretKey::from(hex!(
                         "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                     ))),
@@ -330,7 +321,6 @@ fn serde_local_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
                     key: Some(SecretKey::from(hex!(
                         "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                     ))),
-                    key_index: 0,
                     offset: 0,
                     size: NonZeroU64::try_from(512).unwrap(),
                 }),
@@ -1302,7 +1292,6 @@ fn chunk_promote_as_block() {
     p_assert_eq!(*block.access.as_ref().unwrap().id, *id);
     p_assert_eq!(block.access.as_ref().unwrap().offset, 1);
     p_assert_eq!(block.access.as_ref().unwrap().key, None);
-    p_assert_eq!(block.access.as_ref().unwrap().key_index, 0);
     p_assert_eq!(
         block.access.as_ref().unwrap().size,
         NonZeroU64::try_from(4).unwrap()
@@ -1314,7 +1303,6 @@ fn chunk_promote_as_block() {
 
     let block_access = BlockAccess {
         id: BlockID::default(),
-        key_index: 1,
         key: None,
         offset: 1,
         size: NonZeroU64::try_from(4).unwrap(),
@@ -1459,7 +1447,6 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
 #[case::blocks((1024, vec![
     BlockAccess {
         id: BlockID::default(),
-        key_index: 1,
         key: None,
         offset: 1,
         size: NonZeroU64::try_from(4).unwrap(),
@@ -1467,7 +1454,6 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     },
     BlockAccess {
         id: BlockID::default(),
-        key_index: 1,
         key: None,
         offset: 513,
         size: NonZeroU64::try_from(4).unwrap(),
@@ -1561,7 +1547,6 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
         blocksize: Blocksize::try_from(512).unwrap(),
         blocks: vec![BlockAccess {
             id: BlockID::default(),
-            key_index: 1,
             key: None,
             offset: 0,
             size: NonZeroU64::try_from(1).unwrap(),

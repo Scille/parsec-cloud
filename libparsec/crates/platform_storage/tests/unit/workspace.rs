@@ -430,8 +430,6 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
 
     let chunk1_id = ChunkID::from_hex("aa0000000000000000000000000000c1").unwrap();
     let chunk2_id = ChunkID::from_hex("aa0000000000000000000000000000c2").unwrap();
-    let chunk1_promoted_as_block_id =
-        BlockID::from_hex("aa0000000000000000000000000000f1").unwrap();
 
     // 1) Add chunks
 
@@ -448,7 +446,6 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
                 (chunk2_id, b"<chunk2chunk2>".to_vec()),
             ]
             .into_iter(),
-            [].into_iter(),
             [].into_iter(),
         )
         .await
@@ -523,7 +520,6 @@ blocks: [
             },
             [].into_iter(),
             [chunk2_id].into_iter(),
-            [].into_iter(),
         )
         .await
         .unwrap();
@@ -563,26 +559,76 @@ blocks: [
 ]
 "
     );
+}
 
-    // 3) Promote chunks
+#[parsec_test(testbed = "minimal")]
+async fn promote_chunk_to_block(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let entry_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    let chunk1_id = ChunkID::from_hex("aa0000000000000000000000000000c1").unwrap();
+    let chunk2_id = ChunkID::from_hex("aa0000000000000000000000000000c2").unwrap();
+
+    // 1) Add chunks
 
     workspace_storage
         .update_manifest_and_chunks(
             &UpdateManifestData {
                 entry_id,
-                encrypted: b"<manifest_v3>".to_vec(),
-                need_sync: false,
-                base_version: 2,
+                encrypted: b"<manifest_v1>".to_vec(),
+                need_sync: true,
+                base_version: 1,
             },
-            [].into_iter(),
-            [].into_iter(),
-            [(
-                chunk1_id,
-                chunk1_promoted_as_block_id,
-                "2000-01-01T00:00:00Z".parse().unwrap(),
-            )]
+            [
+                (chunk1_id, b"<chunk1>".to_vec()),
+                (chunk2_id, b"<chunk2chunk2>".to_vec()),
+            ]
             .into_iter(),
+            [].into_iter(),
         )
+        .await
+        .unwrap();
+
+    let dump = workspace_storage.debug_dump().await.unwrap();
+    p_assert_eq!(
+        dump,
+        "\
+checkpoint: 0
+vlobs: [
+{
+	vlob_id: aa000000-0000-0000-0000-0000000000f1
+	need_sync: true
+	base_version: 1
+	remote_version: 1
+},
+]
+chunks: [
+{
+	chunk_id: aa000000-0000-0000-0000-0000000000c1
+	size: 8
+	offline: false
+},
+{
+	chunk_id: aa000000-0000-0000-0000-0000000000c2
+	size: 14
+	offline: false
+},
+]
+blocks: [
+]
+"
+    );
+
+    // 2) Promote chunk
+
+    workspace_storage
+        .promote_chunk_to_block(chunk1_id, "2000-01-31T00:00:00Z".parse().unwrap())
         .await
         .unwrap();
 
@@ -596,22 +642,35 @@ checkpoint: 0
 vlobs: [
 {
 	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: false
-	base_version: 2
-	remote_version: 2
+	need_sync: true
+	base_version: 1
+	remote_version: 1
 },
 ]
 chunks: [
+{
+	chunk_id: aa000000-0000-0000-0000-0000000000c2
+	size: 14
+	offline: false
+},
 ]
 blocks: [
 {
-	block_id: aa000000-0000-0000-0000-0000000000f1
+	block_id: aa000000-0000-0000-0000-0000000000c1
 	size: 8
 	offline: false
-	accessed_on: 2000-01-01T00:00:00Z
+	accessed_on: 2000-01-31T00:00:00Z
 },
 ]
 "
+    );
+
+    p_assert_eq!(
+        workspace_storage
+            .get_block(chunk1_id.into(), alice.now())
+            .await
+            .unwrap(),
+        Some(b"<chunk1>".to_vec())
     );
 }
 

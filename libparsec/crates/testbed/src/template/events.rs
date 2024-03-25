@@ -2641,6 +2641,7 @@ no_certificate_event!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
+        key_index: IndexInt,
         encrypted: Bytes,
     ]
 );
@@ -2651,6 +2652,7 @@ impl TestbedEventCreateOpaqueBlock {
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
+        key_index: IndexInt,
         encrypted: Bytes,
     ) -> Self {
         // 1) Consistency checks
@@ -2670,6 +2672,7 @@ impl TestbedEventCreateOpaqueBlock {
             author,
             realm,
             block_id,
+            key_index,
             encrypted,
         }
     }

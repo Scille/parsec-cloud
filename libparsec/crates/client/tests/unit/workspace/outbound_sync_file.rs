@@ -85,6 +85,7 @@ async fn non_placeholder(env: &TestbedEnv) {
     // Mock server commands and do the sync
 
     let expected_base_blocks = std::sync::Arc::new(std::sync::Mutex::new(vec![]));
+    let (key, key_index) = env.get_last_realm_key(wksp1_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Fetch last workspace keys bundle to encrypt the new manifest
@@ -94,7 +95,7 @@ async fn non_placeholder(env: &TestbedEnv) {
                 env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
-                p_assert_eq!(req.key_index, 1);
+                p_assert_eq!(req.key_index, key_index);
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
                     keys_bundle,
                     keys_bundle_access,
@@ -104,14 +105,14 @@ async fn non_placeholder(env: &TestbedEnv) {
         // 3) `block_create`
         {
             let expected_base_blocks = expected_base_blocks.clone();
-            let (key, key_index) = env.get_last_realm_key(wksp1_id);
             let key = key.to_owned();
             move |req: authenticated_cmds::latest::block_create::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, key_index);
                 p_assert_eq!(key.decrypt(&req.block).unwrap(), NEW_DATA);
                 expected_base_blocks.lock().unwrap().push(BlockAccess {
                     id: req.block_id,
                     key: None,
-                    key_index,
                     offset: 0,
                     size: (NEW_DATA.len() as u64).try_into().unwrap(),
                     digest: HashDigest::from_data(NEW_DATA),
@@ -121,7 +122,7 @@ async fn non_placeholder(env: &TestbedEnv) {
         },
         // 2) `vlob_update` succeed on first try !
         move |req: authenticated_cmds::latest::vlob_update::Req| {
-            p_assert_eq!(req.key_index, 1);
+            p_assert_eq!(req.key_index, key_index);
             p_assert_eq!(req.vlob_id, wksp1_bar_txt_id);
             p_assert_eq!(req.version, 2);
             assert!(req.sequester_blob.is_none());

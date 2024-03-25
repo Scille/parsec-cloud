@@ -157,15 +157,7 @@ impl Chunk {
         // Craft access
         self.access = Some(BlockAccess {
             id: BlockID::from(*self.id),
-            // TODO: this is a hack ! We should have a dedicated "LocalBlockAccess" type instead.
-            // `key_index` (and `key` in with legacy data) is only used when communicating
-            // with the server. However a chunk is a purely local concept, and promoting
-            // it to block means the resulting block will be stored locally.
-            // Hence the `key_index` set to 0 (which is always an invalid key index)
-            // given this field is never going to be used.
-            // Later on, the local-only blocks are going to be uploaded to the server, and
-            // at this point we will update the block access with the actual key index.
-            key_index: 0,
+            // Key is legacy and should not be used
             key: None,
             offset: self.start,
             size: self.size().try_into().expect("size must be > 0"),

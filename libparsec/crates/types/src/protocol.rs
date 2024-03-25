@@ -115,7 +115,7 @@ impl TryFrom<&str> for ApiVersion {
 
 pub trait ProtocolRequest<const V: u32> {
     const API_MAJOR_VERSION: u32 = V;
-    type Response: for<'de> Deserialize<'de>;
+    type Response: for<'de> Deserialize<'de> + std::fmt::Debug;
 
     fn api_dump(&self) -> Result<Vec<u8>, ProtocolEncodeError>;
 

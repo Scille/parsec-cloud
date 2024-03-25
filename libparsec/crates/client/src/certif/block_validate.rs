@@ -63,7 +63,9 @@ pub enum CertifValidateBlockError {
 
 pub(super) async fn validate_block(
     ops: &CertifOps,
+    needed_realm_certificate_timestamp: DateTime,
     realm_id: VlobID,
+    key_index: IndexInt,
     manifest: &FileManifest,
     access: &BlockAccess,
     encrypted: &[u8],
@@ -84,7 +86,8 @@ pub(super) async fn validate_block(
         });
     }
 
-    let needed_timestamps = PerTopicLastTimestamps::new_for_realm(realm_id, manifest.timestamp);
+    let needed_timestamps =
+        PerTopicLastTimestamps::new_for_realm(realm_id, needed_realm_certificate_timestamp);
 
     ops.store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
@@ -105,7 +108,7 @@ pub(super) async fn validate_block(
                             manifest_timestamp: manifest.timestamp,
                             manifest_author: manifest.author.clone(),
                             block_id: access.id,
-                            key_index: access.key_index,
+                            key_index,
                         });
                         CertifValidateBlockError::InvalidBlockAccess(err)
                     }
@@ -116,7 +119,7 @@ pub(super) async fn validate_block(
                 })?;
 
             let key = realm_keys
-                .key_from_index(access.key_index, manifest.timestamp)
+                .key_from_index(key_index, manifest.timestamp)
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
                         CertifValidateBlockError::InvalidBlockAccess(Box::new(
@@ -127,7 +130,7 @@ pub(super) async fn validate_block(
                                 manifest_timestamp: manifest.timestamp,
                                 manifest_author: manifest.author.clone(),
                                 block_id: access.id,
-                                key_index: access.key_index,
+                                key_index,
                             },
                         ))
                     }
@@ -139,7 +142,7 @@ pub(super) async fn validate_block(
                             manifest_timestamp: manifest.timestamp,
                             manifest_author: manifest.author.clone(),
                             block_id: access.id,
-                            key_index: access.key_index,
+                            key_index,
                         }),
                     ),
                 })?;
@@ -154,7 +157,7 @@ pub(super) async fn validate_block(
                     manifest_timestamp: manifest.timestamp,
                     manifest_author: manifest.author.clone(),
                     block_id: access.id,
-                    key_index: 0,
+                    key_index,
                 });
                 CertifValidateBlockError::InvalidBlockAccess(err)
             })

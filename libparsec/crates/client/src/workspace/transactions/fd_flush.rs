@@ -5,7 +5,7 @@ use std::sync::Arc;
 use libparsec_types::prelude::*;
 
 use crate::workspace::{
-    store::{ReadChunkLocalOnlyError, UpdateFileManifestAndContinueError},
+    store::{ReadChunkOrBlockLocalOnlyError, UpdateFileManifestAndContinueError},
     OpenedFile, WorkspaceOps, WriteMode,
 };
 
@@ -100,7 +100,6 @@ pub(super) async fn force_reshape_and_flush(
             opened_file.manifest.clone(),
             &opened_file.new_chunks,
             &opened_file.removed_chunks,
-            &[],
         )
         .await
         .map_err(|err| match err {
@@ -124,37 +123,35 @@ async fn reshape(
 ) -> Result<(), ReshapeAndFlushError> {
     let manifest: &mut LocalFileManifest = Arc::make_mut(&mut opened_file.manifest);
     for reshape in prepare_reshape(manifest) {
-        if reshape.is_pseudo_block() {
-            continue;
-        }
-
         // Build the chunk of data resulting of the reshape...
         let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
         let mut buf_size = 0;
-        let mut reshape_ok = true;
+        let mut local_miss = false;
         let start = reshape.destination().start;
         for chunk in reshape.source().iter() {
-            let outcome = ops.store.get_chunk_local_only(chunk).await;
+            let outcome = ops.store.get_chunk_or_block_local_only(chunk).await;
             match outcome {
                 Ok(chunk_data) => {
                     chunk
                         .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
                         .expect("write on vec cannot fail");
                 }
-                Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
+                Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => {
                     // ...if some data are missing in local, this reshape operation is not possible
                     // so we simply ignore it by not committing the changes in the manifest.
-                    reshape_ok = false;
+                    local_miss = true;
                     break;
                 }
-                Err(ReadChunkLocalOnlyError::Stopped) => return Err(ReshapeAndFlushError::Stopped),
-                Err(ReadChunkLocalOnlyError::Internal(err)) => {
+                Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
+                    return Err(ReshapeAndFlushError::Stopped)
+                }
+                Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
                     return Err(err.context("cannot read chunks").into())
                 }
             }
         }
 
-        if !reshape_ok {
+        if local_miss {
             continue;
         }
 

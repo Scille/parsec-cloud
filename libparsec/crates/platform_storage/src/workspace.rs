@@ -113,15 +113,9 @@ impl WorkspaceStorage {
         manifest: &UpdateManifestData,
         new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
-        chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         self.platform
-            .update_manifest_and_chunks(
-                manifest,
-                new_chunks,
-                removed_chunks,
-                chunks_promoted_to_block,
-            )
+            .update_manifest_and_chunks(manifest, new_chunks, removed_chunks)
             .await
     }
 
@@ -159,6 +153,14 @@ impl WorkspaceStorage {
         now: DateTime,
     ) -> anyhow::Result<()> {
         self.platform.set_block(block_id, encrypted, now).await
+    }
+
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        chunk_id: ChunkID,
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        self.platform.promote_chunk_to_block(chunk_id, now).await
     }
 
     /// Only used for debugging tests

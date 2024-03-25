@@ -405,7 +405,6 @@ fn serde_file_manifest_ok(alice: &Device) {
         blocks: vec![
             BlockAccess {
                 id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                key_index: 1,
                 key: None,
                 offset: 0,
                 size: NonZeroU64::try_from(512).unwrap(),
@@ -415,7 +414,6 @@ fn serde_file_manifest_ok(alice: &Device) {
             },
             BlockAccess {
                 id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-                key_index: 2,
                 key: None,
                 offset: 512,
                 size: NonZeroU64::try_from(188).unwrap(),
@@ -518,7 +516,6 @@ fn serde_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
         blocks: vec![
             BlockAccess {
                 id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                key_index: 0,
                 key: Some(SecretKey::from(hex!(
                     "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
                 ))),
@@ -530,7 +527,6 @@ fn serde_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
             },
             BlockAccess {
                 id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-                key_index: 0,
                 key: Some(SecretKey::from(hex!(
                     "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
                 ))),

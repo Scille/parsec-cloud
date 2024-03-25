@@ -14,8 +14,7 @@ use crate::certif::{
     CertifEncryptForSequesterServicesError, CertifPollServerError,
 };
 use crate::workspace::store::{
-    ForUpdateChildLocalOnlyError, ReadChunkError, ReadChunkLocalOnlyError,
-    WorkspaceStoreOperationError,
+    ForUpdateChildLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
 };
 
 pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -745,21 +744,14 @@ async fn reshape_and_upload_blocks(
         };
     }
 
-    // 2) Now turn the pseudo-blocks into actual blocks by uploading them
+    // 2) Now upload the blocks that are missing on the server
 
-    loop {
-        match do_next_pseudo_block_upload(ops, manifest.clone()).await? {
-            DoNextPseudoBlockUploadOutcome::Done(refreshed_manifest) => {
-                manifest = refreshed_manifest;
-            }
-            DoNextPseudoBlockUploadOutcome::NoMorePseudoBlock => break,
-            DoNextPseudoBlockUploadOutcome::EntryIsBusy => {
-                return Ok(ReshapeAndUploadBlocksOutcome::EntryIsBusy)
-            }
-        };
-    }
-
-    Ok(ReshapeAndUploadBlocksOutcome::Done(manifest))
+    upload_blocks(ops, &manifest)
+        .await
+        .map(move |outcome| match outcome {
+            UploadBlocksOutcome::Done => ReshapeAndUploadBlocksOutcome::Done(manifest),
+            UploadBlocksOutcome::EntryIsBusy => ReshapeAndUploadBlocksOutcome::EntryIsBusy,
+        })
 }
 
 enum DoNextReshapeOperationOutcome {
@@ -768,6 +760,10 @@ enum DoNextReshapeOperationOutcome {
     EntryIsBusy,
 }
 
+/// A reshape is done everytime the file is closed, hence this function should be a noop
+/// in most case.
+/// However the reshape on file close doesn't download blocks that are missing in local,
+/// hence this function has to handle this corner case.
 async fn do_next_reshape_operation(
     ops: &WorkspaceOps,
     mut manifest: Arc<LocalFileManifest>,
@@ -776,9 +772,7 @@ async fn do_next_reshape_operation(
     let manifest_base = &original_manifest.base;
     let manifest_mut: &mut LocalFileManifest = Arc::make_mut(&mut manifest);
 
-    let reshape = match super::file_operations::prepare_reshape(manifest_mut)
-        .find(|reshape| !reshape.is_pseudo_block())
-    {
+    let reshape = match super::file_operations::prepare_reshape(manifest_mut).next() {
         Some(reshape) => reshape,
         // Reshape is all finished \o/
         None => return Ok(DoNextReshapeOperationOutcome::AlreadyReshaped),
@@ -790,7 +784,7 @@ async fn do_next_reshape_operation(
     let mut buf_size = 0;
     let start = reshape.destination().start;
     for chunk in reshape.source().iter() {
-        let outcome = ops.store.get_chunk(chunk, manifest_base).await;
+        let outcome = ops.store.get_chunk_or_block(chunk, manifest_base).await;
         match outcome {
             Ok(chunk_data) => {
                 chunk
@@ -799,21 +793,21 @@ async fn do_next_reshape_operation(
             }
             Err(err) => {
                 return Err(match err {
-                    ReadChunkError::Offline => WorkspaceSyncError::Offline,
-                    ReadChunkError::Stopped => WorkspaceSyncError::Stopped,
+                    ReadChunkOrBlockError::Offline => WorkspaceSyncError::Offline,
+                    ReadChunkOrBlockError::Stopped => WorkspaceSyncError::Stopped,
                     // TODO: manifest seems to contain invalid data (or the server is lying to us)
-                    ReadChunkError::ChunkNotFound => todo!(),
-                    ReadChunkError::NoRealmAccess => WorkspaceSyncError::NotAllowed,
-                    ReadChunkError::InvalidBlockAccess(err) => {
+                    ReadChunkOrBlockError::ChunkNotFound => todo!(),
+                    ReadChunkOrBlockError::NoRealmAccess => WorkspaceSyncError::NotAllowed,
+                    ReadChunkOrBlockError::InvalidBlockAccess(err) => {
                         WorkspaceSyncError::InvalidBlockAccess(err)
                     }
-                    ReadChunkError::InvalidKeysBundle(err) => {
+                    ReadChunkOrBlockError::InvalidKeysBundle(err) => {
                         WorkspaceSyncError::InvalidKeysBundle(err)
                     }
-                    ReadChunkError::InvalidCertificate(err) => {
+                    ReadChunkOrBlockError::InvalidCertificate(err) => {
                         WorkspaceSyncError::InvalidCertificate(err)
                     }
-                    ReadChunkError::Internal(err) => err.context("cannot get chunk").into(),
+                    ReadChunkOrBlockError::Internal(err) => err.context("cannot get chunk").into(),
                 });
             }
         }
@@ -863,7 +857,6 @@ async fn do_next_reshape_operation(
             ArcLocalChildManifest::File(manifest.clone()),
             [(new_chunk_id, buf)].into_iter(),
             to_remove_chunk_ids.into_iter(),
-            [].into_iter(),
         )
         .await
         .map_err(|err| match err {
@@ -876,173 +869,116 @@ async fn do_next_reshape_operation(
     Ok(DoNextReshapeOperationOutcome::Done(manifest))
 }
 
-enum DoNextPseudoBlockUploadOutcome {
-    Done(Arc<LocalFileManifest>),
-    NoMorePseudoBlock,
+enum UploadBlocksOutcome {
+    Done,
     EntryIsBusy,
 }
 
-async fn do_next_pseudo_block_upload(
+async fn upload_blocks(
     ops: &WorkspaceOps,
-    mut manifest: Arc<LocalFileManifest>,
-) -> Result<DoNextPseudoBlockUploadOutcome, WorkspaceSyncError> {
-    let original_manifest = manifest.clone();
-    let manifest_base = &original_manifest.base;
-    let manifest_mut: &mut LocalFileManifest = Arc::make_mut(&mut manifest);
+    manifest: &LocalFileManifest,
+) -> Result<UploadBlocksOutcome, WorkspaceSyncError> {
+    for block in manifest.blocks.iter() {
+        assert!(block.len() == 1); // Sanity check: the manifest is guaranteed to be reshaped
+        let chunk = &block[0];
+        let block_access = chunk.access.as_ref().expect("already reshaped");
+        assert_eq!(block_access.id, chunk.id.into()); // Sanity check
 
-    // 1) Find the next pseudo-block to upload
+        // 1) Get back the block's data
 
-    let pseudo_block = manifest_mut.blocks.iter_mut().find(|block| {
-        assert!(block.len() == 1); // Already reshaped
-        !block[0].is_block()
-    });
+        let maybe_data =
+            ops.store
+                .get_not_uploaded_chunk(chunk.id)
+                .await
+                .map_err(|err| match err {
+                    WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                    WorkspaceStoreOperationError::Internal(err) => {
+                        err.context("cannot get chunk").into()
+                    }
+                })?;
 
-    let chunk = match pseudo_block {
-        None => return Ok(DoNextPseudoBlockUploadOutcome::NoMorePseudoBlock),
-        Some(pseudo_block) => &mut pseudo_block[0],
-    };
-
-    // 2) Get back data and encrypt with the last realm key
-
-    let data = ops
-        .store
-        .get_chunk_local_only(chunk)
-        .await
-        .map_err(|err| match err {
-            ReadChunkLocalOnlyError::Stopped => WorkspaceSyncError::Stopped,
-            ReadChunkLocalOnlyError::ChunkNotFound => anyhow::anyhow!(
-                "Local manifest {} references chunk {} that doesn' exist in the local storage !",
-                manifest_base.id,
-                chunk.id
-            )
-            .into(),
-            ReadChunkLocalOnlyError::Internal(err) => err.context("cannot get chunk").into(),
-        })?;
-
-    let (encrypted, key_index) = ops
-        .certificates_ops
-        .encrypt_for_realm(ops.realm_id, &data)
-        .await
-        .map_err(|err| match err {
-            CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
-            CertifEncryptForRealmError::Offline => WorkspaceSyncError::Offline,
-            CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
-            CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
-            CertifEncryptForRealmError::InvalidKeysBundle(err) => {
-                WorkspaceSyncError::InvalidKeysBundle(err)
-            }
-            CertifEncryptForRealmError::Internal(err) => {
-                err.context("cannot encrypt for realm").into()
-            }
-        })?;
-
-    // 3) Upload the block
-
-    // It's is important to create a new block ID here instead of use the chunk ID !
-    //
-    // This is because the block upload operation can't be handled in an idempotent
-    // way as the data are encrypted with the last realm key index and we store the
-    // key index in the manifest only after the block is uploaded.
-    let block_id = BlockID::default();
-
-    {
-        use authenticated_cmds::latest::block_create::{Rep, Req};
-        let req = Req {
-            realm_id: ops.realm_id,
-            block_id,
-            block: encrypted.into(),
+        let data = match maybe_data {
+            // Already uploaded, nothing to do
+            None => continue,
+            Some(data) => data,
         };
-        let rep = ops.cmds.send(req).await?;
-        match rep {
-            Rep::Ok => (),
-            Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
-            // Nothing we can do if server is not ready to store our data, retry later
-            Rep::StoreUnavailable => return Ok(DoNextPseudoBlockUploadOutcome::EntryIsBusy),
 
-            // Unexpected errors :(
-            bad_rep @ (
-                // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
-                | Rep::RealmNotFound
-                // We have just generated this block ID, it can't already exist
-                | Rep::BlockAlreadyExists
-                // Don't know what to do with this status :/
-                | Rep::UnknownStatus { .. }
-            ) => {
-                return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }
-    }
+        // 2) Upload the block
 
-    // 4) Update the manifest now that the block has become an actual block
+        loop {
+            let (encrypted, key_index) = ops
+                .certificates_ops
+                .encrypt_for_realm(ops.realm_id(), &data)
+                .await
+                .map_err(|e| match e {
+                    CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
+                    CertifEncryptForRealmError::Offline => WorkspaceSyncError::Offline,
+                    CertifEncryptForRealmError::NotAllowed => WorkspaceSyncError::NotAllowed,
+                    CertifEncryptForRealmError::NoKey => WorkspaceSyncError::NoKey,
+                    CertifEncryptForRealmError::InvalidKeysBundle(err) => {
+                        WorkspaceSyncError::InvalidKeysBundle(err)
+                    }
+                    CertifEncryptForRealmError::Internal(err) => {
+                        err.context("Cannot encrypt manifest for realm").into()
+                    }
+                })?;
 
-    // Update the chunk entry with it new ID and key index
+            use authenticated_cmds::latest::block_create::{Rep, Req};
+            let req = Req {
+                realm_id: ops.realm_id,
+                key_index,
+                block_id: block_access.id,
+                block: encrypted.into(),
+            };
+            let rep = ops.cmds.send(req).await?;
+            match rep {
+                Rep::Ok
+                // Go idempotent if the block has already been uploaded, as this might
+                // happen when a failure occurs before the local storage is updated
+                | Rep::BlockAlreadyExists => (),
+                Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
+                // Nothing we can do if server is not ready to store our data, retry later
+                Rep::StoreUnavailable => return Ok(UploadBlocksOutcome::EntryIsBusy),
+                    // A key rotation occured concurrently, should poll for new certificates and retry
+                    Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
+                        let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
+                        ops.certificates_ops
+                            .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+                            .await
+                            .map_err(|err| match err {
+                                CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
+                                CertifPollServerError::Offline => WorkspaceSyncError::Offline,
+                                CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
+                                CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
+                            })?;
+                        continue;
+                    }
 
-    {
-        // TODO: This block promotion doesn't fit our current design given it considers
-        // reshape and block upload as a single operation.
-        // In fact we first do the reshape (i.e. tweak the existing chunks resulting from
-        // the local file write operations into a single chunk with a correct size and
-        // offset ready to be uploaded as block, aka a pseudo block).
-        // Then we do the block upload (i.e. what we are doing right now), at wich point
-        // the chunk have an access field that:
-        // - Corresponds to a real block
-        // - Corresponds to nothing, in which case the `key_index` field has 0 value. This
-        //   is if this chunk has been reshaped.
-        // - Is `None` if the chunk hasn't been reshaped.
-        let _ = chunk.promote_as_block(&data);
-
-        let access = chunk.access.as_mut().expect("pseudo block has access");
-        access.key_index = key_index;
-        access.key = None;
-        access.id = block_id;
-    }
-    let to_promote_chunk_id = chunk.id;
-    chunk.id = block_id.into();
-
-    // Lock back the entry or abort if it has changed in the meantime
-
-    let updater = {
-        let outcome = ops
-            .store
-            .for_update_child_local_only(manifest_base.id)
-            .await;
-        match outcome {
-            Ok((updater, Some(ArcLocalChildManifest::File(refreshed_manifest)))) => {
-                if file_has_changed(&original_manifest, &refreshed_manifest) {
-                    return Ok(DoNextPseudoBlockUploadOutcome::EntryIsBusy);
+                // Unexpected errors :(
+                bad_rep @ (
+                    // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
+                    | Rep::RealmNotFound
+                    // Don't know what to do with this status :/
+                    | Rep::UnknownStatus { .. }
+                ) => {
+                    return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
-                updater
             }
-            // Entry has changed type, hence it has been modified and we should retry later
-            Ok((_, None | Some(ArcLocalChildManifest::Folder(_)))) => {
-                return Ok(DoNextPseudoBlockUploadOutcome::EntryIsBusy)
-            }
-            Err(ForUpdateChildLocalOnlyError::WouldBlock) => {
-                return Ok(DoNextPseudoBlockUploadOutcome::EntryIsBusy)
-            }
-            Err(ForUpdateChildLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
-            Err(ForUpdateChildLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot acces entry in store").into())
-            }
+            break;
         }
-    };
 
-    // Do the actual storage update
+        // 3) Mark the block as uploaded on local storage
 
-    updater
-        .update_manifest_and_chunks(
-            ArcLocalChildManifest::File(manifest.clone()),
-            [].into_iter(),
-            [].into_iter(),
-            [(to_promote_chunk_id, block_id, ops.device.now())].into_iter(),
-        )
-        .await
-        .map_err(|err| match err {
-            WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
-            WorkspaceStoreOperationError::Internal(err) => {
-                err.context("cannot update file manifest&chunks").into()
-            }
-        })?;
+        ops.store
+            .promote_local_only_chunk_to_uploaded_block(chunk.id)
+            .await
+            .map_err(|err| match err {
+                WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                WorkspaceStoreOperationError::Internal(err) => {
+                    err.context("cannot promote chunk to uploaded block").into()
+                }
+            })?;
+    }
 
-    Ok(DoNextPseudoBlockUploadOutcome::Done(manifest))
+    Ok(UploadBlocksOutcome::Done)
 }

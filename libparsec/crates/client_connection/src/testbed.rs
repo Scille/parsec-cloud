@@ -159,7 +159,7 @@ impl Drop for SendHookConfig {
                 "Client connection is being destroyed while configured with a mock \
                 expected to be trigger once !\n\
                 You can set `TESTBED_NO_CLEANUP=1` environ variable to disable this \
-                sanity check in case it is hidding the actual error..."
+                sanity check in case it is hiding the actual error..."
             );
         }
     }
@@ -170,7 +170,7 @@ impl SendHookConfig {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
-        println!("[Testbed] high_level_send({:?})", request);
+        println!("[Testbed] Client connection -> {:?}", request);
 
         // Given mutex is synchronous, we must release it before any await
         let custom_hook_future = {
@@ -202,6 +202,9 @@ impl SendHookConfig {
         let rep: Box<T::Response> = rep_as_any
             .downcast()
             .expect("Wrong type returned for response !");
+
+        // println!("[Testbed] Client connection <- {:?}", rep);
+
         HighLevelSendResult::Resolved(Ok(*rep))
     }
 

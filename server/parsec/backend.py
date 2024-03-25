@@ -285,6 +285,7 @@ class Backend:
                     author=event.author,
                     realm_id=event.realm,
                     block_id=event.block_id,
+                    key_index=event.key_index,
                     block=event.encrypted,
                 )
                 assert outcome is None, outcome
@@ -295,6 +296,7 @@ class Backend:
                     author=event.author,
                     realm_id=event.realm,
                     block_id=event.block_id,
+                    key_index=event.key_index,
                     block=event.encrypted,
                 )
                 assert outcome is None, outcome

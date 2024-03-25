@@ -509,7 +509,6 @@ impl CrcHash for BlockAccess {
         let BlockAccess {
             id,
             key,
-            key_index,
             offset,
             size,
             digest,
@@ -517,7 +516,6 @@ impl CrcHash for BlockAccess {
 
         id.crc_hash(hasher);
         key.crc_hash(hasher);
-        key_index.crc_hash(hasher);
         offset.crc_hash(hasher);
         size.crc_hash(hasher);
         digest.crc_hash(hasher);

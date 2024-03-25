@@ -255,12 +255,23 @@ impl CertifOps {
 
     pub async fn validate_block(
         &self,
+        needed_realm_certificate_timestamp: DateTime,
         realm_id: VlobID,
+        key_index: IndexInt,
         manifest: &FileManifest,
         access: &BlockAccess,
         encrypted: &[u8],
     ) -> Result<Vec<u8>, CertifValidateBlockError> {
-        block_validate::validate_block(self, realm_id, manifest, access, encrypted).await
+        block_validate::validate_block(
+            self,
+            needed_realm_certificate_timestamp,
+            realm_id,
+            key_index,
+            manifest,
+            access,
+            encrypted,
+        )
+        .await
     }
 
     /// Encrypt the data with the last known key from the most recent realm keys bundle.

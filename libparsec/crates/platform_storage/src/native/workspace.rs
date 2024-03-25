@@ -230,50 +230,9 @@ impl PlatformWorkspaceStorage {
         manifest: &UpdateManifestData,
         new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
-        mut chunks_promoted_to_block: impl Iterator<Item = (ChunkID, BlockID, DateTime)>,
     ) -> anyhow::Result<()> {
         // Note transaction automatically rollbacks on drop
         let mut transaction = self.conn.begin().await?;
-
-        // TODO: promoting chunk to block would be much more efficient once we have
-        // merged cache and data storage into a single DB
-        let mut cache_transaction = match chunks_promoted_to_block.next() {
-            None => None,
-            Some(first) => {
-                let mut cache_transaction = self.cache_conn.begin().await?;
-                let mut next = first;
-                loop {
-                    let (to_promote_chunk_id, promoted_block_id, accessed_on) = next;
-
-                    let maybe_encrypted =
-                        db_get_chunk(&mut *transaction, to_promote_chunk_id).await?;
-                    let encrypted = match maybe_encrypted {
-                        Some(encrypted) => encrypted,
-                        None => {
-                            return Err(anyhow::anyhow!(
-                                "Cannot promote chunk {} to block: not found",
-                                to_promote_chunk_id
-                            ))
-                        }
-                    };
-
-                    db_insert_block(
-                        &mut *cache_transaction,
-                        promoted_block_id,
-                        &encrypted,
-                        accessed_on,
-                    )
-                    .await?;
-                    db_remove_chunk(&mut *transaction, to_promote_chunk_id).await?;
-
-                    next = match chunks_promoted_to_block.next() {
-                        None => break,
-                        Some(next) => next,
-                    };
-                }
-                Some(cache_transaction)
-            }
-        };
 
         db_update_manifest(&mut *transaction, manifest).await?;
         for (new_chunk_id, new_chunk_data) in new_chunks {
@@ -283,9 +242,6 @@ impl PlatformWorkspaceStorage {
             db_remove_chunk(&mut *transaction, removed_chunk_id).await?;
         }
 
-        if let Some(cache_transaction) = cache_transaction.take() {
-            cache_transaction.commit().await?;
-        }
         transaction.commit().await?;
         Ok(())
     }
@@ -314,6 +270,28 @@ impl PlatformWorkspaceStorage {
             db_cleanup_blocks(&mut *transaction, to_remove).await?;
         }
 
+        transaction.commit().await?;
+        Ok(())
+    }
+
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        chunk_id: ChunkID,
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        // TODO: have a single base is much better for this !
+        let mut transaction = self.conn.begin().await?;
+        let mut cache_transaction = self.cache_conn.begin().await?;
+
+        let encrypted = match db_get_chunk(&mut *transaction, chunk_id).await? {
+            Some(encrypted) => encrypted,
+            // Nothing to promote, this should not occur under normal circumstances
+            None => return Ok(()),
+        };
+        db_insert_block(&mut *cache_transaction, chunk_id.into(), &encrypted, now).await?;
+        db_remove_chunk(&mut *transaction, chunk_id).await?;
+
+        cache_transaction.commit().await?;
         transaction.commit().await?;
         Ok(())
     }
@@ -741,7 +719,7 @@ async fn db_remove_chunk(
     Ok(())
 }
 
-pub async fn db_get_inbound_need_sync(
+async fn db_get_inbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
@@ -763,7 +741,7 @@ pub async fn db_get_inbound_need_sync(
         .collect()
 }
 
-pub async fn db_get_outbound_need_sync(
+async fn db_get_outbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
