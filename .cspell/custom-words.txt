@@ -91,6 +91,7 @@ CLSID
 clusterfuck
 Cmds
 CODEOWNERS
+Colord
 complexify
 confdir
 conftest
@@ -259,6 +260,7 @@ libappindicator
 libasound
 libassimp
 libbz
+libcolordprivate
 libcupsprintersupport
 libdb
 libdefaultgeometryloader
@@ -278,6 +280,7 @@ libgstmediacapture
 libgstmediaplayer
 libgstreamer
 libgtk
+libicutest
 libmpdec
 libncursesw
 libnspr
@@ -438,6 +441,7 @@ pgdg
 PGINSTALLATION
 picasa
 pipefail
+pkgconfig
 pkill
 platex
 platformthemes

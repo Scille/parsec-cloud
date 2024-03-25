@@ -23,7 +23,7 @@ apps:
       - pulseaudio
       - password-manager-service
     desktop: usr/share/applications/parsec-v3.desktop
-    command: command.sh
+    command: bin/desktop-launch
 
 parts:
   libparsec:
@@ -43,9 +43,8 @@ parts:
     stage:
       - libparsec.d.ts
       - libparsec.node
-      - bin # include fusermount bin
-      - sbin # include mount.fuse, needed ?
-      - lib # include libfuse3
+      - bin/fusermount* # include fusermount bin
+      - lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libfuse3* # include libfuse3
     prime:
       - -libparsec.d.ts
       - -libparsec.node
@@ -77,9 +76,8 @@ parts:
   parsec:
     after:
       - libparsec
-      - wrapper
     plugin: nil
-    source: .
+    source: client
     build-snaps:
       - node/18/stable
     build-attributes:
@@ -91,7 +89,6 @@ parts:
       node --version
       npm --version
 
-      cd client
       npm clean-install
       npm run electron:copy
 
@@ -101,8 +98,8 @@ parts:
       # Copy bindings
       rm -rf build # Cleanup build folder
       mkdir -pv build/{src,generated-ts/src}
-      cp -v "${CRAFT_STAGE}/libparsec.node" build/src/libparsec.node
-      cp -v "${CRAFT_STAGE}/libparsec.d.ts" build/generated-ts/src/libparsec.d.ts
+      cp -va "${CRAFT_STAGE}/libparsec.node" build/src/libparsec.node
+      cp -va "${CRAFT_STAGE}/libparsec.d.ts" build/generated-ts/src/libparsec.d.ts
 
       # Compile typescript
       npx tsc
@@ -116,11 +113,12 @@ parts:
     plugin: nil
     source: client/electron/assets
     build-environment:
-      - ICON_PATH: usr/share/icons/hicolor/512x512/apps/parsec-v3.png
-      - DESKTOP_PATH: usr/share/applications/parsec-v3.desktop
+      - ICON_PATH: &desktop-icon-path usr/share/icons/hicolor/512x512/apps/parsec-v3.png
+      - DESKTOP_PATH: &desktop-path usr/share/applications/parsec-v3.desktop
       - PARSEC_SCHEME: parsec-v3
-    stage:
-      - "*"
+    prime:
+      - *desktop-icon-path
+      - *desktop-path
     override-build: |
       mkdir -p $(dirname "$CRAFT_PART_INSTALL"/$ICON_PATH)
       cp -v icon.png "$CRAFT_PART_INSTALL"/$ICON_PATH
@@ -130,7 +128,7 @@ parts:
       [Desktop Entry]
       Name=Parsec-v3
       Comment=Secure cloud framework
-      Exec=\${SNAP}/command.sh %u
+      Exec=\${SNAP}/bin/desktop-launch %U
       Icon=\${SNAP}/$ICON_PATH
       Terminal=false
       Type=Application
@@ -138,45 +136,51 @@ parts:
       MimeType=x-scheme-handler/$PARSEC_SCHEME;
       EOF
 
-  electron-lib:
+  # Ideally, the gtk platform (i.e. gnome-platform) should be provided by snapcraft by using extensions.
+  # However, it is not available under `classic` confinement.
+  gtk-platform:
     plugin: nil
     stage-packages:
       - libgtk-3-0
       - libgbm1
       - libasound2
-    build-attributes:
-      - enable-patchelf
-
-  wrapper:
-    after:
-      - electron-lib
-    plugin: nil
-    build-packages:
-      - p7zip-full
-    build-environment:
-      # https://github.com/electron-userland/electron-builder-binaries/releases/snap-template-4.0-2
-      - SNAP_TEMPLATE_URL: https://github.com/electron-userland/electron-builder-binaries/releases/download/snap-template-4.0-2/snap-template-electron-4.0-2-amd64.tar.7z
-      # The checksum is provided in base64 format in the release page.
-      - SNAP_TEMPLATE_SHA512: 3d8862410e4a1387b3ada2c4ed3393d9a14f1a404d8c72d137b0bca803da0ba55c9075371fed26f8903f5a6c7af377ca513d99070a3d329f3612e866428e5639
+      - libnss3
     build-attributes:
       - enable-patchelf
     stage:
-      - "*"
+      - usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libssl3.so # Already provided by core22.
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libicutest.so* # International Components for Unicode test lib.
+      - -usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}/libcolordprivate.so* # Colord daemon private lib.
+      - usr/share/X11
+      - usr/share/icons
+      - usr/share/mime
+      - usr/sbin/update-icon-caches
+    prime:
+      - -usr/share/doc
+      - -usr/share/pkgconfig
     override-build: |
-      set -x
+      mkdir -p "$CRAFT_PART_INSTALL"/data-dir
 
-      ARCHIVE_FILE=$(basename "$SNAP_TEMPLATE_URL")
+  desktop-helpers:
+    plugin: make
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-type: git
+    source-commit: ec861254c2a1d2447b2c589446e6cdf04c75c260
+    prime:
+      - bin/desktop-launch-wrapper
+      - bin/desktop-launch
+      - flavor-select
+    override-build: |
+      cd gtk
+      make -j build
 
-      curl -L -O "$SNAP_TEMPLATE_URL"
-      echo "${SNAP_TEMPLATE_SHA512}  $ARCHIVE_FILE" | sha512sum -c
-
-      mkdir -v template
-      7z x -so "$ARCHIVE_FILE" | tar --extract --file - --directory template
-
-      cat > template/command.sh << EOF
+      cat > command.sh << EOF
       #!/bin/bash -e
-      exec "\$SNAP/desktop-init.sh" "\$SNAP/desktop-common.sh" "\$SNAP/desktop-gnome-specific.sh" "\$SNAP/app/parsec-v3" "\$@" --no-sandbox
+      exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec-v3" "\$@" --no-sandbox
       EOF
-      chmod a+x template/command.sh
 
-      cp -rv template/. "$CRAFT_PART_INSTALL"
+      mkdir -p "$CRAFT_PART_INSTALL"/bin
+      install -v --mode=755 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
+      install -v --mode=755 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
+      install -v --mode=644 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
