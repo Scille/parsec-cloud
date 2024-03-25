@@ -480,6 +480,8 @@ async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<voi
       params: { workspaceHandle: workspaceInfo.value?.handle },
       query: { documentPath: newPath },
     });
+  } else {
+    await openEntries([entry]);
   }
 }
 
