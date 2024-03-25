@@ -151,28 +151,23 @@ async function openPopover(event: Event): Promise<void> {
   margin: 0 0.75em 0 0;
   position: relative;
 
-  &.online::after {
+  &::after {
     content: '';
     position: absolute;
     bottom: 0;
-    right: -4px;
+    right: -3px;
     height: 0.625rem;
     width: 0.625rem;
     border-radius: 50%;
     border: var(--parsec-color-light-secondary-white) solid 3px;
+  }
+
+  &.online::after {
     background-color: var(--parsec-color-light-success-500);
   }
 
   &.offline::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    right: -4px;
-    height: 0.625rem;
-    width: 0.625rem;
-    border-radius: 50%;
-    border: var(--parsec-color-light-secondary-white) solid 3px;
-    background-color: red;
+    background-color: var(--parsec-color-light-secondary-light);
   }
 }
 

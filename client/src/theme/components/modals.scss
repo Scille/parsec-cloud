@@ -307,9 +307,11 @@ ion-modal .inner-content {
   }
 }
 
-.question-modal {
+.question-modal,
+.information-modal {
   &::part(content) {
     max-width: var(--parsec-modal-width-sm);
+    width: var(--parsec-modal-width-sm);
   }
 
   .ms-modal-header {

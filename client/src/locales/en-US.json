@@ -458,7 +458,7 @@
             "file": "File",
             "folder": "Folder",
             "created": "Created",
-            "updated": "Updated:",
+            "updated": "Updated: ",
             "version": "Version",
             "id": "Id",
             "size": "Size",
