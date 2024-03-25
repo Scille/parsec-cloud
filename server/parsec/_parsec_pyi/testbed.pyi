@@ -243,7 +243,7 @@ class TestbedEventCreateBlock:
     author: DeviceID
     realm: VlobID
     block_id: BlockID
-    block_key: SecretKey
+    key_index: int
     cleartext: bytes
 
     encrypted: bytes
@@ -253,6 +253,7 @@ class TestbedEventCreateOpaqueBlock:
     author: DeviceID
     realm: VlobID
     block_id: BlockID
+    key_index: int
     encrypted: bytes
 
 TestbedEvent = (

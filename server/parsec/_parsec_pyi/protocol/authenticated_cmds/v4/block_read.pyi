@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import BlockID
+from parsec._parsec import BlockID, DateTime
 
 class Req:
     def __init__(self, block_id: BlockID) -> None: ...
@@ -25,9 +25,15 @@ class RepUnknownStatus(Rep):
     def reason(self) -> str | None: ...
 
 class RepOk(Rep):
-    def __init__(self, block: bytes) -> None: ...
+    def __init__(
+        self, block: bytes, key_index: int, needed_realm_certificate_timestamp: DateTime
+    ) -> None: ...
     @property
     def block(self) -> bytes: ...
+    @property
+    def key_index(self) -> int: ...
+    @property
+    def needed_realm_certificate_timestamp(self) -> DateTime: ...
 
 class RepBlockNotFound(Rep):
     def __init__(

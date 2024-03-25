@@ -153,10 +153,13 @@ impl Drop for SendHookConfig {
         if matches!(
             &*guard,
             SendHookStrategy::LowLevelOnce(_) | SendHookStrategy::HighLevelOnce(_)
-        ) {
+        ) && std::env::var("TESTBED_NO_CLEANUP").is_err()
+        {
             panic!(
                 "Client connection is being destroyed while configured with a mock \
-                 expected to be trigger once !"
+                expected to be trigger once !\n\
+                You can set `TESTBED_NO_CLEANUP=1` environ variable to disable this \
+                sanity check in case it is hiding the actual error..."
             );
         }
     }
@@ -167,6 +170,8 @@ impl SendHookConfig {
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
+        println!("[Testbed] Client connection -> {:?}", request);
+
         // Given mutex is synchronous, we must release it before any await
         let custom_hook_future = {
             let mut guard = self.0.strategy.lock().expect("Mutex is poisoned");
@@ -197,6 +202,9 @@ impl SendHookConfig {
         let rep: Box<T::Response> = rep_as_any
             .downcast()
             .expect("Wrong type returned for response !");
+
+        // println!("[Testbed] Client connection <- {:?}", rep);
+
         HighLevelSendResult::Resolved(Ok(*rep))
     }
 

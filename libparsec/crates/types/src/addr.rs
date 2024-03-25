@@ -1062,3 +1062,7 @@ pub fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> 
     let buff = BASE32.decode(encoded_b32.as_bytes()).or(Err(err_msg))?;
     VerifyKey::try_from(buff.as_slice()).map_err(|_| err_msg)
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/addr.rs"]
+mod tests;

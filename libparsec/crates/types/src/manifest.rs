@@ -153,7 +153,8 @@ macro_rules! impl_manifest_dump_load {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct BlockAccess {
     pub id: BlockID,
-    pub key: SecretKey,
+    /// In Parsec < v3, each block was encrypted by it own dedicated key
+    pub key: Option<SecretKey>,
     pub offset: SizeInt,
     pub size: NonZeroU64,
     pub digest: HashDigest,

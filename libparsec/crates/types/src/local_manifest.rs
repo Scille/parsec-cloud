@@ -157,7 +157,8 @@ impl Chunk {
         // Craft access
         self.access = Some(BlockAccess {
             id: BlockID::from(*self.id),
-            key: SecretKey::generate(),
+            // Key is legacy and should not be used
+            key: None,
             offset: self.start,
             size: self.size().try_into().expect("size must be > 0"),
             digest: HashDigest::from_data(data),
@@ -1204,3 +1205,8 @@ impl From<LocalFolderManifest> for LocalChildManifest {
         Self::Folder(value)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/local_manifest.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

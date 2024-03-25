@@ -275,3 +275,8 @@ impl From<LocalDevice> for LocalDeviceData {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/local_device.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

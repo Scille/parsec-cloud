@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod add;
+mod block_validate;
 mod encrypt;
 mod list;
 mod manifest_validate;
@@ -16,6 +17,7 @@ mod user_revoke;
 mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
+pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
 pub use encrypt::CertifEncryptForSequesterServicesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
@@ -246,6 +248,27 @@ impl CertifOps {
             author,
             version,
             timestamp,
+            encrypted,
+        )
+        .await
+    }
+
+    pub async fn validate_block(
+        &self,
+        needed_realm_certificate_timestamp: DateTime,
+        realm_id: VlobID,
+        key_index: IndexInt,
+        manifest: &FileManifest,
+        access: &BlockAccess,
+        encrypted: &[u8],
+    ) -> Result<Vec<u8>, CertifValidateBlockError> {
+        block_validate::validate_block(
+            self,
+            needed_realm_certificate_timestamp,
+            realm_id,
+            key_index,
+            manifest,
+            access,
             encrypted,
         )
         .await

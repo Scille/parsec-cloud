@@ -390,6 +390,7 @@ class MemoryVlobAtom:
 class MemoryBlock:
     realm_id: VlobID
     block_id: BlockID
+    key_index: int
     author: DeviceID
     block_size: int
     created_on: DateTime

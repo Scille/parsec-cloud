@@ -858,7 +858,7 @@ impl<'a> TestbedEventCreateBlockBuilder<'a> {
             std::num::NonZeroU64::new(event.cleartext.len() as u64).expect("block is not empty");
         BlockAccess {
             id: event.block_id,
-            key: event.block_key.clone(),
+            key: None,
             offset,
             size,
             digest: HashDigest::from_data(&event.cleartext),
@@ -876,6 +876,7 @@ impl_event_builder!(
         device: DeviceID,
         realm: VlobID,
         block_id: BlockID,
+        key_index: IndexInt,
         encrypted_block: Bytes
     ]
 );

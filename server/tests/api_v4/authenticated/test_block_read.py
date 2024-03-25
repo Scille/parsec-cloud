@@ -4,12 +4,16 @@ import pytest
 
 from parsec._parsec import BlockID, DateTime, authenticated_cmds
 from parsec.components.blockstore import BlockStoreReadBadOutcome
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
 
 
 async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
     block_id = BlockID.new()
     block = b"<block content>"
+    wksp1_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+        testbed_template=coolorg.testbed_template,
+        realm_id=coolorg.wksp1_id,
+    )
 
     await backend.block.create(
         now=DateTime.now(),
@@ -17,11 +21,16 @@ async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: 
         author=coolorg.alice.device_id,
         block_id=block_id,
         realm_id=coolorg.wksp1_id,
+        key_index=1,
         block=block,
     )
 
     rep = await coolorg.alice.block_read(block_id)
-    assert rep == authenticated_cmds.v4.block_read.RepOk(block=block)
+    assert rep == authenticated_cmds.v4.block_read.RepOk(
+        block=block,
+        key_index=1,
+        needed_realm_certificate_timestamp=wksp1_last_certificate_timestamp,
+    )
 
 
 async def test_authenticated_block_read_block_not_found(
@@ -45,6 +54,7 @@ async def test_authenticated_block_read_author_not_allowed(
         author=coolorg.alice.device_id,
         block_id=block_id,
         realm_id=coolorg.wksp1_id,
+        key_index=1,
         block=block,
     )
 
@@ -65,6 +75,7 @@ async def test_authenticated_block_read_store_unavailable(
         author=coolorg.alice.device_id,
         block_id=block_id,
         realm_id=coolorg.wksp1_id,
+        key_index=1,
         block=block,
     )
 

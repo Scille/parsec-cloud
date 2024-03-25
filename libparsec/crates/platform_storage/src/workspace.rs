@@ -155,6 +155,14 @@ impl WorkspaceStorage {
         self.platform.set_block(block_id, encrypted, now).await
     }
 
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        chunk_id: ChunkID,
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        self.platform.promote_chunk_to_block(chunk_id, now).await
+    }
+
     /// Only used for debugging tests
     #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {

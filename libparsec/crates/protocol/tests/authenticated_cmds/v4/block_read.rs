@@ -46,9 +46,15 @@ pub fn rep_ok() {
     // Content:
     //   block: hex!("666f6f626172")
     //   status: "ok"
-    let raw = hex!("82a5626c6f636bc406666f6f626172a6737461747573a26f6b");
+    let raw = hex!(
+        "84a6737461747573a26f6ba5626c6f636bc406666f6f626172a96b65795f696e64657802d9"
+        "226e65656465645f7265616c6d5f63657274696669636174655f74696d657374616d70d701"
+        "41cc36a1c0000000"
+    );
     let expected = authenticated_cmds::block_read::Rep::Ok {
         block: bytes::Bytes::from_static(b"foobar"),
+        key_index: 2,
+        needed_realm_certificate_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
     };
     rep_helper(&raw, expected);
 }

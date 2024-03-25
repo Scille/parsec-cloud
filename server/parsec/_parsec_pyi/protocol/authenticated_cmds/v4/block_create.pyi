@@ -4,15 +4,19 @@
 
 from __future__ import annotations
 
-from parsec._parsec import BlockID, VlobID
+from parsec._parsec import BlockID, DateTime, VlobID
 
 class Req:
-    def __init__(self, block_id: BlockID, realm_id: VlobID, block: bytes) -> None: ...
+    def __init__(
+        self, block_id: BlockID, realm_id: VlobID, key_index: int, block: bytes
+    ) -> None: ...
     def dump(self) -> bytes: ...
     @property
     def block_id(self) -> BlockID: ...
     @property
     def realm_id(self) -> VlobID: ...
+    @property
+    def key_index(self) -> int: ...
     @property
     def block(self) -> bytes: ...
 
@@ -47,6 +51,11 @@ class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepBadKeyIndex(Rep):
+    def __init__(self, last_realm_certificate_timestamp: DateTime) -> None: ...
+    @property
+    def last_realm_certificate_timestamp(self) -> DateTime: ...
 
 class RepStoreUnavailable(Rep):
     def __init__(

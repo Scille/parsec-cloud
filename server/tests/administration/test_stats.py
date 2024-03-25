@@ -184,6 +184,7 @@ async def test_ok(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=BlockID.new(),
+        key_index=1,
         realm_id=coolorg.wksp1_id,
         block=b"0" * 10,
     )
@@ -192,6 +193,7 @@ async def test_ok(
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=BlockID.new(),
+        key_index=1,
         realm_id=coolorg.wksp1_id,
         block=b"0" * 20,
     )

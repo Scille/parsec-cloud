@@ -1,16 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
+use rstest_reuse::{self, apply, template};
+use serde_test::{assert_tokens, Token};
 use std::str::FromStr;
 
 use libparsec_tests_lite::prelude::*;
-use rstest_reuse::{self, apply, template};
-use serde_test::{assert_tokens, Token};
 
-use libparsec_types::prelude::*;
+use crate::prelude::*;
 
 const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";

@@ -3,7 +3,10 @@
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
-use crate::workspace::{store::ReadChunkError, ReadMode, WorkspaceOps};
+use crate::{
+    workspace::{store::ReadChunkOrBlockError, ReadMode, WorkspaceOps},
+    InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceFdReadError {
@@ -15,6 +18,14 @@ pub enum WorkspaceFdReadError {
     BadFileDescriptor,
     #[error("File is not opened in read mode")]
     NotInReadMode,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error(transparent)]
+    InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -85,19 +96,32 @@ pub async fn fd_read(
                     .expect("prepare_read/buf/size are consistent");
             }
             None => {
-                let chunk_data = ops.store.get_chunk(&chunk).await.map_err(|err| match err {
-                    ReadChunkError::Offline => WorkspaceFdReadError::Offline,
-                    ReadChunkError::Stopped => WorkspaceFdReadError::Stopped,
-                    ReadChunkError::BadDecryption => todo!(),
-                    ReadChunkError::NoRealmAccess => todo!(),
-                    ReadChunkError::StoreUnavailable => todo!(),
-                    ReadChunkError::ChunkNotFound => anyhow::anyhow!(
-                        "Chunk ID {} referenced in local manifest not in local storage !",
-                        chunk.id
-                    )
-                    .into(),
-                    ReadChunkError::Internal(err) => err.context("cannot read chunk").into(),
-                })?;
+                let chunk_data = ops
+                    .store
+                    .get_chunk_or_block(&chunk, &opened_file.manifest.base)
+                    .await
+                    .map_err(|err| match err {
+                        ReadChunkOrBlockError::Offline => WorkspaceFdReadError::Offline,
+                        ReadChunkOrBlockError::Stopped => WorkspaceFdReadError::Stopped,
+                        ReadChunkOrBlockError::NoRealmAccess => WorkspaceFdReadError::NoRealmAccess,
+                        ReadChunkOrBlockError::InvalidBlockAccess(err) => {
+                            WorkspaceFdReadError::InvalidBlockAccess(err)
+                        }
+                        ReadChunkOrBlockError::InvalidCertificate(err) => {
+                            WorkspaceFdReadError::InvalidCertificate(err)
+                        }
+                        ReadChunkOrBlockError::InvalidKeysBundle(err) => {
+                            WorkspaceFdReadError::InvalidKeysBundle(err)
+                        }
+                        ReadChunkOrBlockError::ChunkNotFound => anyhow::anyhow!(
+                            "Chunk ID {} referenced in local manifest not in local storage !",
+                            chunk.id
+                        )
+                        .into(),
+                        ReadChunkOrBlockError::Internal(err) => {
+                            err.context("cannot read chunk").into()
+                        }
+                    })?;
 
                 chunk
                     .copy_between_start_and_stop(&chunk_data, offset, buf, &mut buf_size)

@@ -274,6 +274,28 @@ impl PlatformWorkspaceStorage {
         Ok(())
     }
 
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        chunk_id: ChunkID,
+        now: DateTime,
+    ) -> anyhow::Result<()> {
+        // TODO: have a single base is much better for this !
+        let mut transaction = self.conn.begin().await?;
+        let mut cache_transaction = self.cache_conn.begin().await?;
+
+        let encrypted = match db_get_chunk(&mut *transaction, chunk_id).await? {
+            Some(encrypted) => encrypted,
+            // Nothing to promote, this should not occur under normal circumstances
+            None => return Ok(()),
+        };
+        db_insert_block(&mut *cache_transaction, chunk_id.into(), &encrypted, now).await?;
+        db_remove_chunk(&mut *transaction, chunk_id).await?;
+
+        cache_transaction.commit().await?;
+        transaction.commit().await?;
+        Ok(())
+    }
+
     /// Only used for debugging tests
     #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
@@ -697,7 +719,7 @@ async fn db_remove_chunk(
     Ok(())
 }
 
-pub async fn db_get_inbound_need_sync(
+async fn db_get_inbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
@@ -719,7 +741,7 @@ pub async fn db_get_inbound_need_sync(
         .collect()
 }
 
-pub async fn db_get_outbound_need_sync(
+async fn db_get_outbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {

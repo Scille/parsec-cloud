@@ -419,13 +419,14 @@ event_wrapper!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
+        key_index: libparsec_types::IndexInt,
         cleartext: Py<PyBytes>,
         encrypted: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventCreateBlock| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
+            "timestamp={:?}, author={:?}, realm={:?}, block={:?}, key_index={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0, x.key_index,
         ))
     }
 );
@@ -437,12 +438,13 @@ event_wrapper!(
         author: DeviceID,
         realm: VlobID,
         block_id: BlockID,
+        key_index: libparsec_types::IndexInt,
         encrypted: Py<PyBytes>,
     ],
     |_py, x: &TestbedEventCreateOpaqueBlock| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, realm={:?}, block={:?}",
-            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0,
+            "timestamp={:?}, author={:?}, realm={:?}, block={:?}, key_index={:?}",
+            x.timestamp.0, x.author.0, x.realm.0, x.block_id.0, x.key_index,
         ))
     }
 );
@@ -1038,6 +1040,7 @@ fn event_to_pyobject(
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
+                key_index: x.key_index,
                 encrypted: PyBytes::new(py, &x.encrypted).into(),
             };
             Some(obj.into_py(py))
@@ -1049,6 +1052,7 @@ fn event_to_pyobject(
                 author: x.author.clone().into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
+                key_index: x.key_index,
                 cleartext: PyBytes::new(py, &x.cleartext).into(),
                 encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
             };

@@ -16,7 +16,7 @@ enum Modification {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn base(
+async fn non_placeholder(
     #[values(Modification::Create, Modification::Remove, Modification::Rename)]
     modification: Modification,
     env: &TestbedEnv,
@@ -131,4 +131,81 @@ async fn base(
     wksp1_ops.stop().await.unwrap();
 }
 
-// TODO: test outbound sync returning `OutboundSyncOutcome::InboundSyncNeeded`
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn inbound_sync_needed(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    let env = env.customize(|builder| {
+        // New version of the file that we our client doesn't know about
+        builder.create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id);
+    });
+
+    let alice = env.local_device("alice@dev1");
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let get_folder_manifest = |entry_id| {
+        let wksp1_ops = &wksp1_ops;
+        async move {
+            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
+            match child_manifest {
+                ArcLocalChildManifest::File(m) => panic!("Expected folder, got {:?}", m),
+                ArcLocalChildManifest::Folder(m) => m,
+            }
+        }
+    };
+
+    // Modify the folder to require a sync
+
+    wksp1_ops
+        .rename_entry(
+            "/foo/spam".parse().unwrap(),
+            "spam_renamed".parse().unwrap(),
+            false,
+        )
+        .await
+        .unwrap();
+
+    // Mock server commands and do the sync
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        // 1) Fetch last workspace keys bundle to encrypt the new manifest
+        {
+            let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
+            let keys_bundle_access =
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+            move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.key_index, 1);
+                authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                    keys_bundle,
+                    keys_bundle_access,
+                }
+            }
+        },
+        // 2) `vlob_update`
+        move |req: authenticated_cmds::latest::vlob_update::Req| {
+            p_assert_eq!(req.key_index, 1);
+            p_assert_eq!(req.vlob_id, wksp1_foo_id);
+            p_assert_eq!(req.version, 2);
+            assert!(req.sequester_blob.is_none());
+            authenticated_cmds::latest::vlob_update::Rep::BadVlobVersion
+        },
+    );
+
+    let before_sync_manifest = get_folder_manifest(wksp1_foo_id).await;
+    p_assert_eq!(before_sync_manifest.need_sync, true); // Sanity check
+
+    let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
+    p_assert_matches!(outcome, OutboundSyncOutcome::InboundSyncNeeded);
+
+    // Check the user manifest still need sync
+    let after_failed_sync_manifest = get_folder_manifest(wksp1_foo_id).await;
+    p_assert_eq!(after_failed_sync_manifest, before_sync_manifest);
+
+    wksp1_ops.stop().await.unwrap();
+}
+
+// TODO: test with placeholder folder manifest
+// TODO: test `OutboundSyncOutcome::EntryIsBusy`

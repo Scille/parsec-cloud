@@ -77,7 +77,10 @@ fn task_future_factory(
                 macro_rules! handle_workspace_sync_error {
                     ($err:expr) => {
                         match $err {
-                                WorkspaceSyncError::Offline | WorkspaceSyncError::Stopped => {
+                                WorkspaceSyncError::Offline => {
+                                    event_bus.wait_server_online().await;
+                                }
+                                WorkspaceSyncError::Stopped => {
                                     return;
                                 }
 
@@ -89,6 +92,8 @@ fn task_future_factory(
                                 // Other errors are unexpected ones
                                 | WorkspaceSyncError::NoKey
                                 | WorkspaceSyncError::NoRealm
+                                | WorkspaceSyncError::InvalidManifest(_)
+                                | WorkspaceSyncError::InvalidBlockAccess(_)
                                 | WorkspaceSyncError::InvalidKeysBundle(_)
                                 | WorkspaceSyncError::InvalidCertificate(_)
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
@@ -125,6 +130,8 @@ fn task_future_factory(
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
+                                // Note the send may fail if the syncer sub task has crashed,
+                                // in which case there is nothing we can do :(
                                 let _ = tx.send(entry_id);
                                 break;
                             }
@@ -214,7 +221,7 @@ fn task_future_factory(
                         if time.due_time < now {
                             // TODO: error handling ? what if syncer needs to stop by itself
                             // due to internal error ?
-                            syncer_tx.send(*entry_id).expect("Syncer sub-task is alive");
+                            let _ = syncer_tx.send(*entry_id);
                             false
                         } else {
                             match next_due_time {

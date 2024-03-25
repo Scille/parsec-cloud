@@ -187,10 +187,14 @@ fn block_write(
 
 /// Prepare a write operation by updating the provided manifest.
 ///
-/// Return a `Vec` of write operations that must be performed in order for the updated manifest to become valid.
-/// Each write operation consists of a new chunk to store, along with an offset to apply to the corresponding raw data.
-/// Note that the raw data also needs to be sliced to the chunk size and padded with null bytes if necessary.
-/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
+/// Return a `Vec` of write operations that must be performed in order for the updated
+/// manifest to become valid.
+/// Each write operation consists of a new chunk to store, along with an offset to apply
+/// to the corresponding raw data.
+/// Note that the raw data also needs to be sliced to the chunk size and padded with
+/// null bytes if necessary.
+/// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after
+/// the updated manifest has been successfully stored.
 pub fn prepare_write(
     manifest: &mut LocalFileManifest,
     size: u64,
@@ -342,7 +346,8 @@ fn prepare_truncate(
 
 /// Prepare a resize operation by updating the provided manifest.
 ///
-/// Return a `HashSet` of chunk IDs that must cleaned up from the storage, after the updated manifest has been successfully stored.
+/// Return a `HashSet` of chunk IDs that must cleaned up from the storage, after the
+/// updated manifest has been successfully stored.
 pub fn prepare_resize(
     manifest: &mut LocalFileManifest,
     size: u64,
@@ -429,8 +434,10 @@ impl ReshapeBlockOperation<'_> {
 // Prepare reshape
 
 /// Prepare a reshape operation without updating the provided manifest.
-/// The reason why the manifest is not updated is because the hash of the corresponding data is required to turn a chunk into a block.
-/// Instead, it's up to the caller to call `chunk.evolve_as_block` and `manifest.set_single_block` to update the manifest.
+/// The reason why the manifest is not updated is because the hash of the
+/// corresponding data is required to turn a chunk into a block.
+/// Instead, it's up to the caller to call `chunk.evolve_as_block` and
+/// `manifest.set_single_block` to update the manifest.
 ///
 /// Return an iterator where each item corresponds to a block to reshape.
 /// Each item consists of:

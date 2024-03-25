@@ -17,6 +17,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{CertifOps, InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::fetch::FetchRemoteManifestError,
+    InvalidBlockAccessError,
 };
 
 enum FetchMode {
@@ -181,7 +182,7 @@ pub(super) enum GetFolderishEntryError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(super) enum ReadChunkLocalOnlyError {
+pub(super) enum ReadChunkOrBlockLocalOnlyError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Chunk doesn't exist")]
@@ -191,7 +192,7 @@ pub(super) enum ReadChunkLocalOnlyError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(super) enum ReadChunkError {
+pub(super) enum ReadChunkOrBlockError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -200,10 +201,12 @@ pub(super) enum ReadChunkError {
     ChunkNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
-    #[error("Block access is temporary unavailable on the server")]
-    StoreUnavailable,
-    #[error("Block cannot be decrypted")]
-    BadDecryption,
+    #[error(transparent)]
+    InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -222,6 +225,8 @@ pub(super) type UpdateRealmCheckpointError = WorkspaceStoreOperationError;
 pub(super) type UpdateWorkspaceManifestError = WorkspaceStoreOperationError;
 pub(super) type UpdateFolderManifestError = WorkspaceStoreOperationError;
 pub(super) type UpdateFileManifestAndContinueError = WorkspaceStoreOperationError;
+pub(super) type PromoteLocalOnlyChunkToUploadedBlockError = WorkspaceStoreOperationError;
+pub(super) type GetNotUploadedChunkError = WorkspaceStoreOperationError;
 
 /*
  * Child manifests lock
@@ -1231,10 +1236,10 @@ impl WorkspaceStore {
         Ok((updater, manifest))
     }
 
-    pub(crate) async fn get_chunk_local_only(
+    pub(crate) async fn get_chunk_or_block_local_only(
         &self,
         chunk: &Chunk,
-    ) -> Result<Bytes, ReadChunkLocalOnlyError> {
+    ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
         {
             let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
             let found = cache.chunks.get(&chunk.id);
@@ -1247,7 +1252,7 @@ impl WorkspaceStore {
 
         let mut maybe_storage = self.storage.lock().await;
         let storage = match &mut *maybe_storage {
-            None => return Err(ReadChunkLocalOnlyError::Stopped),
+            None => return Err(ReadChunkOrBlockLocalOnlyError::Stopped),
             Some(storage) => storage,
         };
 
@@ -1275,47 +1280,73 @@ impl WorkspaceStore {
             return Ok(data);
         }
 
-        Err(ReadChunkLocalOnlyError::ChunkNotFound)
+        Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound)
     }
 
-    pub(crate) async fn get_chunk(&self, chunk: &Chunk) -> Result<Bytes, ReadChunkError> {
-        let outcome = self.get_chunk_local_only(chunk).await;
+    pub(crate) async fn get_chunk_or_block(
+        &self,
+        chunk: &Chunk,
+        remote_manifest: &FileManifest,
+    ) -> Result<Bytes, ReadChunkOrBlockError> {
+        let outcome = self.get_chunk_or_block_local_only(chunk).await;
         match outcome {
             Ok(chunk_data) => return Ok(chunk_data),
             Err(err) => match err {
-                ReadChunkLocalOnlyError::ChunkNotFound => (),
-                ReadChunkLocalOnlyError::Stopped => return Err(ReadChunkError::Stopped),
-                ReadChunkLocalOnlyError::Internal(err) => return Err(err.into()),
+                ReadChunkOrBlockLocalOnlyError::ChunkNotFound => (),
+                ReadChunkOrBlockLocalOnlyError::Stopped => {
+                    return Err(ReadChunkOrBlockError::Stopped)
+                }
+                ReadChunkOrBlockLocalOnlyError::Internal(err) => return Err(err.into()),
             },
         }
 
         // Chunk not in local, time to ask the server
 
-        let data: Bytes = match &chunk.access {
-            None => return Err(ReadChunkError::ChunkNotFound),
-            Some(access) => super::fetch::fetch_block(&self.cmds, access.id, &access.key)
-                .await
-                .map_err(|err| match err {
-                    FetchRemoteBlockError::Offline => ReadChunkError::Offline,
-                    FetchRemoteBlockError::BlockNotFound => ReadChunkError::ChunkNotFound,
-                    FetchRemoteBlockError::NoRealmAccess => ReadChunkError::NoRealmAccess,
-                    FetchRemoteBlockError::StoreUnavailable => ReadChunkError::StoreUnavailable,
-                    FetchRemoteBlockError::BadDecryption => ReadChunkError::BadDecryption,
-                    FetchRemoteBlockError::Internal(err) => {
-                        err.context("cannot fetch block from server").into()
-                    }
-                })?,
-        }
-        .into();
+        let access = match &chunk.access {
+            Some(access) => access,
+            None => return Err(ReadChunkOrBlockError::ChunkNotFound),
+        };
+
+        let data = super::fetch::fetch_block(
+            &self.cmds,
+            &self.certificates_ops,
+            self.realm_id,
+            remote_manifest,
+            access,
+        )
+        .await
+        .map_err(|err| match err {
+            FetchRemoteBlockError::Stopped => ReadChunkOrBlockError::Stopped,
+            FetchRemoteBlockError::Offline | FetchRemoteBlockError::StoreUnavailable => {
+                ReadChunkOrBlockError::Offline
+            }
+            FetchRemoteBlockError::BlockNotFound => ReadChunkOrBlockError::ChunkNotFound,
+            FetchRemoteBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
+            FetchRemoteBlockError::InvalidBlockAccess(err) => {
+                ReadChunkOrBlockError::InvalidBlockAccess(err)
+            }
+            FetchRemoteBlockError::InvalidKeysBundle(err) => {
+                ReadChunkOrBlockError::InvalidKeysBundle(err)
+            }
+            FetchRemoteBlockError::InvalidCertificate(err) => {
+                ReadChunkOrBlockError::InvalidCertificate(err)
+            }
+            FetchRemoteBlockError::Internal(err) => {
+                err.context("cannot fetch block from server").into()
+            }
+        })?;
 
         // Should both store the data in local storage...
 
         let mut maybe_storage = self.storage.lock().await;
         let storage = match &mut *maybe_storage {
-            None => return Err(ReadChunkError::Stopped),
+            None => return Err(ReadChunkOrBlockError::Stopped),
             Some(storage) => storage,
         };
-        storage.set_chunk(chunk.id, &data).await?;
+        let encrypted = self.device.local_symkey.encrypt(&data);
+        storage
+            .set_block(access.id, &encrypted, self.device.now())
+            .await?;
 
         // ...and update the cache !
 
@@ -1323,6 +1354,53 @@ impl WorkspaceStore {
         cache.chunks.push(chunk.id, data.clone());
 
         Ok(data)
+    }
+
+    pub(crate) async fn get_not_uploaded_chunk(
+        &self,
+        chunk_id: ChunkID,
+    ) -> Result<Option<Bytes>, GetNotUploadedChunkError> {
+        // Don't use the in-memory cache given it doesn't tell if the data is from and
+        // uploaded block or not.
+        let mut maybe_storage = self.storage.lock().await;
+        let storage = match &mut *maybe_storage {
+            None => return Err(GetNotUploadedChunkError::Stopped),
+            Some(storage) => storage,
+        };
+
+        let maybe_encrypted = storage
+            .get_chunk(chunk_id)
+            .await
+            .map_err(GetNotUploadedChunkError::Internal)?;
+
+        match maybe_encrypted {
+            None => Ok(None),
+            Some(encrypted) => {
+                let cleartext = self
+                    .device
+                    .local_symkey
+                    .decrypt(&encrypted)
+                    .map_err(|err| {
+                        anyhow::anyhow!("Cannot decrypt block from local storage: {}", err)
+                    })?;
+
+                Ok(Some(cleartext.into()))
+            }
+        }
+    }
+
+    pub(crate) async fn promote_local_only_chunk_to_uploaded_block(
+        &self,
+        chunk_id: ChunkID,
+    ) -> Result<(), PromoteLocalOnlyChunkToUploadedBlockError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| PromoteLocalOnlyChunkToUploadedBlockError::Stopped)?;
+        storage
+            .promote_chunk_to_block(chunk_id, self.device.now())
+            .await
+            .map_err(PromoteLocalOnlyChunkToUploadedBlockError::Internal)
     }
 
     pub(crate) async fn get_inbound_need_sync_entries(
@@ -1623,6 +1701,51 @@ impl<'a> ChildUpdater<'a> {
         };
 
         storage.update_manifest(&update_data).await?;
+
+        // Finally update cache
+        let mut cache = self
+            .store
+            .current_view_cache
+            .lock()
+            .expect("Mutex is poisoned");
+        cache.child_manifests.insert(update_data.entry_id, manifest);
+
+        Ok(())
+    }
+
+    pub async fn update_manifest_and_chunks(
+        self,
+        manifest: ArcLocalChildManifest,
+        new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
+        removed_chunks: impl Iterator<Item = ChunkID>,
+    ) -> Result<(), UpdateFolderManifestError> {
+        let mut storage_guard = self.store.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| UpdateFolderManifestError::Stopped)?;
+
+        let update_data = match &manifest {
+            ArcLocalChildManifest::File(manifest) => UpdateManifestData {
+                entry_id: manifest.base.id,
+                base_version: manifest.base.version,
+                need_sync: manifest.need_sync,
+                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+            },
+            ArcLocalChildManifest::Folder(manifest) => UpdateManifestData {
+                entry_id: manifest.base.id,
+                base_version: manifest.base.version,
+                need_sync: manifest.need_sync,
+                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+            },
+        };
+
+        let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
+            (chunk_id, self.store.device.local_symkey.encrypt(&cleartext))
+        });
+
+        storage
+            .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
+            .await?;
 
         // Finally update cache
         let mut cache = self

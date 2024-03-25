@@ -1,13 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 use std::sync::Arc;
 
 use libparsec_types::prelude::*;
 
 use crate::workspace::{
-    store::{ReadChunkLocalOnlyError, UpdateFileManifestAndContinueError},
+    store::{ReadChunkOrBlockLocalOnlyError, UpdateFileManifestAndContinueError},
     OpenedFile, WorkspaceOps, WriteMode,
 };
 
@@ -128,62 +126,68 @@ async fn reshape(
         // Build the chunk of data resulting of the reshape...
         let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
         let mut buf_size = 0;
-        let mut reshape_ok = true;
+        let mut local_miss = false;
         let start = reshape.destination().start;
         for chunk in reshape.source().iter() {
-            let outcome = ops.store.get_chunk_local_only(chunk).await;
+            let outcome = ops.store.get_chunk_or_block_local_only(chunk).await;
             match outcome {
                 Ok(chunk_data) => {
                     chunk
                         .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
                         .expect("write on vec cannot fail");
                 }
-                Err(ReadChunkLocalOnlyError::ChunkNotFound) => {
+                Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound) => {
                     // ...if some data are missing in local, this reshape operation is not possible
-                    // so we simply ignore it by rollback its corresponding changes in the manifest.
-                    reshape_ok = false;
+                    // so we simply ignore it by not committing the changes in the manifest.
+                    local_miss = true;
                     break;
                 }
-                Err(ReadChunkLocalOnlyError::Stopped) => return Err(ReshapeAndFlushError::Stopped),
-                Err(ReadChunkLocalOnlyError::Internal(err)) => {
+                Err(ReadChunkOrBlockLocalOnlyError::Stopped) => {
+                    return Err(ReshapeAndFlushError::Stopped)
+                }
+                Err(ReadChunkOrBlockLocalOnlyError::Internal(err)) => {
                     return Err(err.context("cannot read chunks").into())
                 }
             }
         }
+
+        if local_miss {
+            continue;
+        }
+
         if buf_size < buf.len() {
             buf.extend_from_slice(&vec![0; buf.len() - buf_size]);
         }
-        if reshape_ok {
-            let new_chunk_id = reshape.destination().id;
-            // Remove old chunks
-            for to_remove_chunk_id in reshape.cleanup_ids() {
-                let found = opened_file
-                    .new_chunks
-                    .iter()
-                    .position(|(id, _)| *id == to_remove_chunk_id);
-                match found {
-                    Some(index) => {
-                        opened_file.new_chunks.remove(index);
-                    }
-                    None => {
-                        opened_file.removed_chunks.push(to_remove_chunk_id);
-                    }
+
+        let new_chunk_id = reshape.destination().id;
+        // Remove old chunks
+        for to_remove_chunk_id in reshape.cleanup_ids() {
+            let found = opened_file
+                .new_chunks
+                .iter()
+                .position(|(id, _)| *id == to_remove_chunk_id);
+            match found {
+                Some(index) => {
+                    opened_file.new_chunks.remove(index);
+                }
+                None => {
+                    opened_file.removed_chunks.push(to_remove_chunk_id);
                 }
             }
-            // Add new chunk
-            let buf_ref = if reshape.write_back() {
-                opened_file.new_chunks.push((new_chunk_id, buf));
-                &opened_file
-                    .new_chunks
-                    .last()
-                    .expect("An item has just been pushed")
-                    .1
-            } else {
-                &buf
-            };
-            // Commit the changes
-            reshape.commit(buf_ref);
         }
+        // Add new chunk
+        let buf_ref = if reshape.write_back() {
+            opened_file.new_chunks.push((new_chunk_id, buf));
+            &opened_file
+                .new_chunks
+                .last()
+                .expect("An item has just been pushed")
+                .1
+        } else {
+            &buf
+        };
+        // Commit the changes
+        reshape.commit(buf_ref);
     }
 
     Ok(())

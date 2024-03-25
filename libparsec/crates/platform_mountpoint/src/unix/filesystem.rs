@@ -7,8 +7,9 @@ use std::{
 
 use libparsec_client::workspace::{
     EntryStat, FileStat, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdCloseError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceOpenFileError,
-    WorkspaceOps, WorkspaceRemoveEntryError, WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceOpenFileError, WorkspaceOps, WorkspaceRemoveEntryError, WorkspaceRenameEntryError,
+    WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -28,11 +29,6 @@ const TTL: std::time::Duration = std::time::Duration::ZERO;
 const GENERATION: u64 = 0;
 const BLOCK_SIZE: u64 = 512;
 const PERMISSIONS: u16 = 0o700;
-
-macro_rules! debug {
-    (target: $target:expr, $($arg:tt)+) => { println!($target, $($arg)+) };
-    ($($arg:tt)+) => { println!($($arg)+) };
-}
 
 fn os_name_to_entry_name(name: &OsStr) -> EntryNameResult<EntryName> {
     name.to_str()
@@ -227,7 +223,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEntry,
     ) {
-        debug!("[FUSE] lookup(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] lookup(parent: {:#x?}, name: {:?})", parent, name);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEntry);
 
         let uid = req.uid();
@@ -305,7 +301,7 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn statfs(&mut self, _req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyStatfs) {
-        debug!("[FUSE] statfs(ino: {:#x?})", ino);
+        log::debug!("[FUSE] statfs(ino: {:#x?})", ino);
 
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
@@ -323,7 +319,7 @@ impl fuser::Filesystem for Filesystem {
     }
 
     fn getattr(&mut self, req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyAttr) {
-        debug!("[FUSE] getattr(ino: {:#x?})", ino);
+        log::debug!("[FUSE] getattr(ino: {:#x?})", ino);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
 
         let uid = req.uid();
@@ -362,7 +358,7 @@ impl fuser::Filesystem for Filesystem {
         _umask: u32,
         reply: fuser::ReplyEntry,
     ) {
-        debug!("[FUSE] mkdir(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] mkdir(parent: {:#x?}, name: {:?})", parent, name);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEntry);
 
         let uid = req.uid();
@@ -424,7 +420,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!("[FUSE] rmdir(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] rmdir(parent: {:#x?}, name: {:?})", parent, name);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         let name = match os_name_to_entry_name(name) {
@@ -482,7 +478,7 @@ impl fuser::Filesystem for Filesystem {
         name: &std::ffi::OsStr,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!("[FUSE] unlink(parent: {:#x?}, name: {:?})", parent, name);
+        log::debug!("[FUSE] unlink(parent: {:#x?}, name: {:?})", parent, name);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         let name = match os_name_to_entry_name(name) {
@@ -543,10 +539,14 @@ impl fuser::Filesystem for Filesystem {
         flags: u32,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] rename(src_parent: {:#x?}, src_name: {:?}, dst_parent: {:#x?}, \\
             std_name: {:?}, flags: {})",
-            src_parent, src_name, dst_parent, dst_name, flags,
+            src_parent,
+            src_name,
+            dst_parent,
+            dst_name,
+            flags,
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
@@ -623,7 +623,7 @@ impl fuser::Filesystem for Filesystem {
 
     // Note flags doesn't contains O_CREAT, O_EXCL, O_NOCTTY and O_TRUNC
     fn open(&mut self, _req: &fuser::Request<'_>, ino: u64, flags: i32, reply: fuser::ReplyOpen) {
-        debug!("[FUSE] open(ino: {:#x?}, flags: {:#x?})", ino, flags);
+        log::debug!("[FUSE] open(ino: {:#x?}, flags: {:#x?})", ino, flags);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyOpen);
 
         let path = {
@@ -708,9 +708,11 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyCreate,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] create(parent: {:#x?}, name: {:?}, flags: {:#x?})",
-            parent, name, flags
+            parent,
+            name,
+            flags
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyCreate);
 
@@ -845,10 +847,16 @@ impl fuser::Filesystem for Filesystem {
         flags: Option<u32>,
         reply: fuser::ReplyAttr,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] setattr(ino: {:#x?}, mode: {:?}, uid: {:?}, \
             gid: {:?}, size: {:?}, fh: {:?}, flags: {:?})",
-            ino, mode, uid, gid, size, fh, flags
+            ino,
+            mode,
+            uid,
+            gid,
+            size,
+            fh,
+            flags
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
         let uid = req.uid();
@@ -997,9 +1005,12 @@ impl fuser::Filesystem for Filesystem {
         _lock_owner: Option<u64>,
         reply: fuser::ReplyData,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] read(ino: {:#x?}, fh: {}, offset: {}, size: {})",
-            ino, fh, offset, size,
+            ino,
+            fh,
+            offset,
+            size,
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyData);
 
@@ -1014,12 +1025,16 @@ impl fuser::Filesystem for Filesystem {
                     reply.manual().data(&buf);
                 }
                 Err(err) => match err {
-                    libparsec_client::workspace::WorkspaceFdReadError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    libparsec_client::workspace::WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
-                    libparsec_client::workspace::WorkspaceFdReadError::Stopped
+                    WorkspaceFdReadError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceFdReadError::NotInReadMode => reply.manual().error(libc::EBADF),
+                    WorkspaceFdReadError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceFdReadError::Stopped
+                    | WorkspaceFdReadError::InvalidBlockAccess(_)
+                    | WorkspaceFdReadError::InvalidKeysBundle(_)
+                    | WorkspaceFdReadError::InvalidCertificate(_)
                     // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                    | libparsec_client::workspace::WorkspaceFdReadError::BadFileDescriptor
-                    | libparsec_client::workspace::WorkspaceFdReadError::Internal(_)
+                    | WorkspaceFdReadError::BadFileDescriptor
+                    | WorkspaceFdReadError::Internal(_)
                     => reply.manual().error(libc::EIO),
                 },
             }
@@ -1038,7 +1053,7 @@ impl fuser::Filesystem for Filesystem {
         _lock_owner: Option<u64>,
         reply: fuser::ReplyWrite,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] write(ino: {:#x?}, fh: {}, offset: {}, data.len(): {})",
             ino,
             fh,
@@ -1077,9 +1092,13 @@ impl fuser::Filesystem for Filesystem {
         flush: bool,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] release(ino: {:#x?}, fh: {}, flags: {:#x?}, lock_owner: {:?}, flush: {})",
-            ino, fh, flags, lock_owner, flush
+            ino,
+            fh,
+            flags,
+            lock_owner,
+            flush
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
@@ -1109,9 +1128,11 @@ impl fuser::Filesystem for Filesystem {
         datasync: bool,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] fsync(ino: {:#x?}, fh: {}, datasync: {})",
-            ino, fh, datasync
+            ino,
+            fh,
+            datasync
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
@@ -1155,7 +1176,7 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyOpen,
     ) {
-        debug!("[FUSE] opendir(ino: {:#x?}, flags: {:#x?})", ino, flags);
+        log::debug!("[FUSE] opendir(ino: {:#x?}, flags: {:#x?})", ino, flags);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyOpen);
 
         let path = {
@@ -1222,9 +1243,11 @@ impl fuser::Filesystem for Filesystem {
         offset: i64,
         reply: fuser::ReplyDirectory,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] readdir(ino: {:#x?}, fh: {}, offset: {})",
-            ino, fh, offset
+            ino,
+            fh,
+            offset
         );
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectory);
 
@@ -1300,9 +1323,11 @@ impl fuser::Filesystem for Filesystem {
         flags: i32,
         reply: fuser::ReplyEmpty,
     ) {
-        debug!(
+        log::debug!(
             "[FUSE] releasedir(ino: {:#x?}, fh: {}, flags: {:#x?})",
-            ino, fh, flags
+            ino,
+            fh,
+            flags
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 

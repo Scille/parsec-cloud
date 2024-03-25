@@ -5,9 +5,9 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import BlockID, DateTime, VlobID, authenticated_cmds
-from parsec.components.block import BlockReadBadOutcome
+from parsec.components.block import BlockReadBadOutcome, BlockReadResult
 from parsec.components.blockstore import BlockStoreReadBadOutcome
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
 
 
 async def test_authenticated_block_create_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -15,9 +15,11 @@ async def test_authenticated_block_create_ok(coolorg: CoolorgRpcClients, backend
     block = b"<block content>"
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
-    expected_dump[block_id] = (ANY, coolorg.alice.device_id, coolorg.wksp1_id, len(block))
+    expected_dump[block_id] = (ANY, coolorg.alice.device_id, coolorg.wksp1_id, 1, len(block))
 
-    rep = await coolorg.alice.block_create(block_id, coolorg.wksp1_id, block)
+    rep = await coolorg.alice.block_create(
+        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+    )
     assert rep == authenticated_cmds.v4.block_create.RepOk()
 
     content = await backend.block.read_as_user(
@@ -25,10 +27,34 @@ async def test_authenticated_block_create_ok(coolorg: CoolorgRpcClients, backend
         author=coolorg.alice.device_id.user_id,
         block_id=block_id,
     )
-    assert content == block
+    assert isinstance(content, BlockReadResult)
+    assert content.block == block
+    assert content.key_index == 1
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
     assert dump == expected_dump
+
+
+async def test_authenticated_block_create_bad_key_index(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    block_id = BlockID.new()
+    block = b"<block content>"
+    wksp1_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+        testbed_template=coolorg.testbed_template,
+        realm_id=coolorg.wksp1_id,
+    )
+
+    expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
+    expected_dump[block_id] = (ANY, coolorg.alice.device_id, coolorg.wksp1_id, 1, len(block))
+
+    rep = await coolorg.alice.block_create(
+        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=42, block=block
+    )
+
+    assert rep == authenticated_cmds.v4.block_create.RepBadKeyIndex(
+        last_realm_certificate_timestamp=wksp1_last_certificate_timestamp,
+    )
 
 
 async def test_authenticated_block_create_realm_not_found(
@@ -38,7 +64,9 @@ async def test_authenticated_block_create_realm_not_found(
     block = b"<block content>"
 
     # Try to create block with an invalid realm ID
-    rep = await coolorg.alice.block_create(block_id, VlobID.new(), block)
+    rep = await coolorg.alice.block_create(
+        block_id=block_id, realm_id=VlobID.new(), key_index=1, block=block
+    )
     assert rep == authenticated_cmds.v4.block_create.RepRealmNotFound()
 
     # Block should not exist
@@ -68,12 +96,15 @@ async def test_authenticated_block_create_already_exists(
         author=coolorg.alice.device_id,
         block_id=block_id,
         realm_id=coolorg.wksp1_id,
+        key_index=1,
         block=block,
     )
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
 
-    rep = await coolorg.alice.block_create(block_id, coolorg.wksp1_id, block)
+    rep = await coolorg.alice.block_create(
+        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+    )
     assert rep == authenticated_cmds.v4.block_create.RepBlockAlreadyExists()
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
@@ -88,7 +119,9 @@ async def test_authenticated_block_create_not_allowed(
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
 
-    rep = await coolorg.mallory.block_create(block_id, coolorg.wksp1_id, block)
+    rep = await coolorg.mallory.block_create(
+        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+    )
     assert rep == authenticated_cmds.v4.block_create.RepAuthorNotAllowed()
 
     dump = await backend.block.test_dump_blocks(coolorg.organization_id)
@@ -108,7 +141,9 @@ async def test_authenticated_block_create_store_unavailable(
         "parsec.components.memory.MemoryBlockStoreComponent.create", mocked_blockstore_create
     )
 
-    rep = await coolorg.alice.block_create(block_id, coolorg.wksp1_id, block)
+    rep = await coolorg.alice.block_create(
+        block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
+    )
     assert rep == authenticated_cmds.v4.block_create.RepStoreUnavailable()
 
     # Block should not exist

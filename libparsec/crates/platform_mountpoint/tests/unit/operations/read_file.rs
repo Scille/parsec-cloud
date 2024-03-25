@@ -294,13 +294,19 @@ async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEn
         });
     });
 
+    let wksp1_id: libparsec_types::VlobID = *env.template.get_stuff("wksp1_id");
+    let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(wksp1_id);
+
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         move |_req: authenticated_cmds::latest::block_read::Req| {
             authenticated_cmds::latest::block_read::Rep::Ok {
+                needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                key_index: 1,
                 block: b"<dummy>".to_vec().into(),
             }
         },
+        // TODO: should register a `get_keys_bundle` here
     );
 
     mount_and_test!(

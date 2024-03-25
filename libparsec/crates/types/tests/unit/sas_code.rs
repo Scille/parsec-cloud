@@ -1,14 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// `allow-unwrap-in-test` don't behave as expected, see:
-// https://github.com/rust-lang/rust-clippy/issues/11119
-#![allow(clippy::unwrap_used)]
-
 use libparsec_tests_lite::prelude::*;
-use libparsec_types::prelude::*;
+
+use crate::{SASCode, SecretKey};
 
 #[test]
-fn generate_sas_codes() {
+fn generate() {
     let claimer_nonce = hex!(
         "f4b8b6327c5d49580d34fdb0512cbcb9b794511eb33631258dfdbcf7ebccc875909e"
         "79ae346d6eefbf775fed9fe9027cae0f56bb9269f0aae3eaf614cd89e77e"
@@ -36,12 +33,12 @@ fn generate_sas_codes() {
 #[case::typical(123456, Ok("AU2D".parse().unwrap()))]
 #[case::max(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]
 #[case::too_large(2u32.pow(20), Err("Provided integer is too large"))]
-fn sas_code_from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
+fn from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
     p_assert_eq!(SASCode::try_from(val), result);
 }
 
 #[test]
-fn sas_code_from_str_good() {
+fn from_str_good() {
     p_assert_eq!("AAAA".parse::<SASCode>().unwrap().as_ref(), "AAAA");
     p_assert_eq!("9999".parse::<SASCode>().unwrap().as_ref(), "9999");
 }
@@ -52,7 +49,7 @@ fn sas_code_from_str_good() {
 #[case::bad_char_i("AIAA")]
 #[case::bad_char_1("AA1A")]
 #[case::bad_char_bang("#AAA")]
-fn sas_code_from_str_bad(#[case] val: &str) {
+fn from_str_bad(#[case] val: &str) {
     p_assert_matches!(
         val.parse::<SASCode>(),
         Err(err) if err == "Invalid SAS code"

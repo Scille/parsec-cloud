@@ -5899,6 +5899,34 @@ fn variant_workspace_fd_read_error_rs_to_js(
                 &"WorkspaceFdReadErrorInternal".into(),
             )?;
         }
+        libparsec::WorkspaceFdReadError::InvalidBlockAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorInvalidBlockAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceFdReadError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceFdReadError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceFdReadError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdReadErrorNoRealmAccess".into(),
+            )?;
+        }
         libparsec::WorkspaceFdReadError::NotInReadMode { .. } => {
             Reflect::set(
                 &js_obj,

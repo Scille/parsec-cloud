@@ -24,11 +24,6 @@ use crate::windows::winify::winify_entry_name;
 
 use super::winify::unwinify_entry_name;
 
-macro_rules! debug {
-    (target: $target:expr, $($arg:tt)+) => { println!($target, $($arg)+) };
-    ($($arg:tt)+) => { println!($($arg)+) };
-}
-
 /// we currently don't support arbitrary security descriptor and instead use only this one
 /// https://docs.microsoft.com/fr-fr/windows/desktop/SecAuthZ/security-descriptor-string-format
 static SECURITY_DESCRIPTOR: Lazy<SecurityDescriptor> = Lazy::new(|| {
@@ -182,7 +177,7 @@ impl FileSystemContext for ParsecFileSystemContext {
     type FileContext = Arc<Mutex<OpenedObj>>;
 
     fn get_volume_info(&self) -> Result<VolumeInfo, NTSTATUS> {
-        debug!("[WinFSP] get_volume_info()");
+        log::debug!("[WinFSP] get_volume_info()");
 
         // We have currently no way of easily getting the size of workspace
         // Also, the total size of a workspace is not limited
@@ -196,7 +191,7 @@ impl FileSystemContext for ParsecFileSystemContext {
     }
 
     fn set_volume_label(&self, volume_label: &U16CStr) -> Result<VolumeInfo, NTSTATUS> {
-        debug!("[WinFSP] get_volume_info(volume_label: {:?})", volume_label);
+        log::debug!("[WinFSP] get_volume_info(volume_label: {:?})", volume_label);
 
         let mut guard = self.volume_label.lock().expect("mutex is poisoned");
         guard.clear();
@@ -210,7 +205,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         file_name: &U16CStr,
         _find_reparse_point: impl Fn() -> Option<FileAttributes>,
     ) -> Result<(FileAttributes, PSecurityDescriptor, bool), NTSTATUS> {
-        debug!("[WinFSP] get_security_by_name(file_name: {:?})", file_name);
+        log::debug!("[WinFSP] get_security_by_name(file_name: {:?})", file_name);
 
         let path = os_path_to_parsec_path(file_name)?;
 
@@ -244,9 +239,11 @@ impl FileSystemContext for ParsecFileSystemContext {
         _buffer: &[u8],
         _extra_buffer_is_reparse_point: bool,
     ) -> Result<(Self::FileContext, FileInfo), NTSTATUS> {
-        debug!(
+        log::debug!(
             "[WinFSP] create(file_name: {:?}, create_file_info: {:?}, security_descriptor: {:?})",
-            file_name, create_file_info, security_descriptor
+            file_name,
+            create_file_info,
+            security_descriptor
         );
 
         // `security_descriptor` is not supported yet
@@ -329,9 +326,11 @@ impl FileSystemContext for ParsecFileSystemContext {
         create_options: CreateOptions,
         granted_access: FileAccessRights,
     ) -> Result<(Self::FileContext, FileInfo), NTSTATUS> {
-        debug!(
+        log::debug!(
             "[WinFSP] open(file_name: {:?}, create_option: {:x?}, granted_access: {:x?})",
-            file_name, create_options, granted_access
+            file_name,
+            create_options,
+            granted_access
         );
 
         // `granted_access` is already handle by WinFSP
@@ -411,7 +410,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         buffer: &[u8],
     ) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] overwrite(file_context: {:?}, file_attributes: {:?}, replace_file_attributes: {:?}, allocation_size: {:?}, buffer_size: {})",
             fc, file_attributes, replace_file_attributes, allocation_size, buffer.len()
         );
@@ -444,9 +443,11 @@ impl FileSystemContext for ParsecFileSystemContext {
         flags: CleanupFlags,
     ) {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] cleanup(file_context: {:?}, file_name: {:?}, flags: {:x?})",
-            fc, file_name, flags
+            fc,
+            file_name,
+            flags
         );
 
         self.tokio_handle.block_on(async move {
@@ -477,7 +478,7 @@ impl FileSystemContext for ParsecFileSystemContext {
     /// Close a file.
     fn close(&self, file_context: Self::FileContext) {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!("[WinFSP] close(file_context: {:?})", fc);
+        log::debug!("[WinFSP] close(file_context: {:?})", fc);
 
         // The file might be deleted at this point. This is fine though as the
         // file descriptor can still be used after a deletion (posix style)
@@ -496,7 +497,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         offset: u64,
     ) -> Result<usize, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] read(file_context: {:?}, buffer_size: {}, offset: {:?})",
             fc,
             buffer.len(),
@@ -512,10 +513,14 @@ impl FileSystemContext for ParsecFileSystemContext {
                     .await
                     .map_err(|err| match err {
                         WorkspaceFdReadError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceFdReadError::NoRealmAccess => STATUS_ACCESS_DENIED,
                         WorkspaceFdReadError::Stopped => STATUS_NO_SUCH_DEVICE,
                         WorkspaceFdReadError::BadFileDescriptor => STATUS_INVALID_HANDLE,
                         WorkspaceFdReadError::NotInReadMode => STATUS_ACCESS_DENIED,
-                        WorkspaceFdReadError::Internal(_) => STATUS_ACCESS_DENIED,
+                        WorkspaceFdReadError::InvalidBlockAccess(_)
+                        | WorkspaceFdReadError::InvalidKeysBundle(_)
+                        | WorkspaceFdReadError::InvalidCertificate(_)
+                        | WorkspaceFdReadError::Internal(_) => STATUS_ACCESS_DENIED,
                     })
                     .map(|read| read as usize)
             } else {
@@ -533,9 +538,11 @@ impl FileSystemContext for ParsecFileSystemContext {
     ) -> Result<(usize, FileInfo), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
         // TODO: WriteMode is not Debug yet
-        debug!(
+        log::debug!(
             "[WinFSP] write(file_context: {:?}, buffer: {:?}, mode: {:?})",
-            fc, buffer, mode,
+            fc,
+            buffer,
+            mode,
         );
 
         self.tokio_handle.block_on(async move {
@@ -570,7 +577,7 @@ impl FileSystemContext for ParsecFileSystemContext {
     /// Flush a file or volume.
     fn flush(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!("[WinFSP] flush(file_context: {:?})", fc);
+        log::debug!("[WinFSP] flush(file_context: {:?})", fc);
 
         self.tokio_handle.block_on(async move {
             // The file might be deleted at this point. This is fine though as the
@@ -592,7 +599,7 @@ impl FileSystemContext for ParsecFileSystemContext {
 
     fn get_file_info(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!("[WinFSP] get_file_info(file_context: {:?})", fc);
+        log::debug!("[WinFSP] get_file_info(file_context: {:?})", fc);
 
         self.tokio_handle
             .block_on(async move { self.get_file_info_async(&fc).await })
@@ -619,9 +626,11 @@ impl FileSystemContext for ParsecFileSystemContext {
         set_allocation_size: bool,
     ) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] set_file_size(file_context: {:?}, new_size: {}, set_allocation_size: {})",
-            fc, new_size, set_allocation_size
+            fc,
+            new_size,
+            set_allocation_size
         );
 
         self.tokio_handle.block_on(async move {
@@ -657,9 +666,10 @@ impl FileSystemContext for ParsecFileSystemContext {
         file_name: &U16CStr,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] can_delete(file_context: {:?}, file_name: {:?})",
-            fc, file_name
+            fc,
+            file_name
         );
 
         self.tokio_handle.block_on(async move {
@@ -709,7 +719,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         replace_if_exists: bool,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!("[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})", fc, file_name, new_file_name, replace_if_exists);
+        log::debug!("[WinFSP] rename(file_context: {:?}, file_name: {:?}, new_file_name: {:?}, replace_if_exists: {:?})", fc, file_name, new_file_name, replace_if_exists);
 
         // `granted_access` is already handle by WinFSP
 
@@ -754,7 +764,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         file_context: Self::FileContext,
     ) -> Result<PSecurityDescriptor, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!("[WinFSP] get_security(file_context: {:?})", fc);
+        log::debug!("[WinFSP] get_security(file_context: {:?})", fc);
 
         Ok(SECURITY_DESCRIPTOR.as_ptr())
     }
@@ -776,9 +786,10 @@ impl FileSystemContext for ParsecFileSystemContext {
         mut add_dir_info: impl FnMut(DirInfo) -> bool,
     ) -> Result<(), NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] read_directory(file_context: {:?}, marker: {:?})",
-            fc, marker
+            fc,
+            marker
         );
 
         self.tokio_handle.block_on(async move {
@@ -925,9 +936,10 @@ impl FileSystemContext for ParsecFileSystemContext {
         file_name: &U16CStr,
     ) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
-        debug!(
+        log::debug!(
             "[WinFSP] get_dir_info_by_name(file_context: {:?}, file_name: {:?})",
-            fc, file_name
+            fc,
+            file_name
         );
 
         self.tokio_handle.block_on(async move {

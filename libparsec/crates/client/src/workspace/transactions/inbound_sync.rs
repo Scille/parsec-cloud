@@ -12,8 +12,10 @@ use crate::{
         InvalidManifestError,
     },
     workspace::store::{
-        ForUpdateChildLocalOnlyError, WorkspaceStore, WorkspaceStoreOperationError,
+        ChildUpdater, ForUpdateChildLocalOnlyError, ForUpdateFolderError, WorkspaceStore,
+        WorkspaceStoreOperationError,
     },
+    InvalidBlockAccessError,
 };
 
 pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -31,10 +33,14 @@ pub enum WorkspaceSyncError {
     #[error("The workspace's realm hasn't been created yet on server")]
     NoRealm,
     #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+    #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
-    // Note `InvalidManifest` here, this is because we self-repair in case of invalid
+    // No `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
@@ -172,7 +178,7 @@ async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, Wor
     // from WorkspaceOps...)
 }
 
-pub(super) async fn update_store_with_remote_root(
+async fn update_store_with_remote_root(
     ops: &WorkspaceOps,
     remote: WorkspaceManifest,
 ) -> anyhow::Result<InboundSyncOutcome> {
@@ -201,7 +207,7 @@ async fn inbound_sync_child(
     // Start by a cheap optional check: the sync is going to end up with `EntryInBusy`
     // if the entry is locked at the time we want to merge the remote manifest with
     // the local one. In such case, the caller is expected to retry later.
-    // But what if the entry stay locked for a long time ? Hence this check that
+    // But what if the entry stays locked for a long time ? Hence this check that
     // will fail early instead of fetching the remote manifest.
     if ops.store.is_child_entry_locked(entry_id).await {
         return Ok(InboundSyncOutcome::EntryIsBusy);
@@ -231,17 +237,6 @@ async fn inbound_sync_child(
     };
 
     // Now merge the remote with the current local manifest
-    update_store_with_remote_child(ops, remote).await
-}
-
-pub(super) async fn update_store_with_remote_child(
-    ops: &WorkspaceOps,
-    remote: ChildManifest,
-) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
-    let entry_id = match &remote {
-        ChildManifest::File(m) => m.id,
-        ChildManifest::Folder(m) => m.id,
-    };
 
     let outcome = ops.store.for_update_child_local_only(entry_id).await;
     let (updater, local) = match outcome {
@@ -255,6 +250,15 @@ pub(super) async fn update_store_with_remote_child(
         }
     };
 
+    update_store_with_remote_child(ops, updater, local, remote).await
+}
+
+async fn update_store_with_remote_child(
+    ops: &WorkspaceOps,
+    updater: ChildUpdater<'_>,
+    local: Option<ArcLocalChildManifest>,
+    remote: ChildManifest,
+) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
     // Note merge may end up with nothing new, typically if the remote version is
     // already the one local is based on
     match (local, remote) {
@@ -316,7 +320,308 @@ pub(super) async fn update_store_with_remote_child(
         // TODO: finish this !
 
         // File present in both remote and local, either they are the same or we have a file conflict !
-        (Some(ArcLocalChildManifest::File(_)), ChildManifest::File(_)) => todo!(),
+        (Some(ArcLocalChildManifest::File(local)), ChildManifest::File(remote)) => {
+            // Ignore outdated remote
+            if local.base.version >= remote.version {
+                return Ok(InboundSyncOutcome::NoChange);
+            }
+
+            // Just use the new remote if there is no local changes
+            if !local.need_sync {
+                let local_from_remote = Arc::new(LocalFileManifest::from_remote(remote));
+                updater
+                    .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update manifest").into()
+                        }
+                    })?;
+                return Ok(InboundSyncOutcome::Updated);
+            }
+
+            // Both remote and local have changed, we have a conflict !
+
+            // Retrieve the parent
+
+            // TODO:
+            // - handle the case the parent has changed between local and remote
+
+            let conflicted = {
+                let mut conflicted = LocalFileManifest::new(
+                    ops.device.device_id.clone(),
+                    local.base.parent,
+                    ops.device.now(),
+                );
+                let LocalFileManifest {
+                    base: _,
+                    need_sync,
+                    updated,
+                    size,
+                    blocksize,
+                    blocks,
+                } = local.as_ref();
+                conflicted.need_sync = *need_sync;
+                conflicted.updated = *updated;
+                conflicted.size = *size;
+                conflicted.blocksize = *blocksize;
+                conflicted.blocks = blocks.to_owned();
+                Arc::new(conflicted)
+            };
+
+            if local.base.parent == ops.realm_id {
+                let (parent_updater, mut parent_manifest) = ops.store.for_update_root().await;
+                let parent_manifest_mut = Arc::make_mut(&mut parent_manifest);
+
+                parent_manifest_mut.need_sync = true;
+                let child_name = match parent_manifest_mut
+                    .children
+                    .iter()
+                    .find(|(_, id)| **id == local.base.id)
+                {
+                    // The conflicted file doesn't exist anymore
+                    None => {
+                        let local_from_remote = Arc::new(LocalFileManifest::from_remote(remote));
+                        updater
+                            .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                            .await
+                            .map_err(|err| match err {
+                                WorkspaceStoreOperationError::Stopped => {
+                                    WorkspaceSyncError::Stopped
+                                }
+                                WorkspaceStoreOperationError::Internal(err) => {
+                                    err.context("cannot update manifest").into()
+                                }
+                            })?;
+                        return Ok(InboundSyncOutcome::Updated);
+                    }
+                    Some((child_name, _)) => child_name.to_owned(),
+                };
+
+                let (child_base_name, child_extension) = child_name.base_and_extension();
+                let mut attempt = 2;
+                macro_rules! build_next_conflicted_name {
+                    () => {{
+                        let mut base_name = child_base_name;
+                        let mut extension = child_extension;
+                        loop {
+                            let name = match extension {
+                                None => format!("{} ({})", base_name, attempt),
+                                Some(extension) => {
+                                    format!("{} ({}).{}", base_name, attempt, extension)
+                                }
+                            };
+                            match name.parse::<EntryName>() {
+                                Ok(name) => break name,
+                                // Entry name too long
+                                Err(EntryNameError::NameTooLong) => {
+                                    // Simply strip 10 characters from the first name then try again
+                                    if base_name.len() > 10 {
+                                        base_name = &base_name[..base_name.len() - 10];
+                                    } else {
+                                        // Very rare case where the extensions are very long,
+                                        // we have no choice but to strip it...
+                                        let extension_str = extension.expect("must be present");
+                                        extension =
+                                            Some(&extension_str[..extension_str.len() - 10]);
+                                    }
+                                }
+                                // Not possible given name is only composed of valid characters
+                                Err(EntryNameError::InvalidName) => unreachable!(),
+                            }
+                        }
+                    }};
+                }
+                let mut conflicted_name = build_next_conflicted_name!();
+                loop {
+                    match parent_manifest_mut.children.entry(conflicted_name) {
+                        std::collections::hash_map::Entry::Occupied(_) => {
+                            attempt += 1;
+                            conflicted_name = build_next_conflicted_name!();
+                        }
+                        std::collections::hash_map::Entry::Vacant(entry) => {
+                            entry.insert(conflicted.base.id);
+                            break;
+                        }
+                    }
+                }
+
+                // TODO: should have a dedicated method in the storage to be able to atomically
+                // update the parent and the child in case of conflict
+
+                parent_updater
+                    .update_workspace_manifest(
+                        parent_manifest,
+                        Some(ArcLocalChildManifest::File(conflicted)),
+                    )
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update parent manifest").into()
+                        }
+                    })?;
+
+                let local_from_remote = Arc::new(LocalFileManifest::from_remote(remote));
+                updater
+                    .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update manifest").into()
+                        }
+                    })?;
+
+                Ok(InboundSyncOutcome::Updated)
+            } else {
+                let outcome = ops.store.for_update_folder(local.base.parent).await;
+                let (parent_updater, mut parent_manifest) = match outcome {
+                    Ok((parent_updater, parent_manifest)) => (parent_updater, parent_manifest),
+                    Err(err) => match err {
+                        // The conflicted file doesn't exist anymore
+                        ForUpdateFolderError::EntryNotFound
+                        | ForUpdateFolderError::EntryNotAFolder => {
+                            let local_from_remote =
+                                Arc::new(LocalFileManifest::from_remote(remote));
+                            updater
+                                .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                                .await
+                                .map_err(|err| match err {
+                                    WorkspaceStoreOperationError::Stopped => {
+                                        WorkspaceSyncError::Stopped
+                                    }
+                                    WorkspaceStoreOperationError::Internal(err) => {
+                                        err.context("cannot update manifest").into()
+                                    }
+                                })?;
+                            return Ok(InboundSyncOutcome::Updated);
+                        }
+                        ForUpdateFolderError::Offline => return Err(WorkspaceSyncError::Offline),
+                        ForUpdateFolderError::Stopped => return Err(WorkspaceSyncError::Stopped),
+                        ForUpdateFolderError::NoRealmAccess => {
+                            return Err(WorkspaceSyncError::NotAllowed)
+                        }
+                        ForUpdateFolderError::InvalidKeysBundle(err) => {
+                            return Err(WorkspaceSyncError::InvalidKeysBundle(err))
+                        }
+                        ForUpdateFolderError::InvalidCertificate(err) => {
+                            return Err(WorkspaceSyncError::InvalidCertificate(err))
+                        }
+                        ForUpdateFolderError::InvalidManifest(err) => {
+                            return Err(WorkspaceSyncError::InvalidManifest(err))
+                        }
+                        ForUpdateFolderError::Internal(err) => {
+                            return Err(err.context("cannot retrieve parent manifest").into())
+                        }
+                    },
+                };
+                let parent_manifest_mut = Arc::make_mut(&mut parent_manifest);
+
+                parent_manifest_mut.need_sync = true;
+                let child_name = match parent_manifest_mut
+                    .children
+                    .iter()
+                    .find(|(_, id)| **id == local.base.id)
+                {
+                    // The conflicted file doesn't exist anymore
+                    None => {
+                        let local_from_remote = Arc::new(LocalFileManifest::from_remote(remote));
+                        updater
+                            .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                            .await
+                            .map_err(|err| match err {
+                                WorkspaceStoreOperationError::Stopped => {
+                                    WorkspaceSyncError::Stopped
+                                }
+                                WorkspaceStoreOperationError::Internal(err) => {
+                                    err.context("cannot update manifest").into()
+                                }
+                            })?;
+                        return Ok(InboundSyncOutcome::Updated);
+                    }
+                    Some((child_name, _)) => child_name.to_owned(),
+                };
+
+                let (child_base_name, child_extension) = child_name.base_and_extension();
+                let mut attempt = 2;
+                macro_rules! build_next_conflicted_name {
+                    () => {{
+                        let mut base_name = child_base_name;
+                        let mut extension = child_extension;
+                        loop {
+                            let name = match extension {
+                                None => format!("{} ({})", base_name, attempt),
+                                Some(extension) => {
+                                    format!("{} ({}).{}", base_name, attempt, extension)
+                                }
+                            };
+                            match name.parse::<EntryName>() {
+                                Ok(name) => break name,
+                                // Entry name too long
+                                Err(EntryNameError::NameTooLong) => {
+                                    // Simply strip 10 characters from the first name then try again
+                                    if base_name.len() > 10 {
+                                        base_name = &base_name[..base_name.len() - 10];
+                                    } else {
+                                        // Very rare case where the extensions are very long,
+                                        // we have no choice but to strip it...
+                                        let extension_str = extension.expect("must be present");
+                                        extension =
+                                            Some(&extension_str[..extension_str.len() - 10]);
+                                    }
+                                }
+                                // Not possible given name is only composed of valid characters
+                                Err(EntryNameError::InvalidName) => unreachable!(),
+                            }
+                        }
+                    }};
+                }
+                let mut conflicted_name = build_next_conflicted_name!();
+                loop {
+                    match parent_manifest_mut.children.entry(conflicted_name) {
+                        std::collections::hash_map::Entry::Occupied(_) => {
+                            attempt += 1;
+                            conflicted_name = build_next_conflicted_name!();
+                        }
+                        std::collections::hash_map::Entry::Vacant(entry) => {
+                            entry.insert(conflicted.base.id);
+                            break;
+                        }
+                    }
+                }
+
+                // TODO: should have a dedicated method in the storage to be able to atomically
+                // update the parent and the child in case of conflict
+
+                parent_updater
+                    .update_folder_manifest(
+                        parent_manifest,
+                        Some(ArcLocalChildManifest::File(conflicted)),
+                    )
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update parent manifest").into()
+                        }
+                    })?;
+
+                let local_from_remote = Arc::new(LocalFileManifest::from_remote(remote));
+                updater
+                    .update_manifest(ArcLocalChildManifest::File(local_from_remote))
+                    .await
+                    .map_err(|err| match err {
+                        WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                        WorkspaceStoreOperationError::Internal(err) => {
+                            err.context("cannot update manifest").into()
+                        }
+                    })?;
+
+                Ok(InboundSyncOutcome::Updated)
+            }
+        }
 
         // The entry has changed it type, this is not expected :/
         // Solve this by considering this is a file conflict

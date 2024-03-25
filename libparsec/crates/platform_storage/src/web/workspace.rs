@@ -96,6 +96,14 @@ impl PlatformWorkspaceStorage {
         todo!()
     }
 
+    pub async fn promote_chunk_to_block(
+        &mut self,
+        _chunk_id: ChunkID,
+        _now: DateTime,
+    ) -> anyhow::Result<()> {
+        todo!()
+    }
+
     /// Only used for debugging tests
     #[allow(unused)]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {

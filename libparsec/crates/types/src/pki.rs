@@ -256,3 +256,8 @@ impl_transparent_data_format_conversion!(
     encrypted_key,
     ciphertext,
 );
+
+#[cfg(test)]
+#[path = "../tests/unit/pki.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;

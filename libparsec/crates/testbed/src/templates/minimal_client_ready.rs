@@ -36,6 +36,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         .create_block("alice@dev1", wksp1_id, bar_txt_content.as_ref())
         .as_block_access(0);
     let bar_txt_block_id = bar_txt_block_access.id;
+    builder.store_stuff("wksp1_bar_txt_block_access", &bar_txt_block_access);
 
     let bar_txt_id = builder
         .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None)

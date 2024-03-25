@@ -12,5 +12,6 @@ lazy_static::lazy_static! {
 
 #[neon::main]
 pub fn main(mut cx: ModuleContext) -> NeonResult<()> {
+    env_logger::init();
     meths::register_meths(&mut cx)
 }

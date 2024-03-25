@@ -250,3 +250,8 @@ impl AvailableDevice {
         format!("{:x}", hash_digest)
     }
 }
+
+#[cfg(test)]
+#[path = "../tests/unit/local_device_file.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests;
