@@ -64,12 +64,12 @@ psutil = "^5.9"
 poetry-lock-package = ">=0.4.4,<0.6.0"
 Babel = "^2.10"
 
-ruff = "0.3.3"
+ruff = "0.3.4"
 mypy = "1.9.0"
 
 setuptools = ">=63.1,<70.0"
 
-maturin = "1.5.0"
+maturin = "1.5.1"
 patchelf = { version = "^0.17.2.0", markers = "platform_system=='Linux'" }
 
 cibuildwheel = "v2.12.3"
