@@ -619,6 +619,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
         now=certif_timestamp,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
         realm_role_certificate=certif,
     )
     assert isinstance(outcome, RealmRoleCertificate)

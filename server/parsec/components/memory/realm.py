@@ -288,6 +288,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
@@ -312,10 +313,11 @@ class MemoryRealmComponent(BaseRealmComponent):
         if author_user.is_revoked:
             return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
 
+        assert author_verify_key == author_device.cooked.verify_key
         match realm_unshare_validate(
             now=now,
             expected_author=author,
-            author_verify_key=author_device.cooked.verify_key,
+            author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
             case RealmRoleCertificate() as certif:
