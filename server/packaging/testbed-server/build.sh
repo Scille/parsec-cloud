@@ -9,7 +9,7 @@ SCRIPTDIR=${SCRIPTDIR:=$(dirname "$(realpath -s "$0")")}
 # Allow the user to overwrite `ROOTDIR` by exporting it beforehand.
 ROOTDIR=${ROOTDIR:=$(realpath -s "$SCRIPTDIR/../../..")}
 
-UNIQ_TAG=$(PYTHONPATH=$ROOTDIR python $ROOTDIR/misc/releaser.py version --uniq-dev | sed -n 's/docker=\(.*\)$/\1/p')
+UNIQ_TAG=$(python $ROOTDIR/misc/releaser.py version --uniq-dev | sed -n 's/docker=\(.*\)$/\1/p')
 # We use Github package repository to store our docker's container.
 PREFIX=ghcr.io/scille/parsec-cloud
 
