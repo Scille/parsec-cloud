@@ -5,10 +5,19 @@ from parsec.components.postgresql.utils import (
     Q,
     q_device,
     q_human,
+    q_invitation,
     q_organization_internal_id,
     q_realm,
     q_user,
 )
+
+# TODO: Remaining tables
+# - sequester_service
+# - shamir_recovery_setup
+# - shamir_recovery_share
+# - pki_enrollment
+# - realm_archiving
+# - realm_user_change
 
 q_test_drop_organization = Q(
     """
@@ -42,6 +51,11 @@ deleted_invitations AS (
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
+deleted_invitation_conduits AS (
+    DELETE FROM invitation_conduit
+    WHERE invitation in (select * from deleted_invitations)
+    RETURNING _id
+),
 deleted_realms AS (
     DELETE FROM realm
     WHERE organization in (select * from deleted_organizations)
@@ -60,7 +74,7 @@ deleted_vlob_atoms AS (
 deleted_blocks AS (
     DELETE FROM block
     WHERE organization in (select * from deleted_organizations)
-    RETURNING _id
+    RETURNING _id, block_id
 ),
 deleted_realm_keys_bundle AS (
     DELETE FROM realm_keys_bundle
@@ -75,6 +89,38 @@ deleted_realm_keys_bundle_access AS (
 deleted_realm_names AS (
     DELETE FROM realm_name
     WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_realm_vlob_updates AS (
+    DELETE FROM realm_vlob_update
+    WHERE realm in (select * from deleted_realms)
+    RETURNING _id
+),
+deleted_block_datas AS (
+    DELETE FROM block_data
+    WHERE organization_id = $organization_id
+    OR block_id in (select block_id from deleted_blocks)
+    RETURNING _id
+),
+deleted_topics_common AS (
+    DELETE FROM topic_common
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_topics_sequester AS (
+    DELETE FROM topic_sequester
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_topics_shamir_recovery AS (
+    DELETE FROM topic_shamir_recovery
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
+),
+deleted_topics_realm AS (
+    DELETE FROM topic_realm
+    WHERE organization in (select * from deleted_organizations)
+    OR realm in (select * from deleted_realms)
     RETURNING _id
 )
 SELECT 1
@@ -189,7 +235,7 @@ new_devices AS (
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id, device_id
 ),
-patched_user_certifier AS (
+patched_user_certifiers AS (
     UPDATE user_
     SET user_certifier = (
         SELECT _id FROM new_devices
@@ -197,7 +243,7 @@ patched_user_certifier AS (
     )
     RETURNING _id
 ),
-patched_revoked_user_certifier AS (
+patched_revoked_user_certifiers AS (
     UPDATE user_
     SET revoked_user_certifier = (
         SELECT _id FROM new_devices
@@ -205,7 +251,7 @@ patched_revoked_user_certifier AS (
     )
     RETURNING _id
 ),
-patched_device_certifier AS (
+patched_device_certifiers AS (
     UPDATE device
     SET device_certifier = (
         SELECT _id FROM new_devices
@@ -265,6 +311,31 @@ new_invitations AS (
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
+new_invitation_conduits AS (
+    INSERT INTO invitation_conduit (
+        invitation,
+        greeter,
+        conduit_state,
+        conduit_greeter_payload,
+        conduit_claimer_payload
+    )
+    SELECT
+        (
+            SELECT _id FROM new_invitations
+            WHERE token = { q_invitation(_id="invitation_conduit.invitation", select="invitation.token") }
+        ),
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="invitation_conduit.greeter", select="user_id") }
+        ),
+        conduit_state,
+        conduit_greeter_payload,
+        conduit_claimer_payload
+    FROM invitation_conduit
+    INNER JOIN invitation ON invitation._id = invitation_conduit.invitation
+    WHERE invitation.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
 new_realms AS (
     INSERT INTO realm (
         organization,
@@ -301,7 +372,10 @@ new_realm_user_roles AS (
         ),
         role,
         certificate,
-        certified_by,
+        (
+            SELECT _id FROM new_devices
+            WHERE device_id = { q_device(_id="realm_user_role.certified_by", select="device_id") }
+        ),
         certified_on
     FROM realm_user_role
     INNER JOIN realm ON realm._id = realm_user_role.realm
@@ -337,7 +411,7 @@ new_vlob_atoms AS (
     FROM vlob_atom
     INNER JOIN realm ON realm._id = vlob_atom.realm
     WHERE realm.organization = { q_organization_internal_id("$source_id") }
-    returning _id
+    returning _id, vlob_id, version
 ),
 new_blocks AS (
     INSERT INTO block (
@@ -427,6 +501,124 @@ new_realm_keys_bundle_access AS (
     FROM realm_keys_bundle_access
     INNER JOIN realm ON realm._id = realm_keys_bundle_access.realm
     WHERE realm.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_realm_names AS (
+    INSERT INTO realm_name (
+        realm,
+        realm_name_certificate,
+        certified_by,
+        certified_on
+    )
+    SELECT
+        (
+            SELECT _id FROM new_realms
+            WHERE realm_id = { q_realm(_id="realm_name.realm", select="realm_id") }
+        ),
+        realm_name_certificate,
+        (
+            SELECT _id FROM new_devices
+            WHERE device_id = { q_device(_id="realm_name.certified_by", select="device_id") }
+        ),
+        certified_on
+    FROM realm_name
+    INNER JOIN realm ON realm._id = realm_name.realm
+    WHERE realm.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_realm_vlob_updates AS (
+    INSERT INTO realm_vlob_update (
+        realm,
+        index,
+        vlob_atom
+    )
+    SELECT
+        (
+            SELECT _id FROM new_realms
+            WHERE realm_id = { q_realm(_id="realm_vlob_update.realm", select="realm_id") }
+        ),
+        index,
+        (
+            SELECT _id FROM new_vlob_atoms
+            WHERE vlob_id = (
+                SELECT vlob_id FROM vlob_atom
+                WHERE _id = realm_vlob_update.vlob_atom
+            )
+            AND version = (
+                SELECT version FROM vlob_atom
+                WHERE _id = realm_vlob_update.vlob_atom
+            )
+        )
+    FROM realm_vlob_update
+    INNER JOIN realm ON realm._id = realm_vlob_update.realm
+    WHERE realm.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_block_data AS (
+    INSERT INTO block_data (
+        organization_id,
+        block_id,
+        data
+    )
+    SELECT
+        $target_id,
+        block_id,
+        data
+    FROM block_data
+    WHERE organization_id = $source_id
+    RETURNING _id
+),
+new_topics_common AS (
+    INSERT INTO topic_common (
+        organization,
+        last_timestamp
+    )
+    SELECT
+        (select * from new_organization_ids),
+        last_timestamp
+    FROM topic_common
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_topics_sequester AS (
+    INSERT INTO topic_sequester (
+        organization,
+        last_timestamp
+    )
+    SELECT
+        (select * from new_organization_ids),
+        last_timestamp
+    FROM topic_sequester
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_topics_shamir_recovery AS (
+    INSERT INTO topic_shamir_recovery (
+        organization,
+        last_timestamp
+    )
+    SELECT
+        (select * from new_organization_ids),
+        last_timestamp
+    FROM topic_shamir_recovery
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_topics_realm AS (
+    INSERT INTO topic_realm (
+        organization,
+        realm,
+        last_timestamp
+    )
+    SELECT
+        (select * from new_organization_ids),
+        (
+            SELECT _id FROM new_realms
+            WHERE realm_id = { q_realm(_id="topic_realm.realm", select="realm_id") }
+        ),
+        last_timestamp
+    FROM topic_realm
+    WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 )
 SELECT 1
