@@ -10,6 +10,7 @@ enum Events {
   Online = 1 << 1,
   Offline = 1 << 2,
   InvitationUpdated = 1 << 3,
+  IncompatibleServer = 1 << 4,
 }
 
 interface WorkspaceCreatedData {

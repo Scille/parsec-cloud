@@ -86,6 +86,10 @@ export async function login(
           status: (event as ClientEventInvitationChanged).status,
         });
         break;
+      case ClientEventTag.IncompatibleServer:
+        eventDistributor.dispatchEvent(Events.Offline, {});
+        eventDistributor.dispatchEvent(Events.IncompatibleServer, {});
+        break;
       default:
         console.log(`Unhandled event ${event.tag}`);
         break;
