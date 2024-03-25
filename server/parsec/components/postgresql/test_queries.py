@@ -162,28 +162,6 @@ new_users AS (
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id, user_id
 ),
-new_profiles AS (
-    INSERT INTO profile (
-        user_,
-        profile,
-        profile_certificate,
-        certified_by,
-        certified_on
-    )
-    SELECT
-        (
-            SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="profile.user_", select="user_id") }
-        ),
-        profile,
-        profile_certificate,
-        certified_by,
-        certified_on
-    FROM profile
-    INNER JOIN user_ ON profile.user_ = user_._id
-    WHERE user_.organization = { q_organization_internal_id("$source_id") }
-    RETURNING _id
-),
 new_devices AS (
     INSERT INTO device (
         organization,
@@ -210,6 +188,55 @@ new_devices AS (
     FROM device
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id, device_id
+),
+patched_user_certifier AS (
+    UPDATE user_
+    SET user_certifier = (
+        SELECT _id FROM new_devices
+        WHERE device_id = { q_user(_id="user_certifier", select="device_id") }
+    )
+    RETURNING _id
+),
+patched_revoked_user_certifier AS (
+    UPDATE user_
+    SET revoked_user_certifier = (
+        SELECT _id FROM new_devices
+        WHERE device_id = { q_user(_id="revoked_user_certifier", select="device_id") }
+    )
+    RETURNING _id
+),
+patched_device_certifier AS (
+    UPDATE device
+    SET device_certifier = (
+        SELECT _id FROM new_devices
+        WHERE device_id = { q_device(_id="device_certifier", select="device_id") }
+    )
+    RETURNING _id
+),
+new_profiles AS (
+    INSERT INTO profile (
+        user_,
+        profile,
+        profile_certificate,
+        certified_by,
+        certified_on
+    )
+    SELECT
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="profile.user_", select="user_id") }
+        ),
+        profile,
+        profile_certificate,
+        (
+            SELECT _id FROM new_devices
+            WHERE device_id = { q_device(_id="profile.certified_by", select="device_id") }
+        ),
+        certified_on
+    FROM profile
+    INNER JOIN user_ ON profile.user_ = user_._id
+    WHERE user_.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
 ),
 new_invitations AS (
     INSERT INTO invitation (
