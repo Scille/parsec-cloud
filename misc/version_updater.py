@@ -197,6 +197,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ]
     },
+    ROOT_DIR / "client/electron/snap/snapcraft.yaml": {
+        Tool.Parsec: [ReplaceRegex(r"version: .*", "version: {version}")],
+    },
     ROOT_DIR / "client/electron/package.json": {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],

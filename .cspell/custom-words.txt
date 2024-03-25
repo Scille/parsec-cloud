@@ -199,6 +199,7 @@ gifv
 gloo
 gradlew
 grapheq
+gsettings
 gtod
 guce
 guci
@@ -208,6 +209,7 @@ hatin'
 headerlink
 helloerror
 Hellow
+hicolor
 HKCR
 HKCU
 HKLM
@@ -253,6 +255,7 @@ latexpdf
 latexpdfja
 letterpaper
 levelno
+libappindicator
 libasound
 libassimp
 libbz
@@ -264,6 +267,7 @@ libegl
 libexpat
 libfontconfig
 libfuse
+libgbm
 libgl
 libgltfgeometryloader
 libgltfsceneexport
@@ -273,8 +277,11 @@ libgstcamerabin
 libgstmediacapture
 libgstmediaplayer
 libgstreamer
+libgtk
 libmpdec
 libncursesw
+libnspr
+libnss
 libopenglrenderer
 libpulse
 libpython
@@ -301,6 +308,7 @@ libqvnc
 libqwebgl
 librsvg
 libscene
+libsecret
 LibSodium
 libsqlite
 libtinfo
@@ -311,6 +319,7 @@ libxcb
 libxcomposite
 libxext
 libxkbcommon
+libxss
 linkcheck
 linuxsys
 Ljava
@@ -398,6 +407,7 @@ onboarded
 oneof
 oneofschema
 Onone
+opengl
 opses
 OpsLimit
 ORGANIZATIONID
@@ -458,6 +468,7 @@ psutil
 pubkey
 PUBLICKEYBYTES
 pubout
+pulseaudio
 pwhash
 pwsh
 PyClass

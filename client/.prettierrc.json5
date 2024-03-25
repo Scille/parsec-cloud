@@ -13,7 +13,7 @@
             },
         },
         {
-            files: ['*.yml'],
+            files: ['*.yml', '*.yaml'],
             options: {
                 singleQuote: false,
             },

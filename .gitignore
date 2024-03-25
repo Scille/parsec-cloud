@@ -110,3 +110,8 @@ node_modules
 
 # Each dev can set up their own env
 client/.env
+
+# snapcraft
+/prime
+/snap
+/*.snap
