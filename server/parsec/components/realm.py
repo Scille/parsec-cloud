@@ -373,6 +373,7 @@ class BaseRealmComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
+        author_verify_key: VerifyKey,
         realm_role_certificate: bytes,
     ) -> (
         RealmRoleCertificate
@@ -569,6 +570,7 @@ class BaseRealmComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            author_verify_key=client_ctx.device_verify_key,
             realm_role_certificate=req.realm_role_certificate,
         )
         match outcome:
