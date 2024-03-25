@@ -84,18 +84,12 @@ jobs:
         id: version
         shell: bash
         run: >-
-          PYTHONPATH=. python3
-          misc/releaser.py version
-          "${{ inputs.version || '--uniq-dev' }}"
+          python misc/releaser.py version "${{ inputs.version || '--uniq-dev' }}"
           | tee ${{ runner.temp }}/version.ini "$GITHUB_OUTPUT"
         timeout-minutes: 2
 
       - name: Set version for patching
-        run: >-
-          PYTHONPATH=. python3
-          misc/version_updater.py
-          --tool parsec
-          --version ${{ steps.version.outputs.full }}
+        run: python misc/version_updater.py --tool parsec --version ${{ steps.version.outputs.full }}
         timeout-minutes: 2
 
       - name: Generate git patch

@@ -46,10 +46,7 @@ jobs:
 
       - name: Get current version
         id: version
-        run: >-
-          PYTHONPATH=. python3
-          misc/releaser.py version --uniq-dev
-          | tee -a $GITHUB_OUTPUT
+        run: python misc/releaser.py version --uniq-dev | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Generate build metadata

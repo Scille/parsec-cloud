@@ -35,9 +35,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Create nightly release
-        run: >-
-          PYTHONPATH=. python3
-          misc/releaser.py build --nightly --yes --no-gpg-sign
+        run: python misc/releaser.py build --nightly --yes --no-gpg-sign
         timeout-minutes: 2
 
       - name: Get commit for nightly tag
@@ -47,7 +45,5 @@ jobs:
 
       - name: Parse version
         id: version
-        run: >-
-          PYTHONPATH=. python3
-          misc/releaser.py version | tee -a $GITHUB_OUTPUT
+        run: python misc/releaser.py version | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
