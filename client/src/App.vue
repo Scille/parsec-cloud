@@ -27,25 +27,49 @@ onMounted(async (): Promise<void> => {
   const config = await storageManager.retrieveConfig();
   toggleDarkMode(config.theme);
 
-  eventCbId = await eventDistributor.registerCallback(Events.Offline | Events.Online, async (event: Events, _data: EventData) => {
-    if (event === Events.Offline) {
-      informationManager.present(
-        new Information({
-          message: translate('notification.serverOffline'),
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Notification,
-      );
-    } else if (event === Events.Online) {
-      informationManager.present(
-        new Information({
-          message: translate('notification.serverOnline'),
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Notification,
-      );
-    }
-  });
+  let ignoreOnline = true;
+
+  eventCbId = await eventDistributor.registerCallback(
+    Events.Offline | Events.Online | Events.IncompatibleServer,
+    async (event: Events, _data: EventData) => {
+      if (event === Events.Offline) {
+        informationManager.present(
+          new Information({
+            message: translate('notification.serverOffline'),
+            level: InformationLevel.Warning,
+          }),
+          PresentationMode.Notification,
+        );
+      } else if (event === Events.Online) {
+        if (ignoreOnline) {
+          ignoreOnline = false;
+          return;
+        }
+        informationManager.present(
+          new Information({
+            message: translate('notification.serverOnline'),
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Notification,
+        );
+      } else if (event === Events.IncompatibleServer) {
+        informationManager.present(
+          new Information({
+            message: translate('notification.incompatibleServer'),
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Notification,
+        );
+        await informationManager.present(
+          new Information({
+            message: translate('globalErrors.incompatibleServer'),
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Modal,
+        );
+      }
+    },
+  );
 });
 
 onUnmounted(async () => {

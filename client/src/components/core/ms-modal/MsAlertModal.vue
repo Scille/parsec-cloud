@@ -8,7 +8,7 @@
     :close-button="{ visible: false }"
     :confirm-button="{
       disabled: false,
-      label: $t('Notification.nextButton'),
+      label: $t('notification.nextButton'),
       onClick: confirm,
     }"
     @on-enter-keyup="confirm()"

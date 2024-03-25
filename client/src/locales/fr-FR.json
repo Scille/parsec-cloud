@@ -14,8 +14,9 @@
         "yes": "Quitter",
         "no": "Annuler"
     },
-    "openFile": {
-        "failed": "L'élément `{path}` n'a pas pu être ouvert."
+    "globalErrors": {
+        "openFileFailed": "L'élément `{path}` n'a pas pu être ouvert.",
+        "incompatibleServer": "Votre application et le serveur ne sont pas compatibles. Les fonctionnalités en-ligne ne seront pas disponibles. Veuillez vérifier que votre application est à jour, et si c'est le cas, contactez un administrateur."
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -77,7 +78,9 @@
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
         "serverOnline": "Vous êtes connecté au serveur Parsec",
-        "serverOffline": "Vous n'êtes plus connecté au serveur Parsec"
+        "serverOffline": "Vous n'êtes plus connecté au serveur Parsec",
+        "incompatibleServer": "Votre application n'est pas compatible avec le serveur.",
+        "nextButton": "fermer"
     },
     "HomePage": {
         "topbar": {
@@ -975,9 +978,6 @@
         "fixes": "Corrections",
         "misc": "Divers",
         "title": "Journal des modifications"
-    },
-    "Notification": {
-        "nextButton": "fermer"
     },
     "ContactDetailsPage": {
         "titleActualPassword": "Saisissez votre mot de passe",
