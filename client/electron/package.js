@@ -8,6 +8,7 @@ const PARSEC_SCHEME = 'parsec3';
  * @returns {{
  *   mode: 'test' | 'prod',
  *   platform: 'linux' | 'win32' | 'darwin',
+ *   targets: string[],
  * }}
  */
 function cli() {
@@ -23,25 +24,30 @@ function cli() {
       .default(builder.DEFAULT_TARGET)
       .makeOptionMandatory(true),
   );
+  program.argument('[target...]', 'Targets to build');
 
   program.parse();
-  return program.opts();
+  return {
+    ...program.opts(),
+    targets: program.args,
+  };
 }
 
 /**
  * @param {string} platform
+ * @param {string[]} targets
  * @return {Map<builder.Platform, Map<builder.Arch, string[]>>}
  */
-function getBuildTargets(platform) {
+function getBuildTargets(platform, targets) {
   switch (platform) {
     case 'linux':
-      return builder.Platform.LINUX.createTarget();
+      return builder.Platform.LINUX.createTarget(targets);
     case 'darwin':
-      return builder.Platform.MAC.createTarget();
+      return builder.Platform.MAC.createTarget(targets);
     case 'win32':
-      return builder.Platform.WINDOWS.createTarget();
+      return builder.Platform.WINDOWS.createTarget(targets);
     case builder.DEFAULT_TARGET:
-      return builder.Platform.current().createTarget();
+      return builder.Platform.current().createTarget(targets);
     default:
       throw new Error(`Unknown platform: ${platform}`);
   }
@@ -49,7 +55,7 @@ function getBuildTargets(platform) {
 const OPTS = cli();
 console.debug(OPTS);
 
-const BUILD_TARGETS = getBuildTargets(OPTS.platform);
+const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
 console.log('BUILD_TARGETS', BUILD_TARGETS);
 
 /**

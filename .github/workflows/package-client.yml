@@ -107,7 +107,76 @@ jobs:
           path: client/dist/
           if-no-files-found: error
 
-  electron:
+  electron-snap:
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
+        with:
+          ref: ${{ inputs.commit_sha }}
+        timeout-minutes: 5
+
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@c850b930e6ba138125429b7e5c93fc707a7f8427 # pin v4.1.4
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+
+      - name: Load version config
+        id: version
+        shell: bash
+        run: |
+          cat version.patch/version.ini > "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
+
+      - name: Apply version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
+
+      - name: Install snapcraft
+        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
+        timeout-minutes: 1
+
+      - name: Setup LXD
+        uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
+        timeout-minutes: 2
+
+      - name: Patch cannot install cypress on lxd
+        run: npm remove cypress{,-file-upload,-real-events,-vite}
+        working-directory: client
+        timeout-minutes: 2
+
+      - name: Build snap
+        run: |
+          ln -sv client/electron/snap
+          snapcraft pack --use-lxd -v
+        timeout-minutes: 30
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          ARCH=$(uname -m)
+          mv -v parsec-v3_*_*.snap Parsec-v3_${{ steps.version.outputs.full }}_linux_$ARCH.snap
+
+      # Install syft
+      - uses: taiki-e/install-action@3068b7dc83db15fc2676a3ce4ae1ebb878685f59 # pin v2.29.7
+        with:
+          tool: syft@0.84.0
+
+      - name: Generate SBOM
+        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux.spdx.json .
+
+      - uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3 # pin v4.3.1
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          path: |
+            Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
+            Parsec-SBOM-Electron-linux.spdx.json
+          if-no-files-found: error
+        timeout-minutes: 10
+
+  electron-non-linux:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
@@ -115,9 +184,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: 🐧 Linux
-            platform: linux
-            os: ubuntu-22.04
           - name: 🏁 Windows
             platform: windows
             os: windows-2022
@@ -155,30 +221,6 @@ jobs:
 
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
-
-      - name: Linux > Install fuse devel
-        if: matrix.platform == 'linux'
-        run: |
-          until sudo apt-get install fuse3 libfuse3-dev; do
-            sleep 1;
-            echo "Retrying";
-          done
-        timeout-minutes: 1
-
-      - name: Linux > Install snapcraft
-        if: matrix.platform == 'linux'
-        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
-        timeout-minutes: 1
-
-      - name: Linux > Setup LXD
-        if: matrix.platform == 'linux'
-        uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
-        timeout-minutes: 2
-
-      - name: Linux > Debug installed packages
-        if: matrix.platform == 'linux'
-        run: apt-cache policy snapd fuse3 libfuse3-dev libssl libssl-dev
-        continue-on-error: true
 
       - name: Windows > Install WinFSP
         if: matrix.platform == 'windows'
@@ -218,14 +260,6 @@ jobs:
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
-
-      - name: Linux > rename artifacts
-        if: matrix.platform == 'linux'
-        shell: bash
-        run: |
-          ARCH=$(uname -m)
-          mv -v parsec-v3_*_*.snap Parsec-v3_${{ steps.version.outputs.full }}_linux_$ARCH.snap
-        working-directory: client/electron/dist
 
       - name: Windows > rename artifacts
         if: matrix.platform == 'windows'
