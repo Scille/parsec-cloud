@@ -19,6 +19,14 @@
                     {
                         "name": "block",
                         "type": "Bytes"
+                    },
+                    {
+                        "name": "key_index",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "needed_realm_certificate_timestamp",
+                        "type": "DateTime"
                     }
                 ]
             },

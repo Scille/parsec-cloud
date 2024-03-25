@@ -20,15 +20,17 @@ pub fn req() {
     //   block_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
     //   cmd: "block_create"
     //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+    //   key_index: 2
     let raw = hex!(
-        "84a5626c6f636bc406666f6f626172a8626c6f636b5f6964d80257c629b69d6c4abbaf651c"
-        "afa46dbc93a3636d64ac626c6f636b5f637265617465a87265616c6d5f6964d8021d335315"
-        "7d7d4e95ad2fdea7b3bd19c5"
+        "85a3636d64ac626c6f636b5f637265617465a8626c6f636b5f6964d80257c629b69d6c4abb"
+        "af651cafa46dbc93a87265616c6d5f6964d8021d3353157d7d4e95ad2fdea7b3bd19c5a96b"
+        "65795f696e64657802a5626c6f636bc406666f6f626172"
     );
 
     let req = authenticated_cmds::block_create::Req {
         block_id: BlockID::from_hex("57c629b69d6c4abbaf651cafa46dbc93").unwrap(),
         realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        key_index: 2,
         block: b"foobar".as_ref().into(),
     };
 
@@ -94,6 +96,22 @@ pub fn rep_store_unavailable() {
     //   status: "store_unavailable"
     let raw = hex!("81a6737461747573b173746f72655f756e617661696c61626c65");
     let expected = authenticated_cmds::block_create::Rep::StoreUnavailable;
+
+    rep_helper(&raw, expected);
+}
+
+pub fn rep_bad_key_index() {
+    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Content:
+    //   status: "bad_key_index"
+    //   last_realm_certificate_timestamp: ext(1, 946684800.0)
+    let raw = hex!(
+        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f6365"
+        "7274696669636174655f74696d657374616d70d70141cc36a1c0000000"
+    );
+    let expected = authenticated_cmds::block_create::Rep::BadKeyIndex {
+        last_realm_certificate_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),
+    };
 
     rep_helper(&raw, expected);
 }

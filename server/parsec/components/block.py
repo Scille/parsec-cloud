@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import auto
 from typing import assert_never
 
@@ -16,7 +17,15 @@ from parsec._parsec import (
 )
 from parsec.api import api
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.realm import BadKeyIndex
 from parsec.types import BadOutcomeEnum
+
+
+@dataclass(slots=True)
+class BlockReadResult:
+    block: bytes
+    key_index: int
+    needed_realm_certificate_timestamp: DateTime
 
 
 class BlockReadBadOutcome(BadOutcomeEnum):
@@ -47,7 +56,7 @@ class BaseBlockComponent:
 
     async def read_as_user(
         self, organization_id: OrganizationID, author: UserID, block_id: BlockID
-    ) -> bytes | BlockReadBadOutcome:
+    ) -> BlockReadResult | BlockReadBadOutcome:
         raise NotImplementedError
 
     async def create(
@@ -55,15 +64,16 @@ class BaseBlockComponent:
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        block_id: BlockID,
         realm_id: VlobID,
+        block_id: BlockID,
+        key_index: int,
         block: bytes,
-    ) -> None | BlockCreateBadOutcome:
+    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
         raise NotImplementedError
 
     async def test_dump_blocks(
         self, organization_id: OrganizationID
-    ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int]]:
+    ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int, int]]:
         raise NotImplementedError
 
     #
@@ -80,8 +90,12 @@ class BaseBlockComponent:
             block_id=req.block_id,
         )
         match outcome:
-            case (bytes() | bytearray() | memoryview()) as block:
-                return authenticated_cmds.latest.block_read.RepOk(block=block)
+            case BlockReadResult() as result:
+                return authenticated_cmds.latest.block_read.RepOk(
+                    block=result.block,
+                    key_index=result.key_index,
+                    needed_realm_certificate_timestamp=result.needed_realm_certificate_timestamp,
+                )
             case BlockReadBadOutcome.BLOCK_NOT_FOUND:
                 return authenticated_cmds.latest.block_read.RepBlockNotFound()
             case BlockReadBadOutcome.AUTHOR_NOT_ALLOWED:
@@ -109,6 +123,7 @@ class BaseBlockComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
+            key_index=req.key_index,
             block_id=req.block_id,
             realm_id=req.realm_id,
             block=req.block,
@@ -116,6 +131,10 @@ class BaseBlockComponent:
         match outcome:
             case None:
                 return authenticated_cmds.latest.block_create.RepOk()
+            case BadKeyIndex() as error:
+                return authenticated_cmds.latest.block_create.RepBadKeyIndex(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
+                )
             case BlockCreateBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.block_create.RepRealmNotFound()
             case BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS:
