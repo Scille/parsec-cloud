@@ -129,6 +129,7 @@ q_user, q_user_internal_id = _table_q_factory("user_", "user_id")
 q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
 q_block, q_block_internal_id = _table_q_factory("block", "block_id")
 q_human, q_human_internal_id = _table_q_factory("human", "email")
+q_invitation, q_invitation_internal_id = _table_q_factory("invitation", "token")
 
 
 def q_vlob_encryption_revision_internal_id(
