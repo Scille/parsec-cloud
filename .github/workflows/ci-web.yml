@@ -81,7 +81,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin v4.0.1
+        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin v4.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -110,7 +110,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@ffad14352befc011a07601bbf501b672acbc18e6 # pin v2.29.0
+      - uses: taiki-e/install-action@3068b7dc83db15fc2676a3ce4ae1ebb878685f59 # pin v2.29.7
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
@@ -122,7 +122,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@ab5e6d0c87105b4c9c2047343972218f562e4319 # pin v4.0.1
+        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin v4.0.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
