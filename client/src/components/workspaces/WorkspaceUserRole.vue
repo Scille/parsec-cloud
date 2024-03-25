@@ -12,7 +12,7 @@
       class="dropdown"
       :options="options"
       :disabled="disabled"
-      :default-option="role || NOT_SHARED_KEY"
+      :default-option-key="role || NOT_SHARED_KEY"
       :appearance="MsAppearance.Clear"
       @change="$emit('roleUpdate', user, getRoleFromString($event.option.key))"
     />

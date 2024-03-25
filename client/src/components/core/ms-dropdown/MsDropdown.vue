@@ -36,7 +36,7 @@ import { caretDown, chevronDown } from 'ionicons/icons';
 import { Ref, ref } from 'vue';
 
 const props = defineProps<{
-  defaultOption?: any;
+  defaultOptionKey?: any;
   label?: string;
   title?: string;
   description?: string;
@@ -49,7 +49,7 @@ const emits = defineEmits<{
   (e: 'change', value: MsDropdownChangeEvent): void;
 }>();
 
-const selectedOption: Ref<MsOption | undefined> = ref(props.defaultOption ? props.options.get(props.defaultOption) : undefined);
+const selectedOption: Ref<MsOption | undefined> = ref(props.defaultOptionKey ? props.options.get(props.defaultOptionKey) : undefined);
 const labelRef = ref(selectedOption.value?.label || props.label);
 const isPopoverOpen = ref(false);
 const appearanceRef = ref(props.appearance ?? MsAppearance.Outline);
@@ -60,7 +60,7 @@ async function openPopover(event: Event): Promise<void> {
     cssClass: 'dropdown-popover',
     componentProps: {
       options: props.options,
-      defaultOption: selectedOption.value?.key,
+      defaultOptionKey: selectedOption.value?.key,
     },
     event: event,
     alignment: 'end',
