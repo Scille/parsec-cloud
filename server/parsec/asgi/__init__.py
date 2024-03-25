@@ -39,7 +39,8 @@ def app_factory() -> AsgiApp:
     app.mount("/static", StaticFiles(packages=[("parsec", "static")]))
 
     @app.get("/")
-    def root(request: Request):
+    # pyright isn't able to see that root is used by FastAPI (cf: https://github.com/microsoft/pylance-release/issues/3622)
+    def root(request: Request):  # pyright: ignore[reportUnusedFunction]
         return templates.TemplateResponse("index.html", {"request": request})
 
     async def page_not_found(scope: Scope, receive: Receive, send: Send) -> None:

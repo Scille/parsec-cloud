@@ -79,8 +79,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -94,8 +93,6 @@ class PGUserComponent(BaseUserComponent):
             case UserProfile() as profile:
                 if profile != UserProfile.ADMIN:
                     return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert_never(unknown)
 
         match user_create_user_validate(
             now=now,
@@ -127,8 +124,6 @@ class PGUserComponent(BaseUserComponent):
                 assert False, f"Unexpected {error}, the device creation should not fail"
             case None:
                 pass
-            case unknown:
-                assert_never(unknown)
 
         await self.event_bus.send(
             EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
@@ -159,8 +154,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         if organization.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -173,8 +167,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
             case UserProfile() as profile:
                 pass
-            case unknown:
-                assert_never(unknown)
+
         match user_create_device_validate(
             now=now,
             expected_author=author,

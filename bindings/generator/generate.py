@@ -586,7 +586,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
 
     # Make sure all types have a unique name, this is not strictly required but it is very convenient when testing type in the template
     reserved: dict[Any, OpaqueSpec | StructSpec | VariantSpec | EnumSpec] = {}
-    for k, v in TYPES_DB.items():
+    for v in TYPES_DB.values():
         name = getattr(v, "name", v.kind)
         assert name not in reserved
         setted = reserved.setdefault(name, v)

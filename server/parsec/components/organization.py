@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import Literal, assert_never
+from typing import Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -112,6 +112,8 @@ def organization_bootstrap_validate(
     match timestamps_in_the_ballpark(u_data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     if not ru_data.is_redacted:
         return OrganizationBootstrapValidateBadOutcome.INVALID_REDACTED
@@ -139,6 +141,8 @@ def organization_bootstrap_validate(
         match timestamps_in_the_ballpark(s_data.timestamp, now):
             case TimestampOutOfBallpark() as error:
                 return error
+            case _:
+                pass
 
         if s_data.timestamp != u_data.timestamp:
             return OrganizationBootstrapValidateBadOutcome.TIMESTAMP_MISMATCH
@@ -345,6 +349,3 @@ class BaseOrganizationComponent:
 
             case OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-
-            case unknown:
-                assert_never(unknown)

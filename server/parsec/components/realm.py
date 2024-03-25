@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import assert_never
 
 from parsec._parsec import (
     DateTime,
@@ -90,6 +89,8 @@ def realm_create_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -129,6 +130,8 @@ def realm_share_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -168,6 +171,8 @@ def realm_unshare_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     assert (
         data.author is not None
@@ -205,6 +210,8 @@ def realm_rename_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     return data
 
@@ -233,6 +240,8 @@ def realm_rotate_key_validate(
     match timestamps_in_the_ballpark(data.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
+        case _:
+            pass
 
     return data
 
@@ -489,8 +498,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmCreateStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_share(
@@ -549,8 +556,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmShareStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_unshare(
@@ -598,8 +603,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmUnshareStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_rename(
@@ -651,8 +654,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmRenameStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_rotate_key(
@@ -703,8 +704,6 @@ class BaseRealmComponent:
                 client_ctx.author_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
 
     @api
     async def api_realm_get_keys_bundle(

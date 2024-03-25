@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from hashlib import sha1
-from typing import assert_never, override
+from typing import override
 
 from parsec._parsec import (
     DateTime,
@@ -116,9 +116,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                         if not user.is_revoked:
                             return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
 
-                    case unknown:
-                        assert_never(unknown)
-
                 # There is no need looking for older enrollments given the
                 # last one represent the current state of this x509 certificate.
                 break
@@ -194,8 +191,6 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     submitted_on=enrollment.submitted_on,
                     rejected_on=enrollment.info_rejected.rejected_on,
                 )
-            case unknown:
-                assert_never(unknown)
 
     @override
     async def list_as_user(
