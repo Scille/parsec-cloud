@@ -75,21 +75,23 @@ class Tool(enum.Enum):
     PostgreSQL = "postgres"
     WinFSP = "winfsp"
 
-    def post_update_hook(self, updated_files: set[Path]) -> None:
+    def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
+        updated = set()
         match self:
             case Tool.Parsec:
-                refresh_cargo_lock(updated_files)
-                refresh_npm_package_lock(updated_files)
+                updated |= refresh_cargo_lock(updated_files)
+                updated |= refresh_npm_package_lock(updated_files)
             case Tool.License:
-                refresh_npm_package_lock(updated_files)
+                updated |= refresh_npm_package_lock(updated_files)
             case _:
                 pass
+        return updated
 
 
-def refresh_cargo_lock(updated_files: set[Path]) -> None:
+def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
     a_cargo_file_has_been_updated = any(file.name == "Cargo.toml" for file in updated_files)
     if not a_cargo_file_has_been_updated:
-        return
+        return set()
 
     print("Refreshing Cargo.lock file ...")
     cargo_lock = ROOT_DIR / "Cargo.lock"
@@ -112,9 +114,12 @@ def refresh_cargo_lock(updated_files: set[Path]) -> None:
         previous_line = line
 
     cargo_lock.write_text("\n".join(lines) + "\n")
+    return {cargo_lock}
 
 
-def refresh_npm_package_lock(update_files: set[Path]) -> None:
+def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
+    updated = set()
+
     for file in update_files:
         if file.name != "package.json":
             continue
@@ -156,6 +161,9 @@ def refresh_npm_package_lock(update_files: set[Path]) -> None:
         assert found_version_count == 2, "Expected two version fields to modify in package.json"
 
         lock_file.write_text("\n".join(step2_lines) + "\n")
+        updated.add(lock_file)
+
+    return updated
 
 
 TOOLS_VERSION: dict[Tool, str] = {
@@ -450,6 +458,7 @@ def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -
 
 def check_tool(tool: Tool, version: str, update: bool) -> VersionUpdateResult:
     update_res = VersionUpdateResult([], set())
+
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
@@ -465,7 +474,8 @@ def check_tool(tool: Tool, version: str, update: bool) -> VersionUpdateResult:
                 update_res.errors += check_tool_version(file, regexes, version).errors
 
     if not update_res.errors and update_res.updated:
-        tool.post_update_hook(update_res.updated)
+        update_res.updated |= tool.post_update_hook(update_res.updated)
+
     return update_res
 
 
