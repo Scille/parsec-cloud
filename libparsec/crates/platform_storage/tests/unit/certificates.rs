@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO: fix those tests !
-
 use std::{collections::HashMap, num::NonZeroU64};
 
 use crate::certificates::CertificatesStorageUpdater;
@@ -11,6 +9,9 @@ use super::{
 };
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
+
+#[cfg(target_arch = "wasm32")]
+libparsec_tests_lite::wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
 enum FetchStrategy {
     Single,
