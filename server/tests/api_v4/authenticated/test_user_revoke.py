@@ -82,8 +82,8 @@ async def test_disconnect_sse(
 
     # 4) ...and cannot reconnect !
 
-    rep = await coolorg.bob.raw_sse_connection()
-    assert rep.status_code == 461
+    async with coolorg.bob.raw_sse_connection() as rep:
+        assert rep.status_code == 461
 
 
 async def test_authenticated_user_revoke_author_not_allowed(
