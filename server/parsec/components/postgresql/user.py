@@ -22,9 +22,6 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
-from parsec.components.postgresql.user_queries import (
-    query_dump_users,
-)
 from parsec.components.postgresql.user_queries.create import (
     q_create_device,
     q_create_user,
@@ -43,7 +40,9 @@ from parsec.components.postgresql.user_queries.revoke import (
 )
 from parsec.components.postgresql.utils import (
     Q,
+    q_device,
     q_device_internal_id,
+    q_human,
     q_organization_internal_id,
     q_user_internal_id,
     transaction,
@@ -161,6 +160,45 @@ SELECT
 FROM device
 WHERE organization = { q_organization_internal_id("$organization_id") }
 AND COALESCE(created_on > $after, TRUE)
+"""
+)
+
+_q_get_organization_users = Q(
+    f"""
+SELECT DISTINCT ON(user_._id)
+    user_id,
+    { q_human(_id="user_.human", select="email") } as human_email,
+    { q_human(_id="user_.human", select="label") } as human_label,
+    initial_profile,
+    user_certificate,
+    redacted_user_certificate,
+    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
+    created_on,
+    revoked_on,
+    revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    frozen,
+    COALESCE(profile.profile, user_.initial_profile) as current_profile
+FROM user_
+LEFT JOIN profile ON user_._id = profile.user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+ORDER BY user_._id, profile.certified_on DESC
+"""
+)
+
+_q_get_organization_devices = Q(
+    f"""
+SELECT
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -882,5 +920,18 @@ class PGUserComponent(BaseUserComponent):
     async def test_dump_current_users(
         self, conn: asyncpg.Connection, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
-        raise NotImplementedError
-        return await query_dump_users(conn, organization_id)
+        rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+        items = {}
+        for row in rows:
+            user_id = UserID(row["user_id"])
+            items[user_id] = UserDump(
+                user_id=user_id,
+                devices=[],
+                current_profile=row["current_profile"],
+                is_revoked=row["revoked_on"] is not None,
+            )
+        rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
+        for row in rows:
+            device_id = DeviceID(row["device_id"])
+            items[device_id.user_id].devices.append(device_id.device_name)
+        return items

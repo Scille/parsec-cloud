@@ -239,15 +239,16 @@ patched_user_certifiers AS (
     UPDATE user_
     SET user_certifier = (
         SELECT _id FROM new_devices
-        WHERE device_id = { q_user(_id="user_certifier", select="device_id") }
+        WHERE device_id = { q_device(_id="user_certifier", select="device_id") }
     )
+    WHERE user_certifier IS NOT NULL
     RETURNING _id
 ),
 patched_revoked_user_certifiers AS (
     UPDATE user_
     SET revoked_user_certifier = (
         SELECT _id FROM new_devices
-        WHERE device_id = { q_user(_id="revoked_user_certifier", select="device_id") }
+        WHERE device_id = { q_device(_id="revoked_user_certifier", select="device_id") }
     )
     RETURNING _id
 ),
