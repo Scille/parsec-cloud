@@ -91,7 +91,8 @@ jobs:
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
-          cp -v artifacts/Linux-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
+          # TODO: don't know why, but snap job is being skipped by Github Actions...
+          # cp -v artifacts/Linux-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
           cp -v artifacts/macOS-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg{,.blockmap} release-files
           cp -v artifacts/Windows-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
         env:
@@ -170,7 +171,6 @@ jobs:
           name: ${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
           files: |
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl*
-            release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg*
             release-files/Parsec-SBOM-Wheel-linux.spdx.json
@@ -179,8 +179,6 @@ jobs:
             release-files/Parsec-SBOM-Wheel-windows.spdx.json.sha256
             release-files/Parsec-SBOM-Wheel-macos.spdx.json
             release-files/Parsec-SBOM-Wheel-macos.spdx.json.sha256
-            release-files/Parsec-SBOM-Electron-linux.spdx.json
-            release-files/Parsec-SBOM-Electron-linux.spdx.json.sha256
             release-files/Parsec-SBOM-Electron-windows.spdx.json
             release-files/Parsec-SBOM-Electron-windows.spdx.json.sha256
             release-files/Parsec-SBOM-Electron-macos.spdx.json
