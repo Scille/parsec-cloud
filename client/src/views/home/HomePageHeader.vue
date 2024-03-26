@@ -24,7 +24,7 @@
           size="small"
         />
         <span class="version-text">
-          {{ getAppVersion() }}
+          {{ APP_VERSION }}
         </span>
       </div>
       <ion-button
@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { getAppVersion } from '@/common/mocks';
+import { APP_VERSION } from '@/common/mocks';
 import { LogoRowWhite, MsImage } from '@/components/core';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';

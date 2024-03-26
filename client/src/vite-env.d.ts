@@ -13,3 +13,5 @@ declare module '*.vue' {
 declare module '@libparsec_trampoline' {
   export function LoadWebLibParsecPlugin(): Promise<any>;
 }
+
+declare const __APP_VERSION__: string;
