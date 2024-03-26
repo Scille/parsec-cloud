@@ -125,13 +125,9 @@ jobs:
             # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
         timeout-minutes: 2
 
-      - name: Fail if libparsec is not restored when style-only==true
-        if: inputs.style-only && steps.cache-libparsec.outputs.cache-hit != 'true'
-        run: exit 1
-
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@b113a30d27a8e59c969077c0a0168cc13dab5ffc # pin v1.8.0
-        if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
           cache: false
@@ -139,7 +135,7 @@ jobs:
 
       - name: Retrieve Rust cache
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # pin v2.7.3
-        if: (!inputs.style-only) && steps.cache-libparsec.outputs.cache-hit != 'true'
+        if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
           # cache is only shared between master and the PRs (and not across PRs).
