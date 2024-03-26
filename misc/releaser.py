@@ -48,20 +48,6 @@ LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
 BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
-FILES_TO_COMMIT_ON_VERSION_CHANGE = list(
-    map(
-        lambda path: path.absolute(),
-        [
-            BUSL_LICENSE_FILE,
-            PROJECT_DIR / "server/parsec/_version.py",
-            PROJECT_DIR / "server/pyproject.toml",
-            PROJECT_DIR / "misc/version_updater.py",
-            PROJECT_DIR / "Cargo.lock",
-            PROJECT_DIR / "client/electron/package-lock.json",
-            PROJECT_DIR / "client/package-lock.json",
-        ],
-    )
-)
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
@@ -404,7 +390,7 @@ def update_version_files(version: Version) -> set[Path]:
     return res.updated
 
 
-def update_license_file(version: Version, new_release_date: datetime) -> None:
+def update_license_file(version: Version, new_release_date: datetime) -> set[Path]:
     license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
         r"Change Date:.*",
@@ -422,6 +408,7 @@ def update_license_file(version: Version, new_release_date: datetime) -> None:
     BUSL_LICENSE_FILE.write_bytes(
         updated_version_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
+    return {BUSL_LICENSE_FILE}
 
 
 def collect_newsfragments() -> list[Path]:
@@ -480,7 +467,7 @@ def get_licence_eol_date(release_date: datetime) -> datetime:
 
 def update_history_changelog(
     newsfragments: list[Path], version: Version, yes: bool, release_date: datetime
-) -> None:
+) -> set[Path]:
     history_header, history_body = split_history_file()
 
     issues_per_type: defaultdict[str, list[str]] = convert_newsfragments_to_rst(newsfragments)
@@ -503,6 +490,8 @@ def update_history_changelog(
             f"Pausing so you can check {COLOR_YELLOW}HISTORY.rst{COLOR_END} is okay, press any key when ready"
         )
 
+    return {HISTORY_FILE}
+
 
 def create_bump_commit_to_new_version(
     new_version: Version,
@@ -513,7 +502,7 @@ def create_bump_commit_to_new_version(
 ) -> None:
     commit_msg = f"Bump version {current_version} -> {new_version}"
     print(f"Create commit {COLOR_GREEN}{commit_msg}{COLOR_END}")
-    run_git("add", HISTORY_FILE.absolute(), *FILES_TO_COMMIT_ON_VERSION_CHANGE, *files_to_commit)
+    run_git("add", *files_to_commit)
     if newsfragments:
         fragments_paths = [str(x.absolute()) for x in newsfragments]
         run_git("rm", *fragments_paths)
@@ -554,9 +543,18 @@ def create_bump_commit_to_dev_version(
     version: Version, license_eol_date: datetime, gpg_sign: bool
 ) -> None:
     dev_version = version.evolve(local="dev")
-    update_license_file(dev_version, license_eol_date)
-    updated_files = update_version_files(dev_version)
-    create_bump_commit_to_new_version(dev_version, version, [], updated_files, gpg_sign)
+
+    updated_files = set()
+    updated_files |= update_license_file(dev_version, license_eol_date)
+    updated_files |= update_version_files(dev_version)
+
+    create_bump_commit_to_new_version(
+        new_version=dev_version,
+        current_version=version,
+        newsfragments=[],
+        files_to_commit=updated_files,
+        gpg_sign=gpg_sign,
+    )
 
 
 def push_release(tag: str, release_branch: str, yes: bool, force_push: bool) -> None:
@@ -727,15 +725,18 @@ def build_main(args: argparse.Namespace) -> None:
     release_date = datetime.now(tz=timezone.utc)
     license_eol_date = get_licence_eol_date(release_date)
 
-    update_license_file(release_version, license_eol_date)
-
-    updated_files = update_version_files(release_version)
-
+    updated_files = set()
+    updated_files |= update_license_file(release_version, license_eol_date)
+    updated_files |= update_version_files(release_version)
     newsfragments = collect_newsfragments()
-    update_history_changelog(newsfragments, release_version, yes, release_date)
+    updated_files |= update_history_changelog(newsfragments, release_version, yes, release_date)
 
     create_bump_commit_to_new_version(
-        release_version, current_version, newsfragments, updated_files, gpg_sign=args.gpg_sign
+        new_version=release_version,
+        current_version=current_version,
+        newsfragments=newsfragments,
+        files_to_commit=updated_files,
+        gpg_sign=args.gpg_sign,
     )
 
     create_tag_for_new_version(release_version, tag, gpg_sign=args.gpg_sign, force=args.nightly)
