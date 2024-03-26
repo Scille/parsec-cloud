@@ -113,7 +113,8 @@ def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
             lines.append(line)
         previous_line = line
 
-    cargo_lock.write_text("\n".join(lines) + "\n")
+    content = ("\n".join(lines) + "\n").encode("utf8")
+    cargo_lock.write_bytes(content)  # Use write_bytes to keep \n on Windows
     return {cargo_lock}
 
 
@@ -160,7 +161,8 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
                 step2_lines.append(line)
         assert found_version_count == 2, "Expected two version fields to modify in package.json"
 
-        lock_file.write_text("\n".join(step2_lines) + "\n")
+        content = ("\n".join(step2_lines) + "\n").encode("utf8")
+        lock_file.write_bytes(content)  # Use write_bytes to keep \n on Windows
         updated.add(lock_file)
 
     return updated
