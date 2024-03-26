@@ -36,7 +36,7 @@
               class="title-h2"
               :class="hasHistory() ? 'align-center' : 'align-left'"
             >
-              {{ getTitleForRoute() }}
+              {{ $t(getTitleForRoute()) }}
             </ion-label>
           </div>
 
@@ -267,21 +267,21 @@ onUnmounted(async () => {
 function getTitleForRoute(): string {
   switch (getCurrentRouteName()) {
     case Routes.Settings:
-      return translate('HeaderPage.titles.settings');
+      return 'HeaderPage.titles.settings';
     case Routes.Devices:
-      return translate('HeaderPage.titles.devices');
+      return 'HeaderPage.titles.devices';
     case Routes.Users:
-      return translate('HeaderPage.titles.users');
+      return 'HeaderPage.titles.users';
     case Routes.Storage:
-      return translate('HeaderPage.titles.organization.storage');
+      return 'HeaderPage.titles.organization.storage';
     case Routes.Organization:
-      return translate('HeaderPage.titles.organization.information');
+      return 'HeaderPage.titles.organization.information';
     case Routes.About:
-      return translate('HeaderPage.titles.about');
+      return 'HeaderPage.titles.about';
     case Routes.ContactDetails:
-      return translate('HeaderPage.titles.myContactDetails');
+      return 'HeaderPage.titles.myContactDetails';
     case Routes.RecoveryExport:
-      return translate('HeaderPage.titles.recoveryExport');
+      return 'HeaderPage.titles.recoveryExport';
     case null:
       return '';
   }

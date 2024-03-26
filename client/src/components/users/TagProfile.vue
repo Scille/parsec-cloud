@@ -6,27 +6,26 @@
       class="button-small tag"
       :class="getClassForProfile(profile)"
     >
-      {{ translateProfile(profile) }}
+      {{ $t(getProfileLabel(profile)) }}
     </ion-chip>
   </ion-label>
 </template>
 
 <script setup lang="ts">
 import { UserProfile } from '@/parsec';
-import { translate } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 
 defineProps<{
   profile: UserProfile;
 }>();
 
-function translateProfile(profile: UserProfile): string {
+function getProfileLabel(profile: UserProfile): string {
   if (profile === UserProfile.Admin) {
-    return translate('UsersPage.profile.admin.label');
+    return 'UsersPage.profile.admin.label';
   } else if (profile === UserProfile.Standard) {
-    return translate('UsersPage.profile.standard.label');
+    return 'UsersPage.profile.standard.label';
   } else if (profile === UserProfile.Outsider) {
-    return translate('UsersPage.profile.outsider.label');
+    return 'UsersPage.profile.outsider.label';
   }
   return '';
 }

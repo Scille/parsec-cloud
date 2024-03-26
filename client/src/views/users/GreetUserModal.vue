@@ -26,10 +26,10 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitleAndSubtitle()[0] }}
+          {{ $t(getTitleAndSubtitle()[0]) }}
         </ion-title>
         <ion-text class="modal-header__text body">
-          {{ getTitleAndSubtitle()[1] }}
+          {{ $t(getTitleAndSubtitle()[1]) }}
         </ion-text>
       </ion-header>
       <div class="modal-content inner-content">
@@ -134,7 +134,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $t(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -205,34 +205,34 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const profileOptions: MsOptions = new MsOptions([
   {
     key: UserProfile.Admin,
-    label: translate('UsersPage.profile.admin.label'),
-    description: translate('UsersPage.profile.admin.description'),
+    label: 'UsersPage.profile.admin.label',
+    description: 'UsersPage.profile.admin.description',
   },
   {
     key: UserProfile.Standard,
-    label: translate('UsersPage.profile.standard.label'),
-    description: translate('UsersPage.profile.standard.description'),
+    label: 'UsersPage.profile.standard.label',
+    description: 'UsersPage.profile.standard.description',
   },
   {
     key: UserProfile.Outsider,
-    label: translate('UsersPage.profile.outsider.label'),
-    description: translate('UsersPage.profile.outsider.description'),
+    label: 'UsersPage.profile.outsider.label',
+    description: 'UsersPage.profile.outsider.description',
   },
 ]);
 
 function getTitleAndSubtitle(): [string, string] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return [translate('UsersPage.greet.titles.waitForGuest'), ''];
+    return ['UsersPage.greet.titles.waitForGuest', ''];
   } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
-    return [translate('UsersPage.greet.titles.provideHostCode'), translate('UsersPage.greet.subtitles.provideHostCode')];
+    return ['UsersPage.greet.titles.provideHostCode', 'UsersPage.greet.subtitles.provideHostCode'];
   } else if (pageStep.value === GreetUserStep.GetGuestSasCode) {
-    return [translate('UsersPage.greet.titles.getGuestCode'), translate('UsersPage.greet.subtitles.getGuestCode')];
+    return ['UsersPage.greet.titles.getGuestCode', 'UsersPage.greet.subtitles.getGuestCode'];
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
-    return [translate('UsersPage.greet.titles.contactDetails'), ''];
+    return ['UsersPage.greet.titles.contactDetails', ''];
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return [translate('UsersPage.greet.titles.contactDetails'), translate('UsersPage.greet.subtitles.checkUserInfo')];
+    return ['UsersPage.greet.titles.contactDetails', 'UsersPage.greet.subtitles.checkUserInfo'];
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return [translate('UsersPage.greet.titles.summary'), ''];
+    return ['UsersPage.greet.titles.summary', ''];
   }
   return ['', ''];
 }
@@ -257,11 +257,11 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
-    return translate('UsersPage.greet.actions.start');
+    return 'UsersPage.greet.actions.start';
   } else if (pageStep.value === GreetUserStep.Summary) {
-    return translate('UsersPage.greet.actions.finish');
+    return 'UsersPage.greet.actions.finish';
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo) {
-    return translate('UsersPage.greet.actions.approve');
+    return 'UsersPage.greet.actions.approve';
   }
   return '';
 }

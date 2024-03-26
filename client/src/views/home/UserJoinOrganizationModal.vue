@@ -143,7 +143,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $t(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -304,13 +304,13 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
-    return translate('JoinOrganization.validateUserInfo');
+    return 'JoinOrganization.validateUserInfo';
   } else if (pageStep.value === UserJoinOrganizationStep.GetAuthentication) {
-    return translate('JoinOrganization.createDevice');
+    return 'JoinOrganization.createDevice';
   } else if (pageStep.value === UserJoinOrganizationStep.Finish) {
-    return translate('JoinOrganization.logIn');
+    return 'JoinOrganization.logIn';
   } else if (pageStep.value === UserJoinOrganizationStep.WaitForHost) {
-    return translate('JoinOrganization.understand');
+    return 'JoinOrganization.understand';
   }
 
   return '';

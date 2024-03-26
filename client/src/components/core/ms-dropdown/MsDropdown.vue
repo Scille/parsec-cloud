@@ -6,7 +6,7 @@
       class="form-label"
       v-if="title && appearanceRef === MsAppearance.Outline"
     >
-      {{ title }}
+      {{ $t(title) }}
     </ion-text>
     <ion-button
       :fill="appearanceRef"

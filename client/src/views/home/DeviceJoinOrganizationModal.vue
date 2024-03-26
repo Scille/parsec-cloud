@@ -110,7 +110,7 @@
             @click="nextStep()"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $t(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -261,11 +261,11 @@ async function showErrorAndRestart(message: string): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === DeviceJoinOrganizationStep.Information) {
-    return translate('ClaimDeviceModal.buttons.understand');
+    return 'ClaimDeviceModal.buttons.understand';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    return translate('ClaimDeviceModal.buttons.password');
+    return 'ClaimDeviceModal.buttons.password';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
-    return translate('ClaimDeviceModal.buttons.login');
+    return 'ClaimDeviceModal.buttons.login';
   }
 
   return '';
