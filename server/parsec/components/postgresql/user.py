@@ -389,13 +389,19 @@ class PGUserComponent(BaseUserComponent):
             case error:
                 return error
 
-        await q_create_device(
+        match await q_create_device(
             conn,
             organization_id,
             device_certificate_cooked=certif,
             device_certificate=device_certificate,
             device_certificate_redacted=redacted_device_certificate,
-        )
+        ):
+            case UserCreateDeviceStoreBadOutcome() as error:
+                return error
+            case None:
+                pass
+            case unknown:
+                assert_never(unknown)
 
         await self.event_bus.send(
             EventCommonCertificate(
