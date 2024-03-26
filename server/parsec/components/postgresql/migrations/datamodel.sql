@@ -430,6 +430,7 @@ CREATE TABLE block (
     created_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
+    key_index INTEGER NOT NULL,
 
     UNIQUE(organization, block_id)
 );

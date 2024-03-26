@@ -19,6 +19,7 @@ from parsec.components.block import (
     BaseBlockComponent,
     BlockCreateBadOutcome,
     BlockReadBadOutcome,
+    BlockReadResult,
 )
 from parsec.components.blockstore import (
     BaseBlockStoreComponent,
@@ -42,13 +43,14 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.components.realm import RealmCheckBadOutcome
+from parsec.components.realm import BadKeyIndex, RealmCheckBadOutcome
 from parsec.components.user import CheckDeviceBadOutcome
 
-_q_get_realm_id_from_block_id = Q(
+_q_get_block_info = Q(
     f"""
 SELECT
-    { q_realm(_id="block.realm", select="realm.realm_id") }
+    { q_realm(_id="block.realm", select="realm.realm_id") },
+    key_index
 FROM block
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -100,14 +102,15 @@ SELECT
 
 _q_insert_block = Q(
     f"""
-INSERT INTO block (organization, block_id, realm, author, size, created_on)
+INSERT INTO block (organization, block_id, realm, author, size, created_on, key_index)
 VALUES (
     { q_organization_internal_id("$organization_id") },
     $block_id,
     { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
     { q_device_internal_id(organization_id="$organization_id", device_id="$author") },
     $size,
-    $created_on
+    $created_on,
+    $key_index
 )
 """
 )
@@ -119,7 +122,8 @@ SELECT
     { q_realm(_id="realm", select="realm.realm_id") } as realm_id,
     { q_device(_id="author", select="device_id") } as author,
     size,
-    created_on
+    created_on,
+    key_index
 FROM block
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -177,7 +181,7 @@ class PGBlockComponent(BaseBlockComponent):
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
-    ) -> bytes | BlockReadBadOutcome:
+    ) -> BlockReadResult | BlockReadBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
@@ -198,13 +202,14 @@ class PGBlockComponent(BaseBlockComponent):
             case unknown:
                 assert_never(unknown)
 
-        realm_id_uuid = await conn.fetchval(
-            *_q_get_realm_id_from_block_id(organization_id=organization_id.str, block_id=block_id)
+        row = await conn.fetchrow(
+            *_q_get_block_info(organization_id=organization_id.str, block_id=block_id)
         )
 
-        if not realm_id_uuid:
+        if row is None:
             return BlockReadBadOutcome.BLOCK_NOT_FOUND
-        realm_id = VlobID.from_hex(realm_id_uuid)
+        realm_id = VlobID.from_hex(row["realm_id"])
+        key_index = row["key_index"]
 
         match await self.realm._check_realm(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
@@ -219,7 +224,11 @@ class PGBlockComponent(BaseBlockComponent):
         outcome = await self.blockstore.read(organization_id, block_id)
         match outcome:
             case bytes() | bytearray() | memoryview() as block:
-                return block
+                return BlockReadResult(
+                    block=block,
+                    key_index=key_index,
+                    needed_realm_certificate_timestamp=DateTime.now(),  # TODO: fixme
+                )
             case BlockStoreReadBadOutcome.BLOCK_NOT_FOUND:
                 # Weird, the block exists in the database but not in the blockstore
                 return BlockReadBadOutcome.STORE_UNAVAILABLE
@@ -236,10 +245,11 @@ class PGBlockComponent(BaseBlockComponent):
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
-        block_id: BlockID,
         realm_id: VlobID,
+        block_id: BlockID,
+        key_index: int,
         block: bytes,
-    ) -> None | BlockCreateBadOutcome:
+    ) -> None | BadKeyIndex | BlockCreateBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
@@ -265,9 +275,13 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, _):
+            case (RealmRole() as role, current_key_index):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
+                if current_key_index != key_index:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=DateTime.now(),  # TODO: fixme
+                    )
             case unknown:
                 assert_never(unknown)
 
@@ -318,6 +332,7 @@ class PGBlockComponent(BaseBlockComponent):
                     author=author.str,
                     size=len(block),
                     created_on=now,
+                    key_index=key_index,
                 )
             )
         except UniqueViolationError:
@@ -332,7 +347,7 @@ class PGBlockComponent(BaseBlockComponent):
     @transaction
     async def test_dump_blocks(
         self, conn: asyncpg.Connection, organization_id: OrganizationID
-    ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int]]:
+    ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int, int]]:
         ret = await conn.fetch(*_q_get_all_block_meta(organization_id=organization_id.str))
 
         items = {}
@@ -342,6 +357,7 @@ class PGBlockComponent(BaseBlockComponent):
                 item["created_on"],
                 DeviceID(item["author"]),
                 VlobID.from_hex(item["realm_id"]),
+                int(item["key_index"]),
                 int(item["size"]),
             )
 
