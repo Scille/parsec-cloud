@@ -458,7 +458,8 @@ def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -
     return errors
 
 
-def check_tool(tool: Tool, version: str, update: bool) -> VersionUpdateResult:
+def check_tool(tool: Tool, update: bool) -> VersionUpdateResult:
+    version = TOOLS_VERSION[tool]
     update_res = VersionUpdateResult([], set())
 
     for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
@@ -490,7 +491,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--version",
-        help="Overwrite the configured version of the tool (will be ignored if no tool is provided)",
+        help="Overwrite the configured version of the tool (must be used with --tool)",
         type=str,
         default=None,
     )
@@ -506,12 +507,15 @@ if __name__ == "__main__":
 
     if args.tool is not None:
         tool = Tool(args.tool)
-        tool_version: str = args.version or TOOLS_VERSION[tool]
+        if args.version is not None:
+            TOOLS_VERSION[tool] = args.version
 
-        errors += check_tool(tool, tool_version, update=not args.check).errors
+        errors += check_tool(tool, update=not args.check).errors
     else:
+        if args.version is not None:
+            raise SystemExit("Parameter --version requires --tool to be set")
         for tool in Tool:
-            errors += check_tool(tool, TOOLS_VERSION[tool], update=not args.check).errors
+            errors += check_tool(tool, update=not args.check).errors
 
     if errors:
         raise SystemExit("\n".join(errors))
