@@ -7,7 +7,6 @@ Helper that help changing the version of a tool across the repository.
 import enum
 import glob
 import re
-import subprocess
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
@@ -57,8 +56,9 @@ WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-ve
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
 PYTHON_SMALL_VERSION = ReplaceRegex(r"python\d.\d+", hide_patch_version("python{version}"))
 TOML_LICENSE_FIELD = ReplaceRegex(r'license = ".*"', 'license = "{version}"')
-JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*",', '"license": "{version}",')
-JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*",', '"version": "{version}",')
+TOML_VERSION_FIELD = ReplaceRegex(r'version = ".*"', 'version = "{version}"')
+JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*"', '"license": "{version}"')
+JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*"', '"version": "{version}"')
 CI_WINFSP_VERSION = ReplaceRegex(r"WINFSP_VERSION: .*", "WINFSP_VERSION: {version}")
 
 
@@ -87,43 +87,75 @@ class Tool(enum.Enum):
 
 
 def refresh_cargo_lock(updated_files: set[Path]) -> None:
-    a_cargo_file_has_been_updated = any("Cargo.toml" in file.name for file in updated_files)
+    a_cargo_file_has_been_updated = any(file.name == "Cargo.toml" for file in updated_files)
     if not a_cargo_file_has_been_updated:
         return
 
-    print("Listing installed rust toolchains ...")
-    rust_installed_toolchain = subprocess.check_output(["rustup", "toolchain", "list"]).decode()
+    print("Refreshing Cargo.lock file ...")
+    cargo_lock = ROOT_DIR / "Cargo.lock"
 
-    if "nightly" not in rust_installed_toolchain:
-        print("Missing nightly toolchain, installing it ...")
-        subprocess.check_call(["rustup", "toolchain", "install", "nightly"])
+    lines = []
+    previous_line = None
+    regex, replace = TOML_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
+    for line in cargo_lock.read_text().splitlines():
+        if previous_line and (
+            previous_line.startswith('name = "libparsec')
+            or previous_line.startswith('name = "parsec')
+        ):
+            match = regex.search(line)
+            assert match, f"Expected to find a version field after a name field in {line!r}"
+            prefix = line[: match.start()]
+            suffix = line[match.end() :]
+            lines.append(f"{prefix}{replace}{suffix}")
+        else:
+            lines.append(line)
+        previous_line = line
 
-    print("Refreshing Cargo.lock ...")
-    subprocess.check_call(
-        [
-            "cargo",
-            "+nightly",
-            "generate-lockfile",
-            "-Z",
-            "direct-minimal-versions",
-        ]
-    )
+    cargo_lock.write_text("\n".join(lines) + "\n")
 
 
 def refresh_npm_package_lock(update_files: set[Path]) -> None:
-    import sys
-
-    npm = "npm" if sys.platform != "win32" else "npm.cmd"
-    print("Checking npm version ...")
-    subprocess.check_call([npm, "--version"])
     for file in update_files:
-        if "package.json" not in file.name:
+        if file.name != "package.json":
             continue
-        print(f"Refreshing npm lock file for {file} ...")
-        subprocess.check_call(
-            [npm, "install", "--package-lock-only", "--no-audit", "--ignore-scripts"],
-            cwd=file.parent,
-        )
+
+        lock_file = file.parent / "package-lock.json"
+
+        print(f"Refreshing npm lock file {lock_file} ...")
+        input_lines = lock_file.read_text().splitlines()
+
+        # The project's license field is the first "license" field in the file
+        regex, replace = JSON_LICENSE_FIELD.compile(TOOLS_VERSION[Tool.License])
+        step1_lines = []
+        found_license_count = 0
+        for line in input_lines:
+            match = regex.search(line)
+            if match:
+                found_license_count += 1
+                assert found_license_count <= 1, "Multiple license fields found in package.json"
+                prefix = line[: match.start()]
+                suffix = line[match.end() :]
+                step1_lines.append(f"{prefix}{replace}{suffix}")
+            else:
+                step1_lines.append(line)
+        assert found_license_count == 1, "No license field found in package.json"
+
+        # The project's version field is present twice at the beginning of the file
+        found_version_count = 0
+        step2_lines = []
+        regex, replace = JSON_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
+        for line in step1_lines:
+            match = regex.search(line)
+            if match and found_version_count < 2:
+                found_version_count += 1
+                prefix = line[: match.start()]
+                suffix = line[match.end() :]
+                step2_lines.append(f"{prefix}{replace}{suffix}")
+            else:
+                step2_lines.append(line)
+        assert found_version_count == 2, "Expected two version fields to modify in package.json"
+
+        lock_file.write_text("\n".join(step2_lines) + "\n")
 
 
 TOOLS_VERSION: dict[Tool, str] = {
