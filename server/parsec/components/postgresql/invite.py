@@ -21,6 +21,7 @@ from parsec.components.invite import (
     DeviceInvitation,
     Invitation,
     InviteAsInvitedInfoBadOutcome,
+    InviteConduitExchangeBadOutcome,
     InviteNewForDeviceBadOutcome,
     InviteNewForUserBadOutcome,
     SendEmailBadOutcome,
@@ -763,22 +764,24 @@ class PGInviteComponent(BaseInviteComponent):
         #         status=InvitationStatus.READY,
         #     )
 
+    @override
     async def _conduit_talk(
         self,
         organization_id: OrganizationID,
-        greeter: UserID | None,
         token: InvitationToken,
+        is_greeter: bool,
         state: ConduitState,
         payload: bytes,
-    ) -> ConduitListenCtx:
+        last: bool,  # Only for greeter
+    ) -> ConduitListenCtx | InviteConduitExchangeBadOutcome:
         raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await _conduit_talk(conn, organization_id, greeter, token, state, payload)
 
-    async def _conduit_listen(self, ctx: ConduitListenCtx) -> bytes | None:
+    async def _conduit_listen(
+        self,
+        now: DateTime,
+        ctx: ConduitListenCtx,
+    ) -> tuple[bytes, bool] | None | InviteConduitExchangeBadOutcome:
         raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            return await _conduit_listen(conn, ctx)
 
     async def claimer_joined(
         self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
