@@ -8,6 +8,7 @@ from typing import (
     Annotated,
     Any,
     AsyncGenerator,
+    Mapping,
     NoReturn,
     Sequence,
     assert_never,
@@ -21,7 +22,6 @@ from fastapi.datastructures import Headers
 from fastapi.responses import StreamingResponse
 from pydantic import (
     GetPydanticSchema,
-    TypeAdapter,
 )
 from pydantic_core import core_schema
 
@@ -49,7 +49,8 @@ from parsec.components.auth import (
     AuthInvitedAuthBadOutcome,
     InvitedAuthInfo,
 )
-from parsec.components.events import SseAPiEventsListenBadOutcome
+from parsec.components.events import ClientBroadcastableEventStream, SseAPiEventsListenBadOutcome
+from parsec.events import EventOrganizationConfig
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
@@ -87,28 +88,26 @@ ANONYMOUS_ORGANIZATION_BOOTSTRAP_CMD_ALL_API_REQS = tuple(
 rpc_router = APIRouter()
 
 
-OrganizationIDField = TypeAdapter(  # pyright: ignore [reportCallIssue]
-    Annotated[
-        OrganizationID,
-        GetPydanticSchema(
-            lambda tp, handler: core_schema.json_or_python_schema(
-                json_schema=core_schema.chain_schema(
-                    [
-                        core_schema.str_schema(),
-                        core_schema.no_info_plain_validator_function(OrganizationID),
-                    ]
-                ),
-                python_schema=core_schema.chain_schema(
-                    [
-                        core_schema.is_instance_schema(OrganizationID),
-                        core_schema.no_info_plain_validator_function(OrganizationID),
-                    ]
-                ),
-                serialization=core_schema.plain_serializer_function_ser_schema(lambda x: x.str),
-            )
-        ),
-    ]
-)
+OrganizationIDField = Annotated[
+    OrganizationID,
+    GetPydanticSchema(
+        lambda tp, handler: core_schema.json_or_python_schema(
+            json_schema=core_schema.chain_schema(
+                [
+                    core_schema.str_schema(),
+                    core_schema.no_info_plain_validator_function(OrganizationID),
+                ]
+            ),
+            python_schema=core_schema.chain_schema(
+                [
+                    core_schema.is_instance_schema(OrganizationID),
+                    core_schema.no_info_plain_validator_function(OrganizationID),
+                ]
+            ),
+            serialization=core_schema.plain_serializer_function_ser_schema(lambda x: x.str),
+        )
+    ),
+]
 
 
 async def _rpc_get_body_with_limit_check(request: Request) -> bytes:
@@ -231,11 +230,11 @@ CUSTOM_HTTP_STATUS_DETAILS = {
 }
 
 
-def _handshake_abort(status: CustomHttpStatus, api_version: ApiVersion) -> NoReturn:
+def _handshake_abort(status: CustomHttpStatus, api_version: ApiVersion, **headers: str) -> NoReturn:
     detail = CUSTOM_HTTP_STATUS_DETAILS[status]
     raise HTTPException(
         status_code=status.value,
-        headers={"Api-Version": str(api_version)},
+        headers={"Api-Version": str(api_version), **headers},
         detail=detail,
     )
 
@@ -655,62 +654,11 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         device_verify_key=auth_info.device_verify_key,
     )
 
-    async def _stream() -> AsyncGenerator[bytes, None]:
-        async with backend.events.sse_api_events_listen(
-            client_ctx=client_ctx, last_event_id=parsed.last_event_id
-        ) as outcome:
-            match outcome:
-                case (initial_organization_config_event, additional_events_receiver):
-                    pass
-                case SseAPiEventsListenBadOutcome():
-                    # Force the closing of the connection
-                    return
-                case unknown:
-                    assert_never(unknown)
-
-            # In SSE, the HTTP status code & headers are sent with the first event.
-            # This means the client has to wait for this first event to know for
-            # sure the connection was successful (in practice the server responds
-            # fast in case of error and potentially up to the keepalive time in case
-            # everything is ok).
-            # So, while not strictly needed, we it is better to send an event right
-            # away the client knows it is correctly connected without delay.
-            # Fortunately we just have the right thing for that: the organization
-            # config (given it may have changed since the last time the client connected).
-
-            yield initial_organization_config_event.dump_as_apiv4_sse_payload()
-            del initial_organization_config_event
-
-            while True:
-                next_event = None
-                with anyio.move_on_after(backend.config.sse_keepalive) as scope:
-                    try:
-                        next_event = await additional_events_receiver.receive()
-                    except StopAsyncIteration:
-                        return
-
-                if scope.cancel_called:
-                    yield b":keepalive\n\n"
-
-                else:
-                    if next_event is None:
-                        # We have missed some events, most likely because the last event id
-                        # provided by the client is too old. In this case we have to
-                        # notify the client with a special `missed_events` message
-                        #
-                        # Event if it is empty, `data` field must be provided or SSE
-                        # client will silently ignore the event.
-                        # (cf. https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage)
-                        yield b"event:missed_events\ndata:\n\n"
-
-                    else:
-                        (event, apiv4_sse_payload) = next_event
-                        if apiv4_sse_payload is None:
-                            apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
-                        yield apiv4_sse_payload
-
-    return StreamingResponse(
-        content=_stream(),
+    return StreamingResponseMiddleware(
+        backend,
+        client_ctx,
+        parsed.last_event_id,
+        parsed.settled_api_version,
         status_code=200,
         headers={
             "Cache-Control": "no-cache",
@@ -719,3 +667,124 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         media_type=ACCEPT_TYPE_SSE,
     )
     # TODO: ensure server doesn't drop this SSE long-polling query due to inactivity timeout
+
+
+class StreamingResponseMiddleware(StreamingResponse):
+    """
+    StreamingResponse is subclassed to have better control over the stream
+    throughout the lifetime of the response.
+
+    In particular, the async `__call__` method has the same lifetime as the
+    response, which allows proper use of async context managers.
+
+    This is useful since the async generator used to stream the events should
+    not contain context managers due to the fact that it is iterated without
+    proper control over its lifetime, breaking the princples of structured concurrency.
+    """
+
+    def __init__(
+        self,
+        backend: Backend,
+        client_ctx: AuthenticatedClientContext,
+        last_event_id: UUID | None,
+        settled_api_version: ApiVersion,
+        status_code: int = 200,
+        headers: Mapping[str, str] | None = None,
+        media_type: str | None = None,
+    ):
+        self.backend = backend
+        self.client_ctx = client_ctx
+        self.last_event_id = last_event_id
+        self.settled_api_version = settled_api_version
+        self.initial_organization_config_event: EventOrganizationConfig
+        self.additional_events_receiver: ClientBroadcastableEventStream
+        super().__init__(
+            content=self._stream(),
+            status_code=status_code,
+            headers=headers,
+            media_type=media_type,
+        )
+
+    async def _stream(self) -> AsyncGenerator[bytes, None]:
+        # In SSE, the HTTP status code & headers are sent with the first event.
+        # This means the client has to wait for this first event to know for
+        # sure the connection was successful (in practice the server responds
+        # fast in case of error and potentially up to the keepalive time in case
+        # everything is ok).
+        # So, while not strictly needed, we it is better to send an event right
+        # away the client knows it is correctly connected without delay.
+        # Fortunately we just have the right thing for that: the organization
+        # config (given it may have changed since the last time the client connected).
+        yield self.initial_organization_config_event.dump_as_apiv4_sse_payload()
+
+        while True:
+            next_event = None
+            # Context manager should be avoided in async generator, but it is fine
+            # in this case since `move_on_after` doesn't use any resources that
+            # would be kept alive after the context manager is exited.
+            with anyio.move_on_after(self.backend.config.sse_keepalive) as scope:
+                try:
+                    next_event = await self.additional_events_receiver.receive()
+                except StopAsyncIteration:
+                    return
+
+            if scope.cancel_called:
+                yield b":keepalive\n\n"
+
+            else:
+                if next_event is None:
+                    # We have missed some events, most likely because the last event id
+                    # provided by the client is too old. In this case we have to
+                    # notify the client with a special `missed_events` message
+                    #
+                    # Event if it is empty, `data` field must be provided or SSE
+                    # client will silently ignore the event.
+                    # (cf. https://html.spec.whatwg.org/multipage/server-sent-events.html#dispatchMessage)
+                    yield b"event:missed_events\ndata:\n\n"
+
+                else:
+                    (event, apiv4_sse_payload) = next_event
+                    if apiv4_sse_payload is None:
+                        apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
+                    yield apiv4_sse_payload
+
+    async def __call__(self, scope, receive, send) -> None:
+        """
+        This method is called by the ASGI server to handle the response.
+
+        It lives as long as events are being produced, which is the right place
+        to put the `sse_api_events_listen` context manager.
+        """
+        async with self.backend.events.sse_api_events_listen(
+            client_ctx=self.client_ctx, last_event_id=self.last_event_id
+        ) as outcome:
+            match outcome:
+                case tuple() as item:
+                    self.initial_organization_config_event, self.additional_events_receiver = item
+                    return await super().__call__(scope, receive, send)
+                case SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND:
+                    _handshake_abort(
+                        CustomHttpStatus.OrganizationNotFound,
+                        api_version=self.settled_api_version,
+                        **self.headers,
+                    )
+                case SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED:
+                    _handshake_abort(
+                        CustomHttpStatus.OrganizationExpired,
+                        api_version=self.settled_api_version,
+                        **self.headers,
+                    )
+                case SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND:
+                    _handshake_abort(
+                        CustomHttpStatus.BadAuthenticationInfo,
+                        api_version=self.settled_api_version,
+                        **self.headers,
+                    )
+                case SseAPiEventsListenBadOutcome.AUTHOR_REVOKED:
+                    _handshake_abort(
+                        CustomHttpStatus.UserRevoked,
+                        api_version=self.settled_api_version,
+                        **self.headers,
+                    )
+                case unknown:
+                    assert_never(unknown)
