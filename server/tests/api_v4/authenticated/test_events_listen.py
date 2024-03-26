@@ -18,7 +18,7 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
-from parsec.events import Event
+from parsec.events import Event, EventPinged
 from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 
 
@@ -342,3 +342,57 @@ async def test_keep_alive(minimalorg: MinimalorgRpcClients, backend: Backend) ->
                 break
 
     assert got_keepalive
+
+
+async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
+    async with minimalorg.alice.events_listen() as alice_sse:
+        raw_source = alice_sse._iter_events  # pyright: ignore[reportPrivateUsage]
+
+        # 1. Start by sending 4 ping event
+        for ping in ("event1", "event2", "event3", "event4"):
+            backend.event_bus._dispatch_incoming_event(  # pyright: ignore[reportPrivateUsage]
+                EventPinged(
+                    organization_id=minimalorg.organization_id,
+                    ping=ping,
+                )
+            )
+
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventPinged(ping="event1")
+        )
+
+        event2_id = (await anext(raw_source)).id
+
+        for ping in ("event3", "event4"):
+            event = await alice_sse.next_event()
+            assert event == authenticated_cmds.v4.events_listen.RepOk(
+                authenticated_cmds.v4.events_listen.APIEventPinged(ping=ping)
+            )
+
+    # 3. Now ask for events *after* the second EventPinged
+    async with minimalorg.alice.events_listen(last_event_id=event2_id) as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        # 4. Only the last two EventPinged should be obtained
+        for ping in ("event3", "event4"):
+            event = await alice_sse.next_event()
+            assert event == authenticated_cmds.v4.events_listen.RepOk(
+                authenticated_cmds.v4.events_listen.APIEventPinged(ping=ping)
+            )
