@@ -4,9 +4,7 @@
 
 import { DateTime } from 'luxon';
 
-export function getAppVersion(): string {
-  return '3.0.0a';
-}
+export const APP_VERSION = __APP_VERSION__;
 
 export interface Change {
   description: string;

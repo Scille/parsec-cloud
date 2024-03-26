@@ -679,6 +679,7 @@ Vacuum
 verifykey
 verrsrc
 viewcode
+VITE
 Vlob
 Vlobs
 VueJs

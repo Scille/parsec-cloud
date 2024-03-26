@@ -68,7 +68,7 @@
         class="footer-list__item"
         @click="onOptionClick(ProfilePopoverOption.App)"
       >
-        <ion-text class="body-sm version"> {{ $t('MenuPage.about') }} (v{{ getAppVersion() }}) </ion-text>
+        <ion-text class="body-sm version"> {{ $t('MenuPage.about') }} (v{{ APP_VERSION }}) </ion-text>
       </ion-item>
     </div>
   </ion-list>
@@ -86,7 +86,7 @@ export enum ProfilePopoverOption {
 </script>
 
 <script setup lang="ts">
-import { getAppVersion } from '@/common/mocks';
+import { APP_VERSION } from '@/common/mocks';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { cog, logOut, personCircle, phonePortrait } from 'ionicons/icons';

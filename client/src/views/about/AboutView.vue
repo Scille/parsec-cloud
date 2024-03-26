@@ -9,7 +9,7 @@
       class="update-container body"
     >
       <ion-text class="update-container__text title-h5">
-        {{ $t('app.name') }} v.{{ getAppVersion() }}
+        {{ $t('app.name') }} v.{{ APP_VERSION }}
         <span class="body-sm">
           {{ $t('AboutPage.update.notUpToDate') }}
         </span>
@@ -30,7 +30,7 @@
           {{ $t('AboutPage.appInfo.version') }}
         </ion-label>
         <div class="text-btn">
-          <ion-text class="app-info-value"> v{{ getAppVersion() }} </ion-text>
+          <ion-text class="app-info-value"> v{{ APP_VERSION }} </ion-text>
           <ion-button
             class="changelog-btn button-outline"
             target="_blank"
@@ -127,7 +127,7 @@ async function showChangelog(): Promise<void> {
 </script>
 
 <script setup lang="ts">
-import { getAppVersion } from '@/common/mocks';
+import { APP_VERSION } from '@/common/mocks';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
