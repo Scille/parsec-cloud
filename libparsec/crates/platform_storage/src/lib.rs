@@ -17,3 +17,6 @@ pub mod workspace;
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
+
+/// Do not match anything (https://stackoverflow.com/a/2302992/2846140)
+const PREVENT_SYNC_PATTERN_EMPTY_PATTERN: &str = r"^\b$";

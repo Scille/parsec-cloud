@@ -9,7 +9,9 @@ use libparsec_types::prelude::*;
 
 use super::{user_storage_non_speculative_init, UserStorage};
 
-#[allow(clippy::enum_variant_names)]
+#[cfg(target_arch = "wasm32")]
+libparsec_tests_lite::wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
 enum FetchStrategy {
     No,
     Single,

@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use libparsec_types::prelude::*;
 
+use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
+
 // In theory we should have multiple kinds of database after what they are used for:
 // - workspace data storage: store local manifests & chunks of file that are not
 //   synchronized yet
@@ -57,9 +59,6 @@ pub(super) fn get_workspace_cache_storage_db_relative_path(
         format!("workspace_cache-v{STORAGE_REVISION}.sqlite"),
     ])
 }
-
-/// Do not match anything (https://stackoverflow.com/a/2302992/2846140)
-const PREVENT_SYNC_PATTERN_EMPTY_PATTERN: &str = r"^\b$";
 
 pub(super) async fn sqlx_initialize_model_if_needed(
     conn: &mut sqlx::SqliteConnection,
