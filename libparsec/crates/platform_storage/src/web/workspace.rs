@@ -63,6 +63,7 @@ impl PlatformWorkspaceStorage {
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
+        self.conn.close();
         Ok(())
     }
 

@@ -54,18 +54,6 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         query: GetCertificateQuery,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
-        // Handling `up_to` with a timestamp is a bit tricky:
-        // 1) we want the last result up to the given timestamp (included)
-        // 2) BUT ! if 1) fails we want the first result in order
-        //    to correctly return NonExisting vs ExistButTooRecent
-        //
-        // So to do that we act in three steps:
-        //  1) do the SQL query with the `up_to` filter
-        //  2) if the previous query returned nothing, do another SQL query without `up_to`
-        //  3) compare the datetime of the result with the on provided by `up_to`: if it's
-        //     too high it's a ExistButTooRecent error otherwise it's a valid result
-
-        // Step 1: do the regular SQL query
         let certifs = Certificate::get_values(
             &self.transaction,
             CertificateFilter {
@@ -106,16 +94,18 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             return Err(GetCertificateError::NonExisting);
         };
 
-        // Step 2: determine if the result is an actual success or a ExistButTooRecent error
+        // Determine if the result is an actual success or a ExistButTooRecent error
         if let Some((certif_timestamp, certif)) = maybe_certif_timestamp {
             let certificate_timestamp = DateTime::from_f64_with_us_precision(certif_timestamp);
 
-            Err(GetCertificateError::ExistButTooRecent {
-                certificate_timestamp,
-            })
-        } else {
-            Err(GetCertificateError::NonExisting)
+            if certificate_timestamp > up_to {
+                return Err(GetCertificateError::ExistButTooRecent {
+                    certificate_timestamp,
+                });
+            }
         }
+
+        Err(GetCertificateError::NonExisting)
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
@@ -341,6 +331,8 @@ impl PlatformCertificatesStorage {
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
+        self.conn.close();
+
         Ok(())
     }
 

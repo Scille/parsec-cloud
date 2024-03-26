@@ -54,6 +54,7 @@ impl PlatformUserStorage {
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
+        self.conn.close();
         Ok(())
     }
 
