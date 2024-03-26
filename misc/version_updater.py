@@ -212,8 +212,14 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
         Tool.WinFSP: [CI_WINFSP_VERSION],
     },
-    ROOT_DIR / "bindings/electron/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
-    ROOT_DIR / "bindings/web/package.json": {Tool.License: [JSON_LICENSE_FIELD]},
+    ROOT_DIR / "bindings/electron/package.json": {
+        Tool.License: [JSON_LICENSE_FIELD],
+        Tool.Parsec: [JSON_VERSION_FIELD],
+    },
+    ROOT_DIR / "bindings/web/package.json": {
+        Tool.License: [JSON_LICENSE_FIELD],
+        Tool.Parsec: [JSON_VERSION_FIELD],
+    },
     ROOT_DIR / "cli/src/tests.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
     },
