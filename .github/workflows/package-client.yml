@@ -5,6 +5,7 @@ on:
     paths:
       - .github/workflows/package-client.yml
       - ./client/electron/package.js
+      - ./client/electron/snap
   workflow_call:
     inputs:
       version:
