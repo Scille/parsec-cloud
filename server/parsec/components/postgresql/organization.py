@@ -276,8 +276,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # `None` stands for "no limit"
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
-        force_bootstrap_token: BootstrapToken | None = None,
         minimum_archiving_period: UnsetType | int = Unset,
+        force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
         if active_users_limit is Unset:

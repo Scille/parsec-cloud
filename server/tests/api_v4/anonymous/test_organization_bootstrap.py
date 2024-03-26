@@ -149,6 +149,7 @@ async def test_invalid_certificate(
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
     anonymous_client: AnonymousRpcClient,
+    cleanup_organizations: None,
 ) -> None:
     config = await backend_bootstrap_config(organization_id)
 
@@ -195,6 +196,7 @@ async def test_organization_already_bootstrapped(
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
     anonymous_client: AnonymousRpcClient,
+    cleanup_organizations: None,
 ) -> None:
     config = await backend_bootstrap_config(organization_id)
 
@@ -243,6 +245,7 @@ async def test_invalid_bootstrap_token(
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
     anonymous_client: AnonymousRpcClient,
+    cleanup_organizations: None,
 ) -> None:
     config = await backend_bootstrap_config(organization_id)
 
@@ -300,6 +303,7 @@ async def test_timestamp_out_of_ballpark(
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
     anonymous_client: AnonymousRpcClient,
+    cleanup_organizations: None,
 ) -> None:
     config = await backend_bootstrap_config(organization_id)
 
