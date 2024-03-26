@@ -384,7 +384,8 @@ def update_version_files(version: Version) -> set[Path]:
     Update the required files to the provided version.
     Return the set of updated files
     """
-    res = version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=True)
+    version_updater.TOOLS_VERSION[version_updater.Tool.Parsec] = str(version)
+    res = version_updater.check_tool(version_updater.Tool.Parsec, update=True)
     if res.errors:
         raise ReleaseError("Error while updating version files:\n" + "\n".join(res.errors))
     return res.updated
@@ -650,7 +651,8 @@ def check_release(version: Version) -> None:
         raise ReleaseError(
             f"Invalid __version__ in server/parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
         )
-    version_updater.check_tool(version_updater.Tool.Parsec, str(version), update=False)
+    version_updater.TOOLS_VERSION[version_updater.Tool.Parsec] = str(version)
+    version_updater.check_tool(version_updater.Tool.Parsec, update=False)
     success()
 
     # Check newsfragments
