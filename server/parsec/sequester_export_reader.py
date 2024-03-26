@@ -322,6 +322,7 @@ class WorkspaceExport:
                 continue
 
             try:
+                assert block.key is not None, "Missing key in block access"
                 clear_data = block.key.decrypt(row[0])
 
             except CryptoError as exc:
