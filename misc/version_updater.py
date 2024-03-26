@@ -174,7 +174,7 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.Poetry: "1.5.1",
     Tool.Node: "18.12.0",
     Tool.WasmPack: "0.11.0",
-    Tool.Parsec: "3.0.0-a.0+dev",
+    Tool.Parsec: "3.0.0-b.3",
     Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
