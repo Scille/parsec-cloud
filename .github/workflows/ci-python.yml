@@ -114,7 +114,6 @@ jobs:
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
-        if: (!inputs.style-only)
         id: cache-libparsec
         uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin v4.0.2
         with:
@@ -125,6 +124,10 @@ jobs:
             # Note `server/parsec.libs/` is not included since we are going to build
             # with POETRY_LIBPARSEC_BUNDLE_EXTRA_SHARED_LIBRARIES=false (see below)
         timeout-minutes: 2
+
+      - name: Fail if libparsec is not restored when style-only==true
+        if: inputs.style-only && steps.cache-libparsec.outputs.cache-hit != 'true'
+        run: exit 1
 
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@b113a30d27a8e59c969077c0a0168cc13dab5ffc # pin v1.8.0
