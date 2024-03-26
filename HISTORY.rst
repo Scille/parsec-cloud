@@ -5,6 +5,29 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.0-b.5 (2024-03-26)
+------------------------------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add documentation for the ``recovery device`` feature. This feature was
+  introduced in v2.6.0 and it was not documented until now.
+  (`#5630 <https://github.com/Scille/parsec-cloud/issues/5630>`__)
+
+* Add SBOM (Software Bills Of Materials) generation on software packaging. This
+  provides the list of dependencies used to build the software.
+  (`#4770 <https://github.com/Scille/parsec-cloud/issues/4770>`__)
+
+
+Client/Backend API evolutions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Drop support for API v2
+  (`#4546 <https://github.com/Scille/parsec-cloud/issues/4546>`__)
+
+
+
 Parsec v2.16.0-a.0 (2023-06-07)
 -------------------------------
 

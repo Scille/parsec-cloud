@@ -1,2 +1,0 @@
-Add SBOM (Software Bills Of Materials) generation on software packaging.
-This provides the list of dependencies used to build the software.
