@@ -51,6 +51,7 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
         async with anyio.create_task_group() as tg:
             tg.start_soon(first, tg.cancel_scope)
             await spy.wait(EventEnrollmentConduit)
+
             await second(tg.cancel_scope)
 
     assert rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepOk()
