@@ -9,6 +9,25 @@ use libparsec_types::prelude::*;
 
 use crate::{EventBus, EventTooMuchDriftWithServerClock};
 
+// Invite command do long polling, so we need to retry on gateway timeout.
+macro_rules! retry_send_on_gateway_timeout {
+    ($send_block:expr) => {
+        async {
+            loop {
+                let outcome = $send_block.await;
+                if matches!(
+                    outcome,
+                    Err(ConnectionError::InvalidResponseStatus(status))
+                    if status.as_u16() == 504
+                ) {
+                    continue;
+                }
+                break outcome;
+            }
+        }
+    };
+}
+
 /*
  * new_user_invitation
  */
@@ -53,6 +72,7 @@ pub async fn new_user_invitation(
         claimer_email,
         send_email,
     };
+    // Not long polling, so no need to retry on gateway timeout
     let rep = cmds.send(req).await?;
 
     match rep {
@@ -106,6 +126,7 @@ pub async fn new_device_invitation(
     };
 
     let req = Req { send_email };
+    // Not long polling, so no need to retry on gateway timeout
     let rep = cmds.send(req).await?;
 
     match rep {
@@ -159,6 +180,7 @@ pub async fn cancel_invitation(
     use authenticated_cmds::latest::invite_cancel::{Rep, Req};
 
     let req = Req { token };
+    // Not long polling, so no need to retry on gateway timeout
     let rep = cmds.send(req).await?;
 
     match rep {
@@ -270,13 +292,15 @@ impl BaseGreetInitialCtx {
         let claimer_public_key = {
             use authenticated_cmds::latest::invite_1_greeter_wait_peer::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    greeter_public_key: greeter_private_key.public_key(),
-                    token: self.token,
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        greeter_public_key: greeter_private_key.public_key(),
+                        token: self.token,
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { claimer_public_key } => Ok(claimer_public_key),
@@ -294,7 +318,10 @@ impl BaseGreetInitialCtx {
         let claimer_hashed_nonce = {
             use authenticated_cmds::latest::invite_2a_greeter_get_hashed_nonce::{Rep, Req};
 
-            let rep = self.cmds.send(Req { token: self.token }).await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds.send(Req { token: self.token }).await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok {
@@ -312,13 +339,15 @@ impl BaseGreetInitialCtx {
         let claimer_nonce = {
             use authenticated_cmds::latest::invite_2b_greeter_send_nonce::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    greeter_nonce: greeter_nonce.clone(),
-                    token: self.token,
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        greeter_nonce: greeter_nonce.clone(),
+                        token: self.token,
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { claimer_nonce } => Ok(claimer_nonce),
@@ -413,7 +442,10 @@ impl BaseGreetInProgress1Ctx {
     async fn do_wait_peer_trust(self) -> Result<BaseGreetInProgress2Ctx, GreetInProgressError> {
         use authenticated_cmds::latest::invite_3a_greeter_wait_peer_trust::{Rep, Req};
 
-        let rep = self.cmds.send(Req { token: self.token }).await?;
+        let rep = retry_send_on_gateway_timeout!(async {
+            self.cmds.send(Req { token: self.token }).await
+        })
+        .await?;
 
         match rep {
             Rep::Ok => Ok(BaseGreetInProgress2Ctx {
@@ -488,7 +520,10 @@ impl BaseGreetInProgress2Ctx {
     async fn do_signify_trust(self) -> Result<BaseGreetInProgress3Ctx, GreetInProgressError> {
         use authenticated_cmds::latest::invite_3b_greeter_signify_trust::{Rep, Req};
 
-        let rep = self.cmds.send(Req { token: self.token }).await?;
+        let rep = retry_send_on_gateway_timeout!(async {
+            self.cmds.send(Req { token: self.token }).await
+        })
+        .await?;
 
         match rep {
             Rep::Ok => Ok(BaseGreetInProgress3Ctx {
@@ -572,14 +607,16 @@ impl BaseGreetInProgress3Ctx {
     ) -> Result<BaseGreetInProgress3WithPayloadCtx, GreetInProgressError> {
         use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
 
-        let rep = self
-            .cmds
-            .send(Req {
-                token: self.token,
-                payload: Bytes::new(),
-                last: false,
-            })
-            .await?;
+        let rep = retry_send_on_gateway_timeout!(async {
+            self.cmds
+                .send(Req {
+                    token: self.token,
+                    payload: Bytes::new(),
+                    last: false,
+                })
+                .await
+        })
+        .await?;
 
         let payload = match rep {
             Rep::Ok { payload } => Ok(payload),
@@ -800,6 +837,7 @@ impl UserGreetInProgress4Ctx {
             {
                 use authenticated_cmds::latest::user_create::{Rep, Req};
 
+                // Not long polling, so no need to retry on gateway timeout
                 let rep = self
                     .cmds
                     .send(Req {
@@ -864,21 +902,23 @@ impl UserGreetInProgress4Ctx {
         // 2) if this occurs the inviter can revoke the user and retry the
         // enrollment process to fix this
 
-        let payload = invite_user_confirmation
+        let payload: Bytes = invite_user_confirmation
             .dump_and_encrypt(&self.shared_secret_key)
             .into();
 
         {
             use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    payload,
-                    last: true,
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        token: self.token,
+                        payload: payload.clone(),
+                        last: true,
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { .. } => Ok(()),
@@ -925,6 +965,7 @@ impl DeviceGreetInProgress4Ctx {
             {
                 use authenticated_cmds::latest::device_create::{Rep, Req};
 
+                // Not long polling, so no need to retry on gateway timeout
                 let rep = self
                     .cmds
                     .send(Req {
@@ -972,7 +1013,7 @@ impl DeviceGreetInProgress4Ctx {
         // 2) if this occurs the inviter can revoke the device and retry the
         // enrollment process to fix this
 
-        let payload = InviteDeviceConfirmation {
+        let payload: Bytes = InviteDeviceConfirmation {
             device_id,
             device_label,
             human_handle: self.device.human_handle.clone(),
@@ -988,14 +1029,16 @@ impl DeviceGreetInProgress4Ctx {
         {
             use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    payload,
-                    last: true,
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        token: self.token,
+                        payload: payload.clone(),
+                        last: true,
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { .. } => Ok(()),
