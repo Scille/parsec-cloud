@@ -115,7 +115,7 @@ parts:
     build-environment:
       - ICON_PATH: &desktop-icon-path usr/share/icons/hicolor/512x512/apps/parsec-v3.png
       - DESKTOP_PATH: &desktop-path usr/share/applications/parsec-v3.desktop
-      - PARSEC_SCHEME: parsec-v3
+      - PARSEC_SCHEME: parsec3
     prime:
       - *desktop-icon-path
       - *desktop-path
