@@ -527,15 +527,20 @@ export type ClientCreateWorkspaceError =
 
 // ClientEvent
 export enum ClientEventTag {
+    ExpiredOrganization = 'ClientEventExpiredOrganization',
     IncompatibleServer = 'ClientEventIncompatibleServer',
     InvitationChanged = 'ClientEventInvitationChanged',
     Offline = 'ClientEventOffline',
     Online = 'ClientEventOnline',
     Ping = 'ClientEventPing',
+    RevokedSelfUser = 'ClientEventRevokedSelfUser',
     ServerConfigChanged = 'ClientEventServerConfigChanged',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
 }
 
+export interface ClientEventExpiredOrganization {
+    tag: ClientEventTag.ExpiredOrganization
+}
 export interface ClientEventIncompatibleServer {
     tag: ClientEventTag.IncompatibleServer
     detail: string
@@ -555,6 +560,9 @@ export interface ClientEventPing {
     tag: ClientEventTag.Ping
     ping: string
 }
+export interface ClientEventRevokedSelfUser {
+    tag: ClientEventTag.RevokedSelfUser
+}
 export interface ClientEventServerConfigChanged {
     tag: ClientEventTag.ServerConfigChanged
 }
@@ -566,11 +574,13 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballparkClientLateOffset: number
 }
 export type ClientEvent =
+  | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged
   | ClientEventOffline
   | ClientEventOnline
   | ClientEventPing
+  | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
 
