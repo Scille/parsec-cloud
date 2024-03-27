@@ -476,6 +476,9 @@ export type ClientCreateWorkspaceError =
 
 
 // ClientEvent
+export interface ClientEventExpiredOrganization {
+    tag: "ExpiredOrganization"
+}
 export interface ClientEventIncompatibleServer {
     tag: "IncompatibleServer"
     detail: string
@@ -495,6 +498,9 @@ export interface ClientEventPing {
     tag: "Ping"
     ping: string
 }
+export interface ClientEventRevokedSelfUser {
+    tag: "RevokedSelfUser"
+}
 export interface ClientEventServerConfigChanged {
     tag: "ServerConfigChanged"
 }
@@ -506,11 +512,13 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballpark_client_late_offset: number
 }
 export type ClientEvent =
+  | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged
   | ClientEventOffline
   | ClientEventOnline
   | ClientEventPing
+  | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
 

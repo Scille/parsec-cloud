@@ -2726,6 +2726,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         .as_string()
         .ok_or_else(|| JsValue::from(TypeError::new("tag isn't a string")))?;
     match tag.as_str() {
+        "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
         "ClientEventIncompatibleServer" => {
             let detail = {
                 let js_val = Reflect::get(&obj, &"detail".into())?;
@@ -2781,6 +2782,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             };
             Ok(libparsec::ClientEvent::Ping { ping })
         }
+        "ClientEventRevokedSelfUser" => Ok(libparsec::ClientEvent::RevokedSelfUser {}),
         "ClientEventServerConfigChanged" => Ok(libparsec::ClientEvent::ServerConfigChanged {}),
         "ClientEventTooMuchDriftWithServerClock" => {
             let server_timestamp = {
@@ -2828,6 +2830,13 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
 fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     match rs_obj {
+        libparsec::ClientEvent::ExpiredOrganization { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventExpiredOrganization".into(),
+            )?;
+        }
         libparsec::ClientEvent::IncompatibleServer { detail, .. } => {
             Reflect::set(
                 &js_obj,
@@ -2866,6 +2875,9 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventPing".into())?;
             let js_ping = ping.into();
             Reflect::set(&js_obj, &"ping".into(), &js_ping)?;
+        }
+        libparsec::ClientEvent::RevokedSelfUser { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventRevokedSelfUser".into())?;
         }
         libparsec::ClientEvent::ServerConfigChanged { .. } => {
             Reflect::set(

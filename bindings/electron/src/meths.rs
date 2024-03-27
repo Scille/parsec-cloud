@@ -2541,6 +2541,7 @@ fn variant_client_event_js_to_rs<'a>(
 ) -> NeonResult<libparsec::ClientEvent> {
     let tag = obj.get::<JsString, _, _>(cx, "tag")?.value(cx);
     match tag.as_str() {
+        "ClientEventExpiredOrganization" => Ok(libparsec::ClientEvent::ExpiredOrganization {}),
         "ClientEventIncompatibleServer" => {
             let detail = {
                 let js_val: Handle<JsString> = obj.get(cx, "detail")?;
@@ -2581,6 +2582,7 @@ fn variant_client_event_js_to_rs<'a>(
             };
             Ok(libparsec::ClientEvent::Ping { ping })
         }
+        "ClientEventRevokedSelfUser" => Ok(libparsec::ClientEvent::RevokedSelfUser {}),
         "ClientEventServerConfigChanged" => Ok(libparsec::ClientEvent::ServerConfigChanged {}),
         "ClientEventTooMuchDriftWithServerClock" => {
             let server_timestamp = {
@@ -2635,6 +2637,10 @@ fn variant_client_event_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     match rs_obj {
+        libparsec::ClientEvent::ExpiredOrganization { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventExpiredOrganization").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientEvent::IncompatibleServer { detail, .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventIncompatibleServer").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -2671,6 +2677,10 @@ fn variant_client_event_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_ping = JsString::try_new(cx, ping).or_throw(cx)?;
             js_obj.set(cx, "ping", js_ping)?;
+        }
+        libparsec::ClientEvent::RevokedSelfUser { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventRevokedSelfUser").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClientEvent::ServerConfigChanged { .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventServerConfigChanged").or_throw(cx)?;
