@@ -11,6 +11,7 @@ ALLSPHINXOPTS
 alsa
 androideabi
 androidx
+anext
 anyio
 appendleft
 aqtbot
