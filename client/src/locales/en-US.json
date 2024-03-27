@@ -54,7 +54,6 @@
     "notificationCenter": {
         "title": "Notifications",
         "readOnly": "Only unread",
-        "browse": "Go to location",
         "goToWorkspace": "Go to this workspace",
         "openImportedMenu": "Open imported files menu",
         "viewJoinedUsers": "View users",
@@ -74,7 +73,6 @@
         "multipleUsersJoinWorkspace": "{count} have joined the workspace {workspace}",
         "users": "users",
         "userSharedDocument": "{name} shared a new document",
-        "revokedOrganizationAccess": "You no longer have access to organization {organization}",
         "allImportedElements": "All your elements have been imported",
         "newDeviceAdded": "A new device has been added to the organization",
         "serverOnline": "You are connected to the Parsec server",
@@ -99,7 +97,6 @@
         },
         "organizationList": {
             "title": "Your organizations",
-            "lastLogin": "Last login:",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization",
@@ -127,8 +124,6 @@
             "login": "Log in"
         },
         "organizationActionSheet": "Organization",
-        "loginNotification": "Incorrect password!",
-        "howToAddDevices": "Create a new organization or get invited into an existing one.",
         "keyringFailed": "Could not log in",
         "noDevices": {
             "titleCreateOrga": "New to Parsec Cloud ?",
@@ -241,7 +236,6 @@
     },
     "WorkspaceSharing": {
         "title": "Share this workspace",
-        "searchLabel": "Name or email address",
         "searchPlaceholder": "e.g.: John Smith",
         "currentUserLabel": "Me",
         "unshareSuccess": "The workspace is no longer shared with {user}.",
@@ -457,28 +451,21 @@
     "FileDetails": {
         "title": "Details on {name}",
         "stats": {
-            "type": "Type",
             "file": "File",
             "folder": "Folder",
             "created": "Created",
             "updated": "Updated: ",
             "version": "Version",
-            "id": "Id",
             "size": "Size",
             "path": "Path",
-            "copyLink": "Copy link",
             "linkCopied": "Copied"
         }
     },
     "OrganizationPage": {
         "infoPage": {
             "getInfoFailed": "Failed to retrieve organization information. Please make sure you are online.",
-            "title": "{organizationName}",
             "users": {
                 "revokedUsers": "Revoked",
-                "outsiderUsers": "Outsider",
-                "standardUsers": "Standard",
-                "adminUsers": "Administrator",
                 "activeUsers": "Active",
                 "title": "Users",
                 "seeUsers": "See users"
@@ -530,9 +517,6 @@
         "workspaces": "Workspaces",
         "noWorkspace": "No workspaces",
         "users": "Users",
-        "revokedUsers": "Revoked",
-        "activeUsers": "Active",
-        "invitations": "Invitations",
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
@@ -709,8 +693,7 @@
             "GetHostCode": "Host code",
             "ProvideGuestCode": "Guest code",
             "ContactDetails": "Contact details",
-            "Authentication": "Authentication",
-            "Validation": "Validation"
+            "Authentication": "Authentication"
         },
         "instructions": {
             "start": {
@@ -790,8 +773,6 @@
         },
         "emptyList": "No user to display.",
         "listUsersFailed": "Failed to retrieve the users list. Please make sure you are online.",
-        "revokedEmptyList": "No revoked users to display.",
-        "listRevokedUsersFailed": "Failed to retrieve the revoked users list. Please make sure you are online.",
         "userSelectedCount": "No user selected | One user selected | {count} users selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
@@ -843,12 +824,6 @@
         "invitation": {
             "greetUser": "Greet",
             "rejectUser": "Cancel",
-            "emailTitle": "Email",
-            "dateTitle": "Invitation date",
-            "statusTitle": "Status",
-            "noInvitations": "No pending invitations",
-            "invitationCount": "No pending invitation | One pending invitation | {count} pending invitations",
-            "invitationsListFailed": "Failed to retrieve the invitations list. Please make sure you are online.",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "This email is already used by a member of this organization.",
@@ -966,7 +941,6 @@
         "cancelNo": "Resume",
         "successMessage": "You can now access your organization from your new device.",
         "errors": {
-            "startFailed": "Failed to start the onboarding process. Please make sure the link is correct and that you are online.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "saveDeviceFailed": "Failed to save the information, please try again",
             "sendDeviceInfoFailed": "Failed to send information to the host, please restart the onboarding process.",
@@ -983,7 +957,6 @@
     "ContactDetailsPage": {
         "titleActualPassword": "Enter your current password",
         "titleNewPassword": "Choose a new password",
-        "validNewPassword": "Change your password",
         "keyring": "This device is authenticated using the system.",
         "email": "Email",
         "authenticationMethod": "Authentication method",
@@ -992,7 +965,6 @@
         "changePasswordButton": "Update",
         "passwordUpdated": "Password has been updated. You can log in with your new password.",
         "errors": {
-            "emptyPasswordError": "Please fill your password.",
             "wrongPassword": "Wrong password. Please try again.",
             "cannotChangePassword": "Failed to update password",
             "failedToRetrieveInformation": "Failed to retrieve information. Please make sure you are online."

@@ -166,7 +166,7 @@ async function refreshDevicesList(): Promise<void> {
   } else {
     informationManager.present(
       new Information({
-        message: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed.message'),
+        message: translate('DevicesPage.greet.errors.retrieveDeviceInfoFailed'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

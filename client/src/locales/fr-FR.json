@@ -54,7 +54,6 @@
     "notificationCenter": {
         "title": "Notifications",
         "readOnly": "Non lues uniquement",
-        "browse": "Aller à l'emplacement",
         "goToWorkspace": "Accéder à l'espace de travail",
         "openImportedMenu": "Ouvrir le menu d'importations",
         "viewJoinedUsers": "Voir les utilisateurs",
@@ -74,7 +73,6 @@
         "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
         "users": "utilisateurs",
         "userSharedDocument": "{name} a partagé un nouveau document",
-        "revokedOrganizationAccess": "Vous n'avez plus accès à l'organisation {organization}",
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
         "serverOnline": "Vous êtes connecté au serveur Parsec",
@@ -99,7 +97,6 @@
         },
         "organizationList": {
             "title": "Vos organisations",
-            "lastLogin": "Dernière connexion :",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
             "sortByOrganization": "Organisation",
@@ -127,8 +124,6 @@
             "login": "Se connecter"
         },
         "organizationActionSheet": "Organisation",
-        "loginNotification": "Le mot de passe est invalide !",
-        "howToAddDevices": "Créez une nouvelle organisation ou faites-vous inviter dans une organisation existante.",
         "keyringFailed": "Impossible de se connecter",
         "noDevices": {
             "titleCreateOrga": "Vous débutez sur Parsec Cloud ?",
@@ -241,7 +236,6 @@
     },
     "WorkspaceSharing": {
         "title": "Partager cet espace de travail",
-        "searchLabel": "Nom ou email",
         "searchPlaceholder": "ex : Jean Martin",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
@@ -457,28 +451,21 @@
     "FileDetails": {
         "title": "Détails de {name}",
         "stats": {
-            "type": "Type",
             "file": "Fichier",
             "folder": "Dossier",
             "created": "Créé le",
             "updated": "Mis à jour : ",
             "version": "Version",
-            "id": "Id",
             "size": "Taille",
             "path": "Emplacement",
-            "copyLink": "Copier le lien",
             "linkCopied": "Copié"
         }
     },
     "OrganizationPage": {
         "infoPage": {
             "getInfoFailed": "Impossible de récupérer les informations sur l'organisation. Veuillez vérifier votre connexion internet.",
-            "title": "Informations sur {organizationName}",
             "users": {
                 "revokedUsers": "Révoqué",
-                "outsiderUsers": "Externe",
-                "standardUsers": "Standard",
-                "adminUsers": "Administrateur",
                 "activeUsers": "Actif",
                 "title": "Utilisateurs",
                 "seeUsers": "Voir les utilisateurs"
@@ -530,9 +517,6 @@
         "workspaces": "Espaces de travail",
         "noWorkspace": "Aucun espace de travail",
         "users": "Utilisateurs",
-        "revokedUsers": "Révoqués",
-        "activeUsers": "Actifs",
-        "invitations": "Invitations",
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
@@ -709,8 +693,7 @@
             "GetHostCode": "Code hôte",
             "ProvideGuestCode": "Code invité",
             "ContactDetails": "Coordonnées",
-            "Authentication": "Authentification",
-            "Validation": "Validation"
+            "Authentication": "Authentification"
         },
         "instructions": {
             "start": {
@@ -790,8 +773,6 @@
         },
         "emptyList": "Aucun utilisateur à afficher.",
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
-        "revokedEmptyList": "Aucun utilisateur révoqué",
-        "listRevokedUsersFailed": "Impossible d'obtenir la liste des utilisateurs révoqués. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
@@ -843,12 +824,6 @@
         "invitation": {
             "greetUser": "Accueillir",
             "rejectUser": "Annuler",
-            "emailTitle": "Email",
-            "dateTitle": "Date d'invitation",
-            "statusTitle": "Statut",
-            "noInvitations": "Aucune invitation en cours",
-            "invitationCount": "Aucune invitation en attente | Une invitation en attente | {count} invitations en attente",
-            "invitationsListFailed": "Impossible de lister les invitations. Veuillez vérifier votre connexion internet.",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "Cet email est déjà utilisé par un membre de cette organisation.",
@@ -966,7 +941,6 @@
         "cancelNo": "Reprendre",
         "successMessage": "Vous pouvez maintenant vous connecter à cette organisation depuis votre nouvel appareil.",
         "errors": {
-            "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que le lien d'invitation est correct et que vous êtes connecté(e) à Internet.",
             "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
             "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
@@ -983,7 +957,6 @@
     "ContactDetailsPage": {
         "titleActualPassword": "Saisissez votre mot de passe",
         "titleNewPassword": "Choisissez un nouveau mot de passe",
-        "validNewPassword": "Mettre à jour mon mot de passe",
         "keyring": "Cet appareil est authentifié par le système.",
         "email": "Email",
         "authenticationMethod": "Méthode d'authentification",
@@ -992,7 +965,6 @@
         "changePasswordButton": "Modifier",
         "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
         "errors": {
-            "emptyPasswordError": "Merci de saisir votre mot de passe.",
             "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
             "cannotChangePassword": "Impossible de changer le mot de passe",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
