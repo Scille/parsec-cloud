@@ -1,12 +1,35 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import anyio
+from fastapi import HTTPException
 
-from parsec._parsec import HashDigest, PrivateKey, authenticated_cmds, invited_cmds
+from parsec._parsec import DateTime, HashDigest, PrivateKey, authenticated_cmds, invited_cmds
 from parsec.backend import Backend
-from parsec.components.invite import ConduitState, InviteConduitExchangeBadOutcome
+from parsec.components.invite import ConduitListenCtx, ConduitState, InviteConduitExchangeBadOutcome
 
 from .client import AuthenticatedRpcClient, InvitedRpcClient
+
+
+def patch_backend_for_timeout_during_conduit_listen(
+    backend: Backend, state: ConduitState, is_greeter: bool
+):
+    vanilla_conduit_listen = backend.invite._conduit_listen
+    timeout_occured = False
+
+    async def patched_conduit_listen(
+        now: DateTime,
+        ctx: ConduitListenCtx,
+    ):
+        nonlocal timeout_occured
+        if not timeout_occured:
+            if ctx.is_greeter == is_greeter and ctx.state == state:
+                timeout_occured = True
+                # 504 is gateway timeout
+                raise HTTPException(status_code=504)
+
+        return await vanilla_conduit_listen(now, ctx)
+
+    backend.invite._conduit_listen = patched_conduit_listen
 
 
 async def pass_state_1_wait_peer(
