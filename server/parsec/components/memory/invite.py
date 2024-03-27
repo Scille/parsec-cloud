@@ -133,8 +133,25 @@ class MemoryInviteComponent(BaseInviteComponent):
             # - the conduit state has changed in our back (maybe reset by the peer)
             # - we want to reset the conduit
             # - we have already provided a payload for the current conduit state (most
-            #   likely because a retry of a command that failed due to connection outage)
-            if state == ConduitState.STATE_1_WAIT_PEERS:
+            #   likely because the current request is a retry of a command that
+            #   failed due to connection outage)
+
+            if curr_our_payload == payload and (
+                not is_greeter or invitation.conduit_is_last_exchange == last
+            ):
+                # In case of gateway timeout, the client will retry the same command with
+                # the exact same payload, and will just pretend the timeout never occured
+                # and we were listening all along.
+
+                # If the peer has talked in the meantime, we have to ignore it otherwise
+                # it will mess up our role in the conduit exchange.
+                if is_greeter and invitation.conduit_talked_first == "greeter":
+                    curr_peer_payload = None
+                elif not is_greeter and invitation.conduit_talked_first == "claimer":
+                    curr_peer_payload = None
+
+                curr_peer_payload = None
+            elif state == ConduitState.STATE_1_WAIT_PEERS:
                 # We wait to reset the conduit
                 invitation.conduit_state = state
                 invitation.conduit_is_last_exchange = False
@@ -149,8 +166,12 @@ class MemoryInviteComponent(BaseInviteComponent):
         if is_greeter:
             invitation.conduit_is_last_exchange = last
             invitation.conduit_greeter_payload = payload
+            if invitation.conduit_talked_first is None:
+                invitation.conduit_talked_first = "greeter"
         else:
             invitation.conduit_claimer_payload = payload
+            if invitation.conduit_talked_first is None:
+                invitation.conduit_talked_first = "claimer"
 
         # Note that in case of conduit resets, this signal will lure the peer into
         # thinking we have answered so he will wakeup and take into account the reset
