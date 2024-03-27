@@ -99,8 +99,8 @@ async def test_disconnect_sse(
 
         # ...and we cannot reconnect !
 
-    rep = await coolorg.alice.raw_sse_connection()
-    assert rep.status_code == 462
+    async with coolorg.alice.raw_sse_connection() as rep:
+        assert rep.status_code == 462
 
 
 async def test_ok(

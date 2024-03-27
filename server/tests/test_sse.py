@@ -21,8 +21,8 @@ async def test_events_listen_auth_then_not_allowed(
 
     # ...which cause authentication failure
 
-    response = await minimalorg.alice.raw_sse_connection()
-    assert response.status_code == 403, response.content
+    async with minimalorg.alice.raw_sse_connection() as response:
+        assert response.status_code == 403, response.content
 
 
 # TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:

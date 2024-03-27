@@ -3,7 +3,7 @@
 from base64 import b64decode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
-from typing import AsyncGenerator, AsyncIterator, assert_never
+from typing import AsyncContextManager, AsyncGenerator, AsyncIterator, assert_never
 
 import pytest
 from httpx import AsyncClient, Response
@@ -151,15 +151,16 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         ) as event_source:
             yield EventsListenSSE(event_source)
 
-    async def raw_sse_connection(self, now: DateTime | None = None) -> Response:
+    def raw_sse_connection(self, now: DateTime | None = None) -> AsyncContextManager[Response]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
             self.device_id,
             now,
             self.signing_key,
         )
-        return await self.raw_client.get(
-            f"{self.url}/events",
+        return self.raw_client.stream(
+            method="GET",
+            url=f"{self.url}/events",
             headers={
                 "Authorization": f"Bearer {token.decode()}",
                 "Accept": "text/event-stream",
