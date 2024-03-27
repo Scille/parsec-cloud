@@ -35,11 +35,11 @@ class ClientEvent(Variant):
         ballpark_client_early_offset: float
         ballpark_client_late_offset: float
 
-    # class ExpiredOrganization:
-    #     pass
+    class ExpiredOrganization:
+        pass
 
-    # class RevokedSelfUser:
-    #     pass
+    class RevokedSelfUser:
+        pass
 
     class IncompatibleServer:
         detail: str
