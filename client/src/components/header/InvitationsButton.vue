@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { Answer, MsModalResult, askQuestion } from '@/components/core';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
-import { Routes, navigateTo } from '@/router';
+import { Routes, navigateTo, watchOrganizationSwitch } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
@@ -33,6 +33,8 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 
+const organizationWatchCancel = watchOrganizationSwitch(updateInvitations);
+
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data: EventData) => {
     if (event === Events.InvitationUpdated) {
@@ -43,6 +45,7 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
+  organizationWatchCancel();
   if (eventCbId) {
     await eventDistributor.removeCallback(eventCbId);
   }
