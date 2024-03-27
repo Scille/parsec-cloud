@@ -32,6 +32,29 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.new_user("bob");
+        builder.update_user_profile("bob", UserProfile::Admin);
+        builder.update_user_profile("bob", UserProfile::Standard);
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn ok_outsider_switch(
     #[values(true, false)] switched_is_self: bool,
     #[values(true, false)] switch_from_outsider: bool,

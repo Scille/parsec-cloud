@@ -28,6 +28,29 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        // Alice already has the device alice@dev1,
+        // there we create a second device alice@dev2.
+        builder.new_device("alice");
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_device("alice").customize(|event| {
