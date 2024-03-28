@@ -4,8 +4,11 @@
   <ion-list class="container">
     <ion-item class="profile-email">
       <ion-text class="body-sm">
-        {{ name }}
+        {{ email }}
       </ion-text>
+    </ion-item>
+    <ion-item>
+      <tag-profile :profile="profile" />
     </ion-item>
     <div class="main-list">
       <ion-item
@@ -87,12 +90,15 @@ export enum ProfilePopoverOption {
 
 <script setup lang="ts">
 import { APP_VERSION } from '@/common/mocks';
+import TagProfile from '@/components/users/TagProfile.vue';
+import { UserProfile } from '@/parsec';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { cog, logOut, personCircle, phonePortrait } from 'ionicons/icons';
 
 defineProps<{
-  name: string;
+  email: string;
+  profile: UserProfile;
 }>();
 
 function onOptionClick(option: ProfilePopoverOption): void {
@@ -121,6 +127,8 @@ function onOptionClick(option: ProfilePopoverOption): void {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--parsec-color-light-secondary-medium);
 
   &__item {
     --background: none;

@@ -93,6 +93,8 @@
           <profile-header
             id="profile-button"
             :name="userInfo ? userInfo.humanHandle.label : ''"
+            :email="userInfo ? userInfo.humanHandle.email : ''"
+            :profile="userInfo ? userInfo.currentProfile : UserProfile.Outsider"
             class="profile-header"
           />
         </ion-buttons>
@@ -110,7 +112,7 @@
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, StartedWorkspaceInfo, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
+import { ClientInfo, Path, StartedWorkspaceInfo, UserProfile, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
 import {
   Routes,
   currentRouteIs,

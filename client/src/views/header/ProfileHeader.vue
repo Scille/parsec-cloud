@@ -28,7 +28,7 @@
 <script setup lang="ts">
 import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { logout as parsecLogout } from '@/parsec';
+import { UserProfile, logout as parsecLogout } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
@@ -51,6 +51,8 @@ let eventCbId: null | string = null;
 
 const props = defineProps<{
   name: string;
+  email: string;
+  profile: UserProfile;
 }>();
 
 onMounted(async () => {
@@ -75,7 +77,8 @@ async function openPopover(event: Event): Promise<void> {
     component: ProfileHeaderPopover,
     cssClass: 'profile-header-popover',
     componentProps: {
-      name: props.name,
+      email: props.email,
+      profile: props.profile,
     },
     event: event,
     showBackdrop: false,
