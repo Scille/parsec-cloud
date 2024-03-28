@@ -41,16 +41,19 @@
 
 <script setup lang="ts">
 import { MsImage, NoNotification } from '@/components/core/ms-image';
-import { Notifications } from '@/components/notifications/index';
-import { InformationDataType, InformationManager, InformationManagerKey } from '@/services/informationManager';
-import { Notification } from '@/services/notificationManager';
+import { Notifications } from '@/components/notifications';
+import { InformationDataType } from '@/services/informationManager';
+import { Notification, NotificationManager } from '@/services/notificationManager';
 import { IonList, IonText, IonToggle } from '@ionic/vue';
-import { Ref, computed, inject, ref, type Component } from 'vue';
+import { Ref, computed, ref, type Component } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-const unreadCount = informationManager.notificationManager.getUnreadCount();
+const props = defineProps<{
+  notificationManager: NotificationManager;
+}>();
+
+const unreadCount = props.notificationManager.getUnreadCount();
 const notifications = computed(() => {
-  return informationManager.notificationManager
+  return props.notificationManager
     .getNotifications()
     .filter((n) => (onlyReadToggle.value ? !n.read : true))
     .sort((n1, n2) => n2.time.toMillis() - n1.time.toMillis());
@@ -83,7 +86,7 @@ function getComponentType(notification: Notification): Component {
 
 function onNotificationMouseOver(notification: Notification): void {
   if (!notification.read) {
-    informationManager.notificationManager.markAsRead(notification.information.id);
+    props.notificationManager.markAsRead(notification.information.id);
   }
 }
 </script>

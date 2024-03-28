@@ -39,10 +39,9 @@ import {
   parseFileLink,
 } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
-import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
-import { ImportManager, ImportManagerKey } from '@/services/importManager';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
@@ -58,11 +57,12 @@ async function setupApp(): Promise<void> {
 
   const { t } = i18n.global;
 
-  const informationManager = new InformationManager();
-  const importManager = new ImportManager();
+  const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
-  const eventDistributor = new EventDistributor();
   const router = getRouter();
+
+  const injections = injectionProvider.getDefault();
+  const informationManager = injections.informationManager;
 
   const app = createApp(App)
     .use(IonicVue, {
@@ -73,10 +73,8 @@ async function setupApp(): Promise<void> {
     .use(Vue3Lottie);
 
   app.provide(StorageManagerKey, storageManager);
-  app.provide(InformationManagerKey, informationManager);
-  app.provide(ImportManagerKey, importManager);
+  app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
-  app.provide(EventDistributorKey, eventDistributor);
 
   // We get the app element
   const appElem = document.getElementById('app');
@@ -161,7 +159,7 @@ async function setupApp(): Promise<void> {
       });
       if (answer === Answer.Yes) {
         const devices = await getLoggedInDevices();
-        await importManager.stop();
+        await injectionProvider.cleanAll();
         for (const device of devices) {
           await logout(device.handle);
         }

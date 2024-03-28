@@ -29,11 +29,12 @@
 import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { logout as parsecLogout } from '@/parsec';
-import { Routes, navigateTo } from '@/router';
+import { Routes, getConnectionHandle, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -46,6 +47,7 @@ const isPopoverOpen = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 
 let eventCbId: null | string = null;
 
@@ -102,9 +104,11 @@ async function openPopover(event: Event): Promise<void> {
       );
 
       if (answer === Answer.Yes) {
-        const menuCtrls = useUploadMenu();
-        menuCtrls.hide();
-        await importManager.stop();
+        const handle = getConnectionHandle();
+        if (!handle) {
+          console.error('Already logged out');
+          return;
+        }
         const result = await parsecLogout();
         if (!result.ok) {
           informationManager.present(
@@ -115,6 +119,9 @@ async function openPopover(event: Event): Promise<void> {
             PresentationMode.Toast,
           );
         } else {
+          const menuCtrls = useUploadMenu();
+          menuCtrls.hide();
+          await injectionProvider.clean(handle);
           await navigateTo(Routes.Home, { replace: true, skipHandle: true });
         }
       }
