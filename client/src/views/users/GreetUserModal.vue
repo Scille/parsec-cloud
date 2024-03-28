@@ -176,10 +176,10 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 enum GreetUserStep {
   WaitForGuest = 1,
@@ -193,6 +193,7 @@ enum GreetUserStep {
 const pageStep = ref(GreetUserStep.WaitForGuest);
 const props = defineProps<{
   invitation: UserInvitation;
+  informationManager: InformationManager;
 }>();
 
 const profile: Ref<UserProfile | null> = ref(null);
@@ -200,7 +201,6 @@ const guestInfoPage = ref();
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const profileOptions: MsOptions = new MsOptions([
   {
@@ -293,7 +293,7 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet(props.invitation.token);
   if (!result.ok) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('UsersPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
@@ -305,7 +305,7 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('UsersPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
@@ -361,7 +361,7 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: message,
       level: InformationLevel.Error,
@@ -377,7 +377,7 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetUserStep.Summary) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('UsersPage.greet.success', {
           user: guestInfoPage.value.fullName,

@@ -216,7 +216,6 @@ import {
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
-  watchOrganizationSwitch,
 } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useSidebarMenu from '@/services/sidebarMenu';
@@ -290,8 +289,6 @@ async function createWorkspace(): Promise<void> {
   }
 }
 
-const organizationWatchCancel = watchOrganizationSwitch(loadAll);
-
 async function loadAll(): Promise<void> {
   const infoResult = await parsecGetClientInfo();
 
@@ -333,7 +330,6 @@ onUnmounted(() => {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
   resetWatchCancel();
-  organizationWatchCancel();
   if (intervalId) {
     clearInterval(intervalId);
   }

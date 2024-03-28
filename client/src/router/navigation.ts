@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { Base64 } from '@/common/base64';
 import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { Query, Routes, getCurrentRoute, getRouter } from '@/router/types';
-import { organizationKey } from '@/router/watchers';
+import { Query, RouteBackup, Routes, getCurrentRoute, getRouter } from '@/router/types';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
 export interface NavigationOptions {
@@ -50,15 +50,6 @@ export async function routerGoBack(): Promise<void> {
   router.go(-1);
 }
 
-interface RouteBackup {
-  handle: ConnectionHandle;
-  data: {
-    route: Routes;
-    params: object;
-    query: Query;
-  };
-}
-
 const routesBackup: Array<RouteBackup> = [];
 
 export async function switchOrganization(handle: ConnectionHandle | null, backup = true): Promise<void> {
@@ -91,7 +82,6 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
   // No handle, navigate to organization list
   if (!handle) {
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-    organizationKey.value += 1;
   } else {
     const backup = routesBackup.find((bk) => bk.handle === handle);
     if (!backup) {
@@ -99,7 +89,6 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
       return;
     }
     console.log('Restoring', backup.data.route, backup.data.params, backup.data.query);
-    await navigateTo(backup.data.route, { params: backup.data.params, query: backup.data.query, skipHandle: true, replace: true });
-    organizationKey.value += 1;
+    await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
   }
 }

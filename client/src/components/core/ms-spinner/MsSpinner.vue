@@ -2,12 +2,6 @@
 
 <template>
   <div class="container">
-    <div class="container-logo">
-      <ms-image
-        :image="LogoIconGradient"
-        class="image"
-      />
-    </div>
     <ion-text class="subtitles-normal container-text">
       {{ title }}
     </ion-text>
@@ -19,7 +13,6 @@
 </template>
 
 <script setup lang="ts">
-import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
 import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{
@@ -30,21 +23,11 @@ defineProps<{
 <style scoped lang="scss">
 .container {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
   overflow: hidden;
-  gap: 1.5rem;
-
-  &-logo {
-    max-width: 3.625rem;
-
-    .image {
-      width: 100%;
-      height: auto;
-    }
-  }
+  gap: 0.5rem;
 
   &-text {
     color: var(--parsec-color-light-secondary-grey);

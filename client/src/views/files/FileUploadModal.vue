@@ -17,16 +17,14 @@
 import { Answer, askQuestion, MsModal } from '@/components/core';
 import { FileDropZone, FileImport } from '@/components/files';
 import { entryStat, Path, WorkspaceHandle, WorkspaceID } from '@/parsec';
-import { ImportManager, ImportManagerKey } from '@/services/importManager';
+import { ImportManager } from '@/services/importManager';
 import { translate } from '@/services/translation';
-import { inject } from 'vue';
-
-const importManager = inject(ImportManagerKey) as ImportManager;
 
 const props = defineProps<{
   currentPath: string;
   workspaceHandle: WorkspaceHandle;
   workspaceId: WorkspaceID;
+  importManager: ImportManager;
 }>();
 
 interface FileImportTuple {
@@ -65,7 +63,7 @@ async function importFiles(imports: FileImportTuple[]): Promise<void> {
     }
   }
   for (const imp of imports) {
-    await importManager.importFile(props.workspaceHandle, props.workspaceId, imp.file, imp.path);
+    await props.importManager.importFile(props.workspaceHandle, props.workspaceId, imp.file, imp.path);
   }
 }
 

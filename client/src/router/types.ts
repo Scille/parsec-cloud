@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { AvailableDevice, EntryName, FileLinkData, FsPath, WorkspaceName } from '@/parsec';
+import { AvailableDevice, ConnectionHandle, EntryName, FileLinkData, FsPath, WorkspaceName } from '@/parsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -16,6 +16,7 @@ export enum Routes {
   About = 'about',
   MyProfile = 'myProfile',
   RecoveryExport = 'recoveryExport',
+  Loading = 'loading',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -29,67 +30,81 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import('@/views/home/HomePage.vue'),
   },
   {
-    path: '/menu',
-    component: () => import('@/views/sidebar-menu/SidebarMenuPage.vue'),
+    path: `/${Routes.Loading}`,
+    name: Routes.Loading,
+    component: () => import('@/views/layouts/LoadingLayout.vue'),
+  },
+  {
+    // ConnectedLayout ensure that every children components are provided
+    // with an importManager, informationManager and eventDistributor
+    // that correspond with the current ConnectionHandle.
+    path: '/connected',
+    component: () => import('@/views/layouts/ConnectedLayout.vue'),
     children: [
       {
-        path: '/connected',
-        component: () => import('@/views/header/HeaderPage.vue'),
+        path: '/sidebar',
+        component: () => import('@/views/sidebar-menu/SidebarMenuPage.vue'),
         children: [
           {
-            path: '/import',
-            component: () => import('@/views/layouts/ImportLayout.vue'),
+            path: '/header',
+            component: () => import('@/views/header/HeaderPage.vue'),
             children: [
               {
-                path: `/:handle(\\d+)/${Routes.Workspaces}`,
-                name: Routes.Workspaces,
-                component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+                path: '/imports',
+                component: () => import('@/views/layouts/ImportLayout.vue'),
+                children: [
+                  {
+                    path: `/:handle(\\d+)/${Routes.Workspaces}`,
+                    name: Routes.Workspaces,
+                    component: () => import('@/views/workspaces/WorkspacesPage.vue'),
+                  },
+                  {
+                    path: `/:handle(\\d+)/${Routes.Documents}/:workspaceHandle(\\d+)`,
+                    name: Routes.Documents,
+                    component: () => import('@/views/files/FoldersPage.vue'),
+                  },
+                ],
               },
               {
-                path: `/:handle(\\d+)/${Routes.Documents}/:workspaceHandle(\\d+)`,
-                name: Routes.Documents,
-                component: () => import('@/views/files/FoldersPage.vue'),
+                path: '/:handle(\\d+)',
+                redirect: { name: Routes.Workspaces },
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.Settings}`,
+                name: Routes.Settings,
+                component: () => import('@/views/settings/SettingsPage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.Users}`,
+                name: Routes.Users,
+                component: () => import('@/views/users/UsersPage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.Storage}`,
+                name: Routes.Storage,
+                component: () => import('@/views/organizations/StoragePage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.Organization}`,
+                name: Routes.Organization,
+                component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.About}`,
+                name: Routes.About,
+                component: () => import('@/views/about/AboutPage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.MyProfile}`,
+                name: Routes.MyProfile,
+                component: () => import('@/views/users/MyProfilePage.vue'),
+              },
+              {
+                path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
+                name: Routes.RecoveryExport,
+                component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
               },
             ],
-          },
-          {
-            path: '/:handle(\\d+)',
-            redirect: { name: Routes.Workspaces },
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Settings}`,
-            name: Routes.Settings,
-            component: () => import('@/views/settings/SettingsPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Users}`,
-            name: Routes.Users,
-            component: () => import('@/views/users/UsersPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Storage}`,
-            name: Routes.Storage,
-            component: () => import('@/views/organizations/StoragePage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.Organization}`,
-            name: Routes.Organization,
-            component: () => import('@/views/organizations/OrganizationInformationPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.About}`,
-            name: Routes.About,
-            component: () => import('@/views/about/AboutPage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.MyProfile}`,
-            name: Routes.MyProfile,
-            component: () => import('@/views/users/MyProfilePage.vue'),
-          },
-          {
-            path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
-            name: Routes.RecoveryExport,
-            component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
           },
         ],
       },
@@ -118,6 +133,17 @@ export function getCurrentRoute(): Ref<RouteLocationNormalizedLoaded> {
   return (router as Router).currentRoute;
 }
 
+export const InvalidConnectionHandle: ConnectionHandle = 0;
+
+export interface RouteBackup {
+  handle: ConnectionHandle;
+  data: {
+    route: Routes;
+    params: object;
+    query: Query;
+  };
+}
+
 export interface Query {
   documentPath?: FsPath;
   device?: AvailableDevice;
@@ -126,4 +152,5 @@ export interface Query {
   openInvite?: true;
   workspaceName?: WorkspaceName;
   selectFile?: EntryName;
+  loginInfo?: string;
 }

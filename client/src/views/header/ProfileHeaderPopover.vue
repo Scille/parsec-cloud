@@ -88,8 +88,8 @@ defineProps<{
   profile: UserProfile;
 }>();
 
-function onOptionClick(option: ProfilePopoverOption): void {
-  popoverController.dismiss({
+async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
+  await popoverController.dismiss({
     option: option,
   });
 }

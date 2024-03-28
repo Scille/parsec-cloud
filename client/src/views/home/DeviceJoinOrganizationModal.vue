@@ -163,13 +163,11 @@ import {
   ParsedParsecAddrTag,
   parseParsecAddr,
 } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
-import { computed, inject, onMounted, ref } from 'vue';
-
-const informationManager = inject(InformationManagerKey) as InformationManager;
+import { computed, onMounted, ref } from 'vue';
 
 enum DeviceJoinOrganizationStep {
   Information = 0,
@@ -187,6 +185,7 @@ const cancelled = ref(false);
 
 const props = defineProps<{
   invitationLink: string;
+  informationManager: InformationManager;
 }>();
 
 const waitingForHost = ref(true);
@@ -249,7 +248,7 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: message,
       level: InformationLevel.Error,
@@ -315,7 +314,7 @@ async function nextStep(): Promise<void> {
       const strategy = authChoice.value.getSaveStrategy();
       const result = await claimer.value.finalize(strategy);
       if (!result.ok) {
-        informationManager.present(
+        props.informationManager.present(
           new Information({
             message: translate('ClaimDeviceModal.errors.saveDeviceFailed'),
             level: InformationLevel.Error,
@@ -336,7 +335,7 @@ async function nextStep(): Promise<void> {
       message: translate('ClaimDeviceModal.successMessage'),
       level: InformationLevel.Success,
     });
-    informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
+    props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
     const accessStrategy =
       saveStrategy.tag === DeviceSaveStrategyTag.Keyring
@@ -381,7 +380,7 @@ async function startProcess(): Promise<void> {
         message = translate('JoinOrganization.errors.offline');
         break;
     }
-    await informationManager.present(
+    await props.informationManager.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -395,7 +394,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok && !cancelled.value) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    await informationManager.present(
+    await props.informationManager.present(
       new Information({
         message: translate('ClaimDeviceModal.errors.unexpected', { reason: waitResult.error.tag }),
         level: InformationLevel.Error,

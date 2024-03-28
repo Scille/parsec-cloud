@@ -95,19 +95,22 @@ import {
   getCurrentAvailableDevice,
   changePassword as parsecChangePassword,
 } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 enum ChangePasswordStep {
   OldPassword,
   NewPassword,
 }
 
+const props = defineProps<{
+  informationManager: InformationManager;
+}>();
+
 const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const informationManager = inject(InformationManagerKey) as InformationManager;
 const pageStep = ref(ChangePasswordStep.OldPassword);
 const choosePasswordInput = ref();
 const oldPassword = ref('');
@@ -121,7 +124,7 @@ onMounted(async () => {
   currentDevice.value = deviceResult.ok ? deviceResult.value : null;
 
   if (!currentDevice.value) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('MyProfilePage.errors.cannotChangePassword'),
         level: InformationLevel.Error,
@@ -163,7 +166,7 @@ async function changePassword(): Promise<void> {
   );
 
   if (result.ok) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('MyProfilePage.passwordUpdated'),
         level: InformationLevel.Success,
@@ -180,7 +183,7 @@ async function changePassword(): Promise<void> {
         break;
       }
       default:
-        informationManager.present(
+        props.informationManager.present(
           new Information({
             message: translate('MyProfilePage.errors.cannotChangePassword'),
             level: InformationLevel.Error,

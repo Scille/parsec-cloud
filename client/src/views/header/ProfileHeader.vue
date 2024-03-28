@@ -29,11 +29,12 @@
 import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, logout as parsecLogout } from '@/parsec';
-import { Routes, navigateTo } from '@/router';
+import { Routes, getConnectionHandle, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -46,6 +47,7 @@ const isPopoverOpen = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 
 let eventCbId: null | string = null;
 
@@ -86,51 +88,55 @@ async function openPopover(event: Event): Promise<void> {
   });
   await popover.present();
 
-  popover.onDidDismiss().then(async (value) => {
-    isPopoverOpen.value = false;
+  const { data } = await popover.onDidDismiss();
+  isPopoverOpen.value = false;
 
-    if (value.data === undefined) {
-      return;
-    }
-    if (value.data.option === ProfilePopoverOption.LogOut) {
-      const answer = await askQuestion(
-        translate('HomePage.topbar.logoutConfirmTitle'),
-        importManager.isImporting()
-          ? translate('HomePage.topbar.logoutImportsConfirmQuestion')
-          : translate('HomePage.topbar.logoutConfirmQuestion'),
-        {
-          yesText: translate('HomePage.topbar.logoutYes'),
-          noText: translate('HomePage.topbar.logoutNo'),
-        },
-      );
+  if (data === undefined) {
+    return;
+  }
+  if (data.option === ProfilePopoverOption.LogOut) {
+    const answer = await askQuestion(
+      translate('HomePage.topbar.logoutConfirmTitle'),
+      importManager.isImporting()
+        ? translate('HomePage.topbar.logoutImportsConfirmQuestion')
+        : translate('HomePage.topbar.logoutConfirmQuestion'),
+      {
+        yesText: translate('HomePage.topbar.logoutYes'),
+        noText: translate('HomePage.topbar.logoutNo'),
+      },
+    );
 
-      if (answer === Answer.Yes) {
+    if (answer === Answer.Yes) {
+      const handle = getConnectionHandle();
+      if (!handle) {
+        console.error('Already logged out');
+        return;
+      }
+      const result = await parsecLogout();
+      if (!result.ok) {
+        informationManager.present(
+          new Information({
+            message: translate('HomePage.topbar.logoutFailed'),
+            level: InformationLevel.Error,
+          }),
+          PresentationMode.Toast,
+        );
+      } else {
         const menuCtrls = useUploadMenu();
         menuCtrls.hide();
-        await importManager.stop();
-        const result = await parsecLogout();
-        if (!result.ok) {
-          informationManager.present(
-            new Information({
-              message: translate('HomePage.topbar.logoutFailed'),
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Toast,
-          );
-        } else {
-          await navigateTo(Routes.Home, { replace: true, skipHandle: true });
-        }
+        await injectionProvider.clean(handle);
+        await navigateTo(Routes.Home, { replace: true, skipHandle: true });
       }
-    } else if (value.data.option === ProfilePopoverOption.Settings) {
-      await navigateTo(Routes.Settings);
-    } else if (value.data.option === ProfilePopoverOption.Help) {
-      window.open(translate('MenuPage.helpLink'), '_blank');
-    } else if (value.data.option === ProfilePopoverOption.App) {
-      await navigateTo(Routes.About);
-    } else if (value.data.option === ProfilePopoverOption.MyProfile) {
-      await navigateTo(Routes.MyProfile);
     }
-  });
+  } else if (data.option === ProfilePopoverOption.Settings) {
+    await navigateTo(Routes.Settings);
+  } else if (data.option === ProfilePopoverOption.Help) {
+    window.open(translate('MenuPage.helpLink'), '_blank');
+  } else if (data.option === ProfilePopoverOption.App) {
+    await navigateTo(Routes.About);
+  } else if (data.option === ProfilePopoverOption.MyProfile) {
+    await navigateTo(Routes.MyProfile);
+  }
 }
 </script>
 

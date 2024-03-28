@@ -173,6 +173,9 @@ async function onAddDeviceClick(): Promise<void> {
     component: GreetDeviceModal,
     canDismiss: true,
     cssClass: 'greet-organization-modal',
+    componentProps: {
+      informationManager: informationManager,
+    },
   });
   await modal.present();
   const modalResult = await modal.onWillDismiss();

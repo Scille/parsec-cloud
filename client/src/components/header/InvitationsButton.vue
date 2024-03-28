@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { Answer, MsModalResult, askQuestion } from '@/components/core';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
-import { Routes, navigateTo, watchOrganizationSwitch } from '@/router';
+import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
@@ -33,8 +33,6 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 
-const organizationWatchCancel = watchOrganizationSwitch(updateInvitations);
-
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data: EventData) => {
     if (event === Events.InvitationUpdated) {
@@ -45,7 +43,6 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  organizationWatchCancel();
   if (eventCbId) {
     await eventDistributor.removeCallback(eventCbId);
   }
@@ -66,6 +63,9 @@ async function openInvitationsPopover(event: Event): Promise<void> {
     event: event,
     cssClass: 'invitations-list-popover',
     showBackdrop: false,
+    componentProps: {
+      informationManager: informationManager,
+    },
   });
   await popover.present();
   const { role, data } = await popover.onDidDismiss();
@@ -136,6 +136,7 @@ async function greetUser(invitation: UserInvitation): Promise<void> {
     cssClass: 'greet-organization-modal',
     componentProps: {
       invitation: invitation,
+      informationManager: informationManager,
     },
   });
   await modal.present();
