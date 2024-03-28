@@ -48,6 +48,12 @@
   flex-grow: 1;
   --placeholder-color: var(--parsec-color-light-secondary-grey);
 
+  &-disabled {
+    opacity: 1 !important;
+    color: var(--parsec-color-light-secondary-hard-grey);
+    --placeholder-opacity: 1;
+  }
+
   &-icon,
   &-clear-icon {
     padding: 0.25rem;
@@ -91,8 +97,8 @@
 }
 
 .form-input-disabled {
-  --background: var(--parsec-color-light-secondary-disabled);
-  background: var(--parsec-color-light-secondary-disabled);
+  --background: var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-medium);
   border: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
