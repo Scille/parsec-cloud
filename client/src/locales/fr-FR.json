@@ -16,7 +16,9 @@
     },
     "globalErrors": {
         "openFileFailed": "L'élément `{path}` n'a pas pu être ouvert.",
-        "incompatibleServer": "Votre application et le serveur ne sont pas compatibles. Les fonctionnalités en-ligne ne seront pas disponibles. Veuillez vérifier que votre application est à jour, et si c'est le cas, contactez un administrateur."
+        "incompatibleServer": "Votre application et le serveur ne sont pas compatibles. Les fonctionnalités en-ligne ne seront pas disponibles. Veuillez vérifier que votre application est à jour, et si c'est le cas, contactez un administrateur.",
+        "clientRevoked": "Vous avez été révoqué(e) de cette organisation. Vous avez toujours accès à certaines données, mais l'accès à la plupart des fonctionnalités vous sera refusé.",
+        "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur."
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -78,7 +80,9 @@
         "serverOnline": "Vous êtes connecté au serveur Parsec",
         "serverOffline": "Vous n'êtes plus connecté au serveur Parsec",
         "incompatibleServer": "Votre application n'est pas compatible avec le serveur.",
-        "nextButton": "fermer"
+        "nextButton": "fermer",
+        "clientRevoked": "Vous avez été révoqué(e) de cette organisation.",
+        "expiredOrganization": "Cette organisation a expiré."
     },
     "HomePage": {
         "topbar": {

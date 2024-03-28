@@ -16,7 +16,9 @@
     },
     "globalErrors": {
         "openFileFailed": "Failed to open entry at `{path}`.",
-        "incompatibleServer": "Your application and the server are not compatible. Online features will not be available. Please check that your application is up-to-date, and if so, contact an administrator."
+        "incompatibleServer": "Your application and the server are not compatible. Online features will not be available. Please check that your application is up-to-date, and if so, contact an administrator.",
+        "clientRevoked": "You have been revoked from this organization. You can still see some of the data you had access to, but most features of Parsec will not work.",
+        "expiredOrganization": "This organization has expired. Please contact an administrator."
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -78,7 +80,9 @@
         "serverOnline": "You are connected to the Parsec server",
         "serverOffline": "You are not connected to the Parsec server",
         "incompatibleServer": "Your application is not compatible with the server.",
-        "nextButton": "close"
+        "nextButton": "close",
+        "clientRevoked": "You have been revoked from this organization.",
+        "expiredOrganization": "This organization has expired."
     },
     "HomePage": {
         "topbar": {

@@ -72,7 +72,6 @@ export async function login(
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
   function parsecEventCallback(event: ClientEvent): void {
-    console.log(event);
     switch (event.tag) {
       case ClientEventTag.Online:
         eventDistributor.dispatchEvent(Events.Online, {});
@@ -89,6 +88,12 @@ export async function login(
       case ClientEventTag.IncompatibleServer:
         eventDistributor.dispatchEvent(Events.Offline, {});
         eventDistributor.dispatchEvent(Events.IncompatibleServer, {});
+        break;
+      case ClientEventTag.RevokedSelfUser:
+        eventDistributor.dispatchEvent(Events.ClientRevoked, {});
+        break;
+      case ClientEventTag.ExpiredOrganization:
+        eventDistributor.dispatchEvent(Events.ExpiredOrganization, {});
         break;
       default:
         console.log(`Unhandled event ${event.tag}`);
