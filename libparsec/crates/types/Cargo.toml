@@ -49,6 +49,9 @@ sha2 = { workspace = true, features = ["std"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+chrono = { workspace = true, features = ["wasmbind"] }
+
 [dev-dependencies]
 libparsec_types = { workspace = true, features = ["test-fixtures"] }
 libparsec_tests_lite = { workspace = true }
