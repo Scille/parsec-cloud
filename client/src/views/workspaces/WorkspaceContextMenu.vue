@@ -26,7 +26,7 @@
 
       <ion-item-group
         class="list-group"
-        v-show="isDesktop()"
+        v-show="isDesktop() || clientRole === WorkspaceRole.Owner"
       >
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
@@ -36,9 +36,9 @@
 
         <ion-item
           button
+          v-show="clientRole === WorkspaceRole.Owner"
           @click="onClick(WorkspaceAction.Rename)"
           class="ion-no-padding list-group-item"
-          v-show="false"
         >
           <ion-icon :icon="pencil" />
           <ion-label class="body list-group-item__label">
@@ -130,7 +130,7 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
-import { UserProfile, isDesktop } from '@/parsec';
+import { UserProfile, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
 
@@ -140,6 +140,7 @@ function onClick(action: WorkspaceAction): Promise<boolean> {
 
 defineProps<{
   clientProfile: UserProfile;
+  clientRole: WorkspaceRole;
 }>();
 </script>
 

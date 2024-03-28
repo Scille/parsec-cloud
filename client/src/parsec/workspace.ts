@@ -7,6 +7,7 @@ import {
   ClientCreateWorkspaceError,
   ClientListWorkspaceUsersError,
   ClientListWorkspacesError,
+  ClientRenameWorkspaceError,
   ClientShareWorkspaceError,
   ClientStartWorkspaceError,
   ConnectionHandle,
@@ -211,6 +212,16 @@ export async function createWorkspace(name: WorkspaceName): Promise<Result<Works
     return await libparsec.clientCreateWorkspace(handle, name);
   } else {
     return { ok: true, value: '1337' };
+  }
+}
+
+export async function renameWorkspace(newName: WorkspaceName, id: WorkspaceID): Promise<Result<null, ClientRenameWorkspaceError>> {
+  const handle = getParsecHandle();
+
+  if (handle !== null && !needsMocks()) {
+    return await libparsec.clientRenameWorkspace(handle, id, newName);
+  } else {
+    return { ok: true, value: null };
   }
 }
 

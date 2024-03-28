@@ -153,6 +153,7 @@ import { MsImage, NoWorkspace } from '@/components/core/ms-image';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
+  ClientRenameWorkspaceErrorTag,
   UserProfile,
   WorkspaceInfo,
   WorkspaceName,
@@ -163,6 +164,7 @@ import {
   getWorkspaceSharing as parsecGetWorkspaceSharing,
   listWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
+  renameWorkspace as parsecRenameWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
@@ -391,18 +393,26 @@ async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo):
     alignment: 'end',
     componentProps: {
       clientProfile: clientProfile.value,
+      clientRole: workspace.currentSelfRole,
     },
   });
   await popover.present();
 
   const { data } = await popover.onDidDismiss();
   if (data !== undefined) {
-    if (data.action === WorkspaceAction.Share) {
-      onWorkspaceShareClick(new Event('ignored'), workspace);
-    } else if (data.action === WorkspaceAction.CopyLink) {
-      await copyLinkToClipboard(workspace);
-    } else if (data.action === WorkspaceAction.OpenInExplorer) {
-      await openWorkspace(workspace);
+    switch (data.action) {
+      case WorkspaceAction.Share:
+        onWorkspaceShareClick(new Event('ignored'), workspace);
+        break;
+      case WorkspaceAction.CopyLink:
+        await copyLinkToClipboard(workspace);
+        break;
+      case WorkspaceAction.OpenInExplorer:
+        await openWorkspace(workspace);
+        break;
+      case WorkspaceAction.Rename:
+        await openRenameWorkspaceModal(workspace);
+        break;
     }
   }
 }
@@ -420,6 +430,63 @@ async function openWorkspace(workspace: WorkspaceInfo): Promise<void> {
     );
   } else {
     window.electronAPI.openFile(result.value);
+  }
+}
+
+async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName): Promise<void> {
+  const result = await parsecRenameWorkspace(newName, workspace.id);
+  if (result.ok) {
+    await refreshWorkspacesList();
+    informationManager.present(
+      new Information({
+        message: translate('WorkspacesPage.RenameWorkspaceModal.success', { newName: newName }),
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    let message = '';
+    switch (result.error.tag) {
+      case ClientRenameWorkspaceErrorTag.AuthorNotAllowed ||
+        ClientRenameWorkspaceErrorTag.InvalidCertificate ||
+        ClientRenameWorkspaceErrorTag.InvalidEncryptedRealmName ||
+        ClientRenameWorkspaceErrorTag.InvalidKeysBundle:
+        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.permission');
+        break;
+      case ClientRenameWorkspaceErrorTag.Offline:
+        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.offline');
+        break;
+      default:
+        message = translate('WorkspacesPage.RenameWorkspaceModal.errors.generic', {
+          reason: result.error.tag,
+        });
+        console.error(result.error.tag);
+        break;
+    }
+    informationManager.present(
+      new Information({
+        message: message,
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
+
+async function openRenameWorkspaceModal(workspace: WorkspaceInfo): Promise<void> {
+  const newWorkspaceName = await getTextInputFromUser({
+    title: translate('WorkspacesPage.RenameWorkspaceModal.pageTitle'),
+    trim: true,
+    validator: workspaceNameValidator,
+    inputLabel: translate('WorkspacesPage.RenameWorkspaceModal.label'),
+    placeholder: translate('WorkspacesPage.RenameWorkspaceModal.placeholder'),
+    okButtonText: translate('WorkspacesPage.RenameWorkspaceModal.rename'),
+    defaultValue: workspace.currentName,
+    selectionRange: [0, workspace.currentName.length],
+  });
+
+  if (newWorkspaceName) {
+    await renameWorkspace(workspace, newWorkspaceName);
   }
 }
 

@@ -310,6 +310,18 @@
             "placeholder": "My space",
             "create": "Create"
         },
+        "RenameWorkspaceModal": {
+            "pageTitle": "Rename workspace",
+            "label": "New workspace name",
+            "placeholder": "My space",
+            "rename": "Rename",
+            "success": "Workspace has been successfully renamed to {newName}.",
+            "errors": {
+                "permission": "You do not have the permission to rename this workspace.",
+                "offline": "Failed to connect to the server. Please make sure you are online.",
+                "generic": "An error has occurred, please try again."
+            }
+        },
         "Workspace": {
             "lastUpdate": "Last updated:",
             "notShared": "Not shared"

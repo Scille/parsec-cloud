@@ -79,6 +79,40 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').last().contains('Trademeet');
   });
 
+  it('Create workspace', () => {
+    cy.get('#button-new-workspace').click();
+    cy.get('.text-input-modal').should('exist');
+    cy.get('.ms-modal-header__title').contains('Create a new workspace');
+    cy.get('.ion-page').find('.closeBtn').should('exist');
+    cy.get('ion-input').should('be.visible');
+    cy.get('.text-input-modal').find('.ms-modal-footer-buttons').find('ion-button').eq(1).as('createButton').contains('Create');
+    cy.get('@createButton').should('have.class', 'button-disabled');
+    cy.get('.text-input-modal').find('.input').find('input').type('MyWorkspace');
+    cy.get('@createButton').should('not.have.class', 'button-disabled');
+    cy.get('@createButton').click();
+    cy.get('.text-input-modal').should('not.exist');
+    cy.checkToastMessageWithSidebar('success', "The workspace 'MyWorkspace' has been created!");
+    cy.get('#button-new-workspace').click();
+    cy.get('ion-modal').should('exist');
+    cy.get('ion-modal').find('.closeBtn').click();
+    cy.get('ion-modal').should('not.exist');
+  });
+
+  it('Rename workspace', () => {
+    cy.get('.card').eq(1).find('.card-option').click();
+    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(3).contains('Rename').click();
+    cy.get('.text-input-modal').should('exist');
+    cy.get('.ms-modal-header__title').contains('Rename workspace');
+    cy.get('.ion-page').find('.closeBtn').should('exist');
+    cy.get('ion-input').should('be.visible');
+    cy.get('#cancel-button').should('be.visible');
+    cy.get('.text-input-modal').find('.ms-modal-footer-buttons').find('ion-button').eq(1).as('renameButton').contains('Rename');
+    cy.get('.text-input-modal').find('.input').find('input').type('New workspace name');
+    cy.get('@renameButton').click();
+    cy.get('.text-input-modal').should('not.exist');
+    cy.checkToastMessageWithSidebar('success', 'Workspace has been successfully renamed to New workspace name');
+  });
+
   it('Navigate into a workspace', () => {
     function checkListWorkspaceSelectedItem(workspaceName: string): void {
       cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 3);
