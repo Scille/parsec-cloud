@@ -25,12 +25,16 @@
 
   /* Secondary */
   --parsec-color-light-secondary-opacity30: hsla(0, 0%, 100%, 0.3);
-  --parsec-color-light-secondary-contrast: hsla(240, 19%, 13%, 1);
-  --parsec-color-light-secondary-text: hsla(240, 20%, 35%, 1);
+  --parsec-color-light-secondary-black: hsla(240, 20%, 13%, 1);
+  --parsec-color-light-secondary-contrast: hsla(240, 20%, 20%, 1);
+  --parsec-color-light-secondary-text: hsla(240, 20%, 30%, 1);
+  --parsec-color-light-secondary-soft-text: hsla(240, 20%, 40%, 1);
+  --parsec-color-light-secondary-hard-grey: hsla(240, 20%, 50%, 1);
   --parsec-color-light-secondary-grey: hsla(240, 20%, 60%, 1);
-  --parsec-color-light-secondary-light: hsla(240, 19.5%, 85%, 1);
-  --parsec-color-light-secondary-disabled: hsla(240, 20%, 93%, 1);
-  --parsec-color-light-secondary-medium: hsla(240, 20%, 96%, 1);
+  --parsec-color-light-secondary-soft-grey: hsla(240, 20%, 70%, 1);
+  --parsec-color-light-secondary-light: hsla(240, 20%, 80%, 1);
+  --parsec-color-light-secondary-disabled: hsla(240, 20%, 90%, 1);
+  --parsec-color-light-secondary-medium: hsla(240, 20%, 93%, 1);
   --parsec-color-light-secondary-premiere: hsla(240, 20%, 96%, 1);
   --parsec-color-light-secondary-background: hsla(240, 20%, 98%, 1);
   --parsec-color-light-secondary-inversed-contrast: hsla(0, 0%, 99%, 1);
