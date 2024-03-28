@@ -20,7 +20,10 @@
       }"
     >
       <ion-input
-        class="form-input input"
+        class="form-input"
+        :class="{
+          input: !$props.disabled,
+        }"
         ref="inputRef"
         :placeholder="$props.placeholder"
         :value="modelValue"
