@@ -310,6 +310,18 @@
             "placeholder": "Mon espace",
             "create": "Créer"
         },
+        "RenameWorkspaceModal": {
+            "pageTitle": "Renommer l'espace de travail",
+            "label": "Nouveau nom de l'espace de travail",
+            "placeholder": "Mon espace",
+            "rename": "Renommer",
+            "success": "L'espace de travail a bien été renommé en {newName}.",
+            "errors": {
+                "permission": "Vous ne possédez pas les droits pour renommer cet espace de travail.",
+                "offline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
+                "generic": "Une erreur est survenue, merci de bien vouloir réessayer."
+            }
+        },
         "Workspace": {
             "lastUpdate": "Dernière modification :",
             "notShared": "Non partagé"
