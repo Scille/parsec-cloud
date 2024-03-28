@@ -20,6 +20,87 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 let eventCbId: null | string = null;
+let ignoreOnlineEvent = true;
+
+async function handleEvent(event: Events, _data: EventData): Promise<void> {
+  switch (event) {
+    case Events.Offline: {
+      informationManager.present(
+        new Information({
+          message: translate('notification.serverOffline'),
+          level: InformationLevel.Warning,
+        }),
+        PresentationMode.Notification,
+      );
+      break;
+    }
+    case Events.Online: {
+      if (ignoreOnlineEvent) {
+        ignoreOnlineEvent = false;
+        return;
+      }
+      informationManager.present(
+        new Information({
+          message: translate('notification.serverOnline'),
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Notification,
+      );
+      break;
+    }
+    case Events.IncompatibleServer: {
+      informationManager.present(
+        new Information({
+          message: translate('notification.incompatibleServer'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await informationManager.present(
+        new Information({
+          message: translate('globalErrors.incompatibleServer'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    }
+    case Events.ExpiredOrganization: {
+      informationManager.present(
+        new Information({
+          message: translate('notification.expiredOrganization'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await informationManager.present(
+        new Information({
+          message: translate('globalErrors.expiredOrganization'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    }
+    case Events.ClientRevoked: {
+      informationManager.present(
+        new Information({
+          message: translate('notification.clientRevoked'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Notification,
+      );
+      await informationManager.present(
+        new Information({
+          message: translate('globalErrors.clientRevoked'),
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      break;
+    }
+  }
+}
 
 onMounted(async (): Promise<void> => {
   SplashScreen.hide();
@@ -27,47 +108,10 @@ onMounted(async (): Promise<void> => {
   const config = await storageManager.retrieveConfig();
   toggleDarkMode(config.theme);
 
-  let ignoreOnline = true;
-
   eventCbId = await eventDistributor.registerCallback(
-    Events.Offline | Events.Online | Events.IncompatibleServer,
-    async (event: Events, _data: EventData) => {
-      if (event === Events.Offline) {
-        informationManager.present(
-          new Information({
-            message: translate('notification.serverOffline'),
-            level: InformationLevel.Warning,
-          }),
-          PresentationMode.Notification,
-        );
-      } else if (event === Events.Online) {
-        if (ignoreOnline) {
-          ignoreOnline = false;
-          return;
-        }
-        informationManager.present(
-          new Information({
-            message: translate('notification.serverOnline'),
-            level: InformationLevel.Info,
-          }),
-          PresentationMode.Notification,
-        );
-      } else if (event === Events.IncompatibleServer) {
-        informationManager.present(
-          new Information({
-            message: translate('notification.incompatibleServer'),
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Notification,
-        );
-        await informationManager.present(
-          new Information({
-            message: translate('globalErrors.incompatibleServer'),
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Modal,
-        );
-      }
+    Events.Offline | Events.Online | Events.IncompatibleServer | Events.ExpiredOrganization | Events.ClientRevoked,
+    async (event: Events, data: EventData) => {
+      await handleEvent(event, data);
     },
   );
 });
