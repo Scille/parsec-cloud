@@ -42,17 +42,21 @@ class TestbedTemplateContent:
     id: str
     events: list["TestbedEvent"]
     certificates: list[
-        UserCertificate
-        | DeviceCertificate
-        | RevokedUserCertificate
-        | UserUpdateCertificate
-        | RealmRoleCertificate
-        | RealmArchivingCertificate
-        | SequesterAuthorityCertificate
-        | SequesterServiceCertificate
-        | SequesterRevokedServiceCertificate
-        | ShamirRecoveryBriefCertificate
-        | ShamirRecoveryShareCertificate
+        tuple[
+            UserCertificate
+            | DeviceCertificate
+            | RevokedUserCertificate
+            | UserUpdateCertificate
+            | RealmRoleCertificate
+            | RealmArchivingCertificate
+            | SequesterAuthorityCertificate
+            | SequesterServiceCertificate
+            | SequesterRevokedServiceCertificate
+            | ShamirRecoveryBriefCertificate
+            | ShamirRecoveryShareCertificate,
+            bytes,
+            bytes,
+        ]
     ]
 
     def compute_crc(self) -> int: ...
