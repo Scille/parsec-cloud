@@ -2,8 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
+
+if TYPE_CHECKING:
+    from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 
 
 class BaseBlockStoreConfig:
@@ -119,9 +123,11 @@ class BackendConfig:
         default_factory=lambda: ActiveUsersLimit.NO_LIMIT
     )
     organization_initial_user_profile_outsider_allowed: bool = True
+    organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
+    backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
 
     @property
     def db_type(self) -> str:

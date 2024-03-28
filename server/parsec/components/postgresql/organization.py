@@ -2,10 +2,9 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal, override
+from typing import Literal, assert_never, override
 
 import asyncpg
-from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -17,37 +16,35 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
     UserCertificate,
     UserID,
+    UserProfile,
     VerifyKey,
 )
 from parsec.ballpark import TimestampOutOfBallpark
+from parsec.components.events import EventBus
 from parsec.components.organization import (
     BaseOrganizationComponent,
     Organization,
     OrganizationBootstrapStoreBadOutcome,
     OrganizationBootstrapValidateBadOutcome,
     OrganizationCreateBadOutcome,
+    OrganizationDump,
     OrganizationGetBadOutcome,
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
     OrganizationStatsBadOutcome,
+    OrganizationStatsProfileDetailItem,
+    OrganizationUpdateBadOutcome,
     organization_bootstrap_validate,
 )
 from parsec.components.postgresql.test_queries import (
-    q_test_drop_organization_from_device_table,
-    q_test_drop_organization_from_human_table,
-    q_test_drop_organization_from_invitation_table,
-    q_test_drop_organization_from_organization_table,
-    q_test_drop_organization_from_user_table,
-    q_test_duplicate_organization_from_device_table,
-    q_test_duplicate_organization_from_human_table,
-    q_test_duplicate_organization_from_invitation_table,
-    q_test_duplicate_organization_from_organization_table,
-    q_test_duplicate_organization_from_user_table,
+    q_test_drop_organization,
+    q_test_duplicate_organization,
 )
 from parsec.components.postgresql.user_queries.create import q_create_user
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, transaction
 from parsec.components.user import UserCreateDeviceStoreBadOutcome, UserCreateUserStoreBadOutcome
 from parsec.config import BackendConfig
+from parsec.events import EventOrganizationExpired
 from parsec.types import Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
@@ -61,7 +58,8 @@ INSERT INTO organization (
     _created_on,
     _bootstrapped_on,
     is_expired,
-    _expired_on
+    _expired_on,
+    minimum_archiving_period
 )
 VALUES (
     $organization_id,
@@ -71,7 +69,8 @@ VALUES (
     $created_on,
     NULL,
     FALSE,
-    NULL
+    NULL,
+    $minimum_archiving_period
 )
 ON CONFLICT (organization_id) DO
     UPDATE SET
@@ -80,7 +79,8 @@ ON CONFLICT (organization_id) DO
         user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
         _created_on = EXCLUDED._created_on,
         is_expired = EXCLUDED.is_expired,
-        _expired_on = EXCLUDED._expired_on
+        _expired_on = EXCLUDED._expired_on,
+        minimum_archiving_period = EXCLUDED.minimum_archiving_period
     WHERE organization.root_verify_key is NULL
 """
 )
@@ -97,7 +97,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 """
@@ -125,7 +126,8 @@ SELECT
     active_users_limit,
     user_profile_outsider_allowed,
     sequester_authority_certificate,
-    sequester_authority_verify_key_der
+    sequester_authority_verify_key_der,
+    minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
 FOR UPDATE
@@ -143,7 +145,7 @@ SET
     _bootstrapped_on = $bootstrapped_on
 WHERE
     organization_id = $organization_id
-    AND bootstrap_token = $bootstrap_token
+    AND bootstrap_token IS NOT DISTINCT FROM $bootstrap_token
     AND root_verify_key IS NULL
 """
 )
@@ -160,7 +162,18 @@ SELECT
     ) exist,
     (
         SELECT ARRAY(
-            SELECT (revoked_on, profile::text)
+            SELECT (
+                revoked_on,
+                COALESCE (
+                    (
+                        SELECT profile.profile::text
+                        FROM profile
+                        WHERE profile.user_ = user_._id
+                        ORDER BY profile.certified_on DESC LIMIT 1
+                    ),
+                    user_.initial_profile::text
+                )
+            )
             FROM user_
             WHERE organization = { q_organization_internal_id("$organization_id") }
             AND created_on <= $at
@@ -177,10 +190,12 @@ SELECT
     (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
+        LEFT JOIN realm
+        ON vlob_atom.realm = realm._id
         WHERE
-            organization = { q_organization_internal_id("$organization_id") }
-            AND created_on <= $at
-            AND (deleted_on IS NULL OR deleted_on > $at)
+            realm.organization = { q_organization_internal_id("$organization_id") }
+            AND vlob_atom.created_on <= $at
+            AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
     ) metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
@@ -211,7 +226,10 @@ _q_get_average_realm_creation_date = Q(
 
 @lru_cache()
 def _q_update_factory(
-    with_is_expired: bool, with_active_users_limit: bool, with_user_profile_outsider_allowed: bool
+    with_is_expired: bool,
+    with_active_users_limit: bool,
+    with_user_profile_outsider_allowed: bool,
+    with_minimum_archiving_period: bool,
 ) -> Q:
     fields = []
     if with_is_expired:
@@ -221,6 +239,8 @@ def _q_update_factory(
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:
         fields.append("user_profile_outsider_allowed = $user_profile_outsider_allowed")
+    if with_minimum_archiving_period:
+        fields.append("minimum_archiving_period = $minimum_archiving_period")
 
     return Q(
         f"""
@@ -232,53 +252,23 @@ def _q_update_factory(
     )
 
 
-async def _organization_stats(
-    conn: asyncpg.Connection,
-    id: OrganizationID,
-    at: DateTime,
-) -> OrganizationStats | None:
-    raise NotImplementedError
-    # result = await conn.fetchrow(*_q_get_stats(organization_id=id.str, at=at))
-    # if not result["exist"]:
-    #     return None
-
-    # users = 0
-    # active_users = 0
-    # users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
-    # for u in result["users"]:
-    #     is_revoked, profile = u
-    #     users += 1
-    #     if is_revoked:
-    #         users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
-    #     else:
-    #         active_users += 1
-    #         users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
-
-    # users_per_profile_detail = tuple(
-    #     UsersPerProfileDetailItem(profile=profile, **data)
-    #     for profile, data in users_per_profile_detail.items()
-    # )
-
-    # return OrganizationStats(
-    #     data_size=result["data_size"],
-    #     metadata_size=result["metadata_size"],
-    #     realms=result["realms"],
-    #     users=users,
-    #     active_users=active_users,
-    #     users_per_profile_detail=users_per_profile_detail,
-    # )
-
-
 class PGOrganizationComponent(BaseOrganizationComponent):
     def __init__(
-        self, pool: asyncpg.Pool, webhooks: WebhooksComponent, config: BackendConfig
+        self,
+        pool: asyncpg.Pool,
+        webhooks: WebhooksComponent,
+        config: BackendConfig,
+        event_bus: EventBus,
     ) -> None:
         super().__init__(webhooks, config)
         self.pool = pool
+        self.event_bus = event_bus
 
     @override
+    @transaction
     async def create(
         self,
+        conn: asyncpg.Connection,
         now: DateTime,
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
@@ -286,6 +276,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # `None` stands for "no limit"
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: UnsetType | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -295,24 +286,52 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_profile_outsider_allowed = (
                 self._config.organization_initial_user_profile_outsider_allowed
             )
-        async with self.pool.acquire() as conn:
-            try:
-                result = await conn.execute(
-                    *_q_insert_organization(
-                        organization_id=id.str,
-                        bootstrap_token=bootstrap_token.hex,
-                        active_users_limit=active_users_limit
-                        if active_users_limit is not ActiveUsersLimit.NO_LIMIT
-                        else None,
-                        user_profile_outsider_allowed=user_profile_outsider_allowed,
-                        created_on=now,
-                    )
-                )
-            except UniqueViolationError:
-                return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
-            if result != "INSERT 0 1":
-                assert False, f"Insertion error: {result}"
-            return bootstrap_token
+        if minimum_archiving_period is Unset:
+            minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+
+        result = await conn.execute(
+            *_q_insert_organization(
+                organization_id=id.str,
+                bootstrap_token=bootstrap_token.hex,
+                active_users_limit=active_users_limit
+                if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                else None,
+                user_profile_outsider_allowed=user_profile_outsider_allowed,
+                created_on=now,
+                minimum_archiving_period=minimum_archiving_period,
+            )
+        )
+        if result == "INSERT 0 0":
+            return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
+        return bootstrap_token
+
+    async def spontaneous_create(
+        self,
+        conn: asyncpg.Connection,
+        organization_id: OrganizationID,
+        now: DateTime,
+    ) -> None:
+        active_users_limit = self._config.organization_initial_active_users_limit
+        user_profile_outsider_allowed = (
+            self._config.organization_initial_user_profile_outsider_allowed
+        )
+        minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        result = await conn.execute(
+            *_q_insert_organization(
+                organization_id=organization_id.str,
+                bootstrap_token=None,
+                active_users_limit=active_users_limit
+                if active_users_limit is not ActiveUsersLimit.NO_LIMIT
+                else None,
+                user_profile_outsider_allowed=user_profile_outsider_allowed,
+                created_on=now,
+                minimum_archiving_period=minimum_archiving_period,
+            )
+        )
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
 
     @override
     @transaction
@@ -350,10 +369,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_services_certificates = tuple(
                 service["service_certificate"] for service in services
             )
+        raw_bootstrap_token = row["bootstrap_token"]
+        bootstrap_token = (
+            None if raw_bootstrap_token is None else BootstrapToken.from_hex(raw_bootstrap_token)
+        )
 
         return Organization(
             organization_id=id,
-            bootstrap_token=BootstrapToken.from_hex(row["bootstrap_token"]),
+            bootstrap_token=bootstrap_token,
             root_verify_key=rvk,
             is_expired=row["is_expired"],
             created_on=row["created_on"],
@@ -363,6 +386,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_certificate=sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
+            minimum_archiving_period=row["minimum_archiving_period"],
         )
 
     @override
@@ -417,12 +441,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case error:
                 return error
 
+        # All checks are good, now we do the actual insertion
+
         match await q_create_user(
             conn,
             id,
             u_certif,
             user_certificate,
-            redacted_device_certificate,
+            redacted_user_certificate,
             d_certif,
             device_certificate,
             redacted_device_certificate,
@@ -432,23 +458,20 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             case UserCreateDeviceStoreBadOutcome():
                 assert False, "The organization is empty, device creation should always succeed"
 
-        # sequester_authority_certificate = None
-        # sequester_authority_verify_key_der = None
-        # if sequester_authority:
-        #     sequester_authority_certificate = sequester_authority.certificate
-        #     sequester_authority_verify_key_der = sequester_authority.verify_key_der.dump()
-        # result = await conn.execute(
-        #     *_q_bootstrap_organization(
-        #         organization_id=id.str,
-        #         bootstrap_token=bootstrap_token,
-        #         bootstrapped_on=bootstrapped_on,
-        #         root_verify_key=root_verify_key.encode(),
-        #         sequester_authority_certificate=sequester_authority_certificate,
-        #         sequester_authority_verify_key_der=sequester_authority_verify_key_der,
-        #     )
-        # )
-        # if result != "UPDATE 1":
-        #     raise OrganizationError(f"Update error: {result}")
+        sequester_authority_verify_key_der = (
+            None if s_certif is None else s_certif.verify_key_der.dump()
+        )
+        result = await conn.execute(
+            *_q_bootstrap_organization(
+                organization_id=id.str,
+                bootstrap_token=None if bootstrap_token is None else bootstrap_token.hex,
+                bootstrapped_on=now,
+                root_verify_key=root_verify_key.encode(),
+                sequester_authority_certificate=s_certif,
+                sequester_authority_verify_key_der=sequester_authority_verify_key_der,
+            )
+        )
+        assert result == "UPDATE 1", result
 
         return u_certif, d_certif, s_certif
 
@@ -463,122 +486,198 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
         raise NotImplementedError
 
+    async def _get_organization_stats(
+        self,
+        connection: asyncpg.Connection,
+        organization: OrganizationID,
+        at: DateTime | None = None,
+    ) -> OrganizationStats | OrganizationStatsBadOutcome:
+        at = at or DateTime.now()
+        result = await connection.fetchrow(*_q_get_stats(organization_id=organization.str, at=at))
+        if result is None or not result["exist"]:
+            return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
+
+        users = 0
+        active_users = 0
+        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
+        for u in result["users"]:
+            is_revoked, profile = u
+            users += 1
+            if is_revoked:
+                users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
+            else:
+                active_users += 1
+                users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
+
+        users_per_profile_detail = tuple(
+            OrganizationStatsProfileDetailItem(profile=profile, **data)
+            for profile, data in users_per_profile_detail.items()
+        )
+
+        return OrganizationStats(
+            data_size=result["data_size"],
+            metadata_size=result["metadata_size"],
+            realms=result["realms"],
+            users=users,
+            active_users=active_users,
+            users_per_profile_detail=users_per_profile_detail,
+        )
+
     @override
     @transaction
     async def organization_stats(
         self,
-        connection: asyncpg.Connection,
+        conn: asyncpg.Connection,
         organization_id: OrganizationID,
     ) -> OrganizationStats | OrganizationStatsBadOutcome:
-        raise NotImplementedError
-        # at = at or DateTime.now()
-        # stats = await _organization_stats(conn, id, at)
-        #     if not stats:
-        #         raise OrganizationNotFoundError()
-        #     return stats
+        return await self._get_organization_stats(conn, organization_id)
 
     @override
     @transaction
     async def server_stats(
-        self, connection: asyncpg.Connection, at: DateTime | None = None
+        self, conn: asyncpg.Connection, at: DateTime | None = None
     ) -> dict[OrganizationID, OrganizationStats]:
-        raise NotImplementedError
-        # for org in await conn.fetch(*_q_get_organizations()):
-        #     org_id = OrganizationID(org["id"])
-        #     org_stats = await _organization_stats(conn, org_id, at)
-        #     if org_stats:
-        #         results[org_id] = org_stats
-        # return results
+        results = {}
+        for org in await conn.fetch(*_q_get_organizations()):
+            org_id = OrganizationID(org["id"])
+            org_stats = await self._get_organization_stats(conn, org_id, at=at)
+            if org_stats:
+                results[org_id] = org_stats
+        return results
 
     @override
+    @transaction
     async def update(
         self,
+        conn: asyncpg.Connection,
         id: OrganizationID,
-        is_expired: UnsetType | bool = Unset,
-        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: UnsetType | bool = Unset,
-    ) -> None:
-        raise NotImplementedError
-        # fields: dict[str, Any] = {}
+        is_expired: Literal[Unset] | bool = Unset,
+        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: Literal[Unset] | int = Unset,
+    ) -> None | OrganizationUpdateBadOutcome:
+        with_is_expired = is_expired is not Unset
+        with_active_users_limit = active_users_limit is not Unset
+        with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+        with_minimum_archiving_period = minimum_archiving_period is not Unset
 
-        # with_is_expired = is_expired is not Unset
-        # with_active_users_limit = active_users_limit is not Unset
-        # with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
+        match await self._get(conn, id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unkown:
+                assert_never(unkown)
 
-        # if (
-        #     not with_is_expired
-        #     and not with_active_users_limit
-        #     and not with_user_profile_outsider_allowed
-        # ):
-        #     # Nothing to update, just make sure the organization exists and
-        #     # pretent we actually did an update
-        #     await self.get(id=id)
-        #     return
+        if (
+            not with_is_expired
+            and not with_active_users_limit
+            and not with_user_profile_outsider_allowed
+            and not with_minimum_archiving_period
+        ):
+            # Nothing to update
+            return
 
-        # if with_is_expired:
-        #     fields["is_expired"] = is_expired
-        # if with_active_users_limit:
-        #     assert isinstance(active_users_limit, ActiveUsersLimit)
-        #     fields["active_users_limit"] = active_users_limit.to_int()
-        # if with_user_profile_outsider_allowed:
-        #     fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+        fields: dict[str, object] = {}
+        if with_is_expired:
+            fields["is_expired"] = is_expired
+        if with_active_users_limit:
+            assert isinstance(active_users_limit, ActiveUsersLimit)
+            fields["active_users_limit"] = active_users_limit.to_maybe_int()
+        if with_user_profile_outsider_allowed:
+            fields["user_profile_outsider_allowed"] = user_profile_outsider_allowed
+        if with_minimum_archiving_period:
+            fields["minimum_archiving_period"] = minimum_archiving_period
 
-        # q = _q_update_factory(
-        #     with_is_expired=with_is_expired,
-        #     with_active_users_limit=with_active_users_limit,
-        #     with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
-        # )
+        q = _q_update_factory(
+            with_is_expired=with_is_expired,
+            with_active_users_limit=with_active_users_limit,
+            with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
+            with_minimum_archiving_period=with_minimum_archiving_period,
+        )
 
-        # async with self.dbh.pool.acquire() as conn, conn.transaction():
-        #     result = await conn.execute(*q(organization_id=id.str, **fields))
+        result = await conn.execute(*q(organization_id=id.str, **fields))
+        assert result == "UPDATE 1"
 
-        #     if result == "UPDATE 0":
-        #         raise OrganizationNotFoundError
+        # TODO: the event is triggered even if the orga was already expired, is this okay ?
+        if organization.is_expired:
+            await self.event_bus.send(EventOrganizationExpired(organization_id=id))
 
-        #     if result != "UPDATE 1":
-        #         raise OrganizationError(f"Update error: {result}")
+    # async def archiving_config(
+    #     self,
+    #     id: OrganizationID,
+    #     user: UserID,
+    # ) -> list[RealmArchivingStatus]:
+    #     async with self.dbh.pool.acquire() as conn:
+    #         await self._get(conn, id)
+    #         mapping = await realm_queries.query_get_realms_for_user(conn, id, user)
+    #         realm_ids = {
+    #             realm_id: internal_realm_id
+    #             for (realm_id, (internal_realm_id, _)) in mapping.items()
+    #         }
+    #         result = []
+    #         for (
+    #             realm_id,
+    #             configuration,
+    #             configured_on,
+    #             configured_by,
+    #         ) in await realm_queries.query_get_archiving_configurations(
+    #             conn,
+    #             id,
+    #             realm_ids,
+    #         ):
+    #             result.append(
+    #                 RealmArchivingStatus(
+    #                     realm_id=realm_id,
+    #                     configured_on=configured_on,
+    #                     configured_by=configured_by,
+    #                     configuration=configuration,
+    #                 )
+    #             )
+    #         return result
 
-        #     if with_is_expired and is_expired:
-        #         await send_signal(conn, BackendEventOrganizationExpired(organization_id=id))
+    @transaction
+    async def test_dump_organizations(
+        self, conn: asyncpg.Connection, skip_templates: bool = True
+    ) -> dict[OrganizationID, OrganizationDump]:
+        items = {}
+        for org in await conn.fetch(*_q_get_organizations()):
+            match await self._get(conn, OrganizationID(org["id"])):
+                case OrganizationGetBadOutcome():
+                    continue
+                case Organization() as org:
+                    pass
+                case unkown:
+                    assert_never(unkown)
 
-    async def test_drop_organization(self, id: OrganizationID) -> None:
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                *q_test_drop_organization_from_invitation_table(organization_id=id.str)
+            if org.organization_id.str.endswith("Template") and skip_templates:
+                continue
+
+            org.active_users_limit
+            items[org.organization_id] = OrganizationDump(
+                organization_id=org.organization_id,
+                is_bootstrapped=org.is_bootstrapped,
+                is_expired=org.is_expired,
+                active_users_limit=org.active_users_limit,
+                user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             )
-            await conn.execute(*q_test_drop_organization_from_device_table(organization_id=id.str))
-            await conn.execute(*q_test_drop_organization_from_user_table(organization_id=id.str))
-            await conn.execute(*q_test_drop_organization_from_human_table(organization_id=id.str))
-            await conn.execute(
-                *q_test_drop_organization_from_organization_table(organization_id=id.str)
-            )
 
+        return items
+
+    @transaction
+    async def test_drop_organization(self, conn: asyncpg.Connection, id: OrganizationID) -> None:
+        await conn.execute(*q_test_drop_organization(organization_id=id.str))
+
+    @transaction
     async def test_duplicate_organization(
-        self, source_id: OrganizationID, target_id: OrganizationID
+        self, conn: asyncpg.Connection, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
-        async with self.pool.acquire() as conn:
-            await conn.execute(
-                *q_test_duplicate_organization_from_organization_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_human_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_user_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_device_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
-            await conn.execute(
-                *q_test_duplicate_organization_from_invitation_table(
-                    source_id=source_id.str, target_id=target_id.str
-                )
-            )
+        row = await conn.fetchrow(*_q_get_organization(organization_id=source_id.str))
+        assert row is not None, f"The organization {source_id} doesn't exist"
+        row = await conn.fetchrow(*_q_get_organization(organization_id=target_id.str))
+        assert row is None, f"The organization {target_id} already exists"
+        await conn.execute(
+            *q_test_duplicate_organization(source_id=source_id.str, target_id=target_id.str)
+        )
+        row = await conn.fetchrow(*_q_get_organization(organization_id=target_id.str))
+        assert row is not None, f"The organization {target_id} hasn't been duplicated"

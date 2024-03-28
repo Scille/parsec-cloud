@@ -53,6 +53,16 @@ class Q:
             args.append(kwargs[variable])
         return args
 
+    def arg_only(self, **kwargs: Any) -> list[Any]:
+        if kwargs.keys() != self._variables.keys():
+            missing = self._variables.keys() - kwargs.keys()
+            unknown = kwargs.keys() - self._variables.keys()
+            raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
+        args = []
+        for variable in self._variables:
+            args.append(kwargs[variable])
+        return args
+
 
 def q_organization(
     organization_id: str | None = None,
@@ -119,6 +129,7 @@ q_user, q_user_internal_id = _table_q_factory("user_", "user_id")
 q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
 q_block, q_block_internal_id = _table_q_factory("block", "block_id")
 q_human, q_human_internal_id = _table_q_factory("human", "email")
+q_invitation, q_invitation_internal_id = _table_q_factory("invitation", "token")
 
 
 def q_vlob_encryption_revision_internal_id(
@@ -268,13 +279,19 @@ def transaction[**P, T, S: WithPool](
 
     async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
         async with self.pool.acquire() as conn:
-            transaction = conn.transaction()
             conn = cast(asyncpg.Connection, conn)
-            async with transaction:
+            transaction = conn.transaction()
+            await transaction.start()
+            try:
                 result = await func(self, conn, *args, **kwargs)
-                match result:
-                    case BadOutcome():
-                        await transaction.rollback()
-                return result
+            except:
+                await transaction.rollback()
+                raise
+            match result:
+                case BadOutcome():
+                    await transaction.rollback()
+                case _:
+                    await transaction.commit()
+            return result
 
     return wrapper

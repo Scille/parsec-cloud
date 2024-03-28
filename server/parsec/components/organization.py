@@ -152,6 +152,7 @@ class Organization:
     bootstrap_token: BootstrapToken | None
     is_expired: bool
     created_on: DateTime
+    minimum_archiving_period: int
     bootstrapped_on: DateTime | None
     root_verify_key: VerifyKey | None
     user_profile_outsider_allowed: bool
@@ -218,6 +219,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        minimum_archiving_period: Literal[Unset] | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         raise NotImplementedError

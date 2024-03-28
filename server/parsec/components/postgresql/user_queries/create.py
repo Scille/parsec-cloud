@@ -90,7 +90,7 @@ _q_insert_user = Q(
 INSERT INTO user_ (
     organization,
     user_id,
-    profile,
+    initial_profile,
     user_certificate,
     redacted_user_certificate,
     user_certifier,
@@ -99,7 +99,7 @@ INSERT INTO user_ (
 VALUES (
     { q_organization_internal_id("$organization_id") },
     $user_id,
-    $profile,
+    $initial_profile,
     $user_certificate,
     $redacted_user_certificate,
     { q_device_internal_id(organization_id="$organization_id", device_id="$user_certifier") },
@@ -114,7 +114,7 @@ _q_insert_user_with_human_handle = Q(
 INSERT INTO user_ (
     organization,
     user_id,
-    profile,
+    initial_profile,
     user_certificate,
     redacted_user_certificate,
     user_certifier,
@@ -124,7 +124,7 @@ INSERT INTO user_ (
 VALUES (
     { q_organization_internal_id("$organization_id") },
     $user_id,
-    $profile,
+    $initial_profile,
     $user_certificate,
     $redacted_user_certificate,
     { q_device_internal_id(organization_id="$organization_id", device_id="$user_certifier") },
@@ -214,7 +214,7 @@ async def _do_create_user(
             *_q_insert_user_with_human_handle(
                 organization_id=organization_id.str,
                 user_id=user_certificate_cooked.user_id.str,
-                profile=user_certificate_cooked.profile.str,
+                initial_profile=user_certificate_cooked.profile.str,
                 user_certificate=user_certificate,
                 redacted_user_certificate=user_certificate_redacted,
                 user_certifier=user_certifier,

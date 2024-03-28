@@ -8,7 +8,9 @@ from typing import Any, AsyncGenerator
 
 import httpx
 
+from parsec.components.blockstore import blockstore_factory
 from parsec.components.postgresql.auth import PGAuthComponent
+from parsec.components.postgresql.block import PGBlockComponent
 from parsec.components.postgresql.events import PGEventsComponent, event_bus_factory
 from parsec.components.postgresql.handler import asyncpg_pool_factory
 from parsec.components.postgresql.invite import PGInviteComponent
@@ -39,25 +41,21 @@ async def components_factory(
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
                 ping = PGPingComponent(pool=pool)
-                organization = PGOrganizationComponent(pool=pool, webhooks=webhooks, config=config)
+                organization = PGOrganizationComponent(
+                    pool=pool, webhooks=webhooks, config=config, event_bus=event_bus
+                )
                 auth = PGAuthComponent(pool=pool, event_bus=event_bus, config=config)
                 invite = PGInviteComponent(pool=pool, event_bus=event_bus, config=config)
                 user = PGUserComponent(pool=pool, event_bus=event_bus)
-                vlob = PGVlobComponent(pool=pool)
-                realm = PGRealmComponent(pool=pool)
+                vlob = PGVlobComponent(pool=pool, event_bus=event_bus)
+                realm = PGRealmComponent(pool=pool, event_bus=event_bus)
+                blockstore = blockstore_factory(
+                    config=config.blockstore_config, postgresql_pool=pool
+                )
+                block = PGBlockComponent(pool=pool)
 
-                # message = PGMessageComponent(pool=pool)
-                # blockstore = blockstore_factory(
-                #     config=config.blockstore_config, postgresql_pool=pool
-                # )
-                # block = PGBlockComponent(pool=pool, blockstore_component=blockstore)
-                # pki = PGPkiEnrollmentComponent(pool=pool)
-                # sequester = PGSequesterComponent(pool=pool)
-                message = None
-                block = None
                 pki = None
                 sequester = None
-                blockstore = None
 
                 components = {
                     "event_bus": event_bus,
@@ -67,7 +65,6 @@ async def components_factory(
                     "user": user,
                     "auth": auth,
                     "invite": invite,
-                    "message": message,
                     "realm": realm,
                     "vlob": vlob,
                     "ping": ping,

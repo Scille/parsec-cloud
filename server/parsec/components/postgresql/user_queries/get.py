@@ -17,10 +17,16 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_human,
     q_organization_internal_id,
+    q_human_internal_id,
     q_user_internal_id,
     query,
 )
-from parsec.components.user import CheckUserWithDeviceBadOutcome
+from parsec.components.user import (
+    CheckDeviceBadOutcome,
+    CheckUserForAuthenticationBadOutcome,
+    UserInfo,
+    UserListUsersBadOutcome,
+)
 
 _q_get_organization_users = Q(
     f"""
@@ -28,14 +34,15 @@ SELECT
     user_id,
     { q_human(_id="user_.human", select="email") } as human_email,
     { q_human(_id="user_.human", select="label") } as human_label,
-    profile,
+    initial_profile,
     user_certificate,
     redacted_user_certificate,
     { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
     created_on,
     revoked_on,
     revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    frozen
 FROM user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -48,18 +55,21 @@ _q_get_user = Q(
 SELECT
     { q_human(_id="user_.human", select="email") } as human_email,
     { q_human(_id="user_.human", select="label") } as human_label,
-    profile,
-    user_certificate,
-    redacted_user_certificate,
+    COALESCE(profile.profile, user_.initial_profile) as profile,
+    user_.user_certificate,
+    user_.redacted_user_certificate,
     { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
-    created_on,
-    revoked_on,
-    revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier
+    user_.created_on,
+    user_.revoked_on,
+    user_.revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    user_.frozen
 FROM user_
+LEFT JOIN profile ON user_._id = profile.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
+ORDER BY profile.certified_on DESC LIMIT 1
 """
 )
 
@@ -209,6 +219,33 @@ SELECT DISTINCT ON (_did)
     redacted_user_certificate,
     revoked_user_certificate
 FROM cte2;
+"""
+)
+
+_q_get_user_info = Q(
+    f"""
+SELECT
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+_q_get_user_info_from_email = Q(
+    f"""
+SELECT
+    user_id,
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND human = { q_human_internal_id(organization_id="$organization_id", email="$email") }
 """
 )
 
@@ -382,41 +419,23 @@ async def query_get_user_with_devices_and_trustchain(
     )
 
 
-async def query_check_user_with_device(
-    conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
-) -> UserProfile | CheckUserWithDeviceBadOutcome:
-    d_row = await conn.fetchrow(
-        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
-    )
-    if not d_row:
-        return CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND
-    u_row = await conn.fetchrow(
-        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
-    )
-    if not u_row:
-        return CheckUserWithDeviceBadOutcome.USER_NOT_FOUND
-    if u_row["revoked_on"] is not None:
-        return CheckUserWithDeviceBadOutcome.USER_REVOKED
-    initial_profile = UserProfile.from_str(u_row["profile"])
-    # TODO: return the actual profile
-    return initial_profile
-
-
 async def query_check_user_for_authentication(
     conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
-) -> DeviceCertificate | CheckUserWithDeviceBadOutcome:
+) -> DeviceCertificate | CheckUserForAuthenticationBadOutcome:
     d_row = await conn.fetchrow(
         *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
     )
     if not d_row:
-        return CheckUserWithDeviceBadOutcome.DEVICE_NOT_FOUND
+        return CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND
     u_row = await conn.fetchrow(
         *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
     )
     if not u_row:
-        return CheckUserWithDeviceBadOutcome.USER_NOT_FOUND
+        return CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND
     if u_row["revoked_on"] is not None:
-        return CheckUserWithDeviceBadOutcome.USER_REVOKED
+        return CheckUserForAuthenticationBadOutcome.USER_REVOKED
+    if u_row["frozen"]:
+        return CheckUserForAuthenticationBadOutcome.USER_FROZEN
     return DeviceCertificate.unsecure_load(d_row["device_certificate"])
 
 
@@ -465,6 +484,23 @@ async def query_get_user_with_device(
     return user, device
 
 
+async def query_list_users(
+    conn: asyncpg.Connection, organization_id: OrganizationID
+) -> list[UserInfo]:
+    users = []
+
+    rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+    for row in rows:
+        users.append(
+            UserInfo(
+                user_id=UserID(row["user_id"]),
+                human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
+                frozen=row["frozen"],
+            )
+        )
+    return users
+
+
 @query()
 async def query_dump_users(
     conn: asyncpg.Connection, organization_id: OrganizationID
@@ -478,7 +514,7 @@ async def query_dump_users(
             User(
                 user_id=UserID(row["user_id"]),
                 human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
-                initial_profile=UserProfile.from_str(row["profile"]),
+                initial_profile=UserProfile.from_str(row["initial_profile"]),
                 user_certificate=row["user_certificate"],
                 redacted_user_certificate=row["redacted_user_certificate"],
                 user_certifier=DeviceID(row["user_certifier"]) if row["user_certifier"] else None,

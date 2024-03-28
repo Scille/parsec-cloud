@@ -290,10 +290,22 @@ class UserGetActiveDeviceVerifyKeyBadOutcome(BadOutcomeEnum):
     USER_REVOKED = auto()
 
 
-class CheckUserWithDeviceBadOutcome(BadOutcomeEnum):
+class CheckDeviceBadOutcome(BadOutcomeEnum):
     USER_REVOKED = auto()
     USER_NOT_FOUND = auto()
     DEVICE_NOT_FOUND = auto()
+
+
+class CheckUserBadOutcome(BadOutcomeEnum):
+    USER_REVOKED = auto()
+    USER_NOT_FOUND = auto()
+
+
+class CheckUserForAuthenticationBadOutcome(BadOutcomeEnum):
+    USER_REVOKED = auto()
+    USER_NOT_FOUND = auto()
+    DEVICE_NOT_FOUND = auto()
+    USER_FROZEN = auto()
 
 
 class UserListUsersBadOutcome(BadOutcomeEnum):

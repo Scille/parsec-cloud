@@ -236,6 +236,7 @@ class Backend:
                         now=event.timestamp,
                         organization_id=org_id,
                         author=event.author,
+                        author_verify_key=verify_key_per_device[event.author],
                         realm_role_certificate=event.raw_certificate,
                     )
                 else:

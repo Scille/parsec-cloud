@@ -224,6 +224,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return certif
 
+    @override
     async def revoke_user(
         self,
         now: DateTime,
@@ -603,6 +604,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return items
 
+    @override
     async def list_users(
         self, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
@@ -623,6 +625,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         return users
 
+    @override
     async def freeze_user(
         self,
         organization_id: OrganizationID,

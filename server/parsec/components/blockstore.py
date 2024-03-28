@@ -83,12 +83,11 @@ def blockstore_factory(
         return MemoryBlockStoreComponent(mocked_data)
 
     elif isinstance(config, PostgreSQLBlockStoreConfig):
-        from parsec.components.postgresql import PGBlockStoreComponent
+        from parsec.components.postgresql.block import PGBlockStoreComponent
 
         if not postgresql_pool:
             raise ValueError("PostgreSQL block store is not available")
-        # TODO: PostgreSQL is currently broken !
-        return PGBlockStoreComponent(postgresql_pool)  # type: ignore
+        return PGBlockStoreComponent(postgresql_pool)
 
     elif isinstance(config, S3BlockStoreConfig):
         try:

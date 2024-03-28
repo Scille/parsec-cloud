@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import Awaitable, Callable, Generator
+from typing import Generator
 
 import pytest
 import structlog
@@ -20,10 +20,8 @@ pytest.register_assert_rewrite("tests.common.event_bus_spy")
 pytest.register_assert_rewrite("tests.common.invite")
 from tests.common import (
     LogCaptureFixture,
-    asyncio_reset_postgresql_testbed,
     bootstrap_postgresql_testbed,
     get_postgresql_url,
-    reset_postgresql_testbed,
 )
 from tests.common.patch_httpx import patch_httpx_stream_support
 
@@ -222,9 +220,8 @@ def postgresql_url(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture
-def db_url(request: pytest.FixtureRequest) -> str:
+async def db_url(request: pytest.FixtureRequest) -> str:
     if request.config.getoption("--postgresql"):
-        reset_postgresql_testbed()
         url = get_postgresql_url()
         assert url is not None
         return url
@@ -243,20 +240,6 @@ def blockstore_config(db_url: str) -> BaseBlockStoreConfig:
         return PostgreSQLBlockStoreConfig()
     else:
         return MockedBlockStoreConfig()
-
-
-@pytest.fixture
-def reset_testbed(
-    request: pytest.FixtureRequest,
-    caplog: LogCaptureFixture,
-) -> Callable[[bool], Awaitable[None]]:
-    async def _reset_testbed(keep_logs=False):
-        if request.config.getoption("--postgresql"):
-            await asyncio_reset_postgresql_testbed()
-        if not keep_logs:
-            caplog.clear()
-
-    return _reset_testbed
 
 
 # Finally other fixtures
