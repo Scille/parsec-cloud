@@ -6,13 +6,14 @@ import ssl
 import sys
 import tempfile
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum, auto
-from typing import assert_never
+from typing import AsyncIterator, assert_never
 
 import anyio
 from structlog.stdlib import get_logger
@@ -33,7 +34,7 @@ from parsec._parsec import (
 )
 from parsec.api import api
 from parsec.client_context import AuthenticatedClientContext, InvitedClientContext
-from parsec.components.events import EventBus
+from parsec.components.events import EventBus, EventWaiter
 from parsec.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.events import (
     Event,
@@ -377,6 +378,79 @@ class BaseInviteComponent:
     #
     # Public methods
     #
+
+    @asynccontextmanager
+    async def conduit_exchange_with_keepalive(
+        self,
+        organization_id: OrganizationID,
+        greeter: UserID | None,  # None for claimer
+        token: InvitationToken,
+        state: ConduitState,
+        payload: bytes,
+        last: bool = False,
+    ) -> AsyncIterator[tuple[ConduitListenCtx, EventWaiter] | InviteConduitExchangeBadOutcome]:
+        # Conduit exchange is done in two steps:
+        # First we "talk" by providing our payload and retrieve the peer's
+        # payload if he has talked prior to us.
+        # Then we "listen" by waiting for the peer to provide his payload if we
+        # have talked first, or to confirm us it has received our payload if we
+        # have talked after him.
+        filter_organization_id = organization_id
+        filter_token = token
+
+        def _event_filter(
+            event: Event,
+        ) -> bool:
+            match event:
+                case (EventEnrollmentConduit() | EventInvitation()) as event:
+                    return (
+                        event.organization_id == filter_organization_id
+                        and event.token == filter_token
+                    )
+                case _:
+                    return False
+
+        with self._event_bus.create_waiter(filter=_event_filter) as waiter:
+            outcome = await self._conduit_talk(
+                organization_id=organization_id,
+                token=token,
+                is_greeter=greeter is not None,
+                state=state,
+                payload=payload,
+                last=last,
+            )
+            match outcome:
+                case ConduitListenCtx() as listen_ctx:
+                    pass
+                case InviteConduitExchangeBadOutcome() as error:
+                    yield error
+                    return
+                case unknown:
+                    assert_never(unknown)
+
+            if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
+                await self._claimer_joined(
+                    organization_id=organization_id, greeter=listen_ctx.greeter, token=token
+                )
+
+            try:
+                yield (listen_ctx, waiter)
+
+            finally:
+                if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
+                    # When claimer left, it's most likely because it's connection is getting closed.
+                    # Hence it's hazardous to send the event directly from this coroutine (it
+                    # requires cancellation shielding), and instead the `send_nowait` will
+                    # delegate the work to a dedicated coroutine.
+                    status = InvitationStatusField.IDLE  # pyright: ignore [reportAttributeAccessIssue]
+                    self._event_bus.send_nowait(
+                        EventInvitation(
+                            organization_id=organization_id,
+                            token=token,
+                            greeter=listen_ctx.greeter,
+                            status=status,
+                        )
+                    )
 
     async def conduit_exchange(
         self,
@@ -784,6 +858,57 @@ class BaseInviteComponent:
                 assert False, unexpected
             case unknown:
                 assert_never(unknown)
+
+    @asynccontextmanager
+    async def api_invite_1_greeter_wait_peer_with_keepalive(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_1_greeter_wait_peer.Req,
+    ) -> AsyncIterator[
+        tuple[ConduitListenCtx, EventWaiter]
+        | authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep
+    ]:
+        async with self.conduit_exchange_with_keepalive(
+            organization_id=client_ctx.organization_id,
+            greeter=client_ctx.user_id,
+            token=req.token,
+            state=ConduitState.STATE_1_WAIT_PEERS,
+            payload=req.greeter_public_key.encode(),
+        ) as outcome:
+            match outcome:
+                case (conduit_ctx, waiter):
+                    yield (conduit_ctx, waiter)
+                case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE as unexpected:
+                    assert False, unexpected
+                case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
+                    yield authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvitationNotFound()
+                case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
+                    yield authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvitationDeleted()
+                case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+                    client_ctx.organization_not_found_abort()
+                case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
+                    client_ctx.organization_expired_abort()
+                case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
+                    client_ctx.author_not_found_abort()
+                case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
+                    client_ctx.author_revoked_abort()
+                case unknown:
+                    assert_never(unknown)
+
+    def api_invite_1_greeter_wait_peer_return(
+        self,
+        raw_outcome: tuple[bytes, bool] | InviteConduitExchangeBadOutcome,
+    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
+        match raw_outcome:
+            case (greeter_public_key, _):
+                return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepOk(
+                    PublicKey(greeter_public_key)
+                )
+            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE as unexpected:
+                # Here we may also return a `RepEnrollmentWrongState` response for the routes that supports it
+                assert False, unexpected
+            case InviteConduitExchangeBadOutcome() as unexpected:
+                assert False, unexpected
 
     @api
     async def api_invite_1_greeter_wait_peer(

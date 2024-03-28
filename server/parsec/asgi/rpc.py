@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Annotated,
     Any,
+    AsyncContextManager,
     AsyncGenerator,
+    Awaitable,
+    Callable,
+    Mapping,
     NoReturn,
     Sequence,
+    TypeAlias,
     assert_never,
 )
 from uuid import UUID
@@ -24,6 +30,7 @@ from pydantic import (
     TypeAdapter,
 )
 from pydantic_core import core_schema
+from starlette.types import Receive, Scope, Send
 
 from parsec._parsec import (
     ApiVersion,
@@ -49,7 +56,8 @@ from parsec.components.auth import (
     AuthInvitedAuthBadOutcome,
     InvitedAuthInfo,
 )
-from parsec.components.events import SseAPiEventsListenBadOutcome
+from parsec.components.events import EventWaiter, SseAPiEventsListenBadOutcome
+from parsec.components.invite import ConduitListenCtx, InviteConduitExchangeBadOutcome
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
@@ -580,8 +588,131 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
     cmd_func = backend.apis[type(req)]
+
+    # PoC for the keepalive feature
+    if type(req) == authenticated_cmds.v4.invite_1_greeter_wait_peer.Req:
+        manager = backend.invite.api_invite_1_greeter_wait_peer_with_keepalive
+        return_callback = backend.invite.api_invite_1_greeter_wait_peer_return
+        conduit_listen = backend.invite._conduit_listen
+        return KeepAliveResponse(
+            context_callback=lambda: manager(client_ctx, req),
+            return_callback=return_callback,
+            conduit_listen=conduit_listen,
+            sse_keepalive=backend.config.sse_keepalive,
+            status_code=200,
+            headers={
+                "Api-Version": str(parsed.settled_api_version),
+                "Content-Type": CONTENT_TYPE_MSGPACK,
+            },
+        )
+
     rep = await cmd_func(client_ctx, req)
     return _rpc_rep(rep, parsed.settled_api_version)
+
+
+@asynccontextmanager
+async def listen_for_disconnect(receive: Receive):
+    async def _task() -> None:
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                break
+        task_group.cancel_scope.cancel()
+
+    async with anyio.create_task_group() as task_group:
+        task_group.start_soon(_task)
+        yield
+        task_group.cancel_scope.cancel()
+
+
+BlockingRep: TypeAlias = authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep
+
+
+class KeepAliveResponse(StreamingResponse):
+    def __init__(
+        self,
+        context_callback: Callable[
+            [], AsyncContextManager[tuple[ConduitListenCtx, EventWaiter] | BlockingRep]
+        ],
+        return_callback: Callable[
+            [tuple[bytes, bool] | InviteConduitExchangeBadOutcome], BlockingRep
+        ],
+        conduit_listen: Callable[
+            [DateTime, ConduitListenCtx],
+            Awaitable[tuple[bytes, bool] | InviteConduitExchangeBadOutcome | None],
+        ],
+        sse_keepalive: float,
+        status_code: int = 200,
+        headers: Mapping[str, str] | None = None,
+    ):
+        self.context_callback = context_callback
+        self.return_callback = return_callback
+        self.conduit_listen = conduit_listen
+        self.sse_keepalive = sse_keepalive
+        super().__init__(
+            content=(),
+            status_code=status_code,
+            headers=headers,
+        )
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        # Open the command context
+        async with self.context_callback() as outcome:
+            # No exception, we can return the headers and status code
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": self.status_code,
+                    "headers": self.raw_headers,
+                }
+            )
+
+            # Match the outcome
+            match outcome:
+                # Waiting is required
+                case (listen_ctx, waiter):
+                    pass
+
+                # Waiting is not required
+                case BlockingRep() as reply:
+                    await send({"type": "http.response.body", "body": reply.dump()})
+                    return
+
+            # Manage `http.disconnect` events
+            async with listen_for_disconnect(receive):
+                # Manage the keepalive
+                keep_alive_message = {
+                    "type": "http.response.body",
+                    "body": b"\xa9keepalive",
+                    "more_body": True,
+                }
+                while True:
+                    # Use sse keepalive to wait for the next event
+                    with anyio.move_on_after(self.sse_keepalive) as cancel_scope:
+                        await waiter.wait()
+                        waiter.clear()
+
+                    if cancel_scope.cancel_called:
+                        await send(keep_alive_message)
+                        continue
+
+                    outcome = await self.conduit_listen(DateTime.now(), listen_ctx)
+                    match outcome:
+                        case InviteConduitExchangeBadOutcome() | tuple() as raw_outcome:
+                            reply = self.return_callback(raw_outcome)
+                            await send(
+                                {
+                                    "type": "http.response.body",
+                                    "body": reply.dump(),
+                                    "more_body": False,
+                                }
+                            )
+                            return
+                        case None:
+                            await send(keep_alive_message)
+                            continue
+                        case unknown:
+                            assert_never(unknown)
 
 
 @rpc_router.get("/authenticated/{raw_organization_id}/events")
