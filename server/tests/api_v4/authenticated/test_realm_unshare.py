@@ -153,6 +153,7 @@ async def test_authenticated_realm_unshare_recipient_already_unshared(
         alice_unshare_bob_certificate.timestamp,
         coolorg.organization_id,
         coolorg.alice.device_id,
+        coolorg.alice.signing_key.verify_key,
         alice_unshare_bob_certificate.dump_and_sign(coolorg.alice.signing_key),
     )
     assert isinstance(outcome, RealmRoleCertificate)

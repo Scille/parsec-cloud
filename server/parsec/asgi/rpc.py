@@ -679,7 +679,7 @@ class StreamingResponseMiddleware(StreamingResponse):
 
     This is useful since the async generator used to stream the events should
     not contain context managers due to the fact that it is iterated without
-    proper control over its lifetime, breaking the princples of structured concurrency.
+    proper control over its lifetime, breaking the principles of structured concurrency.
     """
 
     def __init__(
