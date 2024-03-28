@@ -52,13 +52,13 @@
 import { writeTextToClipboard } from '@/common/clipboard';
 import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
-import { inject } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   invitation: UserInvitation;
+  informationManager: InformationManager;
 }>();
 
 defineEmits<{
@@ -66,12 +66,10 @@ defineEmits<{
   (e: 'greetUser', invitation: UserInvitation): void;
 }>();
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
-
 async function copyLink(invitation: UserInvitation): Promise<void> {
   const result = await writeTextToClipboard(invitation.addr);
   if (result) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('UsersPage.invitation.linkCopiedToClipboard'),
         level: InformationLevel.Info,
@@ -79,7 +77,7 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
       PresentationMode.Toast,
     );
   } else {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('UsersPage.invitation.linkNotCopiedToClipboard'),
         level: InformationLevel.Error,

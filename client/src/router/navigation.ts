@@ -3,7 +3,7 @@
 import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
 import { Query, Routes, getCurrentRoute, getRouter } from '@/router/types';
-import { organizationKey } from '@/router/watchers';
+import { multiOrganizationUpdateKey } from '@/router/watchers';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
 export interface NavigationOptions {
@@ -62,9 +62,9 @@ interface RouteBackup {
 const routesBackup: Array<RouteBackup> = [];
 
 export async function switchOrganization(handle: ConnectionHandle | null, backup = true): Promise<void> {
-  if (backup) {
-    const currentHandle = getConnectionHandle();
+  const currentHandle = getConnectionHandle();
 
+  if (backup) {
     if (currentHandle === null) {
       console.error('No current handle');
     } else if (handle === currentHandle) {
@@ -91,7 +91,6 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
   // No handle, navigate to organization list
   if (!handle) {
     await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-    organizationKey.value += 1;
   } else {
     const backup = routesBackup.find((bk) => bk.handle === handle);
     if (!backup) {
@@ -100,6 +99,8 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
     }
     console.log('Restoring', backup.data.route, backup.data.params, backup.data.query);
     await navigateTo(backup.data.route, { params: backup.data.params, query: backup.data.query, skipHandle: true, replace: true });
-    organizationKey.value += 1;
+    if (currentHandle) {
+      multiOrganizationUpdateKey.value += 1;
+    }
   }
 }

@@ -68,9 +68,10 @@ import {
   login as parsecLogin,
 } from '@/parsec';
 import { NavigationOptions, Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, switchOrganization, watchRoute } from '@/router';
-import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
+import { EventDistributor } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import { translate } from '@/services/translation';
 import { Position, SlideHorizontal } from '@/transitions';
@@ -93,15 +94,15 @@ enum HomePageState {
   ForgottenPassword = 'forgotten-password',
 }
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const state = ref(HomePageState.OrganizationList);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 const loginPageRef = ref();
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -231,6 +232,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 }
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
+  const eventDistributor = new EventDistributor();
   const result = await parsecLogin(eventDistributor, device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.slug]) {
@@ -250,6 +252,7 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
         await navigateToWorkspace(initResult.value.handle, linkData.path);
       }
     } else {
+      injectionProvider.createNewInjections(result.value, eventDistributor);
       const options: NavigationOptions = { params: { handle: result.value }, replace: true };
       await navigateTo(Routes.Workspaces, options);
     }
