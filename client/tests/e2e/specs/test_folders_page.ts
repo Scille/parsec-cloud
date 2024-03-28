@@ -430,7 +430,7 @@ describe('Check folders page', () => {
     cy.get('#folders-ms-action-bar').find('#button-copy-link').should('not.have.css', 'display', 'none');
     cy.get('#folders-ms-action-bar').find('#button-details').should('not.have.css', 'display', 'none');
 
-    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
+    cy.get('.file-list-item').first().find('.options-button').invoke('show').click({ force: true });
     cy.get('#file-context-menu').should('be.visible');
     cy.get('#file-context-menu').find('ion-item').as('menuItems').should('have.length', 7);
     cy.get('@menuItems').eq(0).contains('Manage file');

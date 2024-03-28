@@ -124,7 +124,8 @@
             "emailLabel": "Email",
             "passwordLabel": "Mot de passe",
             "passwordError": "Le mot de passe est invalide.",
-            "login": "Se connecter"
+            "login": "Se connecter",
+            "loading": "Chargement..."
         },
         "organizationActionSheet": "Organisation",
         "keyringFailed": "Impossible de se connecter",

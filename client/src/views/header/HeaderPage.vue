@@ -297,6 +297,9 @@ async function openNotificationCenter(event: Event): Promise<void> {
     event: event,
     cssClass: 'notification-center-popover',
     showBackdrop: false,
+    componentProps: {
+      notificationManager: informationManager.notificationManager,
+    },
   });
   await popover.present();
   await popover.onWillDismiss();

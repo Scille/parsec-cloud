@@ -39,6 +39,7 @@
           :key="invitation.claimerEmail"
           @cancel="cancelInvitation"
           @greet-user="greetUser"
+          :information-manager="informationManager"
         />
       </ion-list>
     </div>
@@ -50,9 +51,14 @@ import { MsModalResult } from '@/components/core';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
 import { UserInvitation, listUserInvitations } from '@/parsec';
 import { currentRouteIsUserRoute } from '@/router';
+import { InformationManager } from '@/services/informationManager';
 import { IonButton, IonIcon, IonList, IonText, popoverController } from '@ionic/vue';
 import { personAdd } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
+
+defineProps<{
+  informationManager: InformationManager;
+}>();
 
 const invitations: Ref<UserInvitation[]> = ref([]);
 

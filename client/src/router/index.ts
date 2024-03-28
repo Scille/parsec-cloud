@@ -12,4 +12,4 @@ export {
   getWorkspaceHandle,
 } from '@/router/params';
 export * from '@/router/types';
-export { watchOrganizationSwitch, watchRoute } from '@/router/watchers';
+export { watchRoute } from '@/router/watchers';

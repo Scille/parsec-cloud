@@ -195,10 +195,10 @@ import {
   DeviceSaveStrategyTag,
   UserClaim,
 } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import { close } from 'ionicons/icons';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -209,7 +209,6 @@ enum UserJoinOrganizationStep {
   Finish = 6,
 }
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const pageStep = ref(UserJoinOrganizationStep.WaitForHost);
 const userInfoPage = ref();
 const authChoice = ref();
@@ -220,6 +219,7 @@ const claimer = ref(new UserClaim());
 
 const props = defineProps<{
   invitationLink: string;
+  informationManager: InformationManager;
 }>();
 
 const waitingForHost = ref(true);
@@ -275,7 +275,7 @@ const titles = new Map<UserJoinOrganizationStep, Title>([
 ]);
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: message,
       level: InformationLevel.Error,
@@ -364,7 +364,7 @@ async function nextStep(): Promise<void> {
       // Error here is quite bad because the user has been created in the organization
       // but we fail to save the device. Don't really know what to do here.
       // So we just keep the dialog as is, they can click the button again, hoping it will work.
-      informationManager.present(
+      props.informationManager.present(
         new Information({
           message: translate('JoinOrganization.errors.saveDeviceFailed'),
           level: InformationLevel.Error,
@@ -390,7 +390,7 @@ async function nextStep(): Promise<void> {
       message: translate('JoinOrganization.successMessage'),
       level: InformationLevel.Success,
     });
-    informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
+    props.informationManager.present(notification, PresentationMode.Toast | PresentationMode.Console);
     const saveStrategy: DeviceSaveStrategy = authChoice.value.getSaveStrategy();
     const accessStrategy =
       saveStrategy.tag === DeviceSaveStrategyTag.Keyring
@@ -436,7 +436,7 @@ async function startProcess(): Promise<void> {
         break;
     }
 
-    await informationManager.present(
+    await props.informationManager.present(
       new Information({
         message: message,
         level: InformationLevel.Error,
@@ -461,7 +461,7 @@ async function startProcess(): Promise<void> {
         break;
     }
 
-    await informationManager.present(
+    await props.informationManager.present(
       new Information({
         message: message,
         level: InformationLevel.Error,

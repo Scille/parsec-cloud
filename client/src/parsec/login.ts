@@ -71,23 +71,24 @@ export async function login(
   device: AvailableDevice,
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
-  function parsecEventCallback(event: ClientEvent): void {
+  function parsecEventCallback(distributor: EventDistributor, event: ClientEvent): void {
+    console.log(event);
     switch (event.tag) {
       case ClientEventTag.Online:
-        eventDistributor.dispatchEvent(Events.Online, {});
+        distributor.dispatchEvent(Events.Online, {});
         break;
       case ClientEventTag.Offline:
-        eventDistributor.dispatchEvent(Events.Offline, {});
+        distributor.dispatchEvent(Events.Offline, {});
         break;
       case ClientEventTag.InvitationChanged:
-        eventDistributor.dispatchEvent(Events.InvitationUpdated, {
+        distributor.dispatchEvent(Events.InvitationUpdated, {
           token: (event as ClientEventInvitationChanged).token,
           status: (event as ClientEventInvitationChanged).status,
         });
         break;
       case ClientEventTag.IncompatibleServer:
-        eventDistributor.dispatchEvent(Events.Offline, {});
-        eventDistributor.dispatchEvent(Events.IncompatibleServer, {});
+        distributor.dispatchEvent(Events.Offline, {});
+        distributor.dispatchEvent(Events.IncompatibleServer, {});
         break;
       case ClientEventTag.RevokedSelfUser:
         eventDistributor.dispatchEvent(Events.ClientRevoked, {});
@@ -108,7 +109,13 @@ export async function login(
 
   if (!needsMocks()) {
     const clientConfig = getClientConfig();
-    const result = await libparsec.clientStart(clientConfig, parsecEventCallback, accessStrategy);
+    const result = await libparsec.clientStart(
+      clientConfig,
+      (event: ClientEvent) => {
+        parsecEventCallback(eventDistributor, event);
+      },
+      accessStrategy,
+    );
     if (result.ok) {
       loggedInDevices.push({ handle: result.value, device: device });
     }

@@ -234,7 +234,7 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import {
   IonButton,
@@ -253,7 +253,7 @@ import {
 } from '@ionic/vue';
 import { checkmarkCircle, close, copy } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,
@@ -263,13 +263,16 @@ enum GreetDeviceStep {
   Summary = 5,
 }
 
+const props = defineProps<{
+  informationManager: InformationManager;
+}>();
+
 const pageStep = ref(GreetDeviceStep.WaitForGuest);
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const isEmailSent = ref(false);
 const elapsedCount = ref(0);
 const greeter = ref(new DeviceGreet());
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const linkCopiedToClipboard = ref(false);
 const cancelled = ref(false);
 
@@ -345,7 +348,7 @@ async function startProcess(): Promise<void> {
   waitingForGuest.value = true;
   const result = await greeter.value.startGreet();
   if (!result.ok) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('DevicesPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
@@ -357,7 +360,7 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok && !cancelled.value) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('DevicesPage.greet.errors.startFailed'),
         level: InformationLevel.Error,
@@ -422,7 +425,7 @@ async function cancelModal(): Promise<boolean> {
 }
 
 async function showErrorAndRestart(message: string): Promise<void> {
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: message,
       level: InformationLevel.Error,
@@ -438,7 +441,7 @@ async function nextStep(): Promise<void> {
     return;
   }
   if (pageStep.value === GreetDeviceStep.Summary) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('DevicesPage.greet.success'),
         level: InformationLevel.Success,
@@ -485,7 +488,7 @@ async function copyLink(): Promise<void> {
   setTimeout(() => {
     linkCopiedToClipboard.value = false;
   }, 5000);
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: translate('DevicesPage.greet.linkCopiedToClipboard'),
       level: InformationLevel.Info,
@@ -507,7 +510,7 @@ async function sendEmail(): Promise<void> {
     isEmailSent.value = true;
     startCounter(5000, 1000, updateCounter);
   } else {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('DevicesPage.greet.errors.emailFailed'),
         level: InformationLevel.Error,

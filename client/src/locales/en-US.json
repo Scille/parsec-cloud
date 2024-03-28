@@ -124,7 +124,8 @@
             "emailLabel": "Email",
             "passwordLabel": "Password",
             "passwordError": "Incorrect password.",
-            "login": "Log in"
+            "login": "Log in",
+            "loading": "Loading..."
         },
         "organizationActionSheet": "Organization",
         "keyringFailed": "Could not log in",

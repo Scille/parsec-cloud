@@ -191,12 +191,12 @@ import {
   DeviceSaveStrategyTag,
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { formatDate, translate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 enum CreateOrganizationStep {
   OrgNameStep = 1,
@@ -210,7 +210,6 @@ enum CreateOrganizationStep {
 
 const DEFAULT_SAAS_ADDR = 'parsec3://saas-demo-v3-fireraptor.parsec.cloud/ ';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
 const userInfo = ref();
@@ -221,6 +220,10 @@ const organizationNameInputRef = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
 const orgInfo: Ref<null | OrgInfoValues> = ref(null);
+
+const props = defineProps<{
+  informationManager: InformationManager;
+}>();
 
 const fieldsUpdated = ref(false);
 
@@ -426,7 +429,7 @@ async function nextStep(): Promise<void> {
           break;
       }
       if (message) {
-        informationManager.present(
+        props.informationManager.present(
           new Information({
             message: message,
             level: InformationLevel.Error,

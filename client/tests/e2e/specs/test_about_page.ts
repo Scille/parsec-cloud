@@ -14,8 +14,8 @@ describe('Check about page', () => {
 
   it('Opens the about page', () => {
     cy.get('.topbar-left__title').find('.title-h2').contains('About');
-    cy.get('.about-container').find('.app-info-key').as('keys').should('have.length', 4);
-    cy.get('.about-container').find('.app-info-value').as('values').should('have.length', 4);
+    cy.get('.about-container').find('.info-list').find('.app-info-key').as('keys').should('have.length', 4);
+    cy.get('.about-container').find('.info-list').find('.app-info-value').as('values').should('have.length', 4);
     cy.get('@keys').eq(0).contains('Version');
     cy.get('@keys').eq(1).contains('Developer');
     cy.get('@keys').eq(2).contains('License');

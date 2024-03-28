@@ -48,18 +48,18 @@
 import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { translate, translateWorkspaceRole } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
-import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
   ownRole: WorkspaceRole | null;
+  informationManager: InformationManager;
 }>();
 
 const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
@@ -109,7 +109,7 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
       userRoles.value = result.value;
     }
   } else {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('WorkspaceSharing.listFailure.message'),
         level: InformationLevel.Error,
@@ -134,7 +134,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   // Trying to set the same role again
   if (current && current[1] === role) {
     if (role === null) {
-      informationManager.present(
+      props.informationManager.present(
         new Information({
           message: translate('WorkspaceSharing.listFailure.alreadyNotShared', { user: user.humanHandle.label }),
           level: InformationLevel.Info,
@@ -142,7 +142,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         PresentationMode.Toast,
       );
     } else {
-      informationManager.present(
+      props.informationManager.present(
         new Information({
           message: translate('WorkspaceSharing.listFailure.alreadyHasRole', {
             user: user.humanHandle.label,
@@ -158,7 +158,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   const result = await shareWorkspace(props.workspaceId, user.id, role);
   if (result.ok) {
     if (!role) {
-      informationManager.present(
+      props.informationManager.present(
         new Information({
           message: translate('WorkspaceSharing.unshareSuccess', {
             user: user.humanHandle.label,
@@ -168,7 +168,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         PresentationMode.Toast,
       );
     } else {
-      informationManager.present(
+      props.informationManager.present(
         new Information({
           message: translate('WorkspaceSharing.updateRoleSuccess', {
             user: user.humanHandle.label,
@@ -180,7 +180,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
       );
     }
   } else {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: translate('WorkspaceSharing.updateRoleFailure', {
           user: user.humanHandle.label,

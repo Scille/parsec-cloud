@@ -118,6 +118,9 @@ async function openChangePassword(): Promise<void> {
   const modal = await modalController.create({
     component: UpdatePasswordModal,
     cssClass: 'change-password-modal',
+    componentProps: {
+      informationManager: informationManager,
+    },
   });
   await modal.present();
   await modal.onWillDismiss();

@@ -374,6 +374,7 @@ async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promis
     componentProps: {
       workspaceId: workspace.id,
       ownRole: workspace.currentSelfRole,
+      informationManager: informationManager,
     },
     cssClass: 'workspace-sharing-modal',
   });

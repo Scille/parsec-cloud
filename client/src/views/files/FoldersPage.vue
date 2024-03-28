@@ -528,6 +528,7 @@ async function importFiles(): Promise<void> {
       currentPath: currentPath.value.toString(),
       workspaceHandle: workspaceInfo.value?.handle,
       workspaceId: workspaceInfo.value?.id,
+      importManager: importManager,
     },
   });
   await fileUploadModal.present();
