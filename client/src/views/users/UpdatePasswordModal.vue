@@ -27,7 +27,7 @@
     <div class="modal">
       <ion-header class="modal-header">
         <ion-title class="modal-header__title title-h2">
-          {{ getTitle() }}
+          {{ $t(getTitle()) }}
         </ion-title>
       </ion-header>
 
@@ -76,7 +76,7 @@
             @click="nextStep"
             :disabled="!canGoForward"
           >
-            {{ getNextButtonText() }}
+            {{ $t(getNextButtonText()) }}
           </ion-button>
         </ion-buttons>
       </ion-footer>
@@ -199,9 +199,9 @@ function updateError(): void {
 function getTitle(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('ContactDetailsPage.titleActualPassword');
+      return 'ContactDetailsPage.titleActualPassword';
     case ChangePasswordStep.NewPassword:
-      return translate('ContactDetailsPage.titleNewPassword');
+      return 'ContactDetailsPage.titleNewPassword';
     default:
       return '';
   }
@@ -214,9 +214,9 @@ async function cancel(): Promise<boolean> {
 function getNextButtonText(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('ContactDetailsPage.nextButton');
+      return 'ContactDetailsPage.nextButton';
     case ChangePasswordStep.NewPassword:
-      return translate('ContactDetailsPage.changePasswordButton');
+      return 'ContactDetailsPage.changePasswordButton';
     default:
       return '';
   }

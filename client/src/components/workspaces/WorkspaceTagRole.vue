@@ -6,14 +6,14 @@
       class="button-small tag"
       :class="role !== null ? getClassForProfile(role) : ''"
     >
-      {{ translateWorkspaceRole(role).label }}
+      {{ $t(getWorkspaceRoleTranslationKeys(role).label) }}
     </ion-chip>
   </ion-label>
 </template>
 
 <script setup lang="ts">
 import { WorkspaceRole } from '@/parsec';
-import { translateWorkspaceRole } from '@/services/translation';
+import { getWorkspaceRoleTranslationKeys } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 
 defineProps<{

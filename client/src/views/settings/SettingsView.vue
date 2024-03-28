@@ -122,7 +122,7 @@
 import { MsDropdown, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Locale, changeLocale, translate } from '@/services/translation';
+import { Locale, changeLocale } from '@/services/translation';
 import { toggleDarkMode } from '@/states/darkMode';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
@@ -135,26 +135,26 @@ let justLoaded = false;
 const languageOptions: MsOptions = new MsOptions([
   {
     key: 'en-US',
-    label: translate('SettingsPage.language.values.enUS'),
+    label: 'SettingsPage.language.values.enUS',
   },
   {
     key: 'fr-FR',
-    label: translate('SettingsPage.language.values.frFR'),
+    label: 'SettingsPage.language.values.frFR',
   },
 ]);
 
 const themeOptions: MsOptions = new MsOptions([
   {
     key: 'dark',
-    label: translate('SettingsPage.theme.values.dark'),
+    label: 'SettingsPage.theme.values.dark',
   },
   {
     key: 'light',
-    label: translate('SettingsPage.theme.values.light'),
+    label: 'SettingsPage.theme.values.light',
   },
   {
     key: 'system',
-    label: translate('SettingsPage.theme.values.system'),
+    label: 'SettingsPage.theme.values.system',
   },
 ]);
 

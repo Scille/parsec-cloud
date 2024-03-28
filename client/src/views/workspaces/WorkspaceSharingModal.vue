@@ -49,7 +49,7 @@ import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { translate, translateWorkspaceRole } from '@/services/translation';
+import { translate, getWorkspaceRoleTranslationKeys } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -146,7 +146,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         new Information({
           message: translate('WorkspaceSharing.listFailure.alreadyHasRole', {
             user: user.humanHandle.label,
-            role: translateWorkspaceRole(role).label,
+            role: translate(getWorkspaceRoleTranslationKeys(role).label),
           }),
           level: InformationLevel.Info,
         }),
@@ -172,7 +172,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
         new Information({
           message: translate('WorkspaceSharing.updateRoleSuccess', {
             user: user.humanHandle.label,
-            role: translateWorkspaceRole(role).label,
+            role: translate(getWorkspaceRoleTranslationKeys(role).label),
           }),
           level: InformationLevel.Success,
         }),

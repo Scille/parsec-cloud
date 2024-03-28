@@ -83,37 +83,35 @@ interface WorkspaceRoleTranslation {
   description?: string;
 }
 
-export function translateWorkspaceRole(role: WorkspaceRole | null): WorkspaceRoleTranslation {
-  const { t } = i18n.global;
-
+export function getWorkspaceRoleTranslationKeys(role: WorkspaceRole | null): WorkspaceRoleTranslation {
   switch (role) {
     case null: {
       return {
-        label: t('workspaceRoles.none'),
+        label: 'workspaceRoles.none',
       };
     }
     case WorkspaceRole.Reader: {
       return {
-        label: t('workspaceRoles.reader.label'),
-        description: t('workspaceRoles.reader.description'),
+        label: 'workspaceRoles.reader.label',
+        description: 'workspaceRoles.reader.description',
       };
     }
     case WorkspaceRole.Contributor: {
       return {
-        label: t('workspaceRoles.contributor.label'),
-        description: t('workspaceRoles.contributor.description'),
+        label: 'workspaceRoles.contributor.label',
+        description: 'workspaceRoles.contributor.description',
       };
     }
     case WorkspaceRole.Manager: {
       return {
-        label: t('workspaceRoles.manager.label'),
-        description: t('workspaceRoles.manager.description'),
+        label: 'workspaceRoles.manager.label',
+        description: 'workspaceRoles.manager.description',
       };
     }
     case WorkspaceRole.Owner: {
       return {
-        label: t('workspaceRoles.owner.label'),
-        description: t('workspaceRoles.owner.description'),
+        label: 'workspaceRoles.owner.label',
+        description: 'workspaceRoles.owner.description',
       };
     }
   }

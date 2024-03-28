@@ -207,7 +207,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $t(getNextButtonText()) }}
             </span>
           </ion-button>
           <div
@@ -311,9 +311,9 @@ async function updateCanGoForward(): Promise<void> {
 
 function getNextButtonText(): string {
   if (pageStep.value === GreetDeviceStep.WaitForGuest) {
-    return translate('DevicesPage.greet.actions.start');
+    return 'DevicesPage.greet.actions.start';
   } else if (pageStep.value === GreetDeviceStep.Summary) {
-    return translate('DevicesPage.greet.actions.finish');
+    return 'DevicesPage.greet.actions.finish';
   }
   return '';
 }

@@ -4,6 +4,7 @@ import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/co
 import { EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
+import { translate } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 

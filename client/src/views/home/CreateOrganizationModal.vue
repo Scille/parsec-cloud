@@ -28,13 +28,13 @@
           v-if="titles.get(pageStep)?.title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ titles.get(pageStep)?.title }}
+          {{ $t(titles.get(pageStep)!.title) }}
         </ion-title>
         <ion-text
           v-if="titles.get(pageStep)?.subtitle !== ''"
           class="modal-header__text body"
         >
-          {{ titles.get(pageStep)?.subtitle }}
+          {{ $t(titles.get(pageStep)!.subtitle || '') }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -153,7 +153,7 @@
             :disabled="!canGoForward"
           >
             <span>
-              {{ getNextButtonText() }}
+              {{ $t(getNextButtonText()) }}
             </span>
             <ion-icon
               v-show="pageStep !== CreateOrganizationStep.SummaryStep"
@@ -241,42 +241,42 @@ const titles = new Map<CreateOrganizationStep, Title>([
   [
     CreateOrganizationStep.OrgNameStep,
     {
-      title: translate('CreateOrganization.title.create'),
-      subtitle: translate('CreateOrganization.subtitle.nameYourOrg'),
+      title: 'CreateOrganization.title.create',
+      subtitle: 'CreateOrganization.subtitle.nameYourOrg',
     },
   ],
   [
     CreateOrganizationStep.UserInfoStep,
     {
-      title: translate('CreateOrganization.title.personalDetails'),
-      subtitle: translate('CreateOrganization.subtitle.personalDetails'),
+      title: 'CreateOrganization.title.personalDetails',
+      subtitle: 'CreateOrganization.subtitle.personalDetails',
     },
   ],
   [
     CreateOrganizationStep.ServerStep,
     {
-      title: translate('CreateOrganization.title.server'),
-      subtitle: translate('CreateOrganization.subtitle.server'),
+      title: 'CreateOrganization.title.server',
+      subtitle: 'CreateOrganization.subtitle.server',
     },
   ],
   [
     CreateOrganizationStep.AuthenticationStep,
     {
-      title: translate('CreateOrganization.title.authentication'),
-      subtitle: translate('CreateOrganization.subtitle.authentication'),
+      title: 'CreateOrganization.title.authentication',
+      subtitle: 'CreateOrganization.subtitle.authentication',
     },
   ],
   [
     CreateOrganizationStep.SummaryStep,
     {
-      title: translate('CreateOrganization.title.overview'),
-      subtitle: translate('CreateOrganization.subtitle.overview'),
+      title: 'CreateOrganization.title.overview',
+      subtitle: 'CreateOrganization.subtitle.overview',
     },
   ],
   [
     CreateOrganizationStep.FinishStep,
     {
-      title: translate('CreateOrganization.title.done'),
+      title: 'CreateOrganization.title.done',
     },
   ],
 ]); // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -299,11 +299,11 @@ const organizationNameValidator: IValidator = async function (value: string) {
 
 function getNextButtonText(): string {
   if (pageStep.value === CreateOrganizationStep.SummaryStep) {
-    return translate('CreateOrganization.button.create');
+    return 'CreateOrganization.button.create';
   } else if (pageStep.value === CreateOrganizationStep.FinishStep) {
-    return translate('CreateOrganization.button.done');
+    return 'CreateOrganization.button.done';
   } else {
-    return translate('CreateOrganization.button.next');
+    return 'CreateOrganization.button.next';
   }
 }
 
