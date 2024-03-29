@@ -33,6 +33,7 @@ chrono = { workspace = true, features = ["clock"] }
 # Hence `fast-rng` feature which enables the use of `rand`.
 uuid = { workspace = true, features = ["serde", "v4", "fast-rng"] }
 data-encoding = { workspace = true, features = ["std"] }
+hex = { workspace = true }
 url = { workspace = true }
 percent-encoding = { workspace = true, features = ["alloc"] }
 regex = { workspace = true, features = ["std", "perf", "unicode"] }

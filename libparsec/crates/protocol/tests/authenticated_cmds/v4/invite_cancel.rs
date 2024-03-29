@@ -12,12 +12,12 @@ use libparsec_types::InvitationToken;
 // Request
 
 pub fn req() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   cmd: "invite_cancel"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "82a3636d64ad696e766974655f63616e63656ca5746f6b656ed802d864b93ded264aae9ae5"
+        "82a3636d64ad696e766974655f63616e63656ca5746f6b656ec410d864b93ded264aae9ae5"
         "83fd3d40c45a"
     );
 

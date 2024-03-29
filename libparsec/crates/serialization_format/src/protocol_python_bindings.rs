@@ -822,8 +822,8 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { &'static PyObject },
         FieldType::RealmRole => quote! { &'static PyObject },
-        FieldType::BootstrapToken => quote! { crate::ids::BootstrapToken },
-        FieldType::InvitationToken => quote! { crate::ids::InvitationToken },
+        FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
+        FieldType::InvitationToken => quote! { crate::token::InvitationToken },
         FieldType::InvitationStatus => quote! { &'static PyObject },
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },
@@ -946,10 +946,10 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! { crate::enumerate::RealmRole::convert(#field_path.to_owned()) }
         }
         FieldType::BootstrapToken => {
-            quote! { crate::ids::BootstrapToken(#field_path.to_owned()) }
+            quote! { crate::token::BootstrapToken(#field_path.to_owned()) }
         }
         FieldType::InvitationToken => {
-            quote! { crate::ids::InvitationToken(#field_path.to_owned()) }
+            quote! { crate::token::InvitationToken(#field_path.to_owned()) }
         }
         FieldType::InvitationStatus => {
             quote! { crate::enumerate::InvitationStatus::convert(#field_path.to_owned()) }
@@ -1048,8 +1048,8 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
         FieldType::RealmRole => quote! { crate::enumerate::RealmRole },
-        FieldType::BootstrapToken => quote! { crate::ids::BootstrapToken },
-        FieldType::InvitationToken => quote! { crate::ids::InvitationToken },
+        FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
+        FieldType::InvitationToken => quote! { crate::token::InvitationToken },
         FieldType::InvitationStatus => quote! { crate::enumerate::InvitationStatus },
         FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
         FieldType::BlockAccess => quote! { crate::data::BlockAccess },

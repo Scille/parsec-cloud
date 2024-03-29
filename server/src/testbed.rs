@@ -755,7 +755,7 @@ fn event_to_pyobject(
             let obj = TestbedEventNewDeviceInvitation {
                 greeter_user_id: x.greeter_user_id.clone().into(),
                 created_on: x.created_on.into(),
-                token: x.token.clone().into(),
+                token: x.token.into(),
             };
             Some(obj.into_py(py))
         }
@@ -765,7 +765,7 @@ fn event_to_pyobject(
                 claimer_email: x.claimer_email.clone(),
                 greeter_user_id: x.greeter_user_id.clone().into(),
                 created_on: x.created_on.into(),
-                token: x.token.clone().into(),
+                token: x.token.into(),
             };
             Some(obj.into_py(py))
         }

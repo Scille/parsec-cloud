@@ -92,16 +92,16 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
             // Content:
             //   event: "INVITATION"
             //   invitation_status: "IDLE"
             //   status: "ok"
             //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
             &hex!(
-                "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e766974617469"
-                "6f6e5f737461747573a449444c45a5746f6b656ed802d864b93ded264aae9ae583fd3d40c4"
-                "5a"
+                "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e76"
+                "69746174696f6e5f737461747573a449444c45a5746f6b656ec410d864b93ded"
+                "264aae9ae583fd3d40c45a"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Invitation {

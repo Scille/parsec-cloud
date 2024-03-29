@@ -319,15 +319,32 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
 }
 
 #[rstest]
-fn bootstrap_addr_bad_token(#[values("", "not_an_uuid", "42", "康熙帝")] bad_token: &str) {
+fn bootstrap_addr_bad_token(#[values("not_an_uuid", "康熙帝")] bad_token: &str) {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
     let url = testbed.url().replace(TOKEN, bad_token);
     testbed.assert_addr_err(
         &url,
         AddrError::InvalidParamValue {
             param: "token",
-            value: bad_token.to_string(),
-            help: "Invalid BootstrapToken".to_string(),
+            value: bad_token.into(),
+            help: "The token is not a valid hex string".into(),
+        },
+    );
+}
+
+#[rstest]
+#[case::empty("", 0)]
+#[case::short("42", 1)]
+#[case::too_long("494d41546f6b656e546861744973546f6f4c6f6e67", 21)]
+fn bootstrap_addr_token_invalid_size(#[case] bad_token: &str, #[case] got_size: usize) {
+    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let url = testbed.url().replace(TOKEN, bad_token);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidParamValue {
+            param: "token",
+            value: bad_token.into(),
+            help: format!("Invalid size, got {got_size} bytes, expected 16 bytes",),
         },
     );
 }
@@ -436,9 +453,7 @@ fn invitation_addr_bad_type(
 
 #[rstest]
 fn invitation_addr_bad_token(
-    #[values(Some(""), Some("not_an_uuid"), Some("42"), Some("康熙帝"), None)] bad_token: Option<
-        &str,
-    >,
+    #[values(Some("not_an_uuid"), Some("康熙帝"), None)] bad_token: Option<&str>,
 ) {
     let testbed = BackendInvitationAddrTestbed {};
 
@@ -451,7 +466,7 @@ fn invitation_addr_bad_token(
                 AddrError::InvalidParamValue {
                     param: "token",
                     value: bad_token.to_string(),
-                    help: "Invalid InvitationToken".to_string(),
+                    help: "The token is not a valid hex string".into(),
                 },
             );
         }
@@ -461,6 +476,25 @@ fn invitation_addr_bad_token(
             testbed.assert_addr_err(&url, AddrError::MissingParam("token"));
         }
     }
+}
+
+#[rstest]
+#[case::empty("", 0)]
+#[case::short("42", 1)]
+#[case::too_long("494d41546f6b656e546861744973546f6f4c6f6e67", 21)]
+fn invitation_addr_token_invalid_size(#[case] bad_token: &str, #[case] got_size: usize) {
+    let testbed = BackendInvitationAddrTestbed {};
+
+    // Token param present in the url but with and empty or bad value
+    let url = testbed.url().replace(TOKEN, bad_token);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidParamValue {
+            param: "token",
+            value: bad_token.into(),
+            help: format!("Invalid size, got {got_size} bytes, expected 16 bytes"),
+        },
+    );
 }
 
 #[test]

@@ -30,7 +30,7 @@ class GenerateEvent(Protocol):
     ) -> Event: ...
 
 
-INVITATION_TOKEN = InvitationToken.from_hex("f22a1230-c2d6-463d-85b1-b7575e601d9f")
+INVITATION_TOKEN = InvitationToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
 ENROLLMENT_ID = EnrollmentID.from_hex("be6510e4-3e0b-4144-b3a7-fd5ad2c01fd8")
 VLOB_ID = VlobID.from_hex("cc7dca19-447c-4aca-9c99-b8205655afee")
 DEVICE_ID = DeviceID.new()

@@ -176,8 +176,20 @@ impl_crc_hash_for_uuid_based!(VlobID);
 impl_crc_hash_for_uuid_based!(BlockID);
 impl_crc_hash_for_uuid_based!(ChunkID);
 impl_crc_hash_for_uuid_based!(SequesterServiceID);
-impl_crc_hash_for_uuid_based!(InvitationToken);
 impl_crc_hash_for_uuid_based!(EnrollmentID);
+
+macro_rules! impl_crc_hash_for_token_based {
+    ($name:ident) => {
+        impl CrcHash for $name {
+            fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+                hasher.update(stringify!($name).as_bytes());
+                hasher.update(self.as_ref())
+            }
+        }
+    };
+}
+
+impl_crc_hash_for_token_based!(InvitationToken);
 
 impl CrcHash for DateTime {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {

@@ -259,7 +259,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
             "--device",
             &alice.slughash(),
             "--token",
-            &format!("{}", token.as_simple()),
+            &format!("{}", token.hex()),
         ])
         .assert()
         .stdout(predicates::str::contains("Invitation deleted"));
@@ -507,7 +507,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         .assert()
         .stdout(predicates::str::contains(format!(
             "{}\t{YELLOW}idle{RESET}\tdevice",
-            token.as_simple()
+            token.hex()
         )));
 }
 
@@ -665,7 +665,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
             "--features=testenv",
             "greet-invitation",
             "--token",
-            &format!("{}", token.as_simple()),
+            &format!("{}", token.hex()),
             "--device",
             &alice.slughash(),
         ])
@@ -769,7 +769,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
             "--features=testenv",
             "greet-invitation",
             "--token",
-            &format!("{}", token.as_simple()),
+            &format!("{}", token.hex()),
             "--device",
             &alice.slughash(),
         ])

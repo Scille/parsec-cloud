@@ -16,6 +16,7 @@ mod protocol;
 #[cfg(feature = "test-utils")]
 mod testbed;
 mod time;
+mod token;
 
 pub(crate) use addrs::*;
 pub(crate) use binding_utils::*;
@@ -26,6 +27,7 @@ pub(crate) use misc::*;
 #[cfg(feature = "test-utils")]
 pub(crate) use testbed::*;
 pub(crate) use time::*;
+pub(crate) use token::*;
 
 /// A Python module implemented in Rust.
 #[pymodule]
