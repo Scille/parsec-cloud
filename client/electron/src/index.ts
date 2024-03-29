@@ -72,13 +72,21 @@ if (!lock) {
   });
 }
 
-// Protocol handler for osx
-app.on('open-url', function (_event, url) {
-  if (url.length > 0) {
-    // We're only interested in potential Parsec links
+// Protocol handler for osx when app is closed
+app.on('will-finish-launching', () => {
+  app.on('open-url', (event, url) => {
     if (url.startsWith('parsec3://')) {
+      event.preventDefault();
       myCapacitorApp.getMainWindow().webContents.send('open-link', url);
     }
+  });
+});
+
+// Protocol handler for osx
+app.on('open-url', function (event, url) {
+  if (url.startsWith('parsec3://')) {
+    event.preventDefault();
+    myCapacitorApp.getMainWindow().webContents.send('open-link', url);
   }
 });
 
