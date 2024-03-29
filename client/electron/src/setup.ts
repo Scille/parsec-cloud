@@ -56,9 +56,14 @@ export class ElectronCapacitorApp {
   private customScheme: string;
   private config: object;
   public forceClose: boolean;
+  private storedLink: string;
+  private isReady: boolean;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
+
+    this.storedLink = '';
+    this.isReady = false;
 
     this.customScheme = this.CapacitorFileConfig.electron?.customUrlScheme ?? 'capacitor-electron';
 
@@ -293,10 +298,24 @@ export class ElectronCapacitorApp {
         const lastArg = process.argv.at(-1);
         // We're only interested in potential Parsec links
         if (lastArg.startsWith('parsec3://')) {
-          this.MainWindow.webContents.send('open-link', lastArg);
+          this.storedLink = lastArg;
         }
       }
+
+      this.isReady = true;
+      if (this.storedLink) {
+        this.MainWindow.webContents.send('open-link', this.storedLink);
+        this.storedLink = '';
+      }
     });
+  }
+
+  openLink(link: string): void {
+    if (!this.isReady) {
+      this.storedLink = link;
+    } else {
+      this.MainWindow.webContents.send('open-link', this.storedLink);
+    }
   }
 }
 

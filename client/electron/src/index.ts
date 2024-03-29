@@ -66,7 +66,7 @@ if (!lock) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
       if (lastArg.startsWith('parsec3://')) {
-        myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
+        myCapacitorApp.openLink(lastArg);
       }
     }
   });
@@ -77,7 +77,7 @@ app.on('will-finish-launching', () => {
   app.on('open-url', (event, url) => {
     if (url.startsWith('parsec3://')) {
       event.preventDefault();
-      myCapacitorApp.getMainWindow().webContents.send('open-link', url);
+      myCapacitorApp.openLink(url);
     }
   });
 });
@@ -86,7 +86,7 @@ app.on('will-finish-launching', () => {
 app.on('open-url', function (event, url) {
   if (url.startsWith('parsec3://')) {
     event.preventDefault();
-    myCapacitorApp.getMainWindow().webContents.send('open-link', url);
+    myCapacitorApp.openLink(url);
   }
 });
 
