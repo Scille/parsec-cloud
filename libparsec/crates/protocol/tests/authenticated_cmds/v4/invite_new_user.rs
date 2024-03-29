@@ -47,7 +47,7 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Rust implementation (Parsec v2.12.1+dev)
+    // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   status: "ok"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
@@ -57,18 +57,18 @@ pub fn rep_ok() {
     // The corresponding expected values used here are therefore not important
     // since loading raw data should fail.
     //
-    let raw = hex!("82a6737461747573a26f6ba5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a");
+    let raw = hex!("82a6737461747573a26f6ba5746f6b656ec410d864b93ded264aae9ae583fd3d40c45a");
     let err = authenticated_cmds::invite_new_user::Rep::load(&raw).unwrap_err();
     p_assert_eq!(err.to_string(), "missing field `email_sent`");
 
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Python implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   email_sent: "SUCCESS"
     //   status: "ok"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "83aa656d61696c5f73656e74a753554343455353a6737461747573a26f6ba5746f6b656ed8"
-        "02d864b93ded264aae9ae583fd3d40c45a"
+        "83aa656d61696c5f73656e74a753554343455353a6737461747573a26f6ba5746f6b656ec4"
+        "10d864b93ded264aae9ae583fd3d40c45a"
     );
     let expected = authenticated_cmds::invite_new_user::Rep::Ok {
         token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),

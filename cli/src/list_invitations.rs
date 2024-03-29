@@ -53,7 +53,7 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
                     }
                 };
 
-                let token = token.as_simple();
+                let token = token.hex();
 
                 let display_status = match status {
                     InvitationStatus::Idle => format!("{YELLOW}idle{RESET}"),

@@ -12,13 +12,14 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Python implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   cmd: "invite_2a_greeter_get_hashed_nonce"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "82a3636d64d922696e766974655f32615f677265657465725f6765745f6861736865645f6e"
-        "6f6e6365a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
+        "82a3636d64d922696e766974655f32615f677265657465725f6765745f686173"
+        "6865645f6e6f6e6365a5746f6b656ec410d864b93ded264aae9ae583fd3d40c4"
+        "5a"
     );
 
     let req = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Req {

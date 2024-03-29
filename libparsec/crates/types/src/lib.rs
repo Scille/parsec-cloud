@@ -59,6 +59,7 @@ mod realm;
 mod regex;
 mod sas_code;
 mod time;
+mod token;
 
 pub use crate::regex::*;
 pub use addr::*;
@@ -78,6 +79,7 @@ pub use protocol::*;
 pub use realm::*;
 pub use sas_code::*;
 pub use time::*;
+pub use token::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ClientType {

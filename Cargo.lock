@@ -2217,6 +2217,7 @@ dependencies = [
  "flate2",
  "fnmatch-regex",
  "glob",
+ "hex",
  "hex-literal",
  "lazy_static",
  "libparsec_crypto",

@@ -12,16 +12,16 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   cmd: "invite_4_greeter_communicate"
     //   last: false
     //   payload: hex!("666f6f626172")
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "84a3636d64bc696e766974655f345f677265657465725f636f6d6d756e6963617465a5746f"
-        "6b656ed802d864b93ded264aae9ae583fd3d40c45aa77061796c6f6164c406666f6f626172"
-        "a46c617374c2"
+        "84a3636d64bc696e766974655f345f677265657465725f636f6d6d756e696361"
+        "7465a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45aa77061796c6f"
+        "6164c406666f6f626172a46c617374c2"
     );
 
     let req = authenticated_cmds::invite_4_greeter_communicate::Req {

@@ -12,15 +12,16 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Python implementation (Parsec v3.0.0-b.6+dev 2024-03-29)
     // Content:
     //   cmd: "invite_1_greeter_wait_peer"
     //   greeter_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "83a3636d64ba696e766974655f315f677265657465725f776169745f70656572b267726565"
-        "7465725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e"
-        "44f352ea46c5f22cd5ac57a5746f6b656ed802d864b93ded264aae9ae583fd3d40c45a"
+        "83a3636d64ba696e766974655f315f677265657465725f776169745f70656572"
+        "a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45ab267726565746572"
+        "5f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b"
+        "126e44f352ea46c5f22cd5ac57"
     );
 
     let req = authenticated_cmds::invite_1_greeter_wait_peer::Req {
