@@ -41,7 +41,7 @@ runs:
         echo "${APPDATA}\.poetry\bin" >> "$GITHUB_PATH"
 
     - name: Install python
-      uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c  # pin v5.0.0
+      uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d  # pin v5.1.0
       id: setup-python
       with:
         python-version-file: ${{ inputs.project-path }}/pyproject.toml
