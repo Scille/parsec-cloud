@@ -7,7 +7,7 @@ describe('Greet a new device', () => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
     cy.get('#profile-button').click();
-    cy.get('.popover-viewport').contains('My devices').click();
+    cy.get('.popover-viewport').contains('My profile').click();
   });
 
   afterEach(() => {

@@ -43,7 +43,7 @@ defineProps<{
 
 async function navigateToDevices(): Promise<void> {
   await popoverController.dismiss();
-  await navigateTo(Routes.Devices);
+  await navigateTo(Routes.MyProfile);
 }
 </script>
 

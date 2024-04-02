@@ -90,8 +90,7 @@
             "contactUs": "Nous contacter",
             "logout": "Déconnexion",
             "help": "Aide et commentaires",
-            "myDevices": "Mes appareils",
-            "myContactDetails": "Mes coordonnées",
+            "myProfile": "Mon profil",
             "logoutConfirmTitle": "Déconnexion",
             "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
             "logoutImportsConfirmQuestion": "Les imports en cours seront annulés. Êtes-vous sûr(e) de vouloir vous déconnecter ?",
@@ -230,7 +229,7 @@
                 "storage": "Stockage",
                 "information": "Informations"
             },
-            "myContactDetails": "Mes coordonnées",
+            "myProfile": "Mon profil",
             "recoveryExport": "Fichiers de récupération"
         },
         "previous": "Précédent",
@@ -539,7 +538,6 @@
         "back": "Retour"
     },
     "DevicesPage": {
-        "title": "Vos appareils",
         "addDevice": "Ajouter",
         "noDevices": "Aucun appareil.",
         "activeDeviceBadge": "Actif",
@@ -970,16 +968,19 @@
         "misc": "Divers",
         "title": "Journal des modifications"
     },
-    "ContactDetailsPage": {
+    "MyProfilePage": {
         "titleActualPassword": "Saisissez votre mot de passe",
         "titleNewPassword": "Choisissez un nouveau mot de passe",
-        "keyring": "Cet appareil est authentifié par le système.",
-        "email": "Email",
-        "authenticationMethod": "Méthode d'authentification",
+        "password": "Mot de passe",
+        "systemAuthentication": "Votre session est gérée avec le mot de passe de votre appareil.",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
         "changePasswordButton": "Modifier",
         "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
+        "tabs": {
+            "devices": "Mes appareils",
+            "authentication": "Authentification"
+        },
         "errors": {
             "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
             "cannotChangePassword": "Impossible de changer le mot de passe",

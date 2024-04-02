@@ -13,26 +13,14 @@
     <div class="main-list">
       <ion-item
         class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.MyContactDetails)"
+        @click="onOptionClick(ProfilePopoverOption.MyProfile)"
       >
         <ion-icon
           :icon="personCircle"
           slot="start"
         />
         <ion-label class="body item-label">
-          {{ $t('HomePage.topbar.myContactDetails') }}
-        </ion-label>
-      </ion-item>
-      <ion-item
-        class="main-list__item"
-        @click="onOptionClick(ProfilePopoverOption.MyDevices)"
-      >
-        <ion-icon
-          :icon="phonePortrait"
-          slot="start"
-        />
-        <ion-label class="body item-label">
-          {{ $t('HomePage.topbar.myDevices') }}
+          {{ $t('HomePage.topbar.myProfile') }}
         </ion-label>
       </ion-item>
       <ion-item
@@ -79,12 +67,11 @@
 
 <script lang="ts">
 export enum ProfilePopoverOption {
-  MyDevices = 0,
-  Settings = 1,
-  Help = 2,
-  LogOut = 3,
-  App = 4,
-  MyContactDetails = 5,
+  Settings = 0,
+  Help = 1,
+  LogOut = 2,
+  App = 3,
+  MyProfile = 4,
 }
 </script>
 
@@ -94,7 +81,7 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import { UserProfile } from '@/parsec';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
-import { cog, logOut, personCircle, phonePortrait } from 'ionicons/icons';
+import { cog, logOut, personCircle } from 'ionicons/icons';
 
 defineProps<{
   email: string;

@@ -123,14 +123,12 @@ async function openPopover(event: Event): Promise<void> {
       }
     } else if (value.data.option === ProfilePopoverOption.Settings) {
       await navigateTo(Routes.Settings);
-    } else if (value.data.option === ProfilePopoverOption.MyDevices) {
-      await navigateTo(Routes.Devices);
     } else if (value.data.option === ProfilePopoverOption.Help) {
       window.open(translate('MenuPage.helpLink'), '_blank');
     } else if (value.data.option === ProfilePopoverOption.App) {
       await navigateTo(Routes.About);
-    } else if (value.data.option === ProfilePopoverOption.MyContactDetails) {
-      await navigateTo(Routes.ContactDetails);
+    } else if (value.data.option === ProfilePopoverOption.MyProfile) {
+      await navigateTo(Routes.MyProfile);
     }
   });
 }

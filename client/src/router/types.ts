@@ -10,12 +10,11 @@ export enum Routes {
   Workspaces = 'workspaces',
   Documents = 'documents',
   Settings = 'settings',
-  Devices = 'devices',
   Users = 'users',
   Storage = 'storage',
   Organization = 'organization',
   About = 'about',
-  ContactDetails = 'contactDetails',
+  MyProfile = 'myProfile',
   RecoveryExport = 'recoveryExport',
 }
 
@@ -63,11 +62,6 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/settings/SettingsPage.vue'),
           },
           {
-            path: `/:handle(\\d+)/${Routes.Devices}`,
-            name: Routes.Devices,
-            component: () => import('@/views/devices/DevicesPage.vue'),
-          },
-          {
             path: `/:handle(\\d+)/${Routes.Users}`,
             name: Routes.Users,
             component: () => import('@/views/users/UsersPage.vue'),
@@ -88,9 +82,9 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/about/AboutPage.vue'),
           },
           {
-            path: `/:handle(\\d+)/${Routes.ContactDetails}`,
-            name: Routes.ContactDetails,
-            component: () => import('@/views/users/MyContactDetailsPage.vue'),
+            path: `/:handle(\\d+)/${Routes.MyProfile}`,
+            name: Routes.MyProfile,
+            component: () => import('@/views/users/MyProfilePage.vue'),
           },
           {
             path: `/:handle(\\d+)/${Routes.RecoveryExport}`,
