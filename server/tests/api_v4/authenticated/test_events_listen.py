@@ -23,7 +23,9 @@ from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 
 
 class GenerateEvent(Protocol):
-    def __call__(self, organization_id: OrganizationID) -> Event: ...
+    def __call__(
+        self, organization_id: OrganizationID, realm_id: VlobID | None = None
+    ) -> Event: ...
 
 
 INVITATION_TOKEN = InvitationToken.from_hex("f22a1230-c2d6-463d-85b1-b7575e601d9f")
@@ -37,24 +39,13 @@ ALICE_USER_ID = UserID("alice")
 @pytest.mark.parametrize(
     ["gen_event", "expected"],
     [
+        # Note we don't test `EventOrganizationConfig` given it is a special case
+        # (never actually dispatched, and instead always sent once as first SSE event).
         pytest.param(
             functools.partial(events.EventPinged, ping="ping"),
             authenticated_cmds.v4.events_listen.APIEventPinged(ping="ping"),
             id="ping",
         ),
-        # FIXME: Did not finish https://github.com/Scille/parsec-cloud/issues/6847
-        # pytest.param(
-        #     functools.partial(
-        #         events.EventOrganizationConfig,
-        #         user_profile_outsider_allowed=False,
-        #         active_users_limit=ActiveUsersLimit.limited_to(42),
-        #     ),
-        #     authenticated_cmds.v4.events_listen.APIEventServerConfig(
-        #         active_users_limit=ActiveUsersLimit.limited_to(42),
-        #         user_profile_outsider_allowed=False,
-        #     ),
-        #     id="server_config",
-        # ),
         pytest.param(
             functools.partial(
                 events.EventInvitation,
@@ -76,10 +67,12 @@ ALICE_USER_ID = UserID("alice")
         pytest.param(
             functools.partial(events.EventCommonCertificate, timestamp=TIMESTAMP),
             authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
+            id="common_certificate",
         ),
         pytest.param(
             functools.partial(events.EventSequesterCertificate, timestamp=TIMESTAMP),
             authenticated_cmds.v4.events_listen.APIEventSequesterCertificate(timestamp=TIMESTAMP),
+            id="sequester_certificate",
         ),
         pytest.param(
             functools.partial(
@@ -91,6 +84,7 @@ ALICE_USER_ID = UserID("alice")
             authenticated_cmds.v4.events_listen.APIEventShamirRecoveryCertificate(
                 timestamp=TIMESTAMP
             ),
+            id="shamir_recovery_certificate",
         ),
         pytest.param(
             functools.partial(
@@ -103,31 +97,31 @@ ALICE_USER_ID = UserID("alice")
             authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
                 timestamp=TIMESTAMP, realm_id=VLOB_ID
             ),
+            id="realm_certificate",
         ),
-        # FIXME: Did not finish https://github.com/Scille/parsec-cloud/issues/6846
-        # pytest.param(
-        #     functools.partial(
-        #         events.EventVlob,
-        #         author=DEVICE_ID,
-        #         realm_id=VLOB_ID,
-        #         timestamp=TIMESTAMP,
-        #         vlob_id=VLOB_ID,
-        #         version=42,
-        #         blob=b"foobar",
-        #         last_common_certificate_timestamp=TIMESTAMP,
-        #         last_realm_certificate_timestamp=TIMESTAMP,
-        #     ),
-        #     authenticated_cmds.v4.events_listen.APIEventVlob(
-        #         realm_id=VLOB_ID,
-        #         vlob_id=VLOB_ID,
-        #         author=DEVICE_ID,
-        #         timestamp=TIMESTAMP,
-        #         version=42,
-        #         blob=b"foobar",
-        #         last_common_certificate_timestamp=TIMESTAMP,
-        #         last_realm_certificate_timestamp=TIMESTAMP,
-        #     ),
-        # ),
+        pytest.param(
+            functools.partial(
+                events.EventVlob,
+                author=DEVICE_ID,
+                timestamp=TIMESTAMP,
+                vlob_id=VLOB_ID,
+                version=42,
+                blob=b"foobar",
+                last_common_certificate_timestamp=TIMESTAMP,
+                last_realm_certificate_timestamp=TIMESTAMP,
+            ),
+            functools.partial(
+                authenticated_cmds.v4.events_listen.APIEventVlob,
+                vlob_id=VLOB_ID,
+                author=DEVICE_ID,
+                timestamp=TIMESTAMP,
+                version=42,
+                blob=b"foobar",
+                last_common_certificate_timestamp=TIMESTAMP,
+                last_realm_certificate_timestamp=TIMESTAMP,
+            ),
+            id="vlob",
+        ),
     ],
 )
 async def test_ok(
@@ -136,7 +130,6 @@ async def test_ok(
     coolorg: CoolorgRpcClients,
     backend: Backend,
 ) -> None:
-    await backend.event_bus.send(gen_event(organization_id=coolorg.organization_id))
     async with coolorg.alice.events_listen() as alice_sse:
         # First event is always ServiceConfig
         event = await alice_sse.next_event()
@@ -147,12 +140,16 @@ async def test_ok(
             )
         )
 
-        # skip coolorg event queue.
-        assert isinstance(
-            await alice_sse.next_event(),
-            authenticated_cmds.v4.events_listen.RepOk,
-        )
+        # Actual event to test
 
+        # Vlob event must reference an existing realm ID, this is a hack to patch accordingly
+        if callable(expected):
+            expected = expected(realm_id=coolorg.wksp1_id)
+            event = gen_event(organization_id=coolorg.organization_id, realm_id=coolorg.wksp1_id)
+        else:
+            event = gen_event(organization_id=coolorg.organization_id)
+
+        await backend.event_bus.send(event)
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.v4.events_listen.RepOk(expected)
 
@@ -189,6 +186,140 @@ async def test_user_not_receive_event_before_listen(
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.v4.events_listen.RepOk(
             authenticated_cmds.v4.events_listen.APIEventPinged(ping="event2")
+        )
+
+
+async def test_receive_event_of_newly_shared_realm(
+    minimalorg: MinimalorgRpcClients,
+    backend: Backend,
+) -> None:
+    async with minimalorg.alice.events_listen() as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        async def send_vlob_event(org: OrganizationID, version: int):
+            await backend.event_bus.send(
+                events.EventVlob(
+                    organization_id=org,
+                    author=minimalorg.alice.device_id,
+                    realm_id=VLOB_ID,
+                    timestamp=TIMESTAMP,
+                    vlob_id=VLOB_ID,
+                    version=version,
+                    blob=b"ok" if org == minimalorg.organization_id else b"wrong organization !",
+                    last_common_certificate_timestamp=TIMESTAMP,
+                    last_realm_certificate_timestamp=TIMESTAMP,
+                )
+            )
+
+        # Trigger events in two organization to ensure they don't get mixed
+        orgs = (OrganizationID("DummyOrg"), minimalorg.organization_id)
+        for org in orgs:
+            # 1) Share for other user, should be ignored
+
+            await backend.event_bus.send(
+                events.EventRealmCertificate(
+                    organization_id=org,
+                    timestamp=TIMESTAMP,
+                    realm_id=VLOB_ID,
+                    user_id=UserID("DummyUser"),
+                    role_removed=False,
+                )
+            )
+            await send_vlob_event(org, 1)
+
+            # 2) Share for Alice, now events should be received
+
+            await backend.event_bus.send(
+                events.EventRealmCertificate(
+                    organization_id=org,
+                    timestamp=TIMESTAMP,
+                    realm_id=VLOB_ID,
+                    user_id=minimalorg.alice.user_id,
+                    role_removed=False,
+                )
+            )
+            await send_vlob_event(org, 2)
+
+            # 3) Unshare for other user, events should still be received
+
+            await backend.event_bus.send(
+                events.EventRealmCertificate(
+                    organization_id=org,
+                    timestamp=TIMESTAMP,
+                    realm_id=VLOB_ID,
+                    user_id=UserID("DummyUser"),
+                    role_removed=True,
+                )
+            )
+            await send_vlob_event(org, 3)
+
+            # 4) Unshare for Alice, now events should no longer be received
+
+            await backend.event_bus.send(
+                events.EventRealmCertificate(
+                    organization_id=org,
+                    timestamp=TIMESTAMP,
+                    realm_id=VLOB_ID,
+                    user_id=minimalorg.alice.user_id,
+                    role_removed=True,
+                )
+            )
+            await send_vlob_event(org, 4)
+
+            # 5) Event always received for Alice, once we have received this event
+            # we know the previous one has been ignored as expected
+
+            await backend.event_bus.send(
+                events.EventCommonCertificate(
+                    organization_id=org,
+                    timestamp=TIMESTAMP,
+                )
+            )
+
+        async def receive_realm_certificate_event():
+            event = await alice_sse.next_event()
+            assert event == authenticated_cmds.v4.events_listen.RepOk(
+                authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
+                    realm_id=VLOB_ID,
+                    timestamp=TIMESTAMP,
+                )
+            )
+
+        async def receive_vlob_event(version):
+            event = await alice_sse.next_event()
+            assert event == authenticated_cmds.v4.events_listen.RepOk(
+                authenticated_cmds.v4.events_listen.APIEventVlob(
+                    realm_id=VLOB_ID,
+                    author=minimalorg.alice.device_id,
+                    timestamp=TIMESTAMP,
+                    vlob_id=VLOB_ID,
+                    version=version,
+                    blob=b"ok",
+                    last_common_certificate_timestamp=TIMESTAMP,
+                    last_realm_certificate_timestamp=TIMESTAMP,
+                )
+            )
+
+        await receive_realm_certificate_event()
+        await receive_vlob_event(2)
+
+        await receive_realm_certificate_event()
+        await receive_vlob_event(3)
+
+        await receive_realm_certificate_event()
+
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(
+                timestamp=TIMESTAMP,
+            )
         )
 
 
