@@ -282,7 +282,11 @@ class BaseEventsComponent:
         self._last_events_cache.append(event)
         for registered in self._registered_clients.values():
             if not event.is_event_for_client(registered):
-                if isinstance(event, EventRealmCertificate) and event.user_id == registered.user_id:
+                if (
+                    isinstance(event, EventRealmCertificate)
+                    and event.organization_id == registered.organization_id
+                    and event.user_id == registered.user_id
+                ):
                     # This is a special case: the current certificate is new a sharing
                     # for our user (hence he doesn't know yet he should be interested
                     # in this realm !).
