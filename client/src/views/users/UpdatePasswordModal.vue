@@ -67,7 +67,7 @@
             size="default"
             @click="cancel"
           >
-            {{ $t('ContactDetailsPage.cancelButton') }}
+            {{ $t('MyProfilePage.cancelButton') }}
           </ion-button>
           <ion-button
             fill="solid"
@@ -123,7 +123,7 @@ onMounted(async () => {
   if (!currentDevice.value) {
     informationManager.present(
       new Information({
-        message: translate('ContactDetailsPage.errors.cannotChangePassword'),
+        message: translate('MyProfilePage.errors.cannotChangePassword'),
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,
@@ -165,7 +165,7 @@ async function changePassword(): Promise<void> {
   if (result.ok) {
     informationManager.present(
       new Information({
-        message: translate('ContactDetailsPage.passwordUpdated'),
+        message: translate('MyProfilePage.passwordUpdated'),
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
@@ -176,13 +176,13 @@ async function changePassword(): Promise<void> {
       case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
         pageStep.value = ChangePasswordStep.OldPassword;
         passwordIsInvalid.value = true;
-        errorMessage.value = translate('ContactDetailsPage.errors.wrongPassword');
+        errorMessage.value = translate('MyProfilePage.errors.wrongPassword');
         break;
       }
       default:
         informationManager.present(
           new Information({
-            message: translate('ContactDetailsPage.errors.cannotChangePassword'),
+            message: translate('MyProfilePage.errors.cannotChangePassword'),
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -199,9 +199,9 @@ function updateError(): void {
 function getTitle(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('ContactDetailsPage.titleActualPassword');
+      return translate('MyProfilePage.titleActualPassword');
     case ChangePasswordStep.NewPassword:
-      return translate('ContactDetailsPage.titleNewPassword');
+      return translate('MyProfilePage.titleNewPassword');
     default:
       return '';
   }
@@ -214,9 +214,9 @@ async function cancel(): Promise<boolean> {
 function getNextButtonText(): string {
   switch (pageStep.value) {
     case ChangePasswordStep.OldPassword:
-      return translate('ContactDetailsPage.nextButton');
+      return translate('MyProfilePage.nextButton');
     case ChangePasswordStep.NewPassword:
-      return translate('ContactDetailsPage.changePasswordButton');
+      return translate('MyProfilePage.changePasswordButton');
     default:
       return '';
   }

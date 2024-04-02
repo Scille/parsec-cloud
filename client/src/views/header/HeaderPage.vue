@@ -270,8 +270,6 @@ function getTitleForRoute(): string {
   switch (getCurrentRouteName()) {
     case Routes.Settings:
       return translate('HeaderPage.titles.settings');
-    case Routes.Devices:
-      return translate('HeaderPage.titles.devices');
     case Routes.Users:
       return translate('HeaderPage.titles.users');
     case Routes.Storage:
@@ -280,8 +278,8 @@ function getTitleForRoute(): string {
       return translate('HeaderPage.titles.organization.information');
     case Routes.About:
       return translate('HeaderPage.titles.about');
-    case Routes.ContactDetails:
-      return translate('HeaderPage.titles.myContactDetails');
+    case Routes.MyProfile:
+      return translate('HeaderPage.titles.myProfile');
     case Routes.RecoveryExport:
       return translate('HeaderPage.titles.recoveryExport');
     case null:

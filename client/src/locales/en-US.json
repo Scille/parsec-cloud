@@ -90,8 +90,7 @@
             "contactUs": "Contact us",
             "logout": "Log out",
             "help": "Help and feedback",
-            "myDevices": "My devices",
-            "myContactDetails": "My contact details",
+            "myProfile": "My profile",
             "logoutConfirmTitle": "Log out",
             "logoutConfirmQuestion": "Are you sure you want to log out?",
             "logoutImportsConfirmQuestion": "All imports will be cancelled. Are you sure you want to log out?",
@@ -230,7 +229,7 @@
                 "storage": "Storage",
                 "information": "Information"
             },
-            "myContactDetails": "My contact details",
+            "myProfile": "My profile",
             "recoveryExport": "Recovery files"
         },
         "previous": "Go back",
@@ -539,7 +538,6 @@
         "back": "Back"
     },
     "DevicesPage": {
-        "title": "Your devices",
         "addDevice": "Add",
         "noDevices": "No devices.",
         "activeDeviceBadge": "Current",
@@ -970,16 +968,19 @@
         "misc": "Miscellaneous",
         "title": "Changes"
     },
-    "ContactDetailsPage": {
+    "MyProfilePage": {
         "titleActualPassword": "Enter your current password",
         "titleNewPassword": "Choose a new password",
-        "keyring": "This device is authenticated using the system.",
-        "email": "Email",
-        "authenticationMethod": "Authentication method",
+        "password": "Password",
+        "systemAuthentication": "TBW",
         "cancelButton": "Cancel",
         "nextButton": "Confirm",
         "changePasswordButton": "Update",
         "passwordUpdated": "Password has been updated. You can log in with your new password.",
+        "tabs": {
+            "devices": "My devices",
+            "authentication": "Authentication"
+        },
         "errors": {
             "wrongPassword": "Wrong password. Please try again.",
             "cannotChangePassword": "Failed to update password",

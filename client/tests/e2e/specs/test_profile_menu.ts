@@ -12,17 +12,17 @@ describe('Check profile menu links', () => {
 
   it('Checks initial status', () => {
     cy.get('#profile-button').click();
-    cy.get('.popover-viewport').contains('My devices');
+    cy.get('.popover-viewport').contains('My profile');
     cy.get('.popover-viewport').contains('Settings');
     cy.get('.popover-viewport').contains('Help and feedback');
     cy.get('.popover-viewport').contains('Log out');
   });
 
-  it('Click devices link', () => {
+  it('Click profile link', () => {
     cy.get('#profile-button').click();
-    cy.get('.popover-viewport').contains('My devices').click();
-    cy.url().should('include', '/devices');
-    cy.get('.topbar-left__title').contains('Devices');
+    cy.get('.popover-viewport').contains('My profile').click();
+    cy.url().should('include', '/myProfile');
+    cy.get('.topbar-left__title').contains('My profile');
   });
 
   it('Click settings link', () => {

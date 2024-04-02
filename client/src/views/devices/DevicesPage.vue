@@ -1,135 +1,128 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
-    <ion-content :fullscreen="true">
-      <div class="container">
-        <div class="devices-container">
-          <!-- header -->
-          <div class="devices-header">
-            <h2 class="title-h2 devices-header-title">
-              {{ $t('DevicesPage.title') }}
-            </h2>
-            <ion-button
-              class="devices-header-button"
-              fill="clear"
-              @click="onAddDeviceClick()"
-            >
-              <ion-icon :icon="add" />
-              <span>{{ $t('DevicesPage.addDevice') }}</span>
-            </ion-button>
-          </div>
+  <div class="container">
+    <div class="devices-container">
+      <!-- header -->
+      <div class="devices-header">
+        <ion-button
+          class="devices-header-button"
+          fill="clear"
+          @click="onAddDeviceClick()"
+        >
+          <ion-icon :icon="add" />
+          <span>{{ $t('DevicesPage.addDevice') }}</span>
+        </ion-button>
+      </div>
 
-          <!-- device list -->
-          <div class="devices-content">
-            <ion-text
-              class="no-device"
-              v-if="devices.length === 0"
-            >
-              {{ $t('DevicesPage.noDevices') }}
-            </ion-text>
-            <ion-list
-              class="devices-list"
-              v-if="devices.length > 0"
-            >
-              <ion-item
-                v-for="device in devices"
-                :key="device.id"
-                class="device-list-item"
-              >
-                <device-card
-                  :label="device.deviceLabel"
-                  :date="device.createdOn"
-                  :is-current="device.isCurrent"
-                />
-              </ion-item>
-            </ion-list>
-          </div>
+      <!-- device list -->
+      <div class="devices-content">
+        <ion-text
+          class="no-device"
+          v-if="devices.length === 0"
+        >
+          {{ $t('DevicesPage.noDevices') }}
+        </ion-text>
+        <ion-list
+          class="devices-list"
+          v-if="devices.length > 0"
+        >
+          <ion-item
+            v-for="device in devices"
+            :key="device.id"
+            class="device-list-item ion-no-padding"
+          >
+            <device-card
+              :label="device.deviceLabel"
+              :date="device.createdOn"
+              :is-current="device.isCurrent"
+            />
+          </ion-item>
+        </ion-list>
+      </div>
+    </div>
+
+    <!-- restore password card -->
+    <div v-show="false">
+      <!-- files not downloaded -->
+      <div
+        class="restore-password"
+        v-if="!passwordSaved"
+      >
+        <ion-label class="body-sm danger">
+          {{ $t('DevicesPage.restorePassword.notDone.label') }}
+        </ion-label>
+        <div class="restore-password-header">
+          <ms-image
+            :image="PasswordLock"
+            class="restore-password-header-img"
+          />
+          <h3 class="title-h3 restore-password-header__title">
+            {{ $t('DevicesPage.restorePassword.title') }}
+          </h3>
         </div>
-
-        <!-- restore password card -->
-        <div v-show="false">
-          <!-- files not downloaded -->
-          <div
-            class="restore-password"
-            v-if="!passwordSaved"
+        <div class="restore-password-subtitles">
+          <ion-text
+            class="body"
+            :show="passwordSaved"
           >
-            <ion-label class="body-sm danger">
-              {{ $t('DevicesPage.restorePassword.notDone.label') }}
-            </ion-label>
-            <div class="restore-password-header">
-              <ms-image
-                :image="PasswordLock"
-                class="restore-password-header-img"
-              />
-              <h3 class="title-h3 restore-password-header__title">
-                {{ $t('DevicesPage.restorePassword.title') }}
-              </h3>
-            </div>
-            <div class="restore-password-subtitles">
-              <ion-text
-                class="body"
-                :show="passwordSaved"
-              >
-                {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
-              </ion-text>
-              <ion-text class="body">
-                {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
-              </ion-text>
-            </div>
-            <div class="restore-password-button">
-              <ion-button
-                class="button-default"
-                @click="goToExportRecoveryDevice()"
-              >
-                <ion-icon
-                  :icon="sparkles"
-                  class="icon"
-                />
-                {{ $t('DevicesPage.restorePassword.notDone.button') }}
-              </ion-button>
-            </div>
-          </div>
-          <!-- files downloaded -->
-          <div
-            class="restore-password"
-            v-else
+            {{ $t('DevicesPage.restorePassword.notDone.subtitle') }}
+          </ion-text>
+          <ion-text class="body">
+            {{ $t('DevicesPage.restorePassword.notDone.subtitle2') }}
+          </ion-text>
+        </div>
+        <div class="restore-password-button">
+          <ion-button
+            class="button-default"
+            @click="goToExportRecoveryDevice()"
           >
-            <ion-label class="body-sm done">
-              {{ $t('DevicesPage.restorePassword.done.label') }}
-            </ion-label>
-            <div class="restore-password-header">
-              <ms-image
-                :image="PasswordLock"
-                class="restore-password-header-img"
-              />
-              <h3 class="title-h3 restore-password-header__title">
-                {{ $t('DevicesPage.restorePassword.title') }}
-              </h3>
-            </div>
-            <div class="restore-password-subtitles">
-              <ion-text class="body">
-                {{ $t('DevicesPage.restorePassword.done.subtitle') }}
-              </ion-text>
-            </div>
-            <div class="restore-password-button">
-              <ion-button
-                @click="goToExportRecoveryDevice()"
-                class="button-default"
-                fill="clear"
-              >
-                <ion-icon
-                  :icon="download"
-                  class="icon"
-                />
-                {{ $t('DevicesPage.restorePassword.done.button') }}
-              </ion-button>
-            </div>
-          </div>
+            <ion-icon
+              :icon="sparkles"
+              class="icon"
+            />
+            {{ $t('DevicesPage.restorePassword.notDone.button') }}
+          </ion-button>
         </div>
       </div>
-    </ion-content>
-  </ion-page>
+      <!-- files downloaded -->
+      <div
+        class="restore-password"
+        v-else
+      >
+        <ion-label class="body-sm done">
+          {{ $t('DevicesPage.restorePassword.done.label') }}
+        </ion-label>
+        <div class="restore-password-header">
+          <ms-image
+            :image="PasswordLock"
+            class="restore-password-header-img"
+          />
+          <h3 class="title-h3 restore-password-header__title">
+            {{ $t('DevicesPage.restorePassword.title') }}
+          </h3>
+        </div>
+        <div class="restore-password-subtitles">
+          <ion-text class="body">
+            {{ $t('DevicesPage.restorePassword.done.subtitle') }}
+          </ion-text>
+        </div>
+        <div class="restore-password-button">
+          <ion-button
+            @click="goToExportRecoveryDevice()"
+            class="button-default"
+            fill="clear"
+          >
+            <ion-icon
+              :icon="download"
+              class="icon"
+            />
+            {{ $t('DevicesPage.restorePassword.done.button') }}
+          </ion-button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -140,7 +133,7 @@ import { Routes, navigateTo } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
-import { IonButton, IonContent, IonIcon, IonItem, IonLabel, IonList, IonPage, IonText, modalController } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
@@ -193,12 +186,8 @@ async function onAddDeviceClick(): Promise<void> {
 <style scoped lang="scss">
 .container {
   display: flex;
-  max-width: 70rem;
-}
-
-.devices-container {
-  margin: 2.5em 2rem 0;
-  width: 45%;
+  flex-direction: column;
+  flex: 1;
 }
 
 .devices-header {
@@ -206,16 +195,9 @@ async function onAddDeviceClick(): Promise<void> {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
-
-  &-title {
-    margin: 0;
-    color: var(--parsec-color-light-primary-700);
-  }
 
   &-button {
-    margin: 0;
+    margin-left: auto;
 
     span {
       margin-left: 0.625rem;
@@ -236,8 +218,8 @@ async function onAddDeviceClick(): Promise<void> {
 }
 
 .restore-password {
-  width: 45%;
-  margin: 6rem 2rem 0;
+  max-width: 75%;
+  margin: 6rem 3rem 0 auto;
   padding: 2rem 1.5rem;
   background: var(--parsec-color-light-secondary-background);
   border: 1px solid var(--parsec-color-light-secondary-disabled);
