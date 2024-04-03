@@ -24,6 +24,7 @@ function cli() {
       .default(builder.DEFAULT_TARGET)
       .makeOptionMandatory(true),
   );
+  program.addOption(new Option('--export', 'Export the configuration to JSON'));
   program.argument('[target...]', 'Targets to build');
 
   program.parse();
@@ -53,10 +54,10 @@ function getBuildTargets(platform, targets) {
   }
 }
 const OPTS = cli();
-console.debug(OPTS);
+console.warn(OPTS);
 
 const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
-console.log('BUILD_TARGETS', BUILD_TARGETS);
+console.warn('BUILD_TARGETS', BUILD_TARGETS);
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -127,8 +128,13 @@ const options = {
 
   extends: null,
 };
-builder.build({
-  targets: BUILD_TARGETS,
-  publish: 'never',
-  config: options,
-});
+
+if (OPTS.export) {
+  console.log(JSON.stringify(options, null, 2));
+} else {
+  builder.build({
+    targets: BUILD_TARGETS,
+    publish: 'never',
+    config: options,
+  });
+}
