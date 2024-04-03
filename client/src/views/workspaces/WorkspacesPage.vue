@@ -284,7 +284,7 @@ async function refreshWorkspacesList(): Promise<void> {
         if (mountResult.ok) {
           wk.mountpoints.push(mountResult.value);
         } else {
-          console.warn(`Failed to mount ${wk.currentName}`);
+          console.warn(`Failed to mount ${wk.currentName}: ${mountResult.error.error}`);
         }
       }
     }
