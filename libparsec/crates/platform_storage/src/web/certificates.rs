@@ -88,9 +88,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             ));
         }
 
-        let up_to = if let UpTo::Timestamp(up_to) = up_to {
-            up_to
-        } else {
+        let UpTo::Timestamp(up_to) = up_to else {
             return Err(GetCertificateError::NonExisting);
         };
 
@@ -183,46 +181,42 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
-        let mut common_certifs = Vec::new();
-        let mut sequester_certifs = Vec::new();
+        let mut common_last_timestamp = None;
+        let mut sequester_last_timestamp = None;
         let mut realm_certifs = Vec::new();
-        let mut shamir_recovery_certifs = Vec::new();
+        let mut shamir_recovery_last_timestamp = None;
 
         for ty in COMMON_CERTIFICATES {
-            common_certifs.extend(
-                &mut Certificate::get_values(
-                    &self.transaction,
-                    CertificateFilter {
-                        certificate_type: ty.into(),
-                        filter1: None,
-                        filter2: None,
-                    },
-                )
-                .await?
-                .into_iter()
-                .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp)),
-            );
+            common_last_timestamp = Certificate::get_values(
+                &self.transaction,
+                CertificateFilter {
+                    certificate_type: ty.into(),
+                    filter1: None,
+                    filter2: None,
+                },
+            )
+            .await?
+            .into_iter()
+            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
+            .chain(common_last_timestamp)
+            .max_by(|x, y| x.cmp(y));
         }
-
-        let common_last_timestamp = common_certifs.into_iter().max_by(|x, y| x.cmp(y));
 
         for ty in SEQUESTER_CERTIFICATES {
-            sequester_certifs.extend(
-                &mut Certificate::get_values(
-                    &self.transaction,
-                    CertificateFilter {
-                        certificate_type: ty.into(),
-                        filter1: None,
-                        filter2: None,
-                    },
-                )
-                .await?
-                .into_iter()
-                .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp)),
-            );
+            sequester_last_timestamp = Certificate::get_values(
+                &self.transaction,
+                CertificateFilter {
+                    certificate_type: ty.into(),
+                    filter1: None,
+                    filter2: None,
+                },
+            )
+            .await?
+            .into_iter()
+            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
+            .chain(sequester_last_timestamp)
+            .max_by(|x, y| x.cmp(y));
         }
-
-        let sequester_last_timestamp = sequester_certifs.into_iter().max_by(|x, y| x.cmp(y));
 
         for ty in REALM_CERTIFICATES {
             realm_certifs.extend(
@@ -260,23 +254,20 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .collect::<Result<HashMap<_, _>, _>>()?;
 
         for ty in SHAMIR_RECOVERY_CERTIFICATES {
-            shamir_recovery_certifs.extend(
-                &mut Certificate::get_values(
-                    &self.transaction,
-                    CertificateFilter {
-                        certificate_type: ty.into(),
-                        filter1: None,
-                        filter2: None,
-                    },
-                )
-                .await?
-                .into_iter()
-                .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp)),
-            );
+            shamir_recovery_last_timestamp = Certificate::get_values(
+                &self.transaction,
+                CertificateFilter {
+                    certificate_type: ty.into(),
+                    filter1: None,
+                    filter2: None,
+                },
+            )
+            .await?
+            .into_iter()
+            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
+            .chain(shamir_recovery_last_timestamp)
+            .max_by(|x, y| x.cmp(y));
         }
-
-        let shamir_recovery_last_timestamp =
-            shamir_recovery_certifs.into_iter().max_by(|x, y| x.cmp(y));
 
         Ok(PerTopicLastTimestamps {
             common: common_last_timestamp,

@@ -198,25 +198,18 @@ impl Chunk {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(super) struct PreventSyncPattern {
-    pub id: IndexInt,
     pub pattern: String,
     pub fully_applied: bool,
 }
 
 impl PreventSyncPattern {
     const STORE: &'static str = "prevent_sync_pattern";
-    const INDEX_ID: &'static str = "id";
 
     fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
         if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
+            evt.db().create_object_store_with_params(
                 Self::STORE,
-                IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            store.create_index_with_params(
-                Self::INDEX_ID,
-                &IdbKeyPath::str(Self::INDEX_ID),
-                &IdbIndexParameters::new().unique(true),
+                &IdbObjectStoreParameters::default(),
             )?;
         }
 
@@ -233,40 +226,31 @@ impl PreventSyncPattern {
 
     pub(super) async fn get(conn: &IdbDatabase) -> anyhow::Result<Option<Self>> {
         let tx = Self::read(conn)?;
-        super::db::get_values(&tx, Self::STORE, Self::INDEX_ID, 0.into())
-            .await
-            .map(|x| x.into_iter().nth(0))
+        super::db::get_value(&tx, Self::STORE, 0.into()).await
     }
 
     pub(super) async fn insert(&self, conn: &IdbDatabase) -> anyhow::Result<()> {
         let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
         let tx = Self::write(conn)?;
-        super::db::insert(&tx, Self::STORE, value).await?;
+        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await?;
         super::db::commit(tx).await
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(super) struct RealmCheckpoint {
-    pub id: IndexInt,
     pub checkpoint: IndexInt,
 }
 
 impl RealmCheckpoint {
     const STORE: &'static str = "realm_checkpoint";
-    const INDEX_ID: &'static str = "id";
 
     fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
         if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
+            evt.db().create_object_store_with_params(
                 Self::STORE,
                 IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            store.create_index_with_params(
-                Self::INDEX_ID,
-                &IdbKeyPath::str(Self::INDEX_ID),
-                IdbIndexParameters::new().unique(true),
             )?;
         }
 
@@ -281,44 +265,29 @@ impl RealmCheckpoint {
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn remove(tx: &IdbTransaction<'_>, id: IndexInt) -> anyhow::Result<()> {
-        let id = serde_wasm_bindgen::to_value(&id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::remove(&tx, Self::STORE, Self::INDEX_ID, id).await
-    }
-
-    pub(super) async fn get(tx: &IdbTransaction<'_>, id: IndexInt) -> anyhow::Result<Option<Self>> {
-        let id = serde_wasm_bindgen::to_value(&id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::get_values(&tx, Self::STORE, Self::INDEX_ID, id)
-            .await
-            .map(|x| x.into_iter().nth(0))
+    pub(super) async fn get(tx: &IdbTransaction<'_>) -> anyhow::Result<Option<Self>> {
+        super::db::get_value(&tx, Self::STORE, 0.into()).await
     }
 
     pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
         let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
-        super::db::insert(&tx, Self::STORE, value).await
+        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(super) struct Remanence {
-    pub id: IndexInt,
     pub block_remanent: bool,
 }
 
 impl Remanence {
     const STORE: &'static str = "remanence";
-    const INDEX_ID: &'static str = "id";
 
     fn create(evt: &IdbVersionChangeEvent) -> Result<(), DomException> {
         if !evt.db().object_store_names().any(|n| n == Self::STORE) {
-            let store = evt.db().create_object_store_with_params(
+            evt.db().create_object_store_with_params(
                 Self::STORE,
                 IdbObjectStoreParameters::default().auto_increment(true),
-            )?;
-            store.create_index_with_params(
-                Self::INDEX_ID,
-                &IdbKeyPath::str(Self::INDEX_ID),
-                IdbIndexParameters::new().unique(true),
             )?;
         }
 
@@ -350,6 +319,10 @@ impl Vlob {
                 Self::INDEX_VLOB_ID,
                 &IdbKeyPath::str(Self::INDEX_VLOB_ID),
                 IdbIndexParameters::new().unique(true),
+            )?;
+            store.create_index(
+                Self::INDEX_NEED_SYNC,
+                &IdbKeyPath::str(Self::INDEX_NEED_SYNC),
             )?;
         }
 
@@ -415,7 +388,6 @@ pub(super) async fn initialize_model_if_needed(
 
     if PreventSyncPattern::get(&conn).await?.is_none() {
         PreventSyncPattern {
-            id: 0,
             pattern: PREVENT_SYNC_PATTERN_EMPTY_PATTERN.into(),
             fully_applied: false,
         }
