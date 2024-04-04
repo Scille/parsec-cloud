@@ -11,4 +11,16 @@ fn main() {
     // loaded ("delayload" option in MSVC) so that we will have time to first configure the
     // lookup directory.
     winfsp_wrs_build::build();
+    #[cfg(target_os = "linux")]
+    {
+        // The atime option is not supported in fuse >= 3.15.
+        // Prevent `fuse: unknown option(s): `-o atime'` errors.
+        if pkg_config::Config::new()
+            .atleast_version("3.15")
+            .probe("fuse3")
+            .is_ok()
+        {
+            println!("cargo:rustc-cfg=skip_fuse_atime_option");
+        }
+    }
 }
