@@ -22,6 +22,28 @@ pub(super) async fn commit(tx: IdbTransaction<'_>) -> anyhow::Result<()> {
     tx.await.into_result().map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
+pub(super) async fn get_value<V>(
+    tx: &IdbTransaction<'_>,
+    store: &str,
+    key: JsValue,
+) -> anyhow::Result<Option<V>>
+where
+    V: DeserializeOwned,
+{
+    let store = tx
+        .object_store(store)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    store
+        .get(&key)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+        .map(|x| serde_wasm_bindgen::from_value(x))
+        .transpose()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))
+}
+
 pub(super) async fn get_values<V>(
     tx: &IdbTransaction<'_>,
     store: &str,
@@ -98,6 +120,23 @@ pub(super) async fn clear(tx: &IdbTransaction<'_>, store: &str) -> anyhow::Resul
     store.clear().map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
     Ok(())
+}
+
+pub(super) async fn insert_with_key(
+    tx: &IdbTransaction<'_>,
+    store: &str,
+    key: JsValue,
+    value: JsValue,
+) -> anyhow::Result<()> {
+    let store = tx
+        .object_store(store)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    store
+        .put_key_val(&key, &value)
+        .map_err(|e| anyhow::anyhow!("{e:?} ({value:?}) is invalid"))?
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
 pub(super) async fn insert(

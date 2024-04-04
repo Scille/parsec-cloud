@@ -60,7 +60,7 @@ impl PlatformUserStorage {
 
     pub async fn get_realm_checkpoint(&self) -> anyhow::Result<IndexInt> {
         let transaction = RealmCheckpoint::read(&self.conn)?;
-        Ok(RealmCheckpoint::get(&transaction, 0)
+        Ok(RealmCheckpoint::get(&transaction)
             .await?
             .map(|x| x.checkpoint)
             .unwrap_or_default())
@@ -87,12 +87,7 @@ impl PlatformUserStorage {
 
         let transaction = RealmCheckpoint::write(&self.conn)?;
 
-        if RealmCheckpoint::get(&transaction, 0).await?.is_some() {
-            RealmCheckpoint::remove(&transaction, 0).await?;
-        }
-
         RealmCheckpoint {
-            id: 0,
             checkpoint: new_checkpoint,
         }
         .insert(&transaction)
