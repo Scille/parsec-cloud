@@ -18,10 +18,6 @@ Parsec
     :target: https://github.com/Scille/parsec-cloud/actions/workflows/package-client.yml
     :alt: Latest App Packaging CI
 
-.. image:: https://pyup.io/repos/github/Scille/parsec-cloud/shield.svg
-    :target: https://pyup.io/repos/github/Scille/parsec-cloud/
-    :alt: Updates
-
 .. image:: https://img.shields.io/pypi/v/parsec-cloud.svg
     :target: https://pypi.python.org/pypi/parsec-cloud
     :alt: Pypi Status
@@ -30,10 +26,9 @@ Parsec
     :target: http://parsec-cloud.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/ambv/black
-    :alt: Code style: black
-
+.. image:: https://img.shields.io/badge/code%20style-ruff-D7FF64
+  :target: https://github.com/charliermarsh/ruff
+  :alt: Code style: ruff
 
 Homepage: https://parsec.cloud
 
