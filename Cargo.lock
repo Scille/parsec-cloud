@@ -2030,6 +2030,7 @@ dependencies = [
  "libparsec_types",
  "log",
  "once_cell",
+ "pkg-config",
  "regex",
  "tokio",
  "windows-sys 0.52.0",

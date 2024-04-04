@@ -49,6 +49,7 @@ impl Mountpoint {
                 fuser::MountOption::DefaultPermissions,
                 fuser::MountOption::NoSuid,
                 fuser::MountOption::Async,
+                #[cfg(not(skip_fuse_atime_option))]
                 fuser::MountOption::Atime,
                 fuser::MountOption::Exec,
                 fuser::MountOption::RW,
