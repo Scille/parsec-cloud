@@ -155,6 +155,11 @@ jobs:
         run: wasm-pack test --headless --firefox libparsec/crates/platform_async
         timeout-minutes: 10
 
+      - name: Test platform-storage on wasm
+        if: inputs.run-wasm-tests
+        run: wasm-pack test --headless --firefox libparsec/crates/platform_storage
+        timeout-minutes: 10
+
       # Clippy basically compile the project, hence it's faster to run it in
       # the job where compilation cache is reused !
       - name: Check cargo-clippy
