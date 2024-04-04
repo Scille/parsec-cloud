@@ -21,6 +21,7 @@ pub use events::*;
 pub use invite::*;
 pub use libparsec_client_connection::*;
 pub use libparsec_platform_device_loader::*;
+pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
 pub use path::*;
 pub use platform::*;
