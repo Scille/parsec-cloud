@@ -194,9 +194,11 @@ updates:
       timezone: Europe/Paris
     open-pull-requests-limit: 5
     groups:
-      electron-dependencies:
+      desktop-updates:
         patterns:
           - "*"
+        exclude-patterns:
+          - electron
     rebase-strategy: disabled
 
   - package-ecosystem: npm
