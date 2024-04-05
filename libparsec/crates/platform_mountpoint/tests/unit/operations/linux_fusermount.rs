@@ -1,6 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{os::linux::fs::MetadataExt, path::PathBuf, sync::Arc};
+#[cfg(target_os = "macos")]
+use std::os::macos::fs::MetadataExt;
+
+#[cfg(target_os = "linux")]
+use std::os::linux::fs::MetadataExt;
+
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{Client, WorkspaceOps};
 use libparsec_tests_fixtures::prelude::*;

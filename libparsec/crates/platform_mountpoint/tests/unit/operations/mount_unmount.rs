@@ -17,8 +17,9 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
     // 1) Mount with mountpoint base dir not existing
 
     let mountpoint_dir = {
+        println!("mount");
         let mountpoint = Mountpoint::mount(wksp1_ops.clone()).await.unwrap();
-
+        println!("mounted");
         let mountpoint_dir = mountpoint.path().to_owned();
 
         mountpoint.unmount().await.unwrap();
