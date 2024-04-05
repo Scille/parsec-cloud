@@ -83,7 +83,7 @@ import HomePageHeader from '@/views/home/HomePageHeader.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
 import OrganizationListPage from '@/views/home/OrganizationListPage.vue';
 import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vue';
-import SettingsModal from '@/views/settings/SettingsModal.vue';
+import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
@@ -290,16 +290,6 @@ async function openAboutModal(): Promise<void> {
   const modal = await modalController.create({
     component: AboutModal,
     cssClass: 'about-modal',
-  });
-  await modal.present();
-  await modal.onWillDismiss();
-  await modal.dismiss();
-}
-
-async function openSettingsModal(): Promise<void> {
-  const modal = await modalController.create({
-    component: SettingsModal,
-    cssClass: 'settings-modal',
   });
   await modal.present();
   await modal.onWillDismiss();

@@ -4,14 +4,14 @@ describe('Check settings modal', () => {
   beforeEach(() => {
     cy.visitApp('coolorg');
     cy.contains('Your organizations');
-    cy.get('#trigger-settings-button').click();
   });
 
   afterEach(() => {
     cy.dropTestbed();
   });
 
-  it('Opens the settings dialog', () => {
+  it('Open the settings modal from homepage', () => {
+    cy.get('#trigger-settings-button').click();
     // Cypress bug without waiting
     cy.wait(200);
     cy.get('.modal-default').should('exist');
@@ -19,7 +19,15 @@ describe('Check settings modal', () => {
     cy.wait(200);
   });
 
+  it('Open the settings modal after login', () => {
+    cy.login('Boby', 'P@ssw0rd.');
+    cy.get('#profile-button').click();
+    cy.get('.popover-viewport').contains('Settings').click();
+    cy.get('ion-modal').get('ion-title').contains('Settings');
+  });
+
   it('Check General tab', () => {
+    cy.get('#trigger-settings-button').click();
     cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'General');
     cy.get('ion-radio').first().should('have.class', 'radio-checked');
     cy.get('.settings-option').first().as('language');
@@ -35,6 +43,7 @@ describe('Check settings modal', () => {
   });
 
   // it('Check Advanced tab', () => {
+  // cy.get('#trigger-settings-button').click();
   //   cy.get('ion-radio').eq(1).click();
   //   cy.get('ion-radio-group').invoke('attr', 'modelvalue').should('eq', 'Advanced');
   //   cy.get('ion-radio').eq(1).should('have.class', 'radio-checked');
@@ -55,6 +64,7 @@ describe('Check settings modal', () => {
   // });
 
   it('Close with X', () => {
+    cy.get('#trigger-settings-button').click();
     cy.get('.modal-default').should('exist');
     cy.get('.closeBtn').click();
     cy.get('.modal-default').should('not.exist');

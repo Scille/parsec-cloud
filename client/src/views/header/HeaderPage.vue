@@ -132,6 +132,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
+import { openSettingsModal } from '@/views/settings';
 import {
   IonButton,
   IonButtons,
@@ -233,10 +234,7 @@ async function updateRoute(): Promise<void> {
 
 onMounted(async () => {
   hotkeys = hotkeyManager.newHotkeys();
-  hotkeys.add(
-    { key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
-    async () => await navigateTo(Routes.Settings),
-  );
+  hotkeys.add({ key: ',', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true }, openSettingsModal);
   hotkeys.add(
     { key: 'arrowup', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true },
     async () => await routerGoBack(),
@@ -267,8 +265,6 @@ onUnmounted(async () => {
 
 function getTitleForRoute(): Translatable {
   switch (getCurrentRouteName()) {
-    case Routes.Settings:
-      return 'HeaderPage.titles.settings';
     case Routes.Users:
       return 'HeaderPage.titles.users';
     case Routes.Storage:

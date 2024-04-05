@@ -10,7 +10,6 @@ export enum Routes {
   Home = 'home',
   Workspaces = 'workspaces',
   Documents = 'documents',
-  Settings = 'settings',
   Users = 'users',
   Storage = 'storage',
   Organization = 'organization',
@@ -69,11 +68,6 @@ const routes: Array<RouteRecordRaw> = [
               {
                 path: '/:handle(\\d+)',
                 redirect: { name: Routes.Workspaces },
-              },
-              {
-                path: `/:handle(\\d+)/${Routes.Settings}`,
-                name: Routes.Settings,
-                component: () => import('@/views/settings/SettingsPage.vue'),
               },
               {
                 path: `/:handle(\\d+)/${Routes.Users}`,
