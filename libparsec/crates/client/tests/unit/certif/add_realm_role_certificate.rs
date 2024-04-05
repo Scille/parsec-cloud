@@ -35,6 +35,7 @@ async fn ok(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn multiple(env: &TestbedEnv) {
     let env = env.customize(|builder| {
+        builder.certificates_storage_fetch_certificates("alice@dev1");
         builder.new_realm("alice");
         builder.new_realm("alice");
     });
@@ -42,12 +43,7 @@ async fn multiple(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &alice).await;
 
     let switch = ops
-        .add_certificates_batch(
-            &env.get_common_certificates_signed(),
-            &[],
-            &[],
-            &env.get_realms_certificates_signed(),
-        )
+        .add_certificates_batch(&[], &[], &[], &env.get_realms_certificates_signed())
         .await
         .unwrap();
 

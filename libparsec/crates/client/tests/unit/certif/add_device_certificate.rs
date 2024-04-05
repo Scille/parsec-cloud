@@ -30,6 +30,7 @@ async fn ok(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn multiple(env: &TestbedEnv) {
     let env = env.customize(|builder| {
+        builder.certificates_storage_fetch_certificates("alice@dev1");
         // Alice already has the device alice@dev1,
         // there we create a second device alice@dev2.
         builder.new_device("alice");
@@ -39,7 +40,7 @@ async fn multiple(env: &TestbedEnv) {
 
     let switch = ops
         .add_certificates_batch(
-            &env.get_common_certificates_signed(),
+            &env.get_common_certificates_signed()[2..],
             &[],
             &[],
             &Default::default(),

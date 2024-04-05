@@ -38,16 +38,18 @@ async fn multiple(env: &TestbedEnv) {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
+        builder.certificates_storage_fetch_certificates("alice@dev1");
         builder.new_sequester_service();
         builder.new_sequester_service();
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
+    let sequester_certificates = env.get_sequester_certificates_signed();
 
     let switch = ops
         .add_certificates_batch(
-            &env.get_common_certificates_signed(),
-            &env.get_sequester_certificates_signed(),
+            &[],
+            &sequester_certificates[sequester_certificates.len() - 2..],
             &[],
             &Default::default(),
         )

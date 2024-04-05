@@ -36,15 +36,17 @@ async fn multiple(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
         builder.revoke_user("bob");
         builder.revoke_user("mallory");
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
+    let common_certificates = env.get_common_certificates_signed();
 
     let switch = ops
         .add_certificates_batch(
-            &env.get_common_certificates_signed(),
+            &common_certificates[common_certificates.len() - 2..],
             &[],
             &[],
             &Default::default(),
