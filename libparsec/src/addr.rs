@@ -33,8 +33,8 @@ pub enum ParsedParsecAddr {
         use_ssl: bool,
         organization_id: OrganizationID,
         workspace_id: VlobID,
+        key_index: IndexInt,
         encrypted_path: Vec<u8>,
-        encrypted_timestamp: Option<Vec<u8>>,
     },
     InvitationUser {
         hostname: String,
@@ -77,7 +77,7 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedParsecAddr, ParseBackendAdd
                     use_ssl: addr.use_ssl(),
                     organization_id: addr.organization_id().clone(),
                     encrypted_path: addr.encrypted_path().clone(),
-                    encrypted_timestamp: addr.encrypted_timestamp().clone(),
+                    key_index: addr.key_index(),
                     workspace_id: addr.workspace_id(),
                 }
             }

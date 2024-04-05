@@ -119,7 +119,7 @@ pub(super) async fn validate_block(
                 })?;
 
             let key = realm_keys
-                .key_from_index(key_index, manifest.timestamp)
+                .key_from_index(key_index, Some(manifest.timestamp))
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
                         CertifValidateBlockError::InvalidBlockAccess(Box::new(

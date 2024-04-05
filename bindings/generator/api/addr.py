@@ -12,6 +12,7 @@ from .common import (
     StrBasedType,
     Variant,
     VlobID,
+    IndexInt,
 )
 
 
@@ -77,8 +78,8 @@ class ParsedParsecAddr(Variant):
         use_ssl: bool
         organization_id: OrganizationID
         workspace_id: VlobID
+        key_index: IndexInt
         encrypted_path: bytes
-        encrypted_timestamp: Optional[bytes]
 
     class InvitationUser:
         hostname: str

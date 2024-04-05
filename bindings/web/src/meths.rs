@@ -5140,6 +5140,19 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     })
                     .map_err(|_| TypeError::new("Not a valid VlobID"))?
             };
+            let key_index = {
+                let js_val = Reflect::get(&obj, &"keyIndex".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    v as u64
+                }
+            };
             let encrypted_path = {
                 let js_val = Reflect::get(&obj, &"encryptedPath".into())?;
                 js_val
@@ -5147,27 +5160,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .map_err(|_| TypeError::new("Not a Uint8Array"))?
                     .to_vec()
             };
-            let encrypted_timestamp = {
-                let js_val = Reflect::get(&obj, &"encryptedTimestamp".into())?;
-                if js_val.is_null() {
-                    None
-                } else {
-                    Some(
-                        js_val
-                            .dyn_into::<Uint8Array>()
-                            .map_err(|_| TypeError::new("Not a Uint8Array"))?
-                            .to_vec(),
-                    )
-                }
-            };
             Ok(libparsec::ParsedParsecAddr::OrganizationFileLink {
                 hostname,
                 port,
                 use_ssl,
                 organization_id,
                 workspace_id,
+                key_index,
                 encrypted_path,
-                encrypted_timestamp,
             })
         }
         "ParsedParsecAddrPkiEnrollment" => {
@@ -5381,8 +5381,8 @@ fn variant_parsed_parsec_addr_rs_to_js(
             use_ssl,
             organization_id,
             workspace_id,
+            key_index,
             encrypted_path,
-            encrypted_timestamp,
             ..
         } => {
             Reflect::set(
@@ -5408,17 +5408,10 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 .as_ref()
             });
             Reflect::set(&js_obj, &"workspaceId".into(), &js_workspace_id)?;
+            let js_key_index = JsValue::from(key_index);
+            Reflect::set(&js_obj, &"keyIndex".into(), &js_key_index)?;
             let js_encrypted_path = JsValue::from(Uint8Array::from(encrypted_path.as_ref()));
             Reflect::set(&js_obj, &"encryptedPath".into(), &js_encrypted_path)?;
-            let js_encrypted_timestamp = match encrypted_timestamp {
-                Some(val) => JsValue::from(Uint8Array::from(val.as_ref())),
-                None => JsValue::NULL,
-            };
-            Reflect::set(
-                &js_obj,
-                &"encryptedTimestamp".into(),
-                &js_encrypted_timestamp,
-            )?;
         }
         libparsec::ParsedParsecAddr::PkiEnrollment {
             hostname,
@@ -5810,6 +5803,83 @@ fn variant_workspace_create_folder_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceDecryptFileLinkPathError
+
+#[allow(dead_code)]
+fn variant_workspace_decrypt_file_link_path_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceDecryptFileLinkPathError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceDecryptFileLinkPathError::CorruptedData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorCorruptedData".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::CorruptedKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorCorruptedKey".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::KeyNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorKeyNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::NotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorNotAllowed".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceDecryptFileLinkPathError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceDecryptFileLinkPathErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceFdCloseError
 
 #[allow(dead_code)]
@@ -6028,6 +6098,62 @@ fn variant_workspace_fd_write_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceFdWriteErrorNotInWriteMode".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceGenerateFileLinkError
+
+#[allow(dead_code)]
+fn variant_workspace_generate_file_link_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceGenerateFileLinkError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceGenerateFileLinkError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceGenerateFileLinkError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceGenerateFileLinkError::NoKey { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorNoKey".into(),
+            )?;
+        }
+        libparsec::WorkspaceGenerateFileLinkError::NotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorNotAllowed".into(),
+            )?;
+        }
+        libparsec::WorkspaceGenerateFileLinkError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceGenerateFileLinkError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceGenerateFileLinkErrorStopped".into(),
             )?;
         }
     }
@@ -8897,6 +9023,86 @@ pub fn workspaceCreateFolderAll(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_create_folder_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_decrypt_file_link_path
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceDecryptFileLinkPath(workspace: u32, link: String) -> Promise {
+    future_to_promise(async move {
+        let link = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::ParsecOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(link).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_decrypt_file_link_path(workspace, &link).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |path: libparsec::FsPath| -> Result<_, &'static str> {
+                        Ok(path.to_string())
+                    };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_decrypt_file_link_path_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_generate_file_link
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceGenerateFileLink(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_generate_file_link(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string = |addr: libparsec::ParsecOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_generate_file_link_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

@@ -6,6 +6,8 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
 use libparsec_types::prelude::*;
 
+use crate::InvalidCertificateError;
+
 use super::{encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertifOps};
 
 #[derive(Debug)]
@@ -70,7 +72,7 @@ impl RealmKeys {
     pub fn key_from_index(
         &self,
         key_index: IndexInt,
-        up_to: DateTime,
+        up_to: Option<DateTime>,
     ) -> Result<&SecretKey, KeyFromIndexError> {
         let key = (key_index as usize)
             .checked_sub(1)
@@ -78,8 +80,11 @@ impl RealmKeys {
             .ok_or(KeyFromIndexError::KeyNotFound)?;
 
         match key {
-            ValidatedKey::Valid { key, timestamp } if *timestamp <= up_to => Ok(key),
-            ValidatedKey::Valid { .. } => Err(KeyFromIndexError::KeyNotFound),
+            ValidatedKey::Valid { key, timestamp } => match up_to {
+                None => Ok(key),
+                Some(up_to) if *timestamp <= up_to => Ok(key),
+                _ => Err(KeyFromIndexError::KeyNotFound),
+            },
             ValidatedKey::Corrupted { .. } => Err(KeyFromIndexError::CorruptedKey),
         }
     }
@@ -849,4 +854,58 @@ pub(super) async fn encrypt_for_realm(
     let encrypted = key.encrypt(data);
 
     Ok((encrypted, key_index))
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum CertifDecryptForRealmError {
+    /// Stopped is not used by `encrypt_for_realm`, but is convenient anyways given
+    /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Not allowed to access this realm")]
+    NotAllowed,
+    #[error("The referenced key doesn't exist yet in this realm")]
+    KeyNotFound,
+    #[error("The referenced key appears to be corrupted !")]
+    CorruptedKey,
+    #[error("Cannot decrypt data")]
+    CorruptedData,
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub(super) async fn decrypt_for_realm(
+    ops: &CertifOps,
+    store: &mut CertificatesStoreReadGuard<'_>,
+    realm_id: VlobID,
+    key_index: IndexInt,
+    encrypted: &[u8],
+) -> Result<Vec<u8>, CertifDecryptForRealmError> {
+    let realm_keys = load_last_realm_keys_bundle(ops, store, realm_id)
+        .await
+        .map_err(|e| match e {
+            LoadLastKeysBundleError::Offline => CertifDecryptForRealmError::Offline,
+            LoadLastKeysBundleError::NotAllowed => CertifDecryptForRealmError::NotAllowed,
+            LoadLastKeysBundleError::NoKey => CertifDecryptForRealmError::KeyNotFound,
+            LoadLastKeysBundleError::InvalidKeysBundle(err) => {
+                CertifDecryptForRealmError::InvalidKeysBundle(err)
+            }
+            LoadLastKeysBundleError::Internal(err) => err.into(),
+        })?;
+
+    let key = realm_keys
+        .key_from_index(key_index, None)
+        .map_err(|err| match err {
+            KeyFromIndexError::CorruptedKey => CertifDecryptForRealmError::CorruptedKey,
+            KeyFromIndexError::KeyNotFound => CertifDecryptForRealmError::KeyNotFound,
+        })?;
+
+    key.decrypt(encrypted)
+        .map_err(|_| CertifDecryptForRealmError::CorruptedData)
 }

@@ -1142,8 +1142,8 @@ export interface ParsedParsecAddrOrganizationFileLink {
     use_ssl: boolean
     organization_id: string
     workspace_id: string
+    key_index: number
     encrypted_path: Uint8Array
-    encrypted_timestamp: Uint8Array | null
 }
 export interface ParsedParsecAddrPkiEnrollment {
     tag: "PkiEnrollment"
@@ -1319,6 +1319,55 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorStopped
 
 
+// WorkspaceDecryptFileLinkPathError
+export interface WorkspaceDecryptFileLinkPathErrorCorruptedData {
+    tag: "CorruptedData"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorCorruptedKey {
+    tag: "CorruptedKey"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorKeyNotFound {
+    tag: "KeyNotFound"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceDecryptFileLinkPathErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceDecryptFileLinkPathError =
+  | WorkspaceDecryptFileLinkPathErrorCorruptedData
+  | WorkspaceDecryptFileLinkPathErrorCorruptedKey
+  | WorkspaceDecryptFileLinkPathErrorInternal
+  | WorkspaceDecryptFileLinkPathErrorInvalidCertificate
+  | WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle
+  | WorkspaceDecryptFileLinkPathErrorKeyNotFound
+  | WorkspaceDecryptFileLinkPathErrorNotAllowed
+  | WorkspaceDecryptFileLinkPathErrorOffline
+  | WorkspaceDecryptFileLinkPathErrorStopped
+
+
 // WorkspaceFdCloseError
 export interface WorkspaceFdCloseErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
@@ -1447,6 +1496,40 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorBadFileDescriptor
   | WorkspaceFdWriteErrorInternal
   | WorkspaceFdWriteErrorNotInWriteMode
+
+
+// WorkspaceGenerateFileLinkError
+export interface WorkspaceGenerateFileLinkErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceGenerateFileLinkErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceGenerateFileLinkErrorNoKey {
+    tag: "NoKey"
+    error: string
+}
+export interface WorkspaceGenerateFileLinkErrorNotAllowed {
+    tag: "NotAllowed"
+    error: string
+}
+export interface WorkspaceGenerateFileLinkErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceGenerateFileLinkErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceGenerateFileLinkError =
+  | WorkspaceGenerateFileLinkErrorInternal
+  | WorkspaceGenerateFileLinkErrorInvalidKeysBundle
+  | WorkspaceGenerateFileLinkErrorNoKey
+  | WorkspaceGenerateFileLinkErrorNotAllowed
+  | WorkspaceGenerateFileLinkErrorOffline
+  | WorkspaceGenerateFileLinkErrorStopped
 
 
 // WorkspaceInfoError
@@ -2042,6 +2125,14 @@ export function workspaceCreateFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceCreateFolderError>>
+export function workspaceDecryptFileLinkPath(
+    workspace: number,
+    link: string
+): Promise<Result<string, WorkspaceDecryptFileLinkPathError>>
+export function workspaceGenerateFileLink(
+    workspace: number,
+    path: string
+): Promise<Result<string, WorkspaceGenerateFileLinkError>>
 export function workspaceInfo(
     workspace: number
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
