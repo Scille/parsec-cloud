@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod fetch;
+mod link;
 mod merge;
 mod store;
 mod transactions;
@@ -16,6 +17,7 @@ use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
 use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
+pub use link::{WorkspaceDecryptFileLinkPathError, WorkspaceGenerateFileLinkError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
@@ -479,6 +481,20 @@ impl WorkspaceOps {
         data: &[u8],
     ) -> Result<u64, WorkspaceFdWriteError> {
         transactions::fd_write(self, fd, data, FdWriteStrategy::StartEOF).await
+    }
+
+    pub async fn generate_file_link(
+        &self,
+        path: &FsPath,
+    ) -> Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError> {
+        link::generate_file_link(self, path).await
+    }
+
+    pub async fn decrypt_file_link_path(
+        &self,
+        link: &ParsecOrganizationFileLinkAddr,
+    ) -> Result<FsPath, WorkspaceDecryptFileLinkPathError> {
+        link::decrypt_file_link_path(self, link).await
     }
 }
 

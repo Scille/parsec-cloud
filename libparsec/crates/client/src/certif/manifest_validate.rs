@@ -183,7 +183,7 @@ pub(super) async fn validate_workspace_manifest(
                     LoadLastKeysBundleError::Internal(err) => err.into(),
                 })?;
             let key = realm_keys
-                .key_from_index(key_index, timestamp)
+                .key_from_index(key_index, Some(timestamp))
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
                         CertifValidateManifestError::InvalidManifest(Box::new(
@@ -282,7 +282,7 @@ pub(super) async fn validate_child_manifest(
                     LoadLastKeysBundleError::Internal(err) => err.into(),
                 })?;
             let key = realm_keys
-                .key_from_index(key_index, timestamp)
+                .key_from_index(key_index, Some(timestamp))
                 .map_err(|e| match e {
                     KeyFromIndexError::CorruptedKey => {
                         CertifValidateManifestError::InvalidManifest(Box::new(

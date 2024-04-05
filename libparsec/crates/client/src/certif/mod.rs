@@ -31,7 +31,9 @@ pub use poll::CertifPollServerError;
 pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
-pub use realm_keys_bundle::{CertifEncryptForRealmError, InvalidKeysBundleError};
+pub use realm_keys_bundle::{
+    CertifDecryptForRealmError, CertifEncryptForRealmError, InvalidKeysBundleError,
+};
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
 pub use store::{CertifStoreError, UpTo};
@@ -289,7 +291,63 @@ impl CertifOps {
             .await
             .map_err(|e| match e {
                 CertifStoreError::Stopped => CertifEncryptForRealmError::Stopped,
-                CertifStoreError::Internal(_) => todo!(),
+                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
+            })?
+    }
+
+    /// Decrypt the data with the key at the given index from the most recent realm keys bundle.
+    /// You most likely want to use the `validate_*` methods instead.
+    /// This method should only be used to decrypt data not controlled by the server (given in
+    /// that case we don't have a `needed_realm_certificate_timestamp`). So far only the
+    /// encrypted path in the file link url need this.
+    ///
+    /// Be aware this function potentially do server accesses (to fetch the keys bundle).
+    pub async fn decrypt_opaque_data_for_realm(
+        &self,
+        realm_id: VlobID,
+        key_index: IndexInt,
+        encrypted: &[u8],
+    ) -> Result<Vec<u8>, CertifDecryptForRealmError> {
+        let outcome = self
+            .store
+            .for_read(|store| async move {
+                realm_keys_bundle::decrypt_for_realm(self, store, realm_id, key_index, encrypted)
+                    .await
+            })
+            .await
+            .map_err(|e| match e {
+                CertifStoreError::Stopped => CertifDecryptForRealmError::Stopped,
+                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
+            })?;
+
+        // If the current keys bundle doesn't contains the specified key index, we have
+        // no choice but to poll the server & retry in case we were actually lagging
+        // behind.
+
+        if !matches!(outcome, Err(CertifDecryptForRealmError::KeyNotFound)) {
+            return outcome;
+        }
+
+        self.poll_server_for_new_certificates(None)
+            .await
+            .map_err(|err| match err {
+                CertifPollServerError::Stopped => CertifDecryptForRealmError::Stopped,
+                CertifPollServerError::Offline => CertifDecryptForRealmError::Offline,
+                CertifPollServerError::InvalidCertificate(err) => {
+                    CertifDecryptForRealmError::InvalidCertificate(err)
+                }
+                CertifPollServerError::Internal(err) => err.context("cannot poll server").into(),
+            })?;
+
+        self.store
+            .for_read(|store| async move {
+                realm_keys_bundle::decrypt_for_realm(self, store, realm_id, key_index, encrypted)
+                    .await
+            })
+            .await
+            .map_err(|e| match e {
+                CertifStoreError::Stopped => CertifDecryptForRealmError::Stopped,
+                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
             })?
     }
 
@@ -305,7 +363,7 @@ impl CertifOps {
             .await
             .map_err(|e| match e {
                 CertifStoreError::Stopped => CertifEncryptForSequesterServicesError::Stopped,
-                CertifStoreError::Internal(err) => err.context("Cannot access storage").into(),
+                CertifStoreError::Internal(err) => err.context("cannot access storage").into(),
             })?
     }
 

@@ -1,17 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use data_encoding::BASE32;
+use data_encoding::{BASE32, BASE64URL_NOPAD};
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 use serde::ser::{Serialize, Serializer};
 pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
 
-use crate::{BootstrapToken, InvitationToken, InvitationType, OrganizationID, VlobID};
+use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
@@ -86,7 +85,7 @@ impl FromStr for ParsecUrlAsHTTPScheme {
         };
 
         if no_ssl_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("no_ssl".to_string()));
+            return Err(AddrError::DuplicateParam("no_ssl"));
         }
 
         // 2) Convert the url into a http/https scheme
@@ -242,7 +241,7 @@ pub enum AddrError {
         help: String,
     },
     #[error("Multiple values for param `{0}` only one should be provided")]
-    DuplicateParam(String),
+    DuplicateParam(&'static str),
     #[error("Missing mandatory `{0}` param")]
     MissingParam(&'static str),
     #[error("The provided url (`{0}`) should not have a path")]
@@ -350,18 +349,25 @@ macro_rules! expose_base_parsec_addr_fields {
     };
 }
 
-fn extract_action<'a>(
+fn extract_param<'a>(
     pairs: &'a url::form_urlencoded::Parse,
+    param: &'static str,
 ) -> Result<std::borrow::Cow<'a, str>, AddrError> {
-    let mut action_queries = pairs.filter(|(k, _)| k == "action");
+    let mut action_queries = pairs.filter(|(k, _)| k == param);
     let action = match action_queries.next() {
-        None => return Err(AddrError::MissingParam("action")),
+        None => return Err(AddrError::MissingParam(param)),
         Some((_, value)) => value,
     };
     if action_queries.next().is_some() {
-        return Err(AddrError::DuplicateParam("action".to_string()));
+        return Err(AddrError::DuplicateParam(param));
     }
     Ok(action)
+}
+
+fn extract_action<'a>(
+    pairs: &'a url::form_urlencoded::Parse,
+) -> Result<std::borrow::Cow<'a, str>, AddrError> {
+    extract_param(pairs, "action")
 }
 
 fn extract_organization_id(parsed: &ParsecUrlAsHTTPScheme) -> Result<OrganizationID, AddrError> {
@@ -468,7 +474,7 @@ impl ParsecOrganizationAddr {
             }
         };
         if rvk_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("rvk".to_string()));
+            return Err(AddrError::DuplicateParam("rvk"));
         }
 
         Ok(Self {
@@ -626,7 +632,7 @@ impl ParsecOrganizationBootstrapAddr {
         // the replacement character EF BF BD is used instead. This should be
         // ok for our use case (but it differs from Python implementation).
         if token_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("token".to_string()));
+            return Err(AddrError::DuplicateParam("token"));
         }
 
         Ok(Self {
@@ -684,14 +690,14 @@ impl ParsecOrganizationBootstrapAddr {
  */
 
 /// Represent the URL to share a file link
-/// (e.g. ``parsec3://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?action=file_link&p=<TODO>``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationFileLinkAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
     workspace_id: VlobID,
+    key_index: IndexInt,
     encrypted_path: Vec<u8>,
-    encrypted_timestamp: Option<Vec<u8>>,
 }
 
 impl_common_stuff!(ParsecOrganizationFileLinkAddr);
@@ -701,15 +707,15 @@ impl ParsecOrganizationFileLinkAddr {
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
         workspace_id: VlobID,
+        key_index: IndexInt,
         encrypted_path: Vec<u8>,
-        encrypted_timestamp: Option<Vec<u8>>,
     ) -> Self {
         Self {
             base: server_addr.into().base,
             organization_id,
             workspace_id,
+            key_index,
             encrypted_path,
-            encrypted_timestamp,
         }
     }
 
@@ -726,48 +732,23 @@ impl ParsecOrganizationFileLinkAddr {
             });
         }
 
-        let mut query_str_map = HashMap::new();
-        for (key, value) in pairs {
-            match query_str_map.entry(key) {
-                std::collections::hash_map::Entry::Occupied(occupied) => {
-                    return Err(AddrError::DuplicateParam(occupied.key().to_string()))
-                }
-                std::collections::hash_map::Entry::Vacant(vacant) => {
-                    vacant.insert(value);
-                }
-            }
-        }
-
-        let encrypted_timestamp = if let Some(ts) = query_str_map.get("timestamp") {
-            Some(binary_urlsafe_decode(ts)?)
-        } else {
-            None
-        };
+        let p = extract_param(&pairs, "p")?;
+        let (workspace_id, key_index, encrypted_path) = BASE64URL_NOPAD
+            .decode(p.as_bytes())
+            .ok()
+            .and_then(|p| rmp_serde::from_slice::<(VlobID, IndexInt, Vec<u8>)>(&p).ok())
+            .ok_or_else(|| AddrError::InvalidParamValue {
+                param: "p",
+                value: p.to_string(),
+                help: "Invalid `p` parameter".to_string(),
+            })?;
 
         Ok(Self {
             base,
             organization_id,
-            workspace_id: query_str_map
-                .get("workspace_id")
-                .ok_or(AddrError::MissingParam("workspace_id"))
-                .and_then(|v| {
-                    VlobID::from_hex(v).map_err(|e| AddrError::InvalidParamValue {
-                        param: "workspace_id",
-                        value: v.to_string(),
-                        help: e.to_string(),
-                    })
-                })?,
-            encrypted_path: query_str_map
-                .get("path")
-                .ok_or(AddrError::MissingParam("path"))
-                .and_then(|v| {
-                    binary_urlsafe_decode(v).map_err(|e| AddrError::InvalidParamValue {
-                        param: "path",
-                        value: v.to_string(),
-                        help: e.to_string(),
-                    })
-                })?,
-            encrypted_timestamp,
+            workspace_id,
+            key_index,
+            encrypted_path,
         })
     }
 
@@ -777,20 +758,24 @@ impl ParsecOrganizationFileLinkAddr {
         url.path_segments_mut()
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
+
+        let p = rmp_serde::to_vec::<(VlobID, IndexInt, &[u8])>(&(
+            self.workspace_id,
+            self.key_index,
+            &self.encrypted_path,
+        ))
+        .map(|raw| BASE64URL_NOPAD.encode(&raw))
+        .expect("data are valid");
+
         url.query_pairs_mut()
             .append_pair("action", "file_link")
-            .append_pair("workspace_id", &self.workspace_id.hex())
-            .append_pair("path", &binary_urlsafe_encode(&self.encrypted_path));
-        if let Some(ts) = &self.encrypted_timestamp {
-            url.query_pairs_mut()
-                .append_pair("timestamp", &binary_urlsafe_encode(ts));
-        }
+            .append_pair("p", &p);
 
         url
     }
 
-    pub fn encrypted_timestamp(&self) -> &Option<Vec<u8>> {
-        &self.encrypted_timestamp
+    pub fn key_index(&self) -> IndexInt {
+        self.key_index
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
@@ -865,7 +850,7 @@ impl ParsecInvitationAddr {
             }
         };
         if token_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("token".to_string()));
+            return Err(AddrError::DuplicateParam("token"));
         }
 
         Ok(Self {

@@ -20,6 +20,9 @@ from .common import (
     U32BasedType,
     Path,
 )
+from .addr import (
+    ParsecOrganizationFileLinkAddr,
+)
 
 
 class ClientStartWorkspaceError(ErrorVariant):
@@ -513,4 +516,67 @@ async def fd_write_start_eof(
     fd: FileDescriptor,
     data: Ref[bytes],
 ) -> Result[U64, WorkspaceFdWriteError]:
+    raise NotImplementedError
+
+
+class WorkspaceGenerateFileLinkError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class NotAllowed:
+        pass
+
+    class NoKey:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_generate_file_link(
+    workspace: Handle,
+    path: Ref[FsPath],
+) -> Result[ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError]:
+    raise NotImplementedError
+
+
+class WorkspaceDecryptFileLinkPathError(ErrorVariant):
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class NotAllowed:
+        pass
+
+    class KeyNotFound:
+        pass
+
+    class CorruptedKey:
+        pass
+
+    class CorruptedData:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_decrypt_file_link_path(
+    workspace: Handle,
+    link: Ref[ParsecOrganizationFileLinkAddr],
+) -> Result[FsPath, WorkspaceDecryptFileLinkPathError]:
     raise NotImplementedError

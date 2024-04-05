@@ -95,7 +95,7 @@ pub(super) async fn decrypt_current_realm_name(
                         }
                         LoadLastKeysBundleError::Internal(err) => err.into(),
                     })?;
-            let key = match realm_keys.key_from_index(certif.key_index, certif.timestamp) {
+            let key = match realm_keys.key_from_index(certif.key_index, Some(certif.timestamp)) {
                 Ok(key) => key,
                 Err(KeyFromIndexError::CorruptedKey) => {
                     return Err(

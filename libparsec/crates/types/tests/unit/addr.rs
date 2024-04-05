@@ -12,8 +12,11 @@ const ORG: &str = "MyOrg";
 const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
 const TOKEN: &str = "a0000000000000000000000000000001";
 const DOMAIN: &str = "parsec.cloud.com";
-const ENCRYPTED_PATH: &str = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
-const WORKSPACE_ID: &str = "2d4ded1274064608833b7f57f01156e2";
+const FILE_LINK_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A"; // cspell:disable-line
+                                                                                                                                                                 // `/foo/bar.txt` encrypted with key `2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1`
+const FILE_LINK_PARAM_ENCRYPTED_PATH: &[u8] = &hex!("e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370");
+const FILE_LINK_PARAM_KEY_INDEX: IndexInt = 1;
+const FILE_LINK_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
 
 /*
@@ -116,9 +119,7 @@ impl Testbed for BackendOrganizationFileLinkAddrTestbed {
     impl_testbed_common!(ParsecOrganizationFileLinkAddr);
     impl_testbed_with_org!(ParsecOrganizationFileLinkAddr);
     fn url(&self) -> String {
-        format!(
-            "{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=file_link&workspace_id={WORKSPACE_ID}&path={ENCRYPTED_PATH}",
-        )
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=file_link&p={FILE_LINK_PARAM}",)
     }
 }
 
@@ -157,7 +158,7 @@ fn addr_with_org(testbed: &dyn Testbed) {}
  */
 
 #[rstest_reuse::apply(all_addr)]
-fn good_addr(testbed: &dyn Testbed) {
+fn good_addr_base(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }
 
@@ -357,76 +358,51 @@ fn file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
 }
 
 #[rstest]
-fn file_link_addr_bad_workspace(
-    #[values(Some(""), Some("4def"), Some("康熙帝"), None)] bad_workspace: Option<&str>,
+fn file_link_addr_bad_p(
+    #[values(
+        Some("__not_base64__"),
+        Some("康熙帝"),
+        Some("ZHVtbXk"), // Base64(b"dummy")
+        None
+    )]
+    bad_param: Option<&str>,
 ) {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
-    match bad_workspace {
-        Some(bad_workspace) => {
-            // Workspace param present in the url but with bad and empty value
-            let url = testbed.url().replace(WORKSPACE_ID, bad_workspace);
+    match bad_param {
+        Some(bad_param) => {
+            // Key index param present in the url but with bad and empty value
+            let url = testbed.url().replace(FILE_LINK_PARAM, bad_param);
             testbed.assert_addr_err(
                 &url,
                 AddrError::InvalidParamValue {
-                    param: "workspace_id",
-                    value: bad_workspace.to_string(),
-                    help: "Invalid VlobID".to_string(),
+                    param: "p",
+                    value: bad_param.to_string(),
+                    help: "Invalid `p` parameter".to_string(),
                 },
             );
         }
         None => {
-            // Workspace param not present in the url
-            let url = testbed
-                .url()
-                .replace(&format!("workspace_id={}", WORKSPACE_ID), "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("workspace_id"));
-        }
-    }
-}
-
-#[rstest]
-fn file_link_addr_bad_encrypted_path(
-    #[values(Some("__notbase32__"), Some("康熙帝"), None)] bad_path: Option<&str>,
-) {
-    let testbed = BackendOrganizationFileLinkAddrTestbed {};
-
-    match bad_path {
-        Some(bad_path) => {
-            // Path param present in the url but with bad and empty value
-            let url = testbed.url().replace(ENCRYPTED_PATH, bad_path);
-            testbed.assert_addr_err(
-                &url,
-                AddrError::InvalidParamValue {
-                    param: "path",
-                    value: bad_path.to_string(),
-                    help: "Invalid base32 data: invalid length at 8".to_string(),
-                },
-            );
-        }
-        None => {
-            // Path param not present in the url
-            let url = testbed
-                .url()
-                .replace(&format!("path={}", ENCRYPTED_PATH), "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("path"));
+            // Key index param not present in the url
+            let url = testbed.url().replace(&format!("p={}", FILE_LINK_PARAM), "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("p"));
         }
     }
 }
 
 #[test]
-fn file_link_addr_get_encrypted_path() {
+fn file_link_addr_get_params() {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
 
-    let serialized_encrypted_path = "HRSW4Y3SPFYHIZLEL5YGC6LMN5QWIPQs";
-    let encrypted_path = b"<encrypted_payload>";
-
-    let url = testbed
-        .url()
-        .replace(ENCRYPTED_PATH, serialized_encrypted_path);
+    let url = testbed.url();
 
     let addr: ParsecOrganizationFileLinkAddr = url.parse().unwrap();
-    p_assert_eq!(addr.encrypted_path(), encrypted_path);
+    p_assert_eq!(addr.encrypted_path(), FILE_LINK_PARAM_ENCRYPTED_PATH);
+    p_assert_eq!(addr.key_index(), FILE_LINK_PARAM_KEY_INDEX);
+    p_assert_eq!(
+        addr.workspace_id(),
+        FILE_LINK_PARAM_WORKSPACE_ID.try_into().unwrap()
+    );
 }
 
 #[rstest]
@@ -624,14 +600,14 @@ fn backend_addr_redirection() {
 
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec3://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
-        "https://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec3://parsec.example.com/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "https://parsec.example.com/redirect/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec3://parsec.example.com/my_org?action=file_link&no_ssl=true&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
-        "parsec3://parsec.example.com/my_org?no_ssl=true&action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
-        "http://parsec.example.com/redirect/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss",
+        "parsec3://parsec.example.com/my_org?action=file_link&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?no_ssl=true&action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "http://parsec.example.com/redirect/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
 }
 

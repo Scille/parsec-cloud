@@ -416,15 +416,15 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl ParsecOrganizationFileLinkAddr {
     #[new]
-    #[pyo3(signature = (organization_id, workspace_id, encrypted_path, encrypted_timestamp = None, **py_kwargs))]
+    #[pyo3(signature = (organization_id, workspace_id, key_index, encrypted_path, **py_kwargs))]
     fn new(
         organization_id: OrganizationID,
         workspace_id: VlobID,
+        key_index: libparsec_types::IndexInt,
         encrypted_path: BytesWrapper,
-        encrypted_timestamp: Option<BytesWrapper>,
         py_kwargs: Option<&PyDict>,
     ) -> PyResult<Self> {
-        crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
+        crate::binding_utils::unwrap_bytes!(encrypted_path);
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
                 match dict.get_item("hostname") {
@@ -448,17 +448,9 @@ impl ParsecOrganizationFileLinkAddr {
             addr.0,
             organization_id.0,
             workspace_id.0,
+            key_index,
             encrypted_path.into(),
-            encrypted_timestamp.map(|e| e.into()),
         )))
-    }
-
-    #[getter]
-    fn encrypted_timestamp<'py>(&self, python: Python<'py>) -> Option<&'py PyBytes> {
-        self.0
-            .encrypted_timestamp()
-            .as_ref()
-            .map(|v| PyBytes::new(python, v))
     }
 
     #[getter]
@@ -493,6 +485,11 @@ impl ParsecOrganizationFileLinkAddr {
     #[getter]
     fn workspace_id(&self) -> VlobID {
         VlobID(self.0.workspace_id())
+    }
+
+    #[getter]
+    fn key_index(&self) -> libparsec_types::IndexInt {
+        self.0.key_index()
     }
 
     #[getter]
@@ -536,21 +533,21 @@ impl ParsecOrganizationFileLinkAddr {
     }
 
     #[classmethod]
-    #[pyo3(signature = (organization_addr, workspace_id, encrypted_path, encrypted_timestamp = None))]
+    #[pyo3(signature = (organization_addr, workspace_id, key_index, encrypted_path))]
     fn build(
         _cls: &PyType,
         organization_addr: ParsecOrganizationAddr,
         workspace_id: VlobID,
+        key_index: libparsec_types::IndexInt,
         encrypted_path: BytesWrapper,
-        encrypted_timestamp: Option<BytesWrapper>,
     ) -> Self {
-        crate::binding_utils::unwrap_bytes!(encrypted_path, encrypted_timestamp);
+        crate::binding_utils::unwrap_bytes!(encrypted_path);
         Self(libparsec_types::ParsecOrganizationFileLinkAddr::new(
             organization_addr.get_server_addr().0,
             organization_addr.organization_id().0,
             workspace_id.0,
+            key_index,
             encrypted_path.to_vec(),
-            encrypted_timestamp.map(|e| e.to_vec()),
         ))
     }
 }
