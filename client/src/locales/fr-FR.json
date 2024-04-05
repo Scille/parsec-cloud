@@ -226,8 +226,6 @@
     "HeaderPage": {
         "titles": {
             "workspaces": "Mes espaces",
-            "settings": "Paramètres",
-            "devices": "Appareils",
             "about": "À propos",
             "users": "Utilisateurs",
             "organization": {
@@ -255,7 +253,7 @@
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         }
     },
-    "SettingsPage": {
+    "SettingsModal": {
         "pageTitle": "Paramètres",
         "general": "Général",
         "advanced": "Avancé",

@@ -37,6 +37,7 @@ import { Information, InformationLevel, InformationManager, InformationManagerKe
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
+import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref } from 'vue';
@@ -127,7 +128,7 @@ async function openPopover(event: Event): Promise<void> {
       }
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
-    await navigateTo(Routes.Settings);
+    await openSettingsModal();
   } else if (data.option === ProfilePopoverOption.Help) {
     window.open(translate('MenuPage.helpLink'), '_blank');
   } else if (data.option === ProfilePopoverOption.App) {

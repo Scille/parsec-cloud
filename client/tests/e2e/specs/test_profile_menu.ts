@@ -28,8 +28,7 @@ describe('Check profile menu links', () => {
   it('Click settings link', () => {
     cy.get('#profile-button').click();
     cy.get('.popover-viewport').contains('Settings').click();
-    cy.url().should('include', '/settings');
-    cy.get('.topbar-left__title').contains('Settings');
+    cy.get('ion-modal').get('ion-title').contains('Settings');
   });
 
   it('Click help and feedback link', () => {
