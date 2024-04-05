@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::collections::HashMap;
+
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -32,23 +34,28 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn multiple(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    let (env, realm_id) = env.customize_with_map(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
             .map(|event| event.realm);
-
+        builder.certificates_storage_fetch_certificates("alice@dev1");
         builder.rotate_key_realm(realm_id);
+        realm_id
     });
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(&env, &alice).await;
+    let realm_certificates = &env.get_realms_certificates_signed()[&realm_id];
 
     let switch = ops
         .add_certificates_batch(
-            &env.get_common_certificates_signed(),
             &[],
             &[],
-            &env.get_realms_certificates_signed(),
+            &[],
+            &HashMap::from([(
+                realm_id,
+                realm_certificates[realm_certificates.len() - 1..].to_vec(),
+            )]),
         )
         .await
         .unwrap();
