@@ -127,7 +127,12 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         rep = await self.raw_client.post(self.url, headers=headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
-        return rep.content
+        # Strip keepalive messages from content
+        content = rep.content
+        keepalive = b"\xa9keepalive"
+        while content.startswith(keepalive):
+            content = content[len(keepalive) :]
+        return content
 
     @asynccontextmanager
     async def events_listen(  # pyright: ignore [reportIncompatibleMethodOverride]
