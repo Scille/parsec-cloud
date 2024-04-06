@@ -55,7 +55,7 @@
     <ms-input
       class="item-radio__input"
       :placeholder="$t('CreateOrganization.parsecServerUrl')"
-      v-model="backendAddr"
+      v-model="serverAddr"
       name="serverUrl"
       v-show="mode === ServerMode.Custom"
       @change="$emit('fieldUpdate')"
@@ -71,19 +71,19 @@ export enum ServerMode {
 </script>
 
 <script setup lang="ts">
-import { Validity, backendAddrValidator } from '@/common/validators';
+import { Validity, parsecAddrValidator } from '@/common/validators';
 import { MsInput } from '@/components/core';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { ref } from 'vue';
 
-const backendAddr = ref('');
+const serverAddr = ref('');
 const mode = ref(ServerMode.SaaS);
 
 defineExpose({
   areFieldsCorrect,
   ServerMode,
   mode,
-  backendAddr,
+  serverAddr,
 });
 
 defineEmits<{
@@ -93,7 +93,7 @@ defineEmits<{
 async function areFieldsCorrect(): Promise<boolean> {
   return (
     mode.value === ServerMode.SaaS ||
-    (mode.value === ServerMode.Custom && (await backendAddrValidator(backendAddr.value)).validity === Validity.Valid)
+    (mode.value === ServerMode.Custom && (await parsecAddrValidator(serverAddr.value)).validity === Validity.Valid)
   );
 }
 </script>

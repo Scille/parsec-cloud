@@ -7,7 +7,7 @@ import {
   isValidOrganizationName,
   isValidUserName,
   isValidWorkspaceName,
-  parseBackendAddr,
+  parseParsecAddr,
 } from '@/parsec';
 import { ParsedParsecAddrTag } from '@/plugins/libparsec';
 import { translate } from '@/services/translation';
@@ -71,24 +71,24 @@ export const entryNameValidator: IValidator = async function (value: string) {
   return (await isValidEntryName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid };
 };
 
-export const backendAddrValidator: IValidator = async function (value: string) {
+export const parsecAddrValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     return result.value.tag === ParsedParsecAddrTag.Server ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   return { validity: Validity.Invalid };
 };
 
-export const backendOrganizationAddrValidator: IValidator = async function (value: string) {
+export const parsecOrganizationAddrValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     return result.value.tag === ParsedParsecAddrTag.Organization ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
@@ -117,7 +117,7 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     if (result.value.tag === ParsedParsecAddrTag.InvitationUser || result.value.tag === ParsedParsecAddrTag.InvitationDevice) {
       return { validity: Validity.Valid };
@@ -145,7 +145,7 @@ export const fileLinkValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     return result.value.tag === ParsedParsecAddrTag.OrganizationFileLink ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
@@ -157,7 +157,7 @@ export const claimUserLinkValidator: IValidator = async function (value: string)
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     return result.value.tag === ParsedParsecAddrTag.InvitationUser ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
@@ -181,7 +181,7 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  const result = await parseBackendAddr(value);
+  const result = await parseParsecAddr(value);
   if (result.ok) {
     return result.value.tag === ParsedParsecAddrTag.InvitationDevice ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
