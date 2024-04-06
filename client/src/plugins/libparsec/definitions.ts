@@ -1292,17 +1292,17 @@ export interface MountpointUnmountErrorInternal {
 export type MountpointUnmountError =
   | MountpointUnmountErrorInternal
 
-// ParseBackendAddrError
-export enum ParseBackendAddrErrorTag {
-    InvalidUrl = 'ParseBackendAddrErrorInvalidUrl',
+// ParseParsecAddrError
+export enum ParseParsecAddrErrorTag {
+    InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
 }
 
-export interface ParseBackendAddrErrorInvalidUrl {
-    tag: ParseBackendAddrErrorTag.InvalidUrl
+export interface ParseParsecAddrErrorInvalidUrl {
+    tag: ParseParsecAddrErrorTag.InvalidUrl
     error: string
 }
-export type ParseBackendAddrError =
-  | ParseBackendAddrErrorInvalidUrl
+export type ParseParsecAddrError =
+  | ParseParsecAddrErrorInvalidUrl
 
 // ParsedParsecAddr
 export enum ParsedParsecAddrTag {
@@ -2178,7 +2178,7 @@ export interface LibParsecPlugin {
         device_label: DeviceLabel,
         sequester_authority_verify_key: SequesterVerifyKeyDer | null
     ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
-    buildBackendOrganizationBootstrapAddr(
+    buildParsecOrganizationBootstrapAddr(
         addr: ParsecAddr,
         organization_id: OrganizationID
     ): Promise<ParsecOrganizationBootstrapAddr>
@@ -2421,9 +2421,9 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, MountpointUnmountError>>
     newCanceller(
     ): Promise<Handle>
-    parseBackendAddr(
+    parseParsecAddr(
         url: string
-    ): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>>
+    ): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
     pathFilename(
         path: FsPath
     ): Promise<EntryName | null>

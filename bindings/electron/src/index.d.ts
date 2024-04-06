@@ -1094,13 +1094,13 @@ export type MountpointUnmountError =
   | MountpointUnmountErrorInternal
 
 
-// ParseBackendAddrError
-export interface ParseBackendAddrErrorInvalidUrl {
+// ParseParsecAddrError
+export interface ParseParsecAddrErrorInvalidUrl {
     tag: "InvalidUrl"
     error: string
 }
-export type ParseBackendAddrError =
-  | ParseBackendAddrErrorInvalidUrl
+export type ParseParsecAddrError =
+  | ParseParsecAddrErrorInvalidUrl
 
 
 // ParsedParsecAddr
@@ -1817,7 +1817,7 @@ export function bootstrapOrganization(
     device_label: string,
     sequester_authority_verify_key: Uint8Array | null
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>>
-export function buildBackendOrganizationBootstrapAddr(
+export function buildParsecOrganizationBootstrapAddr(
     addr: string,
     organization_id: string
 ): Promise<string>
@@ -2060,9 +2060,9 @@ export function mountpointUnmount(
 ): Promise<Result<null, MountpointUnmountError>>
 export function newCanceller(
 ): Promise<number>
-export function parseBackendAddr(
+export function parseParsecAddr(
     url: string
-): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>>
+): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>>
 export function pathFilename(
     path: string
 ): Promise<string | null>
