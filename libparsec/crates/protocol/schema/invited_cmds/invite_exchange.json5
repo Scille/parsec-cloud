@@ -1,0 +1,74 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_exchange",
+            "fields": [
+                {
+                    "name": "step",
+                    "type": "Index"
+                },
+                {
+                    "name": "claimer_payload",
+                    "type": "Bytes"
+                },
+                {
+                    "name": "reset_reason",
+                    "type": "RequiredOption<InviteExchangeResetReason>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        "name": "last",
+                        "type": "Boolean"
+                    }
+                ]
+            },
+            {
+                "status": "step_0_requires_reset_reason"
+            },
+            {
+                "status": "retry_needed"
+            },
+            {
+                "status": "enrollment_wrong_step",
+                "fields": [
+                    {
+                        "name": "reason",
+                        "type": "InviteExchangeResetReason"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "InviteExchangeResetReason",
+                "variants": [
+                    {
+                        // Used for first try, retry after disconnection, or retry
+                        // due to `enrollment_wrong_step` error status
+                        "name": "Normal",
+                        "discriminant_value": "NORMAL"
+                    },
+                    {
+                        // Used if the peer provided our client with an invalid SAS code.
+                        // This way the peer will be informed about it when it receive
+                        // the `enrollment_wrong_step` due to this reset.
+                        "name": "BadSasCode",
+                        "discriminant_value": "BAD_SAS_CODE"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -223,6 +223,29 @@ async def send_email(
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)
 
 
+class InviteConduitGreeterExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    RETRY_NEEDED = auto()
+
+
+class InviteConduitClaimerExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    RETRY_NEEDED = auto()
+
+
+class InviteConduitExchangeResetReason(Enum):
+    NORMAL = auto()
+    BAD_SAS_CODE = auto()
+
+
 class InviteConduitExchangeBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -377,6 +400,31 @@ class BaseInviteComponent:
     #
     # Public methods
     #
+
+    async def conduit_greeter_exchange(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        greeter_payload: bytes,
+        last: bool = False,
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> bytes | InviteConduitExchangeResetReason | InviteConduitGreeterExchangeBadOutcome:
+        raise NotImplementedError
+
+    async def conduit_claimer_exchange(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        claimer_payload: bytes,
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> (
+        tuple[bytes, bool]
+        | InviteConduitExchangeResetReason
+        | InviteConduitClaimerExchangeBadOutcome
+    ):
+        raise NotImplementedError
 
     async def conduit_exchange(
         self,
@@ -1244,5 +1292,112 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
+            case unknown:
+                assert_never(unknown)
+
+    @api
+    async def api_invite_greeter_exchange(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_exchange.Req,
+    ) -> authenticated_cmds.latest.invite_exchange.Rep:
+        reset_reason: InviteConduitExchangeResetReason
+        match req.reset_reason:
+            case authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL:
+                reset_reason = InviteConduitExchangeResetReason.NORMAL
+            case authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE:
+                reset_reason = InviteConduitExchangeResetReason.BAD_SAS_CODE
+            case None:
+                if req.step == 0:
+                    return authenticated_cmds.latest.invite_exchange.RepStep0RequiresResetReason()
+                else:
+                    # Not used, only to satisfy typing
+                    reset_reason = InviteConduitExchangeResetReason.NORMAL
+        outcome = await self.conduit_greeter_exchange(
+            organization_id=client_ctx.organization_id,
+            token=req.token,
+            step=req.step,
+            greeter_payload=req.greeter_payload,
+            last=req.last,
+            reset_reason=reset_reason,
+        )
+        match outcome:
+            case bytes() | bytearray() | memoryview() as claimer_payload:
+                return authenticated_cmds.latest.invite_exchange.RepOk(
+                    claimer_payload=claimer_payload,
+                )
+            case InviteConduitGreeterExchangeBadOutcome.RETRY_NEEDED:
+                return authenticated_cmds.latest.invite_exchange.RepRetryNeeded()
+            case InviteConduitExchangeResetReason.NORMAL:
+                return authenticated_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL
+                )
+            case InviteConduitExchangeResetReason.BAD_SAS_CODE:
+                return authenticated_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE
+                )
+            case InviteConduitGreeterExchangeBadOutcome.INVITATION_NOT_FOUND:
+                return authenticated_cmds.latest.invite_exchange.RepInvitationNotFound()
+            case InviteConduitGreeterExchangeBadOutcome.INVITATION_DELETED:
+                return authenticated_cmds.latest.invite_exchange.RepInvitationDeleted()
+            case InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteConduitGreeterExchangeBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteConduitGreeterExchangeBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            case unknown:
+                assert_never(unknown)
+
+    @api
+    async def api_invite_claimer_exchange(
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_exchange.Req,
+    ) -> invited_cmds.latest.invite_exchange.Rep:
+        reset_reason: InviteConduitExchangeResetReason
+        match req.reset_reason:
+            case invited_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL:
+                reset_reason = InviteConduitExchangeResetReason.NORMAL
+            case invited_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE:
+                reset_reason = InviteConduitExchangeResetReason.BAD_SAS_CODE
+            case None:
+                if req.step == 0:
+                    return invited_cmds.latest.invite_exchange.RepStep0RequiresResetReason()
+                else:
+                    # Not used, only to satisfy typing
+                    reset_reason = InviteConduitExchangeResetReason.NORMAL
+        outcome = await self.conduit_claimer_exchange(
+            organization_id=client_ctx.organization_id,
+            token=client_ctx.token,
+            step=req.step,
+            claimer_payload=req.claimer_payload,
+            reset_reason=reset_reason,
+        )
+        match outcome:
+            case (greeter_payload, last):
+                return invited_cmds.latest.invite_exchange.RepOk(
+                    greeter_payload=greeter_payload, last=last
+                )
+            case InviteConduitClaimerExchangeBadOutcome.RETRY_NEEDED:
+                return invited_cmds.latest.invite_exchange.RepRetryNeeded()
+            case InviteConduitExchangeResetReason.NORMAL:
+                return invited_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=invited_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL
+                )
+            case InviteConduitExchangeResetReason.BAD_SAS_CODE:
+                return invited_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=invited_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE
+                )
+            case InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteConduitClaimerExchangeBadOutcome.INVITATION_NOT_FOUND:
+                client_ctx.invitation_invalid_abort()
+            case InviteConduitClaimerExchangeBadOutcome.INVITATION_DELETED:
+                client_ctx.invitation_invalid_abort()
             case unknown:
                 assert_never(unknown)
