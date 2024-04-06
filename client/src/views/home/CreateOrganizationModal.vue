@@ -385,7 +385,7 @@ async function nextStep(): Promise<void> {
     }
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
-    const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr;
+    const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.serverAddr;
 
     const deviceName = await getDefaultDeviceName();
     const strategy = authChoice.value.getSaveStrategy();
@@ -443,7 +443,7 @@ async function nextStep(): Promise<void> {
       userName: userInfo.value.fullName,
       email: userInfo.value.email,
       serverMode: serverChoice.value.mode,
-      serverAddr: serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.backendAddr,
+      serverAddr: serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.serverAddr,
     };
   }
 }

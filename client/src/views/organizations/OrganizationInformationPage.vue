@@ -40,7 +40,7 @@
                   {{ orgInfo.hasUserLimit ? orgInfo.userLimit : $t('OrganizationPage.infoPage.configuration.unlimited') }}
                 </div>
               </div>
-              <!-- Backend addr -->
+              <!-- Server addr -->
               <div class="org-config-list-item server-address">
                 <ion-text class="org-info-item-title server-address__title body">
                   {{ $t('OrganizationPage.infoPage.configuration.serverAddr') }}

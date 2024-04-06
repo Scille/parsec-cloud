@@ -46,7 +46,7 @@ function mockValidators(): void {
       isValidOrganizationName: async (_value: string): Promise<boolean> => {
         return false;
       },
-      parseBackendAddr: async (_value: string): Promise<any> => {
+      parseParsecAddr: async (_value: string): Promise<any> => {
         return { ok: false, error: 'error' };
       },
     };

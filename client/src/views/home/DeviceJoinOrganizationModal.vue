@@ -161,7 +161,7 @@ import {
   DeviceSaveStrategyTag,
   ParsedParsecAddrInvitationDevice,
   ParsedParsecAddrTag,
-  parseBackendAddr,
+  parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { translate } from '@/services/translation';
@@ -180,7 +180,7 @@ enum DeviceJoinOrganizationStep {
 }
 
 const pageStep = ref(DeviceJoinOrganizationStep.Information);
-let backendAddr: ParsedParsecAddrInvitationDevice | null = null;
+let serverAddr: ParsedParsecAddrInvitationDevice | null = null;
 const claimer = ref(new DeviceClaim());
 const authChoice = ref();
 const cancelled = ref(false);
@@ -224,7 +224,7 @@ function getTitleAndSubtitle(): Title {
     case DeviceJoinOrganizationStep.Finish: {
       return {
         title: translate('ClaimDeviceModal.titles.done', {
-          org: backendAddr?.organizationId || '',
+          org: serverAddr?.organizationId || '',
         }),
       };
     }
@@ -416,10 +416,10 @@ async function restartProcess(): Promise<void> {
 }
 
 onMounted(async () => {
-  const addrResult = await parseBackendAddr(props.invitationLink);
+  const addrResult = await parseParsecAddr(props.invitationLink);
 
   if (addrResult.ok && addrResult.value.tag === ParsedParsecAddrTag.InvitationDevice) {
-    backendAddr = addrResult.value as ParsedParsecAddrInvitationDevice;
+    serverAddr = addrResult.value as ParsedParsecAddrInvitationDevice;
   }
   await startProcess();
 });
