@@ -3,7 +3,7 @@
 use libparsec_types::prelude::*;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ParseBackendAddrError {
+pub enum ParseParsecAddrError {
     #[error("Invalid URL")]
     InvalidUrl,
 }
@@ -58,7 +58,7 @@ pub enum ParsedParsecAddr {
     },
 }
 
-pub fn parse_backend_addr(url: &str) -> Result<ParsedParsecAddr, ParseBackendAddrError> {
+pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrError> {
     if let Ok(addr) = ParsecActionAddr::from_any(url) {
         Ok(match addr {
             ParsecActionAddr::OrganizationBootstrap(addr) => {
@@ -118,11 +118,11 @@ pub fn parse_backend_addr(url: &str) -> Result<ParsedParsecAddr, ParseBackendAdd
             use_ssl: addr.use_ssl(),
         })
     } else {
-        Err(ParseBackendAddrError::InvalidUrl)
+        Err(ParseParsecAddrError::InvalidUrl)
     }
 }
 
-pub fn build_backend_organization_bootstrap_addr(
+pub fn build_parsec_organization_bootstrap_addr(
     addr: ParsecAddr,
     organization_id: OrganizationID,
 ) -> ParsecOrganizationBootstrapAddr {

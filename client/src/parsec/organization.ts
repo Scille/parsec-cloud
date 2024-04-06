@@ -23,7 +23,7 @@ import {
   OrganizationInfo,
   OrganizationInfoError,
   OrganizationInfoErrorTag,
-  ParseBackendAddrError,
+  ParseParsecAddrError,
   ParsecAddr,
   ParsedParsecAddr,
   Result,
@@ -33,7 +33,7 @@ import { listUsers } from '@/parsec/user';
 import { DateTime } from 'luxon';
 
 export async function createOrganization(
-  backendAddr: ParsecAddr,
+  serverAddr: ParsecAddr,
   orgName: OrganizationID,
   userName: string,
   email: string,
@@ -44,7 +44,7 @@ export async function createOrganization(
     console.log('On event', event);
   }
 
-  const bootstrapAddr = await libparsec.buildBackendOrganizationBootstrapAddr(backendAddr, orgName);
+  const bootstrapAddr = await libparsec.buildParsecOrganizationBootstrapAddr(serverAddr, orgName);
 
   if (!needsMocks()) {
     const config: ClientConfig = {
@@ -88,8 +88,8 @@ export async function createOrganization(
   }
 }
 
-export async function parseBackendAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseBackendAddrError>> {
-  return await libparsec.parseBackendAddr(addr);
+export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>> {
+  return await libparsec.parseParsecAddr(addr);
 }
 
 export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, OrganizationInfoError>> {

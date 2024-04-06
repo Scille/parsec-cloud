@@ -4819,21 +4819,21 @@ fn variant_mountpoint_unmount_error_rs_to_js(
     Ok(js_obj)
 }
 
-// ParseBackendAddrError
+// ParseParsecAddrError
 
 #[allow(dead_code)]
-fn variant_parse_backend_addr_error_rs_to_js(
-    rs_obj: libparsec::ParseBackendAddrError,
+fn variant_parse_parsec_addr_error_rs_to_js(
+    rs_obj: libparsec::ParseParsecAddrError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::ParseBackendAddrError::InvalidUrl { .. } => {
+        libparsec::ParseParsecAddrError::InvalidUrl { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ParseBackendAddrErrorInvalidUrl".into(),
+                &"ParseParsecAddrErrorInvalidUrl".into(),
             )?;
         }
     }
@@ -6725,10 +6725,10 @@ pub fn bootstrapOrganization(
     })
 }
 
-// build_backend_organization_bootstrap_addr
+// build_parsec_organization_bootstrap_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn buildBackendOrganizationBootstrapAddr(addr: String, organization_id: String) -> Promise {
+pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: String) -> Promise {
     future_to_promise(async move {
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -6739,7 +6739,7 @@ pub fn buildBackendOrganizationBootstrapAddr(addr: String, organization_id: Stri
         let organization_id = organization_id
             .parse()
             .map_err(|_| JsValue::from(TypeError::new("Not a valid OrganizationID")))?;
-        let ret = libparsec::build_backend_organization_bootstrap_addr(addr, organization_id);
+        let ret = libparsec::build_parsec_organization_bootstrap_addr(addr, organization_id);
         Ok(JsValue::from_str({
             let custom_to_rs_string =
                 |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
@@ -8540,12 +8540,12 @@ pub fn newCanceller() -> Promise {
     })
 }
 
-// parse_backend_addr
+// parse_parsec_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn parseBackendAddr(url: String) -> Promise {
+pub fn parseParsecAddr(url: String) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::parse_backend_addr(&url);
+        let ret = libparsec::parse_parsec_addr(&url);
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -8557,7 +8557,7 @@ pub fn parseBackendAddr(url: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_parse_backend_addr_error_rs_to_js(err)?;
+                let js_err = variant_parse_parsec_addr_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

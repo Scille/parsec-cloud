@@ -4372,19 +4372,19 @@ fn variant_mountpoint_unmount_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// ParseBackendAddrError
+// ParseParsecAddrError
 
 #[allow(dead_code)]
-fn variant_parse_backend_addr_error_rs_to_js<'a>(
+fn variant_parse_parsec_addr_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::ParseBackendAddrError,
+    rs_obj: libparsec::ParseParsecAddrError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ParseBackendAddrError::InvalidUrl { .. } => {
-            let js_tag = JsString::try_new(cx, "ParseBackendAddrErrorInvalidUrl").or_throw(cx)?;
+        libparsec::ParseParsecAddrError::InvalidUrl { .. } => {
+            let js_tag = JsString::try_new(cx, "ParseParsecAddrErrorInvalidUrl").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -5988,8 +5988,8 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// build_backend_organization_bootstrap_addr
-fn build_backend_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// build_parsec_organization_bootstrap_addr
+fn build_parsec_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let addr = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -6011,7 +6011,7 @@ fn build_backend_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResul
             }
         }
     };
-    let ret = libparsec::build_backend_organization_bootstrap_addr(addr, organization_id);
+    let ret = libparsec::build_parsec_organization_bootstrap_addr(addr, organization_id);
     let js_ret = JsString::try_new(&mut cx, {
         let custom_to_rs_string =
             |addr: libparsec::ParsecOrganizationBootstrapAddr| -> Result<String, &'static str> {
@@ -9580,13 +9580,13 @@ fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// parse_backend_addr
-fn parse_backend_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// parse_parsec_addr
+fn parse_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let url = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
     };
-    let ret = libparsec::parse_backend_addr(&url);
+    let ret = libparsec::parse_parsec_addr(&url);
     let js_ret = match ret {
         Ok(ok) => {
             let js_obj = JsObject::new(&mut cx);
@@ -9600,7 +9600,7 @@ fn parse_backend_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
             let js_obj = cx.empty_object();
             let js_tag = JsBoolean::new(&mut cx, false);
             js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_parse_backend_addr_error_rs_to_js(&mut cx, err)?;
+            let js_err = variant_parse_parsec_addr_error_rs_to_js(&mut cx, err)?;
             js_obj.set(&mut cx, "error", js_err)?;
             js_obj
         }
@@ -11069,8 +11069,8 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function(
-        "buildBackendOrganizationBootstrapAddr",
-        build_backend_organization_bootstrap_addr,
+        "buildParsecOrganizationBootstrapAddr",
+        build_parsec_organization_bootstrap_addr,
     )?;
     cx.export_function("cancel", cancel)?;
     cx.export_function(
@@ -11203,7 +11203,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;
-    cx.export_function("parseBackendAddr", parse_backend_addr)?;
+    cx.export_function("parseParsecAddr", parse_parsec_addr)?;
     cx.export_function("pathFilename", path_filename)?;
     cx.export_function("pathJoin", path_join)?;
     cx.export_function("pathNormalize", path_normalize)?;
