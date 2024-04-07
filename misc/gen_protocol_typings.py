@@ -42,7 +42,7 @@ def camel_case_to_snake_case(name: str) -> str:
 
 
 def cook_field_type(
-    raw_type: str, field_parse_callback: Callable[[str | None, bool | None], None]
+    raw_type: str, field_parse_callback: Callable[[str | None, bool | None], str]
 ) -> str:
     for candidate, py_type_name in [
         ("Boolean", "bool"),
@@ -99,12 +99,11 @@ def cook_field_type(
         ]
         return f"tuple[{', '.join(items_types)}]"
 
-    field_parse_callback(raw_type, None)
-    return raw_type
+    return field_parse_callback(raw_type, None)
 
 
 def cook_field(
-    field: dict, field_parse_callback: Callable[[str | None, bool | None], None]
+    field: dict, field_parse_callback: Callable[[str | None, bool | None], str]
 ) -> tuple[str, str]:
     field_parse_callback(None, "introduced_in" in field)
     return (field["name"], cook_field_type(field["type"], field_parse_callback))
@@ -113,7 +112,7 @@ def cook_field(
 def gen_req(
     req: dict,
     collected_items: list[str],
-    field_parse_callback: Callable[[str | None, bool | None], None],
+    field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     collected_items.append("Req")
 
@@ -139,7 +138,7 @@ def gen_req(
 def gen_reps(
     reps: dict,
     collected_items: list[str],
-    field_parse_callback: Callable[[str | None, bool | None], None],
+    field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     collected_items.append("Rep")
     collected_items.append("RepUnknownStatus")
@@ -187,7 +186,7 @@ class {rep_cls_name}(Rep):
 def gen_nested_type(
     nested_type: dict,
     collected_items: list[str],
-    field_parse_callback: Callable[[str | None, bool | None], None],
+    field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     if "variants" in nested_type:
         return gen_nested_type_variant(nested_type, collected_items, field_parse_callback)
@@ -198,7 +197,7 @@ def gen_nested_type(
 def gen_nested_type_variant(
     nested_type: dict,
     collected_items: list[str],
-    field_parse_callback: Callable[[str | None, bool | None], None],
+    field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     class_name = nested_type["name"]
     collected_items.append(class_name)
@@ -245,7 +244,7 @@ class {subclass_name}({class_name}):
 def gen_nested_type_struct(
     nested_type: dict,
     collected_items: list[str],
-    field_parse_callback: Callable[[str | None, bool | None], None],
+    field_parse_callback: Callable[[str | None, bool | None], str],
 ) -> str:
     class_name = nested_type["name"]
     collected_items.append(class_name)
@@ -277,15 +276,17 @@ def gen_single_version_cmd_spec(
 
     need_import_types = set()
 
-    def _field_parse_callback(field_type: str | None, introduced_in: bool | None):
+    def _field_parse_callback(field_type: str | None, introduced_in: bool | None) -> str:
         nonlocal can_be_reused
         if introduced_in is True:
             can_be_reused = False
-        if field_type is not None:
-            for nested_type in spec.get("nested_types", ()):
-                if field_type == nested_type["name"]:
-                    return
-            need_import_types.add(field_type)
+        if field_type is None:
+            return ""
+        for nested_type in spec.get("nested_types", ()):
+            if field_type == nested_type["name"]:
+                return field_type
+        need_import_types.add(field_type)
+        return field_type
 
     cmd_name = spec["req"]["cmd"]
 
@@ -525,14 +526,19 @@ class AnyCmdReq:
                 req_fields = {}
                 for field in req_spec.get("fields", ()):
 
-                    def _field_parse_callback(field_type: str | None, introduced_in: bool | None):
+                    def _field_parse_callback(
+                        field_type: str | None, introduced_in: bool | None
+                    ) -> str:
                         if field_type is not None and field_type not in nested_types:
                             test_rpc_code_need_import_types.add(field_type)
+                        if field_type is not None and field_type in nested_types:
+                            return f"{family_mod_name}.latest.{cmd_name}.{field_type}"
+                        else:
+                            return field_type or ""
 
-                    cooked = cook_field_type(field["type"], _field_parse_callback)
-                    if cooked in nested_types:
-                        cooked = f"{family_mod_name}.latest.{cmd_name}.{cooked}"
-                    req_fields[field["name"]] = cooked
+                    req_fields[field["name"]] = cook_field_type(
+                        field["type"], _field_parse_callback
+                    )
             fn_params = [f"{k}: {v}" for k, v in req_fields.items()]
             call_params = [f"{k}={k}" for k in req_fields.keys()]
             test_rpc_code_body.append("")
