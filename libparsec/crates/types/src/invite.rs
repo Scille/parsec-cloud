@@ -5,13 +5,9 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
-use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
-use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
-    DeviceID, DeviceLabel, HumanHandle, UserProfile, VlobID,
-};
+use crate::{self as libparsec_types, DataError};
 
 /*
  * InvitationType
@@ -103,171 +99,58 @@ macro_rules! impl_decrypt_and_load {
 }
 
 /*
- * InviteUserData
+ * Invitate exchange schemas
  */
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "InviteUserDataData", from = "InviteUserDataData")]
-pub struct InviteUserData {
-    // Claimer ask for device_label/human_handle, but greeter has final word on this
-    pub requested_device_label: DeviceLabel,
-    pub requested_human_handle: HumanHandle,
-    // Note claiming user also imply creating a first device
-    pub public_key: PublicKey,
-    pub verify_key: VerifyKey,
-}
+parsec_data!("schema/invite/invite_0_wait_peer.json5");
+pub type Invite0WaitPeer = Invite0WaitPeerData;
+impl_dump_and_encrypt!(Invite0WaitPeer);
+impl_decrypt_and_load!(Invite0WaitPeer);
 
-parsec_data!("schema/invite/invite_user_data.json5");
+parsec_data!("schema/invite/invite_1_claimer_send_hashed_nonce.json5");
+pub type Invite1ClaimerSendHashedNonce = Invite1ClaimerSendHashedNonceData;
+impl_dump_and_encrypt!(Invite1ClaimerSendHashedNonce);
+impl_decrypt_and_load!(Invite1ClaimerSendHashedNonce);
 
-impl_dump_and_encrypt!(InviteUserData);
-impl_decrypt_and_load!(InviteUserData);
+parsec_data!("schema/invite/invite_2_greeter_send_nonce.json5");
+pub type Invite2GreeterSendNonce = Invite2GreeterSendNonceData;
+impl_dump_and_encrypt!(Invite2GreeterSendNonce);
+impl_decrypt_and_load!(Invite2GreeterSendNonce);
 
-impl_transparent_data_format_conversion!(
-    InviteUserData,
-    InviteUserDataData,
-    requested_device_label,
-    requested_human_handle,
-    public_key,
-    verify_key,
-);
+parsec_data!("schema/invite/invite_3_claimer_send_nonce.json5");
+pub type Invite3ClaimerSendNonce = Invite3ClaimerSendNonceData;
+impl_dump_and_encrypt!(Invite3ClaimerSendNonce);
+impl_decrypt_and_load!(Invite3ClaimerSendNonce);
 
-/*
- * InviteUserConfirmation
- */
+parsec_data!("schema/invite/invite_4_claimer_signify_trust.json5");
+pub type Invite4ClaimerSignifyTrust = Invite4ClaimerSignifyTrustData;
+impl_dump_and_encrypt!(Invite4ClaimerSignifyTrust);
+impl_decrypt_and_load!(Invite4ClaimerSignifyTrust);
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "InviteUserConfirmationData",
-    from = "InviteUserConfirmationData"
-)]
-pub struct InviteUserConfirmation {
-    pub device_id: DeviceID,
-    pub device_label: DeviceLabel,
-    pub human_handle: HumanHandle,
-    pub profile: UserProfile,
-    pub root_verify_key: VerifyKey,
-}
+parsec_data!("schema/invite/invite_5_greeter_signify_trust.json5");
+pub type Invite5GreeterSignifyTrust = Invite5GreeterSignifyTrustData;
+impl_dump_and_encrypt!(Invite5GreeterSignifyTrust);
+impl_decrypt_and_load!(Invite5GreeterSignifyTrust);
 
-parsec_data!("schema/invite/invite_user_confirmation.json5");
+parsec_data!("schema/invite/invite_6_claimer_request_device.json5");
+pub type Invite6ClaimerRequestDevice = Invite6ClaimerRequestDeviceData;
+impl_dump_and_encrypt!(Invite6ClaimerRequestDevice);
+impl_decrypt_and_load!(Invite6ClaimerRequestDevice);
 
-impl_dump_and_encrypt!(InviteUserConfirmation);
-impl_decrypt_and_load!(InviteUserConfirmation);
+parsec_data!("schema/invite/invite_6_claimer_request_user.json5");
+pub type Invite6ClaimerRequestUser = Invite6ClaimerRequestUserData;
+impl_dump_and_encrypt!(Invite6ClaimerRequestUser);
+impl_decrypt_and_load!(Invite6ClaimerRequestUser);
 
-impl_transparent_data_format_conversion!(
-    InviteUserConfirmation,
-    InviteUserConfirmationData,
-    device_id,
-    device_label,
-    human_handle,
-    profile,
-    root_verify_key,
-);
+parsec_data!("schema/invite/invite_7_greeter_confirm_device.json5");
+pub type Invite7GreeterConfirmDevice = Invite7GreeterConfirmDeviceData;
+impl_dump_and_encrypt!(Invite7GreeterConfirmDevice);
+impl_decrypt_and_load!(Invite7GreeterConfirmDevice);
 
-/*
- * InviteDeviceData
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "InviteDeviceDataData", from = "InviteDeviceDataData")]
-pub struct InviteDeviceData {
-    pub requested_device_label: DeviceLabel,
-    pub verify_key: VerifyKey,
-}
-
-parsec_data!("schema/invite/invite_device_data.json5");
-
-impl_dump_and_encrypt!(InviteDeviceData);
-impl_decrypt_and_load!(InviteDeviceData);
-
-impl_transparent_data_format_conversion!(
-    InviteDeviceData,
-    InviteDeviceDataData,
-    requested_device_label,
-    verify_key,
-);
-
-/*
- * InviteDeviceConfirmation
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "InviteDeviceConfirmationData",
-    from = "InviteDeviceConfirmationData"
-)]
-pub struct InviteDeviceConfirmation {
-    pub device_id: DeviceID,
-    pub device_label: DeviceLabel,
-    pub human_handle: HumanHandle,
-    pub profile: UserProfile,
-    pub private_key: PrivateKey,
-    pub user_realm_id: VlobID,
-    pub user_realm_key: SecretKey,
-    pub root_verify_key: VerifyKey,
-}
-
-parsec_data!("schema/invite/invite_device_confirmation.json5");
-
-impl_dump_and_encrypt!(InviteDeviceConfirmation);
-impl_decrypt_and_load!(InviteDeviceConfirmation);
-
-impl From<InviteDeviceConfirmationData> for InviteDeviceConfirmation {
-    fn from(data: InviteDeviceConfirmationData) -> Self {
-        let InviteDeviceConfirmationData {
-            ty: _,
-            device_id,
-            device_label,
-            human_handle,
-            profile,
-            private_key,
-            // For historical reason, we focus on the user manifest but in fact we refer
-            // to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
-            user_manifest_id: user_realm_id,
-            user_manifest_key: user_realm_key,
-            root_verify_key,
-        } = data;
-
-        Self {
-            device_id,
-            device_label,
-            human_handle,
-            profile,
-            private_key,
-            user_realm_id,
-            user_realm_key,
-            root_verify_key,
-        }
-    }
-}
-
-impl From<InviteDeviceConfirmation> for InviteDeviceConfirmationData {
-    fn from(obj: InviteDeviceConfirmation) -> Self {
-        let InviteDeviceConfirmation {
-            device_id,
-            device_label,
-            human_handle,
-            profile,
-            private_key,
-            user_realm_id,
-            user_realm_key,
-            root_verify_key,
-        } = obj;
-
-        Self {
-            ty: InviteDeviceConfirmationDataType,
-            device_id,
-            device_label,
-            human_handle,
-            profile,
-            private_key,
-            // For historical reason, we focus on the user manifest but in fact we refer
-            // to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
-            user_manifest_id: user_realm_id,
-            user_manifest_key: user_realm_key,
-            root_verify_key,
-        }
-    }
-}
+parsec_data!("schema/invite/invite_7_greeter_confirm_user.json5");
+pub type Invite7GreeterConfirmUser = Invite7GreeterConfirmUserData;
+impl_dump_and_encrypt!(Invite7GreeterConfirmUser);
+impl_decrypt_and_load!(Invite7GreeterConfirmUser);
 
 #[cfg(test)]
 #[path = "../tests/unit/invite.rs"]
