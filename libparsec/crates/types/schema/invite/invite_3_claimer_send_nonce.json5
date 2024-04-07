@@ -1,0 +1,10 @@
+{
+    "label": "Invite3ClaimerSendNonce",
+    "type": "invite_3_claimer_send_nonce",
+    "other_fields": [
+        {
+            "name": "claimer_nonce",
+            "type": "Bytes"
+        }
+    ]
+}

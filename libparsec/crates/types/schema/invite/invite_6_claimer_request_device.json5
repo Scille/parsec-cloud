@@ -1,0 +1,15 @@
+{
+    "label": "Invite6ClaimerRequestDevice",
+    "type": "invite_6_claimer_request_device",
+    "other_fields": [
+        {
+            // Claimer ask for device_label, but greeter has final word on this
+            "name": "requested_device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}

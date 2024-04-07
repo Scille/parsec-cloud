@@ -1,0 +1,10 @@
+{
+    "label": "Invite1ClaimerSendHashedNonce",
+    "type": "invite_1_claimer_send_hashed_nonce",
+    "other_fields": [
+        {
+            "name": "claimer_hashed_nonce",
+            "type": "HashDigest"
+        }
+    ]
+}

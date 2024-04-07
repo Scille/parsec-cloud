@@ -1,0 +1,10 @@
+{
+    "label": "Invite2GreeterSendNonce",
+    "type": "invite_2_greeter_send_nonce",
+    "other_fields": [
+        {
+            "name": "greeter_nonce",
+            "type": "Bytes"
+        }
+    ]
+}

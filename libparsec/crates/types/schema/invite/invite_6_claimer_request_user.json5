@@ -1,0 +1,24 @@
+{
+    "label": "Invite6ClaimerRequestUser",
+    "type": "invite_6_claimer_request_user",
+    "other_fields": [
+        {
+            // Claimer ask for device_label/human_handle, but greeter has final word on this
+            "name": "requested_device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "requested_human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            // Note claiming user also imply creating a first device
+            "name": "public_key",
+            "type": "PublicKey"
+        },
+        {
+            "name": "verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}
