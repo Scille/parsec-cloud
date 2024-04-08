@@ -96,7 +96,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@b43c846230df0999d45aeecdc72be153a7985695 # pin v2.32.0
+      - uses: taiki-e/install-action@e4ef34df890c5af6027f55257634401a93b14dc7 # pin v2.32.9
         with:
           tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
 
@@ -232,7 +232,7 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@b43c846230df0999d45aeecdc72be153a7985695 # pin v2.32.0
+      - uses: taiki-e/install-action@e4ef34df890c5af6027f55257634401a93b14dc7 # pin v2.32.9
         with:
           tool: nextest@0.9.54
 

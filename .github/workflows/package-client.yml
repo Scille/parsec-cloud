@@ -87,7 +87,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@b43c846230df0999d45aeecdc72be153a7985695 # pin v2.32.0
+      - uses: taiki-e/install-action@e4ef34df890c5af6027f55257634401a93b14dc7 # pin v2.32.9
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -163,7 +163,7 @@ jobs:
           mv -v parsec-v3_*_*.snap Parsec-v3_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@b43c846230df0999d45aeecdc72be153a7985695 # pin v2.32.0
+      - uses: taiki-e/install-action@e4ef34df890c5af6027f55257634401a93b14dc7 # pin v2.32.9
         with:
           tool: syft@0.84.0
 
@@ -257,7 +257,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@b43c846230df0999d45aeecdc72be153a7985695 # pin v2.32.0
+      - uses: taiki-e/install-action@e4ef34df890c5af6027f55257634401a93b14dc7 # pin v2.32.9
         with:
           tool: syft@0.84.0
 
