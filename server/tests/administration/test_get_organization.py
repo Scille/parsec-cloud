@@ -55,7 +55,7 @@ async def test_ok(
         "is_bootstrapped": True,
         "is_expired": False,
         "user_profile_outsider_allowed": True,
-        "minimum_archiving_period": 2592000,
+        "minimum_archiving_period": 2592000,  # 30 days
     }
 
 

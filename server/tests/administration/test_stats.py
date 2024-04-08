@@ -282,11 +282,10 @@ async def test_server_stats_format(
     }
 
     response = await server_stats("csv")
-    filtered_response = [
-        line
-        for line in response.content.decode("utf8").split("\r\n")
-        if line and "Template" not in line
-    ]
+    # Explicitly check for "\r\n" as line separator
+    expected_line_separator = "\r\n"
+    lines = response.content.decode("utf8").split(expected_line_separator)
+    filtered_response = [line for line in lines if line and "Template" not in line]
     assert response.headers["Content-Type"] == "text/csv; charset=utf-8"
     first_line, second_line = filtered_response
     assert first_line == (
