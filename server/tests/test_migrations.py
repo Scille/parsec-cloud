@@ -89,6 +89,7 @@ async def test_migrations(pg_cluster_url, pg_psql, pg_dump):
         print(f"run: {' '.join(cmd)}")
         process = await asyncio.create_subprocess_exec(*cmd, stdin=asyncio.subprocess.PIPE)
         await process.communicate(data.encode())
+        assert process.returncode == 0
 
     # The schema may start with an automatic comment, something like:
     # `COMMENT ON SCHEMA public IS 'standard public schema';`
@@ -120,7 +121,7 @@ async def test_migrations(pg_cluster_url, pg_psql, pg_dump):
 
     # Final check is to re-import all the data, this requires some cooking first:
 
-    # Remove the migration related data given their should already be in the database
+    # Remove the migration-related data given they should already be in the database
     data_from_migrations = re.sub(
         r"COPY public.migration[^\\]*\\.", "", data_from_migrations, flags=re.DOTALL
     )
@@ -142,4 +143,5 @@ SET CONSTRAINTS fk_user_device_revoked_user_certifier DEFERRED;
 COMMIT;
 """
 
+    # All the data should be restored without errors (restore_data will fail on first error)
     await restore_data(data_from_migrations)

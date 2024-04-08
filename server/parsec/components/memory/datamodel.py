@@ -56,7 +56,7 @@ class MemoryOrganization:
     cooked_sequester_authority: SequesterAuthorityCertificate | None = None
     root_verify_key: VerifyKey | None = field(default=None, repr=False)
     is_expired: bool = False
-    minimum_archiving_period: int = 2592000
+    minimum_archiving_period: int = 2592000  # 30 days
 
     # None for non-sequestered organization
     sequester_services: dict[SequesterServiceID, MemorySequesterService] | None = None
