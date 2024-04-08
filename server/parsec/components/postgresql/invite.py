@@ -720,8 +720,8 @@ class PGInviteComponent(BaseInviteComponent):
                 *_q_conduit_update(
                     row_id=row_id,
                     conduit_state=curr_conduit_state.value,
-                    conduit_greeter_payload=payload,
-                    conduit_claimer_payload=curr_claimer_payload,
+                    conduit_greeter_payload=curr_greeter_payload,
+                    conduit_claimer_payload=payload,
                 )
             )
         # Note that in case of conduit reset, this signal will lure the peer into
@@ -756,13 +756,17 @@ class PGInviteComponent(BaseInviteComponent):
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
                     organization_id=ctx.organization_id.str,
-                    greeter_user_id=ctx.greeter.str,  # type: ignore[union-attr]
+                    greeter_user_id=ctx.greeter.str,
                     token=ctx.token,
                 )
             )
         else:
             row = await conn.fetchrow(
-                *_q_conduit_claimer_info(organization_id=ctx.organization_id.str, token=ctx.token)
+                *_q_conduit_claimer_info(
+                    organization_id=ctx.organization_id.str,
+                    greeter_user_id=ctx.greeter.str,
+                    token=ctx.token,
+                )
             )
 
         if not row:
@@ -828,32 +832,28 @@ class PGInviteComponent(BaseInviteComponent):
         # Peer hasn't answered yet, we should wait and retry later...
         return None
 
-    async def claimer_joined(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+    @override
+    async def _claimer_joined(
+        self, organization_id: OrganizationID, token: InvitationToken, greeter: UserID
     ) -> None:
-        raise NotImplementedError
-        # async with self.dbh.pool.acquire() as conn:
-        #     await send_signal(
-        #         conn,
-        #         BackendEventInviteStatusChanged(
-        #             organization_id=organization_id,
-        #             greeter=greeter,
-        #             token=token,
-        #             status=InvitationStatus.READY,
-        #         ),
-        #     )
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=greeter,
+                status=InvitationStatus.READY,
+            )
+        )
 
-    async def claimer_left(
-        self, organization_id: OrganizationID, greeter: UserID, token: InvitationToken
+    @override
+    async def _claimer_left(
+        self, organization_id: OrganizationID, token: InvitationToken, greeter: UserID
     ) -> None:
-        raise NotImplementedError
-        # async with self.dbh.pool.acquire() as conn:
-        #     await send_signal(
-        #         conn,
-        #         BackendEventInviteStatusChanged(
-        #             organization_id=organization_id,
-        #             greeter=greeter,
-        #             token=token,
-        #             status=InvitationStatus.IDLE,
-        #         ),
-        #     )
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=greeter,
+                status=InvitationStatus.IDLE,
+            )
+        )
