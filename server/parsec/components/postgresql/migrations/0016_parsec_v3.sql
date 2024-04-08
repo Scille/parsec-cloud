@@ -53,6 +53,7 @@ ALTER TABLE invitation_conduit RENAME CONSTRAINT shamir_recovery_conduit_invitat
 ALTER TABLE invitation_conduit RENAME CONSTRAINT shamir_recovery_conduit_greeter_fkey TO invitation_conduit_greeter_fkey;
 ALTER TABLE invitation_conduit RENAME CONSTRAINT shamir_recovery_conduit_invitation_fkey TO invitation_conduit_invitation_fkey;
 
+ALTER TABLE invitation_conduit ADD last_exchange BOOLEAN;
 
 -------------------------------------------------------
 --  Message
