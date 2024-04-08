@@ -1,6 +1,6 @@
 {
-    "label": "InviteUserData",
-    "type": "invite_user_data",
+    "label": "Invite6ClaimerRequestUser",
+    "type": "invite_6_claimer_request_user",
     "other_fields": [
         {
             // Claimer ask for device_label/human_handle, but greeter has final word on this

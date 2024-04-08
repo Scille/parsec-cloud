@@ -19,14 +19,12 @@ from structlog.stdlib import get_logger
 
 from parsec._parsec import (
     DateTime,
-    HashDigest,
     HumanHandle,
     InvitationStatus,
     InvitationToken,
     InvitationType,
     OrganizationID,
     ParsecInvitationAddr,
-    PublicKey,
     UserID,
     authenticated_cmds,
     invited_cmds,
@@ -37,46 +35,12 @@ from parsec.components.events import EventBus
 from parsec.config import BackendConfig, EmailConfig, MockedEmailConfig, SmtpEmailConfig
 from parsec.events import (
     Event,
-    EventEnrollmentConduit,
     EventInvitation,
-    InvitationStatusField,
 )
 from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
 
 logger = get_logger()
-
-
-class ConduitState(Enum):
-    STATE_1_WAIT_PEERS = "1_WAIT_PEERS"
-    STATE_2_1_CLAIMER_HASHED_NONCE = "2_1_CLAIMER_HASHED_NONCE"
-    STATE_2_2_GREETER_NONCE = "2_2_GREETER_NONCE"
-    STATE_2_3_CLAIMER_NONCE = "2_3_CLAIMER_NONCE"
-    STATE_3_1_CLAIMER_TRUST = "3_1_CLAIMER_TRUST"
-    STATE_3_2_GREETER_TRUST = "3_2_GREETER_TRUST"
-    STATE_4_COMMUNICATE = "4_COMMUNICATE"
-
-
-NEXT_CONDUIT_STATE = {
-    ConduitState.STATE_1_WAIT_PEERS: ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-    ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE: ConduitState.STATE_2_2_GREETER_NONCE,
-    ConduitState.STATE_2_2_GREETER_NONCE: ConduitState.STATE_2_3_CLAIMER_NONCE,
-    ConduitState.STATE_2_3_CLAIMER_NONCE: ConduitState.STATE_3_1_CLAIMER_TRUST,
-    ConduitState.STATE_3_1_CLAIMER_TRUST: ConduitState.STATE_3_2_GREETER_TRUST,
-    ConduitState.STATE_3_2_GREETER_TRUST: ConduitState.STATE_4_COMMUNICATE,
-    ConduitState.STATE_4_COMMUNICATE: ConduitState.STATE_4_COMMUNICATE,
-}
-
-
-@dataclass(slots=True)
-class ConduitListenCtx:
-    organization_id: OrganizationID
-    token: InvitationToken
-    greeter: UserID
-    is_greeter: bool
-    state: ConduitState
-    payload: bytes
-    peer_payload: bytes | None
 
 
 @dataclass(slots=True)
@@ -223,14 +187,27 @@ async def send_email(
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)
 
 
-class InviteConduitExchangeBadOutcome(BadOutcomeEnum):
+class InviteConduitGreeterExchangeBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
-    ENROLLMENT_WRONG_STATE = auto()
     INVITATION_NOT_FOUND = auto()
     INVITATION_DELETED = auto()
+    RETRY_NEEDED = auto()
+
+
+class InviteConduitClaimerExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    RETRY_NEEDED = auto()
+
+
+class InviteConduitExchangeResetReason(Enum):
+    NORMAL = auto()
+    BAD_SAS_CODE = auto()
 
 
 class InviteNewForUserBadOutcome(BadOutcomeEnum):
@@ -378,116 +355,29 @@ class BaseInviteComponent:
     # Public methods
     #
 
-    async def conduit_exchange(
+    async def conduit_greeter_exchange(
         self,
         organization_id: OrganizationID,
-        greeter: UserID | None,  # None for claimer
         token: InvitationToken,
-        state: ConduitState,
-        payload: bytes,
+        step: int,
+        greeter_payload: bytes,
         last: bool = False,
-    ) -> tuple[bytes, bool] | InviteConduitExchangeBadOutcome:
-        # Conduit exchange is done in two steps:
-        # First we "talk" by providing our payload and retrieve the peer's
-        # payload if he has talked prior to us.
-        # Then we "listen" by waiting for the peer to provide his payload if we
-        # have talked first, or to confirm us it has received our payload if we
-        # have talked after him.
-        filter_organization_id = organization_id
-        filter_token = token
-
-        def _event_filter(
-            event: Event,
-        ) -> bool:
-            match event:
-                case (EventEnrollmentConduit() | EventInvitation()) as event:
-                    return (
-                        event.organization_id == filter_organization_id
-                        and event.token == filter_token
-                    )
-                case _:
-                    return False
-
-        with self._event_bus.create_waiter(filter=_event_filter) as waiter:
-            outcome = await self._conduit_talk(
-                organization_id=organization_id,
-                token=token,
-                is_greeter=greeter is not None,
-                state=state,
-                payload=payload,
-                last=last,
-            )
-            match outcome:
-                case ConduitListenCtx() as listen_ctx:
-                    pass
-                case InviteConduitExchangeBadOutcome() as error:
-                    return error
-                case unknown:
-                    assert_never(unknown)
-
-            if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
-                await self._claimer_joined(
-                    organization_id=organization_id, greeter=listen_ctx.greeter, token=token
-                )
-
-            try:
-                # Unlike what it name may imply, `_conduit_listen` doesn't wait for the peer
-                # to answer (it returns `None` instead), so we wait for some events to occur
-                # before calling:
-                # - `EventEnrollmentConduitUpdated`: Triggered when the peer has completed it own
-                #   talk step, `_conduit_listen` will most likely return the peer payload now.
-                # - `EventInvitationStatusUpdated`: Triggered if the peer reset the invitation
-                #   or if the invitation has been deleted, in any case `_conduit_listen` will
-                #   detect the listen is not longer possible and return an error accordingly.
-                while True:
-                    await waiter.wait()
-                    waiter.clear()
-                    outcome = await self._conduit_listen(DateTime.now(), listen_ctx)
-                    match outcome:
-                        case (peer_payload, last):
-                            return peer_payload, last
-                        case InviteConduitExchangeBadOutcome() as error:
-                            return error
-                        case None:
-                            continue
-                        case unknown:
-                            assert_never(unknown)
-
-            finally:
-                if greeter is None and state == ConduitState.STATE_1_WAIT_PEERS:
-                    # When claimer left, it's most likely because it's connection is getting closed.
-                    # Hence it's hazardous to send the event directly from this coroutine (it
-                    # requires cancellation shielding), and instead the `send_nowait` will
-                    # delegate the work to a dedicated coroutine.
-                    status = InvitationStatusField.IDLE  # pyright: ignore [reportAttributeAccessIssue]
-                    self._event_bus.send_nowait(
-                        EventInvitation(
-                            organization_id=organization_id,
-                            token=token,
-                            greeter=listen_ctx.greeter,
-                            status=status,
-                        )
-                    )
-
-    async def _conduit_talk(
-        self,
-        organization_id: OrganizationID,
-        token: InvitationToken,
-        is_greeter: bool,
-        state: ConduitState,
-        payload: bytes,
-        last: bool,  # Only for greeter
-    ) -> ConduitListenCtx | InviteConduitExchangeBadOutcome:
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> bytes | InviteConduitExchangeResetReason | InviteConduitGreeterExchangeBadOutcome:
         raise NotImplementedError
 
-    async def _conduit_listen(
+    async def conduit_claimer_exchange(
         self,
-        now: DateTime,
-        ctx: ConduitListenCtx,
-    ) -> tuple[bytes, bool] | None | InviteConduitExchangeBadOutcome:
-        """
-        Returns ``None`` is listen is still needed
-        """
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        claimer_payload: bytes,
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> (
+        tuple[bytes, bool]
+        | InviteConduitExchangeResetReason
+        | InviteConduitClaimerExchangeBadOutcome
+    ):
         raise NotImplementedError
 
     async def _claimer_joined(
@@ -749,500 +639,102 @@ class BaseInviteComponent:
                 assert_never(unknown)
 
     @api
-    async def api_invite_1_claimer_wait_peer(
-        self,
-        client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_1_claimer_wait_peer.Req,
-    ) -> invited_cmds.latest.invite_1_claimer_wait_peer.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_1_WAIT_PEERS,
-            payload=req.claimer_public_key.encode(),
-        )
-        match outcome:
-            case (greeter_public_key, _):
-                return invited_cmds.latest.invite_1_claimer_wait_peer.RepOk(
-                    PublicKey(greeter_public_key)
-                )
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                    | InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_1_greeter_wait_peer(
+    async def api_invite_greeter_exchange(
         self,
         client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_1_greeter_wait_peer.Req,
-    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
-        outcome = await self.conduit_exchange(
+        req: authenticated_cmds.latest.invite_exchange.Req,
+    ) -> authenticated_cmds.latest.invite_exchange.Rep:
+        reset_reason = InviteConduitExchangeResetReason.NORMAL
+        match req.reset_reason:
+            case authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL:
+                reset_reason = InviteConduitExchangeResetReason.NORMAL
+            case authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE:
+                reset_reason = InviteConduitExchangeResetReason.BAD_SAS_CODE
+            case None:
+                if req.step == 0:
+                    return authenticated_cmds.latest.invite_exchange.RepStep0RequiresResetReason()
+        outcome = await self.conduit_greeter_exchange(
             organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
             token=req.token,
-            state=ConduitState.STATE_1_WAIT_PEERS,
-            payload=req.greeter_public_key.encode(),
-        )
-        match outcome:
-            case (claimer_public_key_raw, _):
-                return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepOk(
-                    PublicKey(claimer_public_key_raw)
-                )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE as unexpected:
-                assert False, unexpected
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvitationNotFound()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_1_greeter_wait_peer.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_2a_claimer_send_hash_nonce(
-        self,
-        client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Req,
-    ) -> invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-            payload=req.claimer_hashed_nonce.digest,
-        )
-        match outcome:
-            case (_, _):
-                pass
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_2_2_GREETER_NONCE,
-            payload=b"",
-        )
-        match outcome:
-            case (greeter_nonce, _):
-                return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepOk(greeter_nonce)
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_2a_greeter_get_hashed_nonce(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Req,
-    ) -> authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
-            payload=b"",
-        )
-        match outcome:
-            case (claimer_hashed_nonce_raw, _):
-                # Should not fail given data is check on DB insertion
-                claimer_hashed_nonce = HashDigest(claimer_hashed_nonce_raw)
-                return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepOk(
-                    claimer_hashed_nonce
-                )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepInvitationNotFound()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_2b_greeter_send_nonce(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_2b_greeter_send_nonce.Req,
-    ) -> authenticated_cmds.latest.invite_2b_greeter_send_nonce.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_2_2_GREETER_NONCE,
-            payload=req.greeter_nonce,
-        )
-        match outcome:
-            case (_, _):
-                pass
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return (
-                    authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepEnrollmentWrongState()
-                )
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return (
-                    authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepInvitationNotFound()
-                )
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_2_3_CLAIMER_NONCE,
-            payload=b"",
-        )
-        match outcome:
-            case (claimer_nonce, _):
-                return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepOk(claimer_nonce)
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return (
-                    authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepEnrollmentWrongState()
-                )
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return (
-                    authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepInvitationNotFound()
-                )
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_2b_greeter_send_nonce.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_2b_claimer_send_nonce(
-        self,
-        client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_2b_claimer_send_nonce.Req,
-    ) -> invited_cmds.latest.invite_2b_claimer_send_nonce.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_2_3_CLAIMER_NONCE,
-            payload=req.claimer_nonce,
-        )
-        match outcome:
-            case (_, _):
-                return invited_cmds.latest.invite_2b_claimer_send_nonce.RepOk()
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_2b_claimer_send_nonce.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_3a_greeter_wait_peer_trust(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Req,
-    ) -> authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_3_1_CLAIMER_TRUST,
-            payload=b"",
-        )
-        match outcome:
-            case (_, _):
-                return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepOk()
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepInvitationNotFound()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_3b_claimer_wait_peer_trust(
-        self,
-        client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Req,
-    ) -> invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_3_2_GREETER_TRUST,
-            payload=b"",
-        )
-        match outcome:
-            case (_, _):
-                return invited_cmds.latest.invite_3b_claimer_wait_peer_trust.RepOk()
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return (
-                    invited_cmds.latest.invite_3b_claimer_wait_peer_trust.RepEnrollmentWrongState()
-                )
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_3b_greeter_signify_trust(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_3b_greeter_signify_trust.Req,
-    ) -> authenticated_cmds.latest.invite_3b_greeter_signify_trust.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_3_2_GREETER_TRUST,
-            payload=b"",
-        )
-        match outcome:
-            case (_, _):
-                return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepOk()
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepInvitationNotFound()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return (
-                    authenticated_cmds.latest.invite_3b_greeter_signify_trust.RepInvitationDeleted()
-                )
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
-                client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
-                client_ctx.author_revoked_abort()
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_3a_claimer_signify_trust(
-        self,
-        client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_3a_claimer_signify_trust.Req,
-    ) -> invited_cmds.latest.invite_3a_claimer_signify_trust.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=None,
-            token=client_ctx.token,
-            state=ConduitState.STATE_3_1_CLAIMER_TRUST,
-            payload=b"",
-        )
-        match outcome:
-            case (_, _):
-                return invited_cmds.latest.invite_3a_claimer_signify_trust.RepOk()
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_3a_claimer_signify_trust.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
-                client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
-                client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
-            case unknown:
-                assert_never(unknown)
-
-    @api
-    async def api_invite_4_greeter_communicate(
-        self,
-        client_ctx: AuthenticatedClientContext,
-        req: authenticated_cmds.latest.invite_4_greeter_communicate.Req,
-    ) -> authenticated_cmds.latest.invite_4_greeter_communicate.Rep:
-        outcome = await self.conduit_exchange(
-            organization_id=client_ctx.organization_id,
-            greeter=client_ctx.user_id,
-            token=req.token,
-            state=ConduitState.STATE_4_COMMUNICATE,
-            payload=req.payload,
+            step=req.step,
+            greeter_payload=req.greeter_payload,
             last=req.last,
+            reset_reason=reset_reason,
         )
         match outcome:
-            case (answer_payload, _):
-                return authenticated_cmds.latest.invite_4_greeter_communicate.RepOk(
-                    payload=answer_payload
+            case bytes() | bytearray() | memoryview() as claimer_payload:
+                return authenticated_cmds.latest.invite_exchange.RepOk(
+                    claimer_payload=claimer_payload,
                 )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return (
-                    authenticated_cmds.latest.invite_4_greeter_communicate.RepEnrollmentWrongState()
+            case InviteConduitGreeterExchangeBadOutcome.RETRY_NEEDED:
+                return authenticated_cmds.latest.invite_exchange.RepRetryNeeded()
+            case InviteConduitExchangeResetReason.NORMAL:
+                return authenticated_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL
                 )
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                return (
-                    authenticated_cmds.latest.invite_4_greeter_communicate.RepInvitationNotFound()
+            case InviteConduitExchangeResetReason.BAD_SAS_CODE:
+                return authenticated_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=authenticated_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE
                 )
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                return authenticated_cmds.latest.invite_4_greeter_communicate.RepInvitationDeleted()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+            case InviteConduitGreeterExchangeBadOutcome.INVITATION_NOT_FOUND:
+                return authenticated_cmds.latest.invite_exchange.RepInvitationNotFound()
+            case InviteConduitGreeterExchangeBadOutcome.INVITATION_DELETED:
+                return authenticated_cmds.latest.invite_exchange.RepInvitationDeleted()
+            case InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
+            case InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
+            case InviteConduitGreeterExchangeBadOutcome.AUTHOR_NOT_FOUND:
                 client_ctx.author_not_found_abort()
-            case InviteConduitExchangeBadOutcome.AUTHOR_REVOKED:
+            case InviteConduitGreeterExchangeBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
             case unknown:
                 assert_never(unknown)
 
     @api
-    async def api_invite_4_claimer_communicate(
+    async def api_invite_claimer_exchange(
         self,
         client_ctx: InvitedClientContext,
-        req: invited_cmds.latest.invite_4_claimer_communicate.Req,
-    ) -> invited_cmds.latest.invite_4_claimer_communicate.Rep:
-        outcome = await self.conduit_exchange(
+        req: invited_cmds.latest.invite_exchange.Req,
+    ) -> invited_cmds.latest.invite_exchange.Rep:
+        reset_reason = InviteConduitExchangeResetReason.NORMAL
+        match req.reset_reason:
+            case invited_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL:
+                reset_reason = InviteConduitExchangeResetReason.NORMAL
+            case invited_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE:
+                reset_reason = InviteConduitExchangeResetReason.BAD_SAS_CODE
+            case None:
+                if req.step == 0:
+                    return invited_cmds.latest.invite_exchange.RepStep0RequiresResetReason()
+        outcome = await self.conduit_claimer_exchange(
             organization_id=client_ctx.organization_id,
-            greeter=None,
             token=client_ctx.token,
-            state=ConduitState.STATE_4_COMMUNICATE,
-            payload=req.payload,
+            step=req.step,
+            claimer_payload=req.claimer_payload,
+            reset_reason=reset_reason,
         )
         match outcome:
-            case (answer_payload, last):
-                return invited_cmds.latest.invite_4_claimer_communicate.RepOk(
-                    payload=answer_payload, last=last
+            case (greeter_payload, last):
+                return invited_cmds.latest.invite_exchange.RepOk(
+                    greeter_payload=greeter_payload, last=last
                 )
-            case InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE:
-                return invited_cmds.latest.invite_4_claimer_communicate.RepEnrollmentWrongState()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+            case InviteConduitClaimerExchangeBadOutcome.RETRY_NEEDED:
+                return invited_cmds.latest.invite_exchange.RepRetryNeeded()
+            case InviteConduitExchangeResetReason.NORMAL:
+                return invited_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=invited_cmds.latest.invite_exchange.InviteExchangeResetReason.NORMAL
+                )
+            case InviteConduitExchangeResetReason.BAD_SAS_CODE:
+                return invited_cmds.latest.invite_exchange.RepEnrollmentWrongStep(
+                    reason=invited_cmds.latest.invite_exchange.InviteExchangeResetReason.BAD_SAS_CODE
+                )
+            case InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
-            case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
+            case InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
+            case InviteConduitClaimerExchangeBadOutcome.INVITATION_NOT_FOUND:
                 client_ctx.invitation_invalid_abort()
-            case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
+            case InviteConduitClaimerExchangeBadOutcome.INVITATION_DELETED:
                 client_ctx.invitation_invalid_abort()
-            case (
-                (
-                    InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-                    | InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
-                ) as unexpected
-            ):
-                assert False, unexpected
             case unknown:
                 assert_never(unknown)

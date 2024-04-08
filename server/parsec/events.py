@@ -94,9 +94,11 @@ ActiveUsersLimitField = Annotated[
 class ClientBroadcastableEvent(ABC):
     event_id: UUID
 
-    def is_event_for_client(self, client: RegisteredClient) -> bool: ...
+    def is_event_for_client(self, client: RegisteredClient) -> bool:
+        ...
 
-    def dump_as_apiv4_sse_payload(self) -> bytes: ...
+    def dump_as_apiv4_sse_payload(self) -> bytes:
+        ...
 
     @staticmethod
     def _dump_as_apiv4_sse_payload(
@@ -319,15 +321,6 @@ class EventOrganizationConfig(BaseModel):
         )
 
 
-class EventEnrollmentConduit(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    type: Literal["ENROLLMENT_CONDUIT"] = "ENROLLMENT_CONDUIT"
-    event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    token: InvitationTokenField
-    greeter: UserIDField
-
-
 class EventOrganizationExpired(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_EXPIRED"] = "ORGANIZATION_EXPIRED"
@@ -371,7 +364,6 @@ Event: TypeAlias = (
     | EventShamirRecoveryCertificate
     | EventRealmCertificate
     | EventOrganizationConfig
-    | EventEnrollmentConduit
     | EventOrganizationExpired
     | EventUserRevokedOrFrozen
     | EventUserUnfrozen

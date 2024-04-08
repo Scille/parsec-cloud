@@ -1,0 +1,26 @@
+{
+    "label": "Invite7GreeterConfirmUser",
+    "type": "invite_7_greeter_confirm_user",
+    "other_fields": [
+        {
+            "name": "device_id",
+            "type": "DeviceID"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
+        },
+        {
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "profile",
+            "type": "UserProfile"
+        },
+        {
+            "name": "root_verify_key",
+            "type": "VerifyKey"
+        }
+    ]
+}

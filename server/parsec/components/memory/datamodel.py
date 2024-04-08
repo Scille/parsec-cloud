@@ -34,7 +34,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
-from parsec.components.invite import ConduitState
+from parsec.components.invite import InviteConduitExchangeResetReason
 from parsec.components.sequester import SequesterServiceType
 
 
@@ -231,10 +231,10 @@ class MemoryInvitation:
     created_on: DateTime
     deleted_on: DateTime | None = None
     deleted_reason: MemoryInvitationDeletedReason | None = None
-    conduit_state: ConduitState = ConduitState.STATE_1_WAIT_PEERS
-    conduit_is_last_exchange: bool = False
-    conduit_greeter_payload: bytes | None = field(default=None, repr=False)
-    conduit_claimer_payload: bytes | None = field(default=None, repr=False)
+    conduit_greeter_payloads: list[bytes] = field(default_factory=list, repr=False)
+    conduit_claimer_payloads: list[bytes] = field(default_factory=list, repr=False)
+    conduit_last_exchange_step: int | None = None
+    conduit_reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL
 
     @property
     def is_deleted(self) -> bool:

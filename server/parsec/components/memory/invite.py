@@ -13,15 +13,14 @@ from parsec._parsec import (
     UserProfile,
 )
 from parsec.components.invite import (
-    NEXT_CONDUIT_STATE,
     BaseInviteComponent,
-    ConduitListenCtx,
-    ConduitState,
     DeviceInvitation,
     Invitation,
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
-    InviteConduitExchangeBadOutcome,
+    InviteConduitClaimerExchangeBadOutcome,
+    InviteConduitExchangeResetReason,
+    InviteConduitGreeterExchangeBadOutcome,
     InviteListBadOutcome,
     InviteNewForDeviceBadOutcome,
     InviteNewForUserBadOutcome,
@@ -33,7 +32,7 @@ from parsec.components.memory.datamodel import (
     MemoryInvitation,
     MemoryInvitationDeletedReason,
 )
-from parsec.events import EventEnrollmentConduit, EventInvitation
+from parsec.events import EventInvitation
 
 
 class MemoryInviteComponent(BaseInviteComponent):
@@ -88,187 +87,147 @@ class MemoryInviteComponent(BaseInviteComponent):
             )
         )
 
-    @override
-    async def _conduit_talk(
+    async def conduit_greeter_exchange(
         self,
         organization_id: OrganizationID,
         token: InvitationToken,
-        is_greeter: bool,
-        state: ConduitState,
-        payload: bytes,
-        last: bool,
-    ) -> ConduitListenCtx | InviteConduitExchangeBadOutcome:
+        step: int,
+        greeter_payload: bytes,
+        last: bool = False,
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> bytes | InviteConduitExchangeResetReason | InviteConduitGreeterExchangeBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
-            return InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND
+            return InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
-            return InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED
+            return InviteConduitGreeterExchangeBadOutcome.ORGANIZATION_EXPIRED
 
         try:
             invitation = org.invitations[token]
         except KeyError:
-            return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+            return InviteConduitGreeterExchangeBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_deleted:
-            return InviteConduitExchangeBadOutcome.INVITATION_DELETED
+            return InviteConduitGreeterExchangeBadOutcome.INVITATION_DELETED
 
         try:
             greeter_user = org.users[invitation.greeter]
         except KeyError as exc:
             # Database is corrupted if we end up here !
             assert False, exc
-        if is_greeter and greeter_user.is_revoked:
-            return InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
+        if greeter_user.is_revoked:
+            return InviteConduitGreeterExchangeBadOutcome.AUTHOR_REVOKED
 
-        if is_greeter:
-            curr_our_payload = invitation.conduit_greeter_payload
-            curr_peer_payload = invitation.conduit_claimer_payload
-        else:
-            assert last is False  # Only greeter can decide when the exchange should finish
-            curr_our_payload = invitation.conduit_claimer_payload
-            curr_peer_payload = invitation.conduit_greeter_payload
+        # We are out of sync with the conduit:
+        # - we want to reset the conduit
+        # - the conduit state has changed in our back (maybe reset by the peer)
+        # - we have already provided a different payload for the current conduit state
+        #   (providing the same payload is okay given we play idempotent in this case)
+        # - we want to set a step that is not the next one
+        current_greeter_step = len(invitation.conduit_greeter_payloads)
+        current_claimer_step = len(invitation.conduit_claimer_payloads)
+        if step == 0 and current_greeter_step != 0:
+            # We reset the conduit
+            invitation.conduit_last_exchange_step = None
+            invitation.conduit_claimer_payloads.clear()
+            invitation.conduit_greeter_payloads.clear()
+            invitation.conduit_reset_reason = reset_reason
+        elif (
+            invitation.conduit_last_exchange_step is not None
+            and step > invitation.conduit_last_exchange_step
+        ):
+            return invitation.conduit_reset_reason
+        elif step > current_greeter_step + 1 or step >= current_claimer_step + 1:
+            # Conduit has changed in our back
+            # It is okay to try to set a previous step as long as the payload stays the same !
+            return invitation.conduit_reset_reason
 
-        if invitation.conduit_state != state or curr_our_payload is not None:
-            # We are out of sync with the conduit:
-            # - the conduit state has changed in our back (maybe reset by the peer)
-            # - we want to reset the conduit
-            # - we have already provided a payload for the current conduit state (most
-            #   likely because a retry of a command that failed due to connection outage)
-            if state == ConduitState.STATE_1_WAIT_PEERS:
-                # We wait to reset the conduit
-                invitation.conduit_state = state
-                invitation.conduit_is_last_exchange = False
-                invitation.conduit_claimer_payload = None
-                invitation.conduit_greeter_payload = None
-                curr_peer_payload = None
-            else:
-                return InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
-
-        # Now update the conduit with our payload and send a signal in case
-        # the peer is already waiting for us.
-        if is_greeter:
-            invitation.conduit_is_last_exchange = last
-            invitation.conduit_greeter_payload = payload
-        else:
-            invitation.conduit_claimer_payload = payload
-
-        # Note that in case of conduit resets, this signal will lure the peer into
-        # thinking we have answered so he will wakeup and take into account the reset
-        await self._event_bus.send(
-            EventEnrollmentConduit(
-                organization_id=organization_id,
-                token=token,
-                greeter=greeter_user.cooked.user_id,
-            )
-        )
-
-        return ConduitListenCtx(
-            organization_id=organization_id,
-            token=token,
-            greeter=greeter_user.cooked.user_id,
-            is_greeter=is_greeter,
-            state=state,
-            payload=payload,
-            peer_payload=curr_peer_payload,
-        )
-
-    @override
-    async def _conduit_listen(
-        self, now: DateTime, ctx: ConduitListenCtx
-    ) -> tuple[bytes, bool] | None | InviteConduitExchangeBadOutcome:
         try:
-            org = self._data.organizations[ctx.organization_id]
+            already_provided_step_payload = invitation.conduit_greeter_payloads[step]
+        except IndexError:
+            assert len(invitation.conduit_greeter_payloads) == step
+            # First time we provide a payload for this step
+            invitation.conduit_greeter_payloads.append(greeter_payload)
+            if last:
+                invitation.conduit_last_exchange_step = step
+        else:
+            if already_provided_step_payload != greeter_payload:
+                # We have already provided a different payload
+                return invitation.conduit_reset_reason
+
+        # Finally get the claimer payload if it's available
+        try:
+            claimer_payload = invitation.conduit_claimer_payloads[step]
+        except IndexError:
+            return InviteConduitGreeterExchangeBadOutcome.RETRY_NEEDED
+        return claimer_payload
+
+    async def conduit_claimer_exchange(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        claimer_payload: bytes,
+        reset_reason: InviteConduitExchangeResetReason = InviteConduitExchangeResetReason.NORMAL,
+    ) -> (
+        tuple[bytes, bool]
+        | InviteConduitExchangeResetReason
+        | InviteConduitClaimerExchangeBadOutcome
+    ):
+        try:
+            org = self._data.organizations[organization_id]
         except KeyError:
-            return InviteConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND
+            return InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
-            return InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED
-
-        if ctx.is_greeter:
-            assert ctx.greeter is not None
-            try:
-                greeter_user = org.users[ctx.greeter]
-            except KeyError:
-                return InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
-            if greeter_user.is_revoked:
-                return InviteConduitExchangeBadOutcome.AUTHOR_REVOKED
+            return InviteConduitClaimerExchangeBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            invitation = org.invitations[ctx.token]
+            invitation = org.invitations[token]
         except KeyError:
-            return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+            return InviteConduitClaimerExchangeBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_deleted:
+            return InviteConduitClaimerExchangeBadOutcome.INVITATION_DELETED
 
-        # Ignore `invitation.is_deleted` here:
-        # - The check have already been done during `_conduit_talk`.
-        # - The peer may have already updated the conduite in it final (i.e. deleted)
-        #   state, so it's hard to detect that we *are* the last listen allowed.
+        # We are out of sync with the conduit:
+        # - we want to reset the conduit
+        # - the conduit state has changed in our back (maybe reset by the peer)
+        # - we have already provided a different payload for the current conduit state
+        #   (providing the same payload is okay given we play idempotent in this case)
+        current_claimer_step = len(invitation.conduit_claimer_payloads)
+        current_greeter_step = len(invitation.conduit_greeter_payloads)
+        if step == 0 and current_claimer_step != 0:
+            # We reset the conduit
+            invitation.conduit_last_exchange_step = None
+            invitation.conduit_claimer_payloads.clear()
+            invitation.conduit_greeter_payloads.clear()
+            invitation.conduit_reset_reason = reset_reason
+        elif (
+            invitation.conduit_last_exchange_step is not None
+            and step > invitation.conduit_last_exchange_step
+        ):
+            return invitation.conduit_reset_reason
+        elif step > current_claimer_step + 1 or step >= current_greeter_step + 1:
+            # Conduit has changed in our back
+            # It is okay to try to set a previous step as long as the payload stays the same !
+            return invitation.conduit_reset_reason
 
-        if ctx.is_greeter:
-            curr_our_payload = invitation.conduit_greeter_payload
-            curr_peer_payload = invitation.conduit_claimer_payload
+        try:
+            already_provided_step_payload = invitation.conduit_claimer_payloads[step]
+        except IndexError:
+            assert len(invitation.conduit_claimer_payloads) == step
+            # First time we provide a payload for this step
+            invitation.conduit_claimer_payloads.append(claimer_payload)
         else:
-            curr_our_payload = invitation.conduit_claimer_payload
-            curr_peer_payload = invitation.conduit_greeter_payload
+            if already_provided_step_payload != claimer_payload:
+                # We have already provided a different payload
+                return invitation.conduit_reset_reason
 
-        if ctx.peer_payload is None:
-            # We are waiting for the peer to provide its payload
-
-            # Only peer payload should be allowed to change
-            if invitation.conduit_state != ctx.state or curr_our_payload != ctx.payload:
-                return InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
-
-            if curr_peer_payload is not None:
-                # Our peer has provided it payload (hence it knows
-                # about our payload too), we can update the conduit
-                # to the next state
-                invitation.conduit_state = NEXT_CONDUIT_STATE[ctx.state]
-                invitation.conduit_greeter_payload = None
-                invitation.conduit_claimer_payload = None
-                if (
-                    invitation.conduit_state == ConduitState.STATE_4_COMMUNICATE
-                    and invitation.conduit_is_last_exchange
-                ):
-                    invitation.deleted_on = now
-                    invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED
-                    await self._event_bus.send(
-                        EventInvitation(
-                            organization_id=ctx.organization_id,
-                            token=ctx.token,
-                            greeter=ctx.greeter,
-                            status=InvitationStatus.FINISHED,
-                        )
-                    )
-
-                await self._event_bus.send(
-                    EventEnrollmentConduit(
-                        organization_id=ctx.organization_id,
-                        token=ctx.token,
-                        greeter=ctx.greeter,
-                    )
-                )
-
-                return curr_peer_payload, invitation.conduit_is_last_exchange
-
-        else:
-            # We were waiting for the peer to take into account the
-            # payload we provided. This would be done once the conduit
-            # has switched to it next state.
-
-            if (
-                invitation.conduit_state == NEXT_CONDUIT_STATE[ctx.state]
-                and curr_our_payload is None
-            ):
-                return ctx.peer_payload, invitation.conduit_is_last_exchange
-
-            elif (
-                invitation.conduit_state != ctx.state
-                or curr_our_payload != ctx.payload
-                or curr_peer_payload != ctx.peer_payload
-            ):
-                # Something unexpected has changed in our back...
-                return InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
-
-        # Peer hasn't answered yet, we should wait and retry later...
-        return None
+        # Finally get the greeter payload if it's available
+        try:
+            greeter_payload = invitation.conduit_greeter_payloads[step]
+        except IndexError:
+            return InviteConduitClaimerExchangeBadOutcome.RETRY_NEEDED
+        return greeter_payload, invitation.conduit_last_exchange_step == step
 
     @override
     async def new_for_user(

@@ -17,6 +17,7 @@ from . import (
     invite_3b_greeter_signify_trust,
     invite_4_greeter_communicate,
     invite_cancel,
+    invite_exchange,
     invite_list,
     invite_new_device,
     invite_new_user,
@@ -57,6 +58,7 @@ class AnyCmdReq:
         | invite_3b_greeter_signify_trust.Req
         | invite_4_greeter_communicate.Req
         | invite_cancel.Req
+        | invite_exchange.Req
         | invite_list.Req
         | invite_new_device.Req
         | invite_new_user.Req
@@ -94,6 +96,7 @@ __all__ = [
     "invite_3b_greeter_signify_trust",
     "invite_4_greeter_communicate",
     "invite_cancel",
+    "invite_exchange",
     "invite_list",
     "invite_new_device",
     "invite_new_user",

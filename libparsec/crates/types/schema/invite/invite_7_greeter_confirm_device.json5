@@ -1,6 +1,6 @@
 {
-    "label": "InviteUserConfirmation",
-    "type": "invite_user_confirmation",
+    "label": "Invite7GreeterConfirmDevice",
+    "type": "invite_7_greeter_confirm_device",
     "other_fields": [
         {
             "name": "device_id",
@@ -17,6 +17,18 @@
         {
             "name": "profile",
             "type": "UserProfile"
+        },
+        {
+            "name": "private_key",
+            "type": "PrivateKey"
+        },
+        {
+            "name": "user_realm_id",
+            "type": "VlobID"
+        },
+        {
+            "name": "user_realm_key",
+            "type": "SecretKey"
         },
         {
             "name": "root_verify_key",

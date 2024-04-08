@@ -1,0 +1,11 @@
+{
+    // Symmetric operation used by both claimer and greeter as rendez-vous point
+    "label": "Invite0WaitPeer",
+    "type": "invite_0_wait_peer",
+    "other_fields": [
+        {
+            "name": "public_key",
+            "type": "PublicKey"
+        }
+    ]
+}
