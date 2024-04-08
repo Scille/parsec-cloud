@@ -188,7 +188,7 @@ SELECT
 FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
-    AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
     AND deleted_on IS NULL
 ORDER BY created_on
 """
@@ -200,14 +200,14 @@ _q_info_invitation = Q(
 WITH human_handle_per_user AS ({_q_human_handle_per_user})
 SELECT
     type,
-    { q_user(_id="greeter", select="user_id") },
+    { q_user(_id="author", select="user_id") },
     human_handle_per_user.email,
     human_handle_per_user.label,
     claimer_email,
     created_on,
     deleted_on,
     deleted_reason
-FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
+FROM invitation LEFT JOIN human_handle_per_user on invitation.author = human_handle_per_user.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
