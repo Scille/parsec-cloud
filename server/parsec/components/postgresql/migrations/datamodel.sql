@@ -222,6 +222,7 @@ CREATE TABLE invitation_conduit (
     conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
     conduit_greeter_payload BYTEA,
     conduit_claimer_payload BYTEA,
+    last_exchange BOOLEAN,
 
     UNIQUE(invitation, greeter)
 );
