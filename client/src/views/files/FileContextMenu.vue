@@ -106,10 +106,7 @@
           </ion-label>
         </ion-item>
       </ion-item-group>
-      <ion-item-group
-        class="list-group"
-        v-show="false"
-      >
+      <ion-item-group class="list-group">
         <ion-item class="list-group-title caption-caption">
           <ion-label class="list-group-title__label">
             {{ $t('FoldersPage.fileContextMenu.titleCollaboration') }}

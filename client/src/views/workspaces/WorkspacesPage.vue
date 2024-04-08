@@ -154,11 +154,17 @@ import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   ClientRenameWorkspaceErrorTag,
+  EntryName,
+  ParsecOrganizationFileLinkAddr,
+  Path,
   UserProfile,
   WorkspaceInfo,
   WorkspaceName,
+  decryptFileLink,
+  entryStat,
   getClientProfile,
   getSystemPath,
+  parseFileLink,
   createWorkspace as parsecCreateWorkspace,
   getPathLink as parsecGetPathLink,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
@@ -213,10 +219,18 @@ interface WorkspacesPageSavedData {
 }
 
 const routeWatchCancel = watchRoute(async () => {
+  if (!currentRouteIs(Routes.Workspaces)) {
+    return;
+  }
   const query = getCurrentRouteQuery();
   if (query.workspaceName) {
     await createWorkspace(query.workspaceName);
     await navigateTo(Routes.Workspaces, { query: {} });
+  } else if (query.fileLink) {
+    const success = await handleFileLink(query.fileLink);
+    if (!success) {
+      await navigateTo(Routes.Workspaces, { query: {} });
+    }
   }
 });
 
@@ -249,6 +263,14 @@ onMounted(async (): Promise<void> => {
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
 
+  const query = getCurrentRouteQuery();
+  if (query.fileLink) {
+    const success = await handleFileLink(query.fileLink);
+    if (!success) {
+      await navigateTo(Routes.Workspaces, { query: {} });
+    }
+  }
+
   intervalId = setInterval(refreshWorkspacesList, 10000);
 });
 
@@ -261,6 +283,70 @@ onUnmounted(async () => {
     clearInterval(intervalId);
   }
 });
+
+async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise<boolean> {
+  const parseResult = await parseFileLink(fileLink);
+
+  if (!parseResult.ok) {
+    informationManager.present(
+      new Information({
+        message: translate('link.invalidFileLink'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return false;
+  }
+
+  const workspace = workspaceList.value.find((w) => w.id === parseResult.value.workspaceId);
+  if (!workspace) {
+    informationManager.present(
+      new Information({
+        message: translate('link.workspaceNotFound'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return false;
+  }
+
+  const decryptResult = await decryptFileLink(workspace.handle, fileLink);
+  if (!decryptResult.ok) {
+    informationManager.present(
+      new Information({
+        message: translate('link.invalidFileLink'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return false;
+  }
+
+  const fileInfoResult = await entryStat(workspace.handle, decryptResult.value);
+  if (!fileInfoResult.ok) {
+    informationManager.present(
+      new Information({
+        message: translate('link.fileNotFound'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+    return false;
+  }
+
+  let selectFile: EntryName | undefined = undefined;
+  let path = decryptResult.value;
+  if (fileInfoResult.value.isFile()) {
+    const fileName = await Path.filename(decryptResult.value);
+    if (fileName) {
+      selectFile = fileName;
+    }
+    path = await Path.parent(path);
+  }
+
+  await navigateToWorkspace(workspace.handle, path, selectFile);
+  return true;
+}
 
 async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, { displayState: displayView.value });

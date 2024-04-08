@@ -10,6 +10,7 @@ import {
 
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, getClientConfig } from '@/parsec/internals';
+import { parseParsecAddr } from '@/parsec/organization';
 import { getParsecHandle } from '@/parsec/routing';
 import {
   AvailableDevice,
@@ -33,6 +34,7 @@ import {
   Result,
   UserProfile,
 } from '@/parsec/types';
+import { getConnectionHandle } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 
 export interface LoggedInDeviceInfo {
@@ -54,6 +56,36 @@ export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | nul
   const info = loggedInDevices.find((info) => info.device.slug === device.slug);
   if (info) {
     return info.handle;
+  }
+  return null;
+}
+
+interface OrganizationInfo {
+  server?: {
+    hostname: string;
+    port: number;
+  };
+  id: OrganizationID;
+}
+
+export async function getOrganizationHandle(orgInfo: OrganizationInfo): Promise<ConnectionHandle | null> {
+  const matchingDevices = loggedInDevices.filter((item) => item.device.organizationId === orgInfo.id);
+
+  if (!orgInfo.server || matchingDevices.length <= 1) {
+    return matchingDevices.length > 0 ? matchingDevices[0].handle : null;
+  }
+  for (const device of matchingDevices) {
+    const clientInfo = await getClientInfo(device.handle);
+    if (!clientInfo.ok) {
+      continue;
+    }
+    const parsedAddr = await parseParsecAddr(clientInfo.value.organizationAddr);
+    if (!parsedAddr.ok) {
+      continue;
+    }
+    if (parsedAddr.value.hostname === orgInfo.server.hostname && parsedAddr.value.port === orgInfo.server.port) {
+      return device.handle;
+    }
   }
   return null;
 }
@@ -161,8 +193,10 @@ export async function logout(handle?: ConnectionHandle | undefined | null): Prom
   }
 }
 
-export async function getClientInfo(): Promise<Result<ClientInfo, ClientInfoError>> {
-  const handle = getParsecHandle();
+export async function getClientInfo(handle: ConnectionHandle | null = null): Promise<Result<ClientInfo, ClientInfoError>> {
+  if (!handle) {
+    handle = getConnectionHandle();
+  }
 
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientInfo(handle);

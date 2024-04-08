@@ -13,7 +13,9 @@ import {
   FileType,
   FsPath,
   OpenOptions,
-  OrganizationID,
+  ParseParsecAddrError,
+  ParseParsecAddrErrorTag,
+  ParsedParsecAddrOrganizationFileLink,
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
@@ -21,13 +23,12 @@ import {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceHandle,
-  WorkspaceID,
   WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
 } from '@/parsec/types';
-import { libparsec } from '@/plugins/libparsec';
+import { ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
@@ -117,11 +118,9 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
   const FOLDER_PREFIX = 'Dir_';
   const FILE_PREFIX = 'File_';
 
-  const clientHandle = getParsecHandle();
-
   const fileName = (await Path.filename(path)) || '';
 
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     const result = await libparsec.workspaceStatEntry(workspaceHandle, path);
     if (result.ok) {
       result.value.created = DateTime.fromSeconds(result.value.created as any as number);
@@ -214,38 +213,12 @@ export async function copyEntry(_source: FsPath, _destination: FsPath): Promise<
   }
 }
 
-export interface ParseLinkError {
-  error: string;
-}
-
-export interface FileLinkData {
-  organizationId: OrganizationID;
-  path: FsPath;
-  workspaceId: WorkspaceID;
-}
-
-export async function parseFileLink(_link: string): Promise<Result<FileLinkData, ParseLinkError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
-    return {
-      ok: true,
-      value: {
-        organizationId: 'MyOrg',
-        path: '/Dir/file.txt',
-        workspaceId: '1234',
-      },
-    };
-  } else {
-    return {
-      ok: true,
-      value: {
-        organizationId: 'MyOrg',
-        path: '/Dir/file.txt',
-        workspaceId: '1234',
-      },
-    };
+export async function parseFileLink(link: string): Promise<Result<ParsedParsecAddrOrganizationFileLink, ParseParsecAddrError>> {
+  const result = await libparsec.parseParsecAddr(link);
+  if (result.ok && result.value.tag !== ParsedParsecAddrTag.OrganizationFileLink) {
+    return { ok: false, error: { tag: ParseParsecAddrErrorTag.InvalidUrl, error: 'not a file link' } };
   }
+  return result as Result<ParsedParsecAddrOrganizationFileLink, ParseParsecAddrError>;
 }
 
 export async function openFile(

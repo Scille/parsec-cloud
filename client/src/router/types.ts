@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { AvailableDevice, ConnectionHandle, EntryName, FileLinkData, FsPath, WorkspaceName } from '@/parsec';
+import { ConnectionHandle, EntryName, FsPath, ParsecOrganizationFileLinkAddr, WorkspaceName } from '@/parsec';
+import { DeviceID } from '@/plugins/libparsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -146,9 +147,9 @@ export interface RouteBackup {
 
 export interface Query {
   documentPath?: FsPath;
-  device?: AvailableDevice;
+  deviceId?: DeviceID;
   claimLink?: string;
-  fileLink?: FileLinkData;
+  fileLink?: ParsecOrganizationFileLinkAddr;
   openInvite?: true;
   workspaceName?: WorkspaceName;
   selectFile?: EntryName;

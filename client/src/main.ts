@@ -3,7 +3,16 @@
 import { createApp } from 'vue';
 
 import App from '@/App.vue';
-import { Routes, currentRouteIs, getConnectionHandle, getRouter, navigateTo, navigateToWorkspace, switchOrganization } from '@/router';
+import {
+  RouteBackup,
+  Routes,
+  backupCurrentOrganization,
+  currentRouteIs,
+  getConnectionHandle,
+  getRouter,
+  navigateTo,
+  switchOrganization,
+} from '@/router';
 
 import { IonicVue, modalController } from '@ionic/vue';
 
@@ -27,17 +36,9 @@ import { Config, StorageManager, StorageManagerKey } from '@/services/storageMan
 import { isPlatform } from '@ionic/vue';
 
 /* Theme variables */
-import { Validity, claimLinkValidator } from '@/common/validators';
+import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
-import {
-  getLoggedInDevices,
-  getOrganizationHandles,
-  initializeWorkspace,
-  isElectron,
-  listAvailableDevices,
-  logout,
-  parseFileLink,
-} from '@/parsec';
+import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -45,6 +46,7 @@ import { InjectionProvider, InjectionProviderKey } from '@/services/injectionPro
 import { initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
+import { Base64 } from '@/common/base64';
 import Vue3Lottie from 'vue3-lottie';
 
 async function setupApp(): Promise<void> {
@@ -179,9 +181,8 @@ async function setupApp(): Promise<void> {
       }
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
-        // FIXME: Commented until we can handle file links
-        // } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-        //   await handleFileLink(link, informationManager, t);
+      } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
+        await handleFileLink(link, informationManager, t);
       } else {
         await informationManager.present(
           new Information({
@@ -222,26 +223,37 @@ async function handleJoinLink(link: string): Promise<void> {
   await navigateTo(Routes.Home, { query: { claimLink: link } });
 }
 
-// Marked as exported so the linter does not complain
-export async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
+async function handleFileLink(link: string, informationManager: InformationManager, t: any): Promise<void> {
   const result = await parseFileLink(link);
   if (!result.ok) {
+    informationManager.present(
+      new Information({
+        message: t('link.invalidFileLink'),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
     return;
   }
   const linkData = result.value;
   // Check if the org we want is already logged in
-  const handles = await getOrganizationHandles(linkData.organizationId);
+  const handle = await getOrganizationHandle({ id: linkData.organizationId, server: { hostname: linkData.hostname, port: linkData.port } });
 
   // We have a matching organization already opened
-  if (handles.length > 0) {
-    if (handles[0] !== getConnectionHandle()) {
-      // Switch to the organization first
-      await switchOrganization(handles[0], true);
+  if (handle) {
+    if (getConnectionHandle() && handle !== getConnectionHandle()) {
+      await switchOrganization(handle, true);
     }
-    const initResult = await initializeWorkspace(linkData.workspaceId, handles[0]);
-    if (initResult.ok) {
-      await navigateToWorkspace(initResult.value.handle, linkData.path);
-    }
+
+    const routeData: RouteBackup = {
+      handle: handle,
+      data: {
+        route: Routes.Workspaces,
+        params: { handle: handle },
+        query: { fileLink: link },
+      },
+    };
+    await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
   } else {
     // Check if we have a device with the org
     const devices = await listAvailableDevices();
@@ -258,9 +270,9 @@ export async function handleFileLink(link: string, informationManager: Informati
       return;
     }
     if (!currentRouteIs(Routes.Home)) {
-      await switchOrganization(null, true);
+      await backupCurrentOrganization();
     }
-    await navigateTo(Routes.Home, { query: { device: matchingDevice, fileLink: linkData } });
+    await navigateTo(Routes.Home, { replace: true, skipHandle: true, query: { deviceId: matchingDevice.deviceId, fileLink: link } });
   }
 }
 

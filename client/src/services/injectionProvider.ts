@@ -40,6 +40,10 @@ export class InjectionProvider {
     });
   }
 
+  hasInjections(handle: ConnectionHandle): boolean {
+    return this.injections.get(handle) !== undefined;
+  }
+
   getInjections(handle: ConnectionHandle): Injections {
     const inj = this.injections.get(handle);
 
