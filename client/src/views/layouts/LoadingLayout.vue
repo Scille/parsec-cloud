@@ -18,27 +18,40 @@
 
 <script setup lang="ts">
 import { Base64 } from '@/common/base64';
-import { MsImage, LogoIconGradient } from '@/components/core/ms-image';
 import { MsSpinner } from '@/components/core';
-import { getCurrentRouteQuery, navigateTo, RouteBackup, Routes } from '@/router';
+import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
+import { needsMocks } from '@/parsec';
+import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
 import { IonContent, IonPage } from '@ionic/vue';
 import { onMounted } from 'vue';
 
 onMounted(async () => {
-  setTimeout(async () => {
-    const query = getCurrentRouteQuery();
-    if (query.loginInfo) {
-      const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
-      await navigateTo(loginInfo.data.route, {
-        params: loginInfo.data.params,
-        query: loginInfo.data.query,
-        skipHandle: true,
-        replace: true,
-      });
-    } else {
-      await navigateTo(Routes.Home, { skipHandle: true, replace: true });
-    }
-  }, 1000);
+  // When trying to switch from one connected org to another,
+  // we have trouble remounting the components because the
+  // url doesn't change enough according to vue-router (/1 to /2 for exemple),
+  // which means it doesn't remount a new component and instead insists on re-using
+  // an existing one. This is a pain for us as we don't want to add a watch
+  // in every component.
+  // To force a reload, we first navigate to a loading page (/loading),
+  // then to the connected organization.
+  // We masquerade this as a feature, showing the user a "please wait" message.
+  setTimeout(
+    async () => {
+      const query = getCurrentRouteQuery();
+      if (query.loginInfo) {
+        const loginInfo = Base64.toObject(query.loginInfo) as RouteBackup;
+        await navigateTo(loginInfo.data.route, {
+          params: loginInfo.data.params,
+          query: loginInfo.data.query,
+          skipHandle: true,
+          replace: true,
+        });
+      } else {
+        await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+      }
+    },
+    needsMocks() ? 0 : 1500,
+  );
 });
 </script>
 
