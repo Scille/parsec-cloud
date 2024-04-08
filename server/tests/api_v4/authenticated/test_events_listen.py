@@ -400,8 +400,6 @@ async def test_receive_event_of_newly_shared_realm(
         )
 
 
-# TODO: test `Last-Event-ID`
-
 async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
     async with minimalorg.alice.events_listen() as alice_sse:
         raw_source = alice_sse._iter_events  # pyright: ignore[reportPrivateUsage]
