@@ -32,7 +32,6 @@ async def test_events_listen_auth_then_not_allowed(
 
 
 # TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:
-# TODO: - test sending empty `Last-Event-ID` is different from not sending it (should trigger `event:missed_events`)
 # TODO: - test close on user revoked
 # TODO: - test close on backpressure (too many events pilling up)
 
@@ -80,6 +79,35 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
         assert event.event == "missed_events"
 
         # Only recent event could be received
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventPinged(ping="recent_event")
+        )
+
+
+async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
+    """
+    When the client sends a Last-Event-ID header with an empty value,
+    the server should ignore it as if it was not provided.
+    """
+    async with minimalorg.alice.events_listen(last_event_id="") as alice_sse:
+        backend.event_bus._dispatch_incoming_event(  # pyright: ignore[reportPrivateUsage]
+            EventPinged(
+                organization_id=minimalorg.organization_id,
+                ping="recent_event",
+            )
+        )
+
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        # Backend still send new events without processing `Last-Event-ID`
         event = await alice_sse.next_event()
         assert event == authenticated_cmds.v4.events_listen.RepOk(
             authenticated_cmds.v4.events_listen.APIEventPinged(ping="recent_event")
