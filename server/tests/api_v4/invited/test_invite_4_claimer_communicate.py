@@ -3,14 +3,15 @@ import anyio
 import pytest
 
 from parsec._parsec import authenticated_cmds, invited_cmds
-from tests.common import CoolorgRpcClients
+from parsec.events import EventEnrollmentConduit
+from tests.common import Backend, CoolorgRpcClients
 from tests.common.invite import pass_state_3b_greeter_signify_trust
 
 Response = invited_cmds.v4.invite_4_claimer_communicate.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
+async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
     rep: Response = None
     claimer_payload = b"claimer-payload"
     greeter_payload = b"greeter-payload"
@@ -39,10 +40,12 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
         case unknown:
             assert False, unknown
 
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(first, tg.cancel_scope)
+    with backend.event_bus.spy() as spy:
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(first, tg.cancel_scope)
+            await spy.wait(EventEnrollmentConduit)
 
-        await second(tg.cancel_scope)
+            await second(tg.cancel_scope)
 
     assert rep == invited_cmds.v4.invite_4_claimer_communicate.RepOk(
         payload=greeter_payload, last=True

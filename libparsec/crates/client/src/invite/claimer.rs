@@ -7,6 +7,25 @@ use libparsec_types::prelude::*;
 
 use crate::ClientConfig;
 
+// Invite command do long polling, so we need to retry on gateway timeout.
+macro_rules! retry_send_on_gateway_timeout {
+    ($send_block:expr) => {
+        async {
+            loop {
+                let outcome = $send_block.await;
+                if matches!(
+                    outcome,
+                    Err(ConnectionError::InvalidResponseStatus(status))
+                    if status.as_u16() == 504
+                ) {
+                    continue;
+                }
+                break outcome;
+            }
+        }
+    };
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ClaimerRetrieveInfoError {
     #[error("Cannot reach the server")]
@@ -77,6 +96,7 @@ pub async fn claimer_retrieve_info(
             .map_err(|e| anyhow::anyhow!("Error while configuring connection to server: {e}"))?,
     );
 
+    // Not long polling, so no need to retry on gateway timeout
     let rep = cmds.send(Req).await?;
 
     match rep {
@@ -120,12 +140,14 @@ impl BaseClaimInitialCtx {
         let greeter_public_key = {
             use invited_cmds::latest::invite_1_claimer_wait_peer::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    claimer_public_key: claimer_private_key.public_key(),
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        claimer_public_key: claimer_private_key.public_key(),
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { greeter_public_key } => {
@@ -137,17 +159,19 @@ impl BaseClaimInitialCtx {
             }?
         };
 
-        let claimer_nonce = generate_nonce();
+        let claimer_nonce: Bytes = generate_nonce().into();
         let shared_secret_key = claimer_private_key.generate_shared_secret_key(&greeter_public_key);
         let greeter_nonce = {
             use invited_cmds::latest::invite_2a_claimer_send_hashed_nonce::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    claimer_hashed_nonce: HashDigest::from_data(&claimer_nonce),
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        claimer_hashed_nonce: HashDigest::from_data(&claimer_nonce),
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok { greeter_nonce } => Ok(greeter_nonce),
@@ -164,12 +188,14 @@ impl BaseClaimInitialCtx {
         {
             use invited_cmds::latest::invite_2b_claimer_send_nonce::{Rep, Req};
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    claimer_nonce: claimer_nonce.into(),
-                })
-                .await?;
+            let rep = retry_send_on_gateway_timeout!(async {
+                self.cmds
+                    .send(Req {
+                        claimer_nonce: claimer_nonce.clone(),
+                    })
+                    .await
+            })
+            .await?;
 
             match rep {
                 Rep::Ok => Ok(()),
@@ -276,7 +302,7 @@ impl BaseClaimInProgress1Ctx {
     async fn do_signify_trust(self) -> Result<BaseClaimInProgress2Ctx, ClaimInProgressError> {
         use invited_cmds::latest::invite_3a_claimer_signify_trust::{Rep, Req};
 
-        let rep = self.cmds.send(Req).await?;
+        let rep = retry_send_on_gateway_timeout!(async { self.cmds.send(Req).await }).await?;
 
         match rep {
             Rep::Ok => Ok(BaseClaimInProgress2Ctx {
@@ -342,7 +368,7 @@ impl BaseClaimInProgress2Ctx {
     async fn do_wait_peer_trust(self) -> Result<BaseClaimInProgress3Ctx, ClaimInProgressError> {
         use invited_cmds::latest::invite_3b_claimer_wait_peer_trust::{Rep, Req};
 
-        let rep = self.cmds.send(Req).await?;
+        let rep = retry_send_on_gateway_timeout!(async { self.cmds.send(Req).await }).await?;
 
         match rep {
             Rep::Ok => Ok(BaseClaimInProgress3Ctx {
@@ -403,7 +429,14 @@ impl BaseClaimInProgress3Ctx {
     async fn do_claim(&self, payload: Bytes) -> Result<Bytes, ClaimInProgressError> {
         use invited_cmds::latest::invite_4_claimer_communicate::{Rep, Req};
 
-        let rep = self.cmds.send(Req { payload }).await?;
+        let rep = retry_send_on_gateway_timeout!(async {
+            self.cmds
+                .send(Req {
+                    payload: payload.clone(),
+                })
+                .await
+        })
+        .await?;
 
         match rep {
             Rep::Ok { .. } => Ok(()),
@@ -415,12 +448,14 @@ impl BaseClaimInProgress3Ctx {
 
         // Note the empty payload here, this is because we only want to receive our peer's
         // data, but for that we must send it something.
-        let rep = self
-            .cmds
-            .send(Req {
-                payload: Bytes::new(),
-            })
-            .await?;
+        let rep = retry_send_on_gateway_timeout!(async {
+            self.cmds
+                .send(Req {
+                    payload: Bytes::new(),
+                })
+                .await
+        })
+        .await?;
 
         match rep {
             Rep::Ok { payload, .. } => Ok(payload),

@@ -5,6 +5,7 @@ import pytest
 
 from parsec._parsec import HashDigest, InvitationToken, authenticated_cmds
 from parsec.components.invite import ConduitState
+from parsec.events import EventEnrollmentConduit
 from tests.common import Backend, CoolorgRpcClients
 from tests.common.invite import pass_state_1_wait_peer
 
@@ -43,10 +44,12 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
         case unknown:
             assert False, unknown
 
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(first, tg.cancel_scope)
+    with backend.event_bus.spy() as spy:
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(first, tg.cancel_scope)
+            await spy.wait(EventEnrollmentConduit)
 
-        await second(tg.cancel_scope)
+            await second(tg.cancel_scope)
 
     assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepOk(
         claimer_hashed_nonce=HashDigest.from_data(b"hello-world")

@@ -4,7 +4,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Iterable
+from typing import Iterable, Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -233,6 +233,7 @@ class MemoryInvitation:
     deleted_reason: MemoryInvitationDeletedReason | None = None
     conduit_state: ConduitState = ConduitState.STATE_1_WAIT_PEERS
     conduit_is_last_exchange: bool = False
+    conduit_talked_first: Literal["claimer"] | Literal["greeter"] | None = None
     conduit_greeter_payload: bytes | None = field(default=None, repr=False)
     conduit_claimer_payload: bytes | None = field(default=None, repr=False)
 
