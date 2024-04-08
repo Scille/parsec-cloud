@@ -310,7 +310,7 @@ new_invitations AS (
         deleted_reason
     FROM invitation
     WHERE organization = { q_organization_internal_id("$source_id") }
-    RETURNING _id
+    RETURNING _id, token
 ),
 new_invitation_conduits AS (
     INSERT INTO invitation_conduit (
@@ -323,7 +323,7 @@ new_invitation_conduits AS (
     SELECT
         (
             SELECT _id FROM new_invitations
-            WHERE token = { q_invitation(_id="invitation_conduit.invitation", select="invitation.token") }
+            WHERE token = { q_invitation(_id="invitation_conduit.invitation", select="token") }
         ),
         (
             SELECT _id FROM new_users
