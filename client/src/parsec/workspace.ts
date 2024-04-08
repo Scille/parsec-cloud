@@ -12,7 +12,6 @@ import {
   ClientStartWorkspaceError,
   ConnectionHandle,
   FsPath,
-  LinkError,
   MountpointHandle,
   MountpointToOsPathError,
   MountpointToOsPathErrorTag,
@@ -23,6 +22,8 @@ import {
   UserID,
   UserProfile,
   UserTuple,
+  WorkspaceDecryptFileLinkPathError,
+  WorkspaceGenerateFileLinkError,
   WorkspaceHandle,
   WorkspaceID,
   WorkspaceInfo,
@@ -38,7 +39,7 @@ import { DateTime } from 'luxon';
 
 export async function initializeWorkspace(
   workspaceId: WorkspaceID,
-  connectionHandle?: ConnectionHandle,
+  connectionHandle: ConnectionHandle | null = null,
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError | ClientStartWorkspaceError | WorkspaceMountError>> {
   const startResult = await startWorkspace(workspaceId, connectionHandle);
   if (!startResult.ok) {
@@ -385,11 +386,13 @@ export async function mountWorkspace(
 }
 
 export async function getPathLink(
-  _workspaceHandle: WorkspaceHandle,
+  workspaceHandle: WorkspaceHandle,
   path: string,
   timestamp: DateTime | null = null,
-): Promise<Result<ParsecOrganizationFileLinkAddr, LinkError>> {
-  const handle = getParsecHandle();
+): Promise<Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError>> {
+  if (!needsMocks()) {
+    return await libparsec.workspaceGenerateFileLink(workspaceHandle, path);
+  }
 
   const org = 'Org';
   // cspell:disable-next-line
@@ -401,12 +404,17 @@ export async function getPathLink(
     // cspell:disable-next-line
     link += '&timestamp=JEFHNUJEF39350JFHNsss';
   }
-  // Both are mocked for now
-  if (handle !== null && !needsMocks()) {
-    return { ok: true, value: link };
-  } else {
-    return { ok: true, value: link };
+  return { ok: true, value: link };
+}
+
+export async function decryptFileLink(
+  workspaceHandle: WorkspaceHandle,
+  link: ParsecOrganizationFileLinkAddr,
+): Promise<Result<FsPath, WorkspaceDecryptFileLinkPathError>> {
+  if (!needsMocks()) {
+    return await libparsec.workspaceDecryptFileLinkPath(workspaceHandle, link);
   }
+  return { ok: true, value: '/' };
 }
 
 export interface SharedWithInfo {

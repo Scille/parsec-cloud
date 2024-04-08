@@ -52,31 +52,33 @@ export async function routerGoBack(): Promise<void> {
 
 const routesBackup: Array<RouteBackup> = [];
 
+export async function backupCurrentOrganization(): Promise<void> {
+  const currentHandle = getConnectionHandle();
+
+  if (currentHandle === null) {
+    console.error('No current handle');
+  } else {
+    // Backup the current route
+    const currentRoute = getCurrentRoute();
+    const index = routesBackup.findIndex((bk) => bk.handle === currentHandle);
+    if (index !== -1) {
+      routesBackup.splice(index, 1);
+    }
+    console.log('Saving', currentRoute.value.name, currentRoute.value.params, currentRoute.value.query);
+    routesBackup.push({
+      handle: currentHandle,
+      data: {
+        route: currentRoute.value.name as Routes,
+        params: currentRoute.value.params,
+        query: currentRoute.value.query as Query,
+      },
+    });
+  }
+}
+
 export async function switchOrganization(handle: ConnectionHandle | null, backup = true): Promise<void> {
   if (backup) {
-    const currentHandle = getConnectionHandle();
-
-    if (currentHandle === null) {
-      console.error('No current handle');
-    } else if (handle === currentHandle) {
-      console.error('Cannot switch to same organization');
-    } else {
-      // Backup the current route
-      const currentRoute = getCurrentRoute();
-      const index = routesBackup.findIndex((bk) => bk.handle === currentHandle);
-      if (index !== -1) {
-        routesBackup.splice(index, 1);
-      }
-      console.log('Saving', currentRoute.value.name, currentRoute.value.params, currentRoute.value.query);
-      routesBackup.push({
-        handle: currentHandle,
-        data: {
-          route: currentRoute.value.name as Routes,
-          params: currentRoute.value.params,
-          query: currentRoute.value.query as Query,
-        },
-      });
-    }
+    await backupCurrentOrganization();
   }
 
   // No handle, navigate to organization list

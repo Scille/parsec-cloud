@@ -38,6 +38,7 @@ export {
   UserProfile,
   WorkspaceCreateFileErrorTag,
   WorkspaceCreateFolderErrorTag,
+  WorkspaceDecryptFileLinkPathErrorTag,
   WorkspaceFdCloseErrorTag,
   WorkspaceFdWriteErrorTag,
   WorkspaceInfoErrorTag,
@@ -129,9 +130,11 @@ export type {
   UserOrDeviceClaimInitialInfoUser,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceDecryptFileLinkPathError,
   WorkspaceFdCloseError,
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
+  WorkspaceGenerateFileLinkError,
   VlobID as WorkspaceID,
   WorkspaceInfoError,
   WorkspaceMountError,
@@ -215,26 +218,6 @@ interface GetAbsolutePathError {
   tag: GetAbsolutePathErrorTag.NotFound;
 }
 
-enum LinkErrorTag {
-  WorkspaceNotFound = 'WorkspaceNotFound',
-  PathNotFound = 'PathNotFound',
-  Internal = 'Internal',
-}
-
-interface LinkErrorWorkspaceNotFound {
-  tag: LinkErrorTag.WorkspaceNotFound;
-}
-
-interface LinkErrorPathNotFound {
-  tag: LinkErrorTag.PathNotFound;
-}
-
-interface LinkErrorInternal {
-  tag: LinkErrorTag.Internal;
-}
-
-export type LinkError = LinkErrorWorkspaceNotFound | LinkErrorPathNotFound | LinkErrorInternal;
-
 interface UserTuple {
   id: UserID;
   humanHandle: HumanHandle;
@@ -303,6 +286,7 @@ export {
   OrganizationInfoError,
   OrganizationInfoErrorTag,
   OwnDeviceInfo,
+  ParsecOrganizationAddr,
   StartedWorkspaceInfo,
   SystemPath,
   UserID,

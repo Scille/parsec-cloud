@@ -227,6 +227,10 @@ const msSorterLabels = {
 };
 
 const routeWatchCancel = watchRoute(async () => {
+  if (!currentRouteIs(Routes.Documents)) {
+    return;
+  }
+
   const newPath = getDocumentPath();
   if (newPath === '') {
     return;

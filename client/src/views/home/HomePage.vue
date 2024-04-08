@@ -64,11 +64,11 @@ import {
   DeviceAccessStrategy,
   DeviceFileType,
   getDeviceHandle,
-  initializeWorkspace,
   isDeviceLoggedIn,
+  listAvailableDevices,
   login as parsecLogin,
 } from '@/parsec';
-import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo, navigateToWorkspace, switchOrganization, watchRoute } from '@/router';
+import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
 import { EventDistributor } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -108,13 +108,10 @@ const informationManager: InformationManager = injectionProvider.getDefault().in
 let hotkeys: HotkeyGroup | null = null;
 
 const routeWatchCancel = watchRoute(async () => {
-  const query = getCurrentRouteQuery();
-  if (query.claimLink) {
-    await openJoinByLinkModal(query.claimLink);
-  } else if (query.device) {
-    selectedDevice.value = query.device;
-    state.value = HomePageState.Login;
+  if (!currentRouteIs(Routes.Home)) {
+    return;
   }
+  await handleQuery();
 });
 
 onMounted(async () => {
@@ -137,6 +134,8 @@ onMounted(async () => {
   );
 
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
+
+  await handleQuery();
 });
 
 onUnmounted(() => {
@@ -145,6 +144,21 @@ onUnmounted(() => {
   }
   routeWatchCancel();
 });
+
+async function handleQuery(): Promise<void> {
+  const query = getCurrentRouteQuery();
+  if (query.claimLink) {
+    await openJoinByLinkModal(query.claimLink);
+  } else if (query.deviceId) {
+    const availableDevices = await listAvailableDevices();
+    const device = availableDevices.find((d) => d.deviceId === query.deviceId);
+    if (device) {
+      await onOrganizationSelected(device);
+    } else {
+      console.error('Could not find the corresponding device');
+    }
+  }
+}
 
 async function openCreateOrganizationModal(): Promise<void> {
   const modal = await modalController.create({
@@ -250,20 +264,18 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 
     const query = getCurrentRouteQuery();
-    if (query.fileLink) {
-      const linkData = query.fileLink;
-      const initResult = await initializeWorkspace(linkData.workspaceId, result.value);
-      if (initResult.ok) {
-        await navigateToWorkspace(initResult.value.handle, linkData.path);
-      }
-    } else {
+    const routeData: RouteBackup = {
+      handle: result.value,
+      data: {
+        route: Routes.Workspaces,
+        params: { handle: result.value },
+        query: query.fileLink ? { fileLink: query.fileLink } : {},
+      },
+    };
+    if (!injectionProvider.hasInjections(result.value)) {
       injectionProvider.createNewInjections(result.value, eventDistributor);
-      const routeData: RouteBackup = {
-        handle: result.value,
-        data: { route: Routes.Workspaces, params: { handle: result.value }, query: {} },
-      };
-      await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     }
+    await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
   } else {
     await handleLoginError(device, result.error);
