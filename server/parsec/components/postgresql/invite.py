@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, assert_never, override
+from typing import assert_never, override
 
 import asyncpg
 
@@ -14,6 +14,7 @@ from parsec._parsec import (
     OrganizationID,
     UserID,
 )
+from parsec.components.events import EventBus
 from parsec.components.invite import (
     BaseInviteComponent,
     ConduitListenCtx,
@@ -38,7 +39,8 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.events import EventInvitation
+from parsec.config import BackendConfig
+from parsec.events import EventEnrollmentConduit, EventInvitation
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -86,21 +88,32 @@ LIMIT 1
 
 _q_insert_invitation = Q(
     f"""
-INSERT INTO invitation(
-    organization,
-    token,
-    type,
-    author,
-    claimer_email,
-    created_on
+WITH new_invitations AS (
+    INSERT INTO invitation(
+        organization,
+        token,
+        type,
+        author,
+        claimer_email,
+        created_on
+    )
+    VALUES (
+        { q_organization_internal_id("$organization_id") },
+        $token,
+        $type,
+        { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") },
+        $claimer_email,
+        $created_on
+    )
+    RETURNING _id, author
+)
+INSERT INTO invitation_conduit(
+    invitation,
+    greeter
 )
 VALUES (
-    { q_organization_internal_id("$organization_id") },
-    $token,
-    $type,
-    { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") },
-    $claimer_email,
-    $created_on
+    (SELECT _id FROM new_invitations),
+    (SELECT author FROM new_invitations)
 )
 """
 )
@@ -200,7 +213,7 @@ _q_info_invitation = Q(
 WITH human_handle_per_user AS ({_q_human_handle_per_user})
 SELECT
     type,
-    { q_user(_id="author", select="user_id") },
+    { q_user(_id="author", select="user_id") } AS author,
     human_handle_per_user.email,
     human_handle_per_user.label,
     claimer_email,
@@ -219,16 +232,19 @@ LIMIT 1
 _q_conduit_greeter_info = Q(
     f"""
 SELECT
-    _id,
+    invitation_conduit._id,
     conduit_state,
     conduit_greeter_payload,
     conduit_claimer_payload,
     deleted_on
 FROM invitation
+INNER JOIN invitation_conduit ON
+    invitation._id = invitation_conduit.invitation
+    AND invitation.author = invitation_conduit.greeter
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
-    AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
 FOR UPDATE
 """
 )
@@ -237,15 +253,19 @@ FOR UPDATE
 _q_conduit_claimer_info = Q(
     f"""
 SELECT
-    _id,
+    invitation_conduit._id,
     conduit_state,
     conduit_greeter_payload,
     conduit_claimer_payload,
     deleted_on
 FROM invitation
+INNER JOIN invitation_conduit ON
+    invitation._id = invitation_conduit.invitation
+    AND invitation.author = invitation_conduit.greeter
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
 FOR UPDATE
 """
 )
@@ -253,7 +273,7 @@ FOR UPDATE
 
 _q_conduit_update = Q(
     """
-UPDATE invitation
+UPDATE invitation_conduit
 SET
     conduit_state = $conduit_state,
     conduit_greeter_payload = $conduit_greeter_payload,
@@ -262,98 +282,6 @@ WHERE
     _id = $row_id
 """
 )
-
-
-async def _conduit_talk(
-    conn: asyncpg.Connection,
-    organization_id: OrganizationID,
-    greeter: UserID | None,
-    token: InvitationToken,
-    state: ConduitState,
-    payload: bytes,
-) -> ConduitListenCtx:
-    raise NotImplementedError
-    # is_greeter = greeter is not None
-    # async with conn.transaction():
-    #     # On top of retrieving the invitation row, this query lock the row
-    #     # in the database for the duration of the transaction.
-    #     # Hence concurrent request will be on hold until the end of the transaction.
-
-    #     if is_greeter:
-    #         row = await conn.fetchrow(
-    #             *_q_conduit_greeter_info(
-    #                 organization_id=organization_id.str,
-    #                 greeter_user_id=greeter.str,  # type: ignore[union-attr]
-    #                 token=token,
-    #             )
-    #         )
-    #     else:
-    #         row = await conn.fetchrow(
-    #             *_q_conduit_claimer_info(organization_id=organization_id.str, token=token)
-    #         )
-
-    #     if not row:
-    #         raise InvitationNotFoundError(token)
-
-    #     row_id = row["_id"]
-    #     curr_conduit_state = ConduitState(row["conduit_state"])
-    #     curr_greeter_payload = row["conduit_greeter_payload"]
-    #     curr_claimer_payload = row["conduit_claimer_payload"]
-
-    #     if is_greeter:
-    #         curr_our_payload = curr_greeter_payload
-    #         curr_peer_payload = curr_claimer_payload
-    #     else:
-    #         curr_our_payload = curr_claimer_payload
-    #         curr_peer_payload = curr_greeter_payload
-
-    #     if row["deleted_on"]:
-    #         raise InvitationAlreadyDeletedError(token)
-
-    #     if curr_conduit_state != state or curr_our_payload is not None:
-    #         # We are out of sync with the conduit:
-    #         # - the conduit state has changed in our back (maybe reset by the peer)
-    #         # - we want to reset the conduit
-    #         # - we have already provided a payload for the current conduit state (most
-    #         #   likely because a retry of a command that failed due to connection outage)
-    #         if state == ConduitState.STATE_1_WAIT_PEERS:
-    #             # We wait to reset the conduit
-    #             curr_conduit_state = state
-    #             curr_claimer_payload = None
-    #             curr_greeter_payload = None
-    #             curr_our_payload = None
-    #             curr_peer_payload = None
-    #         else:
-    #             raise InvitationInvalidStateError()
-
-    #     # Now update the conduit with our payload and send a signal if
-    #     # the peer is already waiting for us.
-    #     if is_greeter:
-    #         curr_greeter_payload = payload
-    #     else:
-    #         curr_claimer_payload = payload
-    #     await conn.execute(
-    #         *_q_conduit_update(
-    #             row_id=row_id,
-    #             conduit_state=curr_conduit_state.value,
-    #             conduit_greeter_payload=curr_greeter_payload,
-    #             conduit_claimer_payload=curr_claimer_payload,
-    #         )
-    #     )
-    #     # Note that in case of conduit reset, this signal will lure the peer into
-    #     # thinking we have answered so he will wakeup and take into account the reset
-    #     await send_signal(
-    #         conn, BackendEventInviteConduitUpdated(organization_id=organization_id, token=token)
-    #     )
-
-    # return ConduitListenCtx(
-    #     organization_id=organization_id,
-    #     greeter=greeter,
-    #     token=token,
-    #     state=state,
-    #     payload=payload,
-    #     peer_payload=curr_peer_payload,
-    # )
 
 
 async def _conduit_listen(conn: asyncpg.Connection, ctx: ConduitListenCtx) -> bytes | None:
@@ -504,13 +432,13 @@ async def _human_handle_from_user_id(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, pool: asyncpg.Pool, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus, config: BackendConfig) -> None:
+        super().__init__(event_bus, config)
         self.pool = pool
-        self._organization: PGOrganizationComponent
+        self.organization: PGOrganizationComponent
 
     def register_components(self, organization: PGOrganizationComponent, **kwargs) -> None:
-        self._organization = organization
+        self.organization = organization
 
     @override
     @transaction
@@ -664,7 +592,7 @@ class PGInviteComponent(BaseInviteComponent):
     async def _info_as_invited(
         self, conn: asyncpg.Connection, organization_id: OrganizationID, token: InvitationToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
-        match await self._organization._get(conn, organization_id):
+        match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
@@ -765,8 +693,10 @@ class PGInviteComponent(BaseInviteComponent):
         #     )
 
     @override
+    @transaction
     async def _conduit_talk(
         self,
+        conn: asyncpg.Connection,
         organization_id: OrganizationID,
         token: InvitationToken,
         is_greeter: bool,
@@ -774,7 +704,101 @@ class PGInviteComponent(BaseInviteComponent):
         payload: bytes,
         last: bool,  # Only for greeter
     ) -> ConduitListenCtx | InviteConduitExchangeBadOutcome:
-        raise NotImplementedError
+        # On top of retrieving the invitation row, this query lock the row
+        # in the database for the duration of the transaction.
+        # Hence concurrent request will be on hold until the end of the transaction.
+
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token)
+        )
+        if not row:
+            return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+        # The greeter is the author of the invitation for the moment
+        # TODO: make it more flexible later
+        greeter = UserID(row["author"])
+
+        if is_greeter:
+            row = await conn.fetchrow(
+                *_q_conduit_greeter_info(
+                    organization_id=organization_id.str,
+                    greeter_user_id=greeter.str,
+                    token=token,
+                )
+            )
+        else:
+            row = await conn.fetchrow(
+                *_q_conduit_claimer_info(
+                    organization_id=organization_id.str, token=token, greeter=greeter.str
+                )
+            )
+
+        if not row:
+            return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+
+        row_id = row["_id"]
+        curr_conduit_state = ConduitState(row["conduit_state"])
+        curr_greeter_payload = row["conduit_greeter_payload"]
+        curr_claimer_payload = row["conduit_claimer_payload"]
+
+        if is_greeter:
+            curr_our_payload = curr_greeter_payload
+            curr_peer_payload = curr_claimer_payload
+        else:
+            curr_our_payload = curr_claimer_payload
+            curr_peer_payload = curr_greeter_payload
+
+        if row["deleted_on"]:
+            return InviteConduitExchangeBadOutcome.INVITATION_DELETED
+
+        if curr_conduit_state != state or curr_our_payload is not None:
+            # We are out of sync with the conduit:
+            # - the conduit state has changed in our back (maybe reset by the peer)
+            # - we want to reset the conduit
+            # - we have already provided a payload for the current conduit state (most
+            #   likely because a retry of a command that failed due to connection outage)
+            if state == ConduitState.STATE_1_WAIT_PEERS:
+                # We wait to reset the conduit
+                curr_conduit_state = state
+                curr_claimer_payload = None
+                curr_greeter_payload = None
+                curr_our_payload = None
+                curr_peer_payload = None
+            else:
+                return InviteConduitExchangeBadOutcome.ENROLLMENT_WRONG_STATE
+
+        # Now update the conduit with our payload and send a signal if
+        # the peer is already waiting for us.
+        if is_greeter:
+            curr_greeter_payload = payload
+        else:
+            curr_claimer_payload = payload
+        await conn.execute(
+            *_q_conduit_update(
+                row_id=row_id,
+                conduit_state=curr_conduit_state.value,
+                conduit_greeter_payload=curr_greeter_payload,
+                conduit_claimer_payload=curr_claimer_payload,
+            )
+        )
+        # Note that in case of conduit reset, this signal will lure the peer into
+        # thinking we have answered so he will wakeup and take into account the reset
+        await self._event_bus.send(
+            EventEnrollmentConduit(
+                organization_id=organization_id,
+                token=token,
+                greeter=greeter,
+            )
+        )
+
+        return ConduitListenCtx(
+            organization_id=organization_id,
+            greeter=greeter,
+            token=token,
+            state=state,
+            is_greeter=is_greeter,
+            payload=payload,
+            peer_payload=curr_peer_payload,
+        )
 
     async def _conduit_listen(
         self,
