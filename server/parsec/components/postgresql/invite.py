@@ -13,6 +13,7 @@ from parsec._parsec import (
     InvitationType,
     OrganizationID,
     UserID,
+    UserProfile,
 )
 from parsec.components.events import EventBus
 from parsec.components.invite import (
@@ -23,6 +24,7 @@ from parsec.components.invite import (
     DeviceInvitation,
     Invitation,
     InviteAsInvitedInfoBadOutcome,
+    InviteCancelBadOutcome,
     InviteConduitExchangeBadOutcome,
     InviteNewForDeviceBadOutcome,
     InviteNewForUserBadOutcome,
@@ -32,6 +34,7 @@ from parsec.components.invite import (
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.user_queries.find import query_retrieve_active_human_by_email
 from parsec.components.postgresql.utils import (
     Q,
@@ -40,6 +43,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
+from parsec.components.user import CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -213,6 +217,7 @@ _q_info_invitation = Q(
     f"""
 WITH human_handle_per_user AS ({_q_human_handle_per_user})
 SELECT
+    _id,
     type,
     { q_user(_id="author", select="user_id") } AS author,
     human_handle_per_user.email,
@@ -374,8 +379,11 @@ class PGInviteComponent(BaseInviteComponent):
         self.pool = pool
         self.organization: PGOrganizationComponent
 
-    def register_components(self, organization: PGOrganizationComponent, **kwargs) -> None:
+    def register_components(
+        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
+    ) -> None:
         self.organization = organization
+        self.user = user
 
     @override
     @transaction
@@ -456,16 +464,60 @@ class PGInviteComponent(BaseInviteComponent):
             send_email_outcome = None
         return token, send_email_outcome
 
-    async def delete(
+    @override
+    @transaction
+    async def cancel(
         self,
+        conn: asyncpg.Connection,
+        now: DateTime,
         organization_id: OrganizationID,
-        greeter: UserID,
+        author: UserID,
         token: InvitationToken,
-        on: DateTime,
-    ) -> None:
-        raise NotImplementedError
-        # async with self.dbh.pool.acquire() as conn, conn.transaction():
-        #     await _do_delete_invitation(conn, organization_id, greeter, token, on, reason)
+    ) -> None | InviteCancelBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+            case unknown:
+                assert_never(unknown)
+        if organization.is_expired:
+            return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_user(conn, organization_id, author):
+            case UserProfile():
+                pass
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return InviteCancelBadOutcome.AUTHOR_REVOKED
+            case unknown:
+                assert_never(unknown)
+
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token)
+        )
+        if row is None:
+            return InviteCancelBadOutcome.INVITATION_NOT_FOUND
+        if row["deleted_on"] is not None:
+            return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
+
+        await conn.execute(
+            *_q_delete_invitation(
+                row_id=row["_id"],
+                on=now,
+                reason="CANCELLED",  # TODO: use an enum
+            )
+        )
+
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=author,
+                status=InvitationStatus.CANCELLED,
+            )
+        )
 
     async def list(self, organization_id: OrganizationID, greeter: UserID) -> list[Invitation]:
         raise NotImplementedError
@@ -544,6 +596,7 @@ class PGInviteComponent(BaseInviteComponent):
         if not row:
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
         (
+            _id,
             type,
             greeter_user_id_str,
             greeter_human_handle_email,
