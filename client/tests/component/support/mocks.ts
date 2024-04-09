@@ -55,7 +55,7 @@ function mockValidators(): void {
 
 function mockI18n(): void {
   config.global.mocks = {
-    $t: (key: string, attrs?: object, count?: number): string => msTranslate({ key: key, data: attrs, count: count }),
+    $msTranslate: (key: string, attrs?: object, count?: number): string => msTranslate({ key: key, data: attrs, count: count }),
   };
 }
 
