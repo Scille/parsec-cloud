@@ -4,6 +4,7 @@ import enUS from '@/locales/en-US.json';
 import frFR from '@/locales/fr-FR.json';
 import { InvitationStatus, WorkspaceRole } from '@/parsec';
 import { DateTime } from 'luxon';
+import { App } from 'vue';
 import { createI18n } from 'vue-i18n';
 
 let i18n: any | null = null;
@@ -137,3 +138,13 @@ export function translateInvitationStatus(status: InvitationStatus): string {
 export function changeLocale(locale: Locale): void {
   i18n.global.locale.value = locale;
 }
+
+export const TranslationPlugin = {
+  install: (app: App<any>) => {
+    app.config.globalProperties.$translate = (key: string, data?: object, count?: number) => {
+      return translate(key, data, count);
+    };
+
+    app.provide('translate', translate);
+  },
+};

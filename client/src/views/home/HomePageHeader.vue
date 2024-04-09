@@ -46,7 +46,7 @@
           :disabled="true"
         >
           <ion-icon :icon="chatbubbles" />
-          {{ $t('HomePage.topbar.contactUs') }}
+          {{ $translate('HomePage.topbar.contactUs') }}
         </ion-button>
         <ion-button
           slot="icon-only"
@@ -55,7 +55,7 @@
           @click="$emit('settingsClick')"
         >
           <ion-icon :icon="cog" />
-          {{ $t('HomePage.topbar.settings') }}
+          {{ $translate('HomePage.topbar.settings') }}
         </ion-button>
       </ion-buttons>
     </div>

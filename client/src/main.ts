@@ -42,7 +42,7 @@ import { Platform, libparsec } from '@/plugins/libparsec';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { initTranslations } from '@/services/translation';
+import { TranslationPlugin, initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
 import Vue3Lottie from 'vue3-lottie';
@@ -69,6 +69,7 @@ async function setupApp(): Promise<void> {
       rippleEffect: false,
     })
     .use(router)
+    .use(TranslationPlugin)
     .use(i18n)
     .use(Vue3Lottie);
 
