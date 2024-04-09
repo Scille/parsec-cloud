@@ -104,7 +104,6 @@ export async function login(
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
   function parsecEventCallback(distributor: EventDistributor, event: ClientEvent): void {
-    console.log(event);
     switch (event.tag) {
       case ClientEventTag.Online:
         distributor.dispatchEvent(Events.Online, {});
@@ -140,14 +139,11 @@ export async function login(
   }
 
   if (!needsMocks()) {
+    const callback = (event: ClientEvent): void => {
+      parsecEventCallback(eventDistributor, event);
+    };
     const clientConfig = getClientConfig();
-    const result = await libparsec.clientStart(
-      clientConfig,
-      (event: ClientEvent) => {
-        parsecEventCallback(eventDistributor, event);
-      },
-      accessStrategy,
-    );
+    const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
     if (result.ok) {
       loggedInDevices.push({ handle: result.value, device: device });
     }

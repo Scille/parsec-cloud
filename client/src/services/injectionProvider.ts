@@ -36,7 +36,7 @@ export class InjectionProvider {
     this.injections.set(handle, {
       importManager: new ImportManager(),
       eventDistributor: eventDistributor,
-      informationManager: new InformationManager(),
+      informationManager: new InformationManager(handle),
     });
   }
 
