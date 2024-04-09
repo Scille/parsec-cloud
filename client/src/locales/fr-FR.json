@@ -54,7 +54,7 @@
         "appIsBusy": "Parsec est occupé. Veuillez fermer toutes les fenêtres ouvertes avant de re-cliquer sur le lien.",
         "invalidFileLink": "Le lien fourni n'est pas un lien de fichier valide.",
         "workspaceNotFound": "Impossible de trouver l'espace de travail associé à ce lien de fichier. Vous n'y avez peut-être pas accès.",
-        "fileNotFound": "Impossible de trouver le fichier pointé par ce lien."
+        "fileNotFound": "Impossible de trouver le fichier associé à ce lien."
     },
     "notificationCenter": {
         "title": "Notifications",
