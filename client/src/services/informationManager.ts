@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/core';
-import { EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
+import { ConnectionHandle, EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
+import { getConnectionHandle } from '@/router';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
 import { Translatable, translate } from '@/services/translation';
@@ -135,10 +136,12 @@ export enum PresentationMode {
 export class InformationManager {
   toastManager: ToastManager;
   notificationManager: NotificationManager;
+  handle: ConnectionHandle | null;
 
-  constructor() {
+  constructor(handle: ConnectionHandle | null = null) {
     this.toastManager = new ToastManager();
     this.notificationManager = new NotificationManager();
+    this.handle = handle;
   }
 
   private async showModal(information: Information): Promise<void> {
@@ -153,6 +156,12 @@ export class InformationManager {
   private async _createAndPresentModal(modalConfig: MsAlertModalConfig): Promise<any> {
     const top = await modalController.getTop();
     if (top) {
+      // Should not an information modal if one is already
+      // opened
+      if (top.classList.contains('information-modal')) {
+        console.log('Avoid overlapping information modals');
+        return;
+      }
       top.classList.add('overlapped-modal');
     }
     const modal = await modalController.create({
@@ -193,10 +202,20 @@ export class InformationManager {
       this.sendNotification(information);
     }
     if (presentationMode & PresentationMode.Toast) {
-      await this.showToast(information);
+      // Only show toasts is the organization that generated it is the current one
+      if (this.handle === getConnectionHandle()) {
+        await this.showToast(information);
+      } else {
+        console.log('Organization is not currently focused, toast is ignored');
+      }
     }
     if (presentationMode & PresentationMode.Modal) {
-      await this.showModal(information);
+      // Only show modals is the organization that generated it is the current one
+      if (this.handle === getConnectionHandle()) {
+        await this.showModal(information);
+      } else {
+        console.log('Organization is not currently focused, modal is ignored');
+      }
     }
   }
 

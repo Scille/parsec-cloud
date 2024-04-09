@@ -69,7 +69,7 @@ import {
   login as parsecLogin,
 } from '@/parsec';
 import { RouteBackup, Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, switchOrganization, watchRoute } from '@/router';
-import { EventDistributor } from '@/services/eventDistributor';
+import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -273,12 +273,107 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
     };
     if (!injectionProvider.hasInjections(result.value)) {
       injectionProvider.createNewInjections(result.value, eventDistributor);
+      const injections = injectionProvider.getInjections(result.value);
+      await associateDefaultEvents(injections.eventDistributor, injections.informationManager);
+      const routeData: RouteBackup = {
+        handle: result.value,
+        data: { route: Routes.Workspaces, params: { handle: result.value }, query: {} },
+      };
+      await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
   } else {
     await handleLoginError(device, result.error);
   }
+}
+
+async function associateDefaultEvents(eventDistributor: EventDistributor, informationManager: InformationManager): Promise<void> {
+  let ignoreOnlineEvent = true;
+
+  // Since this is going to be alive the whole time, we don't need to remember the id to clear it later
+  await eventDistributor.registerCallback(
+    Events.Offline | Events.Online | Events.IncompatibleServer | Events.ExpiredOrganization | Events.ClientRevoked,
+    async (event: Events, _data: EventData) => {
+      switch (event) {
+        case Events.Offline: {
+          informationManager.present(
+            new Information({
+              message: 'notification.serverOffline',
+              level: InformationLevel.Warning,
+            }),
+            PresentationMode.Notification,
+          );
+          break;
+        }
+        case Events.Online: {
+          if (ignoreOnlineEvent) {
+            ignoreOnlineEvent = false;
+            return;
+          }
+          informationManager.present(
+            new Information({
+              message: 'notification.serverOnline',
+              level: InformationLevel.Info,
+            }),
+            PresentationMode.Notification,
+          );
+          break;
+        }
+        case Events.IncompatibleServer: {
+          informationManager.present(
+            new Information({
+              message: 'notification.incompatibleServer',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Notification,
+          );
+          await informationManager.present(
+            new Information({
+              message: 'globalErrors.incompatibleServer',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+          break;
+        }
+        case Events.ExpiredOrganization: {
+          informationManager.present(
+            new Information({
+              message: 'notification.expiredOrganization',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Notification,
+          );
+          await informationManager.present(
+            new Information({
+              message: 'globalErrors.expiredOrganization',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+          break;
+        }
+        case Events.ClientRevoked: {
+          informationManager.present(
+            new Information({
+              message: 'notification.clientRevoked',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Notification,
+          );
+          await informationManager.present(
+            new Information({
+              message: 'globalErrors.clientRevoked',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Modal,
+          );
+          break;
+        }
+      }
+    },
+  );
 }
 
 function onForgottenPasswordClicked(device: AvailableDevice): void {

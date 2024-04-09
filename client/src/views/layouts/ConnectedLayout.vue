@@ -11,105 +11,15 @@
 
 <script lang="ts" setup>
 import { getConnectionHandle } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventDistributorKey } from '@/services/eventDistributor';
 import { ImportManagerKey } from '@/services/importManager';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { InformationManagerKey } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { IonContent, IonPage, IonRouterOutlet } from '@ionic/vue';
-import { inject, onMounted, onUnmounted, provide, ref } from 'vue';
+import { inject, onMounted, provide, ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
-let informationManager: InformationManager;
-let eventDistributor: EventDistributor;
-let eventCbId: null | string = null;
 const initialized = ref(false);
-
-async function processEvents(): Promise<void> {
-  let ignoreOnlineEvent = true;
-
-  eventCbId = await eventDistributor.registerCallback(
-    Events.Offline | Events.Online | Events.IncompatibleServer | Events.ExpiredOrganization | Events.ClientRevoked,
-    async (event: Events, _data: EventData) => {
-      switch (event) {
-        case Events.Offline: {
-          informationManager.present(
-            new Information({
-              message: 'notification.serverOffline',
-              level: InformationLevel.Warning,
-            }),
-            PresentationMode.Notification,
-          );
-          break;
-        }
-        case Events.Online: {
-          if (ignoreOnlineEvent) {
-            ignoreOnlineEvent = false;
-            return;
-          }
-          informationManager.present(
-            new Information({
-              message: 'notification.serverOnline',
-              level: InformationLevel.Info,
-            }),
-            PresentationMode.Notification,
-          );
-          break;
-        }
-        case Events.IncompatibleServer: {
-          informationManager.present(
-            new Information({
-              message: 'notification.incompatibleServer',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.incompatibleServer',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.ExpiredOrganization: {
-          informationManager.present(
-            new Information({
-              message: 'notification.expiredOrganization',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.expiredOrganization',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-        case Events.ClientRevoked: {
-          informationManager.present(
-            new Information({
-              message: 'notification.clientRevoked',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Notification,
-          );
-          await informationManager.present(
-            new Information({
-              message: 'globalErrors.clientRevoked',
-              level: InformationLevel.Error,
-            }),
-            PresentationMode.Modal,
-          );
-          break;
-        }
-      }
-    },
-  );
-}
 
 onMounted(async () => {
   const handle = getConnectionHandle();
@@ -123,14 +33,5 @@ onMounted(async () => {
   provide(InformationManagerKey, inj.informationManager);
   provide(EventDistributorKey, inj.eventDistributor);
   initialized.value = true;
-  informationManager = inj.informationManager;
-  eventDistributor = inj.eventDistributor;
-  await processEvents();
-});
-
-onUnmounted(async () => {
-  if (eventCbId) {
-    eventDistributor.removeCallback(eventCbId);
-  }
 });
 </script>
