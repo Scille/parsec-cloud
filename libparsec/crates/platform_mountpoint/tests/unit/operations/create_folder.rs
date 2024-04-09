@@ -6,6 +6,9 @@ use libparsec_client::{
     workspace::{EntryStat, WorkspaceOps},
     Client,
 };
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+};
 use libparsec_tests_fixtures::prelude::*;
 
 use super::utils::mount_and_test;
@@ -245,10 +248,7 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 }
 
-// TODO: Github Action doesn't support container on Windows, which is used
-//       to run the testbed server !
-#[cfg(not(target_os = "windows"))]
-#[parsec_test(testbed = "coolorg", with_server)]
+#[parsec_test(testbed = "coolorg")]
 async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
     let env = env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
@@ -268,6 +268,25 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
             )
         });
     });
+
+    test_register_sequence_of_send_hooks!(
+        &env.discriminant_dir,
+        {
+            move |_: authenticated_cmds::latest::realm_unshare::Req| {
+                authenticated_cmds::latest::realm_unshare::Rep::Ok
+            }
+        },
+        {
+            move |_: authenticated_cmds::latest::certificate_get::Req| {
+                authenticated_cmds::latest::certificate_get::Rep::Ok {
+                    common_certificates: vec![],
+                    sequester_certificates: vec![],
+                    shamir_recovery_certificates: vec![],
+                    realm_certificates: Default::default(),
+                }
+            }
+        }
+    );
 
     let alice_client = super::utils::start_client(&env, "alice@dev1").await;
     mount_and_test!(as "bob@dev1", &env, &tmp_path, |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
