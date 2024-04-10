@@ -6,9 +6,15 @@ from contextlib import contextmanager
 
 import pytest
 
-from parsec._parsec import ActiveUsersLimit, SigningKey, authenticated_cmds
+from parsec._parsec import (
+    ActiveUsersLimit,
+    DateTime,
+    RevokedUserCertificate,
+    SigningKey,
+    authenticated_cmds,
+)
 from parsec.events import EventPinged
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 from tests.common.backend import AsgiApp
 
 
@@ -32,7 +38,6 @@ async def test_events_listen_auth_then_not_allowed(
 
 
 # TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:
-# TODO: - test close on user revoked
 # TODO: - test close on backpressure (too many events pilling up)
 
 
@@ -194,3 +199,54 @@ async def test_keep_alive_real_server(minimalorg: MinimalorgRpcClients, app: Asg
                     break
 
     assert got_keepalive
+
+
+async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backend) -> None:
+    async def send_ping(ping: str) -> None:
+        await backend.event_bus.send(
+            EventPinged(
+                organization_id=coolorg.organization_id,
+                ping=ping,
+            )
+        )
+
+    async with coolorg.bob.events_listen() as bob_sse:
+        await send_ping("before-revocation")
+
+        now = DateTime.now()
+        revoke_certif = RevokedUserCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            user_id=coolorg.bob.device_id.user_id,
+        )
+        rep = await coolorg.alice.user_revoke(
+            revoke_certif.dump_and_sign(coolorg.alice.signing_key)
+        )
+        assert rep == authenticated_cmds.v4.user_revoke.RepOk()
+
+        await send_ping("after-revocation")
+
+        # Bob still receives the ServerConfig event
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        # And the events sent before the revocation
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventPinged(ping="before-revocation")
+        )
+
+        # Then Bob receives a notification that he was revoked
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=now)
+        )
+
+        # And then the connection is closed
+        with pytest.raises(StopAsyncIteration):
+            event = await bob_sse.next_event()
