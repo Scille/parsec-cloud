@@ -3,7 +3,6 @@
 use pyo3::{
     exceptions::PyValueError,
     prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python, ToPyObject},
-    pyfunction,
     types::{PyBytes, PyDict, PyType},
 };
 use std::str::FromStr;
@@ -814,9 +813,4 @@ impl ParsecPkiEnrollmentAddr {
             organization_id.0,
         ))
     }
-}
-
-#[pyfunction]
-pub(crate) fn export_root_verify_key(key: &VerifyKey) -> String {
-    libparsec_types::export_root_verify_key(&key.0)
 }
