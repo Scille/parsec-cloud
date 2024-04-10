@@ -6,10 +6,10 @@
       v-if="pageStep > UserJoinOrganizationStep.WaitForHost"
       :current-index="pageStep - 2"
       :titles="[
-        $msTranslate('JoinOrganization.stepTitles.GetHostCode'),
-        $msTranslate('JoinOrganization.stepTitles.ProvideGuestCode'),
-        $msTranslate('JoinOrganization.stepTitles.ContactDetails'),
-        $msTranslate('JoinOrganization.stepTitles.Authentication'),
+        'JoinOrganization.stepTitles.GetHostCode',
+        'JoinOrganization.stepTitles.ProvideGuestCode',
+        'JoinOrganization.stepTitles.ContactDetails',
+        'JoinOrganization.stepTitles.Authentication',
       ]"
     />
     <ion-buttons
@@ -229,7 +229,7 @@ const waitingForHost = ref(true);
 
 interface Title {
   title: Translatable;
-  subtitle: string;
+  subtitle: Translatable;
 }
 
 const titles = new Map<UserJoinOrganizationStep, Title>([

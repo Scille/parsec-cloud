@@ -12,7 +12,7 @@
           <ms-action-bar-button
             :icon="personAdd"
             id="button-invite-user"
-            :button-label="$msTranslate('UsersPage.inviteUser')"
+            :button-label="'UsersPage.inviteUser'"
             @click="inviteUser()"
           />
         </div>
@@ -22,7 +22,7 @@
             :icon="personRemove"
             class="danger"
             id="button-revoke-user"
-            :button-label="$msTranslate({ key: 'UsersPage.userContextMenu.actionRevoke', count: users.selectedCount() })"
+            :button-label="{ key: 'UsersPage.userContextMenu.actionRevoke', count: users.selectedCount() }"
             @click="revokeSelectedUsers"
           />
         </div>
@@ -30,7 +30,7 @@
           <ms-action-bar-button
             :icon="informationCircle"
             id="button-common-workspaces"
-            :button-label="$msTranslate('UsersPage.userContextMenu.actionDetails')"
+            :button-label="'UsersPage.userContextMenu.actionDetails'"
             @click="openSelectedUserDetails"
           />
         </div>

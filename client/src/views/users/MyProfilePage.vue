@@ -56,7 +56,7 @@
                   v-show="currentDevice && currentDevice.ty === DeviceFileType.Password"
                 >
                   <ms-input
-                    :placeholder="'••••••••••'"
+                    :placeholder="'MyProfilePage.passwordPlaceholder'"
                     name="fullname"
                     :disabled="true"
                     class="user-info__input"

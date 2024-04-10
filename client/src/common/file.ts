@@ -2,7 +2,7 @@
 
 import { File } from '@/components/core/ms-image';
 import { Path } from '@/parsec';
-import { msTranslate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 
 // Shorten a file name by adding ellipsis in the middle if it is above a certain length.
 // It may be a bit scuffed in some edge cases but the default config should work fine.
@@ -42,7 +42,7 @@ More specifically:
 - And so on for MB, GB and TB
 */
 
-function size(bytes: number, system: [number, string][]): string {
+function size(bytes: number, system: [number, string][]): Translatable {
   if (bytes < 0) {
     throw Error('Bytes must be >= 0');
   }
@@ -50,11 +50,11 @@ function size(bytes: number, system: [number, string][]): string {
   // Iterate over factors, expecting them to be in increasing order
   let formattedAmount = '';
   let factor = 1;
-  let suffix = '';
+  let key = '';
   for (const item of system) {
     // Stop when the right factor is reached
     factor = item[0];
-    suffix = item[1];
+    key = item[1];
     if (bytes / factor < 999.5) {
       break;
     }
@@ -73,16 +73,16 @@ function size(bytes: number, system: [number, string][]): string {
   } else {
     formattedAmount = amount.toFixed();
   }
-  return `${formattedAmount} ${suffix}`;
+  return { key: key, data: { size: formattedAmount } };
 }
 
-export function formatFileSize(bytesize: number): string {
+export function formatFileSize(bytesize: number): Translatable {
   const SYSTEM: [number, string][] = [
-    [Math.pow(1024, 0), msTranslate('common.filesize.bytes')],
-    [Math.pow(1024, 1), msTranslate('common.filesize.kilobytes')],
-    [Math.pow(1024, 2), msTranslate('common.filesize.megabytes')],
-    [Math.pow(1024, 3), msTranslate('common.filesize.gigabytes')],
-    [Math.pow(1024, 4), msTranslate('common.filesize.terabytes')],
+    [Math.pow(1024, 0), 'common.filesize.bytes'],
+    [Math.pow(1024, 1), 'common.filesize.kilobytes'],
+    [Math.pow(1024, 2), 'common.filesize.megabytes'],
+    [Math.pow(1024, 3), 'common.filesize.gigabytes'],
+    [Math.pow(1024, 4), 'common.filesize.terabytes'],
   ];
   return size(bytesize, SYSTEM);
 }

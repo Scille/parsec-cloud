@@ -45,7 +45,7 @@
 
       <ion-text class="card-content-last-update body-sm">
         <span>{{ $msTranslate('FoldersPage.File.lastUpdate') }}</span>
-        <span>{{ formatTimeSince(entry.updated, '--', 'short') }}</span>
+        <span>{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
       </ion-text>
     </div>
   </ion-item>

@@ -2,15 +2,15 @@
 
 <template>
   <ms-modal
-    :title="$msTranslate(title)"
+    :title="title"
     :close-button="{ visible: true }"
     :cancel-button="{
-      label: $msTranslate('TextInputModal.cancel'),
+      label: 'TextInputModal.cancel',
       disabled: false,
       onClick: cancel,
     }"
     :confirm-button="{
-      label: $msTranslate('TextInputModal.moveHere'),
+      label: 'TextInputModal.moveHere',
       disabled: selectedPath === startingPath,
       onClick: confirm,
     }"

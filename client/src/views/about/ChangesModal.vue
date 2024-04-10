@@ -31,14 +31,14 @@
             <ion-list class="list">
               <ion-item
                 v-for="change in versionChange.features"
-                :key="change.description"
+                :key="typeof change.description === 'string' ? change.description : change.description.key"
                 class="list-item"
               >
                 <ion-text class="list-item__text">
                   {{ change.description }}
                 </ion-text>
                 <a
-                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate({ key: 'app.issueUrl', data: { issue: change.issue } })"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"
@@ -61,14 +61,14 @@
             <ion-list class="list">
               <ion-item
                 v-for="change in versionChange.fixes"
-                :key="change.description"
+                :key="typeof change.description === 'string' ? change.description : change.description.key"
                 class="list-item"
               >
                 <ion-text class="list-item__text">
                   {{ change.description }}
                 </ion-text>
                 <a
-                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate({ key: 'app.issueUrl', data: { issue: change.issue } })"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"
@@ -91,14 +91,14 @@
             <ion-list class="list">
               <ion-item
                 v-for="change in versionChange.misc"
-                :key="change.description"
+                :key="typeof change.description === 'string' ? change.description : change.description.key"
                 class="list-item"
               >
                 <ion-text class="list-item__text">
-                  {{ change.description }}
+                  {{ $msTranslate(change.description) }}
                 </ion-text>
                 <a
-                  :href="$msTranslate('app.projectSources') + '/issues/' + change.issue"
+                  :href="$msTranslate({ key: 'app.issueUrl', data: { issue: change.issue } })"
                   target="_blank"
                   class="list-item__link body"
                   v-if="change.issue"

@@ -15,14 +15,14 @@ export interface TranslationData {
   count?: number;
 }
 
-export type Translatable = string | TranslationData | undefined;
+export type Translatable = string | TranslationData;
 
 export const TranslationPlugin = {
   install: (app: App<any>): void => {
-    app.config.globalProperties.$msTranslate = (translatable: Translatable): string => {
-      return msTranslate(translatable);
+    app.config.globalProperties.$msTranslate = (translatable: Translatable | undefined): string => {
+      return translate(translatable);
     };
-    app.provide('msTranslate', msTranslate);
+    app.provide('msTranslate', translate);
   },
 };
 
@@ -84,7 +84,7 @@ export function initTranslations(locale?: Locale): any {
   return i18n;
 }
 
-export function msTranslate(content: Translatable): string {
+export function translate(content: Translatable | undefined): string {
   if (typeof content === 'undefined' || content === '') {
     return '';
   }
@@ -100,73 +100,73 @@ export function formatDate(date: DateTime, format: DateFormat = 'long'): string 
   return d(date.toJSDate(), format);
 }
 
-export function getLocale(): any {
-  return i18n.global.locale.value;
-}
-
-interface WorkspaceRoleTranslation {
-  label: string;
-  description?: string;
-}
-
-export function translateProfile(profile: UserProfile): string {
+export function getProfileTranslationKey(profile: UserProfile): Translatable {
   if (profile === UserProfile.Admin) {
-    return msTranslate('UsersPage.profile.admin.label');
+    return 'UsersPage.profile.admin.label';
   } else if (profile === UserProfile.Standard) {
-    return msTranslate('UsersPage.profile.standard.label');
+    return 'UsersPage.profile.standard.label';
   } else if (profile === UserProfile.Outsider) {
-    return msTranslate('UsersPage.profile.outsider.label');
+    return 'UsersPage.profile.outsider.label';
   }
   return '';
 }
 
-export function translateWorkspaceRole(role: WorkspaceRole | null): WorkspaceRoleTranslation {
+interface WorkspaceRoleTranslations {
+  label: Translatable;
+  description?: Translatable;
+}
+
+export function getWorkspaceRoleTranslationKey(role: WorkspaceRole | null): WorkspaceRoleTranslations {
   switch (role) {
     case null: {
       return {
-        label: msTranslate('workspaceRoles.none'),
+        label: 'workspaceRoles.none',
       };
     }
     case WorkspaceRole.Reader: {
       return {
-        label: msTranslate('workspaceRoles.reader.label'),
-        description: msTranslate('workspaceRoles.reader.description'),
+        label: 'workspaceRoles.reader.label',
+        description: 'workspaceRoles.reader.description',
       };
     }
     case WorkspaceRole.Contributor: {
       return {
-        label: msTranslate('workspaceRoles.contributor.label'),
-        description: msTranslate('workspaceRoles.contributor.description'),
+        label: 'workspaceRoles.contributor.label',
+        description: 'workspaceRoles.contributor.description',
       };
     }
     case WorkspaceRole.Manager: {
       return {
-        label: msTranslate('workspaceRoles.manager.label'),
-        description: msTranslate('workspaceRoles.manager.description'),
+        label: 'workspaceRoles.manager.label',
+        description: 'workspaceRoles.manager.description',
       };
     }
     case WorkspaceRole.Owner: {
       return {
-        label: msTranslate('workspaceRoles.owner.label'),
-        description: msTranslate('workspaceRoles.owner.description'),
+        label: 'workspaceRoles.owner.label',
+        description: 'workspaceRoles.owner.description',
       };
     }
   }
 }
 
-export function translateInvitationStatus(status: InvitationStatus): string {
+export function getInvitationStatusTranslationKey(status: InvitationStatus): Translatable {
   switch (status) {
     case InvitationStatus.Ready:
-      return msTranslate('UsersPage.invitation.status.ready');
+      return 'UsersPage.invitation.status.ready';
     case InvitationStatus.Idle:
-      return msTranslate('UsersPage.invitation.status.idle');
+      return 'UsersPage.invitation.status.idle';
     case InvitationStatus.Finished:
-      return msTranslate('UsersPage.invitation.status.finished');
+      return 'UsersPage.invitation.status.finished';
     case InvitationStatus.Cancelled:
-      return msTranslate('UsersPage.invitation.status.cancelled');
+      return 'UsersPage.invitation.status.cancelled';
   }
 }
 
 export function changeLocale(locale: Locale): void {
   i18n.global.locale.value = locale;
+}
+
+export function getLocale(): any {
+  return i18n.global.locale.value;
 }

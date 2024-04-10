@@ -4,10 +4,10 @@
   <div class="settings-option">
     <div class="settings-option__content">
       <ion-text class="body title">
-        {{ title }}
+        {{ $msTranslate(title) }}
       </ion-text>
       <ion-text class="body-sm description">
-        {{ description }}
+        {{ $msTranslate(description) }}
       </ion-text>
     </div>
     <slot />
@@ -15,11 +15,12 @@
 </template>
 
 <script setup lang="ts">
+import { Translatable } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 
 defineProps<{
-  title: string;
-  description?: string;
+  title: Translatable;
+  description?: Translatable;
 }>();
 </script>
 

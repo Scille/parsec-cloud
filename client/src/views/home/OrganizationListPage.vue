@@ -41,8 +41,8 @@
           </ion-title>
           <div class="invitation-link">
             <ms-input
-              :label="$msTranslate('HomePage.noDevices.invitationLink')"
-              :placeholder="$msTranslate('JoinOrganization.linkFormPlaceholder')"
+              :label="'HomePage.noDevices.invitationLink'"
+              :placeholder="'JoinOrganization.linkFormPlaceholder'"
               v-model="link"
               @on-enter-keyup="$emit('joinOrganizationWithLinkClick', link)"
               :validator="claimLinkValidator"
@@ -68,7 +68,7 @@
         <ion-card-title class="organization-filter">
           <!-- No use in showing the sort/filter options for less than one device -->
           <ms-search-input
-            :placeholder="$msTranslate('HomePage.organizationList.search')"
+            :placeholder="'HomePage.organizationList.search'"
             v-model="searchQuery"
             id="ms-search-input"
             ref="searchInputRef"

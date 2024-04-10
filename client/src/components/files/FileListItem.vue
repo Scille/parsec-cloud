@@ -54,7 +54,7 @@
       <!-- last update -->
       <div class="file-lastUpdate">
         <ion-label class="label-last-update cell">
-          {{ formatTimeSince(entry.updated, '--', 'short') }}
+          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-label>
       </div>
 
@@ -64,7 +64,7 @@
           v-show="entry.isFile()"
           class="label-size cell"
         >
-          {{ formatFileSize((entry as FileModel).size) }}
+          {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}
         </ion-label>
       </div>
 

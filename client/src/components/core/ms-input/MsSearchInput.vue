@@ -16,7 +16,7 @@
       class="form-input input"
       ref="inputRef"
       :value="modelValue"
-      :placeholder="placeholder"
+      :placeholder="$msTranslate(placeholder)"
       :clear-input="true"
       @ion-input="onChange($event.target.value)"
       @keyup.enter="onEnterPress()"
@@ -27,13 +27,14 @@
 </template>
 
 <script setup lang="ts">
+import { Translatable } from '@/services/translation';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { search } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const props = defineProps<{
   modelValue?: string;
-  placeholder?: string;
+  placeholder?: Translatable;
 }>();
 
 const inputRef = ref();

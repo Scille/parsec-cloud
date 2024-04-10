@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { Translatable } from '@/services/translation';
+
 export enum MsReportTheme {
   Info = 'ms-info',
   Success = 'ms-success',
@@ -13,11 +15,11 @@ export enum MsAppearance {
 }
 
 export interface MsOption {
-  label: string;
-  description?: string;
+  label: Translatable;
+  description?: Translatable;
   key: any;
   disabled?: boolean;
-  disabledReason?: string;
+  disabledReason?: Translatable;
 }
 
 export class MsOptions {

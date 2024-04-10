@@ -29,8 +29,8 @@
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
-        <span v-show="false">{{ $msTranslate('WorkspacesPage.Workspace.lastUpdate') }}</span>
-        <span v-show="false">{{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}</span>
+        <span v-show="true">{{ $msTranslate('WorkspacesPage.Workspace.lastUpdate') }}</span>
+        <span v-show="true">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
       </ion-text>
 
       <div
@@ -39,7 +39,7 @@
       >
         <ion-text class="label-file-size body-sm">
           <span v-show="false">
-            {{ formatFileSize(workspace.size) }}
+            {{ $msTranslate(formatFileSize(workspace.size)) }}
           </span>
         </ion-text>
         <avatar-group

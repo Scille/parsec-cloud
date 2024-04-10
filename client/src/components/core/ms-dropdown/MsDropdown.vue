@@ -31,15 +31,15 @@
 import MsDropdownPopover from '@/components/core/ms-dropdown/MsDropdownPopover.vue';
 import { MsDropdownChangeEvent } from '@/components/core/ms-dropdown/types';
 import { MsAppearance, MsOption, MsOptions } from '@/components/core/ms-types';
+import { Translatable } from '@/services/translation';
 import { IonButton, IonIcon, IonText, popoverController } from '@ionic/vue';
 import { caretDown, chevronDown } from 'ionicons/icons';
 import { Ref, ref } from 'vue';
 
 const props = defineProps<{
   defaultOptionKey?: any;
-  label?: string;
-  title?: string;
-  description?: string;
+  label?: Translatable;
+  title?: Translatable;
   options: MsOptions;
   disabled?: boolean;
   appearance?: MsAppearance;

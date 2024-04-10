@@ -5,11 +5,7 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetUserStep.WaitForGuest && pageStep < GreetUserStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[
-        $msTranslate('UsersPage.greet.steps.hostCode'),
-        $msTranslate('UsersPage.greet.steps.guestCode'),
-        $msTranslate('UsersPage.greet.steps.contactDetails'),
-      ]"
+      :titles="['UsersPage.greet.steps.hostCode', 'UsersPage.greet.steps.guestCode', 'UsersPage.greet.steps.contactDetails']"
     />
     <ion-buttons
       slot="end"
@@ -94,10 +90,10 @@
           />
           <ms-dropdown
             class="dropdown"
-            :title="$msTranslate('UsersPage.greet.profileDropdownTitle')"
-            :label="$msTranslate('UsersPage.greet.profileDropdownPlaceholder')"
+            :title="'UsersPage.greet.profileDropdownTitle'"
+            :label="'UsersPage.greet.profileDropdownPlaceholder'"
             :options="profileOptions"
-            @change="setUserProfile($event.option.key)"
+            @change="setUserProfile($event.option.key as UserProfile)"
           />
         </div>
 
@@ -224,7 +220,7 @@ const profileOptions: MsOptions = new MsOptions([
   },
 ]);
 
-function getTitleAndSubtitle(): [string, string] {
+function getTitleAndSubtitle(): [Translatable, Translatable] {
   if (pageStep.value === GreetUserStep.WaitForGuest) {
     return ['UsersPage.greet.titles.waitForGuest', ''];
   } else if (pageStep.value === GreetUserStep.ProvideHostSasCode) {
@@ -241,8 +237,8 @@ function getTitleAndSubtitle(): [string, string] {
   return ['', ''];
 }
 
-function setUserProfile(role: string): void {
-  profile.value = role as UserProfile;
+function setUserProfile(role: UserProfile): void {
+  profile.value = role;
 }
 
 const unwatchProfile = watch(profile, async () => {

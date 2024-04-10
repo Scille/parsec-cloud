@@ -8,7 +8,7 @@
     :close-button="{ visible: false }"
     :confirm-button="{
       disabled: false,
-      label: $msTranslate('notification.nextButton'),
+      label: 'notification.nextButton',
       onClick: confirm,
     }"
     @on-enter-keyup="confirm()"

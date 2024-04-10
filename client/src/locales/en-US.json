@@ -4,6 +4,7 @@
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
+        "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
         "license": "BUSL-1.1",
         "licenseLink": "https://github.com/Scille/parsec-cloud/blob/master/LICENSE",
         "history": "https://docs.parsec.cloud/en/stable/history.html"
@@ -517,18 +518,19 @@
             "lastLoginDays": "Today | Yesterday | {days} days ago"
         },
         "filesize": {
-            "bytes": "B",
-            "kilobytes": "KB",
-            "megabytes": "MB",
-            "gigabytes": "GB",
-            "terabytes": "TB"
+            "bytes": "{size} B",
+            "kilobytes": "{size} KB",
+            "megabytes": "{size} MB",
+            "gigabytes": "{size} GB",
+            "terabytes": "{size} TB"
         },
         "deviceTypes": {
             "web": "Web",
             "windows": "Windows",
             "macos": "MacOS",
             "linux": "Linux",
-            "android": "Android"
+            "android": "Android",
+            "unknown": "Unknown"
         },
         "sortBy": "Sort by:"
     },
@@ -979,6 +981,7 @@
         "systemAuthentication": "TBW",
         "cancelButton": "Cancel",
         "nextButton": "Confirm",
+        "passwordPlaceholder": "••••••••••",
         "changePasswordButton": "Update",
         "passwordUpdated": "Password has been updated. You can log in with your new password.",
         "tabs": {

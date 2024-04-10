@@ -5,7 +5,7 @@
     <div
       class="ms-wizard-stepper__step"
       v-for="(title, index) in titles"
-      :key="title"
+      :key="typeof title === 'string' ? title : title.key"
     >
       <ms-wizard-stepper-step
         :status="index < currentIndex ? MsStepStatus.DONE : index === currentIndex ? MsStepStatus.ACTIVE : MsStepStatus.DEFAULT"
@@ -14,7 +14,7 @@
         class="caption-caption step-title"
         :class="index < currentIndex ? MsStepStatus.DONE : ''"
       >
-        {{ title }}
+        {{ $msTranslate(title) }}
       </ion-text>
     </div>
   </div>
@@ -23,10 +23,11 @@
 <script setup lang="ts">
 import MsWizardStepperStep from '@/components/core/ms-stepper/MsWizardStepperStep.vue';
 import { MsStepStatus } from '@/components/core/ms-stepper/types';
+import { Translatable } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 
 defineProps<{
-  titles: string[];
+  titles: Translatable[];
   currentIndex: number;
 }>();
 </script>

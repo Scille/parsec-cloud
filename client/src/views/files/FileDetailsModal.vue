@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$msTranslate({ key: 'FileDetails.title', data: { name: entry.name } })"
+      :title="{ key: 'FileDetails.title', data: { name: entry.name } }"
       :close-button="{ visible: true }"
     >
       <div class="file-info-container">
@@ -47,7 +47,7 @@
             <ion-label class="file-info-details-item__title caption-caption">
               {{ $msTranslate('FileDetails.stats.size') }}
             </ion-label>
-            <span class="file-info-details-item__value body">{{ formatFileSize((entry as EntryStatFile).size) }}</span>
+            <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
           </div>
           <!-- Version -->
           <div class="file-info-details-item">

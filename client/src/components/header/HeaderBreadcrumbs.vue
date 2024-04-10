@@ -20,7 +20,7 @@
         v-if="path.icon"
         :icon="path.icon"
       />
-      {{ path.display }}
+      {{ path.display ? path.display : $msTranslate(path.title) }}
       <ion-icon
         class="separator-icon"
         slot="separator"
@@ -33,7 +33,8 @@
 <script lang="ts">
 export interface RouterPathNode {
   id: number;
-  display: string;
+  display?: string;
+  title?: Translatable;
   icon?: string;
   name: string;
   params?: object;
@@ -43,6 +44,7 @@ export interface RouterPathNode {
 
 <script setup lang="ts">
 import { Query } from '@/router';
+import { Translatable } from '@/services/translation';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
 import { Ref, computed, ref } from 'vue';

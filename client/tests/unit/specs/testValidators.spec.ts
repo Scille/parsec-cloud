@@ -1,6 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { translate } from '@/services/translation';
 import { mockValidators } from '@tests/component/support/mocks';
+import { it } from 'vitest';
 
 mockValidators();
 
@@ -11,60 +13,42 @@ const VALID_TOKEN = 'a'.repeat(32);
 describe('Validators', () => {
   it('Validates organization name', async () => {
     const invalidNameResult = await organizationValidator('Org#');
-    expect(invalidNameResult.reason).to.equal('Only letters, digits, underscores and hyphens. No spaces.');
+    expect(translate(invalidNameResult.reason)).to.equal('Only letters, digits, underscores and hyphens. No spaces.');
 
     const nameTooLongResult = await organizationValidator('a'.repeat(33));
-    expect(nameTooLongResult.reason).to.equal('Name is too long, limit is 32 characters.');
+    expect(translate(nameTooLongResult.reason)).to.equal('Name is too long, limit is 32 characters.');
   });
 
-  it('Validates claim link', async () => {
-    const invalidProtocolResult = await claimLinkValidator(`http://host/org?action=claim_user&token=${VALID_TOKEN}`);
-    expect(invalidProtocolResult.reason).to.equal("Link should start with 'parsec3://'.");
-
-    const missingActionResult = await claimLinkValidator(`parsec3://host/org?token=${VALID_TOKEN}`);
-    expect(missingActionResult.reason).to.equal('Link does not include an action.');
-
-    const invalidActionResult = await claimLinkValidator(`parsec3://host/org?action=bootstrap_organization&token=${VALID_TOKEN}`);
-    expect(invalidActionResult.reason).to.equal('Link contains an invalid action.');
-
-    const missingTokenResult = await claimLinkValidator('parsec3://host/org?action=claim_user');
-    expect(missingTokenResult.reason).to.equal('Link does not include a token.');
-
-    const invalidTokenResult = await claimLinkValidator('parsec3://host/org?action=claim_user&token=abcdefg');
-    expect(invalidTokenResult.reason).to.equal('Link contains an invalid token.');
+  it.each([
+    [`http://host/org?action=claim_user&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
+    [`parsec3://host/org?action=bootstrap_organization&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?action=claim_user', 'Link does not include a token.'],
+    ['parsec3://host/org?action=claim_user&token=abcdefg', 'Link contains an invalid token.'],
+  ])('Validates claim link', async (link: string, expected: string) => {
+    const invalidProtocolResult = await claimLinkValidator(link);
+    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
-  it('Validates claim user', async () => {
-    const invalidProtocolResult = await claimUserLinkValidator(`http://host/org?action=claim_user&token=${VALID_TOKEN}`);
-    expect(invalidProtocolResult.reason).to.equal("Link should start with 'parsec3://'.");
-
-    const missingActionResult = await claimUserLinkValidator(`parsec3://host/org?token=${VALID_TOKEN}`);
-    expect(missingActionResult.reason).to.equal('Link does not include an action.');
-
-    const invalidActionResult = await claimUserLinkValidator(`parsec3://host/org?action=claim_device&token=${VALID_TOKEN}`);
-    expect(invalidActionResult.reason).to.equal('Link contains an invalid action.');
-
-    const missingTokenResult = await claimUserLinkValidator('parsec3://host/org?action=claim_user');
-    expect(missingTokenResult.reason).to.equal('Link does not include a token.');
-
-    const invalidTokenResult = await claimUserLinkValidator('parsec3://host/org?action=claim_user&token=abcdefg');
-    expect(invalidTokenResult.reason).to.equal('Link contains an invalid token.');
+  it.each([
+    [`http://host/org?action=claim_user&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
+    [`parsec3://host/org?action=claim_device&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?action=claim_user', 'Link does not include a token.'],
+    ['parsec3://host/org?action=claim_user&token=abcdefg', 'Link contains an invalid token.'],
+  ])('Validates claim user', async (link: string, expected: string) => {
+    const invalidProtocolResult = await claimUserLinkValidator(link);
+    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
-  it('Validates claim device', async () => {
-    const invalidProtocolResult = await claimDeviceLinkValidator(`http://host/org?action=claim_device&token=${VALID_TOKEN}`);
-    expect(invalidProtocolResult.reason).to.equal("Link should start with 'parsec3://'.");
-
-    const missingActionResult = await claimDeviceLinkValidator(`parsec3://host/org?token=${VALID_TOKEN}`);
-    expect(missingActionResult.reason).to.equal('Link does not include an action.');
-
-    const invalidActionResult = await claimDeviceLinkValidator(`parsec3://host/org?action=claim_user&token=${VALID_TOKEN}`);
-    expect(invalidActionResult.reason).to.equal('Link contains an invalid action.');
-
-    const missingTokenResult = await claimDeviceLinkValidator('parsec3://host/org?action=claim_device');
-    expect(missingTokenResult.reason).to.equal('Link does not include a token.');
-
-    const invalidTokenResult = await claimDeviceLinkValidator('parsec3://host/org?action=claim_device&token=abcdefg');
-    expect(invalidTokenResult.reason).to.equal('Link contains an invalid token.');
+  it.each([
+    [`http://host/org?action=claim_device&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
+    [`parsec3://host/org?action=claim_user&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?action=claim_device', 'Link does not include a token.'],
+    ['parsec3://host/org?action=claim_device&token=abcdefg', 'Link contains an invalid token.'],
+  ])('Validates claim device', async (link: string, expected: string) => {
+    const invalidProtocolResult = await claimDeviceLinkValidator(link);
+    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 });

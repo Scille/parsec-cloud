@@ -7,7 +7,7 @@
       class="form-label"
       v-show="label"
     >
-      {{ label }}
+      {{ $msTranslate(label) }}
     </span>
     <ion-item
       class="input-item"
@@ -63,7 +63,7 @@ const passwordVisible = ref(false);
 const hasFocus = ref(false);
 
 const props = defineProps<{
-  label?: string;
+  label?: Translatable;
   modelValue?: string;
   errorMessage?: Translatable;
   passwordIsInvalid?: boolean;

@@ -11,12 +11,13 @@
 
 <script setup lang="ts">
 import { openInformationTooltip } from '@/components/core/ms-tooltip/utils';
+import { Translatable } from '@/services/translation';
 import { IonIcon } from '@ionic/vue';
 import { informationCircle } from 'ionicons/icons';
 
 defineProps<{
-  text: string;
-  slot: string;
+  text: Translatable;
+  slot: 'start' | 'end';
 }>();
 </script>
 

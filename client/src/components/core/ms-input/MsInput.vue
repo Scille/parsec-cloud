@@ -7,7 +7,7 @@
       class="form-label"
       v-show="label"
     >
-      {{ label }}
+      {{ $msTranslate(label) }}
     </span>
 
     <ion-item
@@ -25,7 +25,7 @@
           input: !$props.disabled,
         }"
         ref="inputRef"
-        :placeholder="$props.placeholder"
+        :placeholder="$msTranslate(placeholder)"
         :value="modelValue"
         @ion-input="onChange($event.detail.value || '')"
         @keyup.enter="enterPressed($event.target.value)"
@@ -40,27 +40,28 @@
         class="form-error-icon"
         :icon="warning"
       />
-      {{ errorMessage }}
+      {{ $msTranslate(errorMessage) }}
     </span>
   </div>
 </template>
 
 <script setup lang="ts">
 import { IValidator, Validity } from '@/common/validators';
+import { Translatable } from '@/services/translation';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
-import { ref } from 'vue';
+import { Ref, ref } from 'vue';
 
 const props = defineProps<{
-  label?: string;
-  placeholder?: string;
+  label?: Translatable;
+  placeholder?: Translatable;
   modelValue?: string;
   disabled?: boolean;
   validator?: IValidator;
 }>();
 
 const inputRef = ref();
-const errorMessage = ref('');
+const errorMessage: Ref<Translatable> = ref('');
 const validity = ref(Validity.Intermediate);
 
 const emits = defineEmits<{

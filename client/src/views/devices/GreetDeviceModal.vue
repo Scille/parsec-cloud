@@ -8,7 +8,7 @@
     <ms-wizard-stepper
       v-show="pageStep > GreetDeviceStep.WaitForGuest && pageStep < GreetDeviceStep.Summary"
       :current-index="getStepperIndex()"
-      :titles="[$msTranslate('DevicesPage.greet.steps.hostCode'), $msTranslate('DevicesPage.greet.steps.guestCode')]"
+      :titles="['DevicesPage.greet.steps.hostCode', 'DevicesPage.greet.steps.guestCode']"
     />
     <ion-buttons
       slot="end"
@@ -277,7 +277,7 @@ const linkCopiedToClipboard = ref(false);
 const cancelled = ref(false);
 
 interface GreetDeviceTitle {
-  title: string;
+  title: Translatable;
   subtitle?: Translatable;
 }
 

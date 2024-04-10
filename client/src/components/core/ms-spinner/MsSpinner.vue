@@ -3,7 +3,7 @@
 <template>
   <div class="container">
     <ion-text class="subtitles-normal container-text">
-      {{ title }}
+      {{ $msTranslate(title) }}
     </ion-text>
     <ion-spinner
       name="crescent"
@@ -13,10 +13,11 @@
 </template>
 
 <script setup lang="ts">
+import { Translatable } from '@/services/translation';
 import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{
-  title: string;
+  title: Translatable;
 }>();
 </script>
 

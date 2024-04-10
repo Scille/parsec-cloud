@@ -6,7 +6,7 @@ import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
 import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { Answer, FolderSelectionOptions, GetPasswordOptions, GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { FsPath } from '@/parsec';
-import { Translatable, msTranslate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 
 export interface QuestionOptions {
@@ -28,10 +28,10 @@ export async function askQuestion(title: Translatable, subtitle: Translatable, o
     backdropDismiss: false,
     cssClass: 'question-modal',
     componentProps: {
-      title: msTranslate(title),
-      subtitle: msTranslate(subtitle),
-      yesText: msTranslate(options?.yesText),
-      noText: msTranslate(options?.noText),
+      title: title,
+      subtitle: subtitle,
+      yesText: options?.yesText,
+      noText: options?.noText,
       yesIsDangerous: options?.yesIsDangerous,
     },
   });
@@ -74,13 +74,13 @@ export async function getTextInputFromUser(options: GetTextOptions): Promise<str
     canDismiss: true,
     cssClass: 'text-input-modal',
     componentProps: {
-      title: msTranslate(options.title),
-      subtitle: msTranslate(options.subtitle),
+      title: options.title,
+      subtitle: options.subtitle,
       trim: options.trim,
       validator: options.validator,
-      inputLabel: msTranslate(options.inputLabel),
-      placeholder: msTranslate(options.placeholder),
-      okButtonText: msTranslate(options.okButtonText),
+      inputLabel: options.inputLabel,
+      placeholder: options.placeholder,
+      okButtonText: options.okButtonText,
       defaultValue: options.defaultValue,
       selectionRange: options.selectionRange,
     },

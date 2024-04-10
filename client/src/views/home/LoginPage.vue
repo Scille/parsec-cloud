@@ -14,14 +14,14 @@
       </ion-card-header>
       <ion-card-content class="login-card-content">
         <ms-input
-          :label="$msTranslate('HomePage.organizationLogin.emailLabel')"
-          :placeholder="device.humanHandle.email"
+          :label="'HomePage.organizationLogin.emailLabel'"
+          v-model="email"
           id="ms-input"
           :disabled="true"
         />
         <div class="login-card-content__password">
           <ms-password-input
-            :label="$msTranslate('HomePage.organizationLogin.passwordLabel')"
+            :label="'HomePage.organizationLogin.passwordLabel'"
             ref="passwordInputRef"
             v-model="password"
             @on-enter-keyup="onLoginClick()"
@@ -80,6 +80,7 @@ const passwordInputRef = ref();
 const password = ref('');
 const errorMessage = ref('');
 const passwordIsInvalid = ref(false);
+const email = props.device.humanHandle.email;
 
 onMounted(async () => {
   await passwordInputRef.value.setFocus();

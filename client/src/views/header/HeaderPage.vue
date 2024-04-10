@@ -129,7 +129,7 @@ import {
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { msTranslate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import {
@@ -182,7 +182,7 @@ async function updateRoute(): Promise<void> {
     fullPath.value = [
       {
         id: 0,
-        display: msTranslate('HeaderPage.titles.workspaces'),
+        title: 'HeaderPage.titles.workspaces',
         icon: home,
         name: Routes.Workspaces,
         params: {},
@@ -202,7 +202,6 @@ async function updateRoute(): Promise<void> {
     const finalPath: RouterPathNode[] = [];
     finalPath.push({
       id: 0,
-      display: '',
       icon: home,
       name: Routes.Workspaces,
       params: {},
@@ -266,7 +265,7 @@ onUnmounted(async () => {
   routeWatchCancel();
 });
 
-function getTitleForRoute(): string {
+function getTitleForRoute(): Translatable {
   switch (getCurrentRouteName()) {
     case Routes.Settings:
       return 'HeaderPage.titles.settings';

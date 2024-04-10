@@ -1,21 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Platform } from '@/parsec';
-import { msTranslate } from '@/services/translation';
 
 export async function getDefaultDeviceName(): Promise<string> {
   switch (window.getPlatform()) {
     case Platform.Web:
-      return msTranslate('common.deviceTypes.web');
+      return 'common.deviceTypes.web';
     case Platform.Android:
-      return msTranslate('common.deviceTypes.android');
+      return 'common.deviceTypes.android';
     case Platform.Windows:
-      return msTranslate('common.deviceTypes.windows');
+      return 'common.deviceTypes.windows';
     case Platform.MacOS:
-      return msTranslate('common.deviceTypes.macos');
+      return 'common.deviceTypes.macos';
     case Platform.Linux:
-      return msTranslate('common.deviceTypes.linux');
+      return 'common.deviceTypes.linux';
     default:
-      return 'Unknown';
+      return 'common.deviceTypes.unknown';
   }
 }

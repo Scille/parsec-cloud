@@ -6,6 +6,6 @@ import { Translatable } from '@/services/translation';
 
 declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
-    $msTranslate: (translatable: Translatable) => string;
+    $msTranslate: (translatable: Translatable | undefined) => string;
   }
 }

@@ -59,7 +59,7 @@
       v-show="false"
     >
       <ion-label class="label-last-update cell">
-        {{ formatTimeSince(workspace.lastUpdated, '--', 'short') }}
+        {{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}
       </ion-label>
     </div>
 
@@ -69,7 +69,7 @@
       v-show="false"
     >
       <ion-label class="label-size cell">
-        {{ formatFileSize(workspace.size) }}
+        {{ $msTranslate(formatFileSize(workspace.size)) }}
       </ion-label>
     </div>
 

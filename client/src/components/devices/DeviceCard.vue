@@ -15,7 +15,7 @@
       </ion-text>
       <ion-text class="join-date body-sm">
         {{ $msTranslate('DevicesPage.joinedOn') }}
-        <span v-if="date">{{ formatTimeSince(date, '--', 'short', true) }}</span>
+        <span v-if="date">{{ $msTranslate(formatTimeSince(date, '--', 'short', true)) }}</span>
         <span
           v-if="!date"
           class="join-date-now"
@@ -37,12 +37,13 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
+import { Translatable } from '@/services/translation';
 import { IonIcon, IonText } from '@ionic/vue';
 import { desktopOutline } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 
 defineProps<{
-  label: string;
+  label: Translatable;
   isCurrent: boolean;
   date?: DateTime;
 }>();

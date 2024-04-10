@@ -6,14 +6,14 @@
       class="button-small tag"
       :class="getClassForProfile(profile)"
     >
-      {{ translateProfile(profile) }}
+      {{ $msTranslate(getProfileTranslationKey(profile)) }}
     </ion-chip>
   </ion-label>
 </template>
 
 <script setup lang="ts">
 import { UserProfile } from '@/parsec';
-import { translateProfile } from '@/services/translation';
+import { getProfileTranslationKey } from '@/services/translation';
 import { IonChip, IonLabel } from '@ionic/vue';
 
 defineProps<{

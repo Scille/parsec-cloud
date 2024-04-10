@@ -2,7 +2,7 @@
 
 import { formatFileSize, shortenFileName } from '@/common/file';
 import { Path } from '@/parsec';
-import { initTranslations } from '@/services/translation';
+import { initTranslations, translate } from '@/services/translation';
 import { it } from 'vitest';
 
 describe('File', () => {
@@ -83,11 +83,11 @@ describe('File', () => {
     ['9.99 GB', 10_737_418_239],
     ['10.0 GB', 10_737_418_240],
   ])('Gets the right format for the size', async (expected, bytes) => {
-    expect(formatFileSize(bytes)).to.equal(expected);
+    expect(translate(formatFileSize(bytes))).to.equal(expected);
   });
 
   it('Handles negative bytes', async () => {
-    expect(() => formatFileSize(-1234)).to.throw('Bytes must be >= 0');
+    expect(() => translate(formatFileSize(-1234))).to.throw('Bytes must be >= 0');
   });
 
   it('Test shorten name', async () => {

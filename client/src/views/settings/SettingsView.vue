@@ -47,8 +47,8 @@
             <ion-list class="settings-list">
               <!-- change lang -->
               <settings-option
-                :title="$msTranslate('SettingsPage.language.label')"
-                :description="$msTranslate('SettingsPage.language.description')"
+                :title="'SettingsPage.language.label'"
+                :description="'SettingsPage.language.description'"
               >
                 <ms-dropdown
                   class="dropdown"
@@ -60,8 +60,8 @@
               <!-- change theme -->
               <!-- TODO: REMOVE "'light' ? 'light' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
               <settings-option
-                :title="$msTranslate('SettingsPage.theme.label')"
-                :description="$msTranslate('SettingsPage.theme.description')"
+                :title="'SettingsPage.theme.label'"
+                :description="'SettingsPage.theme.description'"
               >
                 <ms-dropdown
                   class="dropdown"
@@ -74,8 +74,8 @@
               <!-- minimize in status bar -->
               <settings-option
                 v-if="isPlatform('electron')"
-                :title="$msTranslate('SettingsPage.minimizeToSystemTray.label')"
-                :description="$msTranslate('SettingsPage.minimizeToSystemTray.description')"
+                :title="'SettingsPage.minimizeToSystemTray.label'"
+                :description="'SettingsPage.minimizeToSystemTray.description'"
               >
                 <ion-toggle v-model="config.minimizeToTray" />
               </settings-option>
@@ -90,23 +90,23 @@
             <ion-list class="settings-list">
               <!-- send error report -->
               <settings-option
-                :title="$msTranslate('SettingsPage.enableTelemetry.label')"
-                :description="$msTranslate('SettingsPage.enableTelemetry.description')"
+                :title="'SettingsPage.enableTelemetry.label'"
+                :description="'SettingsPage.enableTelemetry.description'"
               >
                 <ion-toggle v-model="config.enableTelemetry" />
               </settings-option>
               <!-- display unsync files -->
               <settings-option
-                :title="$msTranslate('SettingsPage.unsyncFiles.label')"
-                :description="$msTranslate('SettingsPage.unsyncFiles.description')"
+                :title="'SettingsPage.unsyncFiles.label'"
+                :description="'SettingsPage.unsyncFiles.description'"
               >
                 <ion-toggle v-model="config.unsyncFiles" />
               </settings-option>
               <!-- synchro wifi -->
               <settings-option
                 v-if="false"
-                :title="$msTranslate('SettingsPage.meteredConnection.label')"
-                :description="$msTranslate('SettingsPage.meteredConnection.description')"
+                :title="'SettingsPage.meteredConnection.label'"
+                :description="'SettingsPage.meteredConnection.description'"
               >
                 <ion-toggle v-model="config.meteredConnection" />
               </settings-option>
