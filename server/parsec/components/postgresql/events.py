@@ -12,6 +12,7 @@ from structlog import get_logger
 from parsec._parsec import DeviceID, OrganizationID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import parse_signal, send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm_queries.get import query_get_realms_for_user
@@ -25,7 +26,7 @@ logger = get_logger()
 
 # async def _send_event(
 #     event: Event,
-#     conn: asyncpg.Connection | None = None,
+#     conn: AsyncpgConnection | None = None,
 # ) -> None:
 #     if conn is None:
 #         async with dbh.pool.acquire() as conn:
@@ -97,7 +98,7 @@ async def event_bus_factory(url: str) -> AsyncIterator[PGEventBus]:
 
 
 class PGEventsComponent(BaseEventsComponent):
-    def __init__(self, pool: asyncpg.Pool, config: BackendConfig, event_bus: EventBus):
+    def __init__(self, pool: AsyncpgPool, config: BackendConfig, event_bus: EventBus):
         super().__init__(config, event_bus)
         self.pool = pool
         self.organization: PGOrganizationComponent
@@ -112,7 +113,7 @@ class PGEventsComponent(BaseEventsComponent):
     @override
     @transaction
     async def _get_registration_info_for_author(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, author: DeviceID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:

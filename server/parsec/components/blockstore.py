@@ -4,8 +4,6 @@ from __future__ import annotations
 from enum import auto
 from typing import TYPE_CHECKING
 
-import asyncpg
-
 from parsec._parsec import BlockID, OrganizationID
 from parsec.config import (
     BaseBlockStoreConfig,
@@ -21,6 +19,7 @@ from parsec.types import BadOutcomeEnum
 
 if TYPE_CHECKING:
     from parsec.components.memory.datamodel import MemoryDatamodel
+    from parsec.components.postgresql import AsyncpgPool
 
 
 class BlockStoreReadBadOutcome(BadOutcomeEnum):
@@ -72,7 +71,7 @@ class BaseBlockStoreComponent:
 
 def blockstore_factory(
     config: BaseBlockStoreConfig,
-    postgresql_pool: asyncpg.Pool | None = None,
+    postgresql_pool: AsyncpgPool | None = None,
     mocked_data: MemoryDatamodel | None = None,
 ) -> BaseBlockStoreComponent:
     if isinstance(config, MockedBlockStoreConfig):

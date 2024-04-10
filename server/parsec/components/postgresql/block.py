@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import override
 
-import asyncpg
 from asyncpg.exceptions import UniqueViolationError
 
 from parsec._parsec import (
@@ -27,6 +26,7 @@ from parsec.components.blockstore import (
     BlockStoreReadBadOutcome,
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
@@ -132,7 +132,7 @@ WHERE
 
 
 # async def _check_realm(
-#     conn: asyncpg.Connection,
+#     conn: AsyncpgConnection,
 #     organization_id: OrganizationID,
 #     realm_id: VlobID,
 #     operation_kind: OperationKind,
@@ -153,7 +153,7 @@ WHERE
 
 
 class PGBlockComponent(BaseBlockComponent):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: AsyncpgPool):
         self.pool = pool
         self.blockstore: BaseBlockStoreComponent
         self.user: PGUserComponent
@@ -177,7 +177,7 @@ class PGBlockComponent(BaseBlockComponent):
     @transaction
     async def read(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
@@ -233,7 +233,7 @@ class PGBlockComponent(BaseBlockComponent):
     @transaction
     async def create(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -330,7 +330,7 @@ class PGBlockComponent(BaseBlockComponent):
     @override
     @transaction
     async def test_dump_blocks(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int, int]]:
         ret = await conn.fetch(*_q_get_all_block_meta(organization_id=organization_id.str))
 
@@ -369,7 +369,7 @@ VALUES ($organization_id, $block_id, $data)
 
 
 class PGBlockStoreComponent(BaseBlockStoreComponent):
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: AsyncpgPool):
         self.pool = pool
 
     async def read(

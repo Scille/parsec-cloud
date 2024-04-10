@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import asyncio
-from typing import AsyncIterator, Awaitable, Callable, Iterator
+from typing import AsyncIterator, Awaitable, Callable, Iterator, TypeAlias
 
 import pytest
 
@@ -9,7 +9,7 @@ from parsec._parsec import DateTime, ParsecAddr
 from parsec.asgi import AsgiApp
 from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
-from parsec.cli.testbed import TestbedBackend
+from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 from parsec.config import BackendConfig, BaseBlockStoreConfig, MockedEmailConfig
 from tests.common.postgresql import reset_postgresql_testbed
@@ -100,14 +100,18 @@ def app(backend: Backend, monkeypatch: pytest.MonkeyPatch) -> Iterator[AsgiApp]:
     yield asgi_app
 
 
+# TODO: Replace with `type` once the linter supports it
+TestbedTemplateDict: TypeAlias = dict[str, TestbedTemplate]
+
+
 @pytest.fixture(scope="session")
-def loaded_templates() -> dict[str, str]:
+def loaded_templates() -> TestbedTemplateDict:
     # Session cache for loaded templates
     return {}
 
 
 @pytest.fixture
-def testbed(backend: Backend, loaded_templates: dict) -> TestbedBackend:
+def testbed(backend: Backend, loaded_templates: TestbedTemplateDict) -> TestbedBackend:
     return TestbedBackend(backend, loaded_templates)
 
 

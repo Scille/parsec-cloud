@@ -21,6 +21,7 @@ from parsec.ballpark import (
 )
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
@@ -70,7 +71,7 @@ from parsec.events import EventVlob
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
         self.pool = pool
         self.event_bus = event_bus
         self.organization: PGOrganizationComponent
@@ -147,7 +148,7 @@ class PGVlobComponent(BaseVlobComponent):
     @transaction
     async def create(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,

@@ -36,7 +36,7 @@ ALLOWED_API_VERSIONS = {
 }
 
 
-def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:
+def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
     # Unlike req/rep types that have an absolute path, `client_ctx`'s type is only
     # specified in the signature by its name, hence we must hack `localns` so that
     # it contains the different possible type names.
@@ -76,8 +76,8 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:
     return fn
 
 
-def collect_apis(*components: Any, include_ping: bool) -> dict[Type[Any], ApiFn]:
-    apis: dict[Type[Any], ApiFn] = {}
+def collect_apis(*components: Any, include_ping: bool) -> dict[Type[Any], ApiFn]:  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
+    apis: dict[Type[Any], ApiFn] = {}  # pyright: ignore[reportMissingTypeArgument] see TODO for Req/Rep above
     for component in components:
         for methname in dir(component):
             meth = getattr(component, methname)

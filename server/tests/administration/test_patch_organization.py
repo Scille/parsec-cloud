@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Any, NotRequired, TypedDict
+
 import httpx
 import pytest
 
@@ -39,7 +41,7 @@ async def test_bad_data(
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
 
-    body_args: dict
+    body_args: dict[str, Any]
     match kind:
         case "bad_json":
             body_args = {"content": b"<dummy>"}
@@ -70,6 +72,12 @@ async def test_bad_method(
     assert response.status_code == 405, response.content
 
 
+class PatchOrganizationParams(TypedDict):
+    is_expired: NotRequired[bool]
+    active_user_limit: NotRequired[int]
+    user_profile_outsider_allowed: NotRequired[bool]
+
+
 @pytest.mark.parametrize(
     "params",
     (
@@ -81,7 +89,7 @@ async def test_bad_method(
     ),
 )
 async def test_ok(
-    params: dict,
+    params: PatchOrganizationParams,
     client: httpx.AsyncClient,
     backend: Backend,
     coolorg: CoolorgRpcClients,

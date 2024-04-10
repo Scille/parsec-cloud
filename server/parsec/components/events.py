@@ -225,7 +225,7 @@ class EventBus:
 
 @dataclass(slots=True)
 class RegisteredClient:
-    channel_sender: MemoryObjectSendStream
+    channel_sender: MemoryObjectSendStream[tuple[Event, bytes]]
     organization_id: OrganizationID
     user_id: UserID
     realms: set[VlobID]

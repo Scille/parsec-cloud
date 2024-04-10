@@ -9,7 +9,11 @@ from typing import Awaitable, Callable
 import asyncpg
 from asyncpg.cluster import TempCluster
 
-from parsec.components.postgresql.handler import _apply_migrations, retrieve_migrations
+from parsec.components.postgresql.handler import (
+    AsyncpgConnection,
+    _apply_migrations,
+    retrieve_migrations,
+)
 
 
 def _patch_url_if_xdist(url: str) -> str:
@@ -23,7 +27,7 @@ def _patch_url_if_xdist(url: str) -> str:
 _pg_db_url = None
 
 
-async def run_migrations(conn: asyncpg.Connection) -> None:
+async def run_migrations(conn: AsyncpgConnection) -> None:
     result = await _apply_migrations(conn, retrieve_migrations(), dry_run=False)
     if result.error:
         migration, msg = result.error
@@ -31,7 +35,7 @@ async def run_migrations(conn: asyncpg.Connection) -> None:
 
 
 async def _execute_pg_query(
-    url: str, query: str | Callable[[asyncpg.Connection], Awaitable[None]]
+    url: str, query: str | Callable[[AsyncpgConnection], Awaitable[None]]
 ) -> None:
     conn = await asyncpg.connect(url)
     if callable(query):

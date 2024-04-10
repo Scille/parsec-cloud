@@ -17,6 +17,7 @@ from structlog.stdlib import get_logger
 from typing_extensions import ParamSpec
 
 from parsec._parsec import ActiveUsersLimit, DateTime
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.events import AnyEvent, Event
 
 from . import migrations as migrations_module
@@ -89,7 +90,7 @@ async def apply_migrations(
 
 
 async def _apply_migrations(
-    conn: asyncpg.Connection, migrations: Iterable[MigrationItem], dry_run: bool
+    conn: AsyncpgConnection, migrations: Iterable[MigrationItem], dry_run: bool
 ) -> MigrationResult:
     error = None
     already_applied = []
@@ -111,7 +112,7 @@ async def _apply_migrations(
     return MigrationResult(already_applied=already_applied, new_apply=new_apply, error=error)
 
 
-async def _apply_migration(conn: asyncpg.Connection, migration: MigrationItem) -> None:
+async def _apply_migration(conn: AsyncpgConnection, migration: MigrationItem) -> None:
     async with conn.transaction():
         await conn.execute(migration.sql)
         if migration.idx >= CREATE_MIGRATION_TABLE_ID:
@@ -120,12 +121,12 @@ async def _apply_migration(conn: asyncpg.Connection, migration: MigrationItem) -
             await conn.execute(sql, migration.idx, migration.name, datetime.now())
 
 
-async def _last_migration_row(conn: asyncpg.Connection) -> int:
+async def _last_migration_row(conn: AsyncpgConnection) -> int:
     query = "SELECT _id FROM migration ORDER BY applied desc LIMIT 1"
     return await conn.fetchval(query)
 
 
-async def _is_initial_migration_applied(conn: asyncpg.Connection) -> bool:
+async def _is_initial_migration_applied(conn: AsyncpgConnection) -> bool:
     query = "SELECT _id FROM organization LIMIT 1"
     try:
         await conn.fetchval(query)
@@ -135,7 +136,7 @@ async def _is_initial_migration_applied(conn: asyncpg.Connection) -> bool:
         return True
 
 
-async def _idx_limit(conn: asyncpg.Connection) -> int:
+async def _idx_limit(conn: AsyncpgConnection) -> int:
     idx_limit = 0
     try:
         idx_limit = await _last_migration_row(conn)
@@ -161,7 +162,7 @@ def retry_on_unique_violation(
     return wrapper
 
 
-async def handle_datetime(conn: asyncpg.Connection) -> None:
+async def handle_datetime(conn: AsyncpgConnection) -> None:
     await conn.set_type_codec(
         "timestamptz",
         encoder=lambda x: (int(x.timestamp() * 1000000) - MICRO_SECONDS_BETWEEN_1970_AND_2000,),
@@ -173,7 +174,7 @@ async def handle_datetime(conn: asyncpg.Connection) -> None:
     )
 
 
-async def handle_uuid(conn: asyncpg.Connection) -> None:
+async def handle_uuid(conn: AsyncpgConnection) -> None:
     await conn.set_type_codec(
         "uuid",
         encoder=lambda x: x.hex,
@@ -182,7 +183,7 @@ async def handle_uuid(conn: asyncpg.Connection) -> None:
     )
 
 
-async def handle_integer(conn: asyncpg.Connection) -> None:
+async def handle_integer(conn: AsyncpgConnection) -> None:
     def _encode(x: int | ActiveUsersLimit) -> str:
         if isinstance(x, ActiveUsersLimit):
             # encoder cannot return `None`. `NO_LIMIT` case should be handled before the insertion/update
@@ -204,12 +205,12 @@ async def handle_integer(conn: asyncpg.Connection) -> None:
 @asynccontextmanager
 async def asyncpg_pool_factory(
     url: str, min_connections: int, max_connections: int
-) -> AsyncIterator[asyncpg.Pool]:
+) -> AsyncIterator[AsyncpgPool]:
     # By default AsyncPG only work with Python standard `datetime.DateTime`
     # for timestamp types, here we override this behavior to uses our own custom
     # - DateTime type
     # - Uuid type
-    async def _init_connection(conn: asyncpg.Connection) -> None:
+    async def _init_connection(conn: AsyncpgConnection) -> None:
         await handle_datetime(conn)
         await handle_uuid(conn)
         await handle_integer(conn)
@@ -223,7 +224,7 @@ async def asyncpg_pool_factory(
         yield pool
 
 
-async def send_signal(conn: asyncpg.Connection, event: Event) -> None:
+async def send_signal(conn: AsyncpgConnection, event: Event) -> None:
     # PostgreSQL's NOTIFY only accept string as payload, hence we must
     # use base64 on our payload...
     any_event = AnyEvent(event=event)

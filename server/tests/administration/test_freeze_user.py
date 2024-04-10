@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Any
+
 import httpx
 import pytest
 
@@ -39,7 +41,7 @@ async def test_bad_data(
 ) -> None:
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
 
-    body_args: dict
+    body_args: dict[str, Any]
     match kind:
         case "bad_json":
             body_args = {"content": b"<dummy>"}

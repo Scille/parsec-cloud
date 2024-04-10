@@ -92,7 +92,7 @@ class Backend:
     # Only available if `config.db_url == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
 
-    apis: dict[Type[Any], ApiFn] = field(init=False)
+    apis: dict[Type[Any], ApiFn] = field(init=False)  # pyright: ignore[reportMissingTypeArgument] Req/Rep are currently untyped
 
     def __post_init__(self) -> None:
         self.apis = collect_apis(

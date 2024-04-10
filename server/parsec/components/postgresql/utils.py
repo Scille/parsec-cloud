@@ -5,10 +5,11 @@ import re
 from functools import wraps
 from typing import Any, Awaitable, Callable, Protocol, TypeVar, cast
 
-import asyncpg
 from typing_extensions import Concatenate, ParamSpec
 
 from parsec.types import BadOutcome
+
+from . import AsyncpgConnection, AsyncpgPool
 
 T = TypeVar("T")
 P = ParamSpec("P")
@@ -245,17 +246,17 @@ COALESCE(
 def query(
     in_transaction: bool = False,
 ) -> Callable[
-    [Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]],
-    Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
+    [Callable[Concatenate[AsyncpgConnection, P], Awaitable[T]]],
+    Callable[Concatenate[AsyncpgConnection, P], Awaitable[T]],
 ]:
     if not in_transaction:
         return lambda fn: fn
 
     def decorator(
-        fn: Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]],
-    ) -> Callable[Concatenate[asyncpg.Connection, P], Awaitable[T]]:
+        fn: Callable[Concatenate[AsyncpgConnection, P], Awaitable[T]],
+    ) -> Callable[Concatenate[AsyncpgConnection, P], Awaitable[T]]:
         @wraps(fn)
-        async def wrapper(conn: asyncpg.Connection, *args: P.args, **kwargs: P.kwargs) -> T:
+        async def wrapper(conn: AsyncpgConnection, *args: P.args, **kwargs: P.kwargs) -> T:
             async with conn.transaction():
                 return await fn(conn, *args, **kwargs)
 
@@ -265,11 +266,11 @@ def query(
 
 
 class WithPool(Protocol):
-    pool: asyncpg.Pool
+    pool: AsyncpgPool
 
 
 def transaction[**P, T, S: WithPool](
-    func: Callable[Concatenate[S, asyncpg.Connection, P], Awaitable[T]],
+    func: Callable[Concatenate[S, AsyncpgConnection, P], Awaitable[T]],
 ):
     """
     This is used to decorate API method that need to be executed in a transaction.
@@ -279,7 +280,7 @@ def transaction[**P, T, S: WithPool](
 
     async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
         async with self.pool.acquire() as conn:
-            conn = cast(asyncpg.Connection, conn)
+            conn = cast(AsyncpgConnection, conn)
             transaction = conn.transaction()
             await transaction.start()
             try:

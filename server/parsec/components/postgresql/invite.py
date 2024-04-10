@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from typing import override
 
-import asyncpg
-
 from parsec._parsec import (
     DateTime,
     HumanHandle,
@@ -32,6 +30,7 @@ from parsec.components.invite import (
     UserInvitation,
 )
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
@@ -152,7 +151,7 @@ WHERE
 
 
 # async def _do_delete_invitation(
-#     conn: asyncpg.Connection,
+#     conn: AsyncpgConnection,
 #     organization_id: OrganizationID,
 #     greeter: UserID,
 #     token: InvitationToken,
@@ -306,7 +305,7 @@ WHERE
 
 
 async def _do_new_user_or_device_invitation(
-    conn: asyncpg.Connection,
+    conn: AsyncpgConnection,
     organization_id: OrganizationID,
     author_user_id: UserID,
     claimer_email: str | None,
@@ -361,7 +360,7 @@ async def _do_new_user_or_device_invitation(
 
 
 async def _human_handle_from_user_id(
-    conn: asyncpg.Connection, organization_id: OrganizationID, user_id: UserID
+    conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
 ) -> HumanHandle:
     raise NotImplementedError
     # row = await conn.fetchrow(
@@ -374,7 +373,7 @@ async def _human_handle_from_user_id(
 
 
 class PGInviteComponent(BaseInviteComponent):
-    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus, config: BackendConfig) -> None:
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus, config: BackendConfig) -> None:
         super().__init__(event_bus, config)
         self.pool = pool
         self.organization: PGOrganizationComponent
@@ -389,7 +388,7 @@ class PGInviteComponent(BaseInviteComponent):
     @transaction
     async def new_for_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: UserID,
@@ -432,7 +431,7 @@ class PGInviteComponent(BaseInviteComponent):
     @transaction
     async def new_for_device(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: UserID,
@@ -468,7 +467,7 @@ class PGInviteComponent(BaseInviteComponent):
     @transaction
     async def cancel(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: UserID,
@@ -575,7 +574,7 @@ class PGInviteComponent(BaseInviteComponent):
         return invitations
 
     async def _info_as_invited(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, token: InvitationToken
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -681,7 +680,7 @@ class PGInviteComponent(BaseInviteComponent):
     @transaction
     async def _conduit_talk(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         token: InvitationToken,
         is_greeter: bool,
@@ -796,7 +795,7 @@ class PGInviteComponent(BaseInviteComponent):
     @transaction
     async def _conduit_listen(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         ctx: ConduitListenCtx,
     ) -> tuple[bytes, bool] | None | InviteConduitExchangeBadOutcome:

@@ -2,8 +2,6 @@
 
 from typing import override
 
-import asyncpg
-
 from parsec._parsec import DateTime, DeviceCertificate, DeviceID, InvitationToken, OrganizationID
 from parsec.components.auth import (
     AnonymousAuthInfo,
@@ -17,6 +15,7 @@ from parsec.components.auth import (
 from parsec.components.events import EventBus
 from parsec.components.invite import DeviceInvitation, UserInvitation
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.invite import InviteAsInvitedInfoBadOutcome, PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user_queries.get import query_check_user_for_authentication
@@ -28,7 +27,7 @@ from parsec.config import BackendConfig
 
 
 class PGAuthComponent(BaseAuthComponent):
-    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus, config: BackendConfig) -> None:
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus, config: BackendConfig) -> None:
         super().__init__(event_bus, config)
         self.pool = pool
         self.organization: PGOrganizationComponent
@@ -44,7 +43,7 @@ class PGAuthComponent(BaseAuthComponent):
     @transaction
     async def anonymous_auth(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         spontaneous_bootstrap: bool,
@@ -70,7 +69,7 @@ class PGAuthComponent(BaseAuthComponent):
     @transaction
     async def invited_auth(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         token: InvitationToken,
@@ -99,7 +98,7 @@ class PGAuthComponent(BaseAuthComponent):
     @transaction
     async def _get_authenticated_info(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
