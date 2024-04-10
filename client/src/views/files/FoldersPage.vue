@@ -200,6 +200,7 @@ import {
 } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { Translatable } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import FileUploadModal from '@/views/files/FileUploadModal.vue';
@@ -647,7 +648,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.rename(workspaceInfo.value.handle, filePath, newName);
   if (!result.ok) {
-    let message;
+    let message: Translatable = '';
     switch (result.error.tag) {
       case parsec.WorkspaceRenameEntryErrorTag.DestinationExists:
         message = 'FoldersPage.errors.renameFailedAlreadyExists';

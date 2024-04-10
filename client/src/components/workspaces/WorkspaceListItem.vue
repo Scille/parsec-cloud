@@ -6,7 +6,7 @@
     class="workspace-list-item"
     :detail="false"
     :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
-    @click="$emit('click', $event, workspace)"
+    @click="$emit('click', workspace, $event)"
   >
     <!-- workspace name -->
     <div class="workspace-name">
@@ -42,12 +42,12 @@
         class="shared-group"
         :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
         :max-display="2"
-        @click.stop="$emit('shareClick', $event, workspace)"
+        @click.stop="$emit('shareClick', workspace, $event)"
       />
       <ion-label
         class="label-not-shared cell"
         v-show="workspace.sharing.length !== 0"
-        @click.stop="$emit('shareClick', $event, workspace)"
+        @click.stop="$emit('shareClick', workspace, $event)"
       >
         {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
       </ion-label>
@@ -79,7 +79,7 @@
         v-if="!isSelected"
         fill="clear"
         class="options-button"
-        @click.stop="$emit('menuClick', $event, workspace)"
+        @click.stop="$emit('menuClick', workspace, $event)"
       >
         <ion-icon
           :icon="ellipsisHorizontal"
@@ -109,9 +109,9 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: WorkspaceInfo): void;
-  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
-  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
+  (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 </script>
 

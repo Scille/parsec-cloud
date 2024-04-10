@@ -156,23 +156,51 @@ describe('Check workspaces page', () => {
     cy.get('@avatars').eq(1).contains('Ce');
   });
 
-  // FIXME: disabled for now
-  // it('Get link to the workspace', () => {
-  //   cy.get('.card').eq(0).find('.card-option').click();
-  //   cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
+  it('Get link to the workspace', () => {
+    cy.get('.card').eq(0).find('.card-option').click();
+    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
+    cy.checkToastMessageWithSidebar('info', 'Workspace link has been copied to clipboard.');
+    cy.window().then((win) => {
+      win.navigator.clipboard.readText().then((text) => {
+        // cspell:disable-next-line
+        const workspaceId = '94a350f2f629403db2269c44583f7aa1';
+        // cspell:disable-next-line
+        const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+        expect(text).to.eq(
+          // cspell:disable-next-line
+          `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
+        );
+      });
+    });
+  });
 
-  //   cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
-  //   cy.window().then((win) => {
-  //     win.navigator.clipboard.readText().then((text) => {
-  //       // cspell:disable-next-line
-  //       const workspaceId = '94a350f2f629403db2269c44583f7aa1';
-  //       // cspell:disable-next-line
-  //       const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
-  //       expect(text).to.eq(
-  //         // cspell:disable-next-line
-  //         `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
-  //       );
-  //     });
-  //   });
-  // });
+  it('Check context menu from sidebar', () => {
+    cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 3);
+    cy.get('@workspaceItems').eq(1).find('.workspace-option').click();
+    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').as('menuItem').should('have.length', 10);
+    cy.get('@menuItem').eq(2).contains('Manage workspace');
+    cy.get('@menuItem').eq(3).contains('Rename').should('not.be.visible');
+    cy.get('@menuItem').eq(7).contains('Collaboration');
+    cy.get('@menuItem').eq(8).contains('Copy link').click();
+    cy.checkToastMessageWithSidebar('info', 'Workspace link has been copied to clipboard.');
+    cy.window().then((win) => {
+      win.navigator.clipboard.readText().then((text) => {
+        // cspell:disable-next-line
+        const workspaceId = '94a350f2f629403db2269c44583f7aa1';
+        // cspell:disable-next-line
+        const path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
+        expect(text).to.eq(
+          // cspell:disable-next-line
+          `parsec3://parsec.cloud/Org?action=file_link&workspace_id=${workspaceId}&path=${path}`,
+        );
+      });
+    });
+    cy.get('@workspaceItems').eq(1).find('.workspace-option').click();
+    cy.get('@menuItem').eq(9).contains('Sharing and roles').click();
+    cy.get('.workspace-sharing-modal').find('.closeBtn').click();
+    cy.get('@workspaceItems').eq(0).find('.workspace-option').click();
+    cy.get('@menuItem').eq(3).contains('Rename').should('be.visible').click();
+    cy.get('ion-modal').find('ion-title').contains('Rename workspace');
+    cy.get('ion-modal').find('.closeBtn').click();
+  });
 });

@@ -93,21 +93,21 @@ describe('Workspace List Item', () => {
   it('Emit click', async () => {
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
-    const workspace = wrapper.emitted('click')?.at(0)?.at(1);
+    const workspace = wrapper.emitted('click')?.at(0)?.at(0);
     expect(workspace).to.deep.equal(WORKSPACE);
   });
 
   it('Emit menuClick', async () => {
     wrapper.get('.options-button').trigger('click');
     expect(wrapper.emitted('menuClick')?.length).to.equal(1);
-    const workspace = wrapper.emitted('menuClick')?.at(0)?.at(1);
+    const workspace = wrapper.emitted('menuClick')?.at(0)?.at(0);
     expect(workspace).to.deep.equal(WORKSPACE);
   });
 
   it('Emit shareClick', async () => {
     wrapper.get('.shared-group').trigger('click');
     expect(wrapper.emitted('shareClick')?.length).to.equal(1);
-    const workspace = wrapper.emitted('shareClick')?.at(0)?.at(1);
+    const workspace = wrapper.emitted('shareClick')?.at(0)?.at(0);
     expect(workspace).to.deep.equal(WORKSPACE);
   });
 });

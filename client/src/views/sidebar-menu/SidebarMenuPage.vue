@@ -122,6 +122,12 @@
                   slot="start"
                 />
                 <ion-label>{{ workspace.currentName }}</ion-label>
+                <div
+                  class="workspace-option"
+                  @click.stop="openWorkspaceContextMenu($event, workspace, informationManager)"
+                >
+                  <ion-icon :icon="ellipsisHorizontal" />
+                </div>
               </ion-item>
             </ion-list>
             <!-- list of workspaces -->
@@ -198,6 +204,7 @@
 import { workspaceNameValidator } from '@/common/validators';
 import { CaretExpand, MsImage, getTextInputFromUser } from '@/components/core';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
+import { openWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   UserProfile,
@@ -218,6 +225,7 @@ import {
   switchOrganization,
 } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import {
   GestureDetail,
@@ -242,11 +250,12 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { add, business, chevronBack, informationCircle, people, pieChart } from 'ionicons/icons';
+import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart } from 'ionicons/icons';
 import { Ref, WatchStopHandle, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 let eventDistributorCbId: string | null = null;
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
@@ -681,6 +690,22 @@ ion-menu {
 
   &-list {
     padding: 0;
+  }
+}
+
+.workspace-option {
+  color: var(--parsec-color-light-secondary-grey);
+  text-align: right;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  top: 0;
+  right: 1rem;
+  font-size: 1.2rem;
+  padding-top: 0.5rem;
+
+  &:hover {
+    color: var(--parsec-color-light-primary-30);
   }
 }
 </style>

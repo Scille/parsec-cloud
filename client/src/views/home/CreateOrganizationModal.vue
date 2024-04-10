@@ -192,7 +192,7 @@ import {
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { formatDate } from '@/services/translation';
+import { Translatable, formatDate } from '@/services/translation';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
@@ -398,7 +398,7 @@ async function nextStep(): Promise<void> {
       device.value = result.value;
       await nextStep();
     } else {
-      let message;
+      let message: Translatable = '';
       switch (result.error.tag) {
         case BootstrapOrganizationErrorTag.AlreadyUsedToken:
           pageStep.value = CreateOrganizationStep.OrgNameStep;
