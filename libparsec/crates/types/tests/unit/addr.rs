@@ -110,7 +110,7 @@ impl Testbed for BackendOrganizationBootstrapAddrTestbed {
     impl_testbed_common!(ParsecOrganizationBootstrapAddr);
     impl_testbed_with_org!(ParsecOrganizationBootstrapAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=bootstrap_organization&token={TOKEN}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=bootstrap_organization&token={TOKEN}",)
     }
 }
 
@@ -119,7 +119,7 @@ impl Testbed for BackendOrganizationFileLinkAddrTestbed {
     impl_testbed_common!(ParsecOrganizationFileLinkAddr);
     impl_testbed_with_org!(ParsecOrganizationFileLinkAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action=file_link&p={FILE_LINK_PARAM}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=file_link&p={FILE_LINK_PARAM}",)
     }
 }
 
@@ -128,7 +128,7 @@ impl Testbed for BackendInvitationAddrTestbed {
     impl_testbed_common!(ParsecInvitationAddr);
     impl_testbed_with_org!(ParsecInvitationAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?action={INVITATION_TYPE}&token={TOKEN}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={INVITATION_TYPE}&token={TOKEN}",)
     }
 }
 
@@ -304,16 +304,16 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
             testbed.assert_addr_err(
                 &url,
                 AddrError::InvalidParamValue {
-                    param: "action",
+                    param: "a",
                     value: bad_type.to_string(),
-                    help: "Expected `action=bootstrap_organization`".to_string(),
+                    help: "Expected `a=bootstrap_organization`".to_string(),
                 },
             );
         }
         None => {
             // Type param not present in the url
-            let url = testbed.url().replace("action=bootstrap_organization&", "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("action"));
+            let url = testbed.url().replace("a=bootstrap_organization&", "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
         }
     }
 }
@@ -360,16 +360,16 @@ fn file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
             testbed.assert_addr_err(
                 &url,
                 AddrError::InvalidParamValue {
-                    param: "action",
+                    param: "a",
                     value: bad_type.to_string(),
-                    help: "Expected `action=file_link`".to_string(),
+                    help: "Expected `a=file_link`".to_string(),
                 },
             );
         }
         None => {
             // Type param not present in the url
-            let url = testbed.url().replace("action=file_link&", "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("action"));
+            let url = testbed.url().replace("a=file_link&", "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
         }
     }
 }
@@ -435,9 +435,9 @@ fn invitation_addr_bad_type(
             testbed.assert_addr_err(
                 &url,
                 AddrError::InvalidParamValue {
-                    param: "action",
+                    param: "a",
                     value: bad_type.to_string(),
-                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                    help: "Expected `a=claim_user` or `a=claim_device`".to_string(),
                 },
             );
         }
@@ -445,8 +445,8 @@ fn invitation_addr_bad_type(
             // Type param not present in the url
             let url = testbed
                 .url()
-                .replace(&format!("action={}&", INVITATION_TYPE), "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("action"));
+                .replace(&format!("a={}&", INVITATION_TYPE), "");
+            testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
         }
     }
 }
@@ -634,14 +634,14 @@ fn backend_addr_redirection() {
 
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec3://parsec.example.com/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
-        "https://parsec.example.com/redirect/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "https://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
-        "parsec3://parsec.example.com/my_org?action=file_link&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
-        "parsec3://parsec.example.com/my_org?no_ssl=true&action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
-        "http://parsec.example.com/redirect/my_org?action=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=file_link&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?no_ssl=true&a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "http://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
 }
 
@@ -800,33 +800,33 @@ fn backend_organization_bootstrap_addr_good(
 #[rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::missing_action("parsec3://foo:42/org?token=123", AddrError::MissingParam("action"))]
+#[case::missing_action("parsec3://foo:42/org?token=123", AddrError::MissingParam("a"))]
 #[case::bad_action(
-    "parsec3://foo:42/org?action=dummy&token=123",
+    "parsec3://foo:42/org?a=dummy&token=123",
     AddrError::InvalidParamValue {
-        param: "action",
+        param: "a",
         value: "dummy".to_string(),
-        help: "Expected `action=bootstrap_organization`".to_string()
+        help: "Expected `a=bootstrap_organization`".to_string()
     }
 )]
 #[case::org_name(
-    "parsec3://foo:42?action=bootstrap_organization&token=123",
+    "parsec3://foo:42?a=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec3://foo:42?action=bootstrap_organization&token=123",
+    "parsec3://foo:42?a=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec3://foo:42/?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/?a=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/bad/org?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/bad/org?a=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/~org?action=bootstrap_organization&token=123",
+    "parsec3://foo:42/~org?a=bootstrap_organization&token=123",
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
