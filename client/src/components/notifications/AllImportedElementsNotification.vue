@@ -20,7 +20,7 @@
         >
           {{ $msTranslate('notificationCenter.openImportedMenu') }}
         </span>
-        <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
+        <span class="default-state">{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
         <ion-icon
           class="arrow-icon hover-state"
           :icon="arrowForward"

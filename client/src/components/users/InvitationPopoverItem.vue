@@ -17,7 +17,7 @@
       <!-- invitation action -->
       <div class="invitation-actions">
         <div class="invitation-actions-date">
-          <span class="default-state body-sm">{{ formatTimeSince(invitation.createdOn, '', 'short') }}</span>
+          <span class="default-state body-sm">{{ $msTranslate(formatTimeSince(invitation.createdOn, '', 'short')) }}</span>
           <ion-button
             fill="clear"
             class="hover-state copy-link"

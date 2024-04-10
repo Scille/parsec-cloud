@@ -21,7 +21,7 @@
         <span>{{ $msTranslate(notification.information.message) }}</span>
       </ion-label>
       <ion-text class="notification-details__time body-sm">
-        <span>{{ formatTimeSince(notification.time, '', 'short') }}</span>
+        <span>{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
       </ion-text>
     </div>
   </notification-item>
