@@ -17,6 +17,11 @@ const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 const PARSEC_PARAM_ACTION: &str = "a";
 const PARSEC_PARAM_PAYLOAD: &str = "p";
+const PARSEC_ACTION_BOOTSTRAP_ORGANIZATION: &str = "bootstrap_organization";
+const PARSEC_ACTION_FILE_LINK: &str = "file_link";
+const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
+const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
+const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -604,11 +609,14 @@ impl ParsecOrganizationBootstrapAddr {
         let pairs = parsed.0.query_pairs();
         let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
 
-        if action != "bootstrap_organization" {
+        if action != PARSEC_ACTION_BOOTSTRAP_ORGANIZATION {
             return Err(AddrError::InvalidParamValue {
                 param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
-                help: "Expected `action=bootstrap_organization`".to_string(),
+                help: format!(
+                    "Expected `{}={}`",
+                    PARSEC_PARAM_ACTION, PARSEC_ACTION_BOOTSTRAP_ORGANIZATION
+                ),
             });
         }
 
@@ -645,7 +653,7 @@ impl ParsecOrganizationBootstrapAddr {
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, "bootstrap_organization");
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_BOOTSTRAP_ORGANIZATION);
         if let Some(ref tk) = self.token {
             url.query_pairs_mut().append_pair("token", &tk.hex());
         }
@@ -720,11 +728,14 @@ impl ParsecOrganizationFileLinkAddr {
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
-        if action != "file_link" {
+        if action != PARSEC_ACTION_FILE_LINK {
             return Err(AddrError::InvalidParamValue {
                 param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
-                help: "Expected `action=file_link`".to_string(),
+                help: format!(
+                    "Expected `{}={}`",
+                    PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK
+                ),
             });
         }
 
@@ -764,7 +775,7 @@ impl ParsecOrganizationFileLinkAddr {
         .expect("data are valid");
 
         url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, "file_link")
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK)
             .append_pair(PARSEC_PARAM_PAYLOAD, &p);
 
         url
@@ -823,13 +834,19 @@ impl ParsecInvitationAddr {
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let invitation_type = match extract_param(&pairs, PARSEC_PARAM_ACTION)? {
-            x if x == "claim_user" => InvitationType::User,
-            x if x == "claim_device" => InvitationType::Device,
+            x if x == PARSEC_ACTION_CLAIM_USER => InvitationType::User,
+            x if x == PARSEC_ACTION_CLAIM_DEVICE => InvitationType::Device,
             value => {
                 return Err(AddrError::InvalidParamValue {
                     param: PARSEC_PARAM_ACTION,
                     value: value.to_string(),
-                    help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
+                    help: format!(
+                        "Expected `{}={}` or `{}={}`",
+                        PARSEC_PARAM_ACTION,
+                        PARSEC_ACTION_CLAIM_USER,
+                        PARSEC_PARAM_ACTION,
+                        PARSEC_ACTION_CLAIM_DEVICE
+                    ),
                 })
             }
         };
@@ -867,8 +884,8 @@ impl ParsecInvitationAddr {
             .append_pair(
                 PARSEC_PARAM_ACTION,
                 match self.invitation_type() {
-                    InvitationType::User => "claim_user",
-                    InvitationType::Device => "claim_device",
+                    InvitationType::User => PARSEC_ACTION_CLAIM_USER,
+                    InvitationType::Device => PARSEC_ACTION_CLAIM_DEVICE,
                 },
             )
             .append_pair("token", &self.token.hex());
@@ -936,11 +953,14 @@ impl ParsecPkiEnrollmentAddr {
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
         let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
-        if action != "pki_enrollment" {
+        if action != PARSEC_ACTION_PKI_ENROLLMENT {
             return Err(AddrError::InvalidParamValue {
                 param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
-                help: "Expected `action=pki_enrollment".to_string(),
+                help: format!(
+                    "Expected `{}={}`",
+                    PARSEC_PARAM_ACTION, PARSEC_ACTION_PKI_ENROLLMENT
+                ),
             });
         }
 
@@ -957,7 +977,7 @@ impl ParsecPkiEnrollmentAddr {
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, "pki_enrollment");
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_PKI_ENROLLMENT);
         url
     }
 
