@@ -98,7 +98,7 @@
               :workspace="workspace"
               :client-profile="clientProfile"
               @click="onWorkspaceClick"
-              @menu-click="openWorkspaceContextMenu"
+              @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
             />
           </ion-list>
@@ -116,7 +116,7 @@
               :workspace="workspace"
               :client-profile="clientProfile"
               @click="onWorkspaceClick"
-              @menu-click="openWorkspaceContextMenu"
+              @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
             />
           </ion-item>
@@ -137,7 +137,6 @@
 </template>
 
 <script setup lang="ts">
-import { writeTextToClipboard } from '@/common/clipboard';
 import { workspaceNameValidator } from '@/common/validators';
 import {
   DisplayState,
@@ -150,10 +149,10 @@ import {
   getTextInputFromUser,
 } from '@/components/core';
 import { MsImage, NoWorkspace } from '@/components/core/ms-image';
+import { openWorkspaceContextMenu, workspaceShareClick } from '@/components/workspaces';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
-  ClientRenameWorkspaceErrorTag,
   EntryName,
   ParsecOrganizationFileLinkAddr,
   Path,
@@ -163,22 +162,17 @@ import {
   decryptFileLink,
   entryStat,
   getClientProfile,
-  getSystemPath,
   parseFileLink,
   createWorkspace as parsecCreateWorkspace,
-  getPathLink as parsecGetPathLink,
   getWorkspaceSharing as parsecGetWorkspaceSharing,
   listWorkspaces as parsecListWorkspaces,
   mountWorkspace as parsecMountWorkspace,
-  renameWorkspace as parsecRenameWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
 import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
-import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import {
   IonButton,
   IonContent,
@@ -192,8 +186,6 @@ import {
   IonPage,
   IonText,
   isPlatform,
-  modalController,
-  popoverController,
 } from '@ionic/vue';
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -458,166 +450,18 @@ async function openCreateWorkspaceModal(): Promise<void> {
   }
 }
 
-async function onWorkspaceClick(_event: Event, workspace: WorkspaceInfo): Promise<void> {
+async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
   await navigateToWorkspace(workspace.handle);
 }
 
-async function onWorkspaceShareClick(_: Event, workspace: WorkspaceInfo): Promise<void> {
-  const modal = await modalController.create({
-    component: WorkspaceSharingModal,
-    componentProps: {
-      workspaceId: workspace.id,
-      ownRole: workspace.currentSelfRole,
-      informationManager: informationManager,
-    },
-    cssClass: 'workspace-sharing-modal',
-  });
-  await modal.present();
-  await modal.onWillDismiss();
+async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
+  await workspaceShareClick(workspace, informationManager);
   await refreshWorkspacesList();
 }
 
-async function openWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo): Promise<void> {
-  const popover = await popoverController.create({
-    component: WorkspaceContextMenu,
-    cssClass: 'workspace-context-menu',
-    event: event,
-    translucent: true,
-    showBackdrop: false,
-    dismissOnSelect: true,
-    alignment: 'end',
-    componentProps: {
-      clientProfile: clientProfile.value,
-      clientRole: workspace.currentSelfRole,
-    },
-  });
-  await popover.present();
-
-  const { data } = await popover.onDidDismiss();
-  if (data !== undefined) {
-    switch (data.action) {
-      case WorkspaceAction.Share:
-        onWorkspaceShareClick(new Event('ignored'), workspace);
-        break;
-      case WorkspaceAction.CopyLink:
-        await copyLinkToClipboard(workspace);
-        break;
-      case WorkspaceAction.OpenInExplorer:
-        await openWorkspace(workspace);
-        break;
-      case WorkspaceAction.Rename:
-        await openRenameWorkspaceModal(workspace);
-        break;
-    }
-  }
-}
-
-async function openWorkspace(workspace: WorkspaceInfo): Promise<void> {
-  const result = await getSystemPath(workspace.handle, '/');
-
-  if (!result.ok) {
-    await informationManager.present(
-      new Information({
-        message: { key: 'FoldersPage.open.folderFailed', data: { name: workspace.currentName } },
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Modal,
-    );
-  } else {
-    window.electronAPI.openFile(result.value);
-  }
-}
-
-async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName): Promise<void> {
-  const result = await parsecRenameWorkspace(newName, workspace.id);
-  if (result.ok) {
-    await refreshWorkspacesList();
-    informationManager.present(
-      new Information({
-        message: { key: 'WorkspacesPage.RenameWorkspaceModal.success', data: { newName: newName } },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  } else {
-    let message;
-    switch (result.error.tag) {
-      case ClientRenameWorkspaceErrorTag.AuthorNotAllowed ||
-        ClientRenameWorkspaceErrorTag.InvalidCertificate ||
-        ClientRenameWorkspaceErrorTag.InvalidEncryptedRealmName ||
-        ClientRenameWorkspaceErrorTag.InvalidKeysBundle:
-        message = 'WorkspacesPage.RenameWorkspaceModal.errors.permission';
-        break;
-      case ClientRenameWorkspaceErrorTag.Offline:
-        message = 'WorkspacesPage.RenameWorkspaceModal.errors.offline';
-        break;
-      default:
-        message = {
-          key: 'WorkspacesPage.RenameWorkspaceModal.errors.generic',
-          data: {
-            reason: result.error.tag,
-          },
-        };
-        console.error(result.error.tag);
-        break;
-    }
-    informationManager.present(
-      new Information({
-        message: message,
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-}
-
-async function openRenameWorkspaceModal(workspace: WorkspaceInfo): Promise<void> {
-  const newWorkspaceName = await getTextInputFromUser({
-    title: 'WorkspacesPage.RenameWorkspaceModal.pageTitle',
-    trim: true,
-    validator: workspaceNameValidator,
-    inputLabel: 'WorkspacesPage.RenameWorkspaceModal.label',
-    placeholder: 'WorkspacesPage.RenameWorkspaceModal.placeholder',
-    okButtonText: 'WorkspacesPage.RenameWorkspaceModal.rename',
-    defaultValue: workspace.currentName,
-    selectionRange: [0, workspace.currentName.length],
-  });
-
-  if (newWorkspaceName) {
-    await renameWorkspace(workspace, newWorkspaceName);
-  }
-}
-
-async function copyLinkToClipboard(workspace: WorkspaceInfo): Promise<void> {
-  const result = await parsecGetPathLink(workspace.handle, '/');
-
-  if (result.ok) {
-    if (!(await writeTextToClipboard(result.value))) {
-      informationManager.present(
-        new Information({
-          message: 'WorkspacesPage.linkNotCopiedToClipboard',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: 'WorkspacesPage.linkCopiedToClipboard',
-          level: InformationLevel.Info,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else {
-    informationManager.present(
-      new Information({
-        message: 'WorkspacesPage.getLinkError',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-  }
+async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
+  await openWorkspaceContextMenu(event, workspace, informationManager);
+  await refreshWorkspacesList();
 }
 </script>
 

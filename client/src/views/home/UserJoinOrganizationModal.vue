@@ -426,7 +426,7 @@ async function startProcess(): Promise<void> {
   if (!retrieveResult.ok) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    let message;
+    let message: Translatable = '';
     switch (retrieveResult.error.tag) {
       case ClaimerRetrieveInfoErrorTag.AlreadyUsed:
         message = 'JoinOrganization.errors.tokenAlreadyUsed';
@@ -458,7 +458,7 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok && !cancelled.value) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
-    let message;
+    let message: Translatable = '';
     switch (waitResult.error.tag) {
       case ClaimInProgressErrorTag.ActiveUsersLimitReached:
         message = 'JoinOrganization.errors.usersLimitReached';

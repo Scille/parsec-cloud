@@ -137,6 +137,7 @@ import { Routes, getCurrentRouteQuery, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { Translatable } from '@/services/translation';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
@@ -393,7 +394,7 @@ async function inviteUser(): Promise<void> {
       );
     }
   } else {
-    let message;
+    let message: Translatable = '';
     switch (result.error.tag) {
       case ClientNewUserInvitationErrorTag.AlreadyMember:
         message = 'UsersPage.invitation.inviteFailedAlreadyMember';

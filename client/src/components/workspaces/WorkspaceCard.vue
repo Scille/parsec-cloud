@@ -3,11 +3,11 @@
 <template>
   <div
     class="card"
-    @click="$emit('click', $event, workspace)"
+    @click="$emit('click', workspace, $event)"
   >
     <div
       class="card-option"
-      @click.stop="$emit('menuClick', $event, workspace)"
+      @click.stop="$emit('menuClick', workspace, $event)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -47,11 +47,11 @@
           class="shared-group"
           :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
           :max-display="2"
-          @click.stop="$emit('shareClick', $event, workspace)"
+          @click.stop="$emit('shareClick', workspace, $event)"
         />
         <ion-label
           v-show="workspace.sharing.length === 0"
-          @click.stop="$emit('shareClick', $event, workspace)"
+          @click.stop="$emit('shareClick', workspace, $event)"
           class="body-sm not-shared-label"
         >
           {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
@@ -75,9 +75,9 @@ defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'click', event: Event, workspace: WorkspaceInfo): void;
-  (e: 'menuClick', event: Event, workspace: WorkspaceInfo): void;
-  (e: 'shareClick', event: Event, workspace: WorkspaceInfo): void;
+  (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
+  (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 </script>
 
