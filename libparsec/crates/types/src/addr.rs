@@ -15,6 +15,8 @@ use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, Organizat
 pub const PARSEC_SCHEME: &str = "parsec3";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
+const PARSEC_PARAM_ACTION: &str = "a";
+const PARSEC_PARAM_PAYLOAD: &str = "p";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
 /// of url have special needs (for instance host cannot be empty).
@@ -364,12 +366,6 @@ fn extract_param<'a>(
     Ok(action)
 }
 
-fn extract_action<'a>(
-    pairs: &'a url::form_urlencoded::Parse,
-) -> Result<std::borrow::Cow<'a, str>, AddrError> {
-    extract_param(pairs, "action")
-}
-
 fn extract_organization_id(parsed: &ParsecUrlAsHTTPScheme) -> Result<OrganizationID, AddrError> {
     const ERR_MSG: AddrError = AddrError::InvalidOrganizationID;
     // Strip the initial `/`
@@ -579,7 +575,7 @@ impl std::str::FromStr for ParsecActionAddr {
  */
 
 // Represent the URL to bootstrap an organization within a server
-// (e.g. ``parsec3://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD``)
+// (e.g. ``parsec3://parsec.example.com/my_org?a=bootstrap_organization&token=1234ABCD``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
@@ -606,11 +602,11 @@ impl ParsecOrganizationBootstrapAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_action(&pairs)?;
+        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
 
         if action != "bootstrap_organization" {
             return Err(AddrError::InvalidParamValue {
-                param: "action",
+                param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
                 help: "Expected `action=bootstrap_organization`".to_string(),
             });
@@ -649,7 +645,7 @@ impl ParsecOrganizationBootstrapAddr {
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
-            .append_pair("action", "bootstrap_organization");
+            .append_pair(PARSEC_PARAM_ACTION, "bootstrap_organization");
         if let Some(ref tk) = self.token {
             url.query_pairs_mut().append_pair("token", &tk.hex());
         }
@@ -690,7 +686,7 @@ impl ParsecOrganizationBootstrapAddr {
  */
 
 /// Represent the URL to share a file link
-/// (e.g. ``parsec3://parsec.example.com/my_org?action=file_link&p=<TODO>``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=file_link&p=<TODO>``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationFileLinkAddr {
     base: BaseParsecAddr,
@@ -723,22 +719,22 @@ impl ParsecOrganizationFileLinkAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_action(&pairs)?;
+        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
         if action != "file_link" {
             return Err(AddrError::InvalidParamValue {
-                param: "action",
+                param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
                 help: "Expected `action=file_link`".to_string(),
             });
         }
 
-        let p = extract_param(&pairs, "p")?;
+        let p = extract_param(&pairs, PARSEC_PARAM_PAYLOAD)?;
         let (workspace_id, key_index, encrypted_path) = BASE64URL_NOPAD
             .decode(p.as_bytes())
             .ok()
             .and_then(|p| rmp_serde::from_slice::<(VlobID, IndexInt, Vec<u8>)>(&p).ok())
             .ok_or_else(|| AddrError::InvalidParamValue {
-                param: "p",
+                param: PARSEC_PARAM_PAYLOAD,
                 value: p.to_string(),
                 help: "Invalid `p` parameter".to_string(),
             })?;
@@ -768,8 +764,8 @@ impl ParsecOrganizationFileLinkAddr {
         .expect("data are valid");
 
         url.query_pairs_mut()
-            .append_pair("action", "file_link")
-            .append_pair("p", &p);
+            .append_pair(PARSEC_PARAM_ACTION, "file_link")
+            .append_pair(PARSEC_PARAM_PAYLOAD, &p);
 
         url
     }
@@ -796,7 +792,7 @@ impl ParsecOrganizationFileLinkAddr {
  */
 
 /// Represent the URL to invite a user or a device
-/// (e.g. ``parsec3://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=claim_user&token=3a50b191122b480ebb113b10216ef343``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecInvitationAddr {
     base: BaseParsecAddr,
@@ -826,12 +822,12 @@ impl ParsecInvitationAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let invitation_type = match extract_action(&pairs)? {
+        let invitation_type = match extract_param(&pairs, PARSEC_PARAM_ACTION)? {
             x if x == "claim_user" => InvitationType::User,
             x if x == "claim_device" => InvitationType::Device,
             value => {
                 return Err(AddrError::InvalidParamValue {
-                    param: "action",
+                    param: PARSEC_PARAM_ACTION,
                     value: value.to_string(),
                     help: "Expected `action=claim_user` or `action=claim_device`".to_string(),
                 })
@@ -869,7 +865,7 @@ impl ParsecInvitationAddr {
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
             .append_pair(
-                "action",
+                PARSEC_PARAM_ACTION,
                 match self.invitation_type() {
                     InvitationType::User => "claim_user",
                     InvitationType::Device => "claim_device",
@@ -918,7 +914,7 @@ impl ParsecInvitationAddr {
  */
 
 /// Represent the URL to invite a user using PKI
-/// (e.g. ``parsec3://parsec.example.com/my_org?action=pki_enrollment``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=pki_enrollment``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecPkiEnrollmentAddr {
     base: BaseParsecAddr,
@@ -939,10 +935,10 @@ impl ParsecPkiEnrollmentAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_action(&pairs)?;
+        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
         if action != "pki_enrollment" {
             return Err(AddrError::InvalidParamValue {
-                param: "action",
+                param: PARSEC_PARAM_ACTION,
                 value: action.to_string(),
                 help: "Expected `action=pki_enrollment".to_string(),
             });
@@ -961,7 +957,7 @@ impl ParsecPkiEnrollmentAddr {
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
         url.query_pairs_mut()
-            .append_pair("action", "pki_enrollment");
+            .append_pair(PARSEC_PARAM_ACTION, "pki_enrollment");
         url
     }
 
