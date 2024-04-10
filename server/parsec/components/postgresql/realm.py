@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from typing import override
 
-import asyncpg
-
 from parsec._parsec import (
     DateTime,
     DeviceID,
@@ -21,6 +19,7 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm_queries.create import query_create
 from parsec.components.postgresql.user import PGUserComponent
@@ -269,7 +268,7 @@ INSERT INTO realm_keys_bundle_access (
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus):
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
         super().__init__()
         self.pool = pool
         self.event_bus = event_bus
@@ -282,7 +281,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _check_realm(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
         author: DeviceID,
@@ -302,7 +301,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _get_current_role_for_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
         user_id: UserID,
@@ -319,7 +318,7 @@ class PGRealmComponent(BaseRealmComponent):
         return RealmRole.from_str(row["role"])
 
     async def _get_realms_for_user(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, user: UserID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
     ) -> dict[VlobID, tuple[RealmRole | None, DateTime]]:
         rep = await conn.fetch(
             *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
@@ -334,7 +333,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _get_realm_certificates_for_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user: UserID,
         after: dict[VlobID, DateTime],
@@ -356,7 +355,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _get_realm_certificates_for_realm(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
         after: DateTime | None,
@@ -407,7 +406,7 @@ class PGRealmComponent(BaseRealmComponent):
         return [certificate for _, _, certificate in realm_items]
 
     async def _has_realm_name_certificate(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, realm_id: VlobID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, realm_id: VlobID
     ) -> bool:
         ret = await conn.fetchrow(
             *_q_get_realm_name_certificates(
@@ -422,7 +421,7 @@ class PGRealmComponent(BaseRealmComponent):
     @transaction
     async def create(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -494,7 +493,7 @@ class PGRealmComponent(BaseRealmComponent):
     @transaction
     async def share(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -639,7 +638,7 @@ class PGRealmComponent(BaseRealmComponent):
     @transaction
     async def unshare(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -758,7 +757,7 @@ class PGRealmComponent(BaseRealmComponent):
     @transaction
     async def rename(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -852,7 +851,7 @@ class PGRealmComponent(BaseRealmComponent):
     @transaction
     async def rotate_key(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -938,7 +937,7 @@ class PGRealmComponent(BaseRealmComponent):
         return certif
 
     async def _get_users_in_realm(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, realm_id: VlobID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, realm_id: VlobID
     ) -> set[UserID]:
         rows = await conn.fetch(
             *q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
@@ -947,7 +946,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     async def _add_realm_key_rotation_certificate(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_key_rotation_certificate_cooked: RealmKeyRotationCertificate,
         realm_key_rotation_certificate: bytes,

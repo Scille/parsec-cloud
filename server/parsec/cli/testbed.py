@@ -6,7 +6,7 @@ import asyncio
 import sys
 import tempfile
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, TypeAlias
 
 import anyio
 import click
@@ -19,8 +19,12 @@ try:
     from parsec._parsec import testbed
 
     TESTBED_AVAILABLE = True
+
+    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, testbed.TestbedTemplateContent]  # pyright: ignore[reportRedeclaration]
 except ImportError:
+    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
     TESTBED_AVAILABLE = False
+
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options
@@ -46,8 +50,7 @@ class TestbedBackend:
     def __init__(
         self,
         backend: Backend,
-        loaded_templates: dict[str, tuple[OrganizationID, int, testbed.TestbedTemplateContent]]
-        | None = None,
+        loaded_templates: dict[str, TestbedTemplate] | None = None,
     ):
         self.backend = backend
         self._org_count = 0
@@ -55,9 +58,7 @@ class TestbedBackend:
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
         self._loaded_templates = {} if loaded_templates is None else loaded_templates
 
-    async def get_template(
-        self, template: str
-    ) -> tuple[OrganizationID, int, testbed.TestbedTemplateContent]:
+    async def get_template(self, template: str) -> TestbedTemplate:
         try:
             return self._loaded_templates[template]
         except KeyError:
@@ -90,9 +91,7 @@ class TestbedBackend:
                     self._loaded_templates[template] = ret
                     return ret
 
-    async def new_organization(
-        self, template: str
-    ) -> tuple[OrganizationID, int, testbed.TestbedTemplateContent]:
+    async def new_organization(self, template: str) -> TestbedTemplate:
         template_org_id, template_crc, template_content = await self.get_template(template)
 
         self._org_count += 1

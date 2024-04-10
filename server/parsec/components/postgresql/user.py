@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-import asyncpg
-
 from parsec._parsec import (
     DateTime,
     DeviceCertificate,
@@ -22,6 +20,7 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.user_queries.create import (
     q_create_device,
     q_create_user,
@@ -204,7 +203,7 @@ WHERE
 
 
 class PGUserComponent(BaseUserComponent):
-    def __init__(self, pool: asyncpg.Pool, event_bus: EventBus) -> None:
+    def __init__(self, pool: AsyncpgPool, event_bus: EventBus) -> None:
         super().__init__()
         self.pool = pool
         self.event_bus = event_bus
@@ -219,7 +218,7 @@ class PGUserComponent(BaseUserComponent):
 
     async def _check_device(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
     ) -> UserProfile | CheckDeviceBadOutcome:
@@ -238,7 +237,7 @@ class PGUserComponent(BaseUserComponent):
 
     async def _check_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID,
     ) -> UserProfile | CheckUserBadOutcome:
@@ -257,7 +256,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def create_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -334,7 +333,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def create_device(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -404,7 +403,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def update_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -517,7 +516,7 @@ class PGUserComponent(BaseUserComponent):
         return certif
 
     async def get_user_info(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, user_id: UserID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         row = await conn.fetchrow(
             *_q_get_user_info(organization_id=organization_id.str, user_id=user_id.str)
@@ -528,7 +527,7 @@ class PGUserComponent(BaseUserComponent):
         return UserInfo(user_id, human_handle, bool(row["frozen"]))
 
     async def get_user_info_from_email(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID, email: str
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, email: str
     ) -> UserInfo | None:
         row = await conn.fetchrow(
             *_q_get_user_info_from_email(organization_id=organization_id.str, email=email)
@@ -542,7 +541,7 @@ class PGUserComponent(BaseUserComponent):
     @override
     @transaction
     async def list_users(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -556,7 +555,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def get_certificates_as_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         author: UserID,
         common_after: DateTime | None,
@@ -694,7 +693,7 @@ class PGUserComponent(BaseUserComponent):
     #         )
 
     # async def _get_user_with_device(
-    #     self, conn: asyncpg.Connection, organization_id: OrganizationID, device_id: DeviceID
+    #     self, conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
     # ) -> tuple[User, Device]:
     #     raise NotImplementedError
     #     return await query_get_user_with_device(conn, organization_id, device_id)
@@ -723,7 +722,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def revoke_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -827,7 +826,7 @@ class PGUserComponent(BaseUserComponent):
     @transaction
     async def freeze_user(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID | None,
         user_email: str | None,
@@ -888,7 +887,7 @@ class PGUserComponent(BaseUserComponent):
     @override
     @transaction
     async def test_dump_current_users(
-        self, conn: asyncpg.Connection, organization_id: OrganizationID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
         rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
         items = {}

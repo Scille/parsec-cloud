@@ -10,17 +10,18 @@ import trustme
 from tests.cli.common import cli_running
 
 
+@dataclass
+class SSLConf:
+    @property
+    def use_ssl(self):
+        return bool(self.backend_opts)
+
+    client_env: dict[str, str] = field(default_factory=dict)
+    backend_opts: str = ""
+
+
 @pytest.fixture(params=(False, True), ids=("no_ssl", "ssl"))
 def ssl_conf(request: pytest.FixtureRequest):
-    @dataclass
-    class SSLConf:
-        @property
-        def use_ssl(self):
-            return bool(self.backend_opts)
-
-        client_env: dict = field(default_factory=dict)
-        backend_opts: str = ""
-
     if not request.param:
         yield SSLConf()
     else:

@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Any
+
 import httpx
 import pytest
 
@@ -15,7 +17,7 @@ from parsec._parsec import (
 from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 
 
-def _strip_template_orgs(stats: dict) -> dict:
+def _strip_template_orgs(stats: dict[str, Any]) -> dict[str, Any]:
     stats["stats"] = [s for s in stats["stats"] if not s["organization_id"].endswith("Template")]
     return stats
 

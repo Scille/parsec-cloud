@@ -3,11 +3,12 @@
 import json
 from importlib import import_module
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 
-def parse_json_with_comment(raw: str) -> dict:
+def parse_json_with_comment(raw: str) -> Any:
     return json.loads(
         "\n".join(line for line in raw.splitlines() if not line.strip().startswith("//"))
     )

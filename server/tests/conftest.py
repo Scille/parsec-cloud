@@ -197,7 +197,7 @@ def no_logs_gte_error(caplog: LogCaptureFixture) -> Generator[None, None, None]:
 
     # The test should use `caplog.assert_occurred_once` to indicate a log was expected,
     # otherwise we consider error logs as *actual* errors.
-    asserted_records: set = getattr(caplog, "asserted_records", set())
+    asserted_records: set[logging.LogRecord] = getattr(caplog, "asserted_records", set())
     errors = [
         record
         for record in caplog.get_records("call")

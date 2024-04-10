@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Any, NotRequired, TypedDict
 from unittest.mock import ANY
 
 import httpx
@@ -40,7 +41,7 @@ async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
 async def test_bad_data(client: httpx.AsyncClient, backend: Backend, kind: str) -> None:
     url = "http://parsec.invalid/administration/organizations"
 
-    body_args: dict
+    body_args: dict[str, Any]
     match kind:
         case "bad_json":
             body_args = {"content": b"<dummy>"}
@@ -71,6 +72,11 @@ async def test_bad_method(
     assert response.status_code == 405, response.content
 
 
+class CreateOrganizationParams(TypedDict):
+    active_user_limit: NotRequired[int | None]
+    user_profile_outsider_allowed: NotRequired[bool]
+
+
 @pytest.mark.parametrize(
     "args",
     (
@@ -83,7 +89,7 @@ async def test_ok(
     client: httpx.AsyncClient,
     backend: Backend,
     cleanup_organizations: None,
-    args: dict,
+    args: CreateOrganizationParams,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
     org_id = OrganizationID("MyNewOrg")

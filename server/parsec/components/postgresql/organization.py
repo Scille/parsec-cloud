@@ -4,8 +4,6 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal, override
 
-import asyncpg
-
 from parsec._parsec import (
     ActiveUsersLimit,
     BootstrapToken,
@@ -36,6 +34,7 @@ from parsec.components.organization import (
     OrganizationUpdateBadOutcome,
     organization_bootstrap_validate,
 )
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.test_queries import (
     q_test_drop_organization,
     q_test_duplicate_organization,
@@ -255,7 +254,7 @@ def _q_update_factory(
 class PGOrganizationComponent(BaseOrganizationComponent):
     def __init__(
         self,
-        pool: asyncpg.Pool,
+        pool: AsyncpgPool,
         webhooks: WebhooksComponent,
         config: BackendConfig,
         event_bus: EventBus,
@@ -268,7 +267,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def create(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         now: DateTime,
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
@@ -309,7 +308,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def spontaneous_create(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         now: DateTime,
     ) -> None:
@@ -336,13 +335,13 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @override
     @transaction
     async def get(
-        self, conn: asyncpg.Connection, id: OrganizationID
+        self, conn: AsyncpgConnection, id: OrganizationID
     ) -> Organization | OrganizationGetBadOutcome:
         return await self._get(conn, id)
 
     @staticmethod
     async def _get(
-        conn: asyncpg.Connection, id: OrganizationID, for_update: bool = False
+        conn: AsyncpgConnection, id: OrganizationID, for_update: bool = False
     ) -> Organization | OrganizationGetBadOutcome:
         if for_update:
             row = await conn.fetchrow(*_q_get_organization_for_update(organization_id=id.str))
@@ -393,7 +392,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def bootstrap(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         id: OrganizationID,
         now: DateTime,
         bootstrap_token: BootstrapToken | None,
@@ -481,7 +480,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def stats_as_user(
         self,
-        connection: asyncpg.Connection,
+        connection: AsyncpgConnection,
         organization_id: OrganizationID,
         author: UserID,
         at: DateTime | None = None,
@@ -490,7 +489,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     async def _get_organization_stats(
         self,
-        connection: asyncpg.Connection,
+        connection: AsyncpgConnection,
         organization: OrganizationID,
         at: DateTime | None = None,
     ) -> OrganizationStats | OrganizationStatsBadOutcome:
@@ -529,7 +528,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def organization_stats(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         organization_id: OrganizationID,
     ) -> OrganizationStats | OrganizationStatsBadOutcome:
         return await self._get_organization_stats(conn, organization_id)
@@ -537,7 +536,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @override
     @transaction
     async def server_stats(
-        self, conn: asyncpg.Connection, at: DateTime | None = None
+        self, conn: AsyncpgConnection, at: DateTime | None = None
     ) -> dict[OrganizationID, OrganizationStats]:
         results = {}
         for org in await conn.fetch(*_q_get_organizations()):
@@ -551,7 +550,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def update(
         self,
-        conn: asyncpg.Connection,
+        conn: AsyncpgConnection,
         id: OrganizationID,
         is_expired: Literal[Unset] | bool = Unset,
         active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
@@ -638,7 +637,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     @transaction
     async def test_dump_organizations(
-        self, conn: asyncpg.Connection, skip_templates: bool = True
+        self, conn: AsyncpgConnection, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
         items = {}
         for org in await conn.fetch(*_q_get_organizations()):
@@ -663,12 +662,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         return items
 
     @transaction
-    async def test_drop_organization(self, conn: asyncpg.Connection, id: OrganizationID) -> None:
+    async def test_drop_organization(self, conn: AsyncpgConnection, id: OrganizationID) -> None:
         await conn.execute(*q_test_drop_organization(organization_id=id.str))
 
     @transaction
     async def test_duplicate_organization(
-        self, conn: asyncpg.Connection, source_id: OrganizationID, target_id: OrganizationID
+        self, conn: AsyncpgConnection, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:
         row = await conn.fetchrow(*_q_get_organization(organization_id=source_id.str))
         assert row is not None, f"The organization {source_id} doesn't exist"
