@@ -2,7 +2,7 @@
 
 import { MsReportTheme } from '@/components/core';
 import { isLoggedIn } from '@/router';
-import { msTranslate } from '@/services/translation';
+import { Translatable, translate } from '@/services/translation';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
 
@@ -17,18 +17,18 @@ export class ToastManager {
   }
 
   async createAndPresent(toastConfig: {
-    title?: string;
+    title?: Translatable;
     icon?: string;
-    message: string;
+    message: Translatable;
     theme: MsReportTheme;
-    confirmButtonLabel?: string;
+    confirmButtonLabel?: Translatable;
     duration?: number;
   }): Promise<any> {
     const duration = toastConfig.duration || DEFAULT_TOAST_DURATION;
 
     const toast = await toastController.create({
-      header: toastConfig.title,
-      message: toastConfig.message,
+      header: translate(toastConfig.title),
+      message: translate(toastConfig.message),
       cssClass: isLoggedIn()
         ? ['notification-toast--with-sidebar body', toastConfig.theme]
         : ['notification-toast body', toastConfig.theme],
@@ -37,7 +37,7 @@ export class ToastManager {
       icon: toastConfig.theme ? this._getIcon(toastConfig.theme) : toastConfig.icon,
       buttons: [
         {
-          text: toastConfig.confirmButtonLabel ?? msTranslate('notification.nextButton'),
+          text: toastConfig.confirmButtonLabel ? translate(toastConfig.confirmButtonLabel) : translate('notification.nextButton'),
           role: 'confirm',
           side: 'end',
         },

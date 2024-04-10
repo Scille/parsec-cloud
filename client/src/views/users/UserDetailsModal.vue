@@ -3,10 +3,10 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$msTranslate('UsersPage.UserDetailsModal.title')"
+      :title="'UsersPage.UserDetailsModal.title'"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: $msTranslate('UsersPage.UserDetailsModal.actions.close'),
+        label: 'UsersPage.UserDetailsModal.actions.close',
         disabled: false,
       }"
     >
@@ -37,7 +37,7 @@
             {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
           </ion-text>
           <ion-text class="details-item__text body-lg">
-            {{ formatTimeSince(user.createdOn, '--', 'short') }}
+            {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
           </ion-text>
         </div>
       </div>

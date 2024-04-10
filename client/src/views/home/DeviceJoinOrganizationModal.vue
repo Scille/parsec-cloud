@@ -9,9 +9,9 @@
       v-show="pageStep > DeviceJoinOrganizationStep.Information && pageStep < DeviceJoinOrganizationStep.Finish"
       :current-index="pageStep - 1"
       :titles="[
-        $msTranslate('ClaimDeviceModal.stepper.GetHostCode'),
-        $msTranslate('ClaimDeviceModal.stepper.ProvideGuestCode'),
-        $msTranslate('ClaimDeviceModal.stepper.Authentication'),
+        'ClaimDeviceModal.stepper.GetHostCode',
+        'ClaimDeviceModal.stepper.ProvideGuestCode',
+        'ClaimDeviceModal.stepper.Authentication',
       ]"
     />
     <ion-buttons

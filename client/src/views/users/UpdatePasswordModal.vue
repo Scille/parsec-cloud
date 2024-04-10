@@ -39,7 +39,7 @@
           <ms-password-input
             v-model="oldPassword"
             @change="updateError"
-            :label="$msTranslate('Password.currentPassword')"
+            :label="'Password.currentPassword'"
             @on-enter-keyup="nextStep()"
             :password-is-invalid="passwordIsInvalid"
             :error-message="errorMessage"
@@ -51,7 +51,7 @@
           class="step"
         >
           <ms-choose-password-input
-            :password-label="$msTranslate('Password.newPassword')"
+            :password-label="'Password.newPassword'"
             ref="choosePasswordInput"
           />
         </div>
@@ -96,6 +96,7 @@ import {
   changePassword as parsecChangePassword,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Translatable } from '@/services/translation';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -113,7 +114,7 @@ const currentDevice: Ref<AvailableDevice | null> = ref(null);
 const pageStep = ref(ChangePasswordStep.OldPassword);
 const choosePasswordInput = ref();
 const oldPassword = ref('');
-const errorMessage = ref('');
+const errorMessage: Ref<Translatable> = ref('');
 const passwordIsInvalid = ref(false);
 const currentPasswordInput = ref();
 

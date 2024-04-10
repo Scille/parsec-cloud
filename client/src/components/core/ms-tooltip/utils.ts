@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import MsTooltip from '@/components/core/ms-tooltip/MsTooltip.vue';
+import { Translatable } from '@/services/translation';
 
 import { popoverController } from '@ionic/vue';
 
@@ -17,7 +18,12 @@ enum TooltipSide {
   Right = 'right',
 }
 
-async function openTooltip(event: Event, text: string, alignment = TooltipAlignment.Center, side = TooltipSide.Bottom): Promise<void> {
+async function openTooltip(
+  event: Event,
+  text: Translatable,
+  alignment = TooltipAlignment.Center,
+  side = TooltipSide.Bottom,
+): Promise<void> {
   event.stopPropagation();
   const popover = await popoverController.create({
     component: MsTooltip,
@@ -35,7 +41,7 @@ async function openTooltip(event: Event, text: string, alignment = TooltipAlignm
   await popover.dismiss();
 }
 
-async function openInformationTooltip(event: Event, text: string): Promise<void> {
+async function openInformationTooltip(event: Event, text: Translatable): Promise<void> {
   return await openTooltip(event, text, TooltipAlignment.Center, TooltipSide.Bottom);
 }
 

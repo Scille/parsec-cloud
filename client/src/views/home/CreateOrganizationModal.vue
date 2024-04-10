@@ -45,8 +45,8 @@
           class="step org-name"
         >
           <ms-input
-            :label="$msTranslate('CreateOrganization.organizationName')"
-            :placeholder="$msTranslate('CreateOrganization.organizationNamePlaceholder')"
+            :label="'CreateOrganization.organizationName'"
+            :placeholder="'CreateOrganization.organizationNamePlaceholder'"
             name="organization"
             id="org-name-input"
             v-model="orgName"
@@ -111,7 +111,7 @@
           class="step org-loading"
           v-show="pageStep === CreateOrganizationStep.SpinnerStep"
         >
-          <ms-spinner :title="$msTranslate('CreateOrganization.loading')" />
+          <ms-spinner :title="'CreateOrganization.loading'" />
         </div>
 
         <!-- part 7 (loading) -->
@@ -282,7 +282,7 @@ const titles = new Map<CreateOrganizationStep, Title>([
       title: 'CreateOrganization.title.done',
     },
   ],
-]); // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+]);
 
 onMounted(async () => {
   await organizationNameInputRef.value.setFocus();

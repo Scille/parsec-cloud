@@ -17,12 +17,13 @@
 
 <script setup lang="ts">
 import { Answer, MsModalResult, askQuestion } from '@/components/core';
+import { InvitationAction } from '@/components/users';
+import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';
 import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetUserModal from '@/views/users/GreetUserModal.vue';
-import InvitationsListPopover from '@/views/users/InvitationsListPopover.vue';
 import { IonButton, IonIcon, modalController, popoverController } from '@ionic/vue';
 import { mail } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -70,11 +71,11 @@ async function openInvitationsPopover(event: Event): Promise<void> {
   const { role, data } = await popover.onDidDismiss();
   await popover.dismiss();
   if (role === MsModalResult.Confirm && data.action) {
-    if (data.action === 'greet') {
+    if (data.action === InvitationAction.Greet) {
       await greetUser(data.invitation);
-    } else if (data.action === 'cancel') {
+    } else if (data.action === InvitationAction.Cancel) {
       await cancelUserInvitation(data.invitation);
-    } else if (data.action === 'invite') {
+    } else if (data.action === InvitationAction.Invite) {
       await navigateTo(Routes.Users, { query: { openInvite: true } });
       await updateInvitations();
     }

@@ -16,7 +16,7 @@
           scope="global"
         >
           <template #role>
-            <strong>{{ translateWorkspaceRole(notificationData.newRole).label }}</strong>
+            <strong>{{ $msTranslate(getWorkspaceRoleTranslationKey(notificationData.newRole).label) }}</strong>
           </template>
           <template #workspace>
             <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
@@ -37,7 +37,7 @@ import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
-import { translateWorkspaceRole } from '@/services/translation';
+import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 

@@ -11,14 +11,14 @@
           <ms-action-bar-button
             id="button-new-folder"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$msTranslate('FoldersPage.createFolder')"
+            :button-label="'FoldersPage.createFolder'"
             :icon="folderOpen"
             @click="createFolder()"
           />
           <ms-action-bar-button
             id="button-import"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$msTranslate('FoldersPage.import')"
+            :button-label="'FoldersPage.import'"
             :icon="document"
             @click="importFiles()"
           />
@@ -27,40 +27,40 @@
           <ms-action-bar-button
             id="button-rename"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionRename')"
+            :button-label="'FoldersPage.fileContextMenu.actionRename'"
             :icon="pencil"
             @click="renameEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMoveTo')"
+            :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMakeACopy')"
+            :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDelete')"
+            :button-label="'FoldersPage.fileContextMenu.actionDelete'"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-details"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDetails')"
+            :button-label="'FoldersPage.fileContextMenu.actionDetails'"
             :icon="informationCircle"
             @click="showDetails(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-copy-link"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionCopyLink')"
+            :button-label="'FoldersPage.fileContextMenu.actionCopyLink'"
             :icon="link"
             @click="copyLink(getSelectedEntries())"
           />
@@ -69,21 +69,21 @@
           <ms-action-bar-button
             id="button-moveto"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMoveTo')"
+            :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-makeacopy"
             v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionMakeACopy')"
+            :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
           />
           <ms-action-bar-button
             id="button-delete"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
-            :button-label="$msTranslate('FoldersPage.fileContextMenu.actionDelete')"
+            :button-label="'FoldersPage.fileContextMenu.actionDelete'"
             :icon="trashBin"
             @click="deleteEntries(getSelectedEntries())"
           />

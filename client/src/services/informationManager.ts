@@ -4,7 +4,7 @@ import { MsAlertModal, MsAlertModalConfig, MsReportTheme } from '@/components/co
 import { EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, WorkspaceRole } from '@/parsec';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
-import { Translatable, msTranslate } from '@/services/translation';
+import { Translatable, translate } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 
@@ -100,12 +100,13 @@ export interface InformationOptions {
 
 export class Information {
   id: string;
-  message: string;
+  message: Translatable;
   level: InformationLevel;
   data?: InformationData;
+
   constructor({ message, level, data }: InformationOptions) {
     this.id = uuid4();
-    this.message = msTranslate(message);
+    this.message = message;
     this.level = level;
     this.data = data;
   }
@@ -143,7 +144,7 @@ export class InformationManager {
   private async showModal(information: Information): Promise<void> {
     const alertModalConfig: MsAlertModalConfig = {
       theme: information.theme,
-      message: information.message,
+      message: translate(information.message),
     };
 
     await this._createAndPresentModal(alertModalConfig);

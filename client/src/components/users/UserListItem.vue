@@ -72,7 +72,7 @@
       v-show="false"
     >
       <ion-label class="user-join-label cell">
-        {{ formatTimeSince(user.createdOn, '--', 'short') }}
+        {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
       </ion-label>
     </div>
 

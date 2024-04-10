@@ -11,7 +11,7 @@
         <ms-action-bar-button
           v-show="clientProfile != UserProfile.Outsider"
           id="button-new-workspace"
-          :button-label="$msTranslate('WorkspacesPage.createWorkspace')"
+          :button-label="'WorkspacesPage.createWorkspace'"
           :icon="addCircle"
           @click="openCreateWorkspaceModal()"
         />
@@ -198,7 +198,13 @@ import {
 import { addCircle } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
-const sortBy = ref('name');
+enum SortWorkspaceBy {
+  Name = 'name',
+  Size = 'size',
+  LastUpdate = 'lastUpdate',
+}
+
+const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
@@ -387,11 +393,11 @@ async function refreshWorkspacesList(): Promise<void> {
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-    if (sortBy.value === 'name') {
+    if (sortBy.value === SortWorkspaceBy.Name) {
       return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
-    } else if (sortBy.value === 'size') {
+    } else if (sortBy.value === SortWorkspaceBy.Size) {
       return sortByAsc.value ? a.size - b.size : b.size - a.size;
-    } else if (sortBy.value === 'lastUpdated') {
+    } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
       return sortByAsc.value ? b.lastUpdated.diff(a.lastUpdated).milliseconds : a.lastUpdated.diff(b.lastUpdated).milliseconds;
     }
     return 0;
@@ -399,9 +405,9 @@ const filteredWorkspaces = computed(() => {
 });
 
 const msSorterOptions: MsOptions = new MsOptions([
-  { label: 'WorkspacesPage.sort.sortByName', key: 'name' },
-  { label: 'WorkspacesPage.sort.sortBySize', key: 'size' },
-  { label: 'WorkspacesPage.sort.sortByLastUpdated', key: 'lastUpdated' },
+  { label: 'WorkspacesPage.sort.sortByName', key: SortWorkspaceBy.Name },
+  { label: 'WorkspacesPage.sort.sortBySize', key: SortWorkspaceBy.Size },
+  { label: 'WorkspacesPage.sort.sortByLastUpdated', key: SortWorkspaceBy.LastUpdate },
 ]);
 
 function onMsSorterChange(event: MsSorterChangeEvent): void {

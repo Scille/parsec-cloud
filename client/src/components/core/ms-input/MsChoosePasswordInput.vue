@@ -14,7 +14,7 @@
     <div class="inputs-container">
       <div class="inputs-container-item">
         <ms-password-input
-          :label="passwordLabel || $msTranslate('Password.password')"
+          :label="passwordLabel || 'Password.password'"
           v-model="password"
           name="password"
           ref="firstInputFieldRef"
@@ -24,7 +24,7 @@
       </div>
       <div class="inputs-container-item">
         <ms-password-input
-          :label="$msTranslate('Password.confirmPassword')"
+          :label="'Password.confirmPassword'"
           v-model="passwordConfirm"
           name="confirmPassword"
           @on-enter-keyup="$emit('onEnterKeyup', passwordConfirm)"
@@ -48,7 +48,7 @@
           <div class="bar-item" />
         </div>
         <ion-text class="subtitles-sm password-level__text">
-          {{ getPasswordStrengthText(passwordStrength) }}
+          {{ $msTranslate(getPasswordStrengthText(passwordStrength)) }}
         </ion-text>
       </div>
       <ion-text class="subtitles-sm password-criteria">
@@ -62,6 +62,7 @@
 import { PasswordStrength, getPasswordStrength, getPasswordStrengthText } from '@/common/passwordValidation';
 import { MsImage, PasswordLock } from '@/components/core/ms-image';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
+import { Translatable } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 import { ref } from 'vue';
 
@@ -75,7 +76,7 @@ defineEmits<{
 }>();
 
 defineProps<{
-  passwordLabel?: string;
+  passwordLabel?: Translatable;
 }>();
 
 defineExpose({

@@ -35,7 +35,7 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { msTranslate } from '@/services/translation';
+import { translate } from '@/services/translation';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
@@ -129,7 +129,7 @@ async function openPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.Settings) {
     await navigateTo(Routes.Settings);
   } else if (data.option === ProfilePopoverOption.Help) {
-    window.open(msTranslate('MenuPage.helpLink'), '_blank');
+    window.open(translate('MenuPage.helpLink'), '_blank');
   } else if (data.option === ProfilePopoverOption.App) {
     await navigateTo(Routes.About);
   } else if (data.option === ProfilePopoverOption.MyProfile) {

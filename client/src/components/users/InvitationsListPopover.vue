@@ -49,6 +49,7 @@
 <script setup lang="ts">
 import { MsModalResult } from '@/components/core';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
+import { InvitationAction } from '@/components/users/types';
 import { UserInvitation, listUserInvitations } from '@/parsec';
 import { currentRouteIsUserRoute } from '@/router';
 import { InformationManager } from '@/services/informationManager';
@@ -71,15 +72,15 @@ onMounted(async () => {
 });
 
 async function cancelInvitation(invitation: UserInvitation): Promise<void> {
-  await popoverController.dismiss({ invitation: invitation, action: 'cancel' }, MsModalResult.Confirm);
+  await popoverController.dismiss({ invitation: invitation, action: InvitationAction.Cancel }, MsModalResult.Confirm);
 }
 
 async function greetUser(invitation: UserInvitation): Promise<void> {
-  await popoverController.dismiss({ invitation: invitation, action: 'greet' }, MsModalResult.Confirm);
+  await popoverController.dismiss({ invitation: invitation, action: InvitationAction.Greet }, MsModalResult.Confirm);
 }
 
 async function onInviteClick(): Promise<void> {
-  await popoverController.dismiss({ action: 'invite' }, MsModalResult.Confirm);
+  await popoverController.dismiss({ action: InvitationAction.Invite }, MsModalResult.Confirm);
 }
 </script>
 

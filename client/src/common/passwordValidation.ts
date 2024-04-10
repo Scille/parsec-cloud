@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { msTranslate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 
@@ -34,13 +34,13 @@ export function getPasswordStrength(password: string): PasswordStrength {
   return PasswordStrength.High;
 }
 
-export function getPasswordStrengthText(strength: PasswordStrength): string {
+export function getPasswordStrengthText(strength: PasswordStrength): Translatable {
   if (strength === PasswordStrength.Low) {
-    return msTranslate('Password.passwordLevelLow');
+    return 'Password.passwordLevelLow';
   } else if (strength === PasswordStrength.Medium) {
-    return msTranslate('Password.passwordLevelMedium');
+    return 'Password.passwordLevelMedium';
   } else if (strength === PasswordStrength.High) {
-    return msTranslate('Password.passwordLevelHigh');
+    return 'Password.passwordLevelHigh';
   }
   return '';
 }

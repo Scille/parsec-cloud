@@ -2,6 +2,7 @@
 
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, WorkspaceRole } from '@/parsec';
+import { translate } from '@/services/translation';
 import { it } from 'vitest';
 
 describe('Workspace role', () => {
@@ -63,8 +64,8 @@ describe('Workspace role', () => {
       'Only Managers and Owners can change roles',
     ],
     // user is outsider, can be reader or contributor
-    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, undefined],
-    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Contributor, true, undefined],
+    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
+    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Contributor, true, ''],
     // ... but cannot be manager or owner
     [
       UserProfile.Outsider,
@@ -125,17 +126,17 @@ describe('Workspace role', () => {
     ],
     // few cases that should be no problem
     // reader to contributor
-    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Manager, WorkspaceRole.Contributor, true, undefined],
+    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Manager, WorkspaceRole.Contributor, true, ''],
     // reader to manager
-    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Manager, true, undefined],
+    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Manager, true, ''],
     // reader to owner
-    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Owner, true, undefined],
+    [UserProfile.Standard, WorkspaceRole.Reader, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Owner, true, ''],
     // contributor back to reader
-    [UserProfile.Standard, WorkspaceRole.Contributor, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, undefined],
+    [UserProfile.Standard, WorkspaceRole.Contributor, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
     // manager back to reader
-    [UserProfile.Standard, WorkspaceRole.Manager, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, undefined],
+    [UserProfile.Standard, WorkspaceRole.Manager, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
   ])('test workspace role can change', async (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
     expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).authorized).to.equal(expected);
-    expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason).to.equal(reason);
+    expect(translate(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason)).to.equal(reason);
   });
 });

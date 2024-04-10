@@ -10,15 +10,16 @@
       slot="start"
       :icon="icon"
     />
-    {{ buttonLabel }}
+    {{ $msTranslate(buttonLabel) }}
   </ion-button>
 </template>
 
 <script setup lang="ts">
+import { Translatable } from '@/services/translation';
 import { IonButton, IonIcon } from '@ionic/vue';
 
 defineProps<{
-  buttonLabel?: any;
+  buttonLabel?: Translatable;
   icon?: string;
 }>();
 </script>

@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { formatTimeSince } from '@/common/date';
+import { translate } from '@/services/translation';
 import { DateTime } from 'luxon';
 import { it, vi } from 'vitest';
 
@@ -29,22 +30,22 @@ describe('Date formatting', () => {
     vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
 
     if (expected instanceof RegExp) {
-      expect(formatTimeSince(date, '', format as 'long' | 'short')).to.match(expected);
+      expect(translate(formatTimeSince(date, '', format as 'long' | 'short'))).to.match(expected);
     } else {
-      expect(formatTimeSince(date, '', format as 'long' | 'short')).to.equal(expected);
+      expect(translate(formatTimeSince(date, '', format as 'long' | 'short'))).to.equal(expected);
     }
   });
 
   it('Uses default value', () => {
-    expect(formatTimeSince(undefined)).to.equal('');
-    expect(formatTimeSince(undefined, 'Default Value')).to.equal('Default Value');
+    expect(translate(formatTimeSince(undefined))).to.equal('');
+    expect(translate(formatTimeSince(undefined, 'Default Value'))).to.equal('Default Value');
   });
 
   it('Round at day', () => {
     vi.setSystemTime(DateTime.utc(1988, 4, 7, 12, 0, 0).toJSDate());
-    expect(formatTimeSince(DateTime.utc(1988, 4, 7, 11, 59, 30), '', 'long', true)).to.equal('Today');
-    expect(formatTimeSince(DateTime.utc(1988, 4, 7, 10, 0, 0), '', 'long', true)).to.equal('Today');
-    expect(formatTimeSince(DateTime.utc(1988, 4, 6, 10, 0, 0), '', 'long', true)).to.equal('Yesterday');
-    expect(formatTimeSince(DateTime.utc(1988, 4, 2, 10, 0, 0), '', 'long', true)).to.equal('5 days ago');
+    expect(translate(formatTimeSince(DateTime.utc(1988, 4, 7, 11, 59, 30), '', 'long', true))).to.equal('Today');
+    expect(translate(formatTimeSince(DateTime.utc(1988, 4, 7, 10, 0, 0), '', 'long', true))).to.equal('Today');
+    expect(translate(formatTimeSince(DateTime.utc(1988, 4, 6, 10, 0, 0), '', 'long', true))).to.equal('Yesterday');
+    expect(translate(formatTimeSince(DateTime.utc(1988, 4, 2, 10, 0, 0), '', 'long', true))).to.equal('5 days ago');
   });
 });

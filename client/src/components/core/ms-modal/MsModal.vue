@@ -35,7 +35,7 @@
             v-if="title"
           >
             <ion-title class="ms-modal-header__title title-h2">
-              {{ title }}
+              {{ $msTranslate(title) }}
             </ion-title>
           </div>
           <template v-if="subtitle">
@@ -43,13 +43,13 @@
               v-if="theme"
               :theme="theme"
             >
-              {{ subtitle }}
+              {{ $msTranslate(subtitle) }}
             </ms-report-text>
             <ion-text
               class="ms-modal-header__text body"
               v-else
             >
-              {{ subtitle }}
+              {{ $msTranslate(subtitle) }}
             </ion-text>
           </template>
         </ion-header>
@@ -74,7 +74,7 @@
                 @click="cancelButton && cancelButton.onClick ? cancelButton.onClick() : cancel()"
                 :disabled="cancelButton.disabled"
               >
-                {{ cancelButton.label }}
+                {{ $msTranslate(cancelButton.label) }}
               </ion-button>
               <ion-button
                 v-if="confirmButton"
@@ -86,7 +86,7 @@
                 @click="confirmButton && confirmButton.onClick ? confirmButton.onClick() : confirm()"
                 :disabled="confirmButton.disabled"
               >
-                {{ confirmButton.label }}
+                {{ $msTranslate(confirmButton.label) }}
               </ion-button>
             </ion-buttons>
           </ion-toolbar>

@@ -7,12 +7,12 @@
     :close-button="{ visible: false }"
     :cancel-button="{
       disabled: false,
-      label: noText || $msTranslate('QuestionModal.no'),
+      label: noText || 'QuestionModal.no',
       onClick: onNo,
     }"
     :confirm-button="{
       disabled: false,
-      label: yesText || $msTranslate('QuestionModal.yes'),
+      label: yesText || 'QuestionModal.yes',
       onClick: onYes,
       theme: yesIsDangerous ? MsReportTheme.Error : undefined,
     }"
@@ -24,13 +24,14 @@
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { MsModalResult } from '@/components/core/ms-modal/types';
 import { MsReportTheme } from '@/components/core/ms-types';
+import { Translatable } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 
 defineProps<{
-  title: string;
-  subtitle: string;
-  yesText?: string;
-  noText?: string;
+  title: Translatable;
+  subtitle: Translatable;
+  yesText?: Translatable;
+  noText?: Translatable;
   yesIsDangerous?: boolean;
 }>();
 

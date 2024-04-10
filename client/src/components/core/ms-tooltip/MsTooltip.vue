@@ -5,7 +5,7 @@
     <ms-image :image="WavyCaretUp" />
     <div class="tooltip-content">
       <ion-text class="tooltip-text body-sm">
-        {{ text }}
+        {{ $msTranslate(text) }}
       </ion-text>
     </div>
   </div>
@@ -13,10 +13,11 @@
 
 <script setup lang="ts">
 import { MsImage, WavyCaretUp } from '@/components/core/ms-image';
+import { Translatable } from '@/services/translation';
 import { IonText } from '@ionic/vue';
 
 defineProps<{
-  text: string;
+  text: Translatable;
 }>();
 </script>
 

@@ -18,13 +18,13 @@ export interface FolderSelectionOptions {
 }
 
 export interface GetTextOptions {
-  title: string;
-  subtitle?: string;
+  title: Translatable;
+  subtitle?: Translatable;
   trim?: boolean;
   validator?: IValidator;
-  inputLabel?: string;
-  placeholder?: string;
-  okButtonText?: string;
+  inputLabel?: Translatable;
+  placeholder?: Translatable;
+  okButtonText?: Translatable;
   defaultValue?: string;
   selectionRange?: [number, number];
 }
@@ -37,28 +37,28 @@ export interface GetPasswordOptions {
 }
 
 export interface MsAlertModalConfig {
-  title?: string;
+  title?: Translatable;
   theme: MsReportTheme;
-  message: string;
+  message: Translatable;
 }
 
 export interface MsModalConfig {
-  title?: string;
+  title?: Translatable;
   theme?: MsReportTheme;
-  subtitle?: string;
+  subtitle?: Translatable;
   closeButton?: {
     visible: boolean;
     onClick?: () => Promise<boolean>;
   };
   cancelButton?: {
     disabled: boolean;
-    label: string;
+    label: Translatable;
     onClick?: () => Promise<boolean>;
     theme?: MsReportTheme;
   };
   confirmButton?: {
     disabled: boolean;
-    label: string;
+    label: Translatable;
     onClick?: () => Promise<boolean>;
     theme?: MsReportTheme;
   };

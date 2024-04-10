@@ -10,7 +10,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { ParsedParsecAddrTag } from '@/plugins/libparsec';
-import { msTranslate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 
 export enum Validity {
   Invalid = 0,
@@ -20,7 +20,7 @@ export enum Validity {
 
 export interface ValidationResult {
   validity: Validity;
-  reason?: string;
+  reason?: Translatable;
 }
 
 export interface IValidator {
@@ -32,9 +32,7 @@ export const emailValidator: IValidator = async function (value: string) {
   if (!value.includes('@') || value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  return (await isValidEmail(value))
-    ? { validity: Validity.Valid }
-    : { validity: Validity.Invalid, reason: msTranslate('validators.userInfo.email') };
+  return (await isValidEmail(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid, reason: 'validators.userInfo.email' };
 };
 
 export const deviceNameValidator: IValidator = async function (value: string) {
@@ -50,9 +48,7 @@ export const userNameValidator: IValidator = async function (value: string) {
   if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
-  return (await isValidUserName(value))
-    ? { validity: Validity.Valid }
-    : { validity: Validity.Invalid, reason: msTranslate('validators.userInfo.name') };
+  return (await isValidUserName(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid, reason: 'validators.userInfo.name' };
 };
 
 export const workspaceNameValidator: IValidator = async function (value: string) {
@@ -109,7 +105,7 @@ export const organizationValidator: IValidator = async function (value: string) 
   } else if (new RegExp(/^[\w_-]+$/u).test(value) === false) {
     reason = 'validators.organizationName.forbiddenCharacters';
   }
-  return { validity: Validity.Invalid, reason: msTranslate(reason) };
+  return { validity: Validity.Invalid, reason: reason };
 };
 
 export const claimLinkValidator: IValidator = async function (value: string) {
@@ -122,7 +118,7 @@ export const claimLinkValidator: IValidator = async function (value: string) {
     if (result.value.tag === ParsedParsecAddrTag.InvitationUser || result.value.tag === ParsedParsecAddrTag.InvitationDevice) {
       return { validity: Validity.Valid };
     } else {
-      return { validity: Validity.Invalid, reason: msTranslate('validators.claimLink.invalidAction') };
+      return { validity: Validity.Invalid, reason: 'validators.claimLink.invalidAction' };
     }
   }
   let reason = '';
@@ -137,7 +133,7 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
     reason = 'validators.claimLink.invalidToken';
   }
-  return { validity: Validity.Invalid, reason: reason ? msTranslate(reason) : '' };
+  return { validity: Validity.Invalid, reason: reason ? reason : '' };
 };
 
 export const fileLinkValidator: IValidator = async function (value: string) {
@@ -173,7 +169,7 @@ export const claimUserLinkValidator: IValidator = async function (value: string)
   } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
     reason = 'validators.claimUserLink.invalidToken';
   }
-  return { validity: Validity.Invalid, reason: reason ? msTranslate(reason) : '' };
+  return { validity: Validity.Invalid, reason: reason ? reason : '' };
 };
 
 export const claimDeviceLinkValidator: IValidator = async function (value: string) {
@@ -197,7 +193,7 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
   } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
     reason = 'validators.claimDeviceLink.invalidToken';
   }
-  return { validity: Validity.Invalid, reason: reason ? msTranslate(reason) : '' };
+  return { validity: Validity.Invalid, reason: reason ? reason : '' };
 };
 
 export const secretKeyValidator: IValidator = async function (value: string) {

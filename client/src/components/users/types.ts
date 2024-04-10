@@ -9,6 +9,12 @@ export enum SortProperty {
   Profile,
 }
 
+export enum InvitationAction {
+  Greet = 'greet',
+  Cancel = 'cancel',
+  Invite = 'invite',
+}
+
 export interface UserModel extends UserInfo {
   isSelected: boolean;
 }

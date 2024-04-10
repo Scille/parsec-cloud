@@ -20,13 +20,14 @@
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { MsSorterChangeEvent, MsSorterLabels } from '@/components/core/ms-sorter/types';
 import { MsOption, MsOptions } from '@/components/core/ms-types';
+import { Translatable } from '@/services/translation';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
 import { Ref, ref } from 'vue';
 
 const props = defineProps<{
   defaultOption: any;
-  label?: string;
+  label?: Translatable;
   options: MsOptions;
   sorterLabels?: MsSorterLabels;
   disabled?: boolean;

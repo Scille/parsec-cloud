@@ -24,7 +24,7 @@ import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
-import { translateWorkspaceRole } from '@/services/translation';
+import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -47,8 +47,8 @@ const options = computed((): MsOptions => {
       (role: WorkspaceRole | null) => {
         return {
           key: role === null ? NOT_SHARED_KEY : role,
-          label: translateWorkspaceRole(role).label,
-          description: translateWorkspaceRole(role).description,
+          label: getWorkspaceRoleTranslationKey(role).label,
+          description: getWorkspaceRoleTranslationKey(role).description,
           disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role).authorized,
           disabledReason: canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role).reason,
         };

@@ -109,7 +109,7 @@
     </div>
     <ion-card class="recovery-card">
       <ms-choose-password-input
-        :password-label="$msTranslate('ImportRecoveryDevicePage.titles.setNewPassword')"
+        :password-label="'ImportRecoveryDevicePage.titles.setNewPassword'"
         @on-enter-keyup="createNewDevice()"
         ref="choosePasswordInput"
       />

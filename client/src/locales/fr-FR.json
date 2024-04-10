@@ -4,6 +4,7 @@
         "developer": "Parsec Cloud",
         "developerLink": "https://parsec.cloud",
         "projectSources": "https://github.com/Scille/parsec-cloud",
+        "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
         "license": "BUSL-1.1",
         "licenseLink": "https://github.com/Scille/parsec-cloud/blob/master/LICENSE",
         "history": "https://docs.parsec.cloud/fr/stable/history.html"
@@ -517,18 +518,19 @@
             "lastLoginDays": "Aujourd'hui | Hier | il y a {days} jours"
         },
         "filesize": {
-            "bytes": "o",
-            "kilobytes": "Ko",
-            "megabytes": "Mo",
-            "gigabytes": "Go",
-            "terabytes": "To"
+            "bytes": "{size} o",
+            "kilobytes": "{size} Ko",
+            "megabytes": "{size} Mo",
+            "gigabytes": "{size} Go",
+            "terabytes": "{size} To"
         },
         "deviceTypes": {
             "web": "Web",
             "windows": "Windows",
             "macos": "MacOS",
             "linux": "Linux",
-            "android": "Android"
+            "android": "Android",
+            "unknown": "Inconnu"
         },
         "sortBy": "Trier par :"
     },
@@ -979,6 +981,7 @@
         "systemAuthentication": "Votre session est gérée avec le mot de passe de votre appareil.",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
+        "passwordPlaceholder": "••••••••••",
         "changePasswordButton": "Modifier",
         "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
         "tabs": {

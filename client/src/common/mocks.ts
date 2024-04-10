@@ -2,12 +2,13 @@
 
 // cSpell:disable
 
+import { Translatable } from '@/services/translation';
 import { DateTime } from 'luxon';
 
 export const APP_VERSION = __APP_VERSION__;
 
 export interface Change {
-  description: string;
+  description: Translatable;
   issue?: string;
 }
 

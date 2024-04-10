@@ -2,7 +2,7 @@
 
 import { HotkeyManagerKey } from '@/services/hotkeyManager';
 import { InformationManagerKey } from '@/services/informationManager';
-import { msTranslate } from '@/services/translation';
+import { Translatable, translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
 import { vi } from 'vitest';
 
@@ -55,7 +55,7 @@ function mockValidators(): void {
 
 function mockI18n(): void {
   config.global.mocks = {
-    $msTranslate: (key: string, attrs?: object, count?: number): string => msTranslate({ key: key, data: attrs, count: count }),
+    $msTranslate: (tr: Translatable): string => translate(tr),
   };
 }
 

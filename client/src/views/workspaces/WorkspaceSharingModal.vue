@@ -10,7 +10,7 @@
       <div class="modal-container">
         <ms-search-input
           v-model="search"
-          :placeholder="$msTranslate('WorkspaceSharing.searchPlaceholder')"
+          :placeholder="'WorkspaceSharing.searchPlaceholder'"
         />
         <ion-list class="user-list">
           <workspace-user-role
@@ -49,7 +49,7 @@ import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { translateWorkspaceRole } from '@/services/translation';
+import { getWorkspaceRoleTranslationKey, translate } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -148,7 +148,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.listFailure.alreadyHasRole',
             data: {
               user: user.humanHandle.label,
-              role: translateWorkspaceRole(role).label,
+              role: translate(getWorkspaceRoleTranslationKey(role).label),
             },
           },
           level: InformationLevel.Info,
@@ -180,7 +180,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.updateRoleSuccess',
             data: {
               user: user.humanHandle.label,
-              role: translateWorkspaceRole(role).label,
+              role: translate(getWorkspaceRoleTranslationKey(role).label),
             },
           },
           level: InformationLevel.Success,
