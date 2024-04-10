@@ -29,7 +29,7 @@
         >
           {{ $msTranslate('notificationCenter.viewJoinedUsers') }}
         </span>
-        <span class="default-state">{{ formatTimeSince(notification.time, '', 'short') }}</span>
+        <span class="default-state">{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
       </ion-text>
     </div>
   </notification-item>

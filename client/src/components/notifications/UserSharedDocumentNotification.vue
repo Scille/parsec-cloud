@@ -22,7 +22,7 @@
           </i18n-t>
         </ion-text>
         <ion-text class="notification-details__time body-sm">
-          <span>{{ formatTimeSince(notification.time, '', 'short') }}</span>
+          <span>{{ $msTranslate(formatTimeSince(notification.time, '', 'short')) }}</span>
         </ion-text>
       </div>
     </div>

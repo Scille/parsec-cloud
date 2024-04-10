@@ -122,7 +122,9 @@
                         />
                         <ion-text class="body-sm">
                           {{
-                            device.slug in storedDeviceDataDict ? formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--') : '--'
+                            device.slug in storedDeviceDataDict
+                              ? $msTranslate(formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--'))
+                              : '--'
                           }}
                         </ion-text>
                       </ion-col>
