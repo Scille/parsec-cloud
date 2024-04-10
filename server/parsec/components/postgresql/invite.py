@@ -233,6 +233,16 @@ LIMIT 1
 """
 )
 
+_q_get_invitation_author = Q(
+    f"""
+SELECT
+    { q_user(_id="author", select="user_id") } AS author
+FROM invitation
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND token = $token
+"""
+)
 
 _q_conduit_greeter_info = Q(
     f"""
@@ -693,7 +703,7 @@ class PGInviteComponent(BaseInviteComponent):
         # Hence concurrent request will be on hold until the end of the transaction.
 
         row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token)
+            *_q_get_invitation_author(organization_id=organization_id.str, token=token)
         )
         if not row:
             return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
@@ -823,8 +833,10 @@ class PGInviteComponent(BaseInviteComponent):
         curr_conduit_state = ConduitState(row["conduit_state"])
         is_last_exchange = row["last_exchange"]
 
-        if row["deleted_on"]:
-            return InviteConduitExchangeBadOutcome.INVITATION_DELETED
+        # Ignore `invitation.is_deleted` here:
+        # - The check have already been done during `_conduit_talk`.
+        # - The peer may have already updated the conduite in it final (i.e. deleted)
+        #   state, so it's hard to detect that we *are* the last listen allowed.
 
         if ctx.is_greeter:
             curr_our_payload = row["conduit_greeter_payload"]
@@ -852,6 +864,26 @@ class PGInviteComponent(BaseInviteComponent):
                         conduit_claimer_payload=None,
                     )
                 )
+
+                # If this was the last exchange, we can mark the invitation as finished
+                if ctx.state == ConduitState.STATE_4_COMMUNICATE and is_last_exchange:
+                    await conn.execute(
+                        *_q_delete_invitation(
+                            row_id=row_id,
+                            on=now,
+                            reason="FINISHED",  # TODO: use an enum
+                        )
+                    )
+
+                    await self._event_bus.send(
+                        EventInvitation(
+                            organization_id=ctx.organization_id,
+                            token=ctx.token,
+                            greeter=ctx.greeter,
+                            status=InvitationStatus.FINISHED,
+                        )
+                    )
+
                 await self._event_bus.send(
                     EventEnrollmentConduit(
                         organization_id=ctx.organization_id,
