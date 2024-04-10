@@ -3,7 +3,9 @@
 from collections import deque
 from collections.abc import Iterator
 from contextlib import contextmanager
+from unittest.mock import MagicMock
 
+import anyio
 import pytest
 
 from parsec._parsec import (
@@ -35,10 +37,6 @@ async def test_events_listen_auth_then_not_allowed(
 
     async with minimalorg.alice.raw_sse_connection() as response:
         assert response.status_code == 403, response.content
-
-
-# TODO: Here put generic tests on the `/authenticated/<raw_organization_id>/events` route:
-# TODO: - test close on backpressure (too many events pilling up)
 
 
 async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
@@ -88,6 +86,45 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
         assert event == authenticated_cmds.v4.events_listen.RepOk(
             authenticated_cmds.v4.events_listen.APIEventPinged(ping="recent_event")
         )
+
+
+async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
+    """
+    When event are stacking up too much on the backend side, because the client is too slow to consume them,
+    The connection should be closed.
+    """
+
+    async with minimalorg.alice.events_listen() as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        # Patch the backend to simulate backpressure
+        # We simulate that sending an event to the client will block (this is
+        # the expected behavior if the buffer is full and there are no tasks
+        # waiting to receive)
+        registered_clients = backend.events._registered_clients  # pyright: ignore[reportPrivateUsage]
+        assert len(registered_clients) == 1
+        reg_client_id: int = next(iter(registered_clients.keys()))
+        mock_send_nowait = MagicMock(side_effect=anyio.WouldBlock)
+        registered_clients[reg_client_id].channel_sender.send_nowait = mock_send_nowait
+
+        await backend.event_bus.send(  # pyright: ignore[reportPrivateUsage]
+            EventPinged(
+                organization_id=minimalorg.organization_id,
+                ping="foo",
+            )
+        )
+        # When the server detect backpressure, it should close the connection
+        with pytest.raises(StopAsyncIteration):
+            await alice_sse.next_event()
+
+        mock_send_nowait.assert_called_once()
 
 
 async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
