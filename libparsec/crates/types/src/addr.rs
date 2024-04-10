@@ -1026,21 +1026,15 @@ impl ParsecAnonymousAddr {
 // - We could be using base64url (see RFC 4648) which would be more efficient,
 //   but backward compatibility prevent us from doing it :'(
 
-pub fn binary_urlsafe_encode(data: &[u8]) -> String {
+fn binary_urlsafe_encode(data: &[u8]) -> String {
     BASE32.encode(data).replace('=', "s")
 }
 
-pub fn binary_urlsafe_decode(data: &str) -> Result<Vec<u8>, AddrError> {
-    BASE32
-        .decode(data.replace('s', "=").as_bytes())
-        .map_err(AddrError::InvalidBase32Data)
-}
-
-pub fn export_root_verify_key(key: &VerifyKey) -> String {
+fn export_root_verify_key(key: &VerifyKey) -> String {
     binary_urlsafe_encode(key.as_ref())
 }
 
-pub fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> {
+fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> {
     let err_msg = "Invalid root verify key";
     let encoded_b32 = encoded.replace('s', "=");
     // TODO: would be better to directly decode into key

@@ -13,7 +13,6 @@ from parsec._parsec_pyi.addrs import (
     ParsecOrganizationBootstrapAddr,
     ParsecOrganizationFileLinkAddr,
     ParsecPkiEnrollmentAddr,
-    export_root_verify_key,
 )
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
@@ -157,7 +156,6 @@ __all__ = [
     "ParsecOrganizationBootstrapAddr",
     "ParsecOrganizationFileLinkAddr",
     "ParsecPkiEnrollmentAddr",
-    "export_root_verify_key",
     # Manifest
     "EntryName",
     "BlockAccess",

@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
-    prelude::{pymodule, wrap_pyfunction, PyModule, PyResult, Python},
+    prelude::{pymodule, PyModule, PyResult, Python},
     AsPyPointer, FromPyPointer, IntoPyPointer,
 };
 
@@ -51,7 +51,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ParsecOrganizationFileLinkAddr>()?;
     m.add_class::<ParsecInvitationAddr>()?;
     m.add_class::<ParsecPkiEnrollmentAddr>()?;
-    m.add_function(wrap_pyfunction!(export_root_verify_key, m)?)?;
 
     m.add_class::<InvitationStatus>()?;
     m.add_class::<InvitationType>()?;
