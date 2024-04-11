@@ -45,7 +45,6 @@ describe('Upload files', () => {
     cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
     cy.wait(3000);
     cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item ion-text').eq(1).contains('Done');
-    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
     cy.get('.upload-menu-list').find('.element-container').should('have.class', 'done');
   });
 
@@ -57,7 +56,6 @@ describe('Upload files', () => {
     cy.get('.upload-menu-list').should('have.length', 1);
     cy.get('.upload-menu-list').find('.element-container .element-details__name').should('contain', 'splash.png');
     cy.wait(3000);
-    cy.get('.upload-menu-tabs').find('.upload-menu-tabs__item').eq(1).click();
     cy.get('.upload-menu-list').find('.element-container').should('have.class', 'done');
   });
 
