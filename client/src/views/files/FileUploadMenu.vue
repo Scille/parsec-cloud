@@ -206,11 +206,13 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
   switch (state) {
     case ImportState.ImportAllStarted:
       isImportManagerActive.value = true;
+      currentTab.value = Tabs.InProgress;
       menu.show();
       menu.expand();
       break;
     case ImportState.ImportAllFinished:
       isImportManagerActive.value = false;
+      currentTab.value = Tabs.Done;
       break;
     case ImportState.FileAdded:
       imports.value.unshift({
