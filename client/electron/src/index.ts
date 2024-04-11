@@ -87,16 +87,16 @@ app.on('open-url', (_event, url) => {
 });
 
 // Handle when all of our windows are close (platforms have their own expectations).
-app.on('window-all-closed', function () {
+app.on('window-all-closed', async () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
   if (process.platform !== 'darwin') {
-    app.quit();
+    await myCapacitorApp.quitApp();
   }
 });
 
 // When the dock icon is clicked.
-app.on('activate', async function () {
+app.on('activate', async () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (myCapacitorApp.getMainWindow().isDestroyed()) {
@@ -108,9 +108,13 @@ ipcMain.on('config-update', (_event, data) => {
   myCapacitorApp.updateConfig(data);
 });
 
-ipcMain.on('close-app', (_event) => {
+ipcMain.on('mountpoint-update', (_event, path) => {
+  myCapacitorApp.updateMountpoint(path);
+});
+
+ipcMain.on('close-app', async (_event) => {
   myCapacitorApp.forceClose = true;
-  app.quit();
+  await myCapacitorApp.quitApp();
 });
 
 ipcMain.on('open-file', async (_event, path: string) => {

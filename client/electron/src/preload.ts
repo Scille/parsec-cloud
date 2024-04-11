@@ -22,5 +22,8 @@ process.once('loaded', () => {
     openFile: (path: string) => {
       ipcRenderer.send('open-file', path);
     },
+    sendMountpointFolder: (path: string) => {
+      ipcRenderer.send('mountpoint-update', path);
+    },
   });
 });

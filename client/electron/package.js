@@ -92,6 +92,13 @@ const options = {
 
   win: {
     target: 'nsis',
+    extraResources: [
+      {
+        from: 'node_modules/regedit/vbs',
+        to: 'vbs',
+        filter: ['**/*'],
+      },
+    ],
   },
 
   nsis: {
@@ -99,6 +106,7 @@ const options = {
     oneClick: false,
     allowToChangeInstallationDirectory: true,
     include: 'assets/installer.nsh',
+    guid: '2f56a772-db54-4a32-b264-28c42970f684',
   },
 
   mac: {

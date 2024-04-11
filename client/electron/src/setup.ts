@@ -6,6 +6,7 @@ import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
 import electronIsDev from 'electron-is-dev';
+import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
@@ -56,6 +57,8 @@ export class ElectronCapacitorApp {
   private customScheme: string;
   private config: object;
   public forceClose: boolean;
+  private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
+  private regedit: any = null;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
@@ -65,12 +68,26 @@ export class ElectronCapacitorApp {
     this.TrayMenuTemplate = [
       new MenuItem({
         label: 'Quit App',
-        click: () => {
+        click: async () => {
           this.forceClose = true;
-          app.quit();
+          await this.quitApp();
         },
       }),
     ];
+
+    log.initialize();
+    if (!electronIsDev) {
+      Object.assign(console, log.functions);
+    }
+
+    if (process.platform === 'win32') {
+      const reg = require('regedit');
+      if (!electronIsDev) {
+        const vbsDirectory = join(app.getAppPath(), '../vbs');
+        reg.setExternalVBSLocation(vbsDirectory);
+      }
+      this.regedit = reg.promisified;
+    }
 
     if (appMenuBarMenuTemplate) {
       this.AppMenuBarMenuTemplate = appMenuBarMenuTemplate;
@@ -89,6 +106,11 @@ export class ElectronCapacitorApp {
   // Helper function to load in the app.
   private async loadMainWindow(thisRef: any): Promise<void> {
     await thisRef.loadWebApp(thisRef.MainWindow);
+  }
+
+  async quitApp(): Promise<void> {
+    await this.removeMountpointFromQuickAccess();
+    app.quit();
   }
 
   // Expose the mainWindow ref for use outside of the class.
@@ -119,6 +141,160 @@ export class ElectronCapacitorApp {
       }),
     ];
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
+  }
+
+  private async addMountpointToQuickAccess(mountpointPath: string): Promise<void> {
+    if (process.platform !== 'win32' || !this.regedit) {
+      return;
+    }
+    await this.removeMountpointFromQuickAccess();
+
+    const baseKey1 = `HKCU\\Software\\Classes\\CLSID\\{${this.APP_GUID}}`;
+    const baseKey2 = `HKCU\\Software\\Classes\\Wow6432Node\\CLSID\\{${this.APP_GUID}}`;
+    const systemRoot = process.env.SYSTEMROOT || 'C:\\Windows';
+    const iconPath = this.getIconPaths().tray;
+
+    for (const key of [baseKey1, baseKey2]) {
+      await this.regedit.createKey([key]);
+      await this.regedit.putValue({
+        [key]: {
+          AppName: {
+            value: 'Parsec',
+            type: 'REG_DEFAULT',
+          },
+          SortOrderIndex: {
+            value: 0x42,
+            type: 'REG_DWORD',
+          },
+          'System.IsPinnedToNamespaceTree': {
+            value: 0x01,
+            type: 'REG_DWORD',
+          },
+        },
+      });
+      await this.regedit.createKey([`${key}\\DefaultIcon`]);
+      await this.regedit.putValue({
+        [`${key}\\DefaultIcon`]: {
+          IconPath: {
+            value: iconPath,
+            type: 'REG_DEFAULT',
+          },
+        },
+      });
+      await this.regedit.createKey([`${key}\\InProcServer32`]);
+      await this.regedit.putValue({
+        [`${key}\\InProcServer32`]: {
+          IconPath: {
+            value: `${systemRoot}\\system32\\shell32.dll`,
+            type: 'REG_DEFAULT',
+          },
+        },
+      });
+      await this.regedit.createKey([`${key}\\Instance`]);
+      await this.regedit.putValue({
+        [`${key}\\Instance`]: {
+          CLSID: {
+            value: '{0E5AAE11-A475-4c5b-AB00-C66DE400274E}',
+            type: 'REG_SZ',
+          },
+        },
+      });
+      await this.regedit.createKey([`${key}\\Instance\\InitPropertyBag`]);
+      await this.regedit.putValue({
+        [`${key}\\Instance\\InitPropertyBag`]: {
+          Attributes: {
+            value: 0x11,
+            type: 'REG_DWORD',
+          },
+          TargetFolderPath: {
+            value: mountpointPath,
+            type: 'REG_SZ',
+          },
+        },
+      });
+
+      await this.regedit.createKey([`${key}\\ShellFolder`]);
+      await this.regedit.putValue({
+        [`${key}\\ShellFolder`]: {
+          Attributes: {
+            value: 0xf080004d,
+            type: 'REG_DWORD',
+          },
+          FolderValueFlags: {
+            value: 0x28,
+            type: 'REG_DWORD',
+          },
+        },
+      });
+    }
+
+    await this.regedit.createKey(`HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${this.APP_GUID}}`);
+    await this.regedit.putValue({
+      [`HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${this.APP_GUID}}`]: {
+        AppName: {
+          value: 'Parsec',
+          type: 'REG_DEFAULT',
+        },
+      },
+    });
+
+    await this.regedit.putValue({
+      'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel': {
+        [`{${this.APP_GUID}}`]: {
+          value: 0x1,
+          type: 'REG_DWORD',
+        },
+      },
+    });
+  }
+
+  private async removeMountpointFromQuickAccess(): Promise<void> {
+    async function _silentDeleteValues(regedit: any, values: string[]): Promise<void> {
+      try {
+        await regedit.deleteValue(values);
+      } catch (_err) {}
+    }
+
+    async function _silentDeleteKeys(regedit: any, keys: string[]): Promise<void> {
+      try {
+        await regedit.deleteKey(keys);
+      } catch (_err) {}
+    }
+
+    if (process.platform !== 'win32' || !this.regedit) {
+      return;
+    }
+    const baseKey1 = `HKCU\\Software\\Classes\\CLSID\\{${this.APP_GUID}}`;
+    const baseKey2 = `HKCU\\Software\\Classes\\Wow6432Node\\CLSID\\{${this.APP_GUID}}`;
+
+    for (const key of [baseKey1, baseKey2]) {
+      await _silentDeleteValues(this.regedit, [
+        `${key}\\SortOrderIndex`,
+        `${key}\\System.IsPinnedToNamespaceTree`,
+        `${key}\\Instance\\CLSID`,
+        `${key}\\Instance\\InitPropertyBag\\Attributes`,
+        `${key}\\Instance\\InitPropertyBag\\TargetFolderPath`,
+        `${key}\\ShellFolder\\Attributes`,
+        `${key}\\ShellFolder\\FolderValueFlags`,
+        `${key}\\Instance\\InitPropertyBag`,
+        `${key}\\Instance`,
+      ]);
+      await _silentDeleteKeys(this.regedit, [`${key}\\DefaultIcon`, `${key}\\InProcServer32`, `${key}\\ShellFolder`, key]);
+    }
+
+    await _silentDeleteValues(this.regedit, [
+      `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${this.APP_GUID}}`,
+    ]);
+    await _silentDeleteKeys(this.regedit, [
+      `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Desktop\\NameSpace\\{${this.APP_GUID}}`,
+    ]);
+    await _silentDeleteValues(this.regedit, [
+      `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel\\{${this.APP_GUID}}`,
+    ]);
+  }
+
+  updateMountpoint(path: string): void {
+    this.addMountpointToQuickAccess(path);
   }
 
   isTrayEnabled(): boolean {
@@ -152,7 +328,7 @@ export class ElectronCapacitorApp {
     }
   }
 
-  async init(): Promise<void> {
+  getIconPaths(): { app: string; tray: string } {
     let appIconName: string;
     let trayIconName: string;
     switch (process.platform) {
@@ -168,9 +344,16 @@ export class ElectronCapacitorApp {
         appIconName = 'icon.png';
         trayIconName = 'trayIcon.png';
     }
+    return {
+      app: join(app.getAppPath(), 'assets', appIconName),
+      tray: join(app.getAppPath(), 'assets', trayIconName),
+    };
+  }
 
-    const appIcon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', appIconName));
-    const trayIcon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', trayIconName));
+  async init(): Promise<void> {
+    const iconPaths = this.getIconPaths();
+    const appIcon = nativeImage.createFromPath(iconPaths.app);
+    const trayIcon = nativeImage.createFromPath(iconPaths.tray);
 
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
