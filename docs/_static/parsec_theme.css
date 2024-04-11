@@ -1,5 +1,5 @@
 @import url("css/theme.css");
-@import url('https://fonts.googleapis.com/css2?family=Montserrat&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Albert+Sans&display=swap');
 
 
 /*
@@ -11,7 +11,7 @@
 
 
 body {
-  font-family: Montserrat, Roboto, "Helvetica Neue", sans-serif !important;
+  font-family: "Albert Sans", Roboto, "Helvetica Neue", sans-serif !important;
 }
 
 .wy-side-nav-search { background-color: rgba(0, 0, 0, 0); }

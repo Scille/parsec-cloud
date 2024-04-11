@@ -690,6 +690,7 @@ webengine
 webpki
 websockets
 wfspy
+wght
 whereis
 widestring
 Wignore

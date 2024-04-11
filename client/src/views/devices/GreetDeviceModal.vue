@@ -546,7 +546,7 @@ onMounted(async () => {
   .content-title {
     text-align: center;
     /* Titles/H3 */
-    font-family: Montserrat;
+    font-family: 'Albert Sans';
     font-size: 1.125rem;
     font-style: normal;
     font-weight: 600;
