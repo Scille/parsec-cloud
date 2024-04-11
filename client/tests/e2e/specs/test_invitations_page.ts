@@ -37,7 +37,8 @@ describe('Check invitations page', () => {
     cy.checkToastMessageWithSidebar('info', 'Invitation link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
-        expect(text).to.eq('parsec3://parsec.example.com/MyOrg?action=claim_device&token=12346565645645654645645645645645');
+        // cspell:disable-next-line
+        expect(text).to.eq('parsec3://parsec.example.com/MyOrg?a=claim_device&p=xBASNGVlZFZFZUZFZFZFZFZF');
       });
     });
   });

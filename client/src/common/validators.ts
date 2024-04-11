@@ -124,13 +124,13 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   let reason = '';
   if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimLink.invalidProtocol';
-  } else if (!value.includes('action=')) {
+  } else if (!value.includes('a=')) {
     reason = 'validators.claimLink.missingAction';
-  } else if (value.includes('action=') && !value.includes('action=claim_user') && !value.includes('action=claim_device')) {
+  } else if (value.includes('a=') && !value.includes('a=claim_user') && !value.includes('a=claim_device')) {
     reason = 'validators.claimLink.invalidAction';
-  } else if (!value.includes('token=')) {
+  } else if (!value.includes('p=')) {
     reason = 'validators.claimLink.missingToken';
-  } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
+  } else {
     reason = 'validators.claimLink.invalidToken';
   }
   return { validity: Validity.Invalid, reason: reason ? reason : '' };
@@ -160,13 +160,13 @@ export const claimUserLinkValidator: IValidator = async function (value: string)
   let reason = '';
   if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimUserLink.invalidProtocol';
-  } else if (!value.includes('action=')) {
+  } else if (!value.includes('a=')) {
     reason = 'validators.claimUserLink.missingAction';
-  } else if (value.includes('action=') && !value.includes('action=claim_user')) {
+  } else if (value.includes('a=') && !value.includes('a=claim_user')) {
     reason = 'validators.claimUserLink.invalidAction';
-  } else if (!value.includes('token=')) {
+  } else if (!value.includes('p=')) {
     reason = 'validators.claimUserLink.missingToken';
-  } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
+  } else {
     reason = 'validators.claimUserLink.invalidToken';
   }
   return { validity: Validity.Invalid, reason: reason ? reason : '' };
@@ -184,13 +184,13 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
   let reason = '';
   if (!value.startsWith('parsec3://')) {
     reason = 'validators.claimDeviceLink.invalidProtocol';
-  } else if (!value.includes('action=')) {
+  } else if (!value.includes('a=')) {
     reason = 'validators.claimDeviceLink.missingAction';
-  } else if (value.includes('action=') && !value.includes('action=claim_device')) {
+  } else if (value.includes('a=') && !value.includes('a=claim_device')) {
     reason = 'validators.claimDeviceLink.invalidAction';
-  } else if (!value.includes('token=')) {
+  } else if (!value.includes('p=')) {
     reason = 'validators.claimDeviceLink.missingToken';
-  } else if (!/^.+token=[a-f90-9]{32}&?$/.test(value)) {
+  } else {
     reason = 'validators.claimDeviceLink.invalidToken';
   }
   return { validity: Validity.Invalid, reason: reason ? reason : '' };

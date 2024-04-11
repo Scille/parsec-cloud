@@ -85,7 +85,7 @@ export class DeviceGreet {
       return result;
     } else {
       // cspell:disable-next-line
-      this.invitationLink = 'parsec3://example.parsec.cloud/Org?action=claim_device&token=9ae715f49bc0468eac211e1028f15529';
+      this.invitationLink = 'parsec3://example.parsec.cloud/Org?a=claim_device&p=xBj1p7vXl_j1tzTjrx5pzbXV7XTbx_Xnnb0';
       // cspell:disable-next-line
       this.token = '9ae715f49bc0468eac211e1028f15529';
       return {

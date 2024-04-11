@@ -9,13 +9,23 @@ use libparsec_tests_lite::prelude::*;
 use crate::prelude::*;
 
 const ORG: &str = "MyOrg";
-const RVK: &str = "P25GRG3XPSZKBEKXYQFBOLERWQNEDY3AO43MVNZCLPXPKN63JRYQssss";
 const TOKEN: &str = "a0000000000000000000000000000001";
 const DOMAIN: &str = "parsec.cloud.com";
-const FILE_LINK_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A"; // cspell:disable-line
-                                                                                                                                                                 // `/foo/bar.txt` encrypted with key `2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1`
+// cspell:disable-next-line
+const ORGANIZATION_ADDR_PARAM: &str = "xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA";
+// cspell:disable-next-line
+const ORGANIZATION_BOOTSTRAP_ADDR_PARAM: &str = "xBCgAAAAAAAAAAAAAAAAAAAB";
+// cspell:disable-next-line
+const ORGANIZATION_BOOTSTRAP_ADDR_PARAM_NO_TOKEN: &str = "wA";
+// cspell:disable-next-line
+const INVITATION_PARAM: &str = "xBCgAAAAAAAAAAAAAAAAAAAB";
+// cspell:disable-next-line
+const FILE_LINK_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A";
+// `/foo/bar.txt` encrypted with key `2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1`
+// cspell:disable-next-line
 const FILE_LINK_PARAM_ENCRYPTED_PATH: &[u8] = &hex!("e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370");
 const FILE_LINK_PARAM_KEY_INDEX: IndexInt = 1;
+// cspell:disable-next-line
 const FILE_LINK_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
 
@@ -101,7 +111,7 @@ impl Testbed for BackendOrganizationAddrTestbed {
     impl_testbed_common!(ParsecOrganizationAddr);
     impl_testbed_with_org!(ParsecOrganizationAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?rvk={RVK}")
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?p={ORGANIZATION_ADDR_PARAM}")
     }
 }
 
@@ -110,7 +120,7 @@ impl Testbed for BackendOrganizationBootstrapAddrTestbed {
     impl_testbed_common!(ParsecOrganizationBootstrapAddr);
     impl_testbed_with_org!(ParsecOrganizationBootstrapAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=bootstrap_organization&token={TOKEN}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=bootstrap_organization&p={ORGANIZATION_BOOTSTRAP_ADDR_PARAM}",)
     }
 }
 
@@ -128,7 +138,7 @@ impl Testbed for BackendInvitationAddrTestbed {
     impl_testbed_common!(ParsecInvitationAddr);
     impl_testbed_with_org!(ParsecInvitationAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={INVITATION_TYPE}&token={TOKEN}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a={INVITATION_TYPE}&p={INVITATION_PARAM}",)
     }
 }
 
@@ -319,32 +329,45 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
 }
 
 #[rstest]
-fn bootstrap_addr_bad_token(#[values("not_an_uuid", "康熙帝")] bad_token: &str) {
+fn bootstrap_addr_token() {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
-    let url = testbed.url().replace(TOKEN, bad_token);
-    testbed.assert_addr_err(
-        &url,
-        AddrError::InvalidParamValue {
-            param: "token",
-            value: bad_token.into(),
-            help: "The token is not a valid hex string".into(),
-        },
+
+    // Url with token
+    let addr: ParsecOrganizationBootstrapAddr = testbed.url().parse().unwrap();
+    let expected_token = BootstrapToken::from_hex(TOKEN).unwrap();
+    p_assert_eq!(addr.token(), Some(&expected_token));
+
+    // Url without token (for spontaneous bootstrap)
+    let url = testbed.url().replace(
+        ORGANIZATION_BOOTSTRAP_ADDR_PARAM,
+        ORGANIZATION_BOOTSTRAP_ADDR_PARAM_NO_TOKEN,
     );
+    let addr: ParsecOrganizationBootstrapAddr = url.parse().unwrap();
+    p_assert_eq!(addr.token(), None);
 }
 
 #[rstest]
-#[case::empty("", 0)]
-#[case::short("42", 1)]
-#[case::too_long("494d41546f6b656e546861744973546f6f4c6f6e67", 21)]
-fn bootstrap_addr_token_invalid_size(#[case] bad_token: &str, #[case] got_size: usize) {
+#[case::empty("")]
+#[case::not_base64("<dummy>")]
+// cspell:disable-next-line
+#[case::base64_over_not_msgpack("ZHVtbXk")] // Base64("dummy")
+// cspell:disable-next-line
+#[case::empty_token("xAA")] // Base64(Msgpack(b""))
+// cspell:disable-next-line
+#[case::token_too_short("xAEA")] // Base64(Msgpack(b"\x00"))
+// cspell:disable-next-line
+#[case::token_too_long("xBEAAAAAAAAAAAAAAAAAAAAAAA")] // Base64(Msgpack(b"\x00" * 17))
+fn bootstrap_addr_bad_payload(#[case] bad_payload: &str) {
     let testbed = BackendOrganizationBootstrapAddrTestbed {};
-    let url = testbed.url().replace(TOKEN, bad_token);
+    let url = testbed
+        .url()
+        .replace(ORGANIZATION_BOOTSTRAP_ADDR_PARAM, bad_payload);
     testbed.assert_addr_err(
         &url,
         AddrError::InvalidParamValue {
-            param: "token",
-            value: bad_token.into(),
-            help: format!("Invalid size, got {got_size} bytes, expected 16 bytes",),
+            param: "p",
+            value: bad_payload.into(),
+            help: "Invalid `p` parameter".into(),
         },
     );
 }
@@ -374,39 +397,6 @@ fn file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
     }
 }
 
-#[rstest]
-fn file_link_addr_bad_p(
-    #[values(
-        Some("__not_base64__"),
-        Some("康熙帝"),
-        Some("ZHVtbXk"), // Base64(b"dummy")
-        None
-    )]
-    bad_param: Option<&str>,
-) {
-    let testbed = BackendOrganizationFileLinkAddrTestbed {};
-
-    match bad_param {
-        Some(bad_param) => {
-            // Key index param present in the url but with bad and empty value
-            let url = testbed.url().replace(FILE_LINK_PARAM, bad_param);
-            testbed.assert_addr_err(
-                &url,
-                AddrError::InvalidParamValue {
-                    param: "p",
-                    value: bad_param.to_string(),
-                    help: "Invalid `p` parameter".to_string(),
-                },
-            );
-        }
-        None => {
-            // Key index param not present in the url
-            let url = testbed.url().replace(&format!("p={}", FILE_LINK_PARAM), "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("p"));
-        }
-    }
-}
-
 #[test]
 fn file_link_addr_get_params() {
     let testbed = BackendOrganizationFileLinkAddrTestbed {};
@@ -419,6 +409,26 @@ fn file_link_addr_get_params() {
     p_assert_eq!(
         addr.workspace_id(),
         FILE_LINK_PARAM_WORKSPACE_ID.try_into().unwrap()
+    );
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::not_base64("<dummy>")]
+// cspell:disable-next-line
+#[case::base64_over_not_msgpack("ZHVtbXk")] // Base64("dummy")
+// cspell:disable-next-line
+#[case::bad_data("xAA")] // Base64(Msgpack(b""))
+fn file_link_addr_bad_payload(#[case] bad_payload: &str) {
+    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+    let url = testbed.url().replace(FILE_LINK_PARAM, bad_payload);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidParamValue {
+            param: "p",
+            value: bad_payload.into(),
+            help: "Invalid `p` parameter".into(),
+        },
     );
 }
 
@@ -452,47 +462,33 @@ fn invitation_addr_bad_type(
 }
 
 #[rstest]
-fn invitation_addr_bad_token(
-    #[values(Some("not_an_uuid"), Some("康熙帝"), None)] bad_token: Option<&str>,
-) {
+fn invitation_addr_token() {
     let testbed = BackendInvitationAddrTestbed {};
-
-    match bad_token {
-        Some(bad_token) => {
-            // Token param present in the url but with and empty or bad value
-            let url = testbed.url().replace(TOKEN, bad_token);
-            testbed.assert_addr_err(
-                &url,
-                AddrError::InvalidParamValue {
-                    param: "token",
-                    value: bad_token.to_string(),
-                    help: "The token is not a valid hex string".into(),
-                },
-            );
-        }
-        None => {
-            // Token param not present in the url
-            let url = testbed.url().replace(&format!("token={}", TOKEN), "");
-            testbed.assert_addr_err(&url, AddrError::MissingParam("token"));
-        }
-    }
+    let addr: ParsecInvitationAddr = testbed.url().parse().unwrap();
+    let expected_token = InvitationToken::from_hex(TOKEN).unwrap();
+    p_assert_eq!(addr.token(), expected_token);
 }
 
 #[rstest]
-#[case::empty("", 0)]
-#[case::short("42", 1)]
-#[case::too_long("494d41546f6b656e546861744973546f6f4c6f6e67", 21)]
-fn invitation_addr_token_invalid_size(#[case] bad_token: &str, #[case] got_size: usize) {
+#[case::empty("")]
+#[case::not_base64("<dummy>")]
+// cspell:disable-next-line
+#[case::base64_over_not_msgpack("ZHVtbXk")] // Base64("dummy")
+// cspell:disable-next-line
+#[case::empty_token("xAA")] // Base64(Msgpack(b""))
+// cspell:disable-next-line
+#[case::token_too_short("xAEA")] // Base64(Msgpack(b"\x00"))
+// cspell:disable-next-line
+#[case::token_too_long("xBEAAAAAAAAAAAAAAAAAAAAAAA")] // Base64(Msgpack(b"\x00" * 17))
+fn invitation_addr_bad_payload(#[case] bad_payload: &str) {
     let testbed = BackendInvitationAddrTestbed {};
-
-    // Token param present in the url but with and empty or bad value
-    let url = testbed.url().replace(TOKEN, bad_token);
+    let url = testbed.url().replace(INVITATION_PARAM, bad_payload);
     testbed.assert_addr_err(
         &url,
         AddrError::InvalidParamValue {
-            param: "token",
-            value: bad_token.into(),
-            help: format!("Invalid size, got {got_size} bytes, expected 16 bytes"),
+            param: "p",
+            value: bad_payload.into(),
+            help: "Invalid `p` parameter".into(),
         },
     );
 }
@@ -634,13 +630,18 @@ fn backend_addr_redirection() {
 
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
+        // cspell:disable-next-line
         "parsec3://parsec.example.com/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        // cspell:disable-next-line
         "https://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
     test_redirection!(
         ParsecOrganizationFileLinkAddr,
+        // cspell:disable-next-line
         "parsec3://parsec.example.com/my_org?a=file_link&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        // cspell:disable-next-line
         "parsec3://parsec.example.com/my_org?no_ssl=true&a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        // cspell:disable-next-line
         "http://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
 }
@@ -735,26 +736,66 @@ fn backend_organization_addr_good(
 }
 
 #[rstest]
-// #[case::empty("", "Invalid URL")]
-// #[case::invalid_url("foo", "Invalid URL")]
-// #[case::missing_mandatory_rvk("parsec3://foo:42/org", "Missing mandatory `rvk` param")]
-// #[case::missing_value_for_param("parsec3://foo:42/org?rvk=", "Invalid `rvk` param value")]
-// #[case::bad_value_for_param("parsec3://foo:42/org?rvk=nop", "Invalid `rvk` param value")]
 #[case::missing_org_name(
-    "parsec3://foo:42?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    // cspell:disable-next-line
+    "parsec3://foo:42?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec3://foo:42/?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    // cspell:disable-next-line
+    "parsec3://foo:42/?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/bad/org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    // cspell:disable-next-line
+    "parsec3://foo:42/bad/org?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/~org?rvk=RAFI2CQYDHXMEY4NXEAJCTCBELJAUDE2OTYYLTVHGAGX57WS7LRQssss",
+    // cspell:disable-next-line
+    "parsec3://foo:42/~org?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA",
     AddrError::InvalidOrganizationID
+)]
+#[case::payload_not_b64(
+    "parsec3://foo:42/org?p=dummy",
+    AddrError::InvalidParamValue {
+        param: "p",
+        value: "dummy".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_not_msgpack(
+    // Base64(b"dummy")
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?p=ZHVtbXk",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "ZHVtbXk".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_empty_root_verify_key(
+    // Base64(Msgpack(b""))
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?p=xAA",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "xAA".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_bad_root_verify_key(
+    // Base64(Msgpack(b"\x00"))
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?p=xAEA",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "xAEA".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
 )]
 fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     p_assert_eq!(ParsecOrganizationAddr::from_str(url).unwrap_err(), msg);
@@ -800,33 +841,80 @@ fn backend_organization_bootstrap_addr_good(
 #[rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::missing_action("parsec3://foo:42/org?token=123", AddrError::MissingParam("a"))]
+// cspell:disable-next-line
+#[case::missing_action("parsec3://foo:42/org?p=wA", AddrError::MissingParam("a"))]
+#[case::missing_payload(
+    "parsec3://foo:42/org?a=bootstrap_organization",
+    AddrError::MissingParam("p")
+)]
 #[case::bad_action(
-    "parsec3://foo:42/org?a=dummy&token=123",
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?a=dummy&p=wA",
     AddrError::InvalidParamValue {
         param: "a",
         value: "dummy".to_string(),
         help: "Expected `a=bootstrap_organization`".to_string()
     }
 )]
-#[case::org_name(
-    "parsec3://foo:42?a=bootstrap_organization&token=123",
+#[case::payload_not_b64(
+    "parsec3://foo:42/org?a=bootstrap_organization&p=dummy",
+    AddrError::InvalidParamValue {
+        param: "p",
+        value: "dummy".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_not_msgpack(
+    // Base64(b"dummy")
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?a=bootstrap_organization&p=ZHVtbXk",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "ZHVtbXk".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_empty_token(
+    // Base64(Msgpack(b""))
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?a=bootstrap_organization&p=xAA",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "xAA".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::payload_bad_token(
+    // Base64(Msgpack(b"\x00"))
+    // cspell:disable-next-line
+    "parsec3://foo:42/org?a=bootstrap_organization&p=xAEA",
+    AddrError::InvalidParamValue {
+        param: "p",
+        // cspell:disable-next-line
+        value: "xAEA".to_string(),
+        help: "Invalid `p` parameter".to_string()
+    }
+)]
+#[case::missing_org_name(
+    // cspell:disable-next-line
+    "parsec3://foo:42?a=bootstrap_organization&p=wA",
     AddrError::InvalidOrganizationID
 )]
 #[case::missing_org_name(
-    "parsec3://foo:42?a=bootstrap_organization&token=123",
-    AddrError::InvalidOrganizationID
-)]
-#[case::missing_org_name(
-    "parsec3://foo:42/?a=bootstrap_organization&token=123",
+    // cspell:disable-next-line
+    "parsec3://foo:42/?a=bootstrap_organization&p=wA",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/bad/org?a=bootstrap_organization&token=123",
+    // cspell:disable-next-line
+    "parsec3://foo:42/bad/org?a=bootstrap_organization&p=wA",
     AddrError::InvalidOrganizationID
 )]
 #[case::bad_org_name(
-    "parsec3://foo:42/~org?a=bootstrap_organization&token=123",
+    // cspell:disable-next-line
+    "parsec3://foo:42/~org?a=bootstrap_organization&p=wA",
     AddrError::InvalidOrganizationID
 )]
 fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
@@ -858,6 +946,7 @@ fn legacy_parsec_v2_server_addr() {
 
 #[test]
 fn legacy_parsec_v2_organization_addr() {
+    // cspell:disable-next-line
     const LEGACY_URL: &str = "parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
 
     // No longer supported...
@@ -867,7 +956,11 @@ fn legacy_parsec_v2_organization_addr() {
     );
 
     // ...except in deserialization for backward compatibility (needed by `LocalDevice` schema)
-    let expected_url: ParsecOrganizationAddr = "parsec3://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse().unwrap();
+    let expected_url: ParsecOrganizationAddr =
+        // cspell:disable-next-line
+        "parsec3://parsec.example.com/MyOrg?p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
+            .parse()
+            .unwrap();
     serde_test::assert_de_tokens(&expected_url, &[Token::Str(LEGACY_URL)])
 }
 
@@ -894,6 +987,7 @@ fn legacy_parsec_v2_organization_bootstrap_addr() {
 
 #[test]
 fn legacy_parsec_v2_organization_file_link_addr() {
+    // cspell:disable-next-line
     const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
     let expected_error = AddrError::InvalidUrlScheme {
         got: "parsec".to_string(),
