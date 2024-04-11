@@ -8,7 +8,8 @@ mockValidators();
 
 import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator, organizationValidator } from '@/common/validators';
 
-const VALID_TOKEN = 'a'.repeat(32);
+// cspell:disable-next-line
+const VALID_PAYLOAD = 'xBCqqqqqqqqqqqqqqqqqqqqq';
 
 describe('Validators', () => {
   it('Validates organization name', async () => {
@@ -20,33 +21,35 @@ describe('Validators', () => {
   });
 
   it.each([
-    [`http://host/org?action=claim_user&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
-    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
-    [`parsec3://host/org?action=bootstrap_organization&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
-    ['parsec3://host/org?action=claim_user', 'Link does not include a token.'],
-    ['parsec3://host/org?action=claim_user&token=abcdefg', 'Link contains an invalid token.'],
+    // cspell:disable-next-line
+    [`http://host/org?a=claim_user&p=${VALID_PAYLOAD}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?p=${VALID_PAYLOAD}`, 'Link does not include an action.'],
+    [`parsec3://host/org?a=bootstrap_organization&p=${VALID_PAYLOAD}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?a=claim_user', 'Link does not include a token.'],
+    ['parsec3://host/org?a=claim_user&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim link', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimLinkValidator(link);
     expect(translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
   it.each([
-    [`http://host/org?action=claim_user&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
-    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
-    [`parsec3://host/org?action=claim_device&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
-    ['parsec3://host/org?action=claim_user', 'Link does not include a token.'],
-    ['parsec3://host/org?action=claim_user&token=abcdefg', 'Link contains an invalid token.'],
+    // cspell:disable-next-line
+    [`http://host/org?a=claim_user&p=${VALID_PAYLOAD}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?p=${VALID_PAYLOAD}`, 'Link does not include an action.'],
+    [`parsec3://host/org?a=claim_device&p=${VALID_PAYLOAD}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?a=claim_user', 'Link does not include a token.'],
+    ['parsec3://host/org?a=claim_user&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim user', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimUserLinkValidator(link);
     expect(translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
   it.each([
-    [`http://host/org?action=claim_device&token=${VALID_TOKEN}`, "Link should start with 'parsec3://'."],
-    [`parsec3://host/org?token=${VALID_TOKEN}`, 'Link does not include an action.'],
-    [`parsec3://host/org?action=claim_user&token=${VALID_TOKEN}`, 'Link contains an invalid action.'],
-    ['parsec3://host/org?action=claim_device', 'Link does not include a token.'],
-    ['parsec3://host/org?action=claim_device&token=abcdefg', 'Link contains an invalid token.'],
+    [`http://host/org?a=claim_device&p=${VALID_PAYLOAD}`, "Link should start with 'parsec3://'."],
+    [`parsec3://host/org?p=${VALID_PAYLOAD}`, 'Link does not include an action.'],
+    [`parsec3://host/org?a=claim_user&p=${VALID_PAYLOAD}`, 'Link contains an invalid action.'],
+    ['parsec3://host/org?a=claim_device', 'Link does not include a token.'],
+    ['parsec3://host/org?a=claim_device&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim device', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimDeviceLinkValidator(link);
     expect(translate(invalidProtocolResult.reason)).to.equal(expected);

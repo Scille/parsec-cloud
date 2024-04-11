@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 describe('Claim new device', () => {
-  const INVITATION_LINK = 'parsec3://parsec.cloud/Test?action=claim_device&token=47265123969c4d6584c2bc15960cf212';
+  // cspell:disable-next-line
+  const INVITATION_LINK = 'parsec3://parsec.cloud/Test?a=claim_device&p=xBBHJlEjlpxNZYTCvBWWDPIS';
   const WAIT_TIME = 1000;
 
   beforeEach(() => {

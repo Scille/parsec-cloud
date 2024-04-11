@@ -17,7 +17,8 @@ async fn same_key_file(tmp_path: TmpPath) {
     };
     let device = LocalDevice::generate_new_device(
         ParsecOrganizationAddr::from_any(
-            "parsec3://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss"
+            // cspell:disable-next-line
+            "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
         ).unwrap(),
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
@@ -63,7 +64,8 @@ async fn different_key_file(tmp_path: TmpPath) {
     };
     let device = LocalDevice::generate_new_device(
         ParsecOrganizationAddr::from_any(
-            "parsec3://127.0.0.1:6770/Org?no_ssl=true&rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss"
+            // cspell:disable-next-line
+            "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
         ).unwrap(),
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),

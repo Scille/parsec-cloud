@@ -396,10 +396,8 @@ export async function getPathLink(
 
   const org = 'Org';
   // cspell:disable-next-line
-  const workspaceId = '94a350f2f629403db2269c44583f7aa1';
-  // cspell:disable-next-line
-  path = 'MZDXYYNVT5QF27JMZQOOPEPDATV4R4FQHRZ762CTNRNAJHJO3DV3IACWLABY7EA6DC3BNGXTALKSQAQDDDBAssss';
-  let link = `parsec3://parsec.cloud/${org}?action=file_link&workspace_id=${workspaceId}&path=${path}`;
+  const payload = 'k8QY94a350f2f629403db2269c44583f7aa1AcQ0Zkd8YbWfYF19LMwc55HjBOvI8LA8c_9oU2xaBJ0u2Ou0AFZYA4-QHhi2FprzAtUoAgMYwg';
+  let link = `parsec3://parsec.cloud/${org}?a=file_link&p=${payload}`;
   if (timestamp !== null) {
     // cspell:disable-next-line
     link += '&timestamp=JEFHNUJEF39350JFHNsss';

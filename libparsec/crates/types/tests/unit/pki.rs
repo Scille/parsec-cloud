@@ -216,6 +216,154 @@ fn serde_pki_enrollment_submit_payload(
         }
     })
 )]
+fn serde_local_pending_enrollment_legacy_v2(
+    alice: &Device,
+    #[case] raw: &[u8],
+    #[case] generate_expected: Box<dyn FnOnce(&Device) -> LocalPendingEnrollment>,
+) {
+    let expected = generate_expected(alice);
+
+    let data = LocalPendingEnrollment::load(raw).unwrap();
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw = data.dump();
+    let data = LocalPendingEnrollment::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+}
+
+#[rstest]
+#[case::full(
+    // Generated from Parsec v3.0.0-b.6+dev
+    // Content:
+    //   type: "local_pending_enrollment"
+    //   addr: "parsec3://parsec.example.com/my_org?a=pki_enrollment"
+    //   ciphertext: hex!("666f6f")
+    //   encrypted_key: hex!("666f6f")
+    //   enrollment_id: ext(2, hex!("d4e678ea63cc4025a0739c6c46476794"))
+    //   submit_payload: {
+    //     type: "pki_enrollment_submit_payload"
+    //     public_key: hex!("e1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d")
+    //     requested_device_label: "My dev1 machine"
+    //     verify_key: hex!("845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9")
+    //   }
+    //   submitted_on: ext(1, 946771200.0)
+    //   x509_certificate: {
+    //     type: "x509_certificate"
+    //     certificate_id: "foo"
+    //     certificate_sha1: hex!("666f6f")
+    //     der_x509_certificate: hex!("666f6f")
+    //     issuer: {foo:"bar"}
+    //     subject: {foo:"bar"}
+    //   }
+    //
+    &hex!(
+        "88a474797065b86c6f63616c5f70656e64696e675f656e726f6c6c6d656e74b0783530395f"
+        "636572746966696361746586a474797065b0783530395f6365727469666963617465a66973"
+        "7375657281a3666f6fa3626172a77375626a65637481a3666f6fa3626172b46465725f7835"
+        "30395f6365727469666963617465c403666f6fb063657274696669636174655f73686131c4"
+        "03666f6fae63657274696669636174655f6964a3666f6fa461646472d93470617273656333"
+        "3a2f2f7061727365632e6578616d706c652e636f6d2f6d795f6f72673f613d706b695f656e"
+        "726f6c6c6d656e74ac7375626d69747465645f6f6ed70141cc374a80000000ad656e726f6c"
+        "6c6d656e745f6964d802d4e678ea63cc4025a0739c6c46476794ae7375626d69745f706179"
+        "6c6f616484a474797065bd706b695f656e726f6c6c6d656e745f7375626d69745f7061796c"
+        "6f6164aa7665726966795f6b6579c420845415cd821748005054dba8d456ac18ad3e71acdf"
+        "980e19d6a925191362c9f9aa7075626c69635f6b6579c420e1b20b860a78ef778d0c776121"
+        "c7027cd90ce04b4d2f1a291a48d911f145724db67265717565737465645f6465766963655f"
+        "6c6162656caf4d792064657631206d616368696e65ad656e637279707465645f6b6579c403"
+        "666f6faa63697068657274657874c403666f6f"
+    )[..],
+    Box::new(|alice: &Device| {
+        LocalPendingEnrollment {
+            x509_certificate: X509Certificate {
+                issuer: HashMap::from([("foo".into(), "bar".into())]),
+                subject: HashMap::from([("foo".into(), "bar".into())]),
+                der_x509_certificate: b"foo".as_ref().into(),
+                certificate_sha1: b"foo".as_ref().into(),
+                certificate_id: Some("foo".into()),
+            },
+            addr: ParsecPkiEnrollmentAddr::from_str(
+                "parsec3://parsec.example.com/my_org?a=pki_enrollment",
+            )
+            .unwrap(),
+            submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
+            enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
+            submit_payload: PkiEnrollmentSubmitPayload {
+                verify_key: alice.verify_key(),
+                public_key: alice.public_key(),
+                requested_device_label: alice.device_label.clone(),
+            },
+            encrypted_key: b"foo".as_ref().into(),
+            ciphertext: b"foo".as_ref().into(),
+        }
+    })
+)]
+#[case::without(
+    // Generated from Parsec v3.0.0-b.6+dev
+    // Content:
+    //   type: "local_pending_enrollment"
+    //   addr: "parsec3://parsec.example.com/my_org?a=pki_enrollment"
+    //   ciphertext: hex!("666f6f")
+    //   encrypted_key: hex!("666f6f")
+    //   enrollment_id: ext(2, hex!("d4e678ea63cc4025a0739c6c46476794"))
+    //   submit_payload: {
+    //     type: "pki_enrollment_submit_payload"
+    //     public_key: hex!("e1b20b860a78ef778d0c776121c7027cd90ce04b4d2f1a291a48d911f145724d")
+    //     requested_device_label: "My dev1 machine"
+    //     verify_key: hex!("845415cd821748005054dba8d456ac18ad3e71acdf980e19d6a925191362c9f9")
+    //   }
+    //   submitted_on: ext(1, 946771200.0)
+    //   x509_certificate: {
+    //     type: "x509_certificate"
+    //     certificate_id: None
+    //     certificate_sha1: hex!("666f6f")
+    //     der_x509_certificate: hex!("666f6f")
+    //     issuer: {foo:"bar"}
+    //     subject: {foo:"bar"}
+    //   }
+    //
+    &hex!(
+        "88a474797065b86c6f63616c5f70656e64696e675f656e726f6c6c6d656e74b0783530395f"
+        "636572746966696361746586a474797065b0783530395f6365727469666963617465a66973"
+        "7375657281a3666f6fa3626172a77375626a65637481a3666f6fa3626172b46465725f7835"
+        "30395f6365727469666963617465c403666f6fb063657274696669636174655f73686131c4"
+        "03666f6fae63657274696669636174655f6964c0a461646472d934706172736563333a2f2f"
+        "7061727365632e6578616d706c652e636f6d2f6d795f6f72673f613d706b695f656e726f6c"
+        "6c6d656e74ac7375626d69747465645f6f6ed70141cc374a80000000ad656e726f6c6c6d65"
+        "6e745f6964d802d4e678ea63cc4025a0739c6c46476794ae7375626d69745f7061796c6f61"
+        "6484a474797065bd706b695f656e726f6c6c6d656e745f7375626d69745f7061796c6f6164"
+        "aa7665726966795f6b6579c420845415cd821748005054dba8d456ac18ad3e71acdf980e19"
+        "d6a925191362c9f9aa7075626c69635f6b6579c420e1b20b860a78ef778d0c776121c7027c"
+        "d90ce04b4d2f1a291a48d911f145724db67265717565737465645f6465766963655f6c6162"
+        "656caf4d792064657631206d616368696e65ad656e637279707465645f6b6579c403666f6f"
+        "aa63697068657274657874c403666f6f"
+    )[..],
+    Box::new(|alice: &Device| {
+        LocalPendingEnrollment {
+            x509_certificate: X509Certificate {
+                issuer: HashMap::from([("foo".into(), "bar".into())]),
+                subject: HashMap::from([("foo".into(), "bar".into())]),
+                der_x509_certificate: b"foo".as_ref().into(),
+                certificate_sha1: b"foo".as_ref().into(),
+                certificate_id: None,
+            },
+            addr: ParsecPkiEnrollmentAddr::from_str(
+                "parsec3://parsec.example.com/my_org?a=pki_enrollment",
+            )
+            .unwrap(),
+            submitted_on: "2000-01-02T00:00:00Z".parse().unwrap(),
+            enrollment_id: EnrollmentID::from_hex("d4e678ea63cc4025a0739c6c46476794").unwrap(),
+            submit_payload: PkiEnrollmentSubmitPayload {
+                verify_key: alice.verify_key(),
+                public_key: alice.public_key(),
+                requested_device_label: alice.device_label.clone(),
+            },
+            encrypted_key: b"foo".as_ref().into(),
+            ciphertext: b"foo".as_ref().into(),
+        }
+    })
+)]
 fn serde_local_pending_enrollment(
     alice: &Device,
     #[case] raw: &[u8],

@@ -82,6 +82,8 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     // Testbed stuff
     #[cfg(feature = "test-utils")]
     {
+        use pyo3::wrap_pyfunction;
+
         let tm = PyModule::new(py, "testbed")?;
         m.add_submodule(tm)?;
         // tm.add_function(wrap_pyfunction!(test_new_testbed, tm)?)?;

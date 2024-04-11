@@ -376,6 +376,43 @@ fn extract_param<'a>(
     Ok(action)
 }
 
+fn extract_param_and_expect_value<'a>(
+    pairs: &'a url::form_urlencoded::Parse,
+    param: &'static str,
+    expected_value: &str,
+) -> Result<std::borrow::Cow<'a, str>, AddrError> {
+    let value = extract_param(pairs, param)?;
+    if value != expected_value {
+        return Err(AddrError::InvalidParamValue {
+            param,
+            value: value.to_string(),
+            help: format!("Expected `{}={}`", param, expected_value),
+        });
+    }
+    Ok(value)
+}
+
+fn b64_msgpack_serialize<T: serde::ser::Serialize>(data: &T) -> String {
+    rmp_serde::to_vec::<T>(data)
+        .map(|raw| BASE64URL_NOPAD.encode(&raw))
+        .expect("data are valid")
+}
+
+macro_rules! extract_param_and_b64_msgpack_deserialize {
+    ($pairs:expr, $param:ident, $output:ty) => {{
+        let x = extract_param($pairs, $param)?;
+        BASE64URL_NOPAD
+            .decode(x.as_bytes())
+            .ok()
+            .and_then(|x| rmp_serde::from_slice::<$output>(&x).ok())
+            .ok_or_else(|| AddrError::InvalidParamValue {
+                param: $param,
+                value: x.to_string(),
+                help: format!("Invalid `{}` parameter", $param),
+            })
+    }};
+}
+
 fn extract_organization_id(parsed: &ParsecUrlAsHTTPScheme) -> Result<OrganizationID, AddrError> {
     const ERR_MSG: AddrError = AddrError::InvalidOrganizationID;
     // Strip the initial `/`
@@ -440,7 +477,7 @@ impl ParsecAddr {
  */
 
 /// Represent the URL to access an organization within a server
-/// (e.g. ``parsec3://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss``)
+/// (e.g. ``parsec3://parsec.example.com/MyOrg?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationAddr {
     base: BaseParsecAddr,
@@ -468,20 +505,8 @@ impl ParsecOrganizationAddr {
         let organization_id = extract_organization_id(parsed)?;
 
         let pairs = parsed.0.query_pairs();
-        let mut rvk_queries = pairs.filter(|(k, _)| k == "rvk");
-        let root_verify_key = match rvk_queries.next() {
-            None => return Err(AddrError::MissingParam("rvk")),
-            Some((_, value)) => {
-                import_root_verify_key(&value).map_err(|e| AddrError::InvalidParamValue {
-                    param: "rvk",
-                    value: value.to_string(),
-                    help: e.to_string(),
-                })?
-            }
-        };
-        if rvk_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("rvk"));
-        }
+        let root_verify_key =
+            extract_param_and_b64_msgpack_deserialize!(&pairs, PARSEC_PARAM_PAYLOAD, VerifyKey)?;
 
         Ok(Self {
             base,
@@ -496,8 +521,11 @@ impl ParsecOrganizationAddr {
         url.path_segments_mut()
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
+
+        let payload = b64_msgpack_serialize(&self.root_verify_key);
+
         url.query_pairs_mut()
-            .append_pair("rvk", &export_root_verify_key(&self.root_verify_key));
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
         url
     }
 
@@ -526,6 +554,7 @@ impl ParsecOrganizationAddr {
         let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
 
         const LEGACY_PARSEC_SCHEMA: &str = "parsec";
+        const LEGACY_PARSEC_PARAM_RVK: &str = "rvk";
 
         // 1) Convert scheme `parsec://` -> `parsec3://`
 
@@ -538,6 +567,37 @@ impl ParsecOrganizationAddr {
         parsed
             .set_scheme(PARSEC_SCHEME)
             .expect("old and new schemes are valid and compatible with each other");
+
+        // 2) Convert rvk param into the payload format
+
+        let mut pairs = vec![];
+        for (k, v) in parsed.query_pairs() {
+            if k == LEGACY_PARSEC_PARAM_RVK {
+                let mk_err = || AddrError::InvalidParamValue {
+                    param: LEGACY_PARSEC_PARAM_RVK,
+                    value: v.to_string(),
+                    help: "Invalid root verify key".to_string(),
+                };
+
+                // Legacy binary encoding is based on base32 encoding, but with padding
+                // chars `=` replaced by a simple `s` (which is not part of the base32
+                // table so no risk of collision) to avoid copy/paste errors and silly
+                // escaping issues when carrying the key around.
+
+                let encoded_b32 = v.replace('s', "=");
+                let buff = BASE32
+                    .decode(encoded_b32.as_bytes())
+                    .map_err(|_| mk_err())?;
+
+                let key = VerifyKey::try_from(buff.as_slice()).map_err(|_| mk_err())?;
+                let payload = b64_msgpack_serialize(&key);
+
+                pairs.push((PARSEC_PARAM_PAYLOAD.to_string(), payload));
+            } else {
+                pairs.push((k.to_string(), v.to_string()));
+            }
+        }
+        parsed.query_pairs_mut().clear().extend_pairs(pairs);
 
         // 2) Url has been converted, we can now parse it as a regular one
         Self::from_str(parsed.as_str())
@@ -607,7 +667,7 @@ impl std::str::FromStr for ParsecActionAddr {
  */
 
 // Represent the URL to bootstrap an organization within a server
-// (e.g. ``parsec3://parsec.example.com/my_org?a=bootstrap_organization&token=1234ABCD``)
+// (e.g. ``parsec3://parsec.example.com/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
@@ -634,37 +694,17 @@ impl ParsecOrganizationBootstrapAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
 
-        if action != PARSEC_ACTION_BOOTSTRAP_ORGANIZATION {
-            return Err(AddrError::InvalidParamValue {
-                param: PARSEC_PARAM_ACTION,
-                value: action.to_string(),
-                help: format!(
-                    "Expected `{}={}`",
-                    PARSEC_PARAM_ACTION, PARSEC_ACTION_BOOTSTRAP_ORGANIZATION
-                ),
-            });
-        }
-
-        let mut token_queries = pairs.filter(|(k, _)| k == "token");
-        let token = token_queries
-            .next()
-            .map(|(_, v)| {
-                BootstrapToken::from_hex(&v).map_err(|e| AddrError::InvalidParamValue {
-                    param: "token",
-                    value: v.to_string(),
-                    help: e.to_string(),
-                })
-            })
-            .transpose()?;
-
-        // Note invalid percent-encoding is not considered a failure here:
-        // the replacement character EF BF BD is used instead. This should be
-        // ok for our use case (but it differs from Python implementation).
-        if token_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("token"));
-        }
+        extract_param_and_expect_value(
+            &pairs,
+            PARSEC_PARAM_ACTION,
+            PARSEC_ACTION_BOOTSTRAP_ORGANIZATION,
+        )?;
+        let token = extract_param_and_b64_msgpack_deserialize!(
+            &pairs,
+            PARSEC_PARAM_PAYLOAD,
+            Option<BootstrapToken>
+        )?;
 
         Ok(Self {
             base,
@@ -679,11 +719,12 @@ impl ParsecOrganizationBootstrapAddr {
         url.path_segments_mut()
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
+
+        let payload = b64_msgpack_serialize(&self.token);
+
         url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_BOOTSTRAP_ORGANIZATION);
-        if let Some(ref tk) = self.token {
-            url.query_pairs_mut().append_pair("token", &tk.hex());
-        }
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_BOOTSTRAP_ORGANIZATION)
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
         url
     }
 
@@ -721,7 +762,7 @@ impl ParsecOrganizationBootstrapAddr {
  */
 
 /// Represent the URL to share a file link
-/// (e.g. ``parsec3://parsec.example.com/my_org?a=file_link&p=<TODO>``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationFileLinkAddr {
     base: BaseParsecAddr,
@@ -754,28 +795,13 @@ impl ParsecOrganizationFileLinkAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
-        if action != PARSEC_ACTION_FILE_LINK {
-            return Err(AddrError::InvalidParamValue {
-                param: PARSEC_PARAM_ACTION,
-                value: action.to_string(),
-                help: format!(
-                    "Expected `{}={}`",
-                    PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK
-                ),
-            });
-        }
 
-        let p = extract_param(&pairs, PARSEC_PARAM_PAYLOAD)?;
-        let (workspace_id, key_index, encrypted_path) = BASE64URL_NOPAD
-            .decode(p.as_bytes())
-            .ok()
-            .and_then(|p| rmp_serde::from_slice::<(VlobID, IndexInt, Vec<u8>)>(&p).ok())
-            .ok_or_else(|| AddrError::InvalidParamValue {
-                param: PARSEC_PARAM_PAYLOAD,
-                value: p.to_string(),
-                help: "Invalid `p` parameter".to_string(),
-            })?;
+        extract_param_and_expect_value(&pairs, PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK)?;
+        let (workspace_id, key_index, encrypted_path) = extract_param_and_b64_msgpack_deserialize!(
+            &pairs,
+            PARSEC_PARAM_PAYLOAD,
+            (VlobID, IndexInt, Vec<u8>)
+        )?;
 
         Ok(Self {
             base,
@@ -793,17 +819,12 @@ impl ParsecOrganizationFileLinkAddr {
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
 
-        let p = rmp_serde::to_vec::<(VlobID, IndexInt, &[u8])>(&(
-            self.workspace_id,
-            self.key_index,
-            &self.encrypted_path,
-        ))
-        .map(|raw| BASE64URL_NOPAD.encode(&raw))
-        .expect("data are valid");
+        let payload =
+            b64_msgpack_serialize(&(self.workspace_id, self.key_index, &self.encrypted_path));
 
         url.query_pairs_mut()
             .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK)
-            .append_pair(PARSEC_PARAM_PAYLOAD, &p);
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
 
         url
     }
@@ -830,7 +851,7 @@ impl ParsecOrganizationFileLinkAddr {
  */
 
 /// Represent the URL to invite a user or a device
-/// (e.g. ``parsec3://parsec.example.com/my_org?a=claim_user&token=3a50b191122b480ebb113b10216ef343``)
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecInvitationAddr {
     base: BaseParsecAddr,
@@ -860,6 +881,7 @@ impl ParsecInvitationAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
+
         let invitation_type = match extract_param(&pairs, PARSEC_PARAM_ACTION)? {
             x if x == PARSEC_ACTION_CLAIM_USER => InvitationType::User,
             x if x == PARSEC_ACTION_CLAIM_DEVICE => InvitationType::Device,
@@ -877,21 +899,11 @@ impl ParsecInvitationAddr {
                 })
             }
         };
-
-        let mut token_queries = pairs.filter(|(k, _)| k == "token");
-        let token = match token_queries.next() {
-            None => return Err(AddrError::MissingParam("token")),
-            Some((_, value)) => {
-                InvitationToken::from_hex(&value).map_err(|e| AddrError::InvalidParamValue {
-                    param: "token",
-                    value: value.to_string(),
-                    help: e.to_string(),
-                })?
-            }
-        };
-        if token_queries.next().is_some() {
-            return Err(AddrError::DuplicateParam("token"));
-        }
+        let token = extract_param_and_b64_msgpack_deserialize!(
+            &pairs,
+            PARSEC_PARAM_PAYLOAD,
+            InvitationToken
+        )?;
 
         Ok(Self {
             base,
@@ -907,6 +919,9 @@ impl ParsecInvitationAddr {
         url.path_segments_mut()
             .expect("expected url not to be a cannot-be-a-base")
             .push(self.organization_id.as_ref());
+
+        let payload = b64_msgpack_serialize(&self.token);
+
         url.query_pairs_mut()
             .append_pair(
                 PARSEC_PARAM_ACTION,
@@ -915,7 +930,7 @@ impl ParsecInvitationAddr {
                     InvitationType::Device => PARSEC_ACTION_CLAIM_DEVICE,
                 },
             )
-            .append_pair("token", &self.token.hex());
+            .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
         url
     }
 
@@ -979,17 +994,7 @@ impl ParsecPkiEnrollmentAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
-        let action = extract_param(&pairs, PARSEC_PARAM_ACTION)?;
-        if action != PARSEC_ACTION_PKI_ENROLLMENT {
-            return Err(AddrError::InvalidParamValue {
-                param: PARSEC_PARAM_ACTION,
-                value: action.to_string(),
-                help: format!(
-                    "Expected `{}={}`",
-                    PARSEC_PARAM_ACTION, PARSEC_ACTION_PKI_ENROLLMENT
-                ),
-            });
-        }
+        extract_param_and_expect_value(&pairs, PARSEC_PARAM_ACTION, PARSEC_ACTION_PKI_ENROLLMENT)?;
 
         Ok(Self {
             base,
@@ -1091,34 +1096,6 @@ impl ParsecAnonymousAddr {
         })) = self;
         base.to_http_url(Some(&format!("/anonymous/{}", organization_id)))
     }
-}
-
-/*
- * Helpers
- */
-
-// Binary encoder/decoder for url use.
-// Notes:
-// - We replace padding char `=` by a simple `s` (which is not part of
-//   the base32 table so no risk of collision) to avoid copy/paste errors
-//   and silly escaping issues when carrying the key around.
-// - We could be using base64url (see RFC 4648) which would be more efficient,
-//   but backward compatibility prevent us from doing it :'(
-
-fn binary_urlsafe_encode(data: &[u8]) -> String {
-    BASE32.encode(data).replace('=', "s")
-}
-
-fn export_root_verify_key(key: &VerifyKey) -> String {
-    binary_urlsafe_encode(key.as_ref())
-}
-
-fn import_root_verify_key(encoded: &str) -> Result<VerifyKey, &'static str> {
-    let err_msg = "Invalid root verify key";
-    let encoded_b32 = encoded.replace('s', "=");
-    // TODO: would be better to directly decode into key
-    let buff = BASE32.decode(encoded_b32.as_bytes()).or(Err(err_msg))?;
-    VerifyKey::try_from(buff.as_slice()).map_err(|_| err_msg)
 }
 
 #[cfg(test)]
