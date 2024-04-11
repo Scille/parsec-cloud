@@ -152,6 +152,11 @@ async function setupApp(): Promise<void> {
   }
 
   if (isElectron()) {
+    if ((await libparsec.getPlatform()) === Platform.Windows) {
+      const mountpoint = await libparsec.getDefaultMountpointBaseDir();
+      window.electronAPI.sendMountpointFolder(mountpoint);
+    }
+
     window.electronAPI.receive('close-request', async () => {
       const answer = await askQuestion('quit.title', 'quit.subtitle', {
         yesText: 'quit.yes',
@@ -210,6 +215,8 @@ async function setupApp(): Promise<void> {
       receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       openFile: (_path: string): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      sendMountpointFolder: (_path: string): void => {},
     };
   }
 }
@@ -289,6 +296,7 @@ declare global {
       closeApp: () => void;
       receive: (channel: string, f: (...args: any[]) => Promise<void>) => void;
       openFile: (path: string) => void;
+      sendMountpointFolder: (path: string) => void;
     };
   }
 }

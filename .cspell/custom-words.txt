@@ -525,6 +525,7 @@ ReEncrypted
 Reencrypting
 ReEncryption
 REFRESHICONHANDLER
+regedit
 regexes
 releasedir
 renamesourcefileattribute
