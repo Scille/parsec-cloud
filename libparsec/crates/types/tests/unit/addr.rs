@@ -835,3 +835,117 @@ fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg:
         msg
     );
 }
+
+#[test]
+fn legacy_parsec_v2_server_addr() {
+    const LEGACY_URL: &str = "parsec://example.com";
+    let expected_error = AddrError::InvalidUrlScheme {
+        got: "parsec".to_string(),
+        expected: "parsec3",
+    };
+
+    // Simply no longer supported
+    p_assert_matches!(
+        ParsecAddr::from_str(LEGACY_URL),
+        Err(e) if e == expected_error
+    );
+
+    serde_test::assert_de_tokens_error::<ParsecAddr>(
+        &[Token::Str(LEGACY_URL)],
+        &expected_error.to_string(),
+    )
+}
+
+#[test]
+fn legacy_parsec_v2_organization_addr() {
+    const LEGACY_URL: &str = "parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
+
+    // No longer supported...
+    p_assert_matches!(
+        ParsecOrganizationAddr::from_str(LEGACY_URL),
+        Err(e) if e == AddrError::InvalidUrlScheme{ got: "parsec".to_string(), expected: "parsec3" }
+    );
+
+    // ...except in deserialization for backward compatibility (needed by `LocalDevice` schema)
+    let expected_url: ParsecOrganizationAddr = "parsec3://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss".parse().unwrap();
+    serde_test::assert_de_tokens(&expected_url, &[Token::Str(LEGACY_URL)])
+}
+
+#[test]
+fn legacy_parsec_v2_organization_bootstrap_addr() {
+    const LEGACY_URL: &str =
+        "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD";
+    let expected_error = AddrError::InvalidUrlScheme {
+        got: "parsec".to_string(),
+        expected: "parsec3",
+    };
+
+    // Simply no longer supported
+    p_assert_matches!(
+        ParsecOrganizationBootstrapAddr::from_str(LEGACY_URL),
+        Err(e) if e == expected_error
+    );
+
+    serde_test::assert_de_tokens_error::<ParsecOrganizationBootstrapAddr>(
+        &[Token::Str(LEGACY_URL)],
+        &expected_error.to_string(),
+    )
+}
+
+#[test]
+fn legacy_parsec_v2_organization_file_link_addr() {
+    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
+    let expected_error = AddrError::InvalidUrlScheme {
+        got: "parsec".to_string(),
+        expected: "parsec3",
+    };
+
+    // Simply no longer supported
+    p_assert_matches!(
+        ParsecOrganizationFileLinkAddr::from_str(LEGACY_URL),
+        Err(e) if e == expected_error
+    );
+
+    serde_test::assert_de_tokens_error::<ParsecOrganizationFileLinkAddr>(
+        &[Token::Str(LEGACY_URL)],
+        &expected_error.to_string(),
+    )
+}
+
+#[test]
+fn legacy_parsec_v2_invitation_addr() {
+    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343";
+    let expected_error = AddrError::InvalidUrlScheme {
+        got: "parsec".to_string(),
+        expected: "parsec3",
+    };
+
+    // Simply no longer supported
+    p_assert_matches!(
+        ParsecInvitationAddr::from_str(LEGACY_URL),
+        Err(e) if e == expected_error
+    );
+
+    serde_test::assert_de_tokens_error::<ParsecInvitationAddr>(
+        &[Token::Str(LEGACY_URL)],
+        &expected_error.to_string(),
+    )
+}
+
+#[test]
+fn legacy_parsec_v2_pki_enrollment_addr() {
+    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=pki_enrollment";
+
+    // No longer supported...
+    p_assert_matches!(
+        ParsecPkiEnrollmentAddr::from_str(LEGACY_URL),
+        Err(e) if e == AddrError::InvalidUrlScheme{ got: "parsec".to_string(), expected: "parsec3" }
+    );
+
+    // ...except in deserialization for backward compatibility (needed by `LocalPendingEnrollment` schema)
+    let expected_url: ParsecPkiEnrollmentAddr =
+        "parsec3://parsec.example.com/my_org?a=pki_enrollment"
+            .parse()
+            .unwrap();
+    serde_test::assert_de_tokens(&expected_url, &[Token::Str(LEGACY_URL)])
+}

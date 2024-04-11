@@ -2,6 +2,9 @@
     "label": "LocalDevice",
     "other_fields": [
         {
+            // URL has format `parsec3://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss`.
+            // Note legacy `parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss`
+            // format is also supported here for backwards compatibility.
             "name": "organization_addr",
             "type": "ParsecOrganizationAddr"
         },

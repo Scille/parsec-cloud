@@ -7,6 +7,9 @@
             "type": "X509Certificate"
         },
         {
+            // URL has format `parsec3://parsec.example.com/my_org?a=pki_enrollment`.
+            // Note legacy `parsec://parsec.example.com/my_org?action=pki_enrollment`
+            // format is also supported here for backwards compatibility.
             "name": "addr",
             "type": "ParsecPkiEnrollmentAddr"
         },
