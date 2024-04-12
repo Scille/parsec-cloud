@@ -66,7 +66,7 @@ app: AsgiApp = app_factory()
 #         header_key, header_expected_value = backend.config.forward_proto_enforce_https
 
 #         @app.before_request
-#         def redirect_unsecure() -> ResponseReturnValue | None:  # type: ignore[misc]
+#         def redirect_unsecure() -> ResponseReturnValue | None:
 #             header_value = request.headers.get(header_key)
 #             # If redirection header match and protocol match, then no need for a redirection.
 #             if header_value is not None and header_value != header_expected_value:
