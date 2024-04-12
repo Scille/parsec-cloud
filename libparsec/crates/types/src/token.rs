@@ -13,7 +13,7 @@ pub enum TokenDecodeError {
 
 macro_rules! new_token_type {
     ($name:ident) => {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+        #[derive(Clone, Copy, PartialEq, Eq, Hash)]
         pub struct $name([u8; TOKEN_SIZE]);
 
         impl Default for $name {
@@ -46,6 +46,12 @@ macro_rules! new_token_type {
             #[inline]
             fn as_ref(&self) -> &[u8] {
                 &self.0
+            }
+        }
+
+        impl ::std::fmt::Debug for $name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                write!(f, concat!(stringify!($name), "({})"), self)
             }
         }
 
