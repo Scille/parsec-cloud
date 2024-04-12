@@ -597,8 +597,8 @@ class PGInviteComponent(BaseInviteComponent):
             invitation: Invitation
             if type == InvitationType.USER.str:
                 invitation = UserInvitation(
-                    greeter_user_id=created_by.user_id,
-                    greeter_human_handle=greeter_human_handle,
+                    created_by=created_by,
+                    created_by_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
                     token=token,
                     created_on=created_on,
@@ -606,8 +606,8 @@ class PGInviteComponent(BaseInviteComponent):
                 )
             else:  # Device
                 invitation = DeviceInvitation(
-                    greeter_user_id=created_by.user_id,
-                    greeter_human_handle=greeter_human_handle,
+                    created_by=created_by,
+                    created_by_human_handle=greeter_human_handle,
                     token=token,
                     created_on=created_on,
                     status=status,
@@ -649,8 +649,8 @@ class PGInviteComponent(BaseInviteComponent):
         greeter_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
         if type == InvitationType.USER.str:
             return UserInvitation(
-                greeter_user_id=created_by.user_id,
-                greeter_human_handle=greeter_human_handle,
+                created_by=created_by,
+                created_by_human_handle=greeter_human_handle,
                 claimer_email=claimer_email,
                 token=token,
                 created_on=created_on,
@@ -658,8 +658,8 @@ class PGInviteComponent(BaseInviteComponent):
             )
         else:  # Device
             return DeviceInvitation(
-                greeter_user_id=created_by.user_id,
-                greeter_human_handle=greeter_human_handle,
+                created_by=created_by,
+                created_by_human_handle=greeter_human_handle,
                 token=token,
                 created_on=created_on,
                 status=InvitationStatus.READY,
@@ -1009,8 +1009,8 @@ class PGInviteComponent(BaseInviteComponent):
                             claimer_email=claimer_email,
                             created_on=created_on,
                             status=status,
-                            greeter_user_id=created_by.user_id,
-                            greeter_human_handle=created_by_human_handle,
+                            created_by=created_by,
+                            created_by_human_handle=created_by_human_handle,
                             token=token,
                         )
                     )
@@ -1019,8 +1019,8 @@ class PGInviteComponent(BaseInviteComponent):
                         DeviceInvitation(
                             created_on=created_on,
                             status=status,
-                            greeter_user_id=created_by.user_id,
-                            greeter_human_handle=created_by_human_handle,
+                            created_by=created_by,
+                            created_by_human_handle=created_by_human_handle,
                             token=token,
                         )
                     )
