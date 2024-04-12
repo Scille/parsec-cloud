@@ -211,6 +211,26 @@ ORDER BY created_on
 """
 )
 
+_q_list_all_invitations = Q(
+    f"""
+WITH human_handle_per_user AS ({_q_human_handle_per_user})
+SELECT
+    token,
+    type,
+    { q_user(_id="author", select="user_id") },
+    human_handle_per_user.email,
+    human_handle_per_user.label,
+    claimer_email,
+    created_on,
+    deleted_on,
+    deleted_reason
+FROM invitation LEFT JOIN human_handle_per_user on invitation.author = human_handle_per_user.user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+ORDER BY created_on
+"""
+)
+
 
 _q_info_invitation = Q(
     f"""
@@ -953,3 +973,65 @@ class PGInviteComponent(BaseInviteComponent):
                 status=InvitationStatus.IDLE,
             )
         )
+
+    @override
+    @transaction
+    async def test_dump_all_invitations(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> dict[UserID, list[Invitation]]:
+        per_user_invitations = {}
+        invitations_with_claimer_online = self._claimers_ready[organization_id]
+
+        # Loop over rows
+        rows = await conn.fetch(*_q_list_all_invitations(organization_id=organization_id.str))
+        for (
+            token_str,
+            type,
+            created_by_user_id_str,
+            created_by_email,
+            created_by_label,
+            claimer_email,
+            created_on,
+            deleted_on,
+            deleted_reason,
+        ) in rows:
+            # Parse row
+            token = InvitationToken.from_hex(token_str)
+            created_by = UserID(created_by_user_id_str)
+            current_user_invitations = per_user_invitations.setdefault(created_by, [])
+            type = InvitationType.from_str(type)
+            created_by_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
+            if deleted_on:
+                status = InvitationStatus.from_str(deleted_reason)
+            elif token in invitations_with_claimer_online:
+                status = InvitationStatus.READY
+            else:
+                status = InvitationStatus.IDLE
+
+            # Append the invite
+            match type:
+                case InvitationType.USER:
+                    current_user_invitations.append(
+                        UserInvitation(
+                            claimer_email=claimer_email,
+                            created_on=created_on,
+                            status=status,
+                            greeter_user_id=created_by,
+                            greeter_human_handle=created_by_human_handle,
+                            token=token,
+                        )
+                    )
+                case InvitationType.DEVICE:
+                    current_user_invitations.append(
+                        DeviceInvitation(
+                            created_on=created_on,
+                            status=status,
+                            greeter_user_id=created_by,
+                            greeter_human_handle=created_by_human_handle,
+                            token=token,
+                        )
+                    )
+                case unknown:
+                    assert False, unknown
+
+        return per_user_invitations
