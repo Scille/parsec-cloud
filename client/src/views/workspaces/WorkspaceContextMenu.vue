@@ -2,6 +2,11 @@
 
 <template>
   <ion-content id="workspace-context-menu">
+    <div class="list-title">
+      <ion-label class="list-title__text">
+        {{ workspaceName }}
+      </ion-label>
+    </div>
     <ion-list class="menu-list">
       <ion-item-group
         class="list-group"
@@ -138,9 +143,24 @@ function onClick(action: WorkspaceAction): Promise<boolean> {
 }
 
 defineProps<{
+  workspaceName: string;
   clientProfile: UserProfile;
   clientRole: WorkspaceRole;
 }>();
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.list-title {
+  border-bottom: solid 1px var(--parsec-color-light-secondary-disabled);
+  padding: 0.5rem 0.75rem;
+  background-color: var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &__text {
+    font-style: italic;
+    color: var(--parsec-color-light-secondary-soft-text);
+  }
+}
+</style>

@@ -69,6 +69,7 @@ export async function workspaceShareClick(workspace: WorkspaceInfo, informationM
     component: WorkspaceSharingModal,
     componentProps: {
       workspaceId: workspace.id,
+      workspaceName: workspace.currentName,
       ownRole: workspace.currentSelfRole,
       informationManager: informationManager,
     },
@@ -93,6 +94,7 @@ export async function openWorkspaceContextMenu(
     dismissOnSelect: true,
     alignment: 'end',
     componentProps: {
+      workspaceName: workspace.currentName,
       clientProfile: clientProfile,
       clientRole: workspace.currentSelfRole,
     },

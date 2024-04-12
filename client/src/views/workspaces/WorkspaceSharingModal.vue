@@ -2,6 +2,9 @@
 
 <template>
   <ion-page class="modal">
+    <ion-text class="title-h1 modal-title">
+      {{ workspaceName }}
+    </ion-text>
     <ms-modal
       :title="$msTranslate('WorkspaceSharing.title')"
       :close-button="{ visible: true }"
@@ -58,6 +61,7 @@ let ownProfile = UserProfile.Outsider;
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
+  workspaceName: string;
   ownRole: WorkspaceRole | null;
   informationManager: InformationManager;
 }>();
@@ -211,10 +215,19 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
 .ms-modal {
   display: flex;
   flex-direction: column;
+  margin-top: 2rem;
 
   .inner-content {
     height: 100%;
   }
+}
+
+.modal-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin: 2rem;
+  color: var(--parsec-color-light-primary-800);
 }
 </style>
 
