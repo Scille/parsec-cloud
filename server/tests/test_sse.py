@@ -41,11 +41,11 @@ async def test_events_listen_auth_then_not_allowed(
 
 async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
     backend.config.sse_events_cache_size = 2
-    backend.events._last_events_cache = deque(maxlen=backend.config.sse_events_cache_size)  # pyright: ignore[reportPrivateUsage]
+    backend.events._last_events_cache = deque(maxlen=backend.config.sse_events_cache_size)
 
     # We use dispatch_incoming_event to ensure the event is processed immediately once the function return.
     # That allow to bypass the standard route of `EventBus.send` that goes through to event system of PostgreSQL.
-    dispatch_event_with_no_delay = backend.event_bus._dispatch_incoming_event  # pyright: ignore[reportPrivateUsage]
+    dispatch_event_with_no_delay = backend.event_bus._dispatch_incoming_event
 
     first_event = EventPinged(
         organization_id=minimalorg.organization_id,
@@ -78,7 +78,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
         )
 
         # Backend should inform that some events were missed and we could not retrieve them
-        event = await anext(alice_sse._iter_events)  # pyright: ignore[reportPrivateUsage]
+        event = await anext(alice_sse._iter_events)
         assert event.event == "missed_events"
 
         # Only recent event could be received
@@ -133,7 +133,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
     the server should ignore it as if it was not provided.
     """
     async with minimalorg.alice.events_listen(last_event_id="") as alice_sse:
-        backend.event_bus._dispatch_incoming_event(  # pyright: ignore[reportPrivateUsage]
+        backend.event_bus._dispatch_incoming_event(
             EventPinged(
                 organization_id=minimalorg.organization_id,
                 ping="recent_event",

@@ -399,11 +399,11 @@ async def test_receive_event_of_newly_shared_realm(
 
 async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
     async with minimalorg.alice.events_listen() as alice_sse:
-        raw_source = alice_sse._iter_events  # pyright: ignore[reportPrivateUsage]
+        raw_source = alice_sse._iter_events
 
         # 1. Start by sending 4 ping event
         for ping in ("event1", "event2", "event3", "event4"):
-            backend.event_bus._dispatch_incoming_event(  # pyright: ignore[reportPrivateUsage]
+            backend.event_bus._dispatch_incoming_event(
                 EventPinged(
                     organization_id=minimalorg.organization_id,
                     ping=ping,
