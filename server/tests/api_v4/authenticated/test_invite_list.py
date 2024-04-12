@@ -14,7 +14,7 @@ async def test_authenticated_invite_list_ok(
     outcome = await backend.invite.new_for_device(
         now=t1,
         organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id.user_id,
+        author=minimalorg.alice.device_id,
         send_email=False,
     )
     assert isinstance(outcome, tuple)
@@ -31,7 +31,7 @@ async def test_authenticated_invite_list_ok(
     outcome = await backend.invite.new_for_user(
         now=t2,
         organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id.user_id,
+        author=minimalorg.alice.device_id,
         claimer_email="zack@example.invalid",
         send_email=False,
     )
@@ -70,7 +70,7 @@ async def test_authenticated_invite_list_ok(
     outcome = await backend.invite.new_for_user(
         now=t4,
         organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id.user_id,
+        author=minimalorg.alice.device_id,
         claimer_email="deleted@example.invalid",
         send_email=False,
     )

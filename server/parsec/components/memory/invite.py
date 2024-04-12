@@ -5,6 +5,7 @@ from typing import Any, override
 
 from parsec._parsec import (
     DateTime,
+    DeviceID,
     InvitationStatus,
     InvitationToken,
     InvitationType,
@@ -274,7 +275,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         claimer_email: str,
         send_email: bool,
         # Only needed for testbed template
@@ -288,7 +289,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -306,7 +307,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 force_token is None
                 and not invitation.is_deleted
                 and invitation.type == InvitationType.USER
-                and invitation.greeter == author
+                and invitation.greeter == author.user_id
                 and invitation.claimer_email == claimer_email
             ):
                 # An invitation already exists for what the user has asked for
@@ -320,7 +321,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[token] = MemoryInvitation(
                 token=token,
                 type=InvitationType.USER,
-                greeter=author,
+                greeter=author.user_id,
                 claimer_email=claimer_email,
                 created_on=now,
             )
@@ -329,7 +330,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 EventInvitation(
                     organization_id=organization_id,
                     token=token,
-                    greeter=author,
+                    greeter=author.user_id,
                     status=InvitationStatus.IDLE,
                 )
             )
@@ -351,7 +352,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
@@ -364,7 +365,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -375,7 +376,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 force_token is None
                 and not invitation.is_deleted
                 and invitation.type == InvitationType.DEVICE
-                and invitation.greeter == author
+                and invitation.greeter == author.user_id
             ):
                 # An invitation already exists for what the user has asked for
                 token = invitation.token
@@ -388,7 +389,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[token] = MemoryInvitation(
                 token=token,
                 type=InvitationType.DEVICE,
-                greeter=author,
+                greeter=author.user_id,
                 claimer_email=None,
                 created_on=now,
             )
@@ -397,7 +398,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 EventInvitation(
                     organization_id=organization_id,
                     token=token,
-                    greeter=author,
+                    greeter=author.user_id,
                     status=InvitationStatus.IDLE,
                 )
             )

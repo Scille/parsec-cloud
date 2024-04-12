@@ -18,6 +18,7 @@ from structlog.stdlib import get_logger
 
 from parsec._parsec import (
     DateTime,
+    DeviceID,
     HashDigest,
     HumanHandle,
     InvitationStatus,
@@ -500,7 +501,7 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         claimer_email: str,
         send_email: bool,
         # Only needed for testbed template
@@ -512,7 +513,7 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         send_email: bool,
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
@@ -556,7 +557,7 @@ class BaseInviteComponent:
         outcome = await self.new_for_user(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
             claimer_email=req.claimer_email,
             send_email=req.send_email,
         )
@@ -600,7 +601,7 @@ class BaseInviteComponent:
         outcome = await self.new_for_device(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
             send_email=req.send_email,
         )
         match outcome:

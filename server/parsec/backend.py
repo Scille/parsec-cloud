@@ -206,7 +206,7 @@ class Backend:
                 outcome = await self.invite.new_for_device(
                     now=event.created_on,
                     organization_id=org_id,
-                    author=event.greeter_user_id,
+                    author=event.created_by,
                     send_email=False,
                     force_token=event.token,
                 )
@@ -215,7 +215,7 @@ class Backend:
                 outcome = await self.invite.new_for_user(
                     now=event.created_on,
                     organization_id=org_id,
-                    author=event.greeter_user_id,
+                    author=event.created_by,
                     claimer_email=event.claimer_email,
                     send_email=False,
                     force_token=event.token,

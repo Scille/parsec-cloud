@@ -498,10 +498,10 @@ impl<'a> TestbedEventRevokeUserBuilder<'a> {
  * TestbedEventNewDeviceInvitation
  */
 
-impl_event_builder!(NewDeviceInvitation, [greeter_user_id: UserID]);
+impl_event_builder!(NewDeviceInvitation, [created_by: DeviceID]);
 
 impl<'a> TestbedEventNewDeviceInvitationBuilder<'a> {
-    impl_customize_field_meth!(greeter_user_id, UserID);
+    impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(token, InvitationToken);
 }
@@ -514,7 +514,7 @@ impl_event_builder!(NewUserInvitation, [claimer_email: String]);
 
 impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
     impl_customize_field_meth!(claimer_email, String);
-    impl_customize_field_meth!(greeter_user_id, UserID);
+    impl_customize_field_meth!(created_by, DeviceID);
     impl_customize_field_meth!(created_on, DateTime);
     impl_customize_field_meth!(token, InvitationToken);
 }

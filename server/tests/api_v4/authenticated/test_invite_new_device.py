@@ -64,7 +64,7 @@ async def test_authenticated_invite_new_device_ok_already_exist(
     outcome = await backend.invite.new_for_device(
         now=t1,
         organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id.user_id,
+        author=minimalorg.alice.device_id,
         send_email=False,
     )
     assert isinstance(outcome, tuple)

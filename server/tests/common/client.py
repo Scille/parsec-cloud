@@ -351,7 +351,7 @@ class CoolorgRpcClients:
         for event in self.testbed_template.events:
             if (
                 isinstance(event, tb.TestbedEventNewDeviceInvitation)
-                and event.greeter_user_id.str == "alice"
+                and event.created_by.str == "alice@dev1"
             ):
                 self._invited_alice_dev3 = InvitedRpcClient(
                     self.raw_client, self.organization_id, event=event
