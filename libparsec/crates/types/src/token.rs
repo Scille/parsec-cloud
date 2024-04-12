@@ -51,7 +51,7 @@ macro_rules! new_token_type {
 
         impl ::std::fmt::Debug for $name {
             fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-                write!(f, concat!(stringify!($name), "({})"), self)
+                write!(f, concat!(stringify!($name), "(\"{}\")"), self)
             }
         }
 

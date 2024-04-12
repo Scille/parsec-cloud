@@ -199,7 +199,7 @@ CREATE TABLE invitation (
     token VARCHAR(32) NOT NULL,
     type invitation_type NOT NULL,
 
-    author INTEGER REFERENCES user_ (_id) NOT NULL,
+    created_by INTEGER REFERENCES device (_id) NOT NULL,
     -- Required for when type=USER
     claimer_email VARCHAR(255),
 

@@ -290,7 +290,7 @@ new_invitations AS (
         organization,
         token,
         type,
-        author,
+        created_by,
         claimer_email,
         created_on,
         deleted_on,
@@ -301,8 +301,8 @@ new_invitations AS (
         token,
         type,
         (
-            SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="invitation.author", select="user_id") }
+            SELECT _id FROM new_devices
+            WHERE device_id = { q_device(_id="invitation.created_by", select="device_id") }
         ),
         claimer_email,
         created_on,
