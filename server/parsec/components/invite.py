@@ -83,8 +83,8 @@ class ConduitListenCtx:
 class UserInvitation:
     TYPE = InvitationType.USER
     claimer_email: str
-    greeter_user_id: UserID
-    greeter_human_handle: HumanHandle
+    created_by: DeviceID
+    created_by_human_handle: HumanHandle
     token: InvitationToken
     created_on: DateTime
     status: InvitationStatus
@@ -93,8 +93,8 @@ class UserInvitation:
 @dataclass(slots=True)
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
-    greeter_user_id: UserID
-    greeter_human_handle: HumanHandle
+    created_by: DeviceID
+    created_by_human_handle: HumanHandle
     token: InvitationToken
     created_on: DateTime
     status: InvitationStatus
@@ -713,15 +713,15 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.UserOrDeviceUser(
                         claimer_email=invitation.claimer_email,
-                        greeter_user_id=invitation.greeter_user_id,
-                        greeter_human_handle=invitation.greeter_human_handle,
+                        greeter_user_id=invitation.created_by.user_id,
+                        greeter_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.UserOrDeviceDevice(
-                        greeter_user_id=invitation.greeter_user_id,
-                        greeter_human_handle=invitation.greeter_human_handle,
+                        greeter_user_id=invitation.created_by.user_id,
+                        greeter_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND:

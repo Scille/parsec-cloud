@@ -224,7 +224,7 @@ class MemoryInvitationDeletedReason(Enum):
 class MemoryInvitation:
     token: InvitationToken
     type: InvitationType
-    greeter: UserID
+    created_by: DeviceID
     # Required for when type=USER
     claimer_email: str | None
     created_on: DateTime
