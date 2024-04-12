@@ -18,7 +18,6 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
-from parsec.components.memory.events import MemoryEventsComponent
 from parsec.events import Event, EventPinged
 from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
 from tests.common.client import AuthenticatedRpcClient
@@ -235,9 +234,7 @@ async def test_conn_closed_on_bad_outcome(
             )
         )
 
-    memory_events = backend.events
-    assert isinstance(memory_events, MemoryEventsComponent)
-    del memory_events._data.organizations[minimalorg.organization_id]
+    await backend.organization.test_drop_organization(minimalorg.organization_id)
 
     with pytest.raises(StopAsyncIteration):
         async with minimalorg.alice.events_listen() as alice_sse:

@@ -5,7 +5,7 @@
 -------------------------------------------------------
 
 ALTER TABLE organization ALTER COLUMN bootstrap_token DROP NOT NULL;
-
+ALTER TABLE organization ALTER COLUMN bootstrap_token TYPE VARCHAR(32);
 
 -------------------------------------------------------
 -- User
@@ -35,6 +35,9 @@ ALTER TABLE sequester_service ADD revoked_sequester_certifier INTEGER REFERENCES
 -------------------------------------------------------
 --  Invitation
 -------------------------------------------------------
+
+-- Re-type token as a VARCHAR(32)
+ALTER TABLE invitation ALTER COLUMN token TYPE VARCHAR(32);
 
 -- Rename invitation greeter to invitation author
 ALTER TABLE invitation RENAME COLUMN greeter TO author;
