@@ -38,7 +38,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // 2) Create user & device invitations
 
     builder.new_user_invitation("zack@example.invalid");
-    builder.new_device_invitation("alice");
+    builder.new_device_invitation("alice@dev1");
 
     // 3) Create workspace's realm shared between Alice&Bob, and it initial workspace manifest
 

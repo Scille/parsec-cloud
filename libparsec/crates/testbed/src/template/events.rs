@@ -1922,22 +1922,19 @@ impl TestbedEventNewShamirRecovery {
 no_certificate_event!(
     TestbedEventNewDeviceInvitation,
     [
-        greeter_user_id: UserID,
+        created_by: DeviceID,
         created_on: DateTime,
         token: InvitationToken,
     ]
 );
 
 impl TestbedEventNewDeviceInvitation {
-    pub(super) fn from_builder(
-        builder: &mut TestbedTemplateBuilder,
-        greeter_user_id: UserID,
-    ) -> Self {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, created_by: DeviceID) -> Self {
         // 1) Consistency checks
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_user_exists_and_not_revoked(&builder.events, &greeter_user_id);
+            utils::assert_device_exists_and_not_revoked(&builder.events, &created_by);
         }
 
         // 2) Actual creation
@@ -1945,7 +1942,7 @@ impl TestbedEventNewDeviceInvitation {
         let token = builder.counters.next_invitation_token();
         Self {
             created_on: builder.counters.next_timestamp(),
-            greeter_user_id,
+            created_by,
             token,
         }
     }
@@ -1958,7 +1955,7 @@ impl TestbedEventNewDeviceInvitation {
 no_certificate_event!(
     TestbedEventNewUserInvitation,
     [
-        greeter_user_id: UserID,
+        created_by: DeviceID,
         claimer_email: String,
         created_on: DateTime,
         token: InvitationToken,
@@ -1972,9 +1969,8 @@ impl TestbedEventNewUserInvitation {
     ) -> Self {
         // 1) Consistency checks
 
-        let greeter_user_id = utils::assert_organization_bootstrapped(&builder.events)
+        let created_by = utils::assert_organization_bootstrapped(&builder.events)
             .first_user_device_id
-            .user_id()
             .to_owned();
 
         // 2) Actual creation
@@ -1982,7 +1978,7 @@ impl TestbedEventNewUserInvitation {
         let token = builder.counters.next_invitation_token();
         Self {
             created_on: builder.counters.next_timestamp(),
-            greeter_user_id,
+            created_by,
             claimer_email,
             token,
         }

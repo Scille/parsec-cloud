@@ -162,12 +162,12 @@ class TestbedEventRevokeUser:
 
 class TestbedEventNewUserInvitation:
     claimer_email: str
-    greeter_user_id: UserID
+    created_by: DeviceID
     created_on: DateTime
     token: InvitationToken
 
 class TestbedEventNewDeviceInvitation:
-    greeter_user_id: UserID
+    created_by: DeviceID
     created_on: DateTime
     token: InvitationToken
 

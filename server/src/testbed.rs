@@ -235,14 +235,14 @@ event_wrapper!(
 event_wrapper!(
     TestbedEventNewDeviceInvitation,
     [
-        greeter_user_id: UserID,
+        created_by: DeviceID,
         created_on: DateTime,
         token: InvitationToken,
     ],
     |_py, x: &TestbedEventNewDeviceInvitation| -> PyResult<String> {
         Ok(format!(
-            "greeter_user_id={:?}, created_on={:?}, token={:?}",
-            x.greeter_user_id.0, x.created_on.0, x.token.0,
+            "created_by={:?}, created_on={:?}, token={:?}",
+            x.created_by.0, x.created_on.0, x.token.0,
         ))
     }
 );
@@ -251,14 +251,14 @@ event_wrapper!(
     TestbedEventNewUserInvitation,
     [
         claimer_email: String,
-        greeter_user_id: UserID,
+        created_by: DeviceID,
         created_on: DateTime,
         token: InvitationToken,
     ],
     |_py, x: &TestbedEventNewUserInvitation| -> PyResult<String> {
         Ok(format!(
-            "claimer_email={:?}, greeter_user_id={:?}, created_on={:?}, token={:?}",
-            x.claimer_email, x.greeter_user_id.0, x.created_on.0, x.token.0,
+            "claimer_email={:?}, created_by={:?}, created_on={:?}, token={:?}",
+            x.claimer_email, x.created_by.0, x.created_on.0, x.token.0,
         ))
     }
 );
@@ -753,7 +753,7 @@ fn event_to_pyobject(
 
         libparsec_testbed::TestbedEvent::NewDeviceInvitation(x) => {
             let obj = TestbedEventNewDeviceInvitation {
-                greeter_user_id: x.greeter_user_id.clone().into(),
+                created_by: x.created_by.clone().into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
             };
@@ -763,7 +763,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::NewUserInvitation(x) => {
             let obj = TestbedEventNewUserInvitation {
                 claimer_email: x.claimer_email.clone(),
-                greeter_user_id: x.greeter_user_id.clone().into(),
+                created_by: x.created_by.clone().into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
             };
