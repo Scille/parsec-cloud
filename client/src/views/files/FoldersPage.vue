@@ -301,10 +301,15 @@ onMounted(async () => {
     { key: 'i', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
     async () => await showDetails(getSelectedEntries()),
   );
-  hotkeys.add(
-    { key: 'c', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
-    async () => await moveEntriesTo(getSelectedEntries()),
-  );
+  // FIXME: Reactivate `x` and `c` hotkeys when copy/move bindings are available
+  // hotkeys.add(
+  //   { key: 'c', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+  //   async () => await copyEntries(getSelectedEntries()),
+  // );
+  // hotkeys.add(
+  //   { key: 'x', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Documents },
+  //   async () => await moveEntriesTo(getSelectedEntries()),
+  // );
   hotkeys.add(
     { key: 'l', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
     async () => await copyLink(getSelectedEntries()),
