@@ -44,8 +44,8 @@ async def test_authenticated_invite_new_user_ok_new(
                 token=invitation_token,
                 created_on=ANY,
                 claimer_email="new@example.invalid",
-                greeter_human_handle=minimalorg.alice.human_handle,
-                greeter_user_id=minimalorg.alice.device_id.user_id,
+                created_by=minimalorg.alice.device_id,
+                created_by_human_handle=minimalorg.alice.human_handle,
                 status=InvitationStatus.IDLE,
             )
         ]

@@ -45,8 +45,8 @@ async def test_authenticated_invite_new_device_ok_new(
         DeviceInvitation(
             token=invitation_token,
             created_on=ANY,
-            greeter_user_id=minimalorg.alice.device_id.user_id,
-            greeter_human_handle=minimalorg.alice.human_handle,
+            created_by=minimalorg.alice.device_id,
+            created_by_human_handle=minimalorg.alice.human_handle,
             status=InvitationStatus.IDLE,
         )
     ]
