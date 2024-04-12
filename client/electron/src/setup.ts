@@ -153,7 +153,25 @@ export class ElectronCapacitorApp {
   }
 
   async init(): Promise<void> {
-    const icon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', process.platform === 'win32' ? 'icon.ico' : 'icon.png'));
+    let appIconName: string;
+    let trayIconName: string;
+    switch (process.platform) {
+      case 'darwin':
+        appIconName = 'icon.png';
+        trayIconName = 'trayIconTemplate.png';
+        break;
+      case 'linux':
+        appIconName = '512x512.png';
+        trayIconName = '256x256.png';
+        break;
+      default:
+        appIconName = 'icon.png';
+        trayIconName = 'trayIcon.png';
+    }
+
+    const appIcon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', appIconName));
+    const trayIcon = nativeImage.createFromPath(join(app.getAppPath(), 'assets', trayIconName));
+
     this.mainWindowState = windowStateKeeper({
       defaultWidth: 1000,
       defaultHeight: 800,
@@ -161,7 +179,7 @@ export class ElectronCapacitorApp {
     // Setup preload script path and construct our main window.
     const preloadPath = join(app.getAppPath(), 'build', 'src', 'preload.js');
     this.MainWindow = new BrowserWindow({
-      icon,
+      icon: appIcon,
       show: false,
       x: this.mainWindowState.x,
       y: this.mainWindowState.y,
@@ -211,7 +229,7 @@ export class ElectronCapacitorApp {
 
     // When the tray icon is enabled, setup the options.
     if (this.CapacitorFileConfig.electron?.trayIconAndMenuEnabled) {
-      this.TrayIcon = new Tray(icon.resize({ width: 16, height: 16 }));
+      this.TrayIcon = new Tray(trayIcon);
 
       const trayToggleVisibility = () => {
         this.showMainWindow();

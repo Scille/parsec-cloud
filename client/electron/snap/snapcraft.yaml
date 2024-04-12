@@ -121,7 +121,7 @@ parts:
       - *desktop-path
     override-build: |
       mkdir -p $(dirname "$CRAFT_PART_INSTALL"/$ICON_PATH)
-      cp -v icon.png "$CRAFT_PART_INSTALL"/$ICON_PATH
+      cp -v 512x512.png "$CRAFT_PART_INSTALL"/$ICON_PATH
 
       mkdir -p $(dirname "$CRAFT_PART_INSTALL"/$DESKTOP_PATH)
       cat << EOF > "$CRAFT_PART_INSTALL"/$DESKTOP_PATH
