@@ -16,7 +16,7 @@
 CREATE TABLE organization (
     _id SERIAL PRIMARY KEY,
     organization_id VARCHAR(32) UNIQUE NOT NULL,
-    bootstrap_token TEXT,
+    bootstrap_token VARCHAR(32),
     root_verify_key BYTEA,
     _expired_on TIMESTAMPTZ,
     user_profile_outsider_allowed BOOLEAN NOT NULL,
@@ -196,7 +196,7 @@ CREATE TYPE invitation_conduit_state AS ENUM (
 CREATE TABLE invitation (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    token UUID NOT NULL,
+    token VARCHAR(32) NOT NULL,
     type invitation_type NOT NULL,
 
     author INTEGER REFERENCES user_ (_id) NOT NULL,

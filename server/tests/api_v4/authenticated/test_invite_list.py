@@ -92,4 +92,5 @@ async def test_authenticated_invite_list_ok(
     )
 
     rep = await minimalorg.alice.invite_list()
-    assert rep == authenticated_cmds.v4.invite_list.RepOk(invitations=expected_invitations)
+    assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
+    assert rep.invitations == expected_invitations

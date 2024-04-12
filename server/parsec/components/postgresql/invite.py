@@ -24,6 +24,7 @@ from parsec.components.invite import (
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
     InviteConduitExchangeBadOutcome,
+    InviteListBadOutcome,
     InviteNewForDeviceBadOutcome,
     InviteNewForUserBadOutcome,
     SendEmailBadOutcome,
@@ -195,18 +196,17 @@ WITH human_handle_per_user AS ({_q_human_handle_per_user})
 SELECT
     token,
     type,
-    { q_user(_id="greeter", select="user_id") },
+    { q_user(_id="author", select="user_id") },
     human_handle_per_user.email,
     human_handle_per_user.label,
     claimer_email,
     created_on,
     deleted_on,
     deleted_reason
-FROM invitation LEFT JOIN human_handle_per_user on invitation.greeter = human_handle_per_user.user_
+FROM invitation LEFT JOIN human_handle_per_user on invitation.author = human_handle_per_user.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
-    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
-    AND deleted_on IS NULL
+    AND author = { q_user_internal_id(organization_id="$organization_id", user_id="$author_user_id") }
 ORDER BY created_on
 """
 )
@@ -351,7 +351,7 @@ async def _do_new_user_or_device_invitation(
             *_q_insert_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
-                token=token,
+                token=token.hex,
                 author_user_id=author_user_id.str,
                 claimer_email=claimer_email,
                 created_on=created_on,
@@ -434,7 +434,6 @@ class PGInviteComponent(BaseInviteComponent):
             )
         else:
             send_email_outcome = None
-
         return token, send_email_outcome
 
     @override
@@ -500,7 +499,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
 
         row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token)
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
         )
         if row is None:
             return InviteCancelBadOutcome.INVITATION_NOT_FOUND
@@ -524,14 +523,30 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
 
-    async def list(self, organization_id: OrganizationID, greeter: UserID) -> list[Invitation]:
-        raise NotImplementedError
-        async with self.dbh.pool.acquire() as conn:
-            rows = await conn.fetch(
-                *_q_list_invitations(
-                    organization_id=organization_id.str, greeter_user_id=greeter.str
-                )
-            )
+    @override
+    @transaction
+    async def list_as_user(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: UserID
+    ) -> list[Invitation] | InviteListBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+        if organization.is_expired:
+            return InviteListBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_user(conn, organization_id, author):
+            case UserProfile():
+                pass
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return InviteListBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return InviteListBadOutcome.AUTHOR_REVOKED
+
+        rows = await conn.fetch(
+            *_q_list_invitations(organization_id=organization_id.str, author_user_id=author.str)
+        )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]
         invitations = []
@@ -556,7 +571,7 @@ class PGInviteComponent(BaseInviteComponent):
                 greeter_human_handle = HumanHandle.new_redacted(greeter_user_id)
 
             if deleted_on:
-                status = InvitationStatus.DELETED
+                status = InvitationStatus.from_str(deleted_reason)
             elif token in invitations_with_claimer_online:
                 status = InvitationStatus.READY
             else:
@@ -595,7 +610,7 @@ class PGInviteComponent(BaseInviteComponent):
         if organization.is_expired:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
         row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token)
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
         )
         if not row:
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
@@ -703,7 +718,7 @@ class PGInviteComponent(BaseInviteComponent):
         # Hence concurrent request will be on hold until the end of the transaction.
 
         row = await conn.fetchrow(
-            *_q_get_invitation_author(organization_id=organization_id.str, token=token)
+            *_q_get_invitation_author(organization_id=organization_id.str, token=token.hex)
         )
         if not row:
             return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
@@ -716,13 +731,15 @@ class PGInviteComponent(BaseInviteComponent):
                 *_q_conduit_greeter_info(
                     organization_id=organization_id.str,
                     greeter_user_id=greeter.str,
-                    token=token,
+                    token=token.hex,
                 )
             )
         else:
             row = await conn.fetchrow(
                 *_q_conduit_claimer_info(
-                    organization_id=organization_id.str, token=token, greeter_user_id=greeter.str
+                    organization_id=organization_id.str,
+                    token=token.hex,
+                    greeter_user_id=greeter.str,
                 )
             )
 
@@ -814,7 +831,7 @@ class PGInviteComponent(BaseInviteComponent):
                 *_q_conduit_greeter_info(
                     organization_id=ctx.organization_id.str,
                     greeter_user_id=ctx.greeter.str,
-                    token=ctx.token,
+                    token=ctx.token.hex,
                 )
             )
         else:
@@ -822,7 +839,7 @@ class PGInviteComponent(BaseInviteComponent):
                 *_q_conduit_claimer_info(
                     organization_id=ctx.organization_id.str,
                     greeter_user_id=ctx.greeter.str,
-                    token=ctx.token,
+                    token=ctx.token.hex,
                 )
             )
 
