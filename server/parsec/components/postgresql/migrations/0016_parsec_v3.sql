@@ -40,8 +40,10 @@ ALTER TABLE sequester_service ADD revoked_sequester_certifier INTEGER REFERENCES
 ALTER TABLE invitation ALTER COLUMN token TYPE VARCHAR(32);
 
 -- Rename invitation greeter to invitation author
-ALTER TABLE invitation RENAME COLUMN greeter TO author;
-ALTER TABLE invitation RENAME CONSTRAINT invitation_greeter_fkey TO invitation_author_fkey;
+ALTER TABLE invitation RENAME COLUMN greeter TO created_by;
+ALTER TABLE invitation DROP CONSTRAINT invitation_greeter_fkey;
+ALTER TABLE invitation ADD CONSTRAINT invitation_created_by_fkey FOREIGN KEY (created_by) REFERENCES device(_id);
+
 
 -- Remove conduit columns from invitation table
 ALTER TABLE invitation DROP COLUMN conduit_state;
