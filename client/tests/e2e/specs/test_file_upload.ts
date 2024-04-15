@@ -11,26 +11,24 @@ describe('Upload files', () => {
     cy.dropTestbed();
   });
 
-  it('Open import modal', () => {
-    cy.get('#button-import').click();
-    cy.get('.file-upload-modal').should('exist');
-    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
-    cy.get('.ion-page').find('.drop-zone').should('exist');
-    cy.get('.ion-page').find('.import-button').find('ion-button').should('exist');
-    cy.get('.ion-page').find('.closeBtn').should('exist');
-  });
+  // it('Open import modal', () => {
+  //   cy.get('#button-import').click();
+  //   cy.get('.file-upload-modal').should('exist');
+  //   cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
+  //   cy.get('.ion-page').find('.drop-zone').should('exist');
+  //   cy.get('.ion-page').find('.import-button').find('ion-button').should('exist');
+  //   cy.get('.ion-page').find('.closeBtn').should('exist');
+  // });
 
-  it('Close modal with X', () => {
-    cy.get('#button-import').click();
-    cy.get('.file-upload-modal').should('exist');
-    cy.get('.ion-page').find('.closeBtn').should('exist');
-    cy.get('.ion-page').find('.closeBtn').click();
-    cy.get('.file-upload-modal').should('not.exist');
-  });
+  // it('Close modal with X', () => {
+  //   cy.get('#button-import').click();
+  //   cy.get('.file-upload-modal').should('exist');
+  //   cy.get('.ion-page').find('.closeBtn').should('exist');
+  //   cy.get('.ion-page').find('.closeBtn').click();
+  //   cy.get('.file-upload-modal').should('not.exist');
+  // });
 
   it('Import file with drag&drop', () => {
-    cy.get('#button-import').click();
-    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
     cy.get('.ion-page').find('.drop-zone').attachFile('splash.png', { subjectType: 'drag-n-drop' });
     // Sadly, the drop does react but when calling webkitGetAsEntry() on the data provided,
     // it returns null, preventing us from going further (for the time being).
@@ -38,9 +36,9 @@ describe('Upload files', () => {
 
   it('Import file with button', () => {
     cy.get('#button-import').click();
-    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
-    cy.get('.ion-page').find('.import-button').find('ion-button').click();
-    cy.get('.ion-page').find('.import-button input').attachFile('splash.png');
+    cy.get('.popover-viewport').find('.import-container').find('.option').eq(1).contains('Import a folder');
+    cy.get('.popover-viewport').find('.import-container').find('.option').eq(0).contains('Import files').click();
+    cy.get('#import-file-input').attachFile('splash.png');
     cy.get('.upload-menu-list').find('.element-container .element-details__name').should('contain', 'splash.png');
     cy.get('.upload-menu-list').find('.element-container').should('have.class', 'progress');
     cy.wait(3000);
@@ -50,9 +48,8 @@ describe('Upload files', () => {
 
   it('Import multiple files with button', () => {
     cy.get('#button-import').click();
-    cy.get('.ion-page').find('.ms-modal-header__title').contains('Upload your files');
-    cy.get('.ion-page').find('.import-button').find('ion-button').click();
-    cy.get('.ion-page').find('.import-button input').attachFile(['splash.png', 'splash.png']);
+    cy.get('.popover-viewport').find('.import-container').find('.option').eq(0).click();
+    cy.get('#import-file-input').attachFile(['splash.png', 'splash.png']);
     cy.get('.upload-menu-list').should('have.length', 1);
     cy.get('.upload-menu-list').find('.element-container .element-details__name').should('contain', 'splash.png');
     cy.wait(3000);

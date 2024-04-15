@@ -452,6 +452,8 @@
         "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
         "getLinkError": "Impossible de récupérer un lien vers le fichier",
         "ImportFile": {
+            "importFilesAction": "Importer des fichiers",
+            "importFolderAction": "Importer un dossier",
             "title": "Importation",
             "waiting": "en attente",
             "cancelled": "annulé",
@@ -465,7 +467,8 @@
             },
             "noImportInProgress": "Pas d'import en cours",
             "noImportDone": "Pas d'import terminé",
-            "noImportFailed": "Pas d'import échoué"
+            "noImportFailed": "Pas d'import échoué",
+            "dropInstructions": "Glissez & déposez vos fichiers pour les importer"
         }
     },
     "FileDetails": {

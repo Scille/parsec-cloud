@@ -34,13 +34,13 @@ function getDefaultProvideConfig(showToast = mockShowToast): any {
     disableGroup: mockGroupEnableDisable,
     enableGroup: mockGroupEnableDisable,
   };
-
   return provide;
 }
 
-function mockValidators(): void {
+function mockLibParsec(): void {
   vi.mock('@/parsec', async () => {
     const parsec = await vi.importActual<typeof import('@/parsec')>('@/parsec');
+    const Path = parsec.Path;
     return {
       ...parsec,
       isValidOrganizationName: async (_value: string): Promise<boolean> => {
@@ -48,6 +48,12 @@ function mockValidators(): void {
       },
       parseParsecAddr: async (_value: string): Promise<any> => {
         return { ok: false, error: 'error' };
+      },
+      Path: {
+        ...Path,
+        join: async (path: string, fileName: string): Promise<string> => {
+          return `${path}/${fileName}`;
+        },
       },
     };
   });
@@ -93,4 +99,4 @@ function resetRoutesCalled(): void {
   ROUTES_CALLED.splice(0);
 }
 
-export { getDefaultProvideConfig, getRoutesCalled, mockI18n, mockRouter, mockValidators, resetRoutesCalled };
+export { getDefaultProvideConfig, getRoutesCalled, mockI18n, mockLibParsec, mockRouter, resetRoutesCalled };

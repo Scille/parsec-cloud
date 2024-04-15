@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 // for svg only add ?raw at the end of path
+import AddDocument from '@/assets/images/add-document.svg?raw';
 import Apk from '@/assets/images/apk.svg?raw';
 import CaretExpand from '@/assets/images/caret-expand.svg?raw';
 import Css from '@/assets/images/css.svg?raw';
@@ -69,6 +70,7 @@ const File = {
 };
 
 export {
+  AddDocument,
   CaretExpand,
   Device,
   EmptyFolder,

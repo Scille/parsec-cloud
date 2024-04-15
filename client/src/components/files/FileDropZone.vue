@@ -5,21 +5,52 @@
     class="drop-zone"
     :class="isActive ? 'drop-zone-active' : 'drop-zone-inactive'"
     @drop.prevent="onDrop"
-    @dragenter.prevent="isActive = true"
-    @dragleave.prevent="setInactive()"
+    @dragenter.prevent="onDragEnter()"
+    @dragleave.prevent="onDragLeave()"
   >
     <slot />
+
+    <div
+      v-show="isActive && props.showDropMessage"
+      class="drop-message"
+    >
+      <ms-image
+        :image="AddDocument"
+        class="restore-password-header-img"
+      />
+      <ion-label class="subtitles-normal">
+        {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
+      </ion-label>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { AddDocument, MsImage } from '@/components/core';
+import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
+import { FsPath } from '@/parsec';
+import { IonLabel } from '@ionic/vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-const emits = defineEmits<{
-  (e: 'filesDrop', entries: FileSystemEntry[]): void;
+defineExpose({
+  reset,
+});
+
+const props = defineProps<{
+  currentPath: FsPath;
+  disabled?: boolean;
+  showDropMessage?: boolean;
 }>();
 
-const isActive = ref(false);
+const emits = defineEmits<{
+  (e: 'filesAdded', imports: FileImportTuple[]): void;
+}>();
+
+const dragEnterCount = ref(0);
+
+const isActive = computed(() => {
+  return !props.disabled && dragEnterCount.value > 0;
+});
 
 onMounted(() => {
   // Prevent the browser from handling those events itself
@@ -37,23 +68,12 @@ onUnmounted(() => {
   document.body.removeEventListener('drop', preventDefaults);
 });
 
-function onDrop(event: DragEvent): void {
-  isActive.value = false;
-  if (event.dataTransfer) {
-    const entries: FileSystemEntry[] = [];
-    // May have to use event.dataTransfer.files instead of items.
-    // .files gets us a FileList, the API is not as good
-    // but it's the same used in <input> and it should be compatible with
-    // Cypress.
-    for (let i = 0; i < event.dataTransfer.items.length; i++) {
-      const entry = event.dataTransfer.items[i].webkitGetAsEntry();
-      if (entry) {
-        entries.push(entry);
-      }
-    }
-    if (entries.length) {
-      emits('filesDrop', entries);
-    }
+async function onDrop(event: DragEvent): Promise<void> {
+  event.stopImmediatePropagation();
+  dragEnterCount.value = 0;
+  const imports = await getFilesFromDrop(event, props.currentPath);
+  if (imports.length) {
+    emits('filesAdded', imports);
   }
 }
 
@@ -61,29 +81,58 @@ function preventDefaults(event: Event): void {
   event.preventDefault();
 }
 
-// Helps prevent the state not changing rapidly enough when hovering too fast
-// in and out of the drop zone.
-function setInactive(): void {
-  setTimeout(() => {
-    isActive.value = false;
-  }, 50);
+function onDragLeave(): void {
+  if (dragEnterCount.value > 0) {
+    dragEnterCount.value -= 1;
+  }
+}
+
+function onDragEnter(): void {
+  dragEnterCount.value += 1;
+  props.showDropMessage === true;
+}
+
+function reset(): void {
+  dragEnterCount.value = 0;
 }
 </script>
 
 <style scoped lang="scss">
 .drop-zone {
-  border: 1px dashed var(--parsec-color-light-primary-200);
-  border-radius: var(--parsec-radius-6);
-  height: 25em;
   width: 100%;
-  padding: 5rem;
+  height: 100%;
 }
 
 .drop-zone-active {
-  background-color: var(--parsec-color-light-primary-200);
+  position: relative;
+
+  &::before {
+    content: '';
+    width: calc(100% + 2rem);
+    height: calc(100% - 2.5rem);
+    border-radius: var(--parsec-radius-6);
+    outline: 2px dashed var(--parsec-color-light-primary-400);
+    outline-offset: -2px;
+    position: absolute;
+    top: 1rem;
+    left: -1rem;
+    z-index: 2;
+  }
 }
 
-.drop-zone-inactive {
-  background-color: var(--parsec-color-light-primary-30);
+.drop-message {
+  position: absolute;
+  left: 50%;
+  bottom: 2em;
+  transform: translate(-50%, -50%);
+  width: fit-content;
+  background-color: var(--parsec-color-light-primary-50);
+  border-radius: var(--parsec-radius-6);
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--parsec-color-light-secondary-text);
+  z-index: 10;
 }
 </style>

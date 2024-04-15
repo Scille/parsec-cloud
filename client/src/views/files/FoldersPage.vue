@@ -20,7 +20,7 @@
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.import'"
             :icon="document"
-            @click="importFiles()"
+            @click="onImportClicked($event)"
           />
         </div>
         <div v-else-if="selectedFilesCount === 1">
@@ -125,16 +125,28 @@
         </div>
       </ms-action-bar>
       <div class="folder-container scroll">
+        <file-inputs
+          ref="fileInputsRef"
+          :current-path="currentPath"
+          @files-added="startImportFiles"
+        />
         <div
           v-if="folders.entriesCount() + files.entriesCount() + fileImportsCurrentDir.length === 0"
           class="no-files body-lg"
         >
-          <div class="no-files-content">
-            <ms-image :image="EmptyFolder" />
-            <ion-text>
-              {{ $msTranslate('FoldersPage.emptyFolder') }}
-            </ion-text>
-          </div>
+          <file-drop-zone
+            ref="fileDropZoneRef"
+            :current-path="currentPath"
+            :show-drop-message="true"
+            @files-added="startImportFiles"
+          >
+            <div class="no-files-content">
+              <ms-image :image="EmptyFolder" />
+              <ion-text>
+                {{ $msTranslate('FoldersPage.emptyFolder') }}
+              </ion-text>
+            </div>
+          </file-drop-zone>
         </div>
         <div v-else>
           <div v-if="displayView === DisplayState.List">
@@ -142,8 +154,10 @@
               :files="files"
               :folders="folders"
               :importing="fileImportsCurrentDir"
+              :current-path="currentPath"
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
+              @files-added="startImportFiles"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -151,8 +165,10 @@
               :files="files"
               :folders="folders"
               :importing="fileImportsCurrentDir"
+              :current-path="currentPath"
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
+              @files-added="startImportFiles"
             />
           </div>
         </div>
@@ -170,6 +186,7 @@ import {
   MsActionBar,
   MsActionBarButton,
   MsGridListToggle,
+  MsModalResult,
   askQuestion,
   getTextInputFromUser,
   selectFolder,
@@ -180,13 +197,19 @@ import * as parsec from '@/parsec';
 import { MsOptions, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import {
   EntryCollection,
+  FileDropZone,
   FileGridDisplay,
+  FileImportPopover,
   FileImportProgress,
+  FileImportTuple,
+  FileInputs,
   FileListDisplay,
   FileModel,
   FolderModel,
+  ImportType,
   SortProperty,
 } from '@/components/files';
+import { Path, entryStat } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -203,7 +226,6 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { Translatable } from '@/services/translation';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
-import FileUploadModal from '@/views/files/FileUploadModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -263,6 +285,8 @@ const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 
+const fileInputsRef = ref();
+
 // Replace by events when available
 let intervalId: any = null;
 
@@ -272,23 +296,30 @@ const selectedFilesCount = computed(() => {
 
 let hotkeys: HotkeyGroup | null = null;
 let callbackId: string | null = null;
-let fileUploadModal: HTMLIonModalElement | null = null;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
 });
 
-onMounted(async () => {
-  displayView.value = (
-    await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, {
-      displayState: DisplayState.List,
-    })
-  ).displayState;
-
+async function defineShortcuts(): Promise<void> {
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'o', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },
-    importFiles,
+    async () => {
+      await fileInputsRef.value.importFiles();
+    },
+  );
+  hotkeys.add(
+    {
+      key: 'o',
+      modifiers: Modifiers.Ctrl | Modifiers.Shift,
+      platforms: Platforms.Desktop | Platforms.Web,
+      disableIfModal: true,
+      route: Routes.Documents,
+    },
+    async () => {
+      await fileInputsRef.value.importFolder();
+    },
   );
   hotkeys.add(
     { key: 'enter', modifiers: Modifiers.None, platforms: Platforms.MacOS, disableIfModal: true, route: Routes.Documents },
@@ -342,6 +373,16 @@ onMounted(async () => {
       files.value.selectAll(true);
     },
   );
+}
+
+onMounted(async () => {
+  displayView.value = (
+    await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, {
+      displayState: DisplayState.List,
+    })
+  ).displayState;
+
+  await defineShortcuts();
 
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
@@ -379,9 +420,6 @@ function onSortChange(event: MsSorterChangeEvent): void {
 }
 
 async function onFileImportState(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
-  if (fileUploadModal && state === ImportState.FileAdded) {
-    await fileUploadModal?.dismiss();
-  }
   if (state === ImportState.FileAdded && importData) {
     fileImports.value.push({ data: importData, progress: 0 });
   } else if (state === ImportState.FileProgress && importData) {
@@ -430,6 +468,53 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
         }
       }
     }
+  }
+}
+
+async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
+  const existing: FileImportTuple[] = [];
+
+  if (!workspaceInfo.value) {
+    return;
+  }
+
+  for (const imp of imports) {
+    let importPath = imp.path;
+    let fileName = imp.file.name;
+    if (imp.file.webkitRelativePath) {
+      const parsed = await Path.parse(`/${imp.file.webkitRelativePath}`);
+      importPath = await Path.join(imp.path, parsed[0]);
+      fileName = parsed[1];
+      imp.path = importPath;
+    }
+    const fullPath = await Path.join(importPath, fileName);
+    const result = await entryStat(workspaceInfo.value.handle, fullPath);
+    if (result.ok && result.value.isFile()) {
+      existing.push(imp);
+    }
+  }
+
+  if (existing.length > 0) {
+    const answer = await askQuestion(
+      { key: 'FoldersPage.importModal.replaceTitle', count: 1 },
+      { key: 'FoldersPage.importModal.replaceQuestion', data: { file: existing[0].file.name, count: existing.length } },
+      {
+        yesText: { key: 'FoldersPage.importModal.replaceText', count: 1 },
+        noText: { key: 'FoldersPage.importModal.skipText', count: 1 },
+      },
+    );
+    if (answer === Answer.No) {
+      imports = imports.filter((imp) => {
+        return (
+          existing.find((ex) => {
+            return ex.file.name === imp.file.name && ex.path === imp.path;
+          }) === undefined
+        );
+      });
+    }
+  }
+  for (const imp of imports) {
+    await importManager.importFile(workspaceInfo.value.handle, workspaceInfo.value.id, imp.file, imp.path);
   }
 }
 
@@ -533,23 +618,25 @@ async function createFolder(): Promise<void> {
   await listFolder();
 }
 
-async function importFiles(): Promise<void> {
-  if (fileUploadModal) {
+async function onImportClicked(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: FileImportPopover,
+    cssClass: 'import-popover',
+    event: event,
+    alignment: 'end',
+    showBackdrop: false,
+  });
+  await popover.present();
+  const result = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (result.role !== MsModalResult.Confirm) {
     return;
   }
-  fileUploadModal = await modalController.create({
-    component: FileUploadModal,
-    cssClass: 'file-upload-modal',
-    componentProps: {
-      currentPath: currentPath.value.toString(),
-      workspaceHandle: workspaceInfo.value?.handle,
-      workspaceId: workspaceInfo.value?.id,
-      importManager: importManager,
-    },
-  });
-  await fileUploadModal.present();
-  await fileUploadModal.onDidDismiss();
-  fileUploadModal = null;
+  if (result.data.type === ImportType.Files) {
+    await fileInputsRef.value.importFiles();
+  } else if (result.data.type === ImportType.Folder) {
+    await fileInputsRef.value.importFolder();
+  }
 }
 
 function getSelectedEntries(): parsec.EntryStat[] {
@@ -916,6 +1003,10 @@ async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFin
 </script>
 
 <style scoped lang="scss">
+.folder-container div:not(.no-files-content) {
+  height: 100%;
+}
+
 .no-files {
   width: 100%;
   height: 100%;
