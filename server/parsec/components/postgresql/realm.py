@@ -21,7 +21,6 @@ from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
-from parsec.components.postgresql.realm_queries.create import query_create
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import (
     Q,
@@ -80,17 +79,34 @@ COALESCE(
 """
 
 
-q_check_realm = Q(
-    f"""
-    SELECT
-        { q_user_role(organization="realm.organization", realm="realm._id", user_id="$user_id") } role,
-        key_index
+def _make_q_lock_realm(for_update: bool = False, for_share=False) -> Q:
+    assert for_update ^ for_share
+    share_or_update = "SHARE" if for_share else "UPDATE"
+    return Q(f"""
+WITH selected_realm AS (
+    SELECT _id
     FROM realm
     WHERE
         organization = { q_organization_internal_id("$organization_id") }
         AND realm_id = $realm_id
-"""
+),
+locked_realms AS (
+    SELECT selected_realm._id, last_timestamp
+    FROM realm_topic
+    INNER JOIN selected_realm ON realm_topic.realm = selected_realm._id
+    FOR {share_or_update}
 )
+SELECT
+    { q_user_role(organization="realm.organization", realm="realm._id", user_id="$user_id") } role,
+    key_index,
+    last_timestamp
+FROM realm
+INNER JOIN locked_realms USING (_id)
+""")
+
+
+q_check_realm_topic = _make_q_lock_realm(for_share=True)
+q_lock_realm_topic = _make_q_lock_realm(for_update=True)
 
 q_get_current_roles = Q(
     f"""
@@ -266,6 +282,71 @@ INSERT INTO realm_keys_bundle_access (
 """
 )
 
+_q_update_realm_topic = Q(
+    f"""
+UPDATE realm_topic
+SET last_timestamp = $timestamp
+WHERE realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+"""
+)
+
+_q_create_realm = Q(
+    f"""
+WITH new_realm_id AS (
+    INSERT INTO realm (
+        organization,
+        realm_id,
+        created_on,
+        key_index
+    ) VALUES (
+        { q_organization_internal_id("$organization_id") },
+        $realm_id,
+        $timestamp,
+        0
+    )
+    ON CONFLICT (organization, realm_id) DO NOTHING
+    RETURNING _id
+),
+new_realm_user_role AS (
+    INSERT INTO realm_user_role (
+        realm,
+        user_,
+        role,
+        certificate,
+        certified_by,
+        certified_on
+    )
+    SELECT
+        _id,
+        { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+        'OWNER',
+        $certificate,
+        { q_device_internal_id(organization_id="$organization_id", device_id="$certified_by") },
+        $timestamp
+    FROM new_realm_id
+),
+new_timestamp AS (
+    INSERT INTO realm_topic (
+        organization,
+        realm,
+        last_timestamp
+    )
+    SELECT
+        { q_organization_internal_id("$organization_id") },
+        _id,
+        $timestamp
+    FROM new_realm_id
+    RETURNING last_timestamp
+)
+SELECT true AS inserted, last_timestamp FROM new_timestamp
+UNION
+SELECT false AS inserted, last_timestamp
+FROM realm_topic
+WHERE realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+LIMIT 1
+"""
+)
+
 
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
@@ -279,15 +360,15 @@ class PGRealmComponent(BaseRealmComponent):
         self.organization = organization
         self.user = user
 
-    async def _check_realm(
+    async def _check_realm_topic(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
         author: DeviceID,
-    ) -> tuple[RealmRole, KeyIndex] | RealmCheckBadOutcome:
+    ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
         row = await conn.fetchrow(
-            *q_check_realm(
+            *q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 user_id=author.user_id.str,
@@ -297,7 +378,27 @@ class PGRealmComponent(BaseRealmComponent):
             return RealmCheckBadOutcome.REALM_NOT_FOUND
         if row["role"] is None:
             return RealmCheckBadOutcome.USER_NOT_IN_REALM
-        return RealmRole.from_str(row["role"]), int(row["key_index"])
+        return RealmRole.from_str(row["role"]), int(row["key_index"]), row["last_timestamp"]
+
+    async def _lock_realm_topic(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        author: DeviceID,
+    ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
+        row = await conn.fetchrow(
+            *q_lock_realm_topic(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                user_id=author.user_id.str,
+            )
+        )
+        if not row:
+            return RealmCheckBadOutcome.REALM_NOT_FOUND
+        if row["role"] is None:
+            return RealmCheckBadOutcome.USER_NOT_IN_REALM
+        return RealmRole.from_str(row["role"]), int(row["key_index"]), row["last_timestamp"]
 
     async def _get_current_role_for_user(
         self,
@@ -307,7 +408,7 @@ class PGRealmComponent(BaseRealmComponent):
         user_id: UserID,
     ) -> RealmRole | None:
         row = await conn.fetchrow(
-            *q_check_realm(
+            *q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 user_id=user_id.str,
@@ -464,18 +565,22 @@ class PGRealmComponent(BaseRealmComponent):
                 pass
             case error:
                 return error
+        assert certif.role == RealmRole.OWNER
 
-        # All checks are good, now we do the actual insertion
-        match await query_create(
-            conn=conn,
-            organization_id=organization_id,
-            realm_role_certificate=realm_role_certificate,
-            realm_role_certificate_cooked=certif,
-        ):
-            case CertificateBasedActionIdempotentOutcome() as outcome:
-                return outcome
-            case None:
-                pass
+        result = await conn.fetchrow(
+            *_q_create_realm(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                timestamp=certif.timestamp,
+                user_id=certif.user_id.str,
+                certificate=realm_role_certificate,
+                certified_by=certif.author.str,
+            )
+        )
+        assert result is not None
+        inserted, topic_timestamp = result
+        if not inserted:
+            return CertificateBasedActionIdempotentOutcome(certificate_timestamp=topic_timestamp)
 
         await self.event_bus.send(
             EventRealmCertificate(
@@ -554,12 +659,16 @@ class PGRealmComponent(BaseRealmComponent):
         ):
             return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
 
-        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmShareStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, KeyIndex() as realm_key_index):
+            case (
+                RealmRole() as role,
+                KeyIndex() as realm_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER):
                     return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -574,9 +683,7 @@ class PGRealmComponent(BaseRealmComponent):
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if key_index != realm_key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
-            )
+            return BadKeyIndex(last_realm_certificate_timestamp=last_realm_certificate_timestamp)
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -588,14 +695,10 @@ class PGRealmComponent(BaseRealmComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        # TODO: implement this
-        # assert (
-        #     org.last_certificate_or_vlob_timestamp is not None
-        # )  # Bootstrap has created the first certif
-        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-        #     return RequireGreaterTimestamp(
-        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
-        #     )
+        if last_realm_certificate_timestamp >= certif.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
+
+        # TODO: compare with vlob timestamps too
 
         # All checks are good, now we do the actual insertion
         ret = await conn.execute(
@@ -621,6 +724,15 @@ class PGRealmComponent(BaseRealmComponent):
             )
         )
         assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        ret = await conn.execute(
+            *_q_update_realm_topic(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                timestamp=certif.timestamp,
+            )
+        )
+        assert ret == "UPDATE 1", f"Unexpected return value: {ret}"
 
         await self.event_bus.send(
             EventRealmCertificate(
@@ -690,14 +802,12 @@ class PGRealmComponent(BaseRealmComponent):
             case UserProfile():
                 pass
 
-        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
-                return CertificateBasedActionIdempotentOutcome(
-                    certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
-                )
-            case (RealmRole() as role, KeyIndex()):
+                return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole() as role, KeyIndex(), DateTime()):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER):
                     return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -740,6 +850,15 @@ class PGRealmComponent(BaseRealmComponent):
             )
         )
         assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        ret = await conn.execute(
+            *_q_update_realm_topic(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                timestamp=certif.timestamp,
+            )
+        )
+        assert ret == "UPDATE 1", f"Unexpected return value: {ret}"
 
         await self.event_bus.send(
             EventRealmCertificate(
@@ -803,25 +922,27 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
-        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, KeyIndex() as realm_key_index):
+            case (
+                RealmRole() as role,
+                KeyIndex() as realm_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
                 if role != RealmRole.OWNER:
                     return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if realm_key_index != certif.key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
-            )
+            return BadKeyIndex(last_realm_certificate_timestamp=last_realm_certificate_timestamp)
 
         if initial_name_or_fail and await self._has_realm_name_certificate(
             conn, organization_id, certif.realm_id
         ):
             return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
+                certificate_timestamp=last_realm_certificate_timestamp
             )
 
         ret = await conn.execute(
@@ -834,6 +955,15 @@ class PGRealmComponent(BaseRealmComponent):
             )
         )
         assert ret == "INSERT 0 1", f"Unexpected return value: {ret}"
+
+        ret = await conn.execute(
+            *_q_update_realm_topic(
+                organization_id=organization_id.str,
+                realm_id=certif.realm_id,
+                timestamp=certif.timestamp,
+            )
+        )
+        assert ret == "UPDATE 1", f"Unexpected return value: {ret}"
 
         await self.event_bus.send(
             EventRealmCertificate(
@@ -897,18 +1027,22 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
-        match await self._check_realm(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, KeyIndex() as realm_key_index):
+            case (
+                RealmRole() as role,
+                KeyIndex() as realm_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if certif.key_index != realm_key_index + 1:
             return BadKeyIndex(
-                last_realm_certificate_timestamp=certif.timestamp,  # TODO: this is not the right timestamp
+                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
             )
 
         participants = await self._get_users_in_realm(conn, organization_id, certif.realm_id)
@@ -990,6 +1124,15 @@ class PGRealmComponent(BaseRealmComponent):
                 key_index=realm_key_rotation_certificate_cooked.key_index,
             )
         )
+
+        ret = await conn.execute(
+            *_q_update_realm_topic(
+                organization_id=organization_id.str,
+                realm_id=realm_key_rotation_certificate_cooked.realm_id,
+                timestamp=realm_key_rotation_certificate_cooked.timestamp,
+            )
+        )
+        assert ret == "UPDATE 1", f"Unexpected return value: {ret}"
 
     # async def get_status(
     #     self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID

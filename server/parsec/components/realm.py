@@ -25,18 +25,18 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
-from parsec.types import BadOutcomeEnum
+from parsec.types import BadOutcome, BadOutcomeEnum
 
 KeyIndex: TypeAlias = int
 
 
 @dataclass(slots=True)
-class BadKeyIndex:
+class BadKeyIndex(BadOutcome):
     last_realm_certificate_timestamp: DateTime
 
 
 @dataclass(slots=True)
-class CertificateBasedActionIdempotentOutcome:
+class CertificateBasedActionIdempotentOutcome(BadOutcome):
     certificate_timestamp: DateTime
 
 
