@@ -30,6 +30,7 @@ describe('File Card Item', () => {
       needSync: false,
       size: 43_297_832_478,
       name: 'A File.txt',
+      path: '/',
       isFile: (): boolean => true,
       isSelected: false,
     };
@@ -65,6 +66,7 @@ describe('File Card Item', () => {
       isPlaceholder: false,
       needSync: false,
       name: 'A Folder',
+      path: '/',
       isFile: (): boolean => false,
       children: [
         ['A File.txt', '671'],

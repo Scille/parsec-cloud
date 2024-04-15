@@ -8,46 +8,52 @@
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
   >
-    <div class="card-checkbox">
-      <!-- eslint-disable vue/no-mutating-props -->
-      <ion-checkbox
-        aria-label="''"
-        class="checkbox"
-        v-model="entry.isSelected"
-        v-show="entry.isSelected || isHovered || showCheckbox"
-        @click.stop
-      />
-      <!-- eslint-enable vue/no-mutating-props -->
-    </div>
-    <div
-      class="card-option"
-      v-show="isHovered || menuOpened"
-      @click.stop="onOptionsClick($event)"
+    <file-drop-zone
+      :disabled="entry.isFile()"
+      :current-path="currentPath"
+      @files-added="$emit('filesAdded', $event)"
     >
-      <ion-icon :icon="ellipsisHorizontal" />
-    </div>
-    <div class="card-content">
-      <div class="card-content-icons">
-        <ms-image
-          :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
-          class="file-icon"
+      <div class="card-checkbox">
+        <!-- eslint-disable vue/no-mutating-props -->
+        <ion-checkbox
+          aria-label="''"
+          class="checkbox"
+          v-model="entry.isSelected"
+          v-show="entry.isSelected || isHovered || showCheckbox"
+          @click.stop
         />
-        <ion-icon
-          class="cloud-overlay"
-          :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-          :icon="isFileSynced() ? cloudDone : cloudOffline"
-        />
+        <!-- eslint-enable vue/no-mutating-props -->
       </div>
+      <div
+        class="card-option"
+        v-show="isHovered || menuOpened"
+        @click.stop="onOptionsClick($event)"
+      >
+        <ion-icon :icon="ellipsisHorizontal" />
+      </div>
+      <div class="card-content">
+        <div class="card-content-icons">
+          <ms-image
+            :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+            class="file-icon"
+          />
+          <ion-icon
+            class="cloud-overlay"
+            :class="isFileSynced() ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
+            :icon="isFileSynced() ? cloudDone : cloudOffline"
+          />
+        </div>
 
-      <ion-title class="card-content__title body">
-        {{ entry.name }}
-      </ion-title>
+        <ion-title class="card-content__title body">
+          {{ entry.name }}
+        </ion-title>
 
-      <ion-text class="card-content-last-update body-sm">
-        <span>{{ $msTranslate('FoldersPage.File.lastUpdate') }}</span>
-        <span>{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
-      </ion-text>
-    </div>
+        <ion-text class="card-content-last-update body-sm">
+          <span>{{ $msTranslate('FoldersPage.File.lastUpdate') }}</span>
+          <span>{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
+        </ion-text>
+      </div>
+    </file-drop-zone>
   </ion-item>
 </template>
 
@@ -55,13 +61,26 @@
 import { formatTimeSince } from '@/common/date';
 import { getFileIcon } from '@/common/file';
 import { Folder, MsImage } from '@/components/core/ms-image';
+import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel } from '@/components/files/types';
+import { FileImportTuple } from '@/components/files/utils';
+import { FsPath, Path } from '@/parsec';
 import { IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+
+const currentPath: Ref<FsPath> = ref('/');
+
+onMounted(async () => {
+  if (props.entry.isFile()) {
+    currentPath.value = await Path.parent(props.entry.path);
+  } else {
+    currentPath.value = props.entry.path;
+  }
+});
 
 const props = defineProps<{
   entry: EntryModel;
@@ -71,6 +90,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
 
 defineExpose({

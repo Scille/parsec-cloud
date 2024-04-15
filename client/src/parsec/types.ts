@@ -96,7 +96,6 @@ export type {
   EntryName,
   FileDescriptor,
   VlobID as FileID,
-  FsPath,
   GreetInProgressError,
   InvitationToken,
   ListInvitationsError,
@@ -149,6 +148,7 @@ import type {
   DateTime,
   DeviceInfo,
   EntryName,
+  FsPath,
   Handle,
   HumanHandle,
   OrganizationID,
@@ -183,11 +183,13 @@ interface OwnDeviceInfo extends DeviceInfo {
 
 interface EntryStatFolder extends ParsecEntryStatFolder {
   isFile: () => boolean;
+  path: FsPath;
   name: EntryName;
 }
 
 interface EntryStatFile extends ParsecEntryStatFile {
   isFile: () => boolean;
+  path: FsPath;
   name: EntryName;
 }
 
@@ -274,6 +276,7 @@ export {
   EntryStat,
   EntryStatFile,
   EntryStatFolder,
+  FsPath,
   GetAbsolutePathError,
   GetAbsolutePathErrorTag,
   GetWorkspaceNameError,

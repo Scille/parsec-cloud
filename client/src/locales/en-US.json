@@ -452,6 +452,8 @@
         "linkCopiedToClipboard": "Link has been copied to clipboard.",
         "getLinkError": "Failed to get a link to the file",
         "ImportFile": {
+            "importFilesAction": "Import files",
+            "importFolderAction": "Import a folder",
             "title": "Importation",
             "waiting": "waiting",
             "cancelled": "cancelled",
@@ -465,7 +467,8 @@
             },
             "noImportInProgress": "No import in progress",
             "noImportDone": "No import done",
-            "noImportFailed": "No import failed"
+            "noImportFailed": "No import failed",
+            "dropInstructions": "Drag & drop your files to import them"
         }
     },
     "FileDetails": {

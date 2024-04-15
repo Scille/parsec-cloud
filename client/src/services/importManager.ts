@@ -383,16 +383,19 @@ class ImportManager {
     const reader = data.file.stream().getReader();
     const filePath = await Path.join(data.path, data.file.name);
 
-    const result = await createFolder(data.path);
-    if (result.ok) {
-      this.sendState(ImportState.FolderCreated, undefined, { path: data.path });
-    } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
-      console.log(`Failed to create folder ${data.path} (reason: ${result.error.tag}), cancelling...`);
-      // No need to go further if the folder creation failed
-      return;
+    if (data.path !== '/') {
+      const result = await createFolder(data.workspaceHandle, data.path);
+      if (result.ok) {
+        await this.sendState(ImportState.FolderCreated, undefined, { path: data.path, workspaceHandle: data.workspaceHandle });
+      } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
+        console.log(`Failed to create folder ${data.path} (reason: ${result.error.tag}), cancelling...`);
+        await this.sendState(ImportState.CreateFailed, data, { error: result.error.tag });
+        // No need to go further if the folder creation failed
+        return;
+      }
     }
 
-    const openResult = await openFile(filePath, { write: true, truncate: true, create: true });
+    const openResult = await openFile(data.workspaceHandle, filePath, { write: true, truncate: true, create: true });
 
     if (!openResult.ok) {
       this.sendState(ImportState.CreateFailed, data, { error: openResult.error.tag });
@@ -401,11 +404,11 @@ class ImportManager {
 
     const fd = openResult.value;
 
-    const resizeResult = await resizeFile(fd, data.file.size);
+    const resizeResult = await resizeFile(data.workspaceHandle, fd, data.file.size);
     if (!resizeResult.ok) {
-      await closeFile(fd);
-      await deleteFile(filePath);
-      this.sendState(ImportState.WriteError, data, { error: resizeResult.error.tag as unknown as WorkspaceFdWriteErrorTag });
+      await closeFile(data.workspaceHandle, fd);
+      await deleteFile(data.workspaceHandle, filePath);
+      await this.sendState(ImportState.WriteError, data, { error: resizeResult.error.tag as unknown as WorkspaceFdWriteErrorTag });
       return;
     }
 
@@ -432,9 +435,9 @@ class ImportManager {
 
       if (shouldCancel) {
         // Close the file
-        await closeFile(fd);
+        await closeFile(data.workspaceHandle, fd);
         // Delete the file
-        await deleteFile(filePath);
+        await deleteFile(data.workspaceHandle, filePath);
         // Inform about the cancellation
         this.sendState(ImportState.Cancelled, data);
         return;
@@ -443,11 +446,11 @@ class ImportManager {
       const buffer = await reader.read();
 
       if (buffer.value) {
-        const writeResult = await writeFile(fd, writtenData, buffer.value);
+        const writeResult = await writeFile(data.workspaceHandle, fd, writtenData, buffer.value);
 
         if (!writeResult.ok) {
-          await closeFile(fd);
-          await deleteFile(filePath);
+          await closeFile(data.workspaceHandle, fd);
+          await deleteFile(data.workspaceHandle, filePath);
           this.sendState(ImportState.WriteError, data, { error: writeResult.error.tag });
           return;
         } else {
@@ -459,7 +462,7 @@ class ImportManager {
         break;
       }
     }
-    await closeFile(fd);
+    await closeFile(data.workspaceHandle, fd);
     console.log('File', data.file.name, 'imported');
     this.sendState(ImportState.FileImported, data);
   }

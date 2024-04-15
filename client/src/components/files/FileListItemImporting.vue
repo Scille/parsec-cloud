@@ -51,7 +51,7 @@
       <!-- file size -->
       <div class="file-size">
         <ion-label class="label-size cell">
-          {{ formatFileSize(data.file.size) }}
+          {{ $msTranslate(formatFileSize(data.file.size)) }}
         </ion-label>
       </div>
 

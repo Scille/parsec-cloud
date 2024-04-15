@@ -43,8 +43,10 @@ describe('Check folders page', () => {
   });
 
   it('Import files', () => {
-    cy.get('#button-import').contains('Import').click();
-    cy.get('.file-upload-modal').should('exist');
+    cy.get('#button-import').click();
+    cy.get('.popover-viewport').find('.import-container').find('.option').should('have.length', 2);
+    cy.get('.popover-viewport').find('.import-container').find('.option').eq(0).contains('Import files');
+    cy.get('.popover-viewport').find('.import-container').find('.option').eq(1).contains('Import a folder');
   });
 
   function checkMenuItems(): void {

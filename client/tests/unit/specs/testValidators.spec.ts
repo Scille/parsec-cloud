@@ -1,10 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { translate } from '@/services/translation';
-import { mockValidators } from '@tests/component/support/mocks';
+import { mockLibParsec } from '@tests/component/support/mocks';
 import { it } from 'vitest';
 
-mockValidators();
+mockLibParsec();
 
 import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator, organizationValidator } from '@/common/validators';
 

@@ -28,7 +28,7 @@
           {{ shortenFileName(fileCache.name) }}
         </ion-text>
         <ion-label class="element-details__size body-sm">
-          <span class="default-state">{{ formatFileSize(fileCache.size) }}</span>
+          <span class="default-state">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
           <span
             class="default-state"
             v-if="workspaceInfo"
@@ -111,7 +111,7 @@
           {{ $msTranslate('FoldersPage.ImportFile.failed') }}
         </ion-text>
         <ms-information-tooltip
-          :text="$msTranslate('FoldersPage.ImportFile.failedDetails')"
+          :text="'FoldersPage.ImportFile.failedDetails'"
           class="information-icon"
           slot="end"
         />

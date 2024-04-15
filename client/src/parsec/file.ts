@@ -19,6 +19,7 @@ import {
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
+  WorkspaceCreateFolderErrorTag,
   WorkspaceFdCloseError,
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
@@ -48,7 +49,7 @@ export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPat
   if (clientHandle && !needsMocks()) {
     return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
   } else {
-    return { ok: true, value: '7' };
+    return { ok: false, error: { tag: WorkspaceCreateFolderErrorTag.EntryExists, error: 'already exists' } };
   }
 }
 
@@ -128,9 +129,11 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       if (result.value.tag === FileType.File) {
         (result.value as EntryStatFile).isFile = (): boolean => true;
         (result.value as EntryStatFile).name = fileName;
+        (result.value as EntryStatFile).path = path;
       } else {
         (result.value as EntryStatFolder).isFile = (): boolean => false;
         (result.value as EntryStatFolder).name = fileName;
+        (result.value as EntryStatFolder).path = path;
       }
     }
     return result as Result<EntryStat, WorkspaceStatEntryError>;
@@ -152,6 +155,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
           size: Math.floor(Math.random() * 1_000_000),
           name: fileName,
           isFile: (): boolean => true,
+          path: path,
         },
       };
     } else {
@@ -168,6 +172,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
           needSync: Math.floor(Math.random() * 2) === 1,
           name: fileName,
           isFile: (): boolean => false,
+          path: path,
           children: generateChildren(),
         },
       };
