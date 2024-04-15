@@ -134,7 +134,7 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
-import { UserProfile, WorkspaceRole, isDesktop } from '@/parsec';
+import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
 
@@ -143,7 +143,7 @@ function onClick(action: WorkspaceAction): Promise<boolean> {
 }
 
 defineProps<{
-  workspaceName: string;
+  workspaceName: WorkspaceName;
   clientProfile: UserProfile;
   clientRole: WorkspaceRole;
 }>();

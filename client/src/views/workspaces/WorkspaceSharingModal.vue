@@ -50,7 +50,16 @@
 <script setup lang="ts">
 import { MsModal, MsSearchInput } from '@/components/core';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
-import { UserProfile, UserTuple, WorkspaceID, WorkspaceRole, getClientProfile, getWorkspaceSharing, shareWorkspace } from '@/parsec';
+import {
+  UserProfile,
+  UserTuple,
+  WorkspaceID,
+  WorkspaceName,
+  WorkspaceRole,
+  getClientProfile,
+  getWorkspaceSharing,
+  shareWorkspace,
+} from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey, translate } from '@/services/translation';
 import { IonList, IonPage } from '@ionic/vue';
@@ -61,7 +70,7 @@ let ownProfile = UserProfile.Outsider;
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
-  workspaceName: string;
+  workspaceName: WorkspaceName;
   ownRole: WorkspaceRole | null;
   informationManager: InformationManager;
 }>();
