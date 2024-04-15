@@ -7,12 +7,13 @@ export const EventDistributorKey = 'eventDistributor';
 
 enum Events {
   WorkspaceCreated = 1 << 0,
-  Online = 1 << 1,
-  Offline = 1 << 2,
-  InvitationUpdated = 1 << 3,
-  IncompatibleServer = 1 << 4,
-  ClientRevoked = 1 << 5,
-  ExpiredOrganization = 1 << 6,
+  WorkspaceFavorite = 1 << 1,
+  Online = 1 << 2,
+  Offline = 1 << 3,
+  InvitationUpdated = 1 << 4,
+  IncompatibleServer = 1 << 5,
+  ClientRevoked = 1 << 6,
+  ExpiredOrganization = 1 << 7,
 }
 
 interface WorkspaceCreatedData {
@@ -28,7 +29,9 @@ interface InvitationUpdatedData {
   status: InvitationStatus;
 }
 
-type EventData = WorkspaceCreatedData | OnlineData | OfflineData | InvitationUpdatedData;
+interface WorkspaceFavoriteData {}
+
+type EventData = WorkspaceCreatedData | OnlineData | OfflineData | InvitationUpdatedData | WorkspaceFavoriteData;
 
 interface Callback {
   id: string;
@@ -62,4 +65,4 @@ class EventDistributor {
   }
 }
 
-export { EventData, EventDistributor, Events, InvitationUpdatedData, OfflineData, OnlineData, WorkspaceCreatedData };
+export { EventData, EventDistributor, Events, InvitationUpdatedData, OfflineData, OnlineData, WorkspaceCreatedData, WorkspaceFavoriteData };

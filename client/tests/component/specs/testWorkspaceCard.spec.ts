@@ -70,6 +70,7 @@ describe('Workspace Card', () => {
       props: {
         workspace: WORKSPACE,
         clientProfile: UserProfile.Admin,
+        isFavorite: false,
       },
       global: {
         provide: getDefaultProvideConfig(),

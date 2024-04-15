@@ -26,7 +26,7 @@ describe('Check workspaces page', () => {
 
   it('Checks submenu', () => {
     cy.get('.card').eq(0).find('.card-option').click();
-    cy.get('.popover-viewport').find('.menu-list').find('ion-item').as('items').should('have.length', 10);
+    cy.get('.popover-viewport').find('.menu-list').find('ion-item').as('items').should('have.length', 12);
     cy.get('@items').eq(0).contains('Offline');
     cy.get('@items').eq(1).contains('Enable offline availability');
     cy.get('@items').eq(2).contains('Manage workspace');
@@ -35,9 +35,10 @@ describe('Check workspaces page', () => {
     cy.get('@items').eq(5).contains('History');
     cy.get('@items').eq(6).contains('Details');
     cy.get('@items').eq(7).contains('Collaboration');
-    // FIXME: disabled for now
-    // cy.get('@items').eq(8).contains('Copy link');
+    cy.get('@items').eq(8).contains('Copy link');
     cy.get('@items').eq(9).contains('Sharing and roles');
+    cy.get('@items').eq(10).contains('Miscellaneous');
+    cy.get('@items').eq(11).contains('Add to favorites');
   });
 
   it('Sort workspaces in grid view', () => {
@@ -77,6 +78,27 @@ describe('Check workspaces page', () => {
     cy.get('#workspace-filter-select').contains('Last update');
     cy.get('.workspace-list-item').first().contains('The Copper Coronet');
     cy.get('.workspace-list-item').last().contains('Trademeet');
+  });
+
+  it('Test favorites in grid view', () => {
+    cy.get('.card').eq(1).contains('Trademeet');
+    cy.get('.card').eq(1).find('.card-option').click();
+    cy.get('.popover-viewport').find('.menu-list').find('ion-item').eq(11).contains('Add to favorites').click();
+    cy.get('.card').eq(0).contains('Trademeet');
+    cy.get('.card').eq(0).find('.card-favorite-on').click();
+    cy.get('.card').eq(1).contains('Trademeet');
+    cy.get('.card').eq(1).find('.card-favorite-off');
+  });
+
+  it('Test favorites in list view', () => {
+    cy.get('#workspaces-ms-action-bar').find('#list-view').click();
+    cy.get('.workspace-list-item').eq(1).contains('Trademeet');
+    cy.get('.workspace-list-item').eq(1).find('.card-favorite-off').click();
+    cy.get('.workspace-list-item').eq(0).contains('Trademeet');
+    cy.get('.workspace-list-item').eq(0).find('.workspace-options').click();
+    cy.get('.popover-viewport').find('.menu-list').find('ion-item').eq(11).contains('Remove from favorites').click();
+    cy.get('.workspace-list-item').eq(1).contains('Trademeet');
+    cy.get('.workspace-list-item').eq(1).find('.card-favorite-off');
   });
 
   it('Create workspace', () => {
@@ -139,15 +161,15 @@ describe('Check workspaces page', () => {
 
   it('Open workspace menu in grid view', () => {
     cy.get('.card-option').first().click();
-    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 7);
-    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
+    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 8);
+    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 4);
   });
 
   it('Open workspace menu in list view', () => {
     cy.get('#workspaces-ms-action-bar').find('#list-view').click();
     cy.get('.workspace-options > ion-button').first().click();
-    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 7);
-    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 3);
+    cy.get('.popover-viewport').get('.list-group-item').should('have.length', 8);
+    cy.get('.popover-viewport').get('.list-group-title').should('have.length', 4);
   });
 
   it('Check workspace sharing', () => {
@@ -172,7 +194,7 @@ describe('Check workspaces page', () => {
   it('Check context menu from sidebar', () => {
     cy.get('.list-workspaces').find('.sidebar-item').as('workspaceItems').should('have.length', 3);
     cy.get('@workspaceItems').eq(1).find('.workspace-option').click();
-    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').as('menuItem').should('have.length', 10);
+    cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').as('menuItem').should('have.length', 12);
     cy.get('@menuItem').eq(2).contains('Manage workspace');
     cy.get('@menuItem').eq(3).contains('Rename').should('not.be.visible');
     cy.get('@menuItem').eq(7).contains('Collaboration');
@@ -192,5 +214,9 @@ describe('Check workspaces page', () => {
     cy.get('@menuItem').eq(3).contains('Rename').should('be.visible').click();
     cy.get('ion-modal').find('ion-title').contains('Rename workspace');
     cy.get('ion-modal').find('.closeBtn').click();
+    cy.get('@workspaceItems').eq(1).find('.workspace-option').click();
+    cy.get('@menuItem').eq(11).contains('Add to favorites').click();
+    cy.get('@workspaceItems').eq(0).contains('The Copper Coronet');
+    cy.get('@workspaceItems').eq(0).find('.workspace-favorite').should('be.visible');
   });
 });

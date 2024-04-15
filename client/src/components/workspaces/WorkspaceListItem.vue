@@ -73,6 +73,18 @@
       </ion-label>
     </div>
 
+    <!-- favorites -->
+    <div
+      class="card-favorite card-favorite-on"
+      :class="{
+        'card-favorite-on': isFavorite,
+        'card-favorite-off': !isFavorite,
+      }"
+      @click.stop="$emit('favoriteClick', workspace, $event)"
+    >
+      <ion-icon :icon="star" />
+    </div>
+
     <!-- options -->
     <div class="workspace-options">
       <ion-button
@@ -98,7 +110,7 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
-import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const isSelected = ref(false);
@@ -106,10 +118,12 @@ const isSelected = ref(false);
 defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
+  isFavorite: boolean;
 }>();
 
 defineEmits<{
   (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
@@ -207,6 +221,9 @@ defineEmits<{
 .workspace-options {
   flex-grow: 0;
   margin-left: auto;
+  align-items: center;
+  position: absolute;
+  right: 0;
 
   ion-button::part(native) {
     padding: 0;
@@ -230,5 +247,21 @@ defineEmits<{
 .label-size,
 .label-last-update {
   color: var(--parsec-color-light-secondary-grey);
+}
+
+.card-favorite {
+  position: absolute;
+  align-items: center;
+  right: 3rem;
+  font-size: 1.5rem;
+  &-on {
+    color: var(--parsec-color-light-primary-500);
+  }
+  &-off {
+    color: var(--parsec-color-light-secondary-disabled);
+  }
+  &:hover {
+    color: var(--parsec-color-light-primary-300);
+  }
 }
 </style>

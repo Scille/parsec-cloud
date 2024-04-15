@@ -104,27 +104,34 @@
               </ion-header>
               <ion-text
                 class="body list-workspaces__no-workspace"
-                v-if="workspaces.length === 0"
+                v-if="filteredWorkspaces.length === 0"
               >
                 {{ $msTranslate('SideMenu.noWorkspace') }}
               </ion-text>
               <ion-item
                 lines="none"
                 button
-                v-for="workspace in workspaces"
-                :key="workspace.handle"
+                v-for="workspace in filteredWorkspaces"
+                :key="workspace.id"
                 @click="goToWorkspace(workspace.handle)"
                 :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item menu-default"
               >
                 <ion-icon
                   :icon="business"
-                  slot="start"
+                  class="sidebar-item-business"
                 />
-                <ion-label>{{ workspace.currentName }}</ion-label>
+                <ion-icon
+                  v-if="favorites.includes(workspace.id)"
+                  class="workspace-favorite"
+                  :icon="star"
+                />
+                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
                 <div
                   class="workspace-option"
-                  @click.stop="openWorkspaceContextMenu($event, workspace, informationManager, true)"
+                  @click.stop="
+                    openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                  "
                 >
                   <ion-icon :icon="ellipsisHorizontal" />
                 </div>
@@ -153,6 +160,7 @@
               >
                 <ion-icon
                   :icon="people"
+                  class="sidebar-item-icon"
                   slot="start"
                 />
                 <ion-label>{{ $msTranslate('SideMenu.users') }}</ion-label>
@@ -171,6 +179,7 @@
               >
                 <ion-icon
                   :icon="pieChart"
+                  class="sidebar-item-icon"
                   slot="start"
                 />
                 <ion-label> {{ $msTranslate('SideMenu.storage') }}</ion-label>
@@ -186,6 +195,7 @@
               >
                 <ion-icon
                   :icon="informationCircle"
+                  class="sidebar-item-icon"
                   slot="start"
                 />
                 <ion-label>{{ $msTranslate('SideMenu.organizationInfo') }}</ion-label>
@@ -204,11 +214,12 @@
 import { workspaceNameValidator } from '@/common/validators';
 import { CaretExpand, MsImage, getTextInputFromUser } from '@/components/core';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
-import { openWorkspaceContextMenu } from '@/components/workspaces';
+import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
   ClientInfo,
   UserProfile,
   WorkspaceHandle,
+  WorkspaceID,
   WorkspaceInfo,
   isDesktop,
   getClientInfo as parsecGetClientInfo,
@@ -227,6 +238,7 @@ import {
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import {
   GestureDetail,
   IonAvatar,
@@ -250,16 +262,18 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart } from 'ionicons/icons';
-import { Ref, WatchStopHandle, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart, star } from 'ionicons/icons';
+import { Ref, WatchStopHandle, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
 let eventDistributorCbId: string | null = null;
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
+const favorites: Ref<WorkspaceID[]> = ref([]);
 
 // Replace by events when available
 let intervalId: any = null;
@@ -300,6 +314,10 @@ async function createWorkspace(): Promise<void> {
 async function loadAll(): Promise<void> {
   const infoResult = await parsecGetClientInfo();
 
+  favorites.value = (
+    await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
+  ).favoriteList;
+
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
@@ -315,11 +333,15 @@ async function loadAll(): Promise<void> {
 }
 
 onMounted(async () => {
-  eventDistributorCbId = await eventDistributor.registerCallback(Events.WorkspaceCreated, async (event: Events, _data: EventData) => {
-    if (event === Events.WorkspaceCreated) {
-      await loadAll();
-    }
-  });
+  eventDistributorCbId = await eventDistributor.registerCallback(
+    Events.WorkspaceCreated | Events.WorkspaceFavorite,
+    async (event: Events, _data: EventData) => {
+      if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite) {
+        await loadAll();
+      }
+    },
+  );
+
   await loadAll();
   if (divider.value) {
     const gesture = createGesture({
@@ -341,6 +363,15 @@ onUnmounted(() => {
   if (intervalId) {
     clearInterval(intervalId);
   }
+});
+
+const filteredWorkspaces = computed(() => {
+  return Array.from(workspaces.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
+    if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
+      return favorites.value.includes(b.id) ? 1 : -1;
+    }
+    return 0;
+  });
 });
 
 function onMove(detail: GestureDetail): void {
@@ -668,10 +699,28 @@ ion-menu {
     --color: var(--parsec-color-light-primary-100);
   }
 
-  & > ion-icon {
+  &-workspace-label {
+    position: relative;
+    margin-left: 2rem;
+    margin-right: 1.1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    --color: var(--parsec-color-light-primary-100);
+  }
+
+  &-icon {
     color: var(--parsec-color-light-primary-100);
     font-size: 1.25em;
     margin: 0;
+    margin-inline-end: 12px;
+  }
+
+  &-business {
+    color: var(--parsec-color-light-primary-100);
+    position: absolute;
+    align-items: center;
+    font-size: 1.25em;
     margin-inline-end: 12px;
   }
 }
@@ -691,6 +740,17 @@ ion-menu {
   &-list {
     padding: 0;
   }
+}
+
+.workspace-favorite {
+  color: var(--parsec-color-light-primary-100);
+  position: absolute;
+  display: flex;
+  align-items: center;
+  left: 0.6rem;
+  top: 0.1rem;
+  margin: auto 0;
+  font-size: 0.8rem;
 }
 
 .workspace-option {

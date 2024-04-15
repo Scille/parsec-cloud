@@ -87,16 +87,43 @@ export class StorageManager {
 
   async storeComponentData<Type>(componentKey: string, data: Type): Promise<void> {
     const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
-    await this.internalStore.set(key, data);
+    await this.internalStore.set(key, JSON.stringify(data));
   }
 
-  async retrieveComponentData<Type>(componentKey: string): Promise<Type | undefined> {
+  async updateComponentData<Type>(componentKey: string, newData: Type, defaultValues: Required<Type>): Promise<void> {
+    const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
+    const data = (await this.retrieveComponentData(componentKey, defaultValues)) as Type;
+
+    for (const element in defaultValues) {
+      if (newData[element] !== undefined) {
+        data[element] = newData[element];
+      } else if (data[element] === undefined) {
+        data[element] = defaultValues[element];
+      }
+    }
+    try {
+      await this.internalStore.set(key, JSON.stringify(data));
+    } catch (error) {
+      console.log(`Failed to serialize ${componentKey}: ${error}`);
+    }
+  }
+
+  async retrieveComponentData<Type>(componentKey: string, defaultValues: Required<Type>): Promise<Required<Type>> {
     const key = `${StorageManager.STORED_COMPONENT_PREFIX}_${componentKey}`;
     const data = await this.internalStore.get(key);
 
-    if (data) {
-      return data as Type;
+    try {
+      const parsedData = JSON.parse(data);
+      for (const element in defaultValues) {
+        if (!(element in parsedData)) {
+          parsedData[element] = defaultValues[element];
+        }
+      }
+      return parsedData;
+    } catch (error) {
+      console.log(`Failed to deserialize ${componentKey}: ${error}`);
     }
+    return defaultValues;
   }
 
   async storeConfig(data: Config): Promise<void> {

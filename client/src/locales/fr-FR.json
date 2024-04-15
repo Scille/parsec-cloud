@@ -302,13 +302,16 @@
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
             "titleCollaboration": "Collaboration",
+            "titleMisc": "Divers",
             "actionOffline": "Rendre disponible hors-ligne",
             "actionRename": "Renommer",
             "actionOpenInExplorer": "Ouvrir dans l'explorateur",
             "actionHistory": "Historique des versions",
             "actionShare": "Partage et rôles",
             "actionDetails": "Détails",
-            "actionCopyLink": "Copier le lien"
+            "actionCopyLink": "Copier le lien",
+            "actionAddFavorite": "Ajouter aux favoris",
+            "actionRemoveFavorite": "Retirer des favoris"
         },
         "CreateWorkspaceModal": {
             "pageTitle": "Créer un nouvel espace de travail",
@@ -437,7 +440,6 @@
         "deleteMultipleYes": "Supprimer {count} éléments",
         "deleteMultipleNo": "Conserver les éléments",
         "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
-        "copySelectFolderSubtitle": "Emplacement actuel : {location}",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
         "moveSuccess": "L'élément a été déplacé dans le dossier choisi. | Tous les éléments ont été déplacés dans le dossier choisi.",
         "copySuccess": "L'élément a été copié dans le dossier choisi. | Tous les éléments ont été copiés dans le dossier choisi.",

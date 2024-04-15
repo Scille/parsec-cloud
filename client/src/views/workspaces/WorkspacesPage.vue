@@ -97,7 +97,9 @@
               :key="workspace.id"
               :workspace="workspace"
               :client-profile="clientProfile"
+              :is-favorite="favorites.includes(workspace.id)"
               @click="onWorkspaceClick"
+              @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
             />
@@ -115,7 +117,9 @@
             <workspace-card
               :workspace="workspace"
               :client-profile="clientProfile"
+              :is-favorite="favorites.includes(workspace.id)"
               @click="onWorkspaceClick"
+              @favorite-click="onWorkspaceFavoriteClick"
               @menu-click="onOpenWorkspaceContextMenu"
               @share-click="onWorkspaceShareClick"
             />
@@ -149,7 +153,14 @@ import {
   getTextInputFromUser,
 } from '@/components/core';
 import { MsImage, NoWorkspace } from '@/components/core/ms-image';
-import { openWorkspaceContextMenu, workspaceShareClick } from '@/components/workspaces';
+import {
+  WORKSPACES_PAGE_DATA_KEY,
+  WorkspaceDefaultData,
+  WorkspacesPageSavedData,
+  openWorkspaceContextMenu,
+  toggleFavorite,
+  workspaceShareClick,
+} from '@/components/workspaces';
 import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
@@ -157,6 +168,7 @@ import {
   ParsecWorkspacePathAddr,
   Path,
   UserProfile,
+  WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
   decryptFileLink,
@@ -169,7 +181,7 @@ import {
   mountWorkspace as parsecMountWorkspace,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, navigateTo, navigateToWorkspace, watchRoute } from '@/router';
-import { EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -200,20 +212,17 @@ const sortBy = ref(SortWorkspaceBy.Name);
 const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
+const favorites: Ref<WorkspaceID[]> = ref([]);
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
-const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
+let eventCbId: string | null = null;
 
 // Replace by events when available
 let intervalId: any = null;
-
-interface WorkspacesPageSavedData {
-  displayState?: DisplayState;
-}
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Workspaces)) {
@@ -238,12 +247,18 @@ const msSorterLabels = {
 const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
 let hotkeys: HotkeyGroup | null = null;
 
-onMounted(async (): Promise<void> => {
-  const savedData = await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY);
+async function loadFavorites(): Promise<void> {
+  favorites.value = (
+    await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
+  ).favoriteList;
+}
 
-  if (savedData && savedData.displayState !== undefined) {
-    displayView.value = savedData.displayState;
-  }
+onMounted(async (): Promise<void> => {
+  displayView.value = (
+    await storageManager.retrieveComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData)
+  ).displayState;
+
+  await loadFavorites();
 
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
@@ -256,6 +271,12 @@ onMounted(async (): Promise<void> => {
       displayView.value = displayView.value === DisplayState.Grid ? DisplayState.List : DisplayState.Grid;
     },
   );
+
+  eventCbId = await eventDistributor.registerCallback(Events.WorkspaceFavorite, async (event: Events, _data: EventData) => {
+    if (event === Events.WorkspaceFavorite) {
+      await loadFavorites();
+    }
+  });
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
@@ -278,6 +299,9 @@ onUnmounted(async () => {
   routeWatchCancel();
   if (intervalId) {
     clearInterval(intervalId);
+  }
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
   }
 });
 
@@ -346,7 +370,11 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
 }
 
 async function onDisplayStateChange(): Promise<void> {
-  await storageManager.storeComponentData<WorkspacesPageSavedData>(WORKSPACES_PAGE_DATA_KEY, { displayState: displayView.value });
+  await storageManager.updateComponentData<WorkspacesPageSavedData>(
+    WORKSPACES_PAGE_DATA_KEY,
+    { displayState: displayView.value },
+    WorkspaceDefaultData,
+  );
 }
 
 async function refreshWorkspacesList(): Promise<void> {
@@ -385,6 +413,9 @@ async function refreshWorkspacesList(): Promise<void> {
 
 const filteredWorkspaces = computed(() => {
   return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
+    if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
+      return favorites.value.includes(b.id) ? 1 : -1;
+    }
     if (sortBy.value === SortWorkspaceBy.Name) {
       return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
     } else if (sortBy.value === SortWorkspaceBy.Size) {
@@ -454,13 +485,17 @@ async function onWorkspaceClick(workspace: WorkspaceInfo): Promise<void> {
   await navigateToWorkspace(workspace.handle);
 }
 
+async function onWorkspaceFavoriteClick(workspace: WorkspaceInfo): Promise<void> {
+  await toggleFavorite(workspace, favorites.value, eventDistributor, storageManager);
+}
+
 async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
   await workspaceShareClick(workspace, informationManager);
   await refreshWorkspacesList();
 }
 
 async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
-  await openWorkspaceContextMenu(event, workspace, informationManager);
+  await openWorkspaceContextMenu(event, workspace, favorites.value, eventDistributor, informationManager, storageManager);
   await refreshWorkspacesList();
 }
 </script>
