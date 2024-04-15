@@ -13,7 +13,8 @@ use libparsec_types::prelude::*;
 
 use crate::{
     ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
-    SaveRecoveryDeviceError, DEVICE_FILE_EXT,
+    SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
+    ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -206,7 +207,15 @@ fn load_legacy_device_file_from_content(
     };
 
     Ok(DeviceFile::Password(DeviceFilePassword {
-        salt: legacy_device.salt,
+        // TODO: Invalid values: legacy format used Argon2i with "interactive"
+        //       limits. This compat stuff is no longer needed and should be
+        //       entirely removed.
+        algorithm: DeviceFilePasswordAlgorithm::Argon2id {
+            salt: legacy_device.salt,
+            opslimit: ARGON2ID_DEFAULT_OPSLIMIT.into(),
+            memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
+            parallelism: ARGON2ID_DEFAULT_PARALLELISM.into(),
+        },
         ciphertext: legacy_device.ciphertext,
         human_handle,
         device_label,
@@ -271,8 +280,33 @@ pub async fn load_device(
 
             match device_file {
                 DeviceFile::Password(x) => {
-                    let key = SecretKey::from_password(password, &x.salt)
-                        .map_err(|_| LoadDeviceError::InvalidData)?;
+                    let (salt, opslimit, memlimit_kb, parallelism) = match x.algorithm {
+                        DeviceFilePasswordAlgorithm::Argon2id {
+                            salt,
+                            opslimit,
+                            memlimit_kb,
+                            parallelism,
+                        } => {
+                            let opslimit: u32 = opslimit
+                                .try_into()
+                                .map_err(|_| LoadDeviceError::InvalidData)?;
+                            let memlimit_kb: u32 = memlimit_kb
+                                .try_into()
+                                .map_err(|_| LoadDeviceError::InvalidData)?;
+                            let parallelism: u32 = parallelism
+                                .try_into()
+                                .map_err(|_| LoadDeviceError::InvalidData)?;
+                            (salt, opslimit, memlimit_kb, parallelism)
+                        }
+                    };
+                    let key = SecretKey::from_argon2id_password(
+                        password,
+                        &salt,
+                        opslimit,
+                        memlimit_kb,
+                        parallelism,
+                    )
+                    .map_err(|_| LoadDeviceError::InvalidData)?;
                     let mut cleartext = key
                         .decrypt(&x.ciphertext)
                         .map_err(|_| LoadDeviceError::DecryptionFailed)?;
@@ -392,8 +426,18 @@ pub async fn save_device(
 
         DeviceAccessStrategy::Password { key_file, password } => {
             let salt = SecretKey::generate_salt();
-            let key =
-                SecretKey::from_password(password, &salt).expect("Salt has the correct length");
+            let opslimit = ARGON2ID_DEFAULT_OPSLIMIT;
+            let memlimit_kb = ARGON2ID_DEFAULT_MEMLIMIT_KB;
+            let parallelism = ARGON2ID_DEFAULT_PARALLELISM;
+
+            let key = SecretKey::from_argon2id_password(
+                password,
+                &salt,
+                opslimit,
+                memlimit_kb,
+                parallelism,
+            )
+            .expect("Salt has the correct length");
 
             let ciphertext = {
                 let mut cleartext = device.dump();
@@ -409,7 +453,12 @@ pub async fn save_device(
                 device_id: device.device_id.to_owned(),
                 organization_id: device.organization_id().to_owned(),
                 slug: device.slug(),
-                salt: salt.into(),
+                algorithm: DeviceFilePasswordAlgorithm::Argon2id {
+                    salt: salt.into(),
+                    opslimit: opslimit.into(),
+                    memlimit_kb: memlimit_kb.into(),
+                    parallelism: parallelism.into(),
+                },
             });
 
             let file_content = file_content.dump();

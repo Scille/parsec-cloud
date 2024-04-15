@@ -224,10 +224,23 @@ impl SecretKey {
     }
 
     #[classmethod]
-    fn from_password(_cls: &PyType, password: &str, salt: &[u8]) -> PyResult<Self> {
-        libparsec_crypto::SecretKey::from_password(&password.to_owned().into(), salt)
-            .map(Self)
-            .map_err(|err| CryptoError::new_err(err.to_string()))
+    fn from_argon2id_password(
+        _cls: &PyType,
+        password: &str,
+        salt: &[u8],
+        opslimit: u32,
+        memlimit_kb: u32,
+        parallelism: u32,
+    ) -> PyResult<Self> {
+        libparsec_crypto::SecretKey::from_argon2id_password(
+            &password.to_owned().into(),
+            salt,
+            opslimit,
+            memlimit_kb,
+            parallelism,
+        )
+        .map(Self)
+        .map_err(|err| CryptoError::new_err(err.to_string()))
     }
 
     #[classmethod]

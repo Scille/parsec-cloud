@@ -50,8 +50,7 @@ pub struct DeviceFilePassword {
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
-
-    pub salt: Bytes,
+    pub algorithm: DeviceFilePasswordAlgorithm,
 }
 
 parsec_data!("schema/local_device/device_file_password.json5");
@@ -65,7 +64,7 @@ impl_transparent_data_format_conversion!(
     device_id,
     organization_id,
     slug,
-    salt,
+    algorithm,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
