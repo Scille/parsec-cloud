@@ -6,6 +6,16 @@
     @click="$emit('click', workspace, $event)"
   >
     <div
+      class="card-favorite"
+      :class="{
+        'card-favorite-on': isFavorite,
+        'card-favorite-off': !isFavorite,
+      }"
+      @click.stop="$emit('favoriteClick', workspace, $event)"
+    >
+      <ion-icon :icon="star" />
+    </div>
+    <div
       class="card-option"
       @click.stop="$emit('menuClick', workspace, $event)"
     >
@@ -67,15 +77,17 @@ import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
-import { business, cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
+  isFavorite: boolean;
 }>();
 
 defineEmits<{
   (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
+  (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
@@ -110,6 +122,26 @@ defineEmits<{
 
   &:hover {
     color: var(--parsec-color-light-primary-500);
+  }
+}
+
+.card-favorite {
+  text-align: left;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  top: 0;
+  left: 0.5rem;
+  font-size: 1.5rem;
+  padding: 0.75rem;
+  &-on {
+    color: var(--parsec-color-light-primary-500);
+  }
+  &-off {
+    color: var(--parsec-color-light-secondary-disabled);
+  }
+  &:hover {
+    color: var(--parsec-color-light-primary-300);
   }
 }
 

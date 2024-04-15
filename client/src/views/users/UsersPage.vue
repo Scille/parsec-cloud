@@ -459,10 +459,10 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
-  const savedData = await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY);
-  if (savedData && savedData.displayState !== undefined) {
-    displayView.value = savedData.displayState;
-  }
+  displayView.value = (
+    await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: DisplayState.List })
+  ).displayState;
+
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'g', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users },

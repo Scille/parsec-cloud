@@ -2,10 +2,11 @@
 
 import { writeTextToClipboard } from '@/common/clipboard';
 import { workspaceNameValidator } from '@/common/validators';
-import { getTextInputFromUser } from '@/components/core';
+import { DisplayState, getTextInputFromUser } from '@/components/core';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
+  WorkspaceID,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
@@ -14,16 +15,30 @@ import {
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
 } from '@/parsec';
+import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { StorageManager } from '@/services/storageManager';
 import { Translatable } from '@/services/translation';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 
+export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
+
 interface RoleUpdateAuthorization {
   authorized: boolean;
   reason?: Translatable;
 }
+
+export interface WorkspacesPageSavedData {
+  displayState?: DisplayState;
+  favoriteList?: WorkspaceID[];
+}
+
+export const WorkspaceDefaultData: Required<WorkspacesPageSavedData> = {
+  displayState: DisplayState.Grid,
+  favoriteList: [],
+};
 
 export function canChangeRole(
   clientProfile: UserProfile,
@@ -79,10 +94,32 @@ export async function workspaceShareClick(workspace: WorkspaceInfo, informationM
   await modal.onWillDismiss();
 }
 
+export async function toggleFavorite(
+  workspace: WorkspaceInfo,
+  favorites: WorkspaceID[],
+  eventDistributor: EventDistributor,
+  storageManager: StorageManager,
+): Promise<void> {
+  if (favorites.includes(workspace.id)) {
+    favorites.splice(favorites.indexOf(workspace.id), 1);
+  } else {
+    favorites.push(workspace.id);
+  }
+  await storageManager.updateComponentData<WorkspacesPageSavedData>(
+    WORKSPACES_PAGE_DATA_KEY,
+    { favoriteList: favorites },
+    WorkspaceDefaultData,
+  );
+  eventDistributor.dispatchEvent(Events.WorkspaceFavorite, {});
+}
+
 export async function openWorkspaceContextMenu(
   event: Event,
   workspace: WorkspaceInfo,
+  favorites: WorkspaceID[],
+  eventDistributor: EventDistributor,
   informationManager: InformationManager,
+  storageManager: StorageManager,
   fromSidebar = false,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
@@ -98,6 +135,7 @@ export async function openWorkspaceContextMenu(
       workspaceName: workspace.currentName,
       clientProfile: clientProfile,
       clientRole: workspace.currentSelfRole,
+      isFavorite: favorites.includes(workspace.id),
     },
   });
   await popover.present();
@@ -116,6 +154,9 @@ export async function openWorkspaceContextMenu(
         break;
       case WorkspaceAction.Rename:
         await openRenameWorkspaceModal(workspace, informationManager);
+        break;
+      case WorkspaceAction.Favorite:
+        await toggleFavorite(workspace, favorites, eventDistributor, storageManager);
         break;
       default:
         console.warn('No WorkspaceAction match found');

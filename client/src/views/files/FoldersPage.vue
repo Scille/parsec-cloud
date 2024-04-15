@@ -279,11 +279,12 @@ const ownRole = computed(() => {
 });
 
 onMounted(async () => {
-  const savedData = await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY);
+  displayView.value = (
+    await storageManager.retrieveComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, {
+      displayState: DisplayState.List,
+    })
+  ).displayState;
 
-  if (savedData && savedData.displayState !== undefined) {
-    displayView.value = savedData.displayState;
-  }
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
     { key: 'o', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop | Platforms.Web, disableIfModal: true, route: Routes.Documents },

@@ -116,6 +116,29 @@
           </ion-label>
         </ion-item>
       </ion-item-group>
+      <ion-item-group class="list-group">
+        <ion-item class="list-group-title caption-caption">
+          <ion-label class="list-group-title__label">
+            {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleMisc') }}
+          </ion-label>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(WorkspaceAction.Favorite)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="star" />
+          <ion-label class="body list-group-item__label">
+            {{
+              $msTranslate(
+                isFavorite
+                  ? 'WorkspacesPage.workspaceContextMenu.actionRemoveFavorite'
+                  : 'WorkspacesPage.workspaceContextMenu.actionAddFavorite',
+              )
+            }}
+          </ion-label>
+        </ion-item>
+      </ion-item-group>
     </ion-list>
   </ion-content>
 </template>
@@ -130,13 +153,14 @@ export enum WorkspaceAction {
   ShowHistory,
   OpenInExplorer,
   Mount,
+  Favorite,
 }
 </script>
 
 <script setup lang="ts">
 import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
-import { cloudy, informationCircle, link, open, pencil, shareSocial, time } from 'ionicons/icons';
+import { cloudy, informationCircle, link, open, pencil, shareSocial, star, time } from 'ionicons/icons';
 
 function onClick(action: WorkspaceAction): Promise<boolean> {
   return popoverController.dismiss({ action: action });
@@ -146,6 +170,7 @@ defineProps<{
   workspaceName: WorkspaceName;
   clientProfile: UserProfile;
   clientRole: WorkspaceRole;
+  isFavorite: boolean;
 }>();
 </script>
 
