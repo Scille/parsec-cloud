@@ -454,7 +454,7 @@ CREATE TABLE block_data (
 -- Topic
 -------------------------------------------------------
 
-CREATE TABLE topic_common (
+CREATE TABLE common_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
@@ -462,21 +462,21 @@ CREATE TABLE topic_common (
 
 );
 
-CREATE TABLE topic_sequester (
+CREATE TABLE sequester_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE(organization)
 );
 
-CREATE TABLE topic_shamir_recovery (
+CREATE TABLE shamir_recovery_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
     UNIQUE(organization)
 );
 
-CREATE TABLE topic_realm (
+CREATE TABLE realm_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
