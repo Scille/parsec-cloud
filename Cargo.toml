@@ -90,7 +90,7 @@ libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features 
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.81", default-features = false }
+anyhow = { version = "1.0.82", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.14", default-features = false }
 async-lock = { version = "3.3.0", default-features = false }
@@ -140,7 +140,7 @@ libc = { version = "0.2.153", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.21", default-features = false }
-miniserde = { version = "0.1.38", default-features = false }
+miniserde = { version = "0.1.39", default-features = false }
 neon = { version = "0.10.1", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 openssl = { version = "0.10.64", default-features = false }
@@ -153,9 +153,9 @@ predicates = { version = "3.1.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proptest = { version = "1.4.0", default-features = false }
 proptest-state-machine = { version = "0.1.0", default-features = false }
-proc-macro2 = { version = "1.0.79", default-features = false }
+proc-macro2 = { version = "1.0.80", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
-quote = { version = "1.0.35", default-features = false }
+quote = { version = "1.0.36", default-features = false }
 # Two versions of `rand` needed in `libparsec_crypto`
 rand_08 = { package = "rand", version = "0.8.5", default-features = false }
 rand = { version = "0.8.5", default-features = false }
@@ -177,7 +177,7 @@ serde_with = { version = "3.7.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
 sha2 = { version = "0.10.8", default-features = false }
 sodiumoxide = { version = "0.2.7", default-features = false }
-syn = { version = "2.0.58", default-features = false }
+syn = { version = "2.0.59", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 thiserror = { version = "1.0.58", default-features = false }
 tokio = { version = "1.37.0", default-features = false }
