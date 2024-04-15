@@ -103,22 +103,22 @@ deleted_block_datas AS (
     RETURNING _id
 ),
 deleted_topics_common AS (
-    DELETE FROM topic_common
+    DELETE FROM common_topic
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_sequester AS (
-    DELETE FROM topic_sequester
+    DELETE FROM sequester_topic
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_shamir_recovery AS (
-    DELETE FROM topic_shamir_recovery
+    DELETE FROM shamir_recovery_topic
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
 deleted_topics_realm AS (
-    DELETE FROM topic_realm
+    DELETE FROM realm_topic
     WHERE organization in (select * from deleted_organizations)
     OR realm in (select * from deleted_realms)
     RETURNING _id
@@ -570,43 +570,43 @@ new_block_data AS (
     RETURNING _id
 ),
 new_topics_common AS (
-    INSERT INTO topic_common (
+    INSERT INTO common_topic (
         organization,
         last_timestamp
     )
     SELECT
         (select * from new_organization_ids),
         last_timestamp
-    FROM topic_common
+    FROM common_topic
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
 new_topics_sequester AS (
-    INSERT INTO topic_sequester (
+    INSERT INTO sequester_topic (
         organization,
         last_timestamp
     )
     SELECT
         (select * from new_organization_ids),
         last_timestamp
-    FROM topic_sequester
+    FROM sequester_topic
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
 new_topics_shamir_recovery AS (
-    INSERT INTO topic_shamir_recovery (
+    INSERT INTO shamir_recovery_topic (
         organization,
         last_timestamp
     )
     SELECT
         (select * from new_organization_ids),
         last_timestamp
-    FROM topic_shamir_recovery
+    FROM shamir_recovery_topic
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
 new_topics_realm AS (
-    INSERT INTO topic_realm (
+    INSERT INTO realm_topic (
         organization,
         realm,
         last_timestamp
@@ -615,10 +615,10 @@ new_topics_realm AS (
         (select * from new_organization_ids),
         (
             SELECT _id FROM new_realms
-            WHERE realm_id = { q_realm(_id="topic_realm.realm", select="realm_id") }
+            WHERE realm_id = { q_realm(_id="realm_topic.realm", select="realm_id") }
         ),
         last_timestamp
-    FROM topic_realm
+    FROM realm_topic
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 )
