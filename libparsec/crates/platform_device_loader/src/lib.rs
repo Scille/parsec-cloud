@@ -19,6 +19,11 @@ use native as platform;
 #[cfg(target_arch = "wasm32")]
 use web as platform;
 
+pub const ARGON2ID_DEFAULT_MEMLIMIT_KB: u32 = 128 * 1024; // 128 Mo
+pub const ARGON2ID_DEFAULT_OPSLIMIT: u32 = 3;
+// Be careful when changing parallelism: libsodium only supports 1 thread !
+pub const ARGON2ID_DEFAULT_PARALLELISM: u32 = 1;
+
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
 /// Return the default keyfile path for a given device.

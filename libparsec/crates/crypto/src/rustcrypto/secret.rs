@@ -13,33 +13,8 @@ use crate::{CryptoError, Password};
 
 type Blake2bMac40 = Blake2bMac<U5>;
 
-/// Memory block size in bytes
-const BLOCKSIZE: u32 = 1024;
-/// The maximum amount of RAM that the functions in this module will use, in bytes.
-/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L128
-const MEMLIMIT_INTERACTIVE: u32 = 33_554_432;
-/// The maximum number of computations to perform when using the functions.
-/// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L127
-const OPSLIMIT_INTERACTIVE: u32 = 4;
-/// Degree of parallelism
-const PARALLELISM: u32 = 1;
-// https://github.com/sodiumoxide/sodiumoxide/blob/master/libsodium-sys/src/sodium_bindings.rs#L121
+// https://github.com/sodiumoxide/sodiumoxide/blob/3057acb1a030ad86ed8892a223d64036ab5e8523/libsodium-sys/src/sodium_bindings.rs#L137
 const SALTBYTES: usize = 16;
-
-lazy_static::lazy_static! {
-    static ref ARGON2: Argon2<'static> =
-        Argon2::new(
-            Algorithm::Argon2i,
-            Version::V0x13,
-            Params::new(
-                MEMLIMIT_INTERACTIVE / BLOCKSIZE,
-                OPSLIMIT_INTERACTIVE,
-                PARALLELISM,
-                Some(XSalsa20Poly1305::KEY_SIZE),
-            )
-            .expect("Can't fail"),
-        );
-}
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
@@ -99,10 +74,28 @@ impl SecretKey {
         salt
     }
 
-    pub fn from_password(password: &Password, salt: &[u8]) -> Result<Self, CryptoError> {
+    pub fn from_argon2id_password(
+        password: &Password,
+        salt: &[u8],
+        opslimit: u32,
+        memlimit_kb: u32,
+        parallelism: u32,
+    ) -> Result<Self, CryptoError> {
         let mut key = [0; XSalsa20Poly1305::KEY_SIZE];
 
-        ARGON2
+        let argon = Argon2::new(
+            Algorithm::Argon2id,
+            Version::V0x13,
+            Params::new(
+                memlimit_kb,
+                opslimit,
+                parallelism,
+                Some(XSalsa20Poly1305::KEY_SIZE),
+            )
+            .map_err(|_| CryptoError::DataSize)?,
+        );
+
+        argon
             .hash_password_into(password.as_bytes(), salt, &mut key)
             .map_err(|_| CryptoError::DataSize)?;
 
