@@ -45,7 +45,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.components.user import CheckUserBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -428,6 +428,26 @@ class PGInviteComponent(BaseInviteComponent):
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+        if organization.is_expired:
+            return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteNewForUserBadOutcome.AUTHOR_REVOKED
+            case UserProfile() as current_profile:
+                pass
+        if current_profile != UserProfile.ADMIN:
+            return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
+
         user_id = await query_retrieve_active_human_by_email(conn, organization_id, claimer_email)
         if user_id:
             return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
@@ -469,6 +489,24 @@ class PGInviteComponent(BaseInviteComponent):
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as organization:
+                pass
+        if organization.is_expired:
+            return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
+            case UserProfile():
+                pass
+
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_user_or_device_invitation(
             conn,
@@ -665,54 +703,12 @@ class PGInviteComponent(BaseInviteComponent):
                 status=InvitationStatus.READY,
             )
 
-    async def info(self, organization_id: OrganizationID, token: InvitationToken) -> Invitation:
-        raise NotImplementedError()  # Use _info_as_invited instead
-        # async with self.dbh.pool.acquire() as conn:
-        #     row = await conn.fetchrow(
-        #         *_q_info_invitation(organization_id=organization_id.str, token=token)
-        #     )
-        # if not row:
-        #     raise InvitationNotFoundError(token)
-
-        # (
-        #     type,
-        #     greeter_user_id_str,
-        #     greeter_human_handle_email,
-        #     greeter_human_handle_label,
-        #     claimer_email,
-        #     created_on,
-        #     deleted_on,
-        #     deleted_reason,
-        # ) = row
-        # greeter_user_id = UserID(greeter_user_id_str)
-
-        # if deleted_on:
-        #     raise InvitationAlreadyDeletedError(token)
-
-        # if greeter_human_handle_email:
-        #     greeter_human_handle = HumanHandle(
-        #         email=greeter_human_handle_email, label=greeter_human_handle_label
-        #     )
-        # else:
-        #     greeter_human_handle = HumanHandle.new_redacted(greeter_user_id)
-
-        # if type == InvitationType.USER.str:
-        #     return UserInvitation(
-        #         greeter_user_id=greeter_user_id,
-        #         greeter_human_handle=greeter_human_handle,
-        #         claimer_email=claimer_email,
-        #         token=token,
-        #         created_on=created_on,
-        #         status=InvitationStatus.READY,
-        #     )
-        # else:  # Device
-        #     return DeviceInvitation(
-        #         greeter_user_id=greeter_user_id,
-        #         greeter_human_handle=greeter_human_handle,
-        #         token=token,
-        #         created_on=created_on,
-        #         status=InvitationStatus.READY,
-        #     )
+    @override
+    @transaction
+    async def info_as_invited(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+    ) -> Invitation | InviteAsInvitedInfoBadOutcome:
+        return await self._info_as_invited(conn, organization_id, token)
 
     @override
     @transaction
