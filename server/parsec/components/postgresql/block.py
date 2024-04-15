@@ -207,12 +207,12 @@ class PGBlockComponent(BaseBlockComponent):
         realm_id = VlobID.from_hex(row["realm_id"])
         key_index = row["key_index"]
 
-        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 assert False, f"Realm not found: {realm_id}"
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), _):
+            case (RealmRole(), _, last_realm_certificate_timestamp):
                 pass
 
         outcome = await self.blockstore.read(organization_id, block_id)
@@ -221,7 +221,7 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadResult(
                     block=block,
                     key_index=key_index,
-                    needed_realm_certificate_timestamp=DateTime.now(),  # TODO: fixme
+                    needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
                 )
             case BlockStoreReadBadOutcome.BLOCK_NOT_FOUND:
                 # Weird, the block exists in the database but not in the blockstore
@@ -258,17 +258,21 @@ class PGBlockComponent(BaseBlockComponent):
             case UserProfile():
                 pass
 
-        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return BlockCreateBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, current_key_index):
+            case (
+                RealmRole() as role,
+                current_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
                 if current_key_index != key_index:
                     return BadKeyIndex(
-                        last_realm_certificate_timestamp=DateTime.now(),  # TODO: fixme
+                        last_realm_certificate_timestamp=last_realm_certificate_timestamp,
                     )
 
         # Note it's important to check unicity here because blockstore create

@@ -184,19 +184,23 @@ class PGVlobComponent(BaseVlobComponent):
             case UserProfile():
                 pass
 
-        match await self.realm._check_realm(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobCreateBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, KeyIndex() as realm_key_index):
+            case (
+                RealmRole() as role,
+                KeyIndex() as realm_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
 
         # We only accept the last key
         if realm_key_index != key_index:
             return BadKeyIndex(
-                last_realm_certificate_timestamp=timestamp  # TODO: this is not the right timestamp
+                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
             )
 
         match timestamps_in_the_ballpark(timestamp, now):
