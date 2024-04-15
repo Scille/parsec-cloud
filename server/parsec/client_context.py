@@ -30,11 +30,11 @@ class AnonymousClientContext:
 
     @property
     def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger:
-            return self._logger
-        self._logger = logger.bind(
-            request=uuid4().hex, organization_id=self.organization_id.str, auth="anonymous"
-        )
+        if self._logger is None:
+            self._logger = logger.bind(
+                request=uuid4().hex, organization_id=self.organization_id.str, auth="anonymous"
+            )
+            assert self._logger is not None
         return self._logger
 
     def organization_not_found_abort(self) -> NoReturn:
@@ -67,14 +67,14 @@ class InvitedClientContext:
 
     @property
     def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger:
-            return self._logger
-        self._logger = logger.bind(
-            request=uuid4().hex,
-            organization_id=self.organization_id,
-            auth="invited",
-            token=self.token.hex,
-        )
+        if self._logger is None:
+            self._logger = logger.bind(
+                request=uuid4().hex,
+                organization_id=self.organization_id,
+                auth="invited",
+                token=self.token.hex,
+            )
+            assert self._logger is not None
         return self._logger
 
     def organization_not_found_abort(self) -> NoReturn:
@@ -122,14 +122,14 @@ class AuthenticatedClientContext:
 
     @property
     def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger:
-            return self._logger
-        self._logger = logger.bind(
-            request=uuid4().hex,
-            organization_id=self.organization_id,
-            auth="authenticated",
-            device_id=self.device_id.str,
-        )
+        if self._logger is None:
+            self._logger = logger.bind(
+                request=uuid4().hex,
+                organization_id=self.organization_id,
+                auth="authenticated",
+                device_id=self.device_id.str,
+            )
+            assert self._logger is not None
         return self._logger
 
     def organization_not_found_abort(self) -> NoReturn:
