@@ -481,20 +481,26 @@ class PGUserComponent(BaseUserComponent):
         )
         if not d_row:
             return CheckDeviceBadOutcome.DEVICE_NOT_FOUND
-        match await self._check_user(conn, organization_id, device_id.user_id):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
-                return CheckDeviceBadOutcome.USER_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
-                return CheckDeviceBadOutcome.USER_REVOKED
-            case UserProfile() as profile:
-                return profile, common_timestamp
+        u_row = await conn.fetchrow(
+            *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
+        )
+        if not u_row:
+            return CheckDeviceBadOutcome.USER_NOT_FOUND
+        if u_row["revoked_on"] is not None:
+            return CheckDeviceBadOutcome.USER_REVOKED
+        return UserProfile.from_str(u_row["profile"]), common_timestamp
 
     async def _check_user(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID,
-    ) -> UserProfile | CheckUserBadOutcome:
+    ) -> tuple[UserProfile, DateTime] | CheckUserBadOutcome:
+        common_timestamp = await conn.fetchval(
+            *_q_check_common_topic(organization_id=organization_id.str)
+        )
+        if common_timestamp is None:
+            common_timestamp = DateTime.from_timestamp(0)
         u_row = await conn.fetchrow(
             *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
         )
@@ -502,9 +508,7 @@ class PGUserComponent(BaseUserComponent):
             return CheckUserBadOutcome.USER_NOT_FOUND
         if u_row["revoked_on"] is not None:
             return CheckUserBadOutcome.USER_REVOKED
-        initial_profile = UserProfile.from_str(u_row["profile"])
-        # TODO: return the actual profile
-        return initial_profile
+        return UserProfile.from_str(u_row["profile"]), common_timestamp
 
     async def _lock_common_topic(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
@@ -747,7 +751,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserUpdateUserStoreBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return UserUpdateUserStoreBadOutcome.USER_REVOKED
-            case UserProfile() as current_profile:
+            case (UserProfile() as current_profile, DateTime()):
                 if current_profile == certif.new_profile:
                     return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
                 pass
@@ -877,7 +881,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case (UserProfile() as profile, DateTime()):
                 redacted = profile == UserProfile.OUTSIDER
 
         # 1) Common certificates (i.e. user/device/revoked/update)
@@ -1076,7 +1080,7 @@ class PGUserComponent(BaseUserComponent):
                 return CertificateBasedActionIdempotentOutcome(
                     certificate_timestamp=common_topic_timestamp
                 )
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
