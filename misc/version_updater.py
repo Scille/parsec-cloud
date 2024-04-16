@@ -289,6 +289,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
         Tool.Parsec: [
             ReplaceRegex(
+                # TODO: fix me once hosting/index.rst is updated
                 r"parsec-cloud\[backend\]==.+'",
                 "parsec-cloud[backend]=={version}'",
             ),
