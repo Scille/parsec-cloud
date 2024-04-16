@@ -6,7 +6,7 @@ from base64 import b64encode
 from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias, override
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, PlainValidator
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, PlainValidator, ValidationError
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -88,6 +88,25 @@ ActiveUsersLimitField = Annotated[
         lambda x: x if isinstance(x, ActiveUsersLimit) else ActiveUsersLimit.from_maybe_int(x)
     ),
     PlainSerializer(lambda x: x.to_maybe_int(), return_type=int | None),
+]
+
+
+def hex_bytes_validator(val: object) -> bytes:
+    if isinstance(val, bytes):
+        return val
+    elif isinstance(val, bytearray):
+        return bytes(val)
+    elif isinstance(val, str):
+        return bytes.fromhex(val)
+    raise ValidationError()
+
+
+def hex_bytes_serializer(val: bytes) -> str:
+    return val.hex()
+
+
+HexBytes = Annotated[
+    bytes, PlainValidator(hex_bytes_validator), PlainSerializer(hex_bytes_serializer)
 ]
 
 
@@ -181,7 +200,7 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     timestamp: DateTimeField
     vlob_id: VlobIDField
     version: int
-    blob: bytes | None
+    blob: HexBytes | None
     last_common_certificate_timestamp: DateTimeField
     last_realm_certificate_timestamp: DateTimeField
 
