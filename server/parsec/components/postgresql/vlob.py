@@ -380,6 +380,9 @@ class PGVlobComponent(BaseVlobComponent):
         if last_common_certificate_timestamp >= timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
 
+        if last_realm_certificate_timestamp >= timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
+
         if org.is_sequestered:
             # TODO: Implement sequester
             raise NotImplementedError
@@ -518,6 +521,9 @@ class PGVlobComponent(BaseVlobComponent):
 
         if last_common_certificate_timestamp >= timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
+
+        if last_realm_certificate_timestamp >= timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         if org.is_sequestered:
             raise NotImplementedError
