@@ -109,22 +109,22 @@ def generate_invite_email(
     greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
-    backend_url: str,
+    server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
-    if backend_url.endswith("/"):
-        backend_url = backend_url[:-1]
+    if server_url.endswith("/"):
+        server_url = server_url[:-1]
     html = get_template("invitation_mail.html").render(
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
-        backend_url=backend_url,
+        server_url=server_url,
     )
     text = get_template("invitation_mail.txt").render(
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
-        backend_url=backend_url,
+        server_url=server_url,
     )
 
     # mail settings
@@ -332,7 +332,7 @@ class BaseInviteComponent:
             reply_to=greeter_human_handle.email,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            backend_url=self._config.server_addr.to_http_domain_url(),
+            server_url=self._config.server_addr.to_http_domain_url(),
         )
 
         await send_email(
@@ -365,7 +365,7 @@ class BaseInviteComponent:
             reply_to=None,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            backend_url=self._config.server_addr.to_http_domain_url(),
+            server_url=self._config.server_addr.to_http_domain_url(),
         )
 
         await send_email(
