@@ -125,12 +125,12 @@ impl DateTime {
         now.into()
     }
 
-    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in the administration REST API)
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
     }
 
-    /// Use RFC3339 format when stable serialization to text is needed (e.g. in `OrganizationFileLink`)
+    /// Use RFC3339 format when stable serialization to text is needed (e.g. in the administration REST API)
     pub fn from_rfc3339(s: &str) -> Result<Self, chrono::ParseError> {
         s.parse().map(|dt: chrono::DateTime<chrono::Utc>| dt.into())
     }
