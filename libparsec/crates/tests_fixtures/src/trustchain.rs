@@ -14,6 +14,7 @@ pub fn alice_user_certif(alice: &Device) -> UserCertificate {
         user_id: alice.user_id().clone(),
         human_handle: MaybeRedacted::Real(alice.human_handle.clone()),
         public_key: alice.public_key(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: alice.profile,
     }
 }
@@ -27,6 +28,7 @@ pub fn bob_user_certif(bob: &Device) -> UserCertificate {
         user_id: bob.user_id().clone(),
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: bob.profile,
     }
 }
@@ -40,6 +42,7 @@ pub fn mallory_user_certif(mallory: &Device) -> UserCertificate {
         user_id: mallory.user_id().clone(),
         human_handle: MaybeRedacted::Real(mallory.human_handle.clone()),
         public_key: mallory.public_key(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: mallory.profile,
     }
 }
@@ -53,6 +56,7 @@ pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
         device_id: alice.device_id.clone(),
         device_label: MaybeRedacted::Real(alice.device_label.clone()),
         verify_key: alice.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     }
 }
 
@@ -65,6 +69,7 @@ pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
         device_id: bob.device_id.clone(),
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     }
 }
 
@@ -77,6 +82,7 @@ pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
         device_id: mallory.device_id.clone(),
         device_label: MaybeRedacted::Real(mallory.device_label.clone()),
         verify_key: mallory.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     }
 }
 

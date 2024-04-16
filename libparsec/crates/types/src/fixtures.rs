@@ -11,8 +11,8 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
     CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, Duration, HumanHandle,
-    LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr, TimeProvider,
-    UserCertificate, UserID, UserProfile, VlobID,
+    LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr, PrivateKeyAlgorithm,
+    SigningKeyAlgorithm, TimeProvider, UserCertificate, UserID, UserProfile, VlobID,
 };
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
@@ -201,6 +201,7 @@ pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Ve
         user_id: bob.user_id().clone(),
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: UserProfile::Standard,
     }
     .dump_and_sign(&alice.signing_key)
@@ -215,6 +216,7 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
         user_id: bob.user_id().clone(),
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id())),
         public_key: bob.public_key(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: UserProfile::Standard,
     }
     .dump_and_sign(&alice.signing_key)
@@ -229,6 +231,7 @@ pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> 
         device_id: bob.device_id.clone(),
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     }
     .dump_and_sign(&alice.signing_key)
 }
@@ -242,6 +245,7 @@ pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: Date
         device_id: bob.device_id.clone(),
         device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id.device_name())),
         verify_key: bob.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     }
     .dump_and_sign(&alice.signing_key)
 }

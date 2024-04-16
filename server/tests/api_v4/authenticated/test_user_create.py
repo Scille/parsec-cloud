@@ -10,8 +10,10 @@ from parsec._parsec import (
     DeviceLabel,
     HumanHandle,
     PrivateKey,
+    PrivateKeyAlgorithm,
     RevokedUserCertificate,
     SigningKey,
+    SigningKeyAlgorithm,
     UserCertificate,
     UserID,
     UserProfile,
@@ -48,6 +50,7 @@ def generate_new_mike_device_certificates(
         device_id=device_id,
         device_label=DeviceLabel("New device"),
         verify_key=verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(author.signing_key)
 
     raw_redacted_device_certificate = DeviceCertificate(
@@ -56,6 +59,7 @@ def generate_new_mike_device_certificates(
         device_id=device_id,
         device_label=None,
         verify_key=verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(author.signing_key)
 
     return raw_device_certificate, raw_redacted_device_certificate
@@ -79,6 +83,7 @@ def generate_new_mike_user_certificates(
         human_handle=human_handle,
         profile=profile,
         public_key=public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(author.signing_key)
 
     raw_redacted_user_certificate = UserCertificate(
@@ -88,6 +93,7 @@ def generate_new_mike_user_certificates(
         human_handle=None,
         profile=profile,
         public_key=public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(author.signing_key)
 
     return raw_user_certificate, raw_redacted_user_certificate

@@ -105,6 +105,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                 public_key: alice.public_key(),
+                algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
                 profile: UserProfile::Admin,
             },
             b"<encrypted>".to_vec(),
@@ -165,6 +166,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                     &DeviceName::default(),
                 )),
                 verify_key: alice.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
             },
             b"<encrypted>".to_vec(),
         )
@@ -454,6 +456,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                 public_key: alice.public_key(),
+                algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
                 profile: UserProfile::Admin,
             },
             b"user".to_vec(),
@@ -532,6 +535,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                     &DeviceName::default(),
                 )),
                 verify_key: alice.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
             },
             b"device".to_vec(),
         )
@@ -1056,6 +1060,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
                 public_key: alice.public_key(),
+                algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
                 profile: UserProfile::Admin,
             },
             b"<encrypted>".to_vec(),
@@ -1104,6 +1109,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                     &DeviceName::default(),
                 )),
                 verify_key: alice.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
             },
             b"<encrypted>".to_vec(),
         )

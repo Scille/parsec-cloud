@@ -583,6 +583,7 @@ impl TestbedEventBootstrapOrganization {
                                 self.first_user_device_id.user_id(),
                             )),
                             public_key: self.first_user_private_key.public_key(),
+                            algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
                             profile: UserProfile::Admin,
                         };
                         let signed_redacted: Bytes =
@@ -612,6 +613,7 @@ impl TestbedEventBootstrapOrganization {
                                 self.first_user_device_id.device_name(),
                             )),
                             verify_key: self.first_user_first_device_signing_key.verify_key(),
+                            algorithm: SigningKeyAlgorithm::Ed25519,
                         };
                         let signed_redacted: Bytes =
                             certif.dump_and_sign(&self.root_signing_key).into();
@@ -909,6 +911,7 @@ impl TestbedEventNewUser {
                                 self.device_id.user_id(),
                             )),
                             public_key: self.private_key.public_key(),
+                            algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
                             profile: self.initial_profile,
                         };
                         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
@@ -939,6 +942,7 @@ impl TestbedEventNewUser {
                                 self.device_id.device_name(),
                             )),
                             verify_key: self.first_device_signing_key.verify_key(),
+                            algorithm: SigningKeyAlgorithm::Ed25519,
                         };
                         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
                         let signed = {
@@ -984,6 +988,7 @@ single_certificate_event!(
             device_id: e.device_id.clone(),
             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id.device_name())),
             verify_key: e.signing_key.verify_key(),
+            algorithm: SigningKeyAlgorithm::Ed25519,
         };
         let signed_redacted: Bytes = certif.dump_and_sign(author_signkey).into();
         let signed = {

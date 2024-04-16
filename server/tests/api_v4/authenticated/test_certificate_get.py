@@ -12,6 +12,7 @@ from parsec._parsec import (
     HumanHandle,
     OrganizationID,
     PrivateKey,
+    PrivateKeyAlgorithm,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRole,
@@ -19,6 +20,7 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SecretKeyAlgorithm,
     SigningKey,
+    SigningKeyAlgorithm,
     UserCertificate,
     UserID,
     UserProfile,
@@ -63,6 +65,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.ADMIN,
         human_handle=HumanHandle(label="Alice", email="alice@example.invalid"),
         public_key=alice_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(root_key)
 
     alice_redacted_user_certificate = UserCertificate(
@@ -72,6 +75,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.ADMIN,
         human_handle=None,
         public_key=alice_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(root_key)
 
     alice_device_certificate = DeviceCertificate(
@@ -80,6 +84,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=alice_device_id,
         device_label=DeviceLabel("Dev1"),
         verify_key=alice_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(root_key)
 
     alice_redacted_device_certificate = DeviceCertificate(
@@ -88,6 +93,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=alice_device_id,
         device_label=None,
         verify_key=alice_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(root_key)
 
     bootstrap_token = BootstrapToken.new()
@@ -123,6 +129,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.STANDARD,
         human_handle=HumanHandle(label="Bob", email="bob@example.invalid"),
         public_key=bob_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)
 
     bob_redacted_user_certificate = UserCertificate(
@@ -132,6 +139,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.STANDARD,
         human_handle=None,
         public_key=bob_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)
 
     bob_device_certificate = DeviceCertificate(
@@ -140,6 +148,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=DeviceID("bob@dev1"),
         device_label=DeviceLabel("Dev1"),
         verify_key=bob_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     bob_redacted_device_certificate = DeviceCertificate(
@@ -148,6 +157,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=DeviceID("bob@dev1"),
         device_label=None,
         verify_key=bob_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     outcome = await backend.user.create_user(
@@ -201,6 +211,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.OUTSIDER,
         human_handle=HumanHandle(label="Mallory", email="mallory@example.invalid"),
         public_key=mallory_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)
 
     mallory_redacted_user_certificate = UserCertificate(
@@ -210,6 +221,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         profile=UserProfile.OUTSIDER,
         human_handle=None,
         public_key=mallory_privkey.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
     ).dump_and_sign(alice_signkey)
 
     mallory_device_certificate = DeviceCertificate(
@@ -218,6 +230,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=mallory_device_id,
         device_label=DeviceLabel("Dev1"),
         verify_key=mallory_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     mallory_redacted_device_certificate = DeviceCertificate(
@@ -226,6 +239,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         device_id=mallory_device_id,
         device_label=None,
         verify_key=mallory_signkey.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     outcome = await backend.user.create_user(

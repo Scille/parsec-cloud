@@ -17,6 +17,7 @@ from parsec._parsec_pyi.addrs import (
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
     HashAlgorithm,
+    PrivateKeyAlgorithm,
     RealmArchivingCertificate,
     RealmArchivingConfiguration,
     RealmKeyRotationCertificate,
@@ -29,6 +30,7 @@ from parsec._parsec_pyi.certif import (
     SequesterServiceCertificate,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
+    SigningKeyAlgorithm,
     UserCertificate,
     UserUpdateCertificate,
 )
@@ -101,6 +103,7 @@ __all__ = [
     "DeviceCertificate",
     "RevokedUserCertificate",
     "UserUpdateCertificate",
+    "PrivateKeyAlgorithm",
     "RealmRoleCertificate",
     "RealmKeyRotationCertificate",
     "RealmNameCertificate",
@@ -110,6 +113,7 @@ __all__ = [
     "SequesterAuthorityCertificate",
     "SequesterServiceCertificate",
     "SequesterRevokedServiceCertificate",
+    "SigningKeyAlgorithm",
     "HashAlgorithm",
     "SecretKeyAlgorithm",
     "RealmArchivingConfiguration",

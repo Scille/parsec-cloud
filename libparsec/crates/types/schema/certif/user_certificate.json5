@@ -25,6 +25,10 @@
             "type": "PublicKey"
         },
         {
+            "name": "algorithm",
+            "type": "PrivateKeyAlgorithm"
+        },
+        {
             // `profile` replaces `is_admin` field (which is still required for backward
             // compatibility), hence `None` is not allowed
             "name": "is_admin",
@@ -35,6 +39,17 @@
             "type": "UserProfile",
             // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
             "introduced_in_revision": 114
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "PrivateKeyAlgorithm",
+            "variants": [
+                {
+                    "name": "X25519XSalsa20Poly1305",
+                    "discriminant_value": "X25519_XSALSA20_POLY1305"
+                }
+            ]
         }
     ]
 }
