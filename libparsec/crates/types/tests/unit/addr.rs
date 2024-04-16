@@ -98,16 +98,16 @@ macro_rules! impl_testbed_with_org {
     };
 }
 
-struct BackendAddrTestbed {}
-impl Testbed for BackendAddrTestbed {
+struct AddrTestbed {}
+impl Testbed for AddrTestbed {
     impl_testbed_common!(ParsecAddr);
     fn url(&self) -> String {
         format!("{PARSEC_SCHEME}://{DOMAIN}")
     }
 }
 
-struct BackendOrganizationAddrTestbed {}
-impl Testbed for BackendOrganizationAddrTestbed {
+struct OrganizationAddrTestbed {}
+impl Testbed for OrganizationAddrTestbed {
     impl_testbed_common!(ParsecOrganizationAddr);
     impl_testbed_with_org!(ParsecOrganizationAddr);
     fn url(&self) -> String {
@@ -115,8 +115,8 @@ impl Testbed for BackendOrganizationAddrTestbed {
     }
 }
 
-struct BackendOrganizationBootstrapAddrTestbed {}
-impl Testbed for BackendOrganizationBootstrapAddrTestbed {
+struct OrganizationBootstrapAddrTestbed {}
+impl Testbed for OrganizationBootstrapAddrTestbed {
     impl_testbed_common!(ParsecOrganizationBootstrapAddr);
     impl_testbed_with_org!(ParsecOrganizationBootstrapAddr);
     fn url(&self) -> String {
@@ -124,8 +124,8 @@ impl Testbed for BackendOrganizationBootstrapAddrTestbed {
     }
 }
 
-struct BackendWorkspacePathAddrTestbed {}
-impl Testbed for BackendWorkspacePathAddrTestbed {
+struct WorkspacePathAddrTestbed {}
+impl Testbed for WorkspacePathAddrTestbed {
     impl_testbed_common!(ParsecWorkspacePathAddr);
     impl_testbed_with_org!(ParsecWorkspacePathAddr);
     fn url(&self) -> String {
@@ -133,8 +133,8 @@ impl Testbed for BackendWorkspacePathAddrTestbed {
     }
 }
 
-struct BackendInvitationAddrTestbed {}
-impl Testbed for BackendInvitationAddrTestbed {
+struct InvitationAddrTestbed {}
+impl Testbed for InvitationAddrTestbed {
     impl_testbed_common!(ParsecInvitationAddr);
     impl_testbed_with_org!(ParsecInvitationAddr);
     fn url(&self) -> String {
@@ -145,21 +145,21 @@ impl Testbed for BackendInvitationAddrTestbed {
 #[template]
 #[rstest(
     testbed,
-    case::server_addr(&BackendAddrTestbed{}),
-    case::organization_addr(&BackendOrganizationAddrTestbed{}),
-    case::organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    case::workspace_path_addr(&BackendWorkspacePathAddrTestbed{}),
-    case::invitation_addr(&BackendInvitationAddrTestbed{}),
+    case::server_addr(&AddrTestbed{}),
+    case::organization_addr(&OrganizationAddrTestbed{}),
+    case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
+    case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
+    case::invitation_addr(&InvitationAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
 
 #[template]
 #[rstest(
     testbed,
-    case::organization_addr(&BackendOrganizationAddrTestbed{}),
-    case::organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    case::workspace_path_addr(&BackendWorkspacePathAddrTestbed{}),
-    case::invitation_addr(&BackendInvitationAddrTestbed{}),
+    case::organization_addr(&OrganizationAddrTestbed{}),
+    case::organization_bootstrap_addr(&OrganizationBootstrapAddrTestbed{}),
+    case::workspace_path_addr(&WorkspacePathAddrTestbed{}),
+    case::invitation_addr(&InvitationAddrTestbed{}),
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
 
@@ -215,7 +215,7 @@ fn good_addr_base(testbed: &dyn Testbed) {
     Some("/El Niño/"),
     "https://example.com/El%20Ni%C3%B1o/"
 )]
-fn backend_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
+fn parsec_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
     let addr: ParsecAddr = value.parse().unwrap();
     let result = addr.to_http_url_with_path(path);
     p_assert_eq!(result.as_str(), expected);
@@ -305,7 +305,7 @@ fn addr_with_missing_organization_id(testbed: &dyn Testbed, #[values("/", "")] b
 
 #[rstest]
 fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
-    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let testbed = OrganizationBootstrapAddrTestbed {};
 
     match bad_type {
         Some(bad_type) => {
@@ -330,7 +330,7 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
 
 #[rstest]
 fn bootstrap_addr_token() {
-    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let testbed = OrganizationBootstrapAddrTestbed {};
 
     // Url with token
     let addr: ParsecOrganizationBootstrapAddr = testbed.url().parse().unwrap();
@@ -358,7 +358,7 @@ fn bootstrap_addr_token() {
 // cspell:disable-next-line
 #[case::token_too_long("xBEAAAAAAAAAAAAAAAAAAAAAAA")] // Base64(Msgpack(b"\x00" * 17))
 fn bootstrap_addr_bad_payload(#[case] bad_payload: &str) {
-    let testbed = BackendOrganizationBootstrapAddrTestbed {};
+    let testbed = OrganizationBootstrapAddrTestbed {};
     let url = testbed
         .url()
         .replace(ORGANIZATION_BOOTSTRAP_ADDR_PARAM, bad_payload);
@@ -374,7 +374,7 @@ fn bootstrap_addr_bad_payload(#[case] bad_payload: &str) {
 
 #[rstest]
 fn workspace_path_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
-    let testbed = BackendWorkspacePathAddrTestbed {};
+    let testbed = WorkspacePathAddrTestbed {};
 
     match bad_type {
         Some(bad_type) => {
@@ -399,7 +399,7 @@ fn workspace_path_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_typ
 
 #[test]
 fn workspace_path_addr_get_params() {
-    let testbed = BackendWorkspacePathAddrTestbed {};
+    let testbed = WorkspacePathAddrTestbed {};
 
     let url = testbed.url();
 
@@ -420,7 +420,7 @@ fn workspace_path_addr_get_params() {
 // cspell:disable-next-line
 #[case::bad_data("xAA")] // Base64(Msgpack(b""))
 fn workspace_path_addr_bad_payload(#[case] bad_payload: &str) {
-    let testbed = BackendWorkspacePathAddrTestbed {};
+    let testbed = WorkspacePathAddrTestbed {};
     let url = testbed.url().replace(WORKSPACE_PATH_PARAM, bad_payload);
     testbed.assert_addr_err(
         &url,
@@ -436,7 +436,7 @@ fn workspace_path_addr_bad_payload(#[case] bad_payload: &str) {
 fn invitation_addr_bad_type(
     #[values(Some("claim"), Some("claim_foo"), None)] bad_type: Option<&str>,
 ) {
-    let testbed = BackendInvitationAddrTestbed {};
+    let testbed = InvitationAddrTestbed {};
 
     match bad_type {
         Some(bad_type) => {
@@ -463,7 +463,7 @@ fn invitation_addr_bad_type(
 
 #[rstest]
 fn invitation_addr_token() {
-    let testbed = BackendInvitationAddrTestbed {};
+    let testbed = InvitationAddrTestbed {};
     let addr: ParsecInvitationAddr = testbed.url().parse().unwrap();
     let expected_token = InvitationToken::from_hex(TOKEN).unwrap();
     p_assert_eq!(addr.token(), expected_token);
@@ -481,7 +481,7 @@ fn invitation_addr_token() {
 // cspell:disable-next-line
 #[case::token_too_long("xBEAAAAAAAAAAAAAAAAAAAAAAA")] // Base64(Msgpack(b"\x00" * 17))
 fn invitation_addr_bad_payload(#[case] bad_payload: &str) {
-    let testbed = BackendInvitationAddrTestbed {};
+    let testbed = InvitationAddrTestbed {};
     let url = testbed.url().replace(INVITATION_PARAM, bad_payload);
     testbed.assert_addr_err(
         &url,
@@ -495,7 +495,7 @@ fn invitation_addr_bad_payload(#[case] bad_payload: &str) {
 
 #[test]
 fn invitation_addr_types() {
-    let testbed = BackendInvitationAddrTestbed {};
+    let testbed = InvitationAddrTestbed {};
 
     let url = testbed.url().replace(INVITATION_TYPE, "claim_user");
     let addr: ParsecInvitationAddr = url.parse().unwrap();
@@ -508,7 +508,7 @@ fn invitation_addr_types() {
 
 #[rstest]
 fn invitation_addr_to_redirection(#[values("http", "https")] redirection_scheme: &str) {
-    let testbed = BackendInvitationAddrTestbed {};
+    let testbed = InvitationAddrTestbed {};
 
     // `no_ssl` param should be ignored when build a redirection url given
     // this information is provided by the http/https scheme
@@ -610,7 +610,7 @@ macro_rules! test_redirection {
 }
 
 #[test]
-fn backend_addr_redirection() {
+fn parsec_addr_redirection() {
     test_redirection!(
         ParsecAddr,
         "parsec3://example.com",
@@ -666,7 +666,7 @@ fn faulty_addr_redirection(#[case] raw_url: &str) {
 #[case("parsec3://foo:42?dummy=", 42, true)]
 #[case("parsec3://foo:42?no_ssl=true", 42, false)]
 #[case("parsec3://foo:42?no_ssl=false&dummy=foo", 42, true)]
-fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
+fn parsec_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool) {
     let addr = ParsecAddr::from_str(url).unwrap();
     p_assert_eq!(addr.hostname(), "foo");
     p_assert_eq!(addr.port(), port);
@@ -702,7 +702,7 @@ fn backend_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool
          help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
-fn backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn parsec_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     p_assert_eq!(ParsecAddr::from_str(url).unwrap_err(), msg);
 }
 
@@ -715,11 +715,7 @@ fn backend_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
 #[case("parsec3://foo:42?no_ssl=true", 42, false)]
 #[case("parsec3://foo:42?no_ssl=false", 42, true)]
 #[case("parsec3://foo:42?no_ssl=false&dummy=foo", 42, true)]
-fn backend_organization_addr_good(
-    #[case] base_url: &str,
-    #[case] port: u16,
-    #[case] use_ssl: bool,
-) {
+fn organization_addr_good(#[case] base_url: &str, #[case] port: u16, #[case] use_ssl: bool) {
     let verify_key = SigningKey::generate().verify_key();
     let org = OrganizationID::from_str("org").unwrap();
     let server_addr = ParsecAddr::from_str(base_url).unwrap();
@@ -797,7 +793,7 @@ fn backend_organization_addr_good(
         help: "Invalid `p` parameter".to_string()
     }
 )]
-fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     p_assert_eq!(ParsecOrganizationAddr::from_str(url).unwrap_err(), msg);
 }
 
@@ -810,7 +806,7 @@ fn backend_organization_addr_bad_value(#[case] url: &str, #[case] msg: AddrError
 #[case("parsec3://foo:42?no_ssl=true", 42, false)]
 #[case("parsec3://foo:42?no_ssl=true&dummy=", 42, false)]
 #[case("parsec3://foo:42?no_ssl=false", 42, true)]
-fn backend_organization_bootstrap_addr_good(
+fn organization_bootstrap_addr_good(
     #[case] base_url: &str,
     #[case] port: u16,
     #[case] use_ssl: bool,
@@ -917,7 +913,7 @@ fn backend_organization_bootstrap_addr_good(
     "parsec3://foo:42/~org?a=bootstrap_organization&p=wA",
     AddrError::InvalidOrganizationID
 )]
-fn backend_organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
+fn organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrError) {
     p_assert_eq!(
         ParsecOrganizationBootstrapAddr::from_str(url).unwrap_err(),
         msg
