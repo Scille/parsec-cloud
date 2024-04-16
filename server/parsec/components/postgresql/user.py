@@ -24,9 +24,6 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
-from parsec.components.postgresql.user_queries.create import (
-    q_take_user_device_write_lock,
-)
 from parsec.components.postgresql.user_queries.get import (
     _q_get_device,
     _q_get_user,
@@ -721,6 +718,8 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
+        common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
+
         match await self._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
@@ -763,11 +762,8 @@ class PGUserComponent(BaseUserComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        # TODO: implement consistency
-        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-        #     return RequireGreaterTimestamp(
-        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
-        #     )
+        if common_topic_timestamp >= certif.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
         # TODO: validate it's okay not to check this
         # All checks are good, now we do the actual insertion
@@ -781,7 +777,6 @@ class PGUserComponent(BaseUserComponent):
         #   and that he have to find somebody with access to a seemingly unrelated realm
         #   to change a role in order to be able to do it !
 
-        await q_take_user_device_write_lock(conn, organization_id)
         result = await conn.execute(
             *_q_update_user(
                 organization_id=organization_id.str,
@@ -795,6 +790,15 @@ class PGUserComponent(BaseUserComponent):
 
         # This should not fail as the proper checks have already been performed
         assert result == "INSERT 0 1", f"Unexpected {result}"
+
+        # Update the common topic
+        result = await conn.execute(
+            *_q_update_common_topic(
+                organization_id=organization_id.str,
+                last_timestamp=certif.timestamp,
+            )
+        )
+        assert result == "UPDATE 1", f"Unexpected {result}"
 
         await self.event_bus.send(
             EventCommonCertificate(
@@ -1041,6 +1045,8 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
+        common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
+
         match await self._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
@@ -1068,7 +1074,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return CertificateBasedActionIdempotentOutcome(
-                    certificate_timestamp=certif.timestamp  # TODO: Wrong timestamp!
+                    certificate_timestamp=common_topic_timestamp
                 )
             case UserProfile():
                 pass
@@ -1083,14 +1089,10 @@ class PGUserComponent(BaseUserComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        # TODO: implement consistency
-        # if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-        #     return RequireGreaterTimestamp(
-        #         strictly_greater_than=org.last_certificate_or_vlob_timestamp
-        #     )
+        if common_topic_timestamp >= certif.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
         # All checks are good, now we do the actual insertion
-        await q_take_user_device_write_lock(conn, organization_id)
         result = await conn.execute(
             *_q_revoke_user(
                 organization_id=organization_id.str,
@@ -1102,6 +1104,15 @@ class PGUserComponent(BaseUserComponent):
         )
 
         # This should not fail as the proper checks have already been performed
+        assert result == "UPDATE 1", f"Unexpected {result}"
+
+        # Update the common topic
+        result = await conn.execute(
+            *_q_update_common_topic(
+                organization_id=organization_id.str,
+                last_timestamp=certif.timestamp,
+            )
+        )
         assert result == "UPDATE 1", f"Unexpected {result}"
 
         await self.event_bus.send(
@@ -1193,7 +1204,7 @@ class PGUserComponent(BaseUserComponent):
             items[user_id] = UserDump(
                 user_id=user_id,
                 devices=[],
-                current_profile=row["current_profile"],
+                current_profile=UserProfile.from_str(row["current_profile"]),
                 is_revoked=row["revoked_on"] is not None,
             )
         rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
