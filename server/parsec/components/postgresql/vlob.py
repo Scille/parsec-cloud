@@ -11,6 +11,7 @@ from parsec._parsec import (
     OrganizationID,
     RealmRole,
     SequesterServiceID,
+    UserID,
     UserProfile,
     VlobID,
 )
@@ -25,16 +26,23 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.utils import Q, q_device, transaction
-from parsec.components.postgresql.vlob_queries.write import _q_create
+from parsec.components.postgresql.utils import (
+    Q,
+    q_device,
+    q_device_internal_id,
+    q_realm_internal_id,
+    transaction,
+)
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
-from parsec.components.user import CheckDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
     SequesterInconsistency,
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
+    VlobPollChangesAsUserBadOutcome,
+    VlobUpdateBadOutcome,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
@@ -84,6 +92,78 @@ ON realm._id = vlob_atom.realm
 INNER JOIN organization
 ON organization._id = realm.organization
 WHERE organization_id = $organization_id
+"""
+)
+
+_q_insert_vlob = Q(
+    f"""
+WITH new_vlob AS (
+    INSERT INTO vlob_atom (
+        realm,
+        key_index,
+        vlob_id,
+        version,
+        blob,
+        size,
+        author,
+        created_on
+    )
+    SELECT
+        { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") },
+        $key_index,
+        $vlob_id,
+        $version,
+        $blob,
+        $blob_len,
+        { q_device_internal_id(organization_id="$organization_id", device_id="$author") },
+        $timestamp
+    RETURNING _id, realm
+)
+INSERT INTO realm_vlob_update (
+    realm,
+    index,
+    vlob_atom
+) (
+    SELECT
+        realm,
+        (
+            SELECT COALESCE(MAX(index), 0) + 1 AS checkpoint
+            FROM realm_vlob_update
+            WHERE realm_vlob_update.realm = new_vlob.realm
+        ),
+        _id
+    FROM new_vlob
+)
+RETURNING index
+"""
+)
+
+
+_q_poll_changes = Q(
+    f"""
+SELECT
+    index,
+    vlob_id,
+    vlob_atom.version
+FROM realm_vlob_update
+LEFT JOIN vlob_atom ON realm_vlob_update.vlob_atom = vlob_atom._id
+WHERE
+    vlob_atom.realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
+    AND index > $checkpoint
+ORDER BY index ASC
+"""
+)
+
+_q_get_vlob_info = Q(
+    """
+SELECT realm_id, version
+FROM vlob_atom
+INNER JOIN realm ON vlob_atom.realm = realm._id
+INNER JOIN organization ON realm.organization = organization._id
+WHERE organization_id = $organization_id
+AND vlob_id = $vlob_id
+ORDER BY version DESC
+LIMIT 1
 """
 )
 
@@ -162,6 +242,19 @@ class PGVlobComponent(BaseVlobComponent):
 
     #     return sequestered_data
 
+    async def _get_vlob_info(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, vlob_id: VlobID
+    ) -> tuple[VlobID, int] | None:
+        row = await conn.fetchrow(
+            *_q_get_vlob_info(
+                organization_id=organization_id.str,
+                vlob_id=vlob_id,
+            )
+        )
+        if row is None:
+            return None
+        return (VlobID.from_hex(row["realm_id"]), row["version"])
+
     @override
     @transaction
     async def create(
@@ -227,9 +320,8 @@ class PGVlobComponent(BaseVlobComponent):
             case _:
                 pass
 
-        # TODO: Fix causality
-        # if timestamp < org.last_certificate_timestamp:
-        #     return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
+        if last_common_certificate_timestamp >= timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
 
         if org.is_sequestered:
             # TODO: Implement sequester
@@ -267,8 +359,8 @@ class PGVlobComponent(BaseVlobComponent):
         # All checks are good, now we do the actual insertion
 
         try:
-            vlob_atom_internal_id = await conn.fetchval(
-                *_q_create(
+            new_checkpoint = await conn.fetchval(
+                *_q_insert_vlob(
                     organization_id=organization_id.str,
                     realm_id=realm_id,
                     author=author.str,
@@ -277,13 +369,14 @@ class PGVlobComponent(BaseVlobComponent):
                     blob=blob,
                     blob_len=len(blob),
                     timestamp=timestamp,
+                    version=1,
                 )
             )
 
         except asyncpg.UniqueViolationError:
             return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
 
-        assert vlob_atom_internal_id is not None
+        assert new_checkpoint >= 1
 
         event = EventVlob(
             organization_id=organization_id,
@@ -296,8 +389,119 @@ class PGVlobComponent(BaseVlobComponent):
             last_common_certificate_timestamp=last_common_certificate_timestamp,
             last_realm_certificate_timestamp=last_realm_certificate_timestamp,
         )
-        event.model_dump_json()
         await self.event_bus.send(event)
+
+    @override
+    @transaction
+    async def update(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        vlob_id: VlobID,
+        key_index: int,
+        version: int,
+        timestamp: DateTime,
+        blob: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
+    ) -> (
+        None
+        | BadKeyIndex
+        | VlobUpdateBadOutcome
+        | TimestampOutOfBallpark
+        | RequireGreaterTimestamp
+        | RejectedBySequesterService
+        | SequesterServiceNotAvailable
+        | SequesterInconsistency
+    ):
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return VlobUpdateBadOutcome.AUTHOR_REVOKED
+            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
+                pass
+
+        match await self._get_vlob_info(conn, organization_id, vlob_id):
+            case None:
+                return VlobUpdateBadOutcome.VLOB_NOT_FOUND
+            case (VlobID() as realm_id, int() as current_version):
+                pass
+
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                assert False, "Should not happen"
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
+            case (
+                RealmRole() as role,
+                KeyIndex() as realm_key_index,
+                DateTime() as last_realm_certificate_timestamp,
+            ):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
+
+        # We only accept the last key
+        if realm_key_index != key_index:
+            return BadKeyIndex(last_realm_certificate_timestamp=last_realm_certificate_timestamp)
+
+        maybe_error = timestamps_in_the_ballpark(timestamp, now)
+        if maybe_error is not None:
+            return maybe_error
+
+        if last_common_certificate_timestamp >= timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
+
+        if org.is_sequestered:
+            raise NotImplementedError
+        else:
+            if sequester_blob is not None:
+                return VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+
+        if version != current_version + 1:
+            return VlobUpdateBadOutcome.BAD_VLOB_VERSION
+
+        # All checks are good, now we do the actual insertion
+
+        new_checkpoint = await conn.fetchval(
+            *_q_insert_vlob(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                author=author.str,
+                key_index=key_index,
+                vlob_id=vlob_id,
+                blob=blob,
+                blob_len=len(blob),
+                timestamp=timestamp,
+                version=version,
+            )
+        )
+
+        assert new_checkpoint >= 1
+
+        await self.event_bus.send(
+            EventVlob(
+                organization_id=organization_id,
+                author=author,
+                realm_id=realm_id,
+                timestamp=timestamp,
+                vlob_id=vlob_id,
+                version=version,
+                blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
+                last_common_certificate_timestamp=last_common_certificate_timestamp,
+                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
+            )
+        )
 
     async def read(
         self,
@@ -315,40 +519,57 @@ class PGVlobComponent(BaseVlobComponent):
         #     conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
         # )
 
-    # @retry_on_unique_violation
-    # async def update(
-    #     self,
-    #     organization_id: OrganizationID,
-    #     author: DeviceID,
-    #     encryption_revision: int,
-    #     vlob_id: VlobID,
-    #     version: int,
-    #     timestamp: DateTime,
-    #     blob: bytes,
-    #     sequester_blob: dict[SequesterServiceID, bytes] | None = None,
-    # ) -> None:
-    #     async with self.dbh.pool.acquire() as conn:
-    #         sequester_blob = await self._extract_sequestered_data_and_proceed_webhook(
-    #             conn,
-    #             organization_id=organization_id,
-    #             sequester_blob=sequester_blob,
-    #             author=author,
-    #             encryption_revision=encryption_revision,
-    #             vlob_id=vlob_id,
-    #             timestamp=timestamp,
-    #         )
+    @override
+    @transaction
+    async def poll_changes_as_user(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        author: UserID,
+        realm_id: VlobID,
+        checkpoint: int,
+    ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+        if org.is_expired:
+            return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-    #         return await query_update(
-    #             conn,
-    #             organization_id,
-    #             author,
-    #             encryption_revision,
-    #             vlob_id,
-    #             version,
-    #             timestamp,
-    #             blob,
-    #             sequester_blob,
-    #         )
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
+            case UserProfile():
+                pass
+
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole(), KeyIndex(), DateTime()):
+                pass
+
+        rows = await conn.fetch(
+            *_q_poll_changes(
+                organization_id=organization_id.str,
+                realm_id=realm_id,
+                checkpoint=checkpoint,
+            )
+        )
+
+        items = {}
+        current_checkpoint = checkpoint
+        for row in rows:
+            current_checkpoint = row["index"]
+            vlob_id = VlobID.from_hex(row["vlob_id"])
+            version = row["version"]
+            items[vlob_id] = version
+
+        return current_checkpoint, list(items.items())
 
     @override
     @transaction
