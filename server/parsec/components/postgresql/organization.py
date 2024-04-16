@@ -49,38 +49,44 @@ from parsec.webhooks import WebhooksComponent
 
 _q_insert_organization = Q(
     """
-INSERT INTO organization (
-    organization_id,
-    bootstrap_token,
-    active_users_limit,
-    user_profile_outsider_allowed,
-    _created_on,
-    _bootstrapped_on,
-    is_expired,
-    _expired_on,
-    minimum_archiving_period
+WITH new_organization AS (
+    INSERT INTO organization (
+        organization_id,
+        bootstrap_token,
+        active_users_limit,
+        user_profile_outsider_allowed,
+        _created_on,
+        _bootstrapped_on,
+        is_expired,
+        _expired_on,
+        minimum_archiving_period
+    )
+    VALUES (
+        $organization_id,
+        $bootstrap_token,
+        $active_users_limit,
+        $user_profile_outsider_allowed,
+        $created_on,
+        NULL,
+        FALSE,
+        NULL,
+        $minimum_archiving_period
+    )
+    ON CONFLICT (organization_id) DO
+        UPDATE SET
+            bootstrap_token = EXCLUDED.bootstrap_token,
+            active_users_limit = EXCLUDED.active_users_limit,
+            user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
+            _created_on = EXCLUDED._created_on,
+            is_expired = EXCLUDED.is_expired,
+            _expired_on = EXCLUDED._expired_on,
+            minimum_archiving_period = EXCLUDED.minimum_archiving_period
+        WHERE organization.root_verify_key is NULL
+    RETURNING _id
 )
-VALUES (
-    $organization_id,
-    $bootstrap_token,
-    $active_users_limit,
-    $user_profile_outsider_allowed,
-    $created_on,
-    NULL,
-    FALSE,
-    NULL,
-    $minimum_archiving_period
-)
-ON CONFLICT (organization_id) DO
-    UPDATE SET
-        bootstrap_token = EXCLUDED.bootstrap_token,
-        active_users_limit = EXCLUDED.active_users_limit,
-        user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
-        _created_on = EXCLUDED._created_on,
-        is_expired = EXCLUDED.is_expired,
-        _expired_on = EXCLUDED._expired_on,
-        minimum_archiving_period = EXCLUDED.minimum_archiving_period
-    WHERE organization.root_verify_key is NULL
+INSERT INTO common_topic (organization, last_timestamp)
+SELECT _id, $created_on FROM new_organization
+ON CONFLICT (organization) DO NOTHING
 """
 )
 

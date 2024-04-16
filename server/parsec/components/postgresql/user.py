@@ -99,6 +99,14 @@ FOR {share_or_update}
 _q_check_common_topic = _make_q_lock_common_topic(for_share=True)
 _q_lock_common_topic = _make_q_lock_common_topic(for_update=True)
 
+_q_update_common_topic = Q(
+    f"""
+UPDATE common_topic
+SET last_timestamp = $last_timestamp
+WHERE organization = { q_organization_internal_id("$organization_id") }
+"""
+)
+
 _q_update_user = Q(
     f"""
 INSERT INTO profile (user_, profile, profile_certificate, certified_by, certified_on)
@@ -397,6 +405,15 @@ class PGUserComponent(BaseUserComponent):
             # Exception cancels the transaction so the user insertion is automatically cancelled
             return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
+        # Update the common topic
+        result = await conn.execute(
+            *_q_update_common_topic(
+                organization_id=organization_id.str,
+                last_timestamp=user_certificate_cooked.timestamp,
+            )
+        )
+        assert result == "UPDATE 1", f"Unexpected {result}"
+
     async def _create_device(
         self,
         conn: AsyncpgConnection,
@@ -440,8 +457,16 @@ class PGUserComponent(BaseUserComponent):
         except UniqueViolationError:
             return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
 
-        if result != "INSERT 0 1":
-            assert False, f"Insertion error: {result}"
+        assert result == "INSERT 0 1", f"Insertion error: {result}"
+
+        # Update the common topic
+        result = await conn.execute(
+            *_q_update_common_topic(
+                organization_id=organization_id.str,
+                last_timestamp=device_certificate_cooked.timestamp,
+            )
+        )
+        assert result == "UPDATE 1", f"Unexpected {result}"
 
     async def _check_device(
         self,
