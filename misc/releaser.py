@@ -47,7 +47,7 @@ PYTHON_EXECUTABLE_PATH = sys.executable
 LICENSE_CONVERSION_DELAY = 4 * 365 * 24 * 3600  # 4 years
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 HISTORY_FILE = PROJECT_DIR / "HISTORY.rst"
-BUSL_LICENSE_FILE = PROJECT_DIR / "licenses/BUSL-Scille.txt"
+BUSL_LICENSE_FILE = PROJECT_DIR / "LICENSE"
 
 FRAGMENTS_DIR = PROJECT_DIR / "newsfragments"
 FRAGMENT_TYPES = {
