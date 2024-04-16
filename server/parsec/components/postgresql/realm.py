@@ -682,7 +682,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
-            case UserProfile() as target_current_profile:
+            case (UserProfile() as target_current_profile, DateTime()):
                 pass
 
         if target_current_profile == UserProfile.OUTSIDER and certif.role in (
@@ -837,7 +837,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 pass  # TODO: Is that OK to pass here?
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
@@ -1200,7 +1200,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmGetCurrentRealmsForUserBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 pass
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         rows = await conn.fetch(

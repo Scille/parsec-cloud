@@ -42,6 +42,8 @@ from parsec.components.vlob import (
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
     VlobPollChangesAsUserBadOutcome,
+    VlobReadAsUserBadOutcome,
+    VlobReadResult,
     VlobUpdateBadOutcome,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
@@ -164,6 +166,61 @@ WHERE organization_id = $organization_id
 AND vlob_id = $vlob_id
 ORDER BY version DESC
 LIMIT 1
+"""
+)
+
+_q_get_latest_vlob = Q(
+    f"""
+SELECT
+    vlob_atom.key_index,
+    { q_device(select="device_id", _id="author") } AS author,
+    vlob_atom.version,
+    vlob_atom.created_on,
+    vlob_atom.blob
+FROM vlob_atom
+INNER JOIN realm ON vlob_atom.realm = realm._id
+INNER JOIN organization ON realm.organization = organization._id
+WHERE organization_id = $organization_id
+AND vlob_id = $vlob_id
+ORDER BY version DESC
+LIMIT 1
+"""
+)
+
+_q_get_vlob_at_timestamp = Q(
+    f"""
+SELECT
+    vlob_atom.key_index,
+    { q_device(select="device_id", _id="author") } AS author,
+    vlob_atom.version,
+    vlob_atom.created_on,
+    vlob_atom.blob
+FROM vlob_atom
+INNER JOIN realm ON vlob_atom.realm = realm._id
+INNER JOIN organization ON realm.organization = organization._id
+WHERE organization_id = $organization_id
+AND vlob_atom.vlob_id = $vlob_id
+AND vlob_atom.created_on <= $timestamp
+ORDER BY version DESC
+LIMIT 1
+"""
+)
+
+
+_q_get_vlob_at_version = Q(
+    f"""
+SELECT
+    vlob_atom.key_index,
+    { q_device(select="device_id", _id="author") } AS author,
+    vlob_atom.version,
+    vlob_atom.created_on,
+    vlob_atom.blob
+FROM vlob_atom
+INNER JOIN realm ON vlob_atom.realm = realm._id
+INNER JOIN organization ON realm.organization = organization._id
+WHERE organization_id = $organization_id
+AND vlob_atom.vlob_id = $vlob_id
+AND vlob_atom.version = $version
 """
 )
 
@@ -542,7 +599,7 @@ class PGVlobComponent(BaseVlobComponent):
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
@@ -570,6 +627,151 @@ class PGVlobComponent(BaseVlobComponent):
             items[vlob_id] = version
 
         return current_checkpoint, list(items.items())
+
+    @override
+    @transaction
+    async def read_batch_as_user(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        author: UserID,
+        realm_id: VlobID,
+        vlobs: list[VlobID],
+        at: DateTime | None,
+    ) -> VlobReadResult | VlobReadAsUserBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+        if org.is_expired:
+            return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
+            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
+                pass
+
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole(), KeyIndex(), DateTime() as last_realm_certificate_timestamp):
+                pass
+
+        output = []
+        for vlob_id in vlobs:
+            if at is None:
+                row = await conn.fetchrow(
+                    *_q_get_latest_vlob(
+                        organization_id=organization_id.str,
+                        vlob_id=vlob_id,
+                    )
+                )
+            else:
+                row = await conn.fetchrow(
+                    *_q_get_vlob_at_timestamp(
+                        organization_id=organization_id.str,
+                        vlob_id=vlob_id,
+                        timestamp=at,
+                    )
+                )
+            if row is None:
+                continue
+            key_index = row["key_index"]
+            vlob_author = DeviceID(row["author"])
+            version = row["version"]
+            created_on = row["created_on"]
+            blob = row["blob"]
+            output.append(
+                (
+                    vlob_id,
+                    key_index,
+                    vlob_author,
+                    version,
+                    created_on,
+                    blob,
+                )
+            )
+
+        return VlobReadResult(
+            items=output,
+            needed_common_certificate_timestamp=last_common_certificate_timestamp,
+            needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
+        )
+
+    @override
+    @transaction
+    async def read_versions_as_user(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        author: UserID,
+        realm_id: VlobID,
+        items: list[tuple[VlobID, int]],
+    ) -> VlobReadResult | VlobReadAsUserBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
+            case Organization() as org:
+                pass
+        if org.is_expired:
+            return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_user(conn, organization_id, author):
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
+            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
+                pass
+
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
+            case (RealmRole(), KeyIndex(), DateTime() as last_realm_certificate_timestamp):
+                pass
+
+        output = []
+        for vlob_id, vlob_version in items:
+            if vlob_version < 1:
+                continue
+            row = await conn.fetchrow(
+                *_q_get_vlob_at_version(
+                    organization_id=organization_id.str,
+                    vlob_id=vlob_id,
+                    version=vlob_version,
+                )
+            )
+            if row is None:
+                continue
+            key_index = row["key_index"]
+            vlob_author = DeviceID(row["author"])
+            version = row["version"]
+            created_on = row["created_on"]
+            blob = row["blob"]
+            output.append(
+                (
+                    vlob_id,
+                    key_index,
+                    vlob_author,
+                    version,
+                    created_on,
+                    blob,
+                )
+            )
+
+        return VlobReadResult(
+            items=output,
+            needed_common_certificate_timestamp=last_common_certificate_timestamp,
+            needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
+        )
 
     @override
     @transaction
