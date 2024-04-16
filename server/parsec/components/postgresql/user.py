@@ -24,17 +24,6 @@ from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
-from parsec.components.postgresql.user_queries.get import (
-    _q_get_device,
-    _q_get_user,
-    _q_get_user_info,
-    _q_get_user_info_from_email,
-    query_list_users,
-)
-from parsec.components.postgresql.user_queries.revoke import (
-    _q_revoke_user,
-    q_freeze_user,
-)
 from parsec.components.postgresql.utils import (
     Q,
     q_device,
@@ -79,6 +68,96 @@ from parsec.events import (
 if TYPE_CHECKING:
     from parsec.components.postgresql.organization import PGOrganizationComponent
     from parsec.components.postgresql.realm import PGRealmComponent
+
+
+_q_get_device = Q(
+    f"""
+SELECT
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
+    created_on
+FROM device
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND device_id = $device_id
+"""
+)
+
+_q_get_user = Q(
+    f"""
+SELECT
+    { q_human(_id="user_.human", select="email") } as human_email,
+    { q_human(_id="user_.human", select="label") } as human_label,
+    COALESCE(profile.profile, user_.initial_profile) as profile,
+    user_.user_certificate,
+    user_.redacted_user_certificate,
+    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
+    user_.created_on,
+    user_.revoked_on,
+    user_.revoked_user_certificate,
+    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
+    user_.frozen
+FROM user_
+LEFT JOIN profile ON user_._id = profile.user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+ORDER BY profile.certified_on DESC LIMIT 1
+"""
+)
+
+_q_get_user_info = Q(
+    f"""
+SELECT
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+_q_get_user_info_from_email = Q(
+    f"""
+SELECT
+    user_id,
+    { q_human(_id="user_.human", select="email") } as email,
+    { q_human(_id="user_.human", select="label") } as label,
+    frozen
+FROM user_
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND human = { q_human_internal_id(organization_id="$organization_id", email="$email") }
+"""
+)
+
+q_freeze_user = Q(
+    f"""
+UPDATE user_ SET
+    frozen = $frozen
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+"""
+)
+
+
+_q_revoke_user = Q(
+    f"""
+UPDATE user_ SET
+    revoked_user_certificate = $revoked_user_certificate,
+    revoked_user_certifier = { q_device_internal_id(organization_id="$organization_id", device_id="$revoked_user_certifier") },
+    revoked_on = $revoked_on
+WHERE
+    organization = { q_organization_internal_id("$organization_id") }
+    AND user_id = $user_id
+    AND revoked_on IS NULL
+"""
+)
 
 
 def _make_q_lock_common_topic(for_update: bool = False, for_share=False) -> Q:
@@ -328,6 +407,23 @@ VALUES (
 )
 """
 )
+
+
+async def query_list_users(
+    conn: AsyncpgConnection, organization_id: OrganizationID
+) -> list[UserInfo]:
+    users = []
+
+    rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
+    for row in rows:
+        users.append(
+            UserInfo(
+                user_id=UserID(row["user_id"]),
+                human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
+                frozen=row["frozen"],
+            )
+        )
+    return users
 
 
 class PGUserComponent(BaseUserComponent):

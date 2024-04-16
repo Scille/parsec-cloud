@@ -39,7 +39,7 @@ from parsec.components.postgresql.test_queries import (
     q_test_drop_organization,
     q_test_duplicate_organization,
 )
-from parsec.components.postgresql.user_queries.create import q_create_user
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, transaction
 from parsec.components.user import UserCreateDeviceStoreBadOutcome, UserCreateUserStoreBadOutcome
 from parsec.config import BackendConfig
@@ -268,6 +268,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         super().__init__(webhooks, config)
         self.pool = pool
         self.event_bus = event_bus
+        self.user: PGUserComponent
+
+    def register_components(
+        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
+    ) -> None:
+        self.user = user
 
     @override
     @transaction
@@ -441,28 +447,35 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             redacted_device_certificate=redacted_device_certificate,
             sequester_authority_certificate=sequester_authority_certificate,
         ):
-            case (u_certif, d_certif, s_certif):
+            case (user_certificate_cooked, device_certificate_cooked, s_certif):
                 pass
             case error:
                 return error
 
         # All checks are good, now we do the actual insertion
-
-        match await q_create_user(
+        match await self.user._create_user(
             conn,
             id,
-            u_certif,
+            user_certificate_cooked,
             user_certificate,
             redacted_user_certificate,
-            d_certif,
-            device_certificate,
-            redacted_device_certificate,
         ):
             case UserCreateUserStoreBadOutcome():
                 assert False, "The organization is empty, user creation should always succeed"
+            case None:
+                pass
+
+        match await self.user._create_device(
+            conn,
+            id,
+            device_certificate_cooked,
+            device_certificate,
+            redacted_device_certificate,
+            first_device=True,
+        ):
             case UserCreateDeviceStoreBadOutcome():
                 assert False, "The organization is empty, device creation should always succeed"
-            case _:
+            case None:
                 pass
 
         sequester_authority_verify_key_der = (
@@ -480,7 +493,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         )
         assert result == "UPDATE 1", result
 
-        return u_certif, d_certif, s_certif
+        return user_certificate_cooked, device_certificate_cooked, s_certif
 
     @override
     @transaction

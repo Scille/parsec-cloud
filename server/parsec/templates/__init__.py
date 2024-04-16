@@ -26,7 +26,7 @@ JINJA_ENV_CONFIG = {
     "loader": PackageLoader("parsec.backend.http.templates"),
     "undefined": StrictUndefined,
 }
-JINJA_ENV = Environment(**JINJA_ENV_CONFIG)  # pyright: ignore[reportArgumentType]
+JINJA_ENV = Environment(**JINJA_ENV_CONFIG)
 
 
 def get_template(name: str | Template) -> Template:
