@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceLabel,
     RevokedUserCertificate,
     SigningKey,
+    SigningKeyAlgorithm,
     authenticated_cmds,
 )
 from parsec.events import EventCommonCertificate
@@ -38,6 +39,7 @@ def generate_new_alice_device_certificates(
         device_id=device_id,
         device_label=DeviceLabel("New device"),
         verify_key=verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(author.signing_key)
 
     raw_redacted_device_certificate = DeviceCertificate(
@@ -46,6 +48,7 @@ def generate_new_alice_device_certificates(
         device_id=device_id,
         device_label=None,
         verify_key=verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(author.signing_key)
 
     return raw_device_certificate, raw_redacted_device_certificate

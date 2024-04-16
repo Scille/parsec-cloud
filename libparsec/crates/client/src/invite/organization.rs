@@ -74,6 +74,7 @@ pub async fn bootstrap_organization(
             user_id: device.user_id().to_owned(),
             human_handle: MaybeRedacted::Real(device.human_handle.clone()),
             public_key: device.public_key(),
+            algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
             profile: device.initial_profile,
         };
         let signed = user_certificate.dump_and_sign(&root_signing_key);
@@ -92,6 +93,7 @@ pub async fn bootstrap_organization(
             device_id: device.device_id.clone(),
             device_label: MaybeRedacted::Real(device.device_label.clone()),
             verify_key: device.verify_key(),
+            algorithm: SigningKeyAlgorithm::Ed25519,
         };
         let signed = device_certificate.dump_and_sign(&root_signing_key);
 

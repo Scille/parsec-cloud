@@ -15,9 +15,9 @@ use libparsec::{
     },
     load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
     DeviceAccessStrategy, DeviceCertificate, DeviceLabel, DeviceName, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr, ProxyConfig,
-    SigningKey, UserCertificate, UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
-    PARSEC_SCHEME,
+    MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr,
+    PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
+    UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -66,6 +66,7 @@ fn create_new_device(
         device_id: new_device.device_id.clone(),
         device_label: MaybeRedacted::Real(new_device.device_label.clone()),
         verify_key: new_device.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
@@ -92,6 +93,7 @@ fn create_new_user(
         human_handle: MaybeRedacted::Real(new_device.human_handle.clone()),
         profile: initial_profile,
         public_key: new_device.public_key().clone(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
     };
 
     let user_certificate = user_cert.dump_and_sign(&author.signing_key).into();

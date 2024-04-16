@@ -12,9 +12,11 @@ use pyo3::{types::PyModule, wrap_pyfunction, PyResult};
 
 pub(crate) fn add_mod(m: &PyModule) -> PyResult<()> {
     // Certif
+    m.add_class::<PrivateKeyAlgorithm>()?;
     m.add_class::<UserCertificate>()?;
     m.add_class::<RevokedUserCertificate>()?;
     m.add_class::<UserUpdateCertificate>()?;
+    m.add_class::<SigningKeyAlgorithm>()?;
     m.add_class::<DeviceCertificate>()?;
     m.add_class::<RealmRoleCertificate>()?;
     m.add_class::<RealmNameCertificate>()?;

@@ -670,6 +670,7 @@ fn create_new_signed_user_certificates(
         user_id: device_id.user_id().clone(),
         human_handle: MaybeRedacted::Real(human_handle.clone()),
         public_key: public_key.clone(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile,
     };
 
@@ -679,6 +680,7 @@ fn create_new_signed_user_certificates(
         user_id: device_id.user_id().clone(),
         human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(device_id.user_id())),
         public_key,
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile,
     };
 
@@ -688,6 +690,7 @@ fn create_new_signed_user_certificates(
         device_id: device_id.clone(),
         device_label: MaybeRedacted::Real(device_label.clone()),
         verify_key: verify_key.clone(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let redacted_device_certificate = DeviceCertificate {
@@ -696,6 +699,7 @@ fn create_new_signed_user_certificates(
         device_id: device_id.clone(),
         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
         verify_key,
+        algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let user_certificate_bytes = user_certificate.dump_and_sign(&author.signing_key);
@@ -736,6 +740,7 @@ fn create_new_signed_device_certificates(
         device_id: device_id.clone(),
         device_label: MaybeRedacted::Real(device_label),
         verify_key: verify_key.clone(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let redacted_device_certificate = DeviceCertificate {
@@ -744,6 +749,7 @@ fn create_new_signed_device_certificates(
         device_id: device_id.clone(),
         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
         verify_key,
+        algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let device_certificate_bytes = device_certificate.dump_and_sign(&author.signing_key);

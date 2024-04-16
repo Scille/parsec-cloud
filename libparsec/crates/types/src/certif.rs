@@ -251,6 +251,7 @@ pub struct UserCertificate {
     pub user_id: UserID,
     pub human_handle: MaybeRedacted<HumanHandle>,
     pub public_key: PublicKey,
+    pub algorithm: PrivateKeyAlgorithm,
     pub profile: UserProfile,
 }
 
@@ -267,6 +268,7 @@ impl UserCertificate {
             user_id: self.user_id,
             human_handle,
             public_key: self.public_key,
+            algorithm: self.algorithm,
             profile: self.profile,
         }
     }
@@ -329,6 +331,7 @@ impl From<UserCertificateData> for UserCertificate {
             user_id: data.user_id,
             human_handle,
             public_key: data.public_key,
+            algorithm: data.algorithm,
             profile,
         }
     }
@@ -350,6 +353,7 @@ impl From<UserCertificate> for UserCertificateData {
             human_handle,
             public_key: obj.public_key,
             profile: obj.profile.into(),
+            algorithm: obj.algorithm,
             is_admin: obj.profile == UserProfile::Admin,
         }
     }
@@ -485,6 +489,7 @@ pub struct DeviceCertificate {
     pub device_id: DeviceID,
     pub device_label: MaybeRedacted<DeviceLabel>,
     pub verify_key: VerifyKey,
+    pub algorithm: SigningKeyAlgorithm,
 }
 
 parsec_data!("schema/certif/device_certificate.json5");
@@ -503,6 +508,7 @@ impl DeviceCertificate {
             device_id: self.device_id,
             device_label,
             verify_key: self.verify_key,
+            algorithm: self.algorithm,
         }
     }
 
@@ -548,6 +554,7 @@ impl From<DeviceCertificateData> for DeviceCertificate {
             device_id: data.device_id,
             device_label,
             verify_key: data.verify_key,
+            algorithm: data.algorithm,
         }
     }
 }
@@ -567,6 +574,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
             device_id: obj.device_id,
             device_label,
             verify_key: obj.verify_key,
+            algorithm: obj.algorithm,
         }
     }
 }

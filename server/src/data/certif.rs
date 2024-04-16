@@ -19,6 +19,16 @@ use crate::{
     time::DateTime,
 };
 
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    PrivateKeyAlgorithm,
+    libparsec_types::PrivateKeyAlgorithm,
+    [
+        "X25519_XSALSA20_POLY1305",
+        x25519_xsalsa20_poly1305,
+        libparsec_types::PrivateKeyAlgorithm::X25519XSalsa20Poly1305
+    ],
+);
+
 crate::binding_utils::gen_py_wrapper_class!(
     UserCertificate,
     Arc<libparsec_types::UserCertificate>,
@@ -31,13 +41,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl UserCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, user_id, human_handle, public_key, profile))]
+    #[pyo3(signature = (author, timestamp, user_id, human_handle, public_key, algorithm, profile))]
     fn new(
         author: Option<DeviceID>,
         timestamp: DateTime,
         user_id: UserID,
         human_handle: Option<HumanHandle>,
         public_key: PublicKey,
+        algorithm: PrivateKeyAlgorithm,
         profile: UserProfile,
     ) -> PyResult<Self> {
         let human_handle = match human_handle {
@@ -55,6 +66,7 @@ impl UserCertificate {
             user_id: user_id.0,
             human_handle,
             public_key: public_key.0,
+            algorithm: algorithm.0,
             profile: profile.0,
         })))
     }
@@ -101,6 +113,7 @@ impl UserCertificate {
             user_id,
             public_key,
             profile,
+            algorithm,
             human_handle: _,
         } = &*self.0;
 
@@ -109,6 +122,7 @@ impl UserCertificate {
             timestamp: redacted_timestamp,
             user_id: redacted_user_id,
             public_key: redacted_public_key,
+            algorithm: redacted_algorithm,
             profile: redacted_profile,
             human_handle: _,
         } = &*redacted.0;
@@ -117,6 +131,7 @@ impl UserCertificate {
             && timestamp == redacted_timestamp
             && user_id == redacted_user_id
             && public_key == redacted_public_key
+            && algorithm == redacted_algorithm
             && profile == redacted_profile
     }
 
@@ -162,10 +177,25 @@ impl UserCertificate {
     }
 
     #[getter]
+    fn algorithm(&self) -> &'static PyObject {
+        PrivateKeyAlgorithm::convert(self.0.algorithm)
+    }
+
+    #[getter]
     fn profile(&self) -> &'static PyObject {
         UserProfile::convert(self.0.profile)
     }
 }
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    SigningKeyAlgorithm,
+    libparsec_types::SigningKeyAlgorithm,
+    [
+        "ED25519",
+        ed25519,
+        libparsec_types::SigningKeyAlgorithm::Ed25519
+    ],
+);
 
 crate::binding_utils::gen_py_wrapper_class!(
     DeviceCertificate,
@@ -179,13 +209,14 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl DeviceCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, device_id, device_label, verify_key))]
+    #[pyo3(signature = (author, timestamp, device_id, device_label, verify_key, algorithm))]
     fn new(
         author: Option<DeviceID>,
         timestamp: DateTime,
         device_id: DeviceID,
         device_label: Option<DeviceLabel>,
         verify_key: VerifyKey,
+        algorithm: SigningKeyAlgorithm,
     ) -> PyResult<Self> {
         let device_label = match device_label {
             Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
@@ -202,6 +233,7 @@ impl DeviceCertificate {
             device_id: device_id.0,
             device_label,
             verify_key: verify_key.0,
+            algorithm: algorithm.0,
         })))
     }
 
@@ -244,6 +276,7 @@ impl DeviceCertificate {
             timestamp,
             device_id,
             verify_key,
+            algorithm,
             device_label: _,
         } = &*self.0;
 
@@ -252,6 +285,7 @@ impl DeviceCertificate {
             timestamp: redacted_timestamp,
             device_id: redacted_device_id,
             verify_key: redacted_verify_key,
+            algorithm: redacted_algorithm,
             device_label: _,
         } = &*redacted.0;
 
@@ -259,6 +293,7 @@ impl DeviceCertificate {
             && timestamp == redacted_timestamp
             && device_id == redacted_device_id
             && verify_key == redacted_verify_key
+            && algorithm == redacted_algorithm
     }
 
     #[getter]
@@ -295,6 +330,11 @@ impl DeviceCertificate {
     #[getter]
     fn verify_key(&self) -> VerifyKey {
         VerifyKey(self.0.verify_key.clone())
+    }
+
+    #[getter]
+    fn algorithm(&self) -> &'static PyObject {
+        SigningKeyAlgorithm::convert(self.0.algorithm)
     }
 }
 

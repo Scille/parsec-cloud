@@ -14,8 +14,10 @@ from parsec._parsec import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
     PrivateKey,
+    PrivateKeyAlgorithm,
     RevokedUserCertificate,
     SigningKey,
+    SigningKeyAlgorithm,
     UserCertificate,
     UserID,
     UserProfile,
@@ -230,6 +232,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
             email=existing_enrollment.submitter_der_x509_certificate_email, label="Mike"
         ),
         public_key=PrivateKey.generate().public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
         profile=UserProfile.STANDARD,
     )
     user_certificate = u_certif.dump_and_sign(coolorg.alice.signing_key)
@@ -240,6 +243,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         user_id=u_certif.user_id,
         human_handle=None,
         public_key=u_certif.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
         profile=u_certif.profile,
     ).dump_and_sign(coolorg.alice.signing_key)
 
@@ -249,6 +253,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         timestamp=t1,
         device_label=DeviceLabel("Dev1"),
         verify_key=SigningKey.generate().verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     )
     device_certificate = d_certif.dump_and_sign(coolorg.alice.signing_key)
 
@@ -258,6 +263,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         timestamp=d_certif.timestamp,
         device_label=None,
         verify_key=d_certif.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(coolorg.alice.signing_key)
 
     outcome = await backend.pki.accept(

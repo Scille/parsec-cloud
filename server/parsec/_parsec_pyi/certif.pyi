@@ -20,6 +20,15 @@ from parsec._parsec_pyi.ids import (
 )
 from parsec._parsec_pyi.time import DateTime
 
+class PrivateKeyAlgorithm:
+    X25519_XSALSA20_POLY1305: PrivateKeyAlgorithm
+    VALUES: tuple[SecretKeyAlgorithm, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> PrivateKeyAlgorithm: ...
+    @property
+    def str(self) -> str: ...
+
 class UserCertificate:
     def __init__(
         self,
@@ -28,6 +37,7 @@ class UserCertificate:
         user_id: UserID,
         human_handle: HumanHandle | None,
         public_key: PublicKey,
+        algorithm: PrivateKeyAlgorithm,
         profile: UserProfile,
     ) -> None: ...
     @property
@@ -44,6 +54,8 @@ class UserCertificate:
     def is_redacted(self) -> bool: ...
     @property
     def public_key(self) -> PublicKey: ...
+    @property
+    def algorithm(self) -> PrivateKeyAlgorithm: ...
     @property
     def profile(self) -> UserProfile: ...
     @classmethod
@@ -64,6 +76,15 @@ class UserCertificate:
         ...
     def redacted_compare(self, redacted: "UserCertificate") -> bool: ...
 
+class SigningKeyAlgorithm:
+    ED25519: SigningKeyAlgorithm
+    VALUES: tuple[SecretKeyAlgorithm, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> SigningKeyAlgorithm: ...
+    @property
+    def str(self) -> str: ...
+
 class DeviceCertificate:
     def __init__(
         self,
@@ -72,6 +93,7 @@ class DeviceCertificate:
         device_id: DeviceID,
         device_label: DeviceLabel | None,
         verify_key: VerifyKey,
+        algorithm: SigningKeyAlgorithm,
     ) -> None: ...
     @property
     def author(self) -> DeviceID | None: ...
@@ -85,6 +107,8 @@ class DeviceCertificate:
     def is_redacted(self) -> bool: ...
     @property
     def verify_key(self) -> VerifyKey: ...
+    @property
+    def algorithm(self) -> SigningKeyAlgorithm: ...
     @classmethod
     def verify_and_load(
         cls,

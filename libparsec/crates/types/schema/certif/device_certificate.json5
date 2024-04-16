@@ -24,6 +24,21 @@
         {
             "name": "verify_key",
             "type": "VerifyKey"
+        },
+        {
+            "name": "algorithm",
+            "type": "SigningKeyAlgorithm"
+        }
+    ],
+    "nested_types": [
+        {
+            "name": "SigningKeyAlgorithm",
+            "variants": [
+                {
+                    "name": "Ed25519",
+                    "discriminant_value": "ED25519"
+                }
+            ]
         }
     ]
 }

@@ -15,9 +15,11 @@ from parsec._parsec import (
     HumanHandle,
     OrganizationID,
     PrivateKey,
+    PrivateKeyAlgorithm,
     SequesterAuthorityCertificate,
     SequesterSigningKeyDer,
     SigningKey,
+    SigningKeyAlgorithm,
     UserCertificate,
     UserProfile,
     anonymous_cmds,
@@ -325,6 +327,7 @@ async def test_timestamp_out_of_ballpark(
         user_id=user_id,
         human_handle=user_human_handle,
         public_key=user_priv_key.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
         profile=UserProfile.ADMIN,
     )
     redacted_user_certificate = UserCertificate(
@@ -333,6 +336,7 @@ async def test_timestamp_out_of_ballpark(
         user_id=user_certificate.user_id,
         human_handle=None,
         public_key=user_certificate.public_key,
+        algorithm=PrivateKeyAlgorithm.X25519_XSALSA20_POLY1305,
         profile=user_certificate.profile,
     )
     device_certificate = DeviceCertificate(
@@ -341,6 +345,7 @@ async def test_timestamp_out_of_ballpark(
         device_id=device_id,
         device_label=device_label,
         verify_key=root_verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     )
     redacted_device_certificate = DeviceCertificate(
         author=device_certificate.author,
@@ -348,6 +353,7 @@ async def test_timestamp_out_of_ballpark(
         device_id=device_certificate.device_id,
         device_label=None,
         verify_key=device_certificate.verify_key,
+        algorithm=SigningKeyAlgorithm.ED25519,
     )
 
     _, sequester_verify_key = SequesterSigningKeyDer.generate_pair(1024)
