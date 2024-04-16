@@ -19,7 +19,7 @@ pub struct DisconnectProxyHandle {
 }
 
 impl DisconnectProxyHandle {
-    pub fn to_backend_addr(&self) -> ParsecAddr {
+    pub fn to_parsec_addr(&self) -> ParsecAddr {
         ParsecAddr::new("localhost".into(), Some(self.port), false)
     }
 
