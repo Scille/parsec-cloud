@@ -15,15 +15,15 @@ import {
   MountpointHandle,
   MountpointToOsPathError,
   MountpointToOsPathErrorTag,
-  ParsecOrganizationFileLinkAddr,
+  ParsecWorkspacePathAddr,
   Result,
   StartedWorkspaceInfo,
   SystemPath,
   UserID,
   UserProfile,
   UserTuple,
-  WorkspaceDecryptFileLinkPathError,
-  WorkspaceGenerateFileLinkError,
+  WorkspaceDecryptPathAddrError,
+  WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
   WorkspaceID,
   WorkspaceInfo,
@@ -389,15 +389,15 @@ export async function getPathLink(
   workspaceHandle: WorkspaceHandle,
   path: string,
   timestamp: DateTime | null = null,
-): Promise<Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError>> {
+): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>> {
   if (!needsMocks()) {
-    return await libparsec.workspaceGenerateFileLink(workspaceHandle, path);
+    return await libparsec.workspaceGeneratePathAddr(workspaceHandle, path);
   }
 
   const org = 'Org';
   // cspell:disable-next-line
   const payload = 'k8QY94a350f2f629403db2269c44583f7aa1AcQ0Zkd8YbWfYF19LMwc55HjBOvI8LA8c_9oU2xaBJ0u2Ou0AFZYA4-QHhi2FprzAtUoAgMYwg';
-  let link = `parsec3://parsec.cloud/${org}?a=file_link&p=${payload}`;
+  let link = `parsec3://parsec.cloud/${org}?a=path&p=${payload}`;
   if (timestamp !== null) {
     // cspell:disable-next-line
     link += '&timestamp=JEFHNUJEF39350JFHNsss';
@@ -407,10 +407,10 @@ export async function getPathLink(
 
 export async function decryptFileLink(
   workspaceHandle: WorkspaceHandle,
-  link: ParsecOrganizationFileLinkAddr,
-): Promise<Result<FsPath, WorkspaceDecryptFileLinkPathError>> {
+  link: ParsecWorkspacePathAddr,
+): Promise<Result<FsPath, WorkspaceDecryptPathAddrError>> {
   if (!needsMocks()) {
-    return await libparsec.workspaceDecryptFileLinkPath(workspaceHandle, link);
+    return await libparsec.workspaceDecryptPathAddr(workspaceHandle, link);
   }
   return { ok: true, value: '/' };
 }

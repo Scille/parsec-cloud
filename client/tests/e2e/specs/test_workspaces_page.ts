@@ -164,7 +164,7 @@ describe('Check workspaces page', () => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
         const payload = 'k8QY94a350f2f629403db2269c44583f7aa1AcQ0Zkd8YbWfYF19LMwc55HjBOvI8LA8c_9oU2xaBJ0u2Ou0AFZYA4-QHhi2FprzAtUoAgMYwg';
-        expect(text).to.eq(`parsec3://parsec.cloud/Org?a=file_link&p=${payload}`);
+        expect(text).to.eq(`parsec3://parsec.cloud/Org?a=path&p=${payload}`);
       });
     });
   });
@@ -182,7 +182,7 @@ describe('Check workspaces page', () => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
         const payload = 'k8QY94a350f2f629403db2269c44583f7aa1AcQ0Zkd8YbWfYF19LMwc55HjBOvI8LA8c_9oU2xaBJ0u2Ou0AFZYA4-QHhi2FprzAtUoAgMYwg';
-        expect(text).to.eq(`parsec3://parsec.cloud/Org?a=file_link&p=${payload}`);
+        expect(text).to.eq(`parsec3://parsec.cloud/Org?a=path&p=${payload}`);
       });
     });
     cy.get('@workspaceItems').eq(1).find('.workspace-option').click();

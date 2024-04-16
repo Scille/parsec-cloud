@@ -231,8 +231,8 @@ impl ParsecActionAddr {
                     libparsec_types::ParsecActionAddr::OrganizationBootstrap(v) => {
                         Ok(ParsecOrganizationBootstrapAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec_types::ParsecActionAddr::OrganizationFileLink(v) => {
-                        Ok(ParsecOrganizationFileLinkAddr(v).into_py(py).to_object(py))
+                    libparsec_types::ParsecActionAddr::WorkspacePath(v) => {
+                        Ok(ParsecWorkspacePathAddr(v).into_py(py).to_object(py))
                     }
                     libparsec_types::ParsecActionAddr::Invitation(v) => {
                         Ok(ParsecInvitationAddr(v).into_py(py).to_object(py))
@@ -248,8 +248,8 @@ impl ParsecActionAddr {
                     libparsec_types::ParsecActionAddr::OrganizationBootstrap(v) => {
                         Ok(ParsecOrganizationBootstrapAddr(v).into_py(py).to_object(py))
                     }
-                    libparsec_types::ParsecActionAddr::OrganizationFileLink(v) => {
-                        Ok(ParsecOrganizationFileLinkAddr(v).into_py(py).to_object(py))
+                    libparsec_types::ParsecActionAddr::WorkspacePath(v) => {
+                        Ok(ParsecWorkspacePathAddr(v).into_py(py).to_object(py))
                     }
                     libparsec_types::ParsecActionAddr::Invitation(v) => {
                         Ok(ParsecInvitationAddr(v).into_py(py).to_object(py))
@@ -403,8 +403,8 @@ impl ParsecOrganizationBootstrapAddr {
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
-    ParsecOrganizationFileLinkAddr,
-    libparsec_types::ParsecOrganizationFileLinkAddr,
+    ParsecWorkspacePathAddr,
+    libparsec_types::ParsecWorkspacePathAddr,
     __repr__,
     __copy__,
     __deepcopy__,
@@ -413,7 +413,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 );
 
 #[pymethods]
-impl ParsecOrganizationFileLinkAddr {
+impl ParsecWorkspacePathAddr {
     #[new]
     #[pyo3(signature = (organization_id, workspace_id, key_index, encrypted_path, **py_kwargs))]
     fn new(
@@ -443,7 +443,7 @@ impl ParsecOrganizationFileLinkAddr {
             ),
             None => return Err(PyValueError::new_err("Missing parameters")),
         };
-        Ok(Self(libparsec_types::ParsecOrganizationFileLinkAddr::new(
+        Ok(Self(libparsec_types::ParsecWorkspacePathAddr::new(
             addr.0,
             organization_id.0,
             workspace_id.0,
@@ -520,11 +520,11 @@ impl ParsecOrganizationFileLinkAddr {
     #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
         match allow_http_redirection {
-            true => match libparsec_types::ParsecOrganizationFileLinkAddr::from_any(url) {
+            true => match libparsec_types::ParsecWorkspacePathAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
-            false => match libparsec_types::ParsecOrganizationFileLinkAddr::from_str(url) {
+            false => match libparsec_types::ParsecWorkspacePathAddr::from_str(url) {
                 Ok(addr) => Ok(Self(addr)),
                 Err(err) => Err(PyValueError::new_err(err.to_string())),
             },
@@ -541,7 +541,7 @@ impl ParsecOrganizationFileLinkAddr {
         encrypted_path: BytesWrapper,
     ) -> Self {
         crate::binding_utils::unwrap_bytes!(encrypted_path);
-        Self(libparsec_types::ParsecOrganizationFileLinkAddr::new(
+        Self(libparsec_types::ParsecWorkspacePathAddr::new(
             organization_addr.get_server_addr().0,
             organization_addr.organization_id().0,
             workspace_id.0,

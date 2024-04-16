@@ -154,7 +154,7 @@ import WorkspaceCard from '@/components/workspaces/WorkspaceCard.vue';
 import WorkspaceListItem from '@/components/workspaces/WorkspaceListItem.vue';
 import {
   EntryName,
-  ParsecOrganizationFileLinkAddr,
+  ParsecWorkspacePathAddr,
   Path,
   UserProfile,
   WorkspaceInfo,
@@ -281,7 +281,7 @@ onUnmounted(async () => {
   }
 });
 
-async function handleFileLink(fileLink: ParsecOrganizationFileLinkAddr): Promise<boolean> {
+async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolean> {
   const parseResult = await parseFileLink(fileLink);
 
   if (!parseResult.ok) {

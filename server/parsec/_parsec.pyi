@@ -11,8 +11,8 @@ from parsec._parsec_pyi.addrs import (
     ParsecInvitationAddr,
     ParsecOrganizationAddr,
     ParsecOrganizationBootstrapAddr,
-    ParsecOrganizationFileLinkAddr,
     ParsecPkiEnrollmentAddr,
+    ParsecWorkspacePathAddr,
 )
 from parsec._parsec_pyi.certif import (
     DeviceCertificate,
@@ -154,7 +154,7 @@ __all__ = [
     "ParsecInvitationAddr",
     "ParsecOrganizationAddr",
     "ParsecOrganizationBootstrapAddr",
-    "ParsecOrganizationFileLinkAddr",
+    "ParsecWorkspacePathAddr",
     "ParsecPkiEnrollmentAddr",
     # Manifest
     "EntryName",

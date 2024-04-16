@@ -38,9 +38,9 @@ class ParsecInvitationAddr(StrBasedType):
     custom_to_rs_string = "|addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
-class ParsecOrganizationFileLinkAddr(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string()) }"
-    custom_to_rs_string = "|addr: libparsec::ParsecOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
+class ParsecWorkspacePathAddr(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { libparsec::ParsecWorkspacePathAddr::from_any(&s).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) }"
 
 
 class ParsecPkiEnrollmentAddr(StrBasedType):
@@ -72,7 +72,7 @@ class ParsedParsecAddr(Variant):
         organization_id: OrganizationID
         token: Optional[str]
 
-    class OrganizationFileLink:
+    class WorkspacePath:
         hostname: str
         port: U32
         use_ssl: bool

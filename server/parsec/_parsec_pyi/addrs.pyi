@@ -70,7 +70,7 @@ class ParsecActionAddr:
         cls, url: str, allow_http_redirection: bool = False
     ) -> Union[
         ParsecOrganizationBootstrapAddr,
-        ParsecOrganizationFileLinkAddr,
+        ParsecWorkspacePathAddr,
         ParsecInvitationAddr,
         ParsecPkiEnrollmentAddr,
     ]: ...
@@ -114,7 +114,7 @@ class ParsecOrganizationBootstrapAddr(ParsecAddr):
         token: BootstrapToken | None = None,
     ) -> ParsecOrganizationBootstrapAddr: ...
 
-class ParsecOrganizationFileLinkAddr(ParsecAddr):
+class ParsecWorkspacePathAddr(ParsecAddr):
     def __init__(
         self,
         organization_id: OrganizationID,
@@ -148,7 +148,7 @@ class ParsecOrganizationFileLinkAddr(ParsecAddr):
     @classmethod
     def from_url(
         cls, url: str, allow_http_redirection: bool = False
-    ) -> ParsecOrganizationFileLinkAddr: ...
+    ) -> ParsecWorkspacePathAddr: ...
     @classmethod
     def build(
         cls,
@@ -156,7 +156,7 @@ class ParsecOrganizationFileLinkAddr(ParsecAddr):
         workspace_id: VlobID,
         key_index: int,
         encrypted_path: bytes,
-    ) -> ParsecOrganizationFileLinkAddr: ...
+    ) -> ParsecWorkspacePathAddr: ...
 
 class ParsecInvitationAddr(ParsecAddr):
     def __init__(

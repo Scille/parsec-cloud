@@ -6,7 +6,7 @@ use libparsec_client_connection::{
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::WorkspaceDecryptFileLinkPathError;
+use crate::workspace::WorkspaceDecryptPathAddrError;
 
 use super::utils::workspace_ops_factory;
 
@@ -37,7 +37,7 @@ async fn generate(env: &TestbedEnv) {
         },
     );
 
-    let link = ops.generate_file_link(&target_path).await.unwrap();
+    let link = ops.generate_path_addr(&target_path).await.unwrap();
 
     let (key, expected_key_index) = env.get_last_realm_key(wksp1_id);
 
@@ -67,7 +67,7 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
     let link = {
         let (key, key_index) = env.get_last_realm_key(wksp1_id);
         let encrypted_path = key.encrypt(b"/foo/bar.txt");
-        ParsecOrganizationFileLinkAddr::new(
+        ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().to_owned(),
             wksp1_id,
@@ -136,7 +136,7 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
         );
     }
 
-    let path = ops.decrypt_file_link_path(&link).await.unwrap();
+    let path = ops.decrypt_path_addr(&link).await.unwrap();
     p_assert_eq!(path, "/foo/bar.txt".parse().unwrap());
 }
 
@@ -154,7 +154,7 @@ async fn decrypt_missing_key_and_offline(env: &TestbedEnv) {
     let link = {
         let (key, key_index) = env.get_last_realm_key(wksp1_id);
         let encrypted_path = key.encrypt(b"/foo/bar.txt");
-        ParsecOrganizationFileLinkAddr::new(
+        ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().to_owned(),
             wksp1_id,
@@ -163,8 +163,8 @@ async fn decrypt_missing_key_and_offline(env: &TestbedEnv) {
         )
     };
 
-    let err = ops.decrypt_file_link_path(&link).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceDecryptFileLinkPathError::Offline);
+    let err = ops.decrypt_path_addr(&link).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceDecryptPathAddrError::Offline);
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -176,7 +176,7 @@ async fn bad_decrypt_realm_unknown_key_index(env: &TestbedEnv) {
     let link = {
         let (_, key_index) = env.get_last_realm_key(wksp1_id);
         let encrypted_path = b"<whatever>".to_vec();
-        ParsecOrganizationFileLinkAddr::new(
+        ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().to_owned(),
             wksp1_id,
@@ -213,8 +213,8 @@ async fn bad_decrypt_realm_unknown_key_index(env: &TestbedEnv) {
         // 3) ...but there is none, so the client has not new keys bundle to fetch
     );
 
-    let err = ops.decrypt_file_link_path(&link).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceDecryptFileLinkPathError::KeyNotFound);
+    let err = ops.decrypt_path_addr(&link).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceDecryptPathAddrError::KeyNotFound);
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -226,7 +226,7 @@ async fn decrypt_bad_encryption(env: &TestbedEnv) {
     let link = {
         let (_, key_index) = env.get_last_realm_key(wksp1_id);
         let encrypted_path = b"<dummy>".to_vec();
-        ParsecOrganizationFileLinkAddr::new(
+        ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),
             alice.organization_id().to_owned(),
             wksp1_id,
@@ -253,6 +253,6 @@ async fn decrypt_bad_encryption(env: &TestbedEnv) {
         },
     );
 
-    let err = ops.decrypt_file_link_path(&link).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceDecryptFileLinkPathError::CorruptedData);
+    let err = ops.decrypt_path_addr(&link).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceDecryptPathAddrError::CorruptedData);
 }

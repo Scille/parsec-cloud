@@ -58,8 +58,8 @@ export type ParsecAddr = string
 export type ParsecInvitationAddr = string
 export type ParsecOrganizationAddr = string
 export type ParsecOrganizationBootstrapAddr = string
-export type ParsecOrganizationFileLinkAddr = string
 export type ParsecPkiEnrollmentAddr = string
+export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
 export type SASCode = string
@@ -1310,9 +1310,9 @@ export enum ParsedParsecAddrTag {
     InvitationUser = 'ParsedParsecAddrInvitationUser',
     Organization = 'ParsedParsecAddrOrganization',
     OrganizationBootstrap = 'ParsedParsecAddrOrganizationBootstrap',
-    OrganizationFileLink = 'ParsedParsecAddrOrganizationFileLink',
     PkiEnrollment = 'ParsedParsecAddrPkiEnrollment',
     Server = 'ParsedParsecAddrServer',
+    WorkspacePath = 'ParsedParsecAddrWorkspacePath',
 }
 
 export interface ParsedParsecAddrInvitationDevice {
@@ -1346,16 +1346,6 @@ export interface ParsedParsecAddrOrganizationBootstrap {
     organizationId: OrganizationID
     token: string | null
 }
-export interface ParsedParsecAddrOrganizationFileLink {
-    tag: ParsedParsecAddrTag.OrganizationFileLink
-    hostname: string
-    port: U32
-    useSsl: boolean
-    organizationId: OrganizationID
-    workspaceId: VlobID
-    keyIndex: IndexInt
-    encryptedPath: Uint8Array
-}
 export interface ParsedParsecAddrPkiEnrollment {
     tag: ParsedParsecAddrTag.PkiEnrollment
     hostname: string
@@ -1369,14 +1359,24 @@ export interface ParsedParsecAddrServer {
     port: U32
     useSsl: boolean
 }
+export interface ParsedParsecAddrWorkspacePath {
+    tag: ParsedParsecAddrTag.WorkspacePath
+    hostname: string
+    port: U32
+    useSsl: boolean
+    organizationId: OrganizationID
+    workspaceId: VlobID
+    keyIndex: IndexInt
+    encryptedPath: Uint8Array
+}
 export type ParsedParsecAddr =
   | ParsedParsecAddrInvitationDevice
   | ParsedParsecAddrInvitationUser
   | ParsedParsecAddrOrganization
   | ParsedParsecAddrOrganizationBootstrap
-  | ParsedParsecAddrOrganizationFileLink
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
+  | ParsedParsecAddrWorkspacePath
 
 // TestbedError
 export enum TestbedErrorTag {
@@ -1563,65 +1563,65 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorReadOnlyRealm
   | WorkspaceCreateFolderErrorStopped
 
-// WorkspaceDecryptFileLinkPathError
-export enum WorkspaceDecryptFileLinkPathErrorTag {
-    CorruptedData = 'WorkspaceDecryptFileLinkPathErrorCorruptedData',
-    CorruptedKey = 'WorkspaceDecryptFileLinkPathErrorCorruptedKey',
-    Internal = 'WorkspaceDecryptFileLinkPathErrorInternal',
-    InvalidCertificate = 'WorkspaceDecryptFileLinkPathErrorInvalidCertificate',
-    InvalidKeysBundle = 'WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle',
-    KeyNotFound = 'WorkspaceDecryptFileLinkPathErrorKeyNotFound',
-    NotAllowed = 'WorkspaceDecryptFileLinkPathErrorNotAllowed',
-    Offline = 'WorkspaceDecryptFileLinkPathErrorOffline',
-    Stopped = 'WorkspaceDecryptFileLinkPathErrorStopped',
+// WorkspaceDecryptPathAddrError
+export enum WorkspaceDecryptPathAddrErrorTag {
+    CorruptedData = 'WorkspaceDecryptPathAddrErrorCorruptedData',
+    CorruptedKey = 'WorkspaceDecryptPathAddrErrorCorruptedKey',
+    Internal = 'WorkspaceDecryptPathAddrErrorInternal',
+    InvalidCertificate = 'WorkspaceDecryptPathAddrErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceDecryptPathAddrErrorInvalidKeysBundle',
+    KeyNotFound = 'WorkspaceDecryptPathAddrErrorKeyNotFound',
+    NotAllowed = 'WorkspaceDecryptPathAddrErrorNotAllowed',
+    Offline = 'WorkspaceDecryptPathAddrErrorOffline',
+    Stopped = 'WorkspaceDecryptPathAddrErrorStopped',
 }
 
-export interface WorkspaceDecryptFileLinkPathErrorCorruptedData {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.CorruptedData
+export interface WorkspaceDecryptPathAddrErrorCorruptedData {
+    tag: WorkspaceDecryptPathAddrErrorTag.CorruptedData
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorCorruptedKey {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.CorruptedKey
+export interface WorkspaceDecryptPathAddrErrorCorruptedKey {
+    tag: WorkspaceDecryptPathAddrErrorTag.CorruptedKey
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInternal {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.Internal
+export interface WorkspaceDecryptPathAddrErrorInternal {
+    tag: WorkspaceDecryptPathAddrErrorTag.Internal
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInvalidCertificate {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.InvalidCertificate
+export interface WorkspaceDecryptPathAddrErrorInvalidCertificate {
+    tag: WorkspaceDecryptPathAddrErrorTag.InvalidCertificate
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.InvalidKeysBundle
+export interface WorkspaceDecryptPathAddrErrorInvalidKeysBundle {
+    tag: WorkspaceDecryptPathAddrErrorTag.InvalidKeysBundle
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorKeyNotFound {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.KeyNotFound
+export interface WorkspaceDecryptPathAddrErrorKeyNotFound {
+    tag: WorkspaceDecryptPathAddrErrorTag.KeyNotFound
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorNotAllowed {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.NotAllowed
+export interface WorkspaceDecryptPathAddrErrorNotAllowed {
+    tag: WorkspaceDecryptPathAddrErrorTag.NotAllowed
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorOffline {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.Offline
+export interface WorkspaceDecryptPathAddrErrorOffline {
+    tag: WorkspaceDecryptPathAddrErrorTag.Offline
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorStopped {
-    tag: WorkspaceDecryptFileLinkPathErrorTag.Stopped
+export interface WorkspaceDecryptPathAddrErrorStopped {
+    tag: WorkspaceDecryptPathAddrErrorTag.Stopped
     error: string
 }
-export type WorkspaceDecryptFileLinkPathError =
-  | WorkspaceDecryptFileLinkPathErrorCorruptedData
-  | WorkspaceDecryptFileLinkPathErrorCorruptedKey
-  | WorkspaceDecryptFileLinkPathErrorInternal
-  | WorkspaceDecryptFileLinkPathErrorInvalidCertificate
-  | WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle
-  | WorkspaceDecryptFileLinkPathErrorKeyNotFound
-  | WorkspaceDecryptFileLinkPathErrorNotAllowed
-  | WorkspaceDecryptFileLinkPathErrorOffline
-  | WorkspaceDecryptFileLinkPathErrorStopped
+export type WorkspaceDecryptPathAddrError =
+  | WorkspaceDecryptPathAddrErrorCorruptedData
+  | WorkspaceDecryptPathAddrErrorCorruptedKey
+  | WorkspaceDecryptPathAddrErrorInternal
+  | WorkspaceDecryptPathAddrErrorInvalidCertificate
+  | WorkspaceDecryptPathAddrErrorInvalidKeysBundle
+  | WorkspaceDecryptPathAddrErrorKeyNotFound
+  | WorkspaceDecryptPathAddrErrorNotAllowed
+  | WorkspaceDecryptPathAddrErrorOffline
+  | WorkspaceDecryptPathAddrErrorStopped
 
 // WorkspaceFdCloseError
 export enum WorkspaceFdCloseErrorTag {
@@ -1785,47 +1785,47 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorInternal
   | WorkspaceFdWriteErrorNotInWriteMode
 
-// WorkspaceGenerateFileLinkError
-export enum WorkspaceGenerateFileLinkErrorTag {
-    Internal = 'WorkspaceGenerateFileLinkErrorInternal',
-    InvalidKeysBundle = 'WorkspaceGenerateFileLinkErrorInvalidKeysBundle',
-    NoKey = 'WorkspaceGenerateFileLinkErrorNoKey',
-    NotAllowed = 'WorkspaceGenerateFileLinkErrorNotAllowed',
-    Offline = 'WorkspaceGenerateFileLinkErrorOffline',
-    Stopped = 'WorkspaceGenerateFileLinkErrorStopped',
+// WorkspaceGeneratePathAddrError
+export enum WorkspaceGeneratePathAddrErrorTag {
+    Internal = 'WorkspaceGeneratePathAddrErrorInternal',
+    InvalidKeysBundle = 'WorkspaceGeneratePathAddrErrorInvalidKeysBundle',
+    NoKey = 'WorkspaceGeneratePathAddrErrorNoKey',
+    NotAllowed = 'WorkspaceGeneratePathAddrErrorNotAllowed',
+    Offline = 'WorkspaceGeneratePathAddrErrorOffline',
+    Stopped = 'WorkspaceGeneratePathAddrErrorStopped',
 }
 
-export interface WorkspaceGenerateFileLinkErrorInternal {
-    tag: WorkspaceGenerateFileLinkErrorTag.Internal
+export interface WorkspaceGeneratePathAddrErrorInternal {
+    tag: WorkspaceGeneratePathAddrErrorTag.Internal
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorInvalidKeysBundle {
-    tag: WorkspaceGenerateFileLinkErrorTag.InvalidKeysBundle
+export interface WorkspaceGeneratePathAddrErrorInvalidKeysBundle {
+    tag: WorkspaceGeneratePathAddrErrorTag.InvalidKeysBundle
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorNoKey {
-    tag: WorkspaceGenerateFileLinkErrorTag.NoKey
+export interface WorkspaceGeneratePathAddrErrorNoKey {
+    tag: WorkspaceGeneratePathAddrErrorTag.NoKey
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorNotAllowed {
-    tag: WorkspaceGenerateFileLinkErrorTag.NotAllowed
+export interface WorkspaceGeneratePathAddrErrorNotAllowed {
+    tag: WorkspaceGeneratePathAddrErrorTag.NotAllowed
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorOffline {
-    tag: WorkspaceGenerateFileLinkErrorTag.Offline
+export interface WorkspaceGeneratePathAddrErrorOffline {
+    tag: WorkspaceGeneratePathAddrErrorTag.Offline
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorStopped {
-    tag: WorkspaceGenerateFileLinkErrorTag.Stopped
+export interface WorkspaceGeneratePathAddrErrorStopped {
+    tag: WorkspaceGeneratePathAddrErrorTag.Stopped
     error: string
 }
-export type WorkspaceGenerateFileLinkError =
-  | WorkspaceGenerateFileLinkErrorInternal
-  | WorkspaceGenerateFileLinkErrorInvalidKeysBundle
-  | WorkspaceGenerateFileLinkErrorNoKey
-  | WorkspaceGenerateFileLinkErrorNotAllowed
-  | WorkspaceGenerateFileLinkErrorOffline
-  | WorkspaceGenerateFileLinkErrorStopped
+export type WorkspaceGeneratePathAddrError =
+  | WorkspaceGeneratePathAddrErrorInternal
+  | WorkspaceGeneratePathAddrErrorInvalidKeysBundle
+  | WorkspaceGeneratePathAddrErrorNoKey
+  | WorkspaceGeneratePathAddrErrorNotAllowed
+  | WorkspaceGeneratePathAddrErrorOffline
+  | WorkspaceGeneratePathAddrErrorStopped
 
 // WorkspaceInfoError
 export enum WorkspaceInfoErrorTag {
@@ -2486,14 +2486,14 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<VlobID, WorkspaceCreateFolderError>>
-    workspaceDecryptFileLinkPath(
+    workspaceDecryptPathAddr(
         workspace: Handle,
-        link: ParsecOrganizationFileLinkAddr
-    ): Promise<Result<FsPath, WorkspaceDecryptFileLinkPathError>>
-    workspaceGenerateFileLink(
+        link: ParsecWorkspacePathAddr
+    ): Promise<Result<FsPath, WorkspaceDecryptPathAddrError>>
+    workspaceGeneratePathAddr(
         workspace: Handle,
         path: FsPath
-    ): Promise<Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError>>
+    ): Promise<Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError>>
     workspaceInfo(
         workspace: Handle
     ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
