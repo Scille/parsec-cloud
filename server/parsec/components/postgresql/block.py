@@ -195,7 +195,7 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         row = await conn.fetchrow(
@@ -255,7 +255,7 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):

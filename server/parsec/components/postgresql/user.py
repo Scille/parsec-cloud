@@ -1,7 +1,10 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import itertools
 from typing import TYPE_CHECKING, override
+
+from asyncpg import UniqueViolationError
 
 from parsec._parsec import (
     DateTime,
@@ -22,8 +25,6 @@ from parsec.components.events import EventBus
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.user_queries.create import (
-    q_create_device,
-    q_create_user,
     q_take_user_device_write_lock,
 )
 from parsec.components.postgresql.user_queries.get import (
@@ -42,6 +43,7 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_device_internal_id,
     q_human,
+    q_human_internal_id,
     q_organization_internal_id,
     q_user_internal_id,
     transaction,
@@ -80,6 +82,22 @@ from parsec.events import (
 if TYPE_CHECKING:
     from parsec.components.postgresql.organization import PGOrganizationComponent
     from parsec.components.postgresql.realm import PGRealmComponent
+
+
+def _make_q_lock_common_topic(for_update: bool = False, for_share=False) -> Q:
+    assert for_update ^ for_share
+    share_or_update = "SHARE" if for_share else "UPDATE"
+    return Q(f"""
+SELECT last_timestamp
+FROM common_topic
+JOIN organization ON common_topic.organization = organization._id
+WHERE organization_id = $organization_id
+FOR {share_or_update}
+""")
+
+
+_q_check_common_topic = _make_q_lock_common_topic(for_share=True)
+_q_lock_common_topic = _make_q_lock_common_topic(for_update=True)
 
 _q_update_user = Q(
     f"""
@@ -201,6 +219,111 @@ WHERE
 """
 )
 
+_q_check_active_users_limit = Q(
+    """
+    SELECT
+        (
+            organization.active_users_limit is NULL
+            OR (
+                SELECT
+                    count(*)
+                FROM
+                    user_
+                WHERE
+                    user_.organization = organization._id AND
+                    user_.revoked_on IS NULL
+            ) < organization.active_users_limit
+        ) as allowed
+    FROM
+        organization
+    WHERE
+        organization.organization_id = $organization_id
+"""
+)
+
+_q_insert_human_if_not_exists = Q(
+    f"""
+INSERT INTO human (organization, email, label)
+VALUES (
+    { q_organization_internal_id("$organization_id") },
+    $email,
+    $label
+)
+ON CONFLICT DO NOTHING
+"""
+)
+
+_q_insert_user_with_human_handle = Q(
+    f"""
+INSERT INTO user_ (
+    organization,
+    user_id,
+    initial_profile,
+    user_certificate,
+    redacted_user_certificate,
+    user_certifier,
+    created_on,
+    human
+)
+VALUES (
+    { q_organization_internal_id("$organization_id") },
+    $user_id,
+    $initial_profile,
+    $user_certificate,
+    $redacted_user_certificate,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$user_certifier") },
+    $created_on,
+    { q_human_internal_id(organization_id="$organization_id", email="$email") }
+)
+"""
+)
+
+_q_get_not_revoked_users_for_human = Q(
+    f"""
+SELECT user_id
+FROM user_
+WHERE
+    human = { q_human_internal_id(organization_id="$organization_id", email="$email") }
+    AND (
+        revoked_on IS NULL
+        OR revoked_on > $now
+    )
+"""
+)
+
+_q_get_user_devices = Q(
+    f"""
+SELECT device_id
+FROM device
+WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
+"""
+)
+
+_q_insert_device = Q(
+    f"""
+INSERT INTO device (
+    organization,
+    user_,
+    device_id,
+    device_label,
+    device_certificate,
+    redacted_device_certificate,
+    device_certifier,
+    created_on
+)
+VALUES (
+    { q_organization_internal_id("$organization_id") },
+    { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
+    $device_id,
+    $device_label,
+    $device_certificate,
+    $redacted_device_certificate,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$device_certifier") },
+    $created_on
+)
+"""
+)
+
 
 class PGUserComponent(BaseUserComponent):
     def __init__(self, pool: AsyncpgPool, event_bus: EventBus) -> None:
@@ -216,12 +339,121 @@ class PGUserComponent(BaseUserComponent):
         self.organization = organization
         self.realm = realm
 
+    async def _create_user(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        user_certificate_cooked: UserCertificate,
+        user_certificate: bytes,
+        user_certificate_redacted: bytes,
+    ) -> None | UserCreateUserStoreBadOutcome:
+        assert user_certificate_cooked.human_handle is not None
+        # Create human handle if needed
+        await conn.execute(
+            *_q_insert_human_if_not_exists(
+                organization_id=organization_id.str,
+                email=user_certificate_cooked.human_handle.email,
+                label=user_certificate_cooked.human_handle.label,
+            )
+        )
+
+        # Now insert the new user
+        try:
+            user_certifier = (
+                user_certificate_cooked.author.str if user_certificate_cooked.author else None
+            )
+            result = await conn.execute(
+                *_q_insert_user_with_human_handle(
+                    organization_id=organization_id.str,
+                    user_id=user_certificate_cooked.user_id.str,
+                    initial_profile=user_certificate_cooked.profile.str,
+                    user_certificate=user_certificate,
+                    redacted_user_certificate=user_certificate_redacted,
+                    user_certifier=user_certifier,
+                    created_on=user_certificate_cooked.timestamp,
+                    email=user_certificate_cooked.human_handle.email,
+                )
+            )
+
+        except UniqueViolationError:
+            return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
+
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
+
+        # Finally make sure there is only one non-revoked user with this human handle
+        now = DateTime.now()
+        not_revoked_users = await conn.fetch(
+            *_q_get_not_revoked_users_for_human(
+                organization_id=organization_id.str,
+                email=user_certificate_cooked.human_handle.email,
+                now=now,
+            )
+        )
+        if (
+            len(not_revoked_users) != 1
+            or not_revoked_users[0]["user_id"] != user_certificate_cooked.user_id.str
+        ):
+            # Exception cancels the transaction so the user insertion is automatically cancelled
+            return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
+
+    async def _create_device(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        device_certificate_cooked: DeviceCertificate,
+        device_certificate: bytes,
+        device_certificate_redacted: bytes,
+        first_device: bool = False,
+    ) -> None | UserCreateDeviceStoreBadOutcome:
+        if not first_device:
+            existing_devices = await conn.fetch(
+                *_q_get_user_devices(
+                    organization_id=organization_id.str,
+                    user_id=device_certificate_cooked.device_id.user_id.str,
+                )
+            )
+            if not existing_devices:
+                return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
+
+            if device_certificate_cooked.device_id in itertools.chain(*existing_devices):
+                return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
+
+        try:
+            device_certifier = (
+                device_certificate_cooked.author.str if device_certificate_cooked.author else None
+            )
+            result = await conn.execute(
+                *_q_insert_device(
+                    organization_id=organization_id.str,
+                    user_id=device_certificate_cooked.device_id.user_id.str,
+                    device_id=device_certificate_cooked.device_id.str,
+                    device_label=device_certificate_cooked.device_label.str
+                    if device_certificate_cooked.device_label
+                    else None,
+                    device_certificate=device_certificate,
+                    redacted_device_certificate=device_certificate_redacted,
+                    device_certifier=device_certifier,
+                    created_on=device_certificate_cooked.timestamp,
+                )
+            )
+        except UniqueViolationError:
+            return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
+
+        if result != "INSERT 0 1":
+            assert False, f"Insertion error: {result}"
+
     async def _check_device(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
-    ) -> UserProfile | CheckDeviceBadOutcome:
+    ) -> tuple[UserProfile, DateTime] | CheckDeviceBadOutcome:
+        common_timestamp = await conn.fetchval(
+            *_q_check_common_topic(organization_id=organization_id.str)
+        )
+        if common_timestamp is None:
+            common_timestamp = DateTime.from_timestamp(0)
         d_row = await conn.fetchrow(
             *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
         )
@@ -233,7 +465,7 @@ class PGUserComponent(BaseUserComponent):
             case CheckUserBadOutcome.USER_REVOKED:
                 return CheckDeviceBadOutcome.USER_REVOKED
             case UserProfile() as profile:
-                return profile
+                return profile, common_timestamp
 
     async def _check_user(
         self,
@@ -251,6 +483,14 @@ class PGUserComponent(BaseUserComponent):
         initial_profile = UserProfile.from_str(u_row["profile"])
         # TODO: return the actual profile
         return initial_profile
+
+    async def _lock_common_topic(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> DateTime:
+        value = await conn.fetchval(*_q_lock_common_topic(organization_id=organization_id.str))
+        if value is None:
+            return DateTime.from_timestamp(0)
+        return value
 
     @override
     @transaction
@@ -281,6 +521,8 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
+        common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
+
         match await self._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
@@ -288,7 +530,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case (UserProfile() as profile, DateTime()):
                 if profile != UserProfile.ADMIN:
                     return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -301,33 +543,57 @@ class PGUserComponent(BaseUserComponent):
             redacted_user_certificate=redacted_user_certificate,
             redacted_device_certificate=redacted_device_certificate,
         ):
-            case (u_certif, d_certif):
+            case (user_certificate_cooked, device_certificate_cooked):
                 pass
             case error:
                 return error
 
-        match await q_create_user(
+        if common_topic_timestamp >= user_certificate_cooked.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
+
+        record = await conn.fetchrow(
+            *_q_check_active_users_limit(organization_id=organization_id.str)
+        )
+        # Note with the user/device write lock held we have the guarantee the active users
+        # limit won't change in our back.
+        if record is not None and not record["allowed"]:
+            return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+
+        if not user_certificate_cooked.human_handle:
+            assert False, "User creation without human handle is not supported anymore"
+
+        match await self._create_user(
             conn,
             organization_id,
-            user_certificate_cooked=u_certif,
-            user_certificate=user_certificate,
-            user_certificate_redacted=redacted_user_certificate,
-            device_certificate_cooked=d_certif,
-            device_certificate=device_certificate,
-            device_certificate_redacted=redacted_device_certificate,
+            user_certificate_cooked,
+            user_certificate,
+            redacted_user_certificate,
         ):
-            case UserCreateUserStoreBadOutcome() as error:
-                return error
-            case UserCreateDeviceStoreBadOutcome() as error:
-                assert False, f"Unexpected {error}, the device creation should not fail"
+            case UserCreateUserStoreBadOutcome() as bad_outcome:
+                return bad_outcome
+            case None:
+                pass
+
+        match await self._create_device(
+            conn,
+            organization_id,
+            device_certificate_cooked,
+            device_certificate,
+            redacted_device_certificate,
+            first_device=True,
+        ):
+            case UserCreateDeviceStoreBadOutcome() as bad_outcome:
+                assert False, f"Unexpected {bad_outcome}"
             case None:
                 pass
 
         await self.event_bus.send(
-            EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
+            EventCommonCertificate(
+                organization_id=organization_id, timestamp=user_certificate_cooked.timestamp
+            )
         )
 
-        return u_certif, d_certif
+        return user_certificate_cooked, device_certificate_cooked
 
     @override
     @transaction
@@ -356,6 +622,8 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
+        common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
+
         match await self._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
@@ -363,7 +631,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match user_create_device_validate(
@@ -373,31 +641,35 @@ class PGUserComponent(BaseUserComponent):
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
         ):
-            case DeviceCertificate() as certif:
+            case DeviceCertificate() as device_certificate_cooked:
                 pass
             case error:
                 return error
 
-        match await q_create_device(
+        if common_topic_timestamp >= device_certificate_cooked.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
+
+        match await self._create_device(
             conn,
             organization_id,
-            device_certificate_cooked=certif,
-            device_certificate=device_certificate,
-            device_certificate_redacted=redacted_device_certificate,
+            device_certificate_cooked,
+            device_certificate,
+            redacted_device_certificate,
+            first_device=False,
         ):
-            case UserCreateDeviceStoreBadOutcome() as error:
-                return error
+            case UserCreateDeviceStoreBadOutcome() as bad_outcome:
+                return bad_outcome
             case None:
                 pass
 
         await self.event_bus.send(
             EventCommonCertificate(
                 organization_id=organization_id,
-                timestamp=certif.timestamp,
+                timestamp=device_certificate_cooked.timestamp,
             )
         )
 
-        return certif
+        return device_certificate_cooked
 
     @override
     @transaction
@@ -431,7 +703,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case (UserProfile() as profile, DateTime()):
                 if profile != UserProfile.ADMIN:
                     return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -751,7 +1023,7 @@ class PGUserComponent(BaseUserComponent):
                 return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case (UserProfile() as profile, DateTime()):
                 if profile != UserProfile.ADMIN:
                     return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 

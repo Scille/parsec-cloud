@@ -443,7 +443,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteNewForUserBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as current_profile:
+            case (UserProfile() as current_profile, DateTime()):
                 pass
         if current_profile != UserProfile.ADMIN:
             return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
@@ -504,7 +504,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         suggested_token = force_token or InvitationToken.new()
