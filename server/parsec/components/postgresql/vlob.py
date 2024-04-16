@@ -25,7 +25,7 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.utils import transaction
+from parsec.components.postgresql.utils import Q, q_device, transaction
 from parsec.components.postgresql.vlob_queries.write import _q_create
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
 from parsec.components.user import CheckDeviceBadOutcome
@@ -68,6 +68,24 @@ from parsec.events import EventVlob
 #         )
 
 #     return configured_services
+
+
+q_dump_vlobs = Q(
+    f"""
+SELECT
+    vlob_atom.vlob_id,
+    realm.realm_id,
+    { q_device(_id="vlob_atom.author", select="device_id") } as author,
+    vlob_atom.created_on,
+    vlob_atom.blob
+FROM vlob_atom
+INNER JOIN realm
+ON realm._id = vlob_atom.realm
+INNER JOIN organization
+ON organization._id = realm.organization
+WHERE organization_id = $organization_id
+"""
+)
 
 
 class PGVlobComponent(BaseVlobComponent):
@@ -181,7 +199,7 @@ class PGVlobComponent(BaseVlobComponent):
                 return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobCreateBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
                 pass
 
         match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
@@ -276,8 +294,8 @@ class PGVlobComponent(BaseVlobComponent):
                 vlob_id=vlob_id,
                 version=1,
                 blob=None,  # TODO: use `blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None`
-                last_common_certificate_timestamp=timestamp,  # TODO: this is not the right timestamp
-                last_realm_certificate_timestamp=timestamp,  # TODO: this is not the right timestamp
+                last_common_certificate_timestamp=last_common_certificate_timestamp,
+                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
             )
         )
 
@@ -331,3 +349,25 @@ class PGVlobComponent(BaseVlobComponent):
     #             blob,
     #             sequester_blob,
     #         )
+
+    @override
+    @transaction
+    async def test_dump_vlobs(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
+        rows = await conn.fetch(*q_dump_vlobs(organization_id=organization_id.str))
+        result: dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]] = {}
+        for row in rows:
+            vlob_id = VlobID.from_hex(row["vlob_id"])
+            realm_id = VlobID.from_hex(row["realm_id"])
+            if vlob_id not in result:
+                result[vlob_id] = []
+            result[vlob_id].append(
+                (
+                    DeviceID(row["author"]),
+                    row["created_on"],
+                    realm_id,
+                    row["blob"],
+                )
+            )
+        return result

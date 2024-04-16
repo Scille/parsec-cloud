@@ -582,7 +582,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match realm_create_validate(
@@ -661,7 +661,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmShareStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match realm_share_validate(
@@ -816,7 +816,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match realm_unshare_validate(
@@ -945,7 +945,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match realm_rename_validate(
@@ -1050,7 +1050,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match realm_rotate_key_validate(
@@ -1132,7 +1132,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED
-            case UserProfile():
+            case (UserProfile(), DateTime()):
                 pass
 
         match await self._check_realm_topic(conn, organization_id, realm_id, author):

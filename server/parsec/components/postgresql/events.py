@@ -9,7 +9,7 @@ import asyncpg
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 from structlog import get_logger
 
-from parsec._parsec import DeviceID, OrganizationID, UserProfile, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
@@ -131,7 +131,7 @@ class PGEventsComponent(BaseEventsComponent):
                 return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
-            case UserProfile() as profile:
+            case (UserProfile() as profile, DateTime()):
                 pass
 
         org_config = EventOrganizationConfig(
