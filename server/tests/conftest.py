@@ -222,6 +222,11 @@ def postgresql_url(request: pytest.FixtureRequest) -> str:
 
 
 @pytest.fixture
+def with_postgresql(request: pytest.FixtureRequest) -> bool:
+    return bool(request.config.getoption("--postgresql"))
+
+
+@pytest.fixture
 async def db_url(request: pytest.FixtureRequest) -> str:
     if request.config.getoption("--postgresql"):
         url = get_postgresql_url()
