@@ -1135,16 +1135,6 @@ export interface ParsedParsecAddrOrganizationBootstrap {
     organization_id: string
     token: string | null
 }
-export interface ParsedParsecAddrOrganizationFileLink {
-    tag: "OrganizationFileLink"
-    hostname: string
-    port: number
-    use_ssl: boolean
-    organization_id: string
-    workspace_id: string
-    key_index: number
-    encrypted_path: Uint8Array
-}
 export interface ParsedParsecAddrPkiEnrollment {
     tag: "PkiEnrollment"
     hostname: string
@@ -1158,14 +1148,24 @@ export interface ParsedParsecAddrServer {
     port: number
     use_ssl: boolean
 }
+export interface ParsedParsecAddrWorkspacePath {
+    tag: "WorkspacePath"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    workspace_id: string
+    key_index: number
+    encrypted_path: Uint8Array
+}
 export type ParsedParsecAddr =
   | ParsedParsecAddrInvitationDevice
   | ParsedParsecAddrInvitationUser
   | ParsedParsecAddrOrganization
   | ParsedParsecAddrOrganizationBootstrap
-  | ParsedParsecAddrOrganizationFileLink
   | ParsedParsecAddrPkiEnrollment
   | ParsedParsecAddrServer
+  | ParsedParsecAddrWorkspacePath
 
 
 // TestbedError
@@ -1319,53 +1319,53 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorStopped
 
 
-// WorkspaceDecryptFileLinkPathError
-export interface WorkspaceDecryptFileLinkPathErrorCorruptedData {
+// WorkspaceDecryptPathAddrError
+export interface WorkspaceDecryptPathAddrErrorCorruptedData {
     tag: "CorruptedData"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorCorruptedKey {
+export interface WorkspaceDecryptPathAddrErrorCorruptedKey {
     tag: "CorruptedKey"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInternal {
+export interface WorkspaceDecryptPathAddrErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInvalidCertificate {
+export interface WorkspaceDecryptPathAddrErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle {
+export interface WorkspaceDecryptPathAddrErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorKeyNotFound {
+export interface WorkspaceDecryptPathAddrErrorKeyNotFound {
     tag: "KeyNotFound"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorNotAllowed {
+export interface WorkspaceDecryptPathAddrErrorNotAllowed {
     tag: "NotAllowed"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorOffline {
+export interface WorkspaceDecryptPathAddrErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceDecryptFileLinkPathErrorStopped {
+export interface WorkspaceDecryptPathAddrErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceDecryptFileLinkPathError =
-  | WorkspaceDecryptFileLinkPathErrorCorruptedData
-  | WorkspaceDecryptFileLinkPathErrorCorruptedKey
-  | WorkspaceDecryptFileLinkPathErrorInternal
-  | WorkspaceDecryptFileLinkPathErrorInvalidCertificate
-  | WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle
-  | WorkspaceDecryptFileLinkPathErrorKeyNotFound
-  | WorkspaceDecryptFileLinkPathErrorNotAllowed
-  | WorkspaceDecryptFileLinkPathErrorOffline
-  | WorkspaceDecryptFileLinkPathErrorStopped
+export type WorkspaceDecryptPathAddrError =
+  | WorkspaceDecryptPathAddrErrorCorruptedData
+  | WorkspaceDecryptPathAddrErrorCorruptedKey
+  | WorkspaceDecryptPathAddrErrorInternal
+  | WorkspaceDecryptPathAddrErrorInvalidCertificate
+  | WorkspaceDecryptPathAddrErrorInvalidKeysBundle
+  | WorkspaceDecryptPathAddrErrorKeyNotFound
+  | WorkspaceDecryptPathAddrErrorNotAllowed
+  | WorkspaceDecryptPathAddrErrorOffline
+  | WorkspaceDecryptPathAddrErrorStopped
 
 
 // WorkspaceFdCloseError
@@ -1498,38 +1498,38 @@ export type WorkspaceFdWriteError =
   | WorkspaceFdWriteErrorNotInWriteMode
 
 
-// WorkspaceGenerateFileLinkError
-export interface WorkspaceGenerateFileLinkErrorInternal {
+// WorkspaceGeneratePathAddrError
+export interface WorkspaceGeneratePathAddrErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorInvalidKeysBundle {
+export interface WorkspaceGeneratePathAddrErrorInvalidKeysBundle {
     tag: "InvalidKeysBundle"
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorNoKey {
+export interface WorkspaceGeneratePathAddrErrorNoKey {
     tag: "NoKey"
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorNotAllowed {
+export interface WorkspaceGeneratePathAddrErrorNotAllowed {
     tag: "NotAllowed"
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorOffline {
+export interface WorkspaceGeneratePathAddrErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceGenerateFileLinkErrorStopped {
+export interface WorkspaceGeneratePathAddrErrorStopped {
     tag: "Stopped"
     error: string
 }
-export type WorkspaceGenerateFileLinkError =
-  | WorkspaceGenerateFileLinkErrorInternal
-  | WorkspaceGenerateFileLinkErrorInvalidKeysBundle
-  | WorkspaceGenerateFileLinkErrorNoKey
-  | WorkspaceGenerateFileLinkErrorNotAllowed
-  | WorkspaceGenerateFileLinkErrorOffline
-  | WorkspaceGenerateFileLinkErrorStopped
+export type WorkspaceGeneratePathAddrError =
+  | WorkspaceGeneratePathAddrErrorInternal
+  | WorkspaceGeneratePathAddrErrorInvalidKeysBundle
+  | WorkspaceGeneratePathAddrErrorNoKey
+  | WorkspaceGeneratePathAddrErrorNotAllowed
+  | WorkspaceGeneratePathAddrErrorOffline
+  | WorkspaceGeneratePathAddrErrorStopped
 
 
 // WorkspaceInfoError
@@ -2125,14 +2125,14 @@ export function workspaceCreateFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<string, WorkspaceCreateFolderError>>
-export function workspaceDecryptFileLinkPath(
+export function workspaceDecryptPathAddr(
     workspace: number,
     link: string
-): Promise<Result<string, WorkspaceDecryptFileLinkPathError>>
-export function workspaceGenerateFileLink(
+): Promise<Result<string, WorkspaceDecryptPathAddrError>>
+export function workspaceGeneratePathAddr(
     workspace: number,
     path: string
-): Promise<Result<string, WorkspaceGenerateFileLinkError>>
+): Promise<Result<string, WorkspaceGeneratePathAddrError>>
 export function workspaceInfo(
     workspace: number
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>

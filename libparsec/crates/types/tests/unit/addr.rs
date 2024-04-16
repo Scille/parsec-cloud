@@ -20,13 +20,13 @@ const ORGANIZATION_BOOTSTRAP_ADDR_PARAM_NO_TOKEN: &str = "wA";
 // cspell:disable-next-line
 const INVITATION_PARAM: &str = "xBCgAAAAAAAAAAAAAAAAAAAB";
 // cspell:disable-next-line
-const FILE_LINK_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A";
+const WORKSPACE_PATH_PARAM: &str = "k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A";
 // `/foo/bar.txt` encrypted with key `2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1`
 // cspell:disable-next-line
-const FILE_LINK_PARAM_ENCRYPTED_PATH: &[u8] = &hex!("e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370");
-const FILE_LINK_PARAM_KEY_INDEX: IndexInt = 1;
+const WORKSPACE_PATH_PARAM_ENCRYPTED_PATH: &[u8] = &hex!("e167d4e1d9bd33abbe067afba20daf765bbf6c238b2407d95a2e3217046dcc4080d2239d7f1ca63b3e6de6e838377e36223c5370");
+const WORKSPACE_PATH_PARAM_KEY_INDEX: IndexInt = 1;
 // cspell:disable-next-line
-const FILE_LINK_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
+const WORKSPACE_PATH_PARAM_WORKSPACE_ID: &[u8] = &hex!("2d4ded1274064608833b7f57f01156e2");
 const INVITATION_TYPE: &str = "claim_user";
 
 /*
@@ -124,12 +124,12 @@ impl Testbed for BackendOrganizationBootstrapAddrTestbed {
     }
 }
 
-struct BackendOrganizationFileLinkAddrTestbed {}
-impl Testbed for BackendOrganizationFileLinkAddrTestbed {
-    impl_testbed_common!(ParsecOrganizationFileLinkAddr);
-    impl_testbed_with_org!(ParsecOrganizationFileLinkAddr);
+struct BackendWorkspacePathAddrTestbed {}
+impl Testbed for BackendWorkspacePathAddrTestbed {
+    impl_testbed_common!(ParsecWorkspacePathAddr);
+    impl_testbed_with_org!(ParsecWorkspacePathAddr);
     fn url(&self) -> String {
-        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=file_link&p={FILE_LINK_PARAM}",)
+        format!("{PARSEC_SCHEME}://{DOMAIN}/{ORG}?a=path&p={WORKSPACE_PATH_PARAM}",)
     }
 }
 
@@ -148,7 +148,7 @@ impl Testbed for BackendInvitationAddrTestbed {
     case::server_addr(&BackendAddrTestbed{}),
     case::organization_addr(&BackendOrganizationAddrTestbed{}),
     case::organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    case::organization_file_link_addr(&BackendOrganizationFileLinkAddrTestbed{}),
+    case::workspace_path_addr(&BackendWorkspacePathAddrTestbed{}),
     case::invitation_addr(&BackendInvitationAddrTestbed{}),
 )]
 fn all_addr(testbed: &dyn Testbed) {}
@@ -156,10 +156,10 @@ fn all_addr(testbed: &dyn Testbed) {}
 #[template]
 #[rstest(
     testbed,
-    case::parsec_organization_addr(&BackendOrganizationAddrTestbed{}),
-    case::parsec_organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
-    case::parsec_organization_file_link_addr(&BackendOrganizationFileLinkAddrTestbed{}),
-    case::parsec_invitation_addr(&BackendInvitationAddrTestbed{}),
+    case::organization_addr(&BackendOrganizationAddrTestbed{}),
+    case::organization_bootstrap_addr(&BackendOrganizationBootstrapAddrTestbed{}),
+    case::workspace_path_addr(&BackendWorkspacePathAddrTestbed{}),
+    case::invitation_addr(&BackendInvitationAddrTestbed{}),
 )]
 fn addr_with_org(testbed: &dyn Testbed) {}
 
@@ -373,42 +373,42 @@ fn bootstrap_addr_bad_payload(#[case] bad_payload: &str) {
 }
 
 #[rstest]
-fn file_link_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
-    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+fn workspace_path_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Option<&str>) {
+    let testbed = BackendWorkspacePathAddrTestbed {};
 
     match bad_type {
         Some(bad_type) => {
             // Type param present in the url but with bad and empty value
-            let url = testbed.url().replace("file_link", bad_type);
+            let url = testbed.url().replace("path", bad_type);
             testbed.assert_addr_err(
                 &url,
                 AddrError::InvalidParamValue {
                     param: "a",
                     value: bad_type.to_string(),
-                    help: "Expected `a=file_link`".to_string(),
+                    help: "Expected `a=path`".to_string(),
                 },
             );
         }
         None => {
             // Type param not present in the url
-            let url = testbed.url().replace("a=file_link&", "");
+            let url = testbed.url().replace("a=path&", "");
             testbed.assert_addr_err(&url, AddrError::MissingParam("a"));
         }
     }
 }
 
 #[test]
-fn file_link_addr_get_params() {
-    let testbed = BackendOrganizationFileLinkAddrTestbed {};
+fn workspace_path_addr_get_params() {
+    let testbed = BackendWorkspacePathAddrTestbed {};
 
     let url = testbed.url();
 
-    let addr: ParsecOrganizationFileLinkAddr = url.parse().unwrap();
-    p_assert_eq!(addr.encrypted_path(), FILE_LINK_PARAM_ENCRYPTED_PATH);
-    p_assert_eq!(addr.key_index(), FILE_LINK_PARAM_KEY_INDEX);
+    let addr: ParsecWorkspacePathAddr = url.parse().unwrap();
+    p_assert_eq!(addr.encrypted_path(), WORKSPACE_PATH_PARAM_ENCRYPTED_PATH);
+    p_assert_eq!(addr.key_index(), WORKSPACE_PATH_PARAM_KEY_INDEX);
     p_assert_eq!(
         addr.workspace_id(),
-        FILE_LINK_PARAM_WORKSPACE_ID.try_into().unwrap()
+        WORKSPACE_PATH_PARAM_WORKSPACE_ID.try_into().unwrap()
     );
 }
 
@@ -419,9 +419,9 @@ fn file_link_addr_get_params() {
 #[case::base64_over_not_msgpack("ZHVtbXk")] // Base64("dummy")
 // cspell:disable-next-line
 #[case::bad_data("xAA")] // Base64(Msgpack(b""))
-fn file_link_addr_bad_payload(#[case] bad_payload: &str) {
-    let testbed = BackendOrganizationFileLinkAddrTestbed {};
-    let url = testbed.url().replace(FILE_LINK_PARAM, bad_payload);
+fn workspace_path_addr_bad_payload(#[case] bad_payload: &str) {
+    let testbed = BackendWorkspacePathAddrTestbed {};
+    let url = testbed.url().replace(WORKSPACE_PATH_PARAM, bad_payload);
     testbed.assert_addr_err(
         &url,
         AddrError::InvalidParamValue {
@@ -629,20 +629,20 @@ fn backend_addr_redirection() {
     );
 
     test_redirection!(
-        ParsecOrganizationFileLinkAddr,
+        ParsecWorkspacePathAddr,
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
         // cspell:disable-next-line
-        "https://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "https://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
     test_redirection!(
-        ParsecOrganizationFileLinkAddr,
+        ParsecWorkspacePathAddr,
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?a=file_link&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?a=path&no_ssl=true&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
         // cspell:disable-next-line
-        "parsec3://parsec.example.com/my_org?no_ssl=true&a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "parsec3://parsec.example.com/my_org?no_ssl=true&a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
         // cspell:disable-next-line
-        "http://parsec.example.com/redirect/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
+        "http://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",  // cspell:disable-line
     );
 }
 
@@ -986,9 +986,9 @@ fn legacy_parsec_v2_organization_bootstrap_addr() {
 }
 
 #[test]
-fn legacy_parsec_v2_organization_file_link_addr() {
+fn legacy_parsec_v2_workspace_path_addr() {
     // cspell:disable-next-line
-    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=file_link&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
+    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=path&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
     let expected_error = AddrError::InvalidUrlScheme {
         got: "parsec".to_string(),
         expected: "parsec3",
@@ -996,11 +996,11 @@ fn legacy_parsec_v2_organization_file_link_addr() {
 
     // Simply no longer supported
     p_assert_matches!(
-        ParsecOrganizationFileLinkAddr::from_str(LEGACY_URL),
+        ParsecWorkspacePathAddr::from_str(LEGACY_URL),
         Err(e) if e == expected_error
     );
 
-    serde_test::assert_de_tokens_error::<ParsecOrganizationFileLinkAddr>(
+    serde_test::assert_de_tokens_error::<ParsecWorkspacePathAddr>(
         &[Token::Str(LEGACY_URL)],
         &expected_error.to_string(),
     )

@@ -8,7 +8,7 @@ use crate::{
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceGenerateFileLinkError {
+pub enum WorkspaceGeneratePathAddrError {
     /// Stopped is not used by `encrypt_for_realm`, but is convenient anyways given
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
@@ -25,10 +25,10 @@ pub enum WorkspaceGenerateFileLinkError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn generate_file_link(
+pub async fn generate_path_addr(
     ops: &WorkspaceOps,
     path: &FsPath,
-) -> Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError> {
+) -> Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError> {
     // String is already in UTF8, so no need for encoding
     let path_as_str = path.to_string();
     let cleartext = path_as_str.as_bytes();
@@ -38,12 +38,12 @@ pub async fn generate_file_link(
         .encrypt_for_realm(ops.realm_id, cleartext)
         .await
         .map_err(|err| match err {
-            CertifEncryptForRealmError::Stopped => WorkspaceGenerateFileLinkError::Stopped,
-            CertifEncryptForRealmError::Offline => WorkspaceGenerateFileLinkError::Offline,
-            CertifEncryptForRealmError::NotAllowed => WorkspaceGenerateFileLinkError::NotAllowed,
-            CertifEncryptForRealmError::NoKey => WorkspaceGenerateFileLinkError::NoKey,
+            CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
+            CertifEncryptForRealmError::Offline => WorkspaceGeneratePathAddrError::Offline,
+            CertifEncryptForRealmError::NotAllowed => WorkspaceGeneratePathAddrError::NotAllowed,
+            CertifEncryptForRealmError::NoKey => WorkspaceGeneratePathAddrError::NoKey,
             CertifEncryptForRealmError::InvalidKeysBundle(err) => {
-                WorkspaceGenerateFileLinkError::InvalidKeysBundle(err)
+                WorkspaceGeneratePathAddrError::InvalidKeysBundle(err)
             }
             CertifEncryptForRealmError::Internal(err) => {
                 err.context("cannot encrypt path for realm").into()
@@ -52,7 +52,7 @@ pub async fn generate_file_link(
 
     // ops.certificates_ops.
 
-    Ok(ParsecOrganizationFileLinkAddr::new(
+    Ok(ParsecWorkspacePathAddr::new(
         ops.device.organization_addr.clone(),
         ops.device.organization_id().to_owned(),
         ops.realm_id,
@@ -62,7 +62,7 @@ pub async fn generate_file_link(
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum WorkspaceDecryptFileLinkPathError {
+pub enum WorkspaceDecryptPathAddrError {
     /// Stopped is not used by `encrypt_for_realm`, but is convenient anyways given
     /// it is needed by the wrapper `CertificateOps::encrypt_for_realm`.
     #[error("Component has stopped")]
@@ -85,39 +85,35 @@ pub enum WorkspaceDecryptFileLinkPathError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn decrypt_file_link_path(
+pub async fn decrypt_path_addr(
     ops: &WorkspaceOps,
-    link: &ParsecOrganizationFileLinkAddr,
-) -> Result<FsPath, WorkspaceDecryptFileLinkPathError> {
+    link: &ParsecWorkspacePathAddr,
+) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
     let cleartext = ops
         .certificates_ops
         .decrypt_opaque_data_for_realm(ops.realm_id, link.key_index(), link.encrypted_path())
         .await
         .map_err(|err| match err {
-            CertifDecryptForRealmError::Stopped => WorkspaceDecryptFileLinkPathError::Stopped,
-            CertifDecryptForRealmError::Offline => WorkspaceDecryptFileLinkPathError::Offline,
-            CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptFileLinkPathError::NotAllowed,
-            CertifDecryptForRealmError::KeyNotFound => {
-                WorkspaceDecryptFileLinkPathError::KeyNotFound
-            }
-            CertifDecryptForRealmError::CorruptedKey => {
-                WorkspaceDecryptFileLinkPathError::CorruptedKey
-            }
+            CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,
+            CertifDecryptForRealmError::Offline => WorkspaceDecryptPathAddrError::Offline,
+            CertifDecryptForRealmError::NotAllowed => WorkspaceDecryptPathAddrError::NotAllowed,
+            CertifDecryptForRealmError::KeyNotFound => WorkspaceDecryptPathAddrError::KeyNotFound,
+            CertifDecryptForRealmError::CorruptedKey => WorkspaceDecryptPathAddrError::CorruptedKey,
             CertifDecryptForRealmError::CorruptedData => {
-                WorkspaceDecryptFileLinkPathError::CorruptedData
+                WorkspaceDecryptPathAddrError::CorruptedData
             }
             CertifDecryptForRealmError::InvalidCertificate(err) => {
-                WorkspaceDecryptFileLinkPathError::InvalidCertificate(err)
+                WorkspaceDecryptPathAddrError::InvalidCertificate(err)
             }
             CertifDecryptForRealmError::InvalidKeysBundle(err) => {
-                WorkspaceDecryptFileLinkPathError::InvalidKeysBundle(err)
+                WorkspaceDecryptPathAddrError::InvalidKeysBundle(err)
             }
             CertifDecryptForRealmError::Internal(err) => err.context("").into(),
         })?;
 
     let path_as_str = std::str::from_utf8(&cleartext)
-        .map_err(|_| WorkspaceDecryptFileLinkPathError::CorruptedData)?;
+        .map_err(|_| WorkspaceDecryptPathAddrError::CorruptedData)?;
     path_as_str
         .parse()
-        .map_err(|_| WorkspaceDecryptFileLinkPathError::CorruptedData)
+        .map_err(|_| WorkspaceDecryptPathAddrError::CorruptedData)
 }

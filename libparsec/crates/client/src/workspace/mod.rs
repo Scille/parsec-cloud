@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+mod addr;
 mod fetch;
-mod link;
 mod merge;
 mod store;
 mod transactions;
@@ -17,7 +17,7 @@ use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
 use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
-pub use link::{WorkspaceDecryptFileLinkPathError, WorkspaceGenerateFileLinkError};
+pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
@@ -483,18 +483,18 @@ impl WorkspaceOps {
         transactions::fd_write(self, fd, data, FdWriteStrategy::StartEOF).await
     }
 
-    pub async fn generate_file_link(
+    pub async fn generate_path_addr(
         &self,
         path: &FsPath,
-    ) -> Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError> {
-        link::generate_file_link(self, path).await
+    ) -> Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError> {
+        addr::generate_path_addr(self, path).await
     }
 
-    pub async fn decrypt_file_link_path(
+    pub async fn decrypt_path_addr(
         &self,
-        link: &ParsecOrganizationFileLinkAddr,
-    ) -> Result<FsPath, WorkspaceDecryptFileLinkPathError> {
-        link::decrypt_file_link_path(self, link).await
+        link: &ParsecWorkspacePathAddr,
+    ) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
+        addr::decrypt_path_addr(self, link).await
     }
 }
 

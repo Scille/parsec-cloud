@@ -15,7 +15,7 @@ import {
   OpenOptions,
   ParseParsecAddrError,
   ParseParsecAddrErrorTag,
-  ParsedParsecAddrOrganizationFileLink,
+  ParsedParsecAddrWorkspacePath,
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
@@ -213,12 +213,12 @@ export async function copyEntry(_source: FsPath, _destination: FsPath): Promise<
   }
 }
 
-export async function parseFileLink(link: string): Promise<Result<ParsedParsecAddrOrganizationFileLink, ParseParsecAddrError>> {
+export async function parseFileLink(link: string): Promise<Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>> {
   const result = await libparsec.parseParsecAddr(link);
-  if (result.ok && result.value.tag !== ParsedParsecAddrTag.OrganizationFileLink) {
+  if (result.ok && result.value.tag !== ParsedParsecAddrTag.WorkspacePath) {
     return { ok: false, error: { tag: ParseParsecAddrErrorTag.InvalidUrl, error: 'not a file link' } };
   }
-  return result as Result<ParsedParsecAddrOrganizationFileLink, ParseParsecAddrError>;
+  return result as Result<ParsedParsecAddrWorkspacePath, ParseParsecAddrError>;
 }
 
 export async function openFile(

@@ -143,7 +143,7 @@ export const fileLinkValidator: IValidator = async function (value: string) {
   }
   const result = await parseParsecAddr(value);
   if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.OrganizationFileLink ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+    return result.value.tag === ParsedParsecAddrTag.WorkspacePath ? { validity: Validity.Valid } : { validity: Validity.Invalid };
   }
   return { validity: Validity.Invalid };
 };

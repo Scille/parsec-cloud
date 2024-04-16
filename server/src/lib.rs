@@ -48,7 +48,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ParsecOrganizationAddr>()?;
     m.add_class::<ParsecActionAddr>()?;
     m.add_class::<ParsecOrganizationBootstrapAddr>()?;
-    m.add_class::<ParsecOrganizationFileLinkAddr>()?;
+    m.add_class::<ParsecWorkspacePathAddr>()?;
     m.add_class::<ParsecInvitationAddr>()?;
     m.add_class::<ParsecPkiEnrollmentAddr>()?;
 

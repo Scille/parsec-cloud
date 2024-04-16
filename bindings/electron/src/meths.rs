@@ -4586,72 +4586,6 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 token,
             })
         }
-        "ParsedParsecAddrOrganizationFileLink" => {
-            let hostname = {
-                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
-                js_val.value(cx)
-            };
-            let port = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
-                        cx.throw_type_error("Not an u32 number")?
-                    }
-                    let v = v as u32;
-                    v
-                }
-            };
-            let use_ssl = {
-                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
-                js_val.value(cx)
-            };
-            let organization_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
-                {
-                    match js_val.value(cx).parse() {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let workspace_id = {
-                let js_val: Handle<JsString> = obj.get(cx, "workspaceId")?;
-                {
-                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
-                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
-                    };
-                    match custom_from_rs_string(js_val.value(cx)) {
-                        Ok(val) => val,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                }
-            };
-            let key_index = {
-                let js_val: Handle<JsNumber> = obj.get(cx, "keyIndex")?;
-                {
-                    let v = js_val.value(cx);
-                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
-                        cx.throw_type_error("Not an u64 number")?
-                    }
-                    let v = v as u64;
-                    v
-                }
-            };
-            let encrypted_path = {
-                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "encryptedPath")?;
-                js_val.as_slice(cx).to_vec()
-            };
-            Ok(libparsec::ParsedParsecAddr::OrganizationFileLink {
-                hostname,
-                port,
-                use_ssl,
-                organization_id,
-                workspace_id,
-                key_index,
-                encrypted_path,
-            })
-        }
         "ParsedParsecAddrPkiEnrollment" => {
             let hostname = {
                 let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
@@ -4712,6 +4646,72 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 hostname,
                 port,
                 use_ssl,
+            })
+        }
+        "ParsedParsecAddrWorkspacePath" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    match js_val.value(cx).parse() {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let workspace_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "workspaceId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let key_index = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "keyIndex")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            let encrypted_path = {
+                let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "encryptedPath")?;
+                js_val.as_slice(cx).to_vec()
+            };
+            Ok(libparsec::ParsedParsecAddr::WorkspacePath {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                workspace_id,
+                key_index,
+                encrypted_path,
             })
         }
         _ => cx.throw_type_error("Object is not a ParsedParsecAddr"),
@@ -4826,49 +4826,6 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             };
             js_obj.set(cx, "token", js_token)?;
         }
-        libparsec::ParsedParsecAddr::OrganizationFileLink {
-            hostname,
-            port,
-            use_ssl,
-            organization_id,
-            workspace_id,
-            key_index,
-            encrypted_path,
-            ..
-        } => {
-            let js_tag =
-                JsString::try_new(cx, "ParsedParsecAddrOrganizationFileLink").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
-            js_obj.set(cx, "hostname", js_hostname)?;
-            let js_port = JsNumber::new(cx, port as f64);
-            js_obj.set(cx, "port", js_port)?;
-            let js_use_ssl = JsBoolean::new(cx, use_ssl);
-            js_obj.set(cx, "useSsl", js_use_ssl)?;
-            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
-            js_obj.set(cx, "organizationId", js_organization_id)?;
-            let js_workspace_id = JsString::try_new(cx, {
-                let custom_to_rs_string =
-                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
-                match custom_to_rs_string(workspace_id) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            })
-            .or_throw(cx)?;
-            js_obj.set(cx, "workspaceId", js_workspace_id)?;
-            let js_key_index = JsNumber::new(cx, key_index as f64);
-            js_obj.set(cx, "keyIndex", js_key_index)?;
-            let js_encrypted_path = {
-                let mut js_buff = JsArrayBuffer::new(cx, encrypted_path.len())?;
-                let js_buff_slice = js_buff.as_mut_slice(cx);
-                for (i, c) in encrypted_path.iter().enumerate() {
-                    js_buff_slice[i] = *c;
-                }
-                js_buff
-            };
-            js_obj.set(cx, "encryptedPath", js_encrypted_path)?;
-        }
         libparsec::ParsedParsecAddr::PkiEnrollment {
             hostname,
             port,
@@ -4901,6 +4858,48 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             js_obj.set(cx, "port", js_port)?;
             let js_use_ssl = JsBoolean::new(cx, use_ssl);
             js_obj.set(cx, "useSsl", js_use_ssl)?;
+        }
+        libparsec::ParsedParsecAddr::WorkspacePath {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            workspace_id,
+            key_index,
+            encrypted_path,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ParsedParsecAddrWorkspacePath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_workspace_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(workspace_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "workspaceId", js_workspace_id)?;
+            let js_key_index = JsNumber::new(cx, key_index as f64);
+            js_obj.set(cx, "keyIndex", js_key_index)?;
+            let js_encrypted_path = {
+                let mut js_buff = JsArrayBuffer::new(cx, encrypted_path.len())?;
+                let js_buff_slice = js_buff.as_mut_slice(cx);
+                for (i, c) in encrypted_path.iter().enumerate() {
+                    js_buff_slice[i] = *c;
+                }
+                js_buff
+            };
+            js_obj.set(cx, "encryptedPath", js_encrypted_path)?;
         }
     }
     Ok(js_obj)
@@ -5189,62 +5188,60 @@ fn variant_workspace_create_folder_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// WorkspaceDecryptFileLinkPathError
+// WorkspaceDecryptPathAddrError
 
 #[allow(dead_code)]
-fn variant_workspace_decrypt_file_link_path_error_rs_to_js<'a>(
+fn variant_workspace_decrypt_path_addr_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::WorkspaceDecryptFileLinkPathError,
+    rs_obj: libparsec::WorkspaceDecryptPathAddrError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::WorkspaceDecryptFileLinkPathError::CorruptedData { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorCorruptedData")
+        libparsec::WorkspaceDecryptPathAddrError::CorruptedData { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorCorruptedData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::CorruptedKey { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorCorruptedKey").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceDecryptPathAddrError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorInvalidCertificate")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceDecryptFileLinkPathError::CorruptedKey { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorCorruptedKey")
+        libparsec::WorkspaceDecryptPathAddrError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorInvalidKeysBundle")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceDecryptFileLinkPathError::Internal { .. } => {
+        libparsec::WorkspaceDecryptPathAddrError::KeyNotFound { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorInternal").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorKeyNotFound").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceDecryptFileLinkPathError::InvalidCertificate { .. } => {
+        libparsec::WorkspaceDecryptPathAddrError::NotAllowed { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorInvalidCertificate")
-                    .or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceDecryptFileLinkPathError::InvalidKeysBundle { .. } => {
+        libparsec::WorkspaceDecryptPathAddrError::Offline { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorInvalidKeysBundle")
-                    .or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceDecryptFileLinkPathError::KeyNotFound { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorKeyNotFound")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceDecryptFileLinkPathError::NotAllowed { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorNotAllowed")
-                .or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceDecryptFileLinkPathError::Offline { .. } => {
+        libparsec::WorkspaceDecryptPathAddrError::Stopped { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorOffline").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::WorkspaceDecryptFileLinkPathError::Stopped { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "WorkspaceDecryptFileLinkPathErrorStopped").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceDecryptPathAddrErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -5425,45 +5422,45 @@ fn variant_workspace_fd_write_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
-// WorkspaceGenerateFileLinkError
+// WorkspaceGeneratePathAddrError
 
 #[allow(dead_code)]
-fn variant_workspace_generate_file_link_error_rs_to_js<'a>(
+fn variant_workspace_generate_path_addr_error_rs_to_js<'a>(
     cx: &mut impl Context<'a>,
-    rs_obj: libparsec::WorkspaceGenerateFileLinkError,
+    rs_obj: libparsec::WorkspaceGeneratePathAddrError,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::WorkspaceGenerateFileLinkError::Internal { .. } => {
+        libparsec::WorkspaceGeneratePathAddrError::Internal { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorInternal").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceGenerateFileLinkError::InvalidKeysBundle { .. } => {
-            let js_tag = JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorInvalidKeysBundle")
+        libparsec::WorkspaceGeneratePathAddrError::InvalidKeysBundle { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorInvalidKeysBundle")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceGenerateFileLinkError::NoKey { .. } => {
+        libparsec::WorkspaceGeneratePathAddrError::NoKey { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorNoKey").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorNoKey").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceGenerateFileLinkError::NotAllowed { .. } => {
+        libparsec::WorkspaceGeneratePathAddrError::NotAllowed { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorNotAllowed").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceGenerateFileLinkError::Offline { .. } => {
+        libparsec::WorkspaceGeneratePathAddrError::Offline { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorOffline").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::WorkspaceGenerateFileLinkError::Stopped { .. } => {
+        libparsec::WorkspaceGeneratePathAddrError::Stopped { .. } => {
             let js_tag =
-                JsString::try_new(cx, "WorkspaceGenerateFileLinkErrorStopped").or_throw(cx)?;
+                JsString::try_new(cx, "WorkspaceGeneratePathAddrErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -10279,8 +10276,8 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
-// workspace_decrypt_file_link_path
-fn workspace_decrypt_file_link_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// workspace_decrypt_path_addr
+fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10296,7 +10293,7 @@ fn workspace_decrypt_file_link_path(mut cx: FunctionContext) -> JsResult<JsPromi
         let js_val = cx.argument::<JsString>(1)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
-                libparsec::ParsecOrganizationFileLinkAddr::from_any(&s).map_err(|e| e.to_string())
+                libparsec::ParsecWorkspacePathAddr::from_any(&s).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -10312,7 +10309,7 @@ fn workspace_decrypt_file_link_path(mut cx: FunctionContext) -> JsResult<JsPromi
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::workspace_decrypt_file_link_path(workspace, &link).await;
+            let ret = libparsec::workspace_decrypt_path_addr(workspace, &link).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -10339,7 +10336,7 @@ fn workspace_decrypt_file_link_path(mut cx: FunctionContext) -> JsResult<JsPromi
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err =
-                            variant_workspace_decrypt_file_link_path_error_rs_to_js(&mut cx, err)?;
+                            variant_workspace_decrypt_path_addr_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -10351,8 +10348,8 @@ fn workspace_decrypt_file_link_path(mut cx: FunctionContext) -> JsResult<JsPromi
     Ok(promise)
 }
 
-// workspace_generate_file_link
-fn workspace_generate_file_link(mut cx: FunctionContext) -> JsResult<JsPromise> {
+// workspace_generate_path_addr
+fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10382,7 +10379,7 @@ fn workspace_generate_file_link(mut cx: FunctionContext) -> JsResult<JsPromise> 
     // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
     let _handle = crate::TOKIO_RUNTIME.lock().expect("Mutex is poisoned").spawn(async move {
 
-        let ret = libparsec::workspace_generate_file_link(
+        let ret = libparsec::workspace_generate_path_addr(
             workspace,
             &path,
         ).await;
@@ -10394,7 +10391,7 @@ fn workspace_generate_file_link(mut cx: FunctionContext) -> JsResult<JsPromise> 
         let js_tag = JsBoolean::new(&mut cx, true);
         js_obj.set(&mut cx, "ok", js_tag)?;
         let js_value = JsString::try_new(&mut cx,{
-    let custom_to_rs_string = |addr: libparsec::ParsecOrganizationFileLinkAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
+    let custom_to_rs_string = |addr: libparsec::ParsecWorkspacePathAddr| -> Result<String, &'static str> { Ok(addr.to_url().into()) };
     match custom_to_rs_string(ok) {
         Ok(ok) => ok,
         Err(err) => return cx.throw_type_error(err),
@@ -10407,7 +10404,7 @@ fn workspace_generate_file_link(mut cx: FunctionContext) -> JsResult<JsPromise> 
         let js_obj = cx.empty_object();
         let js_tag = JsBoolean::new(&mut cx, false);
         js_obj.set(&mut cx, "ok", js_tag)?;
-        let js_err = variant_workspace_generate_file_link_error_rs_to_js(&mut cx, err)?;
+        let js_err = variant_workspace_generate_path_addr_error_rs_to_js(&mut cx, err)?;
         js_obj.set(&mut cx, "error", js_err)?;
         js_obj
     }
@@ -11229,11 +11226,8 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("workspaceCreateFile", workspace_create_file)?;
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
     cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
-    cx.export_function(
-        "workspaceDecryptFileLinkPath",
-        workspace_decrypt_file_link_path,
-    )?;
-    cx.export_function("workspaceGenerateFileLink", workspace_generate_file_link)?;
+    cx.export_function("workspaceDecryptPathAddr", workspace_decrypt_path_addr)?;
+    cx.export_function("workspaceGeneratePathAddr", workspace_generate_path_addr)?;
     cx.export_function("workspaceInfo", workspace_info)?;
     cx.export_function("workspaceMount", workspace_mount)?;
     cx.export_function("workspaceOpenFile", workspace_open_file)?;

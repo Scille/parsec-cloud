@@ -21,7 +21,7 @@ from .common import (
     Path,
 )
 from .addr import (
-    ParsecOrganizationFileLinkAddr,
+    ParsecWorkspacePathAddr,
 )
 
 
@@ -519,7 +519,7 @@ async def fd_write_start_eof(
     raise NotImplementedError
 
 
-class WorkspaceGenerateFileLinkError(ErrorVariant):
+class WorkspaceGeneratePathAddrError(ErrorVariant):
     class Stopped:
         pass
 
@@ -539,14 +539,14 @@ class WorkspaceGenerateFileLinkError(ErrorVariant):
         pass
 
 
-async def workspace_generate_file_link(
+async def workspace_generate_path_addr(
     workspace: Handle,
     path: Ref[FsPath],
-) -> Result[ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError]:
+) -> Result[ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError]:
     raise NotImplementedError
 
 
-class WorkspaceDecryptFileLinkPathError(ErrorVariant):
+class WorkspaceDecryptPathAddrError(ErrorVariant):
     class Stopped:
         pass
 
@@ -575,8 +575,8 @@ class WorkspaceDecryptFileLinkPathError(ErrorVariant):
         pass
 
 
-async def workspace_decrypt_file_link_path(
+async def workspace_decrypt_path_addr(
     workspace: Handle,
-    link: Ref[ParsecOrganizationFileLinkAddr],
-) -> Result[FsPath, WorkspaceDecryptFileLinkPathError]:
+    link: Ref[ParsecWorkspacePathAddr],
+) -> Result[FsPath, WorkspaceDecryptPathAddrError]:
     raise NotImplementedError

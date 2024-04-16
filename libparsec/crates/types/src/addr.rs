@@ -18,7 +18,7 @@ const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 const PARSEC_PARAM_ACTION: &str = "a";
 const PARSEC_PARAM_PAYLOAD: &str = "p";
 const PARSEC_ACTION_BOOTSTRAP_ORGANIZATION: &str = "bootstrap_organization";
-const PARSEC_ACTION_FILE_LINK: &str = "file_link";
+const PARSEC_ACTION_WORKSPACE_PATH: &str = "path";
 const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
 const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
@@ -610,7 +610,7 @@ impl ParsecOrganizationAddr {
 
 pub enum ParsecActionAddr {
     OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
-    OrganizationFileLink(ParsecOrganizationFileLinkAddr),
+    WorkspacePath(ParsecWorkspacePathAddr),
     Invitation(ParsecInvitationAddr),
     PkiEnrollment(ParsecPkiEnrollmentAddr),
 }
@@ -619,8 +619,8 @@ impl ParsecActionAddr {
     pub fn from_any(url: &str) -> Result<Self, AddrError> {
         if let Ok(addr) = ParsecOrganizationBootstrapAddr::from_any(url) {
             Ok(ParsecActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::from_any(url) {
-            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecWorkspacePathAddr::from_any(url) {
+            Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::from_any(url) {
             Ok(ParsecActionAddr::Invitation(addr))
         } else {
@@ -633,8 +633,8 @@ impl ParsecActionAddr {
 
         if let Ok(addr) = ParsecOrganizationBootstrapAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecWorkspacePathAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::Invitation(addr))
         } else {
@@ -652,8 +652,8 @@ impl std::str::FromStr for ParsecActionAddr {
 
         if let Ok(addr) = ParsecOrganizationBootstrapAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::OrganizationBootstrap(addr))
-        } else if let Ok(addr) = ParsecOrganizationFileLinkAddr::_from_url(&parsed) {
-            Ok(ParsecActionAddr::OrganizationFileLink(addr))
+        } else if let Ok(addr) = ParsecWorkspacePathAddr::_from_url(&parsed) {
+            Ok(ParsecActionAddr::WorkspacePath(addr))
         } else if let Ok(addr) = ParsecInvitationAddr::_from_url(&parsed) {
             Ok(ParsecActionAddr::Invitation(addr))
         } else {
@@ -758,13 +758,13 @@ impl ParsecOrganizationBootstrapAddr {
 }
 
 /*
- * ParsecOrganizationFileLinkAddr
+ * ParsecWorkspacePathAddr
  */
 
 /// Represent the URL to share a file link
-/// (e.g. ``parsec3://parsec.example.com/my_org?a=file_link&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A``)  // cspell:disable-line
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ParsecOrganizationFileLinkAddr {
+pub struct ParsecWorkspacePathAddr {
     base: BaseParsecAddr,
     organization_id: OrganizationID,
     workspace_id: VlobID,
@@ -772,9 +772,9 @@ pub struct ParsecOrganizationFileLinkAddr {
     encrypted_path: Vec<u8>,
 }
 
-impl_common_stuff!(ParsecOrganizationFileLinkAddr);
+impl_common_stuff!(ParsecWorkspacePathAddr);
 
-impl ParsecOrganizationFileLinkAddr {
+impl ParsecWorkspacePathAddr {
     pub fn new(
         server_addr: impl Into<ParsecAddr>,
         organization_id: OrganizationID,
@@ -796,7 +796,7 @@ impl ParsecOrganizationFileLinkAddr {
         let organization_id = extract_organization_id(parsed)?;
         let pairs = parsed.0.query_pairs();
 
-        extract_param_and_expect_value(&pairs, PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK)?;
+        extract_param_and_expect_value(&pairs, PARSEC_PARAM_ACTION, PARSEC_ACTION_WORKSPACE_PATH)?;
         let (workspace_id, key_index, encrypted_path) = extract_param_and_b64_msgpack_deserialize!(
             &pairs,
             PARSEC_PARAM_PAYLOAD,
@@ -823,7 +823,7 @@ impl ParsecOrganizationFileLinkAddr {
             b64_msgpack_serialize(&(self.workspace_id, self.key_index, &self.encrypted_path));
 
         url.query_pairs_mut()
-            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_FILE_LINK)
+            .append_pair(PARSEC_PARAM_ACTION, PARSEC_ACTION_WORKSPACE_PATH)
             .append_pair(PARSEC_PARAM_PAYLOAD, &payload);
 
         url

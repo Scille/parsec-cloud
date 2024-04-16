@@ -4,9 +4,9 @@ use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
     EntryStat, OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
-    WorkspaceDecryptFileLinkPathError, WorkspaceFdCloseError, WorkspaceFdFlushError,
+    WorkspaceDecryptPathAddrError, WorkspaceFdCloseError, WorkspaceFdFlushError,
     WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
-    WorkspaceGenerateFileLinkError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
+    WorkspaceGeneratePathAddrError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
     WorkspaceRenameEntryError, WorkspaceStatEntryError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
@@ -617,20 +617,20 @@ pub async fn fd_write_start_eof(
     workspace.fd_write_start_eof(fd, data).await
 }
 
-pub async fn workspace_generate_file_link(
+pub async fn workspace_generate_path_addr(
     workspace: Handle,
     path: &FsPath,
-) -> Result<ParsecOrganizationFileLinkAddr, WorkspaceGenerateFileLinkError> {
+) -> Result<ParsecWorkspacePathAddr, WorkspaceGeneratePathAddrError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.generate_file_link(path).await
+    workspace.generate_path_addr(path).await
 }
 
-pub async fn workspace_decrypt_file_link_path(
+pub async fn workspace_decrypt_path_addr(
     workspace: Handle,
-    link: &ParsecOrganizationFileLinkAddr,
-) -> Result<FsPath, WorkspaceDecryptFileLinkPathError> {
+    link: &ParsecWorkspacePathAddr,
+) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.decrypt_file_link_path(link).await
+    workspace.decrypt_path_addr(link).await
 }

@@ -27,7 +27,7 @@ pub enum ParsedParsecAddr {
         organization_id: OrganizationID,
         token: Option<String>,
     },
-    OrganizationFileLink {
+    WorkspacePath {
         hostname: String,
         port: u32,
         use_ssl: bool,
@@ -70,17 +70,15 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     token: addr.token().map(|x| x.to_string()),
                 }
             }
-            ParsecActionAddr::OrganizationFileLink(addr) => {
-                ParsedParsecAddr::OrganizationFileLink {
-                    hostname: addr.hostname().into(),
-                    port: addr.port() as u32,
-                    use_ssl: addr.use_ssl(),
-                    organization_id: addr.organization_id().clone(),
-                    encrypted_path: addr.encrypted_path().clone(),
-                    key_index: addr.key_index(),
-                    workspace_id: addr.workspace_id(),
-                }
-            }
+            ParsecActionAddr::WorkspacePath(addr) => ParsedParsecAddr::WorkspacePath {
+                hostname: addr.hostname().into(),
+                port: addr.port() as u32,
+                use_ssl: addr.use_ssl(),
+                organization_id: addr.organization_id().clone(),
+                encrypted_path: addr.encrypted_path().clone(),
+                key_index: addr.key_index(),
+                workspace_id: addr.workspace_id(),
+            },
             ParsecActionAddr::Invitation(addr) => match addr.invitation_type() {
                 InvitationType::User => ParsedParsecAddr::InvitationUser {
                     hostname: addr.hostname().into(),
