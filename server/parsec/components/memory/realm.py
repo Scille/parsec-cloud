@@ -562,7 +562,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         return certif
 
     @override
-    async def get_keys_bundle_as_user(
+    async def get_keys_bundle(
         self,
         organization_id: OrganizationID,
         author: DeviceID,

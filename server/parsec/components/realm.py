@@ -433,7 +433,7 @@ class BaseRealmComponent:
     ):
         raise NotImplementedError
 
-    async def get_keys_bundle_as_user(
+    async def get_keys_bundle(
         self,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -721,7 +721,7 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_get_keys_bundle.Req,
     ) -> authenticated_cmds.latest.realm_get_keys_bundle.Rep:
-        outcome = await self.get_keys_bundle_as_user(
+        outcome = await self.get_keys_bundle(
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,
