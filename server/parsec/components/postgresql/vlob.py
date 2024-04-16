@@ -36,7 +36,7 @@ from parsec.components.vlob import (
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
 )
-from parsec.events import EventVlob
+from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
 # async def _check_sequestered_organization(
 #     conn: asyncpg.Connection,
@@ -285,19 +285,19 @@ class PGVlobComponent(BaseVlobComponent):
 
         assert vlob_atom_internal_id is not None
 
-        await self.event_bus.send(
-            EventVlob(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm_id,
-                timestamp=timestamp,
-                vlob_id=vlob_id,
-                version=1,
-                blob=None,  # TODO: use `blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None`
-                last_common_certificate_timestamp=last_common_certificate_timestamp,
-                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
-            )
+        event = EventVlob(
+            organization_id=organization_id,
+            author=author,
+            realm_id=realm_id,
+            timestamp=timestamp,
+            vlob_id=vlob_id,
+            version=1,
+            blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
+            last_common_certificate_timestamp=last_common_certificate_timestamp,
+            last_realm_certificate_timestamp=last_realm_certificate_timestamp,
         )
+        event.model_dump_json()
+        await self.event_bus.send(event)
 
     async def read(
         self,
