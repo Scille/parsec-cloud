@@ -584,7 +584,7 @@ class PGRealmComponent(BaseRealmComponent):
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
+            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
                 pass
 
         match realm_create_validate(
@@ -598,6 +598,9 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
         assert certif.role == RealmRole.OWNER
+
+        if last_common_certificate_timestamp >= certif.timestamp:
+            return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
 
         result = await conn.fetchrow(
             *_q_create_realm(

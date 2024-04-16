@@ -8,6 +8,7 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmRole,
     RealmRoleCertificate,
+    RevokedUserCertificate,
     SecretKey,
     SecretKeyAlgorithm,
     VlobID,
@@ -118,16 +119,17 @@ async def test_authenticated_realm_create_timestamp_out_of_ballpark(
     "timestamp_offset",
     (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
 )
-async def test_authenticated_realm_create_require_greater_timestamp(
+async def test_authenticated_realm_create_require_greater_timestamp_due_to_other_realm_activity(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     alice_owner_role_certificate: RealmRoleCertificate,
     timestamp_offset: int,
+    with_postgresql: bool,
 ) -> None:
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 
-    # 1) Performa a key rotation to add a new certificate at last_certificate_timestamp
+    # 1) Perform a a key rotation to add a new certificate at last_certificate_timestamp
 
     outcome = await backend.realm.rotate_key(
         now=last_certificate_timestamp,
@@ -150,6 +152,54 @@ async def test_authenticated_realm_create_require_greater_timestamp(
         ).dump_and_sign(coolorg.alice.signing_key),
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
+
+    # 2) Try to create a realm with same or previous timestamp
+
+    certif = patch_realm_role_certificate(
+        alice_owner_role_certificate, timestamp=same_or_previous_timestamp
+    )
+    rep = await coolorg.alice.realm_create(
+        realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
+    )
+
+    # The rotation of a realm has nothing to do with the creation of a new realm
+    # The postgre implementation does not perform this check
+    if with_postgresql:
+        assert rep == authenticated_cmds.v4.realm_create.RepOk()
+    else:
+        assert rep == authenticated_cmds.v4.realm_create.RepRequireGreaterTimestamp(
+            strictly_greater_than=last_certificate_timestamp
+        )
+
+
+@pytest.mark.parametrize(
+    "timestamp_offset",
+    (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
+)
+async def test_authenticated_realm_create_require_greater_timestamp_due_to_common_activity(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    alice_owner_role_certificate: RealmRoleCertificate,
+    timestamp_offset: int,
+    with_postgresql: bool,
+) -> None:
+    last_certificate_timestamp = DateTime.now()
+    same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
+
+    # 1) Perform a a key rotation to add a new certificate at last_certificate_timestamp
+
+    outcome = await backend.user.revoke_user(
+        now=last_certificate_timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        revoked_user_certificate=RevokedUserCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=last_certificate_timestamp,
+            user_id=coolorg.mallory.device_id.user_id,
+        ).dump_and_sign(coolorg.alice.signing_key),
+    )
+    assert isinstance(outcome, RevokedUserCertificate)
 
     # 2) Try to create a realm with same or previous timestamp
 
