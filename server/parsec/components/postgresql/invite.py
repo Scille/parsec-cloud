@@ -36,7 +36,6 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.user_queries.find import query_retrieve_active_human_by_email
 from parsec.components.postgresql.utils import (
     Q,
     q_device,
@@ -157,38 +156,6 @@ WHERE
     _id = $row_id
 """
 )
-
-
-# async def _do_delete_invitation(
-#     conn: AsyncpgConnection,
-#     organization_id: OrganizationID,
-#     greeter: UserID,
-#     token: InvitationToken,
-#     on: DateTime,
-#     reason: InvitationDeletedReason,
-# ) -> None:
-#     row = await conn.fetchrow(
-#         *_q_delete_invitation_info(
-#             organization_id=organization_id.str, greeter=greeter.str, token=token
-#         )
-#     )
-#     if not row:
-#         raise InvitationNotFoundError(token)
-#     row_id, deleted_on = row
-#     if deleted_on:
-#         raise InvitationAlreadyDeletedError(token)
-
-#     await conn.execute(*_q_delete_invitation(row_id=row_id, on=on, reason=reason.str))
-#     await send_signal(
-#         conn,
-#         BackendEventInviteStatusChanged(
-#             organization_id=organization_id,
-#             greeter=greeter,
-#             token=token,
-#             status=InvitationStatus.DELETED,
-#         ),
-#     )
-
 
 _q_list_invitations = Q(
     f"""
@@ -333,6 +300,34 @@ WHERE
     _id = $row_id
 """
 )
+
+_q_retrieve_active_human_by_email = Q(
+    f"""
+SELECT
+    user_.user_id
+FROM user_ LEFT JOIN human ON user_.human=human._id
+WHERE
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    AND human.email = $email
+    AND (user_.revoked_on IS NULL OR user_.revoked_on > $now)
+LIMIT 1
+"""
+)
+
+
+async def query_retrieve_active_human_by_email(
+    conn: AsyncpgConnection, organization_id: OrganizationID, email: str
+) -> UserID | None:
+    result = await conn.fetchrow(
+        *_q_retrieve_active_human_by_email(
+            organization_id=organization_id.str,
+            now=DateTime.now(),
+            email=email,
+        )
+    )
+    if result:
+        return UserID(result["user_id"])
+    return None
 
 
 async def _do_new_user_or_device_invitation(
@@ -550,12 +545,12 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_user(conn, organization_id, author):
-            case UserProfile():
-                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
+            case (UserProfile(), DateTime()):
+                pass
 
         row = await conn.fetchrow(
             *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
@@ -596,12 +591,12 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_user(conn, organization_id, author):
-            case UserProfile():
-                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return InviteListBadOutcome.AUTHOR_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return InviteListBadOutcome.AUTHOR_REVOKED
+            case (UserProfile(), DateTime()):
+                pass
 
         rows = await conn.fetch(
             *_q_list_invitations(organization_id=organization_id.str, user_id=author.str)

@@ -22,10 +22,6 @@ from parsec.components.pki import (
     PkiEnrollmentListItem,
 )
 from parsec.components.postgresql.handler import send_signal
-from parsec.components.postgresql.user_queries.create import (
-    q_create_user,
-    q_take_user_device_write_lock,
-)
 from parsec.components.postgresql.utils import Q, q_device_internal_id, q_organization_internal_id
 
 
