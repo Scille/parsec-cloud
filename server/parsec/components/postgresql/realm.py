@@ -394,13 +394,15 @@ class PGRealmComponent(BaseRealmComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
-        author: DeviceID,
+        author: DeviceID | UserID,
     ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
+        if isinstance(author, DeviceID):
+            author = author.user_id
         row = await conn.fetchrow(
             *q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
-                user_id=author.user_id.str,
+                user_id=author.str,
             )
         )
         if not row:
