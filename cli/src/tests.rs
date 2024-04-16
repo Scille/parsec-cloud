@@ -21,7 +21,7 @@ use libparsec::{
 use crate::{
     create_organization::create_organization_req,
     run_testenv::{
-        backend_addr_from_http_url, initialize_test_organization, new_environment, TestenvConfig,
+        initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
         DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER_URL,
     },
     utils::*,
@@ -29,7 +29,7 @@ use crate::{
 
 fn get_testenv_config() -> TestenvConfig {
     if let Ok(testbed_server) = std::env::var("TESTBED_SERVER") {
-        TestenvConfig::ConnectToServer(backend_addr_from_http_url(&testbed_server))
+        TestenvConfig::ConnectToServer(parsec_addr_from_http_url(&testbed_server))
     } else {
         TestenvConfig::StartNewServer {
             stop_after_process: std::process::id(),

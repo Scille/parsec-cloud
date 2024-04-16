@@ -461,7 +461,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
 
     let testenv_config = match (main_process_id, std::env::var("TESTBED_SERVER")) {
         (_, Ok(testbed_server)) => {
-            let url = backend_addr_from_http_url(&testbed_server);
+            let url = parsec_addr_from_http_url(&testbed_server);
             TestenvConfig::ConnectToServer(url)
         }
         (Some(main_process_id), _) => TestenvConfig::StartNewServer {
@@ -496,7 +496,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub fn backend_addr_from_http_url(url: &str) -> ParsecAddr {
+pub fn parsec_addr_from_http_url(url: &str) -> ParsecAddr {
     let url = if url.starts_with("http://") {
         url.replacen("http", PARSEC_SCHEME, 1) + "?no_ssl=true"
     } else if url.starts_with("https://") {
