@@ -43,7 +43,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
             "(use `PG_URL` env var to customize the database to use)"
         ),
     )
-    parser.addoption("--runslow", action="store_true", help="Don't skip slow tests")
     parser.addoption(
         "--run-postgresql-cluster",
         action="store_true",
@@ -156,8 +155,6 @@ def _patch_caplog() -> None:
 
 
 def pytest_runtest_setup(item: pytest.Item) -> None:
-    if item.get_closest_marker("slow") and not item.config.getoption("--runslow"):
-        pytest.skip("need --runslow option to run")
     if item.get_closest_marker("postgresql"):
         if not item.config.getoption("--postgresql"):
             pytest.skip("need --postgresql option to run")
