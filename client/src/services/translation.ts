@@ -94,10 +94,15 @@ export function translate(content: Translatable | undefined): string {
   return typeof content === 'string' ? t(content) : t(content.key, content.data, content.count);
 }
 
-export function formatDate(date: DateTime, format: DateFormat = 'long'): string {
+export function formatDate(date: DateTime, format: DateFormat = 'long'): Translatable {
   const { d } = i18n.global;
 
-  return d(date.toJSDate(), format);
+  // Bit of a trickery.
+  // `d` from i18n returns an already formatted date as string
+  // But in our case, we want it to be a Translatable instead so it can be processed
+  // as every other translation.
+  // We use a translation key that just returns the string given as parameter.
+  return { key: 'common.date.asIs', data: { date: d(date.toJSDate(), format) } };
 }
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
