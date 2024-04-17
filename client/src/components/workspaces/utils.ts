@@ -83,16 +83,17 @@ export async function openWorkspaceContextMenu(
   event: Event,
   workspace: WorkspaceInfo,
   informationManager: InformationManager,
+  fromSidebar = false,
 ): Promise<void> {
   const clientProfile = await getClientProfile();
   const popover = await popoverController.create({
     component: WorkspaceContextMenu,
-    cssClass: 'workspace-context-menu',
+    cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
     event: event,
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    alignment: 'end',
+    side: fromSidebar ? 'right' : 'bottom',
     componentProps: {
       workspaceName: workspace.currentName,
       clientProfile: clientProfile,

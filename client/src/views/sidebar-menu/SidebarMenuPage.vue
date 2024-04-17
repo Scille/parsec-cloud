@@ -124,7 +124,7 @@
                 <ion-label>{{ workspace.currentName }}</ion-label>
                 <div
                   class="workspace-option"
-                  @click.stop="openWorkspaceContextMenu($event, workspace, informationManager)"
+                  @click.stop="openWorkspaceContextMenu($event, workspace, informationManager, true)"
                 >
                   <ion-icon :icon="ellipsisHorizontal" />
                 </div>
