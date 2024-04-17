@@ -458,6 +458,8 @@ PoFile
 pointsize
 popleft
 positionpoll
+postgre
+postgresql
 poutils
 powrap
 precommit
