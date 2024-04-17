@@ -209,6 +209,15 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm run build:ci",
         ),
     ),
+    ("electron-release-install",): (
+        Cwd(BINDINGS_ELECTRON_DIR),
+        Cmd(
+            cmd="npm install",
+        ),
+        Cmd(
+            cmd="npm run build:release",
+        ),
+    ),
     # Flags used in `bindings/electron/scripts/build.js`
     ("electron-ci-libparsec-cargo-flags",): Echo(ELECTRON_CI_CARGO_FLAGS),
     # Flags used in `bindings/electron/scripts/build.js`
@@ -242,6 +251,15 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         ),
         Cmd(
             cmd="npm run build:ci",
+        ),
+    ),
+    ("web-release-install",): (
+        Cwd(BINDINGS_WEB_DIR),
+        Cmd(
+            cmd="npm install",
+        ),
+        Cmd(
+            cmd="npm run build:release",
         ),
     ),
     ("run-testbed-server", "rts"): (
