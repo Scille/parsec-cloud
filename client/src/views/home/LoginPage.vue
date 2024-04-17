@@ -44,7 +44,7 @@
         <ion-button
           @click="onLoginClick()"
           size="large"
-          :disabled="password.length == 0"
+          :disabled="password.length == 0 || loginInProgress === true"
           class="login-button"
         >
           <ion-icon
@@ -53,6 +53,11 @@
           />
           {{ $msTranslate('HomePage.organizationLogin.login') }}
         </ion-button>
+
+        <ms-spinner
+          class="login-spinner"
+          v-show="loginInProgress === true"
+        />
       </ion-footer>
     </ion-card>
     <!-- end of login -->
@@ -60,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsInput, MsPasswordInput } from '@/components/core';
+import { MsInput, MsPasswordInput, MsSpinner } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
@@ -69,6 +74,7 @@ import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   device: AvailableDevice;
+  loginInProgress?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -87,7 +93,9 @@ onMounted(async () => {
 });
 
 async function onLoginClick(): Promise<void> {
-  emits('loginClick', props.device, AccessStrategy.usePassword(props.device, password.value));
+  if (!props.loginInProgress) {
+    emits('loginClick', props.device, AccessStrategy.usePassword(props.device, password.value));
+  }
 }
 
 async function setLoginError(_error?: ClientStartError): Promise<void> {
@@ -208,6 +216,10 @@ defineExpose({
 
       .login-button {
         width: 100%;
+      }
+
+      .login-spinner {
+        flex-shrink: 2;
       }
     }
   }
