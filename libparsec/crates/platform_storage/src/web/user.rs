@@ -27,13 +27,17 @@ unsafe impl Send for PlatformUserStorage {}
 
 impl PlatformUserStorage {
     pub(crate) async fn no_populate_start(
-        data_base_dir: &Path,
+        _data_base_dir: &Path,
         device: &LocalDevice,
     ) -> anyhow::Result<Self> {
         // 1) Open the database
 
         #[cfg(feature = "test-with-testbed")]
-        let name = format!("{}-{}-user", data_base_dir.to_str().unwrap(), device.slug());
+        let name = format!(
+            "{}-{}-user",
+            _data_base_dir.to_str().unwrap(),
+            device.slug()
+        );
 
         #[cfg(not(feature = "test-with-testbed"))]
         let name = format!("{}-user", device.slug());
