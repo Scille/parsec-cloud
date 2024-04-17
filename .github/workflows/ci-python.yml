@@ -207,17 +207,10 @@ jobs:
         timeout-minutes: 10
         working-directory: server
 
-      # TODO: Postgresql implementation is currently broken
-      # - name: PostgreSQL tests
-      #   if: (!inputs.style-only)
-      #   env:
-      #     PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
-      #   run: poetry run pytest ${{ env.pytest-base-args }} tests/backend tests/test_cli.py -k 'not test_shuffle_roles' --postgresql --runslow
-      #   timeout-minutes: 20
-      #   working-directory: server
-
-      - name: Hypothesis tests
+      - name: PostgreSQL tests
         if: (!inputs.style-only)
-        run: poetry run pytest ${{ env.pytest-base-args }} tests --runslow -m slow --numprocesses auto
-        timeout-minutes: 50
+        env:
+          PGINSTALLATION: /usr/lib/postgresql/${{ env.postgresql-version }}/bin
+        run: poetry run pytest ${{ env.pytest-base-args }} tests -n auto --postgresql
+        timeout-minutes: 10
         working-directory: server
