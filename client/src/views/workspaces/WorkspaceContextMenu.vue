@@ -3,7 +3,7 @@
 <template>
   <ion-content id="workspace-context-menu">
     <div class="list-title">
-      <ion-label class="list-title__text">
+      <ion-label class="list-title__text button-large">
         {{ workspaceName }}
       </ion-label>
     </div>
@@ -152,14 +152,13 @@ defineProps<{
 <style lang="scss" scoped>
 .list-title {
   border-bottom: solid 1px var(--parsec-color-light-secondary-disabled);
-  padding: 0.5rem 0.75rem;
+  padding: 0.75rem 0.75rem;
   background-color: var(--parsec-color-light-secondary-premiere);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 
   &__text {
-    font-style: italic;
     color: var(--parsec-color-light-secondary-soft-text);
   }
 }
