@@ -511,6 +511,7 @@
     },
     "common": {
         "date": {
+            "asIs": "{date}",
             "fewSeconds": "à l'instant",
             "lessThanAMinute": "< 1 minute",
             "lastLoginMinutes": "il y a une minute | il y a {minutes} minutes",
