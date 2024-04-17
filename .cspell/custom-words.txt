@@ -186,6 +186,7 @@ fsyncdir
 fusepy
 fusermount
 fuzzer
+hexstring
 gdce
 generichash
 genindex
