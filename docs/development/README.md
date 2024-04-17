@@ -160,16 +160,15 @@ poetry run pytest tests
 
 In addition, the following options are available:
 
-| Option           | Description                                                                                              |
-| ---------------- | -------------------------------------------------------------------------------------------------------- |
-| ``--runslow``    | Include slow tests                                                                                       |
-| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory</br>**⚠️ Currently postgresql tests are broken** |
-| ``-n 4``         | Run tests in parallel (here `4` jobs)                                                                    |
+| Option           | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| ``--postgresql`` | Use PostgreSQL in the server instead of a mock in memory |
+| ``-n 4``         | Run tests in parallel (here `4` jobs)                    |
 
 Note you can mix&match the flags, e.g.
 
 ```shell
-poetry run pytest tests --runslow -n auto
+poetry run pytest tests --postgresql -n auto
 ```
 
 ## Hacking the clients
