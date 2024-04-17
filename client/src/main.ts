@@ -131,7 +131,11 @@ async function setupApp(): Promise<void> {
       nextStage(configResult.value); // Fire-and-forget call
     } else {
       // eslint-disable-next-line no-alert
-      alert('TESTBED_SERVER_URL is set but failed to reach the testbed server.');
+      alert(
+        `Failed to initialize using the testbed.\nTESTBED_SERVER_URL is set to '${import.meta.env.VITE_TESTBED_SERVER_URL}'\n${
+          configResult.error.tag
+        }: ${configResult.error.error}`,
+      );
       if (isElectron()) {
         (window as any).electronAPI.closeApp();
       }
