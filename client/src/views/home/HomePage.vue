@@ -42,6 +42,7 @@
                 :device="selectedDevice"
                 @login-click="login"
                 @forgotten-password-click="onForgottenPasswordClicked"
+                :login-in-progress="loginInProgress"
                 ref="loginPageRef"
               />
             </template>
@@ -103,6 +104,7 @@ const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 const loginPageRef = ref();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
+const loginInProgress = ref(false);
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -251,6 +253,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
 
 async function login(device: AvailableDevice, access: DeviceAccessStrategy): Promise<void> {
   const eventDistributor = new EventDistributor();
+  loginInProgress.value = true;
   const result = await parsecLogin(eventDistributor, device, access);
   if (result.ok) {
     if (!storedDeviceDataDict.value[device.slug]) {
@@ -275,16 +278,13 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
       injectionProvider.createNewInjections(result.value, eventDistributor);
       const injections = injectionProvider.getInjections(result.value);
       await associateDefaultEvents(injections.eventDistributor, injections.informationManager);
-      const routeData: RouteBackup = {
-        handle: result.value,
-        data: { route: Routes.Workspaces, params: { handle: result.value }, query: {} },
-      };
-      await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     }
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(routeData) } });
     state.value = HomePageState.OrganizationList;
+    loginInProgress.value = false;
   } else {
     await handleLoginError(device, result.error);
+    loginInProgress.value = false;
   }
 }
 
