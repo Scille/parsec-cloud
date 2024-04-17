@@ -295,6 +295,7 @@ async function openUserDetails(user: UserInfo): Promise<void> {
     cssClass: 'user-details-modal',
     componentProps: {
       user: user,
+      informationManager: informationManager,
     },
   });
   await modal.present();

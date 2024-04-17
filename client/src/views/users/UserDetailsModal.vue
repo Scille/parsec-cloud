@@ -87,16 +87,16 @@ import { formatTimeSince } from '@/common/date';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, ellipse } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref } from 'vue';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const props = defineProps<{
   user: UserInfo;
+  informationManager: InformationManager;
 }>();
 
 onMounted(async () => {
@@ -105,7 +105,7 @@ onMounted(async () => {
   if (result.ok) {
     sharedWorkspaces.value = result.value;
   } else {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: 'UsersPage.UserDetailsModal.failedToListWorkspaces',
         level: InformationLevel.Error,
