@@ -2269,7 +2269,10 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         builder: &mut TestbedTemplateBuilder,
         author: DeviceID,
         realm: VlobID,
+        // If None, a new VlobID will be generated
         vlob: Option<VlobID>,
+        // If None, the parent will be retrieved from the vlob previous version
+        parent: Option<VlobID>,
     ) -> Self {
         let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id());
 
@@ -2288,7 +2291,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 
         // 2) Actual creation
 
-        let (version, parent, children) = builder
+        let (parent, version, children) = builder
             .events
             .iter()
             .rev()
@@ -2298,9 +2301,10 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                 {
                     // A given VlobID can only be part of a single realm
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    let parent = parent.unwrap_or(x.manifest.parent);
                     Some((
+                        parent,
                         x.manifest.version + 1,
-                        x.manifest.parent,
                         x.manifest.children.to_owned(),
                     ))
                 }
@@ -2309,8 +2313,12 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                 {
                     // A given VlobID can only be part of a single realm
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    let parent = match parent {
+                        Some(parent) => parent,
+                        None => panic!("Cannot determine parent of vlob {}, given it previous version is opaque !", vlob)
+                    };
                     // Cannot read opaque vlob, so use default values instead
-                    Some((x.version + 1, realm, HashMap::new()))
+                    Some((parent, x.version + 1, HashMap::new()))
                 }
                 // Try to detect common mistake in testbed env definition
                 TestbedEvent::CreateOrUpdateFileManifestVlob(x)
@@ -2322,8 +2330,13 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
-            // (note we use the workspace manifest as parent of our manifest)
-            .unwrap_or_else(|| (1, realm, HashMap::new()));
+            .unwrap_or_else(|| {
+                let parent = match parent {
+                    Some(parent) => parent,
+                    None => panic!("Must specify parent given this vlob has no previous version !")
+                };
+                (parent, 1, HashMap::new())
+            });
 
         let timestamp = builder.counters.next_timestamp();
         Self {
@@ -2411,7 +2424,10 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         builder: &mut TestbedTemplateBuilder,
         author: DeviceID,
         realm: VlobID,
+        // If None, a new VlobID will be generated
         vlob: Option<VlobID>,
+        // If None, the parent will be retrieved from the vlob previous version
+        parent: Option<VlobID>,
     ) -> Self {
         let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id());
 
@@ -2430,7 +2446,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
 
         // 2) Actual creation
 
-        let (version, parent, blocksize, size, blocks) = builder
+        let (parent, version, blocksize, size, blocks) = builder
             .events
             .iter()
             .rev()
@@ -2440,9 +2456,10 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 {
                     // A given VlobID can only be part of a single realm
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    let parent = parent.unwrap_or(x.manifest.parent);
                     Some((
+                        parent,
                         x.manifest.version + 1,
-                        x.manifest.parent,
                         x.manifest.blocksize,
                         x.manifest.size,
                         x.manifest.blocks.clone(),
@@ -2453,10 +2470,14 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 {
                     // A given VlobID can only be part of a single realm
                     assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", vlob, x.realm, realm);
+                    let parent = match parent {
+                        Some(parent) => parent,
+                        None => panic!("Cannot determine parent of vlob {}, given it previous version is opaque !", vlob)
+                    };
                     // Cannot read opaque vlob, so use default values instead
                     Some((
+                        parent,
                         x.version + 1,
-                        realm,
                         Blocksize::try_from(512).expect("valid blocksize"),
                         0,
                         vec![],
@@ -2472,11 +2493,14 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
-            // (note we use the workspace manifest as parent of our manifest)
             .unwrap_or_else(|| {
+                let parent = match parent {
+                    Some(parent) => parent,
+                    None => panic!("Must specify parent given this vlob has no previous version !")
+                };
                 (
+                    parent,
                     1,
-                    realm,
                     Blocksize::try_from(512).expect("valid blocksize"),
                     0,
                     vec![],
@@ -3354,8 +3378,13 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
         builder: &mut TestbedTemplateBuilder,
         device: DeviceID,
         realm: VlobID,
+        // If None, a new VlobID will be generated
         vlob: Option<VlobID>,
+        // Parent must be provided when created in new local manifest
+        parent: Option<VlobID>,
     ) -> Self {
+        let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id());
+
         // 1) Consistency checks
 
         if builder.check_consistency {
@@ -3369,51 +3398,50 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
 
         let timestamp = builder.counters.next_timestamp();
 
-        let local_manifest = match vlob {
-            // Create new local manifest
-            None => {
-                let vlob = builder.counters.next_entry_id();
-                let mut local_manifest = LocalFolderManifest::new(device.clone(), realm, timestamp);
-                local_manifest.base.id = vlob;
-                Arc::new(local_manifest)
-            }
-            // Update existing local manifest
-            Some(vlob) => {
-                let mut local_manifest = builder
-                    .events
-                    .iter()
-                    .rev()
-                    .find_map(|e| match e {
-                        TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
-                            if x.device == device
-                                && x.realm == realm
-                                && x.local_manifest.base.id == vlob =>
-                        {
-                            Some(x.local_manifest.clone())
-                        }
-                        TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
-                            if x.device == device
-                                && x.realm == realm
-                                && x.local_manifest.base.id == vlob =>
-                        {
-                            Some(x.local_manifest.clone())
-                        }
-                        _ => None,
-                    })
-                    .unwrap_or_else(|| {
-                        panic!(
-                            "Vlob {} in realm {} doesn't exist on device {} !",
-                            realm, vlob, device
-                        );
-                    });
+        let local_manifest = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x)
+                    if x.device == device
+                        && x.realm == realm
+                        && x.local_manifest.base.id == vlob =>
+                {
+                    Some(x.local_manifest.clone())
+                }
+                TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x)
+                    if x.device == device
+                        && x.realm == realm
+                        && x.local_manifest.base.id == vlob =>
+                {
+                    Some(x.local_manifest.clone())
+                }
+                _ => None,
+            })
+            .map(|mut manifest| {
+                // Sanity check in case the parent is provided
+                if let Some(expected_parent) = parent {
+                    assert_eq!(manifest.base.parent, expected_parent);
+                }
 
-                let m = Arc::make_mut(&mut local_manifest);
+                let m = Arc::make_mut(&mut manifest);
                 m.updated = timestamp;
                 m.need_sync = true;
 
-                local_manifest
-            }
-        };
+                manifest
+            })
+            // Manifest doesn't exist yet (at least on local), we create it then !
+            .unwrap_or_else(|| {
+                let parent = match parent {
+                    Some(parent) => parent,
+                    None => panic!("Parameter `parent` is requested for new local manifest"),
+                };
+                let mut local_manifest =
+                    LocalFolderManifest::new(device.clone(), parent, timestamp);
+                local_manifest.base.id = vlob;
+                Arc::new(local_manifest)
+            });
 
         // 2) Actual creation
 
@@ -3445,8 +3473,13 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
         builder: &mut TestbedTemplateBuilder,
         device: DeviceID,
         realm: VlobID,
+        // If None, a new VlobID will be generated
         vlob: Option<VlobID>,
+        // Parent must be provided when created in new local manifest
+        parent: Option<VlobID>,
     ) -> Self {
+        let vlob = vlob.unwrap_or_else(|| builder.counters.next_entry_id());
+
         // 1) Consistency checks
 
         if builder.check_consistency {
@@ -3460,51 +3493,51 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
 
         let timestamp = builder.counters.next_timestamp();
 
-        let local_manifest = match vlob {
-            // Create new local manifest
-            None => {
-                let vlob = builder.counters.next_entry_id();
-                let mut local_manifest = LocalFileManifest::new(device.clone(), realm, timestamp);
+        let local_manifest = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| {
+                match e {
+                    TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
+                        if x.device == device
+                            && x.realm == realm
+                            && x.local_manifest.base.id == vlob =>
+                    {
+                        Some(x.local_manifest.clone())
+                    }
+                    _ => None,
+                }
+                .map(|mut manifest| {
+                    // Sanity check in case the parent is provided
+                    if let Some(expected_parent) = parent {
+                        assert_eq!(manifest.base.parent, expected_parent);
+                    }
+
+                    let m = Arc::make_mut(&mut manifest);
+                    m.updated = timestamp;
+                    m.need_sync = true;
+
+                    manifest
+                })
+            })
+            // Manifest doesn't exist yet (at least on local), we create it then !
+            .unwrap_or_else(|| {
+                let parent = match parent {
+                    Some(parent) => parent,
+                    None => panic!("Parameter `parent` is requested for new local manifest"),
+                };
+                let mut local_manifest = LocalFileManifest::new(device.clone(), parent, timestamp);
                 local_manifest.base.id = vlob;
                 Arc::new(local_manifest)
-            }
-            // Update existing local manifest
-            Some(vlob) => builder
-                .events
-                .iter()
-                .rev()
-                .find_map(|e| {
-                    match e {
-                        TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
-                            if x.device == device
-                                && x.realm == realm
-                                && x.local_manifest.base.id == vlob =>
-                        {
-                            Some(x.local_manifest.clone())
-                        }
-                        TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(x)
-                            if x.device == device
-                                && x.realm == realm
-                                && x.local_manifest.base.id == vlob =>
-                        {
-                            Some(x.local_manifest.clone())
-                        }
-                        _ => None,
-                    }
-                    .map(|mut manifest| {
-                        let m = Arc::make_mut(&mut manifest);
-                        m.updated = timestamp;
-                        m.need_sync = true;
-                        manifest
-                    })
-                })
-                .unwrap_or_else(|| {
-                    panic!(
-                        "Vlob {} in realm {} doesn't exist on device {} !",
-                        realm, vlob, device
-                    );
-                }),
-        };
+            });
 
         // 2) Actual creation
 

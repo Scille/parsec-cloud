@@ -54,6 +54,7 @@ async fn invalid_windows_character(tmp_path: TmpPath, env: &TestbedEnv) {
                 "alice@dev1",
                 wksp1_id,
                 wksp1_foo_id,
+                None,
             )
             .customize(|x| {
                 let local_manifest = Arc::make_mut(&mut x.local_manifest);

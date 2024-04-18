@@ -155,7 +155,7 @@ const SEQUESTER_SERVICE_IDENTITIES: &[SequesterServiceIdentityType] = &[
 ];
 
 #[derive(Clone)]
-pub(super) struct TestbedTemplateBuilderCounters {
+pub struct TestbedTemplateBuilderCounters {
     current_timestamp: DateTime,
     current_invitation_token: u128,
     current_entry_id: u128,
@@ -237,7 +237,7 @@ pub struct TestbedTemplateBuilder {
     pub(super) events: Vec<TestbedEvent>,
     // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
     pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
-    pub(super) counters: TestbedTemplateBuilderCounters,
+    pub counters: TestbedTemplateBuilderCounters,
     pub(super) check_consistency: bool,
 }
 
@@ -796,7 +796,7 @@ impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
 
 impl_event_builder!(
     CreateOrUpdateFileManifestVlob,
-    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
 impl<'a> TestbedEventCreateOrUpdateFileManifestVlobBuilder<'a> {
@@ -810,7 +810,7 @@ impl<'a> TestbedEventCreateOrUpdateFileManifestVlobBuilder<'a> {
 
 impl_event_builder!(
     CreateOrUpdateFolderManifestVlob,
-    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
 impl<'a> TestbedEventCreateOrUpdateFolderManifestVlobBuilder<'a> {
@@ -1160,7 +1160,7 @@ impl<'a> TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdateBuilder<'a>
 
 impl_event_builder!(
     WorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
-    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );
 
 impl<'a> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder<'a> {
@@ -1193,5 +1193,5 @@ impl<'a> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilde
 
 impl_event_builder!(
     WorkspaceDataStorageLocalFileManifestCreateOrUpdate,
-    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>]
+    [device: DeviceID, realm: VlobID, vlob: Option<VlobID>, parent: Option<VlobID>]
 );

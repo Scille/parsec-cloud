@@ -48,10 +48,10 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
             } else {
                 builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);
                 let file_id = builder
-                    .create_or_update_file_manifest_vlob("alice@dev1", realm_id, None)
+                    .create_or_update_file_manifest_vlob("alice@dev1", realm_id, None, realm_id)
                     .map(|e| e.manifest.id);
                 let folder_id = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev1", realm_id, None)
+                    .create_or_update_folder_manifest_vlob("alice@dev1", realm_id, None, realm_id)
                     .map(|e| e.manifest.id);
                 expected_version = 1;
                 expected_checkpoint = 3;
@@ -71,12 +71,14 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
                     builder.create_or_update_file_manifest_vlob(
                         "alice@dev1",
                         realm_id,
-                        Some(file_id),
+                        file_id,
+                        None,
                     );
                     builder.create_or_update_folder_manifest_vlob(
                         "alice@dev1",
                         realm_id,
-                        Some(folder_id),
+                        folder_id,
+                        None,
                     );
                     expected_version = 2;
                     expected_checkpoint = 6;
@@ -107,13 +109,23 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
             p_assert_ne!(expected_version, actual_version);
             if let Some(file_id) = &file_id {
                 let actual_version = builder
-                    .create_or_update_file_manifest_vlob("alice@dev1", realm_id, Some(*file_id))
+                    .create_or_update_file_manifest_vlob(
+                        "alice@dev1",
+                        realm_id,
+                        Some(*file_id),
+                        None,
+                    )
                     .map(|e| e.manifest.version);
                 p_assert_ne!(expected_version, actual_version);
             }
             if let Some(folder_id) = &folder_id {
                 let actual_version = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev1", realm_id, Some(*folder_id))
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev1",
+                        realm_id,
+                        Some(*folder_id),
+                        None,
+                    )
                     .map(|e| e.manifest.version);
                 p_assert_ne!(expected_version, actual_version);
             }

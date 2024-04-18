@@ -59,6 +59,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_new_id", &local_new_id);
@@ -84,6 +85,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_foo_replaced_id", &local_foo_replaced_id);
@@ -95,7 +97,7 @@ async fn non_placeholder(
 
         if remote_change {
             let dont_mind_me_id = builder
-                .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
+                .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None, wksp1_id)
                 .map(|e| e.manifest.id);
             builder.store_stuff("wksp1_dont_mind_me_id", &dont_mind_me_id);
             builder

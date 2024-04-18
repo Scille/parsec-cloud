@@ -69,7 +69,12 @@ async fn non_placeholder(
                     .map(|e| e.block_id);
                 builder.store_stuff("wksp1_bar_txt_new_block_id", &wksp1_bar_txt_new_block_id);
                 builder
-                    .create_or_update_file_manifest_vlob("alice@dev2", wksp1_id, wksp1_bar_txt_id)
+                    .create_or_update_file_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_bar_txt_id,
+                        None,
+                    )
                     .customize(|e| {
                         let manifest = Arc::make_mut(&mut e.manifest);
                         manifest.blocks.clear();
@@ -99,7 +104,8 @@ async fn non_placeholder(
                     .workspace_data_storage_local_file_manifest_create_or_update(
                         "alice@dev1",
                         wksp1_id,
-                        Some(wksp1_bar_txt_id),
+                        wksp1_bar_txt_id,
+                        None,
                     )
                     .customize(|e| {
                         let manifest = Arc::make_mut(&mut e.local_manifest);
@@ -125,6 +131,7 @@ async fn non_placeholder(
                             "alice@dev1",
                             wksp1_id,
                             None,
+                            wksp1_id,
                         )
                         .map(|e| e.local_manifest.base.id);
                     builder.store_stuff("wksp1_bar2_txt_id", &wksp1_bar2_txt_id);
