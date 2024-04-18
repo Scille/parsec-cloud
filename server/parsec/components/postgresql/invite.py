@@ -130,22 +130,6 @@ VALUES (
 """
 )
 
-
-_q_delete_invitation_info = Q(
-    f"""
-SELECT
-    _id,
-    deleted_on
-FROM invitation
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter")}
-    AND token = $token
-FOR UPDATE
-"""
-)
-
-
 _q_delete_invitation = Q(
     """
 UPDATE invitation
@@ -388,14 +372,8 @@ async def _do_new_user_or_device_invitation(
 async def _human_handle_from_user_id(
     conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
 ) -> HumanHandle:
+    # TODO: implement this query and write the corresponding test
     raise NotImplementedError
-    # row = await conn.fetchrow(
-    #     _q_get_human_handle_from_user_id(organization_id=organization_id, user_id=user_id)
-    # )
-    # if row:
-    #     return HumanHandle(email=row["email"], label=row["label"])
-    # else:
-    #     return HumanHandle.new_redacted(user_id)
 
 
 class PGInviteComponent(BaseInviteComponent):

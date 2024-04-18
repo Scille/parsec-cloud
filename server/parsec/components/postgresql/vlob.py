@@ -48,38 +48,6 @@ from parsec.components.vlob import (
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
-# async def _check_sequestered_organization(
-#     conn: asyncpg.Connection,
-#     organization_id: OrganizationID,
-#     sequester_authority: SequesterAuthority | None,
-#     sequester_blob: dict[SequesterServiceID, bytes] | None,
-# ) -> dict[SequesterServiceID, BaseSequesterService] | None:
-#     if sequester_blob is None and sequester_authority is None:
-#         # Sequester is disable, fetching sequester services is pointless
-#         return None
-
-#     if sequester_authority is None:
-#         raise VlobSequesterDisabledError()
-
-#     configured_services = {
-#         s.service_id: s
-#         for s in await get_sequester_services(
-#             conn=conn, organization_id=organization_id, with_disabled=False
-#         )
-#     }
-#     requested_sequester_services = sequester_blob.keys() if sequester_blob is not None else set()
-
-#     if configured_services.keys() != requested_sequester_services:
-#         raise VlobSequesterServiceInconsistencyError(
-#             sequester_authority_certificate=sequester_authority.certificate,
-#             sequester_services_certificates=[
-#                 s.service_certificate for s in configured_services.values()
-#             ],
-#         )
-
-#     return configured_services
-
-
 q_dump_vlobs = Q(
     f"""
 SELECT
@@ -248,57 +216,6 @@ class PGVlobComponent(BaseVlobComponent):
         self.user = user
         self.realm = realm
 
-    # async def _fetch_organization_sequester_authority(
-    #     self, conn: asyncpg.Connection, organization_id: OrganizationID
-    # ) -> None:
-    #     sequester_authority: SequesterAuthority | None
-    #     try:
-    #         sequester_authority = await get_sequester_authority(conn, organization_id)
-    #     except SequesterDisabledError:
-    #         sequester_authority = None
-    #     self._sequester_organization_authority_cache[organization_id] = sequester_authority
-
-    # async def _get_sequester_organization_authority(
-    #     self, conn: asyncpg.Connection, organization_id: OrganizationID
-    # ) -> SequesterAuthority | None:
-    #     if organization_id not in self._sequester_organization_authority_cache:
-    #         await self._fetch_organization_sequester_authority(conn, organization_id)
-    #     return self._sequester_organization_authority_cache[organization_id]
-
-    # async def _extract_sequestered_data_and_proceed_webhook(
-    #     self,
-    #     conn: asyncpg.Connection,
-    #     organization_id: OrganizationID,
-    #     sequester_blob: dict[SequesterServiceID, bytes] | None,
-    #     author: DeviceID,
-    #     encryption_revision: int,
-    #     vlob_id: VlobID,
-    #     timestamp: DateTime,
-    # ) -> dict[SequesterServiceID, bytes] | None:
-    #     sequester_authority = await self._get_sequester_organization_authority(
-    #         conn, organization_id
-    #     )
-    #     services = await _check_sequestered_organization(
-    #         conn,
-    #         organization_id=organization_id,
-    #         sequester_authority=sequester_authority,
-    #         sequester_blob=sequester_blob,
-    #     )
-    #     if not sequester_blob or not services:
-    #         return None
-
-    #     sequestered_data = await extract_sequestered_data_and_proceed_webhook(
-    #         services,
-    #         organization_id,
-    #         author,
-    #         encryption_revision,
-    #         vlob_id,
-    #         timestamp,
-    #         sequester_blob,
-    #     )
-
-    #     return sequestered_data
-
     async def _get_vlob_info(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, vlob_id: VlobID
     ) -> tuple[VlobID, int] | None:
@@ -386,31 +303,6 @@ class PGVlobComponent(BaseVlobComponent):
         if org.is_sequestered:
             # TODO: Implement sequester
             raise NotImplementedError
-            # assert org.sequester_services is not None
-            # if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-            #     return SequesterInconsistency(
-            #         last_common_certificate_timestamp=org.last_common_certificate_timestamp
-            #     )
-
-            # blob_for_storage_sequester_services = {}
-            # for service_id, service in org.sequester_services.items():
-            #     match service.service_type:
-            #         case SequesterServiceType.STORAGE:
-            #             blob_for_storage_sequester_services[service_id] = sequester_blob[service_id]
-            #         case SequesterServiceType.WEBHOOK:
-            #             assert service.webhook_url is not None
-            #             match await self._sequester_service_send_webhook(
-            #                 webhook_url=service.webhook_url,
-            #                 organization_id=organization_id,
-            #                 service_id=service_id,
-            #                 sequester_blob=sequester_blob[service_id],
-            #             ):
-            #                 case None:
-            #                     pass
-            #                 case error:
-            #                     return error
-            #         case unknown:
-            #             assert_never(unknown)
 
         else:
             if sequester_blob is not None:
@@ -565,22 +457,6 @@ class PGVlobComponent(BaseVlobComponent):
                 last_realm_certificate_timestamp=last_realm_certificate_timestamp,
             )
         )
-
-    async def read(
-        self,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        encryption_revision: int,
-        vlob_id: VlobID,
-        version: int | None = None,
-        timestamp: DateTime | None = None,
-    ) -> tuple[int, bytes, DeviceID, DateTime, DateTime, int]:
-        # TODO: fix me !
-        raise NotImplementedError
-        # async with self.dbh.pool.acquire() as conn:
-        # return await query_read(
-        #     conn, organization_id, author, encryption_revision, vlob_id, version, timestamp
-        # )
 
     @override
     @transaction
