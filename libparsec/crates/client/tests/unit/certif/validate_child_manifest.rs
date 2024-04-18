@@ -22,7 +22,7 @@ async fn ok(env: &TestbedEnv) {
                 .map(|event| event.realm);
             builder.certificates_storage_fetch_certificates("alice@dev1");
             builder
-                .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id)
+                .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, realm_id)
                 .map(|e| {
                     (
                         realm_id,
@@ -210,7 +210,12 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
             .map(|e| e.realm);
         builder.certificates_storage_fetch_certificates("alice@dev1");
         builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob("bob@dev1", realm_id, file_id);
+            builder.create_or_update_file_manifest_vlob(
+                "bob@dev1",
+                realm_id,
+                file_id,
+                Some(realm_id),
+            );
         });
         realm_id
     });
@@ -273,7 +278,12 @@ async fn revoked(env: &TestbedEnv) {
         builder.revoke_user("bob");
         builder.certificates_storage_fetch_certificates("bob@dev1");
         builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob("bob@dev1", realm_id, file_id);
+            builder.create_or_update_file_manifest_vlob(
+                "bob@dev1",
+                realm_id,
+                file_id,
+                Some(realm_id),
+            );
         });
 
         realm_id
@@ -356,7 +366,12 @@ async fn cannot_write(env: &TestbedEnv) {
         builder.share_realm(realm_id, "bob", Some(RealmRole::Reader));
         builder.certificates_storage_fetch_certificates("bob@dev1");
         builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob("bob@dev1", realm_id, file_id);
+            builder.create_or_update_file_manifest_vlob(
+                "bob@dev1",
+                realm_id,
+                file_id,
+                Some(realm_id),
+            );
         });
         realm_id
     });
@@ -466,7 +481,7 @@ async fn server_error(
             .map(|event| event.realm);
         builder.certificates_storage_fetch_certificates("alice@dev1");
         builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id)
+            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
             .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
     });
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
@@ -531,7 +546,7 @@ async fn invalid_keys_bundle(
             .map(|event| event.realm);
         builder.certificates_storage_fetch_certificates("alice@dev1");
         builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id)
+            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
             .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
     });
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
@@ -575,7 +590,7 @@ async fn invalid_response(env: &TestbedEnv) {
             .map(|event| event.realm);
         builder.certificates_storage_fetch_certificates("alice@dev1");
         builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id)
+            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
             .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
     });
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);

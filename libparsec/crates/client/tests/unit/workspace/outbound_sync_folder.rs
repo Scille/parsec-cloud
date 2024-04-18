@@ -138,7 +138,7 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
 
     let env = env.customize(|builder| {
         // New version of the file that we our client doesn't know about
-        builder.create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id);
+        builder.create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None);
     });
 
     let alice = env.local_device("alice@dev1");

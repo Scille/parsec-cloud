@@ -63,7 +63,7 @@ async fn non_placeholder(
             RemoteModification::Nothing => (),
             RemoteModification::Create => {
                 let entry_id = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
+                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None, wksp1_id)
                     .map(|e| e.manifest.id);
                 builder.store_stuff("wksp1_new_id", &entry_id);
                 builder
@@ -84,7 +84,7 @@ async fn non_placeholder(
             }
             RemoteModification::Replace => {
                 let entry_id = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
+                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None, wksp1_id)
                     .map(|e| e.manifest.id);
                 builder.store_stuff("wksp1_foo_replaced_id", &entry_id);
                 builder
@@ -102,6 +102,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_dont_mind_me_txt_id", &id);
@@ -116,6 +117,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_new_id", &local_new_id);
@@ -138,6 +140,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_foo_renamed_id", &local_foo_renamed_id);
@@ -152,6 +155,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_foo_replaced_id", &local_foo_replaced_id);
@@ -338,6 +342,7 @@ async fn placeholder(
                 "alice@dev1",
                 wksp1_id,
                 None,
+                wksp1_id,
             )
             .map(|e| e.local_manifest.base.id);
         builder

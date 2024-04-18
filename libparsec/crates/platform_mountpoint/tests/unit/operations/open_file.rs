@@ -310,7 +310,7 @@ async fn read_only_realm(
         let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
 
         let bar_txt_id = builder
-            .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None)
+            .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None, wksp1_id)
             .map(|e| e.manifest.id);
 
         builder

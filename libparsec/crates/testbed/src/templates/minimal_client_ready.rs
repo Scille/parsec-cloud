@@ -28,6 +28,8 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder.store_stuff("wksp1_id", &wksp1_id);
     builder.store_stuff("wksp1_name", &wksp1_name);
 
+    let foo_id = builder.counters.next_entry_id();
+
     // 3) Create `/bar.txt`'s vlob & block
 
     let bar_txt_content = b"hello world";
@@ -39,7 +41,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     builder.store_stuff("wksp1_bar_txt_block_access", &bar_txt_block_access);
 
     let bar_txt_id = builder
-        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None)
+        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None, wksp1_id)
         .customize(|e| {
             let manifest = Arc::make_mut(&mut e.manifest);
             manifest.size = bar_txt_block_access.size.get();
@@ -52,7 +54,7 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // 4) Create `/foo/spam`'s vlob
 
     let foo_spam_id = builder
-        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, None)
+        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, None, foo_id)
         .map(|e| e.manifest.id);
 
     builder.store_stuff("wksp1_foo_spam_id", &foo_spam_id);
@@ -60,15 +62,15 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
     // 5) Create `/foo/egg.txt`'s vlob
 
     let foo_egg_txt_id = builder
-        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None)
+        .create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, None, foo_id)
         .map(|e| e.manifest.id);
 
     builder.store_stuff("wksp1_foo_egg_txt_id", &foo_egg_txt_id);
 
     // 6) Create `/foo`'s vlob and add it `/foo/spam` & `/foo/egg.txt` entries
 
-    let foo_id = builder
-        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, None)
+    builder
+        .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, Some(foo_id), wksp1_id)
         .customize(|e| {
             let manifest = Arc::make_mut(&mut e.manifest);
             manifest

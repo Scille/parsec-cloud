@@ -25,7 +25,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
             builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", wksp1_id, None);
         } else {
             builder
-                .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id)
+                .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None)
                 .customize(|e| {
                     let manifest = Arc::make_mut(&mut e.manifest);
                     manifest.children.clear();

@@ -65,32 +65,62 @@ async fn non_placeholder(
             RemoteModification::Nothing => (),
             RemoteModification::CreateChild => {
                 let entry_id = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        None,
+                        wksp1_foo_id,
+                    )
                     .map(|e| e.manifest.id);
                 builder.store_stuff("wksp1_foo_new_id", &entry_id);
                 builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
                     .customize_children([("new", Some(entry_id))].into_iter());
             }
             RemoteModification::RemoveChild => {
                 builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
                     .customize_children([("spam", None)].into_iter());
             }
             RemoteModification::RenameChild => {
                 builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
                     .customize_children(
                         [("spam", None), ("spam_renamed", Some(wksp1_foo_spam_id))].into_iter(),
                     );
             }
             RemoteModification::ReplaceChild => {
                 let entry_id = builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, None)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        None,
+                        wksp1_foo_id,
+                    )
                     .map(|e| e.manifest.id);
                 builder.store_stuff("wksp1_foo_spam_replaced_id", &entry_id);
                 builder
-                    .create_or_update_folder_manifest_vlob("alice@dev2", wksp1_id, wksp1_foo_id)
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
                     .customize_children([("spam", Some(entry_id))].into_iter());
             }
         };
@@ -104,6 +134,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_foo_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_foo_dont_mind_me_txt_id", &id);
@@ -112,6 +143,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         wksp1_foo_id,
+                        None,
                     )
                     .customize_children([("dont_mind_me.txt", Some(id))].into_iter());
             }
@@ -122,6 +154,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_foo_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff("wksp1_local_foo_new_id", &local_new_id);
@@ -130,6 +163,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         wksp1_foo_id,
+                        None,
                     )
                     .customize_children([("new", Some(local_new_id))].into_iter());
             }
@@ -140,6 +174,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         wksp1_foo_id,
+                        None,
                     )
                     .customize_children(
                         [("spam", None), ("spam_renamed", Some(wksp1_foo_spam_id))].into_iter(),
@@ -152,6 +187,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_foo_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff(
@@ -163,6 +199,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         wksp1_foo_id,
+                        None,
                     )
                     .customize_children(
                         [("spam_renamed", Some(local_foo_spam_renamed_id))].into_iter(),
@@ -175,6 +212,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         None,
+                        wksp1_foo_id,
                     )
                     .map(|e| e.local_manifest.base.id);
                 builder.store_stuff(
@@ -186,6 +224,7 @@ async fn non_placeholder(
                         "alice@dev1",
                         wksp1_id,
                         wksp1_foo_id,
+                        None,
                     )
                     .customize_children([("spam", Some(local_foo_spam_replaced_id))].into_iter());
             }
