@@ -1150,7 +1150,7 @@ class PGUserComponent(BaseUserComponent):
                 user_id=certif.user_id.str,
                 revoked_user_certificate=revoked_user_certificate,
                 revoked_user_certifier=author.str,
-                revoked_on=now,
+                revoked_on=certif.timestamp,
             )
         )
 
@@ -1249,14 +1249,17 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
         rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
-        items = {}
+        items: dict[UserID, UserDump] = {}
         for row in rows:
             user_id = UserID(row["user_id"])
+            human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
             items[user_id] = UserDump(
                 user_id=user_id,
+                human_handle=human_handle,
+                created_on=row["created_on"],
+                revoked_on=row["revoked_on"],
                 devices=[],
                 current_profile=UserProfile.from_str(row["current_profile"]),
-                is_revoked=row["revoked_on"] is not None,
             )
         rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
         for row in rows:

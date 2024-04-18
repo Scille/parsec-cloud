@@ -43,9 +43,11 @@ class CertificatesBundle:
 @dataclass(slots=True)
 class UserDump:
     user_id: UserID
-    devices: list[DeviceName]
+    human_handle: HumanHandle
+    created_on: DateTime
+    revoked_on: DateTime | None
     current_profile: UserProfile
-    is_revoked: bool
+    devices: list[DeviceName]
 
 
 @dataclass(slots=True)

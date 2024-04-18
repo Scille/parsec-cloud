@@ -15,6 +15,7 @@ from parsec._parsec import (
     SequesterVerifyKeyDer,
     VlobID,
 )
+from parsec.components.postgresql import AsyncpgPool
 from parsec.components.postgresql.utils import Q, q_organization_internal_id, q_realm_internal_id
 from parsec.components.sequester import (
     BaseSequesterComponent,
@@ -211,15 +212,15 @@ def build_sequester_service_obj(row: dict[str, Any]) -> BaseSequesterService:
 
 
 class PGSequesterComponent(BaseSequesterComponent):
-    def __init__(self, dbh: PGHandler):
-        self.dbh = dbh
+    def __init__(self, pool: AsyncpgPool):
+        self.pool = pool
 
     async def create_service(
         self,
         organization_id: OrganizationID,
         service: BaseSequesterService,
     ) -> None:
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.pool.acquire() as conn, conn.transaction():
             sequester_authority = await get_sequester_authority(conn, organization_id)
 
             try:
@@ -287,7 +288,7 @@ class PGSequesterComponent(BaseSequesterComponent):
         disabled_on: DateTime | None = None,
     ) -> None:
         disabled_on = disabled_on or DateTime.now()
-        async with self.dbh.pool.acquire() as conn, conn.transaction():
+        async with self.pool.acquire() as conn, conn.transaction():
             await self._assert_service_enabled(conn, organization_id)
 
             row = await conn.fetchrow(
@@ -358,13 +359,13 @@ class PGSequesterComponent(BaseSequesterComponent):
     async def get_service(
         self, organization_id: OrganizationID, service_id: SequesterServiceID
     ) -> BaseSequesterService:
-        async with self.dbh.pool.acquire() as conn:
+        async with self.pool.acquire() as conn:
             return await self._get_service(conn, organization_id, service_id)
 
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> list[BaseSequesterService]:
-        async with self.dbh.pool.acquire() as conn:
+        async with self.pool.acquire() as conn:
             await self._assert_service_enabled(conn, organization_id)
             return await get_sequester_services(
                 conn=conn, organization_id=organization_id, with_disabled=True
@@ -373,7 +374,7 @@ class PGSequesterComponent(BaseSequesterComponent):
     async def dump_realm(
         self, organization_id: OrganizationID, service_id: SequesterServiceID, realm_id: VlobID
     ) -> list[tuple[VlobID, int, bytes]]:
-        async with self.dbh.pool.acquire() as conn:
+        async with self.pool.acquire() as conn:
             # Check organization and service exists
             service = await self._get_service(conn, organization_id, service_id)
             if service.service_type != SequesterServiceType.STORAGE:

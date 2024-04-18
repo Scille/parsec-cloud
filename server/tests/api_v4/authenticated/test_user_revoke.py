@@ -26,7 +26,7 @@ async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend:
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.device_id.user_id].is_revoked = True
+    expected_dump[coolorg.bob.device_id.user_id].revoked_on = now
 
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.user_revoke(
@@ -97,7 +97,7 @@ async def test_authenticated_user_revoke_author_not_allowed(
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.alice.device_id.user_id].is_revoked = False
+    expected_dump[coolorg.alice.device_id.user_id].revoked_on = None
 
     rep = await coolorg.bob.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
