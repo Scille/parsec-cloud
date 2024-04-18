@@ -40,7 +40,6 @@ def ssl_conf(request: pytest.FixtureRequest):
             )
 
 
-@pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
 def test_run(coolorg, unused_tcp_port, tmp_path, ssl_conf):
     config_dir = tmp_path / "config"

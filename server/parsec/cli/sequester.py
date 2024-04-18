@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncIterator
+from typing import AsyncContextManager, AsyncIterator, cast
 
 import click
 
@@ -29,9 +29,15 @@ from parsec._parsec import (
 from parsec.cli.options import blockstore_server_options, db_server_options, debug_config_options
 from parsec.cli.utils import cli_exception_handler, operation
 from parsec.components.blockstore import blockstore_factory
-
-
+from parsec.components.organization import Organization
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
+from parsec.components.postgresql.events import event_bus_factory
+from parsec.components.postgresql.handler import asyncpg_pool_factory
+from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.sequester import PGSequesterComponent
+from parsec.components.postgresql.sequester_export import RealmExporter
+from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.realm import RealmGrantedRole
 from parsec.components.sequester import (
     BaseSequesterService,
@@ -39,6 +45,7 @@ from parsec.components.sequester import (
     StorageSequesterService,
     WebhookSequesterService,
 )
+from parsec.components.user import UserDump
 from parsec.config import BaseBlockStoreConfig
 from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
 
@@ -100,10 +107,14 @@ class BackendDbConfig:
     db_min_connections: int
     db_max_connections: int
 
+    def pool(self) -> AsyncContextManager[AsyncpgPool]:
+        return asyncpg_pool_factory(self.db_url, self.db_min_connections, self.db_max_connections)
+
 
 @asynccontextmanager
 async def run_sequester_component(config: BackendDbConfig) -> AsyncIterator[PGSequesterComponent]:
     raise NotImplementedError
+    yield
 
 
 async def _create_service(
@@ -123,9 +134,9 @@ def _display_service(service: BaseSequesterService) -> None:
     click.echo(f"\tService type: {service.service_type}")
     if isinstance(service, WebhookSequesterService):
         click.echo(f"\tWebhook endpoint URL {service.webhook_url}")
-    if not service.is_enabled:
+    if service.is_revoked:
         display_disable = click.style("Disabled", fg="red")
-        click.echo(f"\t{display_disable} on: {service.disabled_on}")
+        click.echo(f"\t{display_disable} on: {service.revoked_on}")
 
 
 async def _list_services(config: BackendDbConfig, organization_id: OrganizationID) -> None:
@@ -135,12 +146,12 @@ async def _list_services(config: BackendDbConfig, organization_id: OrganizationI
     display_services_count = click.style(len(services), fg="green")
     click.echo(f"Found {display_services_count} sequester service(s)")
 
-    # Display enabled services first
+    # Display active services first
     for service in services:
-        if service.is_enabled:
+        if not service.is_revoked:
             _display_service(service)
     for service in services:
-        if not service.is_enabled:
+        if service.is_revoked:
             _display_service(service)
 
 
@@ -301,16 +312,21 @@ async def _import_service_certificate(
     service_type: SequesterServiceType,
     webhook_url: str | None,
 ) -> None:
-    async with run_pg_db_handler(db_config) as dbh:
+    async with db_config.pool() as pool:
         # 1) Retrieve the sequester authority verify key and check organization is compatible
 
-        async with dbh.pool.acquire() as conn:
+        async with pool.acquire() as conn:
+            conn = cast(AsyncpgConnection, conn)
             organization = await PGOrganizationComponent._get(conn, id=organization_id)
+            assert isinstance(organization, Organization)
 
-        if not organization.is_bootstrapped():
+        if not organization.is_bootstrapped:
             raise RuntimeError("Organization is not bootstrapped, aborting.")
 
-        if organization.sequester_authority is None:
+        if (
+            organization.sequester_authority_certificate is None
+            or organization.sequester_authority_verify_key_der is None
+        ):
             raise RuntimeError("Organization doesn't support sequester, aborting.")
 
         # 2) Validate the certificate
@@ -320,7 +336,7 @@ async def _import_service_certificate(
             service_certificate_content,
         ) = load_sequester_service_certificate_pem(
             data=service_certificate_pem,
-            authority_verify_key=organization.sequester_authority.verify_key_der,
+            authority_verify_key=organization.sequester_authority_verify_key_der,
         )
 
         # 3) Insert the certificate
@@ -333,6 +349,7 @@ async def _import_service_certificate(
                 service_label=service_certificate_data.service_label,
                 service_certificate=service_certificate_content,
                 created_on=service_certificate_data.timestamp,
+                revoked_on=None,
             )
         else:
             assert service_type == SequesterServiceType.WEBHOOK
@@ -344,9 +361,10 @@ async def _import_service_certificate(
                 service_certificate=service_certificate_content,
                 created_on=service_certificate_data.timestamp,
                 webhook_url=webhook_url,
+                revoked_on=None,
             )
 
-        sequester_component = PGSequesterComponent(dbh)
+        sequester_component = PGSequesterComponent(pool=pool)
         await sequester_component.create_service(organization_id, service)
 
 
@@ -430,6 +448,7 @@ def create_service(
                 service_label=service_label,
                 service_certificate=certificate,
                 created_on=now,
+                revoked_on=None,
             )
         else:
             assert cooked_service_type == SequesterServiceType.WEBHOOK
@@ -441,6 +460,7 @@ def create_service(
                 service_certificate=certificate,
                 created_on=now,
                 webhook_url=webhook_url,
+                revoked_on=None,
             )
 
         db_config = _get_config(db, db_min_connections, db_max_connections)
@@ -505,11 +525,12 @@ def update_service(
 async def _human_accesses(
     config: BackendDbConfig, organization: OrganizationID, user_filter: str
 ) -> None:
-    async with run_pg_db_handler(config) as dbh:
-        user_component = PGUserComponent(event_bus=dbh.event_bus, dbh=dbh)
-        realm_component = PGRealmComponent(dbh)
+    async with config.pool() as pool, event_bus_factory(config.db_url) as event_bus:
+        user_component = PGUserComponent(pool=pool, event_bus=event_bus)
+        realm_component = PGRealmComponent(pool=pool, event_bus=event_bus)
 
-        users, _ = await user_component.dump_users(organization_id=organization)
+        dump = await user_component.test_dump_current_users(organization_id=organization)
+        users = list(dump.values())
         if user_filter:
             # Now is a good time to filter out
             filter_split = user_filter.split()
@@ -523,12 +544,13 @@ async def _human_accesses(
         realms_granted_roles = await realm_component.dump_realms_granted_roles(
             organization_id=organization
         )
+        assert isinstance(realms_granted_roles, list)
         per_user_granted_roles: dict[UserID, list[RealmGrantedRole]] = {}
         for granted_role in realms_granted_roles:
             user_granted_roles = per_user_granted_roles.setdefault(granted_role.user_id, [])
             user_granted_roles.append(granted_role)
 
-        humans: dict[HumanHandle, list[tuple[User, dict[VlobID, list[RealmGrantedRole]]]]] = {}
+        humans: dict[HumanHandle, list[tuple[UserDump, dict[VlobID, list[RealmGrantedRole]]]]] = {}
         for user in users:
             human_users = humans.setdefault(user.human_handle, [])
             per_user_per_realm_granted_role: dict[VlobID, list[RealmGrantedRole]] = {}
@@ -568,11 +590,13 @@ async def _human_accesses(
         #       2000-01-01T00:00:00Z: Access READER granted
 
         def _display_user(
-            user: User, per_realm_granted_role: dict[VlobID, list[RealmGrantedRole]], indent: int
+            user: UserDump,
+            per_realm_granted_role: dict[VlobID, list[RealmGrantedRole]],
+            indent: int,
         ) -> None:
             base_indent = "\t" * indent
             display_user = click.style(user.user_id, fg="green")
-            user_info = f"{user.profile}, created on {user.created_on}"
+            user_info = f"{user.current_profile}, created on {user.created_on}"
             if user.revoked_on:
                 user_info += f", revoked on {user.revoked_on}"
             print(base_indent + f"User {display_user} ({user_info})")
@@ -638,15 +662,15 @@ async def _export_realm(
         " progress won't be lost when restarting the command"
     )
 
-    async with run_pg_db_handler(db_config) as dbh:
-        blockstore_component = blockstore_factory(config=blockstore_config, postgresql_dbh=dbh)
+    async with db_config.pool() as pool:
+        blockstore_component = blockstore_factory(config=blockstore_config, postgresql_pool=pool)
 
         async with RealmExporter.run(
             organization_id=organization_id,
             realm_id=realm_id,
             service_id=service_id,
             output_db_path=output_db_path,
-            input_dbh=dbh,
+            input_pool=pool,
             input_blockstore=blockstore_component,
         ) as exporter:
             # 1) Export vlobs

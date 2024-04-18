@@ -104,15 +104,17 @@ async def test_authenticated_user_create_ok(
     backend: Backend,
     testbed: TestbedBackend,
 ) -> None:
+    t1 = DateTime.now()
     expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
     expected_dump[NEW_MIKE_DEVICE_ID.user_id] = UserDump(
         user_id=NEW_MIKE_DEVICE_ID.user_id,
         devices=[NEW_MIKE_DEVICE_ID.device_name],
         current_profile=UserProfile.STANDARD,
-        is_revoked=False,
+        created_on=t1,
+        human_handle=NEW_MIKE_HUMAN_HANDLE,
+        revoked_on=None,
     )
 
-    t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
         minimalorg.alice, t1
     )

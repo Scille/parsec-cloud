@@ -7,11 +7,10 @@ from pathlib import Path
 from typing import AsyncGenerator, NewType, cast
 
 import anyio
-import asyncpg
 
 from parsec._parsec import BlockID, OrganizationID, SequesterServiceID, VlobID
 from parsec.components.blockstore import BaseBlockStoreComponent
-from parsec.components.postgresql.handler import PGHandler
+from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 
 
 class RealmExporterError(Exception):
@@ -114,7 +113,7 @@ async def _init_output_db(
     realm_id: VlobID,
     service_id: SequesterServiceID,
     output_db_path: Path,
-    input_conn: asyncpg.Connection,
+    input_conn: AsyncpgConnection,
 ) -> None:
     # 0) Retrieve organization/realm/sequester service from input database
 
@@ -197,7 +196,7 @@ async def _init_output_db(
                 )
             if db_realm_id != realm_id.bytes:
                 raise RealmExporterOutputDbError(
-                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"  # type: ignore[str-bytes-safe]
+                    f"Existing output export database is for a different realm: got `{db_realm_id}` instead of expected `{realm_id.bytes}`"
                 )
             if db_root_verify_key != root_verify_key:
                 raise RealmExporterOutputDbError(
@@ -301,14 +300,14 @@ class RealmExporter:
         realm_id: VlobID,
         service_id: SequesterServiceID,
         output_db_path: Path,
-        input_dbh: PGHandler,
+        input_pool: AsyncpgPool,
         input_blockstore: BaseBlockStoreComponent,
     ):
         self.organization_id = organization_id
         self.realm_id = realm_id
         self.service_id = service_id
         self.output_db_path = output_db_path
-        self.input_dbh = input_dbh
+        self.input_pool = input_pool
         self.input_blockstore = input_blockstore
 
     @classmethod
@@ -319,10 +318,11 @@ class RealmExporter:
         realm_id: VlobID,
         service_id: SequesterServiceID,
         output_db_path: Path,
-        input_dbh: PGHandler,
+        input_pool: AsyncpgPool,
         input_blockstore: BaseBlockStoreComponent,
     ) -> AsyncGenerator["RealmExporter", None]:
-        async with input_dbh.pool.acquire() as input_conn:
+        async with input_pool.acquire() as input_conn:
+            input_conn = cast(AsyncpgConnection, input_conn)
             await _init_output_db(
                 organization_id=organization_id,
                 realm_id=realm_id,
@@ -336,7 +336,7 @@ class RealmExporter:
             realm_id=realm_id,
             service_id=service_id,
             output_db_path=output_db_path,
-            input_dbh=input_dbh,
+            input_pool=input_pool,
             input_blockstore=input_blockstore,
         )
 
@@ -353,7 +353,7 @@ class RealmExporter:
 
         last_exported_index = await anyio.to_thread.run_sync(_retrieve_vlobs_export_status)
 
-        async with self.input_dbh.pool.acquire() as conn:
+        async with self.input_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
 SELECT
@@ -379,9 +379,10 @@ WHERE
     async def export_vlobs(
         self, batch_size: int = 1000, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
-        batch_offset_marker = batch_offset_marker or 0
+        if batch_offset_marker is None:
+            batch_offset_marker = BatchOffsetMarker(0)
 
-        async with self.input_dbh.pool.acquire() as conn:
+        async with self.input_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
 SELECT
@@ -469,7 +470,7 @@ ON CONFLICT DO NOTHING
 
         last_exported_index = await anyio.to_thread.run_sync(_retrieve_vlobs_export_status)
 
-        async with self.input_dbh.pool.acquire() as conn:
+        async with self.input_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
 SELECT
@@ -495,9 +496,9 @@ WHERE
     async def export_blocks(
         self, batch_size: int = 100, batch_offset_marker: BatchOffsetMarker | None = None
     ) -> BatchOffsetMarker:
-        batch_offset_marker = batch_offset_marker or 0
+        batch_offset_marker = batch_offset_marker or BatchOffsetMarker(0)
 
-        async with self.input_dbh.pool.acquire() as conn:
+        async with self.input_pool.acquire() as conn:
             rows = await conn.fetch(
                 """
 SELECT

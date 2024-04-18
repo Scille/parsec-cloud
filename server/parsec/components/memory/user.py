@@ -599,7 +599,11 @@ class MemoryUserComponent(BaseUserComponent):
                     if d.cooked.device_id.user_id == user_id
                 ],
                 current_profile=user.current_profile,
-                is_revoked=user.is_revoked,
+                created_on=user.cooked.timestamp,
+                revoked_on=user.cooked_revoked.timestamp
+                if user.cooked_revoked is not None
+                else None,
+                human_handle=user.cooked.human_handle,
             )
 
         return items
