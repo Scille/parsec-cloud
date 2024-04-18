@@ -11,14 +11,6 @@ from parsec.components.postgresql.utils import (
     q_user,
 )
 
-# TODO: Remaining tables
-# - sequester_service
-# - shamir_recovery_setup
-# - shamir_recovery_share
-# - pki_enrollment
-# - realm_archiving
-# - realm_user_change
-
 q_test_drop_organization = Q(
     """
 WITH deleted_organizations AS (

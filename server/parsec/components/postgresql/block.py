@@ -131,27 +131,6 @@ WHERE
 )
 
 
-# async def _check_realm(
-#     conn: AsyncpgConnection,
-#     organization_id: OrganizationID,
-#     realm_id: VlobID,
-#     operation_kind: OperationKind,
-# ) -> None:
-#     # Fetch the realm status maintenance type
-#     try:
-#         status = await get_realm_status(conn, organization_id, realm_id)
-#     except RealmNotFoundError as exc:
-#         raise BlockNotFoundError(*exc.args) from exc
-
-#     # Special case of reading while in reencryption is authorized
-#     if operation_kind == OperationKind.DATA_READ and status.in_reencryption:
-#         pass
-
-#     # Access is not allowed while in maintenance
-#     elif status.in_maintenance:
-#         raise BlockInMaintenanceError("Data realm is currently under maintenance")
-
-
 class PGBlockComponent(BaseBlockComponent):
     def __init__(self, pool: AsyncpgPool):
         self.pool = pool

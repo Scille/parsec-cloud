@@ -1070,55 +1070,6 @@ class PGUserComponent(BaseUserComponent):
             realm=realm_items,
         )
 
-    # async def get_user_with_trustchain(
-    #     self, organization_id: OrganizationID, user_id: UserID
-    # ) -> tuple[User, Trustchain]:
-    #     raise NotImplementedError
-    #     async with self.dbh.pool.acquire() as conn:
-    #         return await query_get_user_with_trustchain(conn, organization_id, user_id)
-
-    # async def get_user_with_device_and_trustchain(
-    #     self, organization_id: OrganizationID, device_id: DeviceID
-    # ) -> tuple[User, Device, Trustchain]:
-    #     raise NotImplementedError
-    #     async with self.dbh.pool.acquire() as conn:
-    #         return await query_get_user_with_device_and_trustchain(conn, organization_id, device_id)
-
-    # async def get_user_with_devices_and_trustchain(
-    #     self, organization_id: OrganizationID, user_id: UserID, redacted: bool = False
-    # ) -> GetUserAndDevicesResult:
-    #     raise NotImplementedError
-    #     async with self.dbh.pool.acquire() as conn:
-    #         return await query_get_user_with_devices_and_trustchain(
-    #             conn, organization_id, user_id, redacted=redacted
-    #         )
-
-    # async def _get_user_with_device(
-    #     self, conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
-    # ) -> tuple[User, Device]:
-    #     raise NotImplementedError
-    #     return await query_get_user_with_device(conn, organization_id, device_id)
-
-    # async def find_humans(
-    #     self,
-    #     organization_id: OrganizationID,
-    #     query: str | None = None,
-    #     page: int = 1,
-    #     per_page: int = 100,
-    #     omit_revoked: bool = False,
-    #     omit_non_human: bool = False,
-    # ) -> tuple[list[HumanFindResultItem], int]:
-    #     async with self.dbh.pool.acquire() as conn:
-    #         return await query_find_humans(
-    #             conn,
-    #             organization_id=organization_id,
-    #             query=query,
-    #             page=page,
-    #             per_page=per_page,
-    #             omit_revoked=omit_revoked,
-    #             omit_non_human=omit_non_human,
-    #         )
-
     @override
     @transaction
     async def revoke_user(
