@@ -50,8 +50,6 @@ pub async fn generate_path_addr(
             }
         })?;
 
-    // ops.certificates_ops.
-
     Ok(ParsecWorkspacePathAddr::new(
         ops.device.organization_addr.clone(),
         ops.device.organization_id().to_owned(),
