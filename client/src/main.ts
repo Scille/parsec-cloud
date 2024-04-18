@@ -47,6 +47,7 @@ import { TranslationPlugin, initTranslations } from '@/services/translation';
 import '@/theme/global.scss';
 
 import { Base64 } from '@/common/base64';
+import { Events } from '@/services/eventDistributor';
 import Vue3Lottie from 'vue3-lottie';
 
 async function setupApp(): Promise<void> {
@@ -161,7 +162,7 @@ async function setupApp(): Promise<void> {
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
-    window.electronAPI.receive('close-request', async () => {
+    window.electronAPI.receive('parsec-close-request', async () => {
       const answer = await askQuestion('quit.title', 'quit.subtitle', {
         yesText: 'quit.yes',
         noText: 'quit.no',
@@ -175,7 +176,7 @@ async function setupApp(): Promise<void> {
         window.electronAPI.closeApp();
       }
     });
-    window.electronAPI.receive('open-link', async (link: string) => {
+    window.electronAPI.receive('parsec-open-link', async (link: string) => {
       if (await modalController.getTop()) {
         informationManager.present(
           new Information({
@@ -200,7 +201,7 @@ async function setupApp(): Promise<void> {
         );
       }
     });
-    window.electronAPI.receive('open-file-failed', async (path: string, _error: string) => {
+    window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
       informationManager.present(
         new Information({
           message: { key: 'globalErrors.openFileFailed', data: { path: path } },
@@ -208,6 +209,9 @@ async function setupApp(): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+    });
+    window.electronAPI.receive('parsec-update-availability', async ([updateAvailable, version]: [boolean, string?]) => {
+      injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
     });
   } else {
     window.electronAPI = {
@@ -221,6 +225,10 @@ async function setupApp(): Promise<void> {
       openFile: (_path: string): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       sendMountpointFolder: (_path: string): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      getUpdateAvailability: (): void => {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      updateApp: (): void => {},
     };
   }
 }
@@ -301,6 +309,8 @@ declare global {
       receive: (channel: string, f: (...args: any[]) => Promise<void>) => void;
       openFile: (path: string) => void;
       sendMountpointFolder: (path: string) => void;
+      getUpdateAvailability: () => void;
+      updateApp: () => void;
     };
   }
 }

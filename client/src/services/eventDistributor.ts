@@ -14,6 +14,7 @@ enum Events {
   IncompatibleServer = 1 << 5,
   ClientRevoked = 1 << 6,
   ExpiredOrganization = 1 << 7,
+  UpdateAvailability = 1 << 8,
 }
 
 interface WorkspaceCreatedData {
@@ -31,7 +32,12 @@ interface InvitationUpdatedData {
 
 interface WorkspaceFavoriteData {}
 
-type EventData = WorkspaceCreatedData | OnlineData | OfflineData | InvitationUpdatedData | WorkspaceFavoriteData;
+interface UpdateAvailabilityData {
+  updateAvailable: boolean;
+  version?: string;
+}
+
+type EventData = WorkspaceCreatedData | OnlineData | OfflineData | InvitationUpdatedData | WorkspaceFavoriteData | UpdateAvailabilityData;
 
 interface Callback {
   id: string;
@@ -65,4 +71,14 @@ class EventDistributor {
   }
 }
 
-export { EventData, EventDistributor, Events, InvitationUpdatedData, OfflineData, OnlineData, WorkspaceCreatedData, WorkspaceFavoriteData };
+export {
+  EventData,
+  EventDistributor,
+  Events,
+  InvitationUpdatedData,
+  OfflineData,
+  OnlineData,
+  UpdateAvailabilityData,
+  WorkspaceCreatedData,
+  WorkspaceFavoriteData,
+};

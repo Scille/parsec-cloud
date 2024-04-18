@@ -78,15 +78,39 @@ export enum ProfilePopoverOption {
 <script setup lang="ts">
 import { APP_VERSION } from '@/common/mocks';
 import TagProfile from '@/components/users/TagProfile.vue';
-import { UserProfile } from '@/parsec';
+import { isElectron, UserProfile } from '@/parsec';
+import { EventData, EventDistributor, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { cog, logOut, personCircle } from 'ionicons/icons';
+import { onMounted, onUnmounted } from 'vue';
 
-defineProps<{
+let cbId: string | null = null;
+
+const props = defineProps<{
   email: string;
   profile: UserProfile;
+  eventDistributor: EventDistributor;
 }>();
+
+async function onUpdateAvailability(event: Events, data: EventData): Promise<void> {
+  // The whole process of handling new updates should be moved to
+  // its own component
+  const _updateData = data as UpdateAvailabilityData;
+}
+
+onMounted(async () => {
+  cbId = await props.eventDistributor.registerCallback(Events.UpdateAvailability, onUpdateAvailability);
+  if (isElectron()) {
+    window.electronAPI.getUpdateAvailability();
+  }
+});
+
+onUnmounted(async () => {
+  if (cbId) {
+    await props.eventDistributor.removeCallback(cbId);
+  }
+});
 
 async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   await popoverController.dismiss({

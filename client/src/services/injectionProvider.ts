@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { ConnectionHandle, needsMocks } from '@/parsec';
-import { EventDistributor } from '@/services/eventDistributor';
+import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { ImportManager } from '@/services/importManager';
 import { InformationManager } from '@/services/informationManager';
 
@@ -59,6 +59,12 @@ export class InjectionProvider {
 
   getDefault(): Injections {
     return this.default;
+  }
+
+  async distributeEventToAll(event: Events, data: EventData): Promise<void> {
+    for (const injections of this.injections.values()) {
+      await injections.eventDistributor.dispatchEvent(event, data);
+    }
   }
 
   async clean(handle: ConnectionHandle): Promise<void> {

@@ -5,25 +5,32 @@ require('./rt/electron-rt');
 // User Defined Preload scripts below
 
 import { contextBridge, ipcRenderer } from 'electron';
+import { PageToWindowChannel } from './communicationChannels';
 import libparsec from './libparsec';
 
 process.once('loaded', () => {
   contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
   contextBridge.exposeInMainWorld('electronAPI', {
     sendConfig: (config: any) => {
-      ipcRenderer.send('config-update', config);
+      ipcRenderer.send(PageToWindowChannel.ConfigUpdate, config);
     },
     receive: (channel: string, f: (data: any) => Promise<void>) => {
       ipcRenderer.on(channel, async (event, data) => await f(data));
     },
     closeApp: () => {
-      ipcRenderer.send('close-app');
+      ipcRenderer.send(PageToWindowChannel.CloseApp);
     },
     openFile: (path: string) => {
-      ipcRenderer.send('open-file', path);
+      ipcRenderer.send(PageToWindowChannel.OpenFile, path);
     },
     sendMountpointFolder: (path: string) => {
-      ipcRenderer.send('mountpoint-update', path);
+      ipcRenderer.send(PageToWindowChannel.MountpointUpdate, path);
+    },
+    getUpdateAvailability: () => {
+      ipcRenderer.send(PageToWindowChannel.UpdateAvailabilityRequest);
+    },
+    updateApp: () => {
+      ipcRenderer.send(PageToWindowChannel.UpdateApp);
     },
   });
 });

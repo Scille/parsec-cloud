@@ -82,6 +82,7 @@ async function openPopover(event: Event): Promise<void> {
     componentProps: {
       email: props.email,
       profile: props.profile,
+      eventDistributor: eventDistributor,
     },
     event: event,
     showBackdrop: false,
