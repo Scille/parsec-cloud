@@ -11,7 +11,6 @@ from parsec._parsec import (
     EnrollmentID,
     OrganizationID,
     UserCertificate,
-    UserID,
     VerifyKey,
     anonymous_cmds,
     authenticated_cmds,
@@ -220,10 +219,10 @@ class BasePkiEnrollmentComponent:
     ) -> PkiEnrollmentInfo | PkiEnrollmentInfoBadOutcome:
         raise NotImplementedError
 
-    async def list_as_user(
+    async def list(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
     ) -> list[PkiEnrollmentListItem] | PkiEnrollmentListBadOutcome:
         raise NotImplementedError
 
@@ -348,9 +347,9 @@ class BasePkiEnrollmentComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.pki_enrollment_list.Req,
     ) -> authenticated_cmds.latest.pki_enrollment_list.Rep:
-        outcome = await self.list_as_user(
+        outcome = await self.list(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
         )
         match outcome:
             case list() as enrollments:

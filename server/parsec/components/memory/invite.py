@@ -419,7 +419,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
         try:
@@ -430,7 +430,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -450,14 +450,14 @@ class MemoryInviteComponent(BaseInviteComponent):
             EventInvitation(
                 organization_id=organization_id,
                 token=token,
-                greeter=author,
+                greeter=author.user_id,
                 status=InvitationStatus.CANCELLED,
             )
         )
 
     @override
-    async def list_as_user(
-        self, organization_id: OrganizationID, author: UserID
+    async def list(
+        self, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -467,7 +467,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return InviteListBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -475,7 +475,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         items = []
         for invitation in org.invitations.values():
-            if invitation.created_by.user_id != author:
+            if invitation.created_by.user_id != author.user_id:
                 continue
 
             status = self._get_invitation_status(organization_id, invitation)

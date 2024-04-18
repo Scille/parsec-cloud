@@ -11,7 +11,6 @@ from parsec._parsec import (
     OrganizationID,
     RealmRole,
     SequesterServiceID,
-    UserID,
     UserProfile,
     VlobID,
 )
@@ -34,7 +33,7 @@ from parsec.components.postgresql.utils import (
     transaction,
 )
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
-from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
@@ -460,11 +459,11 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
-    async def poll_changes_as_user(
+    async def poll_changes(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
@@ -476,10 +475,12 @@ class PGVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
             case (UserProfile(), DateTime()):
                 pass
@@ -512,11 +513,11 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
-    async def read_batch_as_user(
+    async def read_batch(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         vlobs: list[VlobID],
         at: DateTime | None,
@@ -529,10 +530,12 @@ class PGVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
             case (UserProfile(), DateTime() as last_common_certificate_timestamp):
                 pass
@@ -588,11 +591,11 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
-    async def read_versions_as_user(
+    async def read_versions(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
@@ -604,10 +607,12 @@ class PGVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
             case (UserProfile(), DateTime() as last_common_certificate_timestamp):
                 pass

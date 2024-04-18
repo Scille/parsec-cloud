@@ -13,7 +13,6 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     SequesterServiceID,
-    UserID,
     VlobID,
     authenticated_cmds,
 )
@@ -153,29 +152,29 @@ class BaseVlobComponent:
     ):
         raise NotImplementedError
 
-    async def read_versions_as_user(
+    async def read_versions(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
         raise NotImplementedError
 
-    async def read_batch_as_user(
+    async def read_batch(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         vlobs: list[VlobID],
         at: DateTime | None,
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
         raise NotImplementedError
 
-    async def poll_changes_as_user(
+    async def poll_changes(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
@@ -402,9 +401,9 @@ class BaseVlobComponent:
         if len(req.vlobs) > VLOB_READ_REQUEST_ITEMS_LIMIT:
             return authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
 
-        outcome = await self.read_batch_as_user(
+        outcome = await self.read_batch(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.user_id,
+            author=client_ctx.device_id,
             realm_id=req.realm_id,
             vlobs=req.vlobs,
             at=req.at,
@@ -438,9 +437,9 @@ class BaseVlobComponent:
         if len(req.items) > VLOB_READ_REQUEST_ITEMS_LIMIT:
             return authenticated_cmds.latest.vlob_read_versions.RepTooManyElements()
 
-        outcome = await self.read_versions_as_user(
+        outcome = await self.read_versions(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.user_id,
+            author=client_ctx.device_id,
             realm_id=req.realm_id,
             items=req.items,
         )
@@ -470,9 +469,9 @@ class BaseVlobComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.vlob_poll_changes.Req,
     ) -> authenticated_cmds.latest.vlob_poll_changes.Rep:
-        outcome = await self.poll_changes_as_user(
+        outcome = await self.poll_changes(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.user_id,
+            author=client_ctx.device_id,
             realm_id=req.realm_id,
             checkpoint=req.last_checkpoint,
         )

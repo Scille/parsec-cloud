@@ -442,14 +442,9 @@ class BaseRealmComponent:
     ) -> KeysBundle | RealmGetKeysBundleBadOutcome:
         raise NotImplementedError
 
-    async def get_stats_as_user(
+    async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStats | RealmGetStatsAsUserBadOutcome:
-        raise NotImplementedError
-
-    async def get_stats(
-        self, organization_id: OrganizationID, realm_id: VlobID
-    ) -> RealmStats | RealmGetStatsBadOutcome:
         raise NotImplementedError
 
     async def get_current_realms_for_user(

@@ -13,7 +13,6 @@ from parsec._parsec import (
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentSubmitPayload,
     UserCertificate,
-    UserID,
     UserProfile,
     VerifyKey,
 )
@@ -193,10 +192,10 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 )
 
     @override
-    async def list_as_user(
+    async def list(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
     ) -> list[PkiEnrollmentListItem] | PkiEnrollmentListBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -206,7 +205,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             return PkiEnrollmentListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return PkiEnrollmentListBadOutcome.AUTHOR_NOT_FOUND
 

@@ -954,11 +954,11 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
-    async def get_certificates_as_user(
+    async def get_certificates(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         common_after: DateTime | None,
         sequester_after: DateTime | None,
         shamir_recovery_after: DateTime | None,
@@ -972,10 +972,12 @@ class PGUserComponent(BaseUserComponent):
         if organization.is_expired:
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED
             case (UserProfile() as profile, DateTime()):
                 redacted = profile == UserProfile.OUTSIDER
@@ -1055,7 +1057,7 @@ class PGUserComponent(BaseUserComponent):
         # 3) Realm certificates
 
         realm_items = await self.realm._get_realm_certificates_for_user(
-            conn, organization_id, author, realm_after
+            conn, organization_id, author.user_id, realm_after
         )
 
         # 4) Shamir certificates

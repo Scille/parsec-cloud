@@ -11,10 +11,10 @@ from parsec._parsec import (
     BootstrapToken,
     DateTime,
     DeviceCertificate,
+    DeviceID,
     OrganizationID,
     SequesterAuthorityCertificate,
     UserCertificate,
-    UserID,
     UserProfile,
     VerifyKey,
 )
@@ -214,10 +214,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             return u_certif, d_certif, s_certif
 
     @override
-    async def stats_as_user(
+    async def stats(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         at: DateTime | None = None,
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
         try:
@@ -228,7 +228,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             return OrganizationStatsAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[author]
+            user = org.users[author.user_id]
         except KeyError:
             return OrganizationStatsAsUserBadOutcome.AUTHOR_NOT_FOUND
         if user.is_revoked:
@@ -237,7 +237,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if user.current_profile != UserProfile.ADMIN:
             return OrganizationStatsAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
-        return self._stats(org, None)
+        return self._stats(org, at)
 
     def _stats(
         self,

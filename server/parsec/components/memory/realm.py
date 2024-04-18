@@ -35,7 +35,6 @@ from parsec.components.realm import (
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGetStatsAsUserBadOutcome,
-    RealmGetStatsBadOutcome,
     RealmGrantedRole,
     RealmRenameStoreBadOutcome,
     RealmRenameValidateBadOutcome,
@@ -616,7 +615,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         )
 
     @override
-    async def get_stats_as_user(
+    async def get_stats(
         self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID
     ) -> RealmStats | RealmGetStatsAsUserBadOutcome:
         try:
@@ -639,34 +638,6 @@ class MemoryRealmComponent(BaseRealmComponent):
 
         if realm.get_current_role_for(author.user_id) is None:
             return RealmGetStatsAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-
-        block_size = 0
-        vlob_size = 0
-
-        for vlob in org.vlobs.values():
-            for vlob_atom in vlob:
-                vlob_size += len(vlob_atom.blob)
-
-        for block in org.blocks.values():
-            if block.realm_id == realm_id:
-                block_size += block.block_size
-
-        return RealmStats(
-            blocks_size=block_size,
-            vlobs_size=vlob_size,
-        )
-
-    @override
-    async def get_stats(
-        self, organization_id: OrganizationID, realm_id: VlobID
-    ) -> RealmStats | RealmGetStatsBadOutcome:
-        try:
-            org = self._data.organizations[organization_id]
-        except KeyError:
-            return RealmGetStatsBadOutcome.ORGANIZATION_NOT_FOUND
-
-        if realm_id not in org.realms:
-            return RealmGetStatsBadOutcome.REALM_NOT_FOUND
 
         block_size = 0
         vlob_size = 0

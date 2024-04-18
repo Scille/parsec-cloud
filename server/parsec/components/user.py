@@ -406,10 +406,10 @@ class BaseUserComponent:
     ):
         raise NotImplementedError
 
-    async def get_certificates_as_user(
+    async def get_certificates(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         common_after: DateTime | None,
         sequester_after: DateTime | None,
         shamir_recovery_after: DateTime | None,
@@ -451,9 +451,9 @@ class BaseUserComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.certificate_get.Req,
     ) -> authenticated_cmds.latest.certificate_get.Rep:
-        outcome = await self.get_certificates_as_user(
+        outcome = await self.get_certificates(
             client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
             common_after=req.common_after,
             sequester_after=req.sequester_after,
             shamir_recovery_after=req.shamir_recovery_after,
