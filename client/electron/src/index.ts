@@ -8,6 +8,7 @@ import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 // import { autoUpdater } from 'electron-updater';
 
+import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 
 // Graceful handling of unhandled errors.
@@ -66,7 +67,7 @@ if (!lock) {
       const lastArg = commandLine.at(-1);
       // We're only interested in potential Parsec links
       if (lastArg.startsWith('parsec3://')) {
-        myCapacitorApp.getMainWindow().webContents.send('open-link', lastArg);
+        myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, lastArg);
       }
     }
   });
@@ -79,7 +80,7 @@ app.on('open-url', (_event, url) => {
     // wait for it to load
     setTimeout(
       () => {
-        myCapacitorApp.getMainWindow().webContents.send('open-link', url);
+        myCapacitorApp.sendEvent(WindowToPageChannel.OpenLink, url);
       },
       app.isReady() ? 0 : 1000,
     );
@@ -104,22 +105,31 @@ app.on('activate', async () => {
   }
 });
 
-ipcMain.on('config-update', (_event, data) => {
+ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {
   myCapacitorApp.updateConfig(data);
 });
 
-ipcMain.on('mountpoint-update', (_event, path) => {
+ipcMain.on(PageToWindowChannel.MountpointUpdate, (_event, path) => {
   myCapacitorApp.updateMountpoint(path);
 });
 
-ipcMain.on('close-app', async (_event) => {
+ipcMain.on(PageToWindowChannel.CloseApp, async (_event) => {
   myCapacitorApp.forceClose = true;
   await myCapacitorApp.quitApp();
 });
 
-ipcMain.on('open-file', async (_event, path: string) => {
+ipcMain.on(PageToWindowChannel.OpenFile, async (_event, path: string) => {
   const result = await shell.openPath(path);
   if (result !== '') {
-    myCapacitorApp.getMainWindow().webContents.send('open-file-failed', path, result);
+    myCapacitorApp.sendEvent(WindowToPageChannel.OpenPathFailed, path, result);
   }
+});
+
+ipcMain.on(PageToWindowChannel.UpdateApp, async () => {
+  myCapacitorApp.updateApp();
+});
+
+ipcMain.on(PageToWindowChannel.UpdateAvailabilityRequest, async () => {
+  const updateInfo = await myCapacitorApp.getUpdateInfo();
+  myCapacitorApp.sendEvent(WindowToPageChannel.UpdateAvailability, updateInfo.updateAvailable, updateInfo.version);
 });
