@@ -79,7 +79,7 @@ async def test_authenticated_invite_list_ok(
     await backend.invite.cancel(
         now=t5,
         organization_id=minimalorg.organization_id,
-        author=minimalorg.alice.device_id.user_id,
+        author=minimalorg.alice.device_id,
         token=outcome[0],
     )
     expected_invitations.append(

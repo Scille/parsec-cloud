@@ -524,13 +524,13 @@ class BaseInviteComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
         raise NotImplementedError
 
-    async def list_as_user(
-        self, organization_id: OrganizationID, author: UserID
+    async def list(
+        self, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         raise NotImplementedError
 
@@ -640,7 +640,7 @@ class BaseInviteComponent:
         outcome = await self.cancel(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
             token=req.token,
         )
         match outcome:
@@ -665,9 +665,9 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_list.Req,
     ) -> authenticated_cmds.latest.invite_list.Rep:
-        outcome = await self.list_as_user(
+        outcome = await self.list(
             organization_id=client_ctx.organization_id,
-            author=client_ctx.device_id.user_id,
+            author=client_ctx.device_id,
         )
         match outcome:
             case list() as invitations:

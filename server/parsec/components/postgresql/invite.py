@@ -44,7 +44,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -511,7 +511,7 @@ class PGInviteComponent(BaseInviteComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
         match await self.organization._get(conn, organization_id):
@@ -522,10 +522,12 @@ class PGInviteComponent(BaseInviteComponent):
         if organization.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
             case (UserProfile(), DateTime()):
                 pass
@@ -550,15 +552,15 @@ class PGInviteComponent(BaseInviteComponent):
             EventInvitation(
                 organization_id=organization_id,
                 token=token,
-                greeter=author,
+                greeter=author.user_id,
                 status=InvitationStatus.CANCELLED,
             )
         )
 
     @override
     @transaction
-    async def list_as_user(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: UserID
+    async def list(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         match await self.organization._get(conn, organization_id):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -568,16 +570,18 @@ class PGInviteComponent(BaseInviteComponent):
         if organization.is_expired:
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, author):
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+        match await self.user._check_device(conn, organization_id, author):
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteListBadOutcome.AUTHOR_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteListBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteListBadOutcome.AUTHOR_REVOKED
             case (UserProfile(), DateTime()):
                 pass
 
         rows = await conn.fetch(
-            *_q_list_invitations(organization_id=organization_id.str, user_id=author.str)
+            *_q_list_invitations(organization_id=organization_id.str, user_id=author.user_id.str)
         )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]

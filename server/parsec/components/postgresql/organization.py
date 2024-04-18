@@ -9,11 +9,11 @@ from parsec._parsec import (
     BootstrapToken,
     DateTime,
     DeviceCertificate,
+    DeviceID,
     OrganizationID,
     SequesterAuthorityCertificate,
     SequesterVerifyKeyDer,
     UserCertificate,
-    UserID,
     UserProfile,
     VerifyKey,
 )
@@ -497,11 +497,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
 
     @override
     @transaction
-    async def stats_as_user(
+    async def stats(
         self,
         connection: AsyncpgConnection,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         at: DateTime | None = None,
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
         raise NotImplementedError

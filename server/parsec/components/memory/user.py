@@ -415,10 +415,10 @@ class MemoryUserComponent(BaseUserComponent):
         return certif
 
     @override
-    async def get_certificates_as_user(
+    async def get_certificates(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         common_after: DateTime | None,
         sequester_after: DateTime | None,
         shamir_recovery_after: DateTime | None,
@@ -432,7 +432,7 @@ class MemoryUserComponent(BaseUserComponent):
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[author]
+            user = org.users[author.user_id]
         except KeyError:
             return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
         redacted = user.current_profile == UserProfile.OUTSIDER
@@ -510,7 +510,7 @@ class MemoryUserComponent(BaseUserComponent):
         for realm in org.realms.values():
             last_role = None
             for role in reversed(realm.roles):
-                if role.cooked.user_id == author:
+                if role.cooked.user_id == author.user_id:
                     last_role = role.cooked
                     break
             if not last_role:

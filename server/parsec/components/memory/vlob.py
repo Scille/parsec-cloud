@@ -9,7 +9,6 @@ from parsec._parsec import (
     OrganizationID,
     RealmRole,
     SequesterServiceID,
-    UserID,
     VlobID,
 )
 from parsec.ballpark import (
@@ -326,10 +325,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     @override
-    async def read_versions_as_user(
+    async def read_versions(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
@@ -341,7 +340,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -352,7 +351,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author):
+        match realm.get_current_role_for(author.user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -397,10 +396,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     @override
-    async def read_batch_as_user(
+    async def read_batch(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         vlobs: list[VlobID],
         at: DateTime | None,
@@ -413,7 +412,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -424,7 +423,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author):
+        match realm.get_current_role_for(author.user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -471,10 +470,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         )
 
     @override
-    async def poll_changes_as_user(
+    async def poll_changes(
         self,
         organization_id: OrganizationID,
-        author: UserID,
+        author: DeviceID,
         realm_id: VlobID,
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
@@ -486,7 +485,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author]
+            author_user = org.users[author.user_id]
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -497,7 +496,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author):
+        match realm.get_current_role_for(author.user_id):
             case None:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
