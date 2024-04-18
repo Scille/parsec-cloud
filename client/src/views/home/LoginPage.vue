@@ -53,10 +53,13 @@
           />
           {{ $msTranslate('HomePage.organizationLogin.login') }}
         </ion-button>
-
-        <ms-spinner
-          class="login-spinner"
+        <vue3-lottie
           v-show="loginInProgress === true"
+          :animation-data="SpinnerJSON"
+          :height="28"
+          :width="28"
+          :speed="2"
+          :loop="true"
         />
       </ion-footer>
     </ion-card>
@@ -65,12 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { MsInput, MsPasswordInput, MsSpinner } from '@/components/core';
+import SpinnerJSON from '@/assets/spinner.json';
+import { MsInput, MsPasswordInput } from '@/components/core';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
+import { Vue3Lottie } from 'vue3-lottie';
 
 const props = defineProps<{
   device: AvailableDevice;
@@ -213,13 +218,11 @@ defineExpose({
       padding: 0;
       width: 100%;
       display: flex;
+      gap: 1.5rem;
+      align-items: center;
 
       .login-button {
         width: 100%;
-      }
-
-      .login-spinner {
-        flex-shrink: 2;
       }
     }
   }
