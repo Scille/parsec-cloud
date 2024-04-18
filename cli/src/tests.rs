@@ -439,6 +439,7 @@ async fn status_organization(tmp_path: TmpPath) {
             "active_users_limit": null,
             "is_bootstrapped": true,
             "is_expired": false,
+            "minimum_archiving_period": 2592000,
             "user_profile_outsider_allowed": true
         })
     );
