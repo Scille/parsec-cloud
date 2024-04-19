@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Callable, Iterator, Mapping, TypeVar
+from typing import TYPE_CHECKING, Iterator, Mapping
 
 from parsec._parsec import (
     CryptoError,
@@ -22,7 +22,6 @@ from parsec._parsec import (
     UserCertificate,
     VerifyKey,
     VlobID,
-    WorkspaceManifest,
     child_manifest_verify_and_load,
 )
 
@@ -182,10 +181,7 @@ class WorkspaceExport:
     devices_form_internal_id: dict[int, tuple[DeviceID, VerifyKey]]
     filter_on_date: DateTime
 
-    if TYPE_CHECKING:
-        M = TypeVar("M", WorkspaceManifest, ChildManifest)
-
-    def load_manifest(self, manifest_id: VlobID, verify_and_load: Callable[..., M]) -> M:
+    def load_manifest(self, manifest_id: VlobID) -> ChildManifest:
         # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
         filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
         row = self.db.con.execute(
@@ -213,7 +209,7 @@ class WorkspaceExport:
 
             decrypted_blob = self.decryption_key.decrypt(blob)
 
-            manifest = verify_and_load(
+            manifest = child_manifest_verify_and_load(
                 signed=decrypted_blob,
                 author_verify_key=author_verify_key,
                 expected_author=author,
@@ -229,9 +225,9 @@ class WorkspaceExport:
                 f"Invalid manifest data from vlob {manifest_id.hex}: {exc}"
             ) from exc
 
-    def load_workspace_manifest(self) -> WorkspaceManifest:
-        manifest = self.load_manifest(self.db.realm_id, WorkspaceManifest.verify_and_load)
-        if not isinstance(manifest, WorkspaceManifest):
+    def load_workspace_manifest(self) -> FolderManifest:
+        manifest = self.load_manifest(self.db.realm_id)
+        if not isinstance(manifest, FolderManifest):
             raise InconsistentWorkspaceError(
                 f"Vlob with realm id is expected to contain a Workspace manifest, but actually contained {manifest}"
             )
@@ -260,7 +256,7 @@ class WorkspaceExport:
             child_output = output / child_name.str
             child_manifest_version = None
             try:
-                child_manifest = self.load_manifest(child_id, child_manifest_verify_and_load)
+                child_manifest = self.load_manifest(child_id)
                 child_manifest_version = child_manifest.version
                 if isinstance(child_manifest, FileManifest):
                     yield from self.extract_file(

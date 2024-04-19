@@ -36,9 +36,6 @@ pub(super) struct FsPathResolution {
 }
 
 pub(super) enum FsPathResolutionAndManifest {
-    Workspace {
-        manifest: Arc<LocalWorkspaceManifest>,
-    },
     Folder {
         manifest: Arc<LocalFolderManifest>,
         confinement_point: Option<VlobID>,
@@ -51,7 +48,7 @@ pub(super) enum FsPathResolutionAndManifest {
 
 pub(super) enum FolderishManifestAndUpdater<'a> {
     Root {
-        manifest: Arc<LocalWorkspaceManifest>,
+        manifest: Arc<LocalFolderManifest>,
         updater: RootUpdater<'a>,
     },
     Folder {
@@ -443,7 +440,7 @@ impl ChunksCache {
 
 #[derive(Debug)]
 struct CurrentViewCache {
-    workspace_manifest: Arc<LocalWorkspaceManifest>,
+    workspace_manifest: Arc<LocalFolderManifest>,
     // `child_manifests` contains a cache on the database:
     // - the cache may be cleaned at any given time (i.e. inserting an entry in the cache
     //   doesn't guarantee it will be available later on)
@@ -496,7 +493,7 @@ impl WorkspaceStore {
             Some(encrypted) => {
                 // TODO: if we cannot load this user manifest, should we fallback on
                 //       a new speculative manifest ?
-                LocalWorkspaceManifest::decrypt_and_load(&encrypted, &device.local_symkey)
+                LocalFolderManifest::decrypt_and_load(&encrypted, &device.local_symkey)
                     .context("Cannot load workspace manifest from local storage")?
             }
             // It is possible to lack the workspace manifest in local if our
@@ -509,12 +506,7 @@ impl WorkspaceStore {
             // corrected by the merge during sync).
             None => {
                 let timestamp = device.now();
-                LocalWorkspaceManifest::new(
-                    device.device_id.clone(),
-                    timestamp,
-                    Some(realm_id),
-                    true,
-                )
+                LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, true)
             }
         };
 
@@ -680,8 +672,10 @@ impl WorkspaceStore {
     ) -> Result<FsPathResolutionAndManifest, GetEntryError> {
         if path.is_root() {
             let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            return Ok(FsPathResolutionAndManifest::Workspace {
+            return Ok(FsPathResolutionAndManifest::Folder {
                 manifest: cache.workspace_manifest.clone(),
+                // Root has no parent, hence confinement_point is never possible
+                confinement_point: None,
             });
         }
 
@@ -751,7 +745,7 @@ impl WorkspaceStore {
         })
     }
 
-    pub(crate) fn get_workspace_manifest(&self) -> Arc<LocalWorkspaceManifest> {
+    pub(crate) fn get_workspace_manifest(&self) -> Arc<LocalFolderManifest> {
         self.current_view_cache
             .lock()
             .expect("Mutex is poisoned")
@@ -932,7 +926,7 @@ impl WorkspaceStore {
         Ok(manifest)
     }
 
-    pub(crate) async fn for_update_root(&self) -> (RootUpdater<'_>, Arc<LocalWorkspaceManifest>) {
+    pub(crate) async fn for_update_root(&self) -> (RootUpdater<'_>, Arc<LocalFolderManifest>) {
         let guard = self.lock_update_workspace_manifest.lock().await;
 
         let manifest = {
@@ -1466,9 +1460,11 @@ pub(super) struct RootUpdater<'a> {
 impl<'a> RootUpdater<'a> {
     pub async fn update_workspace_manifest(
         self,
-        manifest: Arc<LocalWorkspaceManifest>,
+        manifest: Arc<LocalFolderManifest>,
         new_child: Option<ArcLocalChildManifest>,
     ) -> Result<(), UpdateWorkspaceManifestError> {
+        assert_eq!(manifest.base.id, manifest.base.parent); // Sanity check
+
         let mut storage_guard = self.store.storage.lock().await;
         let storage = storage_guard
             .as_mut()

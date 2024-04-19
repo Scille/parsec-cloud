@@ -355,13 +355,21 @@ pub struct FolderManifest {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
+    /// Note that, by convention, root folder manifest is identified by the realm ID
     pub id: VlobID,
+    /// If root folder manifest, `parent` and `id` fields are equal
     pub parent: VlobID,
     // Version 0 means the data is not synchronized
     pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
     pub children: HashMap<EntryName, VlobID>,
+}
+
+impl FolderManifest {
+    pub fn is_root(&self) -> bool {
+        self.id == self.parent
+    }
 }
 
 impl_manifest_dump_load!(FolderManifest);
@@ -375,41 +383,6 @@ impl_transparent_data_format_conversion!(
     timestamp,
     id,
     parent,
-    version,
-    created,
-    updated,
-    children,
-);
-
-/*
- * WorkspaceManifest
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(into = "WorkspaceManifestData", from = "WorkspaceManifestData")]
-pub struct WorkspaceManifest {
-    pub author: DeviceID,
-    pub timestamp: DateTime,
-
-    // Note that, by convention, workspace manifest is identified by the realm ID
-    pub id: VlobID,
-    // Version 0 means the data is not synchronized
-    pub version: VersionInt,
-    pub created: DateTime,
-    pub updated: DateTime,
-    pub children: HashMap<EntryName, VlobID>,
-}
-
-parsec_data!("schema/manifest/workspace_manifest.json5");
-
-impl_manifest_dump_load!(WorkspaceManifest);
-
-impl_transparent_data_format_conversion!(
-    WorkspaceManifest,
-    WorkspaceManifestData,
-    author,
-    timestamp,
-    id,
     version,
     created,
     updated,

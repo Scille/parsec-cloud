@@ -285,19 +285,6 @@ pub(crate) async fn maybe_populate_workspace_storage(
 
             for event in &env.template.events {
                 match event {
-                    TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x)
-                        if x.realm == realm_id && x.device == device.device_id =>
-                    {
-                        lazy_storage!()
-                            .update_manifest(&UpdateManifestData {
-                                entry_id: x.local_manifest.base.id,
-                                need_sync: x.local_manifest.need_sync,
-                                base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
-                            })
-                            .await
-                            .unwrap();
-                    }
                     TestbedEvent::WorkspaceDataStorageFetchFileVlob(x)
                         if x.realm == realm_id && x.device == device.device_id =>
                     {
@@ -338,19 +325,6 @@ pub(crate) async fn maybe_populate_workspace_storage(
                     {
                         lazy_storage!()
                             .update_realm_checkpoint(x.checkpoint, &x.changed_vlobs)
-                            .await
-                            .unwrap();
-                    }
-                    TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x)
-                        if x.realm == realm_id && x.device == device.device_id =>
-                    {
-                        lazy_storage!()
-                            .update_manifest(&UpdateManifestData {
-                                entry_id: x.local_manifest.base.id,
-                                need_sync: x.local_manifest.need_sync,
-                                base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
-                            })
                             .await
                             .unwrap();
                     }

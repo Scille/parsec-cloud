@@ -15,7 +15,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, RealmRole, Regex, UserManifest, VlobID, WorkspaceManifest, DEFAULT_BLOCK_SIZE,
+    FolderManifest, RealmRole, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -408,6 +408,17 @@ pub struct LocalFolderManifest {
     // deleted locally and hence should be restored when crafting the remote manifest
     // to upload.
     pub remote_confinement_points: HashSet<VlobID>,
+    // Speculative placeholders are created when we want to access a workspace
+    // but didn't retrieve manifest data from server yet. This implies:
+    // - only the root folder can be speculative
+    // - non-placeholders cannot be speculative
+    // - the only non-speculative placeholder is the placeholder initialized
+    //   during the initial workspace creation
+    // This speculative information is useful during merge to understand if
+    // a data is not present in the placeholder compared with a remote because:
+    // a) the data is not locally known (speculative is True)
+    // b) the data is known, but has been locally removed (speculative is False)
+    pub speculative: bool,
 }
 
 parsec_data!("schema/local_manifest/local_folder_manifest.json5");
@@ -421,6 +432,7 @@ impl_transparent_data_format_conversion!(
     children,
     local_confinement_points,
     remote_confinement_points,
+    speculative,
 );
 
 impl_local_manifest_dump_load!(LocalFolderManifest);
@@ -443,287 +455,25 @@ impl LocalFolderManifest {
             children: HashMap::new(),
             local_confinement_points: HashSet::new(),
             remote_confinement_points: HashSet::new(),
+            speculative: false,
         }
     }
 
-    pub fn evolve_children_and_mark_updated(
-        mut self,
-        data: HashMap<EntryName, Option<VlobID>>,
-        prevent_sync_pattern: Option<&Regex>,
-        timestamp: DateTime,
-    ) -> Self {
-        let mut actually_updated = false;
-        // Deal with removal first
-        for (name, entry_id) in data.iter() {
-            // Here `entry_id` can be either:
-            // - a new entry id that might overwrite the previous one with the same name if it exists
-            // - `None` which means the entry for the corresponding name should be removed
-            if !self.children.contains_key(name) {
-                // Make sure we don't remove a name that does not exist
-                assert!(entry_id.is_some());
-                continue;
-            }
-            // Remove old entry
-            if let Some(old_entry_id) = self.children.remove(name) {
-                if !self.local_confinement_points.remove(&old_entry_id) {
-                    actually_updated = true;
-                }
-            }
-        }
-        // Make sure no entry_id is duplicated
-        assert_eq!(
-            HashSet::<_, RandomState>::from_iter(data.values().filter_map(|v| v.as_ref()))
-                .intersection(&HashSet::from_iter(self.children.values()))
-                .count(),
-            0
-        );
-
-        // Deal with additions second
-        for (name, entry_id) in data.into_iter() {
-            if let Some(entry_id) = entry_id {
-                if prevent_sync_pattern.is_some_and(|p| p.is_match(name.as_ref())) {
-                    self.local_confinement_points.insert(entry_id);
-                } else {
-                    actually_updated = true;
-                }
-                // Add new entry
-                self.children.insert(name, entry_id);
-            }
-        }
-
-        if !actually_updated {
-            return self;
-        }
-
-        self.need_sync = true;
-        self.updated = timestamp;
-        self
-    }
-
-    fn filter_local_confinement_points(mut self) -> Self {
-        if self.local_confinement_points.is_empty() {
-            return self;
-        }
-
-        self.children
-            .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
-
-        self.local_confinement_points.clear();
-        self
-    }
-
-    fn restore_local_confinement_points(
-        self,
-        other: &Self,
-        prevent_sync_pattern: Option<&Regex>,
-        timestamp: DateTime,
-    ) -> Self {
-        // Using self.remote_confinement_points is useful to restore entries that were present locally
-        // before applying a new filter that filtered those entries from the remote manifest
-        if other.local_confinement_points.is_empty() && self.remote_confinement_points.is_empty() {
-            return self;
-        }
-        // Create a set for fast lookup in order to make sure no entry gets duplicated.
-        // This might happen when a synchronized entry is renamed to a confined name locally.
-        let self_entry_ids = HashSet::<_, RandomState>::from_iter(self.children.values());
-        let previously_local_confinement_points = other
-            .children
-            .iter()
-            .filter_map(|(name, entry_id)| {
-                if !self_entry_ids.contains(entry_id)
-                    && (other.local_confinement_points.contains(entry_id)
-                        || self.remote_confinement_points.contains(entry_id))
-                {
-                    Some((name.clone(), Some(*entry_id)))
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        self.evolve_children_and_mark_updated(
-            previously_local_confinement_points,
-            prevent_sync_pattern,
-            timestamp,
-        )
-    }
-
-    fn filter_remote_entries(mut self, prevent_sync_pattern: Option<&Regex>) -> Self {
-        let remote_confinement_points: HashSet<_> = self
-            .children
-            .iter()
-            .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.is_some_and(|p| p.is_match(name.as_ref())) {
-                    Some(*entry_id)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        if remote_confinement_points.is_empty() {
-            return self;
-        }
-
-        self.remote_confinement_points = remote_confinement_points;
-        self.children
-            .retain(|_, entry_id| !self.remote_confinement_points.contains(entry_id));
-
-        self
-    }
-
-    fn restore_remote_confinement_points(mut self) -> Self {
-        if self.remote_confinement_points.is_empty() {
-            return self;
-        }
-
-        for (name, entry_id) in self.base.children.iter() {
-            if self.remote_confinement_points.contains(entry_id) {
-                self.children.insert(name.clone(), *entry_id);
-            }
-        }
-        self.remote_confinement_points.clear();
-        self
-    }
-
-    pub fn apply_prevent_sync_pattern(
-        &self,
-        prevent_sync_pattern: Option<&Regex>,
-        timestamp: DateTime,
-    ) -> Self {
-        let result = self.clone();
-        result
-            // Filter local confinement points
-            .filter_local_confinement_points()
-            // Restore remote confinement points
-            .restore_remote_confinement_points()
-            // Filter remote confinement_points
-            .filter_remote_entries(prevent_sync_pattern)
-            // Restore local confinement points
-            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
-    }
-
-    pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: Option<&Regex>) -> Self {
-        let updated = remote.updated;
-        let children = remote.children.clone();
-
-        Self {
-            base: remote,
-            need_sync: false,
-            updated,
-            children,
-            local_confinement_points: HashSet::new(),
-            remote_confinement_points: HashSet::new(),
-        }
-        .filter_remote_entries(prevent_sync_pattern)
-    }
-
-    pub fn from_remote_with_local_context(
-        remote: FolderManifest,
-        prevent_sync_pattern: Option<&Regex>,
-        local_manifest: &Self,
-        timestamp: DateTime,
-    ) -> Self {
-        Self::from_remote(remote, prevent_sync_pattern).restore_local_confinement_points(
-            local_manifest,
-            prevent_sync_pattern,
-            timestamp,
-        )
-    }
-
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
-        let result = self
-            .clone()
-            // Filter confined entries
-            .filter_local_confinement_points()
-            // Restore filtered entries
-            .restore_remote_confinement_points();
-        // Create remote manifest
-        FolderManifest {
-            author,
-            timestamp,
-            id: result.base.id,
-            parent: result.base.parent,
-            version: result.base.version + 1,
-            created: result.base.created,
-            updated: result.updated,
-            children: result.children,
-        }
-    }
-
-    pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
-        let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
-        reference.version = remote_manifest.version;
-        reference == *remote_manifest
-    }
-}
-
-/*
- * LocalWorkspaceManifest
- */
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "LocalWorkspaceManifestData",
-    from = "LocalWorkspaceManifestData"
-)]
-pub struct LocalWorkspaceManifest {
-    pub base: WorkspaceManifest,
-    pub need_sync: bool,
-    pub updated: DateTime,
-    pub children: HashMap<EntryName, VlobID>,
-    // Confined entries are entries that are meant to stay locally and not be added
-    // to the uploaded remote manifest when synchronizing. The criteria for being
-    // confined is to have a filename that matched the "prevent sync" pattern at the time of
-    // the last change (or when a new filter was successfully applied)
-    pub local_confinement_points: HashSet<VlobID>,
-    // Filtered entries are entries present in the base manifest that are not exposed
-    // locally. We keep track of them to remember that those entries have not been
-    // deleted locally and hence should be restored when crafting the remote manifest
-    // to upload.
-    pub remote_confinement_points: HashSet<VlobID>,
-    // Speculative placeholders are created when we want to access a workspace
-    // but didn't retrieve manifest data from server yet. This implies:
-    // - non-placeholders cannot be speculative
-    // - the only non-speculative placeholder is the placeholder initialized
-    //   during the initial workspace creation
-    // This speculative information is useful during merge to understand if
-    // a data is not present in the placeholder compared with a remote because:
-    // a) the data is not locally known (speculative is True)
-    // b) the data is known, but has been locally removed (speculative is False)
-    // Prevented to be `required=True` by backward compatibility
-    pub speculative: bool,
-}
-
-parsec_data!("schema/local_manifest/local_workspace_manifest.json5");
-
-impl_local_manifest_dump_load!(LocalWorkspaceManifest);
-
-impl_transparent_data_format_conversion!(
-    LocalWorkspaceManifest,
-    LocalWorkspaceManifestData,
-    base,
-    need_sync,
-    updated,
-    children,
-    local_confinement_points,
-    remote_confinement_points,
-    speculative
-);
-
-impl LocalWorkspaceManifest {
-    pub fn new(
+    /// Root folder manifest (aka "workspace manifest" for historical reasons) is a special
+    /// folder manifest which ID the same as the realm ID.
+    /// It is the only folder manifest that can be speculative.
+    pub fn new_root(
         author: DeviceID,
+        realm: VlobID,
         timestamp: DateTime,
-        id: Option<VlobID>,
         speculative: bool,
     ) -> Self {
         Self {
-            base: WorkspaceManifest {
+            base: FolderManifest {
                 author,
                 timestamp,
-                id: id.unwrap_or_default(),
+                id: realm,
+                parent: realm,
                 version: 0,
                 created: timestamp,
                 updated: timestamp,
@@ -895,7 +645,7 @@ impl LocalWorkspaceManifest {
             .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
     }
 
-    pub fn from_remote(remote: WorkspaceManifest, prevent_sync_pattern: Option<&Regex>) -> Self {
+    pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: Option<&Regex>) -> Self {
         let updated = remote.updated;
         let children = remote.children.clone();
 
@@ -912,7 +662,7 @@ impl LocalWorkspaceManifest {
     }
 
     pub fn from_remote_with_local_context(
-        remote: WorkspaceManifest,
+        remote: FolderManifest,
         prevent_sync_pattern: Option<&Regex>,
         local_manifest: &Self,
         timestamp: DateTime,
@@ -924,7 +674,7 @@ impl LocalWorkspaceManifest {
         )
     }
 
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> WorkspaceManifest {
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
         let result = self
             .clone()
             // Filter confined entries
@@ -932,10 +682,11 @@ impl LocalWorkspaceManifest {
             // Restore filtered entries
             .restore_remote_confinement_points();
         // Create remote manifest
-        WorkspaceManifest {
+        FolderManifest {
             author,
             timestamp,
             id: result.base.id,
+            parent: result.base.parent,
             version: result.base.version + 1,
             created: result.base.created,
             updated: result.updated,
@@ -943,7 +694,7 @@ impl LocalWorkspaceManifest {
         }
     }
 
-    pub fn match_remote(&self, remote_manifest: &WorkspaceManifest) -> bool {
+    pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
         let mut reference =
             self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
         reference.version = remote_manifest.version;

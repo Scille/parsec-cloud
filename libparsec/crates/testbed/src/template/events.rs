@@ -150,7 +150,6 @@ pub enum TestbedEvent {
     NewDeviceInvitation(TestbedEventNewDeviceInvitation),
     NewUserInvitation(TestbedEventNewUserInvitation),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
-    CreateOrUpdateWorkspaceManifestVlob(TestbedEventCreateOrUpdateWorkspaceManifestVlob),
     CreateOrUpdateFileManifestVlob(TestbedEventCreateOrUpdateFileManifestVlob),
     CreateOrUpdateFolderManifestVlob(TestbedEventCreateOrUpdateFolderManifestVlob),
     CreateOrUpdateOpaqueVlob(TestbedEventCreateOrUpdateOpaqueVlob),
@@ -162,13 +161,9 @@ pub enum TestbedEvent {
     UserStorageFetchUserVlob(TestbedEventUserStorageFetchUserVlob),
     UserStorageFetchRealmCheckpoint(TestbedEventUserStorageFetchRealmCheckpoint),
     UserStorageLocalUpdate(TestbedEventUserStorageLocalUpdate),
-    WorkspaceDataStorageFetchWorkspaceVlob(TestbedEventWorkspaceDataStorageFetchWorkspaceVlob),
     WorkspaceDataStorageFetchFileVlob(TestbedEventWorkspaceDataStorageFetchFileVlob),
     WorkspaceDataStorageFetchFolderVlob(TestbedEventWorkspaceDataStorageFetchFolderVlob),
     WorkspaceCacheStorageFetchBlock(TestbedEventWorkspaceCacheStorageFetchBlock),
-    WorkspaceDataStorageLocalWorkspaceManifestUpdate(
-        TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate,
-    ),
     WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(
         TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate,
     ),
@@ -198,7 +193,6 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::ArchiveRealm(x) => x.crc_hash(hasher),
             TestbedEvent::NewShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
-            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFileManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFolderManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) => x.crc_hash(hasher),
@@ -208,13 +202,11 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::UserStorageFetchUserVlob(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageLocalUpdate(x) => x.crc_hash(hasher),
-            TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageFetchFileVlob(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageFetchFolderVlob(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageChunkCreate(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceCacheStorageFetchBlock(x) => x.crc_hash(hasher),
-            TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x) => x.crc_hash(hasher),
             TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(x) => {
                 x.crc_hash(hasher)
             }
@@ -358,7 +350,6 @@ impl TestbedEvent {
             TestbedEvent::NewDeviceInvitation(_)
             | TestbedEvent::NewUserInvitation(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
-            | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
@@ -368,11 +359,9 @@ impl TestbedEvent {
             | TestbedEvent::UserStorageFetchUserVlob(_)
             | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
             | TestbedEvent::UserStorageLocalUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
@@ -400,7 +389,6 @@ impl TestbedEvent {
             | TestbedEvent::ArchiveRealm(_)
             | TestbedEvent::NewShamirRecovery(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
-            | TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
@@ -411,13 +399,11 @@ impl TestbedEvent {
             | TestbedEvent::UserStorageFetchUserVlob(_)
             | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
             | TestbedEvent::UserStorageLocalUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_) => true,
         }
@@ -2113,134 +2099,6 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 }
 
 /*
- * TestbedEventCreateOrUpdateWorkspaceManifestVlob
- */
-
-#[derive(Clone)]
-pub struct TestbedEventCreateOrUpdateWorkspaceManifestVlob {
-    pub key_index: IndexInt,
-    pub key: SecretKey,
-    pub manifest: Arc<WorkspaceManifest>,
-    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
-}
-
-impl_event_debug!(
-    TestbedEventCreateOrUpdateWorkspaceManifestVlob,
-    [manifest: Arc<WorkspaceManifest>]
-);
-
-impl CrcHash for TestbedEventCreateOrUpdateWorkspaceManifestVlob {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        "TestbedEventCreateOrUpdateWorkspaceManifestVlob".crc_hash(hasher);
-        self.manifest.crc_hash(hasher);
-    }
-}
-
-impl TestbedEventCreateOrUpdateWorkspaceManifestVlob {
-    pub(super) fn from_builder(
-        builder: &mut TestbedTemplateBuilder,
-        author: DeviceID,
-        realm: VlobID,
-    ) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
-            utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
-        }
-
-        let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
-            "Realm must have had at least one key rotation before vlob create/update is possible !",
-        );
-
-        // 2) Actual creation
-
-        let id = realm;
-
-        let (version, children) = builder
-            .events
-            .iter()
-            .rev()
-            .find_map(|e| match e {
-                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) if x.manifest.id == id => {
-                    Some((x.manifest.version + 1, x.manifest.children.to_owned()))
-                }
-                TestbedEvent::CreateOrUpdateOpaqueVlob(x)
-                    if x.vlob_id == id =>
-                {
-                    // A given VlobID can only be part of a single realm
-                    assert_eq!(realm, x.realm, "VlobID {} is part of realm {}, not {}", id, x.realm, realm);
-                    Some((x.version + 1, HashMap::new()))
-                }
-                // Try to detect common mistake in testbed env definition
-                TestbedEvent::CreateOrUpdateFileManifestVlob(x)
-                    if x.manifest.id == id
-                => panic!("Expected vlob {} to be a workspace, but it previous version contains file manifest !", id),
-                TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
-                    if x.manifest.id == id
-                => panic!("Expected vlob {} to be a workspace, but it previous version contains folder manifest !", id),
-                _ => None,
-            })
-            // Manifest doesn't exist yet, we create it then !
-            .unwrap_or_else(|| (1, HashMap::new()));
-
-        let timestamp = builder.counters.next_timestamp();
-        Self {
-            key_index,
-            key: key.to_owned(),
-            manifest: Arc::new(WorkspaceManifest {
-                timestamp,
-                author,
-                id,
-                version,
-                created: timestamp,
-                updated: timestamp,
-                children,
-            }),
-            cache: Arc::default(),
-        }
-    }
-
-    pub fn signed(&self, template: &TestbedTemplate) -> Bytes {
-        self.cache(template).signed
-    }
-
-    pub fn encrypted(&self, template: &TestbedTemplate) -> Bytes {
-        self.cache(template).encrypted
-    }
-
-    pub fn sequestered(
-        &self,
-        template: &TestbedTemplate,
-    ) -> Option<Vec<(SequesterServiceID, Bytes)>> {
-        self.cache(template).sequestered
-    }
-
-    fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
-        let populate = || {
-            let author_signkey = template.device_signing_key(&self.manifest.author);
-
-            let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
-            let encrypted = self.key.encrypt(&signed).into();
-            let sequestered = template.sequester_services_public_key().map(|iter| {
-                iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
-                    .collect()
-            });
-
-            TestbedEventCreateOrUpdateVlobCache {
-                signed,
-                encrypted,
-                sequestered,
-            }
-        };
-        let mut guard = self.cache.lock().expect("Mutex is poisoned");
-        guard.populated(populate).to_owned()
-    }
-}
-
-/*
  * TestbedEventCreateOrUpdateFolderManifestVlob
  */
 
@@ -2325,9 +2183,6 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
                 TestbedEvent::CreateOrUpdateFileManifestVlob(x)
                     if x.manifest.id == vlob
                 => panic!("Expected vlob {} to be a folder, but it previous version contains file manifest !", vlob),
-                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
-                    if x.manifest.id == vlob
-                => panic!("Expected vlob {} to be a folder, but it previous version contains workspace manifest !", vlob),
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
@@ -2488,9 +2343,6 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
                 TestbedEvent::CreateOrUpdateFolderManifestVlob(x)
                     if x.manifest.id == vlob
                 => panic!("Expected vlob {} to be a file, but it previous version contains folder manifest !", vlob),
-                TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
-                    if x.manifest.id == vlob
-                => panic!("Expected vlob {} to be a file, but it previous version contains workspace manifest !", vlob),
                 _ => None,
             })
             // Manifest doesn't exist yet, we create it then !
@@ -2932,62 +2784,6 @@ impl TestbedEventUserStorageLocalUpdate {
 }
 
 /*
- * TestbedEventWorkspaceDataStorageFetchWorkspaceVlob
- */
-
-no_certificate_event!(
-    TestbedEventWorkspaceDataStorageFetchWorkspaceVlob,
-    [
-        device: DeviceID,
-        realm: VlobID,
-        local_manifest: Arc<LocalWorkspaceManifest>
-    ]
-);
-
-impl TestbedEventWorkspaceDataStorageFetchWorkspaceVlob {
-    pub(super) fn from_builder(
-        builder: &mut TestbedTemplateBuilder,
-        device: DeviceID,
-        realm: VlobID,
-        prevent_sync_pattern: Option<Regex>,
-    ) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-            // We don't care that the user is revoked here given we don't modify
-            // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
-            utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
-        }
-
-        let local_manifest = builder.events.iter().rev().find_map(|e| match e {
-            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x)
-                if x.manifest.id == realm => {
-                Some(Arc::new(LocalWorkspaceManifest::from_remote(
-                    (*x.manifest).clone(),
-                    prevent_sync_pattern.as_ref(),
-                )))
-            }
-            TestbedEvent::CreateOrUpdateOpaqueVlob(x)
-                if x.realm == realm && x.vlob_id == VlobID::from(*realm) => {
-                panic!("Last workspace vlob create/update for realm {} is opaque, cannot deduce what to put in the local user storage !", realm);
-            }
-            _ => None,
-        }).unwrap_or_else( || panic!("Workspace manifest has never been synced for realm {}", realm) );
-
-        // 2) Actual creation
-
-        Self {
-            device,
-            realm,
-            local_manifest,
-        }
-    }
-}
-
-/*
  * TestbedEventWorkspaceDataStorageFetchFolderVlob
  */
 
@@ -3150,10 +2946,6 @@ impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
         };
 
         let checkpoint = builder.events.iter().fold(0, |acc, e| match e {
-            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) if x.manifest.id == realm => {
-                insert_change(x.manifest.id, x.manifest.version);
-                acc + 1
-            }
             TestbedEvent::CreateOrUpdateFileManifestVlob(x) if x.realm == realm => {
                 insert_change(x.manifest.id, x.manifest.version);
                 acc + 1
@@ -3277,85 +3069,6 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
             realm,
             block_id: block,
             cleartext,
-        }
-    }
-}
-
-/*
- * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate
- */
-
-no_certificate_event!(
-    TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate,
-    [
-        timestamp: DateTime,
-        device: DeviceID,
-        realm: VlobID,
-        local_manifest: Arc<LocalWorkspaceManifest>
-    ]
-);
-
-impl TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdate {
-    pub(super) fn from_builder(
-        builder: &mut TestbedTemplateBuilder,
-        device: DeviceID,
-        realm: VlobID,
-    ) -> Self {
-        // 1) Consistency checks
-
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-            // We don't care that the user is revoked here given we don't modify
-            // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
-            utils::assert_realm_exists(&builder.events, realm);
-            // Changes are in local, so no need to check for realm read/write access
-        }
-
-        let timestamp = builder.counters.next_timestamp();
-
-        let local_manifest = builder
-            .events
-            .iter()
-            .rev()
-            .find_map(|e| {
-                match e {
-                    TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(x)
-                        if x.device == device && x.realm == realm =>
-                    {
-                        Some(x.local_manifest.clone())
-                    }
-                    TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(x)
-                        if x.device == device && x.realm == realm =>
-                    {
-                        Some(x.local_manifest.clone())
-                    }
-                    _ => None,
-                }
-                .map(|mut manifest| {
-                    let m = Arc::make_mut(&mut manifest);
-                    m.updated = timestamp;
-                    m.need_sync = true;
-                    manifest
-                })
-            })
-            .unwrap_or_else(|| {
-                // No previous local workspace manifest, create one
-                Arc::new(LocalWorkspaceManifest::new(
-                    device.clone(),
-                    timestamp,
-                    Some(realm),
-                    false,
-                ))
-            });
-
-        // 2) Actual creation
-
-        Self {
-            timestamp,
-            device,
-            realm,
-            local_manifest,
         }
     }
 }

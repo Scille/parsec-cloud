@@ -16,6 +16,7 @@
             "type": "VlobID"
         },
         {
+            // In case of the root folder, `parent` and `id` fields must be equal
             "name": "parent",
             "type": "VlobID"
         },

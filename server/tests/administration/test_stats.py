@@ -102,7 +102,7 @@ async def test_ok(
     expected_coolorg_stats = {
         "active_users": 3,
         "data_size": 0,
-        "metadata_size": 671,
+        "metadata_size": 675,
         "realms": 3,
         "users": 3,
         "users_per_profile_detail": {

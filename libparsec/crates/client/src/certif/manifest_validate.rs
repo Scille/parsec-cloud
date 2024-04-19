@@ -148,7 +148,7 @@ pub(super) async fn validate_workspace_manifest(
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
-) -> Result<WorkspaceManifest, CertifValidateManifestError> {
+) -> Result<FolderManifest, CertifValidateManifestError> {
     let vlob_id = realm_id;
 
     let needed_timestamps = PerTopicLastTimestamps::new_for_common_and_realm(
@@ -220,9 +220,22 @@ pub(super) async fn validate_workspace_manifest(
                 version,
                 timestamp,
                 encrypted,
-                WorkspaceManifest::decrypt_verify_and_load,
+                FolderManifest::decrypt_verify_and_load,
             )
             .await?;
+
+            // Last check: root folder's parent must point to itself
+            if res.parent != res.id {
+                let what = Box::new(InvalidManifestError::Corrupted {
+                    realm: realm_id,
+                    vlob: vlob_id,
+                    version,
+                    author: author.to_owned(),
+                    timestamp,
+                    error: Box::new(DataError::Serialization),
+                });
+                return Err(CertifValidateManifestError::InvalidManifest(what));
+            }
 
             Ok(res)
         })

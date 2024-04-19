@@ -9,7 +9,6 @@ use crate::{
     fixtures::{alice, Device},
     BlockAccess, BlockID, Blocksize, ChildManifest, DataError, DateTime, DeviceID, FileManifest,
     FolderManifest, HashDigest, LegacyUserManifestWorkspaceEntry, UserManifest, VlobID,
-    WorkspaceManifest,
 };
 
 #[rstest]
@@ -683,84 +682,6 @@ fn serde_folder_manifest(alice: &Device) {
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
     // Note we cannot just compare with `data` due to signature and keys order
     let manifest2 = FolderManifest::decrypt_verify_and_load(
-        &data2,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        now,
-        None,
-        None,
-    )
-    .unwrap();
-    p_assert_eq!(manifest2, expected);
-}
-
-#[rstest]
-fn serde_workspace_manifest(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "workspace_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   children: {
-    //     wksp1: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //     wksp2: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-    //   }
-    let data = hex!(
-        "81de3866c170f0fe2de103cbdcd518952c9d821e2b751b1ca43b2502333efa33142b52"
-        "d0aac474f24e71e71caa858f2786dfbecada89d92f577e970f1ac92b8e385b3f278172"
-        "d787da92d8b5e98d772893268652c0590644acb1344f0f3c13b5a1c49a96f58b9959f0"
-        "6ebcca5c8cdff4b921bf83d61515d039ede22766cae7fe657b9f21746717a06995a910"
-        "c350c5082d5c6db8a6762d55e7b0ed26bd29f8f1d21e543022380c886dae8bc5dd1a8e"
-        "b6254cd90b47eead401f9e9a91668cf757ab15f7c0f799b02b5a3d36e1c5df5d62b3fe"
-        "07b1f45071b655f197e47b3c41f31a58d4eb6e7c3666220fe0c8a4fb21c9e21334299c"
-        "c7397f94ea0829a6613383ce83ec2561f5c8758f71dc00df7b82bc6bdd9831de"
-    );
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let key = SecretKey::from(hex!(
-        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
-    ));
-
-    let expected = WorkspaceManifest {
-        author: alice.device_id.to_owned(),
-        timestamp: now,
-        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-        version: 42,
-        created: now,
-        updated: now,
-        children: HashMap::from([
-            (
-                "wksp1".parse().unwrap(),
-                VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-            ),
-            (
-                "wksp2".parse().unwrap(),
-                VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-            ),
-        ]),
-    };
-
-    let manifest = WorkspaceManifest::decrypt_verify_and_load(
-        &data,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        now,
-        None,
-        None,
-    )
-    .unwrap();
-
-    p_assert_eq!(manifest, expected);
-
-    // Also test serialization round trip
-    let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
-    // Note we cannot just compare with `data` due to signature and keys order
-    let manifest2 = WorkspaceManifest::decrypt_verify_and_load(
         &data2,
         &key,
         &alice.verify_key(),

@@ -416,7 +416,7 @@ pub async fn workspace_storage_non_speculative_init(
 
     let timestamp = device.now();
     let manifest =
-        LocalWorkspaceManifest::new(device.device_id.clone(), timestamp, Some(realm_id), false);
+        LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, false);
 
     storage
         .update_manifest(&UpdateManifestData {
