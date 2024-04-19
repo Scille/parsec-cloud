@@ -26,8 +26,8 @@ use libparsec_tests_fixtures::prelude::*;
     //   status: "invalid_msg_format"
     //
     &hex!(
-        "82a6726561736f6ea6726561736f6ea6737461747573b2696e76616c69645f6d73675f666f"
-        "726d6174"
+        "82a6726561736f6ea6726561736f6ea6737461747573b2696e76616c69645f6d73675f"
+        "666f726d6174"
     )[..],
     authenticated_cmds::block_read::Rep::UnknownStatus {
         unknown_status: "invalid_msg_format".into(),
@@ -52,9 +52,9 @@ fn serde_block_read_rep(#[case] raw: &[u8], #[case] expected: authenticated_cmds
     //  greeter_human_handle: 42 // Invalid field
     //
     &hex!(
-        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696ca761"
-        "40612e636f6daf677265657465725f757365725f6964a26161b4677265657465725f68756d"
-        "616e5f68616e646c652a"
+        "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696c"
+        "a76140612e636f6daf677265657465725f757365725f6964a26161b467726565746572"
+        "5f68756d616e5f68616e646c652a"
     )[..],
     "invalid type: integer `42`, expected a tuple of size 2",
 )]

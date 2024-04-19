@@ -48,7 +48,10 @@ fn data_decrypt_spec() {
         "2ff13803789977db4f8ccabfb6b26f3e70eb4453d396dcb2315f7690cbc2e3f1"
     ));
     // Ciphertext generated with base python implementation
-    let ciphertext = hex!("5705b4386acf746e64aca52767d7fdd66bff3e82d87be3346c6d8e9c0ca0db43afe622c04473551737c2a0c65200bf64580c40f639ad6c622286ba13a92612ea2358d78f3b96");
+    let ciphertext = hex!(
+        "5705b4386acf746e64aca52767d7fdd66bff3e82d87be3346c6d8e9c0ca0db43afe622"
+        "c04473551737c2a0c65200bf64580c40f639ad6c622286ba13a92612ea2358d78f3b96"
+    );
     let cleartext = sk.decrypt(&ciphertext).unwrap();
     assert_eq!(cleartext, b"all your base are belong to us");
 }

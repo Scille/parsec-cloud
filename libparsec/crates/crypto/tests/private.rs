@@ -67,7 +67,10 @@ fn decrypt_existing() {
         "7e771d03da8ed86aaea5b82f2b3754984cb49023e9c51297b99c5c4fd0d2dc54"
     ));
     // Ciphertext generated with base python implementation
-    let ciphertext = hex!("e38919105de15295805e7dd8d3c03c79185278b7fd27abac2f9147e06afab065b1a639db2c1191b930bf172327b0a9b2ab4acad57895e787e1b2dd1dfec9");
+    let ciphertext = hex!(
+        "e38919105de15295805e7dd8d3c03c79185278b7fd27abac2f9147e06afab065b1a639"
+        "db2c1191b930bf172327b0a9b2ab4acad57895e787e1b2dd1dfec9"
+    );
     let cleartext = privkey.decrypt_from_self(&ciphertext).unwrap();
     assert_eq!(cleartext, b"Hello, World !");
 }
