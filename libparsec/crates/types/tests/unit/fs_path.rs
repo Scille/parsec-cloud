@@ -23,6 +23,37 @@ fn entry_name_too_long() {
 }
 
 #[rstest]
+#[case(
+    "aaa.aaa".to_string().parse().unwrap(),
+    2,
+    "aaa (2).aaa".parse().unwrap()
+)]
+#[case::long_base_name((
+    "a".repeat(251) + ".aaa").parse().unwrap(),
+    2,
+    ("a".repeat(241) + " (2).aaa").parse().unwrap()
+)]
+#[case::long_extension(
+    ("aaa.".to_string() + &"a".repeat(251)).parse().unwrap(),
+    2,
+    ("aaa (2).".to_string() + &"a".repeat(241)).parse().unwrap()
+)]
+#[case::big_attempt(
+    ("a".repeat(251) + ".aaa").parse().unwrap(),
+    u32::MAX,
+    ("a".repeat(231) + &format!(" ({}).aaa", u32::MAX)).parse().unwrap()
+)]
+fn entry_name_next_conflicted_name(
+    #[case] name: EntryName,
+    #[case] attempt: u32,
+    #[case] expected: EntryName,
+) {
+    let conflicted_name = name.build_next_conflicted_name(attempt);
+
+    p_assert_eq!(conflicted_name, expected)
+}
+
+#[rstest]
 #[case("")]
 #[case(".")]
 #[case("..")]
