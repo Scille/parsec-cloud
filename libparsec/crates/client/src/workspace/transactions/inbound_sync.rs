@@ -145,9 +145,9 @@ pub async fn inbound_sync(
 
 async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
     // Retrieve remote
-    let remote: WorkspaceManifest =
-        match fetch_remote_manifest_with_self_heal(ops, ops.realm_id).await? {
-            FetchWithSelfHealOutcome::LastVersion(manifest) => manifest,
+    let remote =
+        match fetch_remote_manifest_with_self_heal::<WorkspaceManifest>(ops, ops.realm_id).await? {
+            FetchWithSelfHealOutcome::LastVersion(manifest) => manifest.0,
             FetchWithSelfHealOutcome::SelfHeal {
                 last_version,
                 mut last_valid_manifest,
@@ -160,8 +160,8 @@ async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, Wor
                 // data to client B ? We would end up with clients not agreeing on what
                 // contains a given version of the manifest...
                 // TODO: send event or warning log ?
-                last_valid_manifest.version = last_version;
-                last_valid_manifest
+                last_valid_manifest.0.version = last_version;
+                last_valid_manifest.0
             }
         };
 
@@ -180,12 +180,12 @@ async fn inbound_sync_root(ops: &WorkspaceOps) -> Result<InboundSyncOutcome, Wor
 
 async fn update_store_with_remote_root(
     ops: &WorkspaceOps,
-    remote: WorkspaceManifest,
+    remote: FolderManifest,
 ) -> anyhow::Result<InboundSyncOutcome> {
     let (updater, local) = ops.store.for_update_root().await;
     // Note merge may end up with nothing new, typically if the remote version is
     // already the one local is based on
-    if let Some(merged) = super::super::merge::merge_local_workspace_manifests(
+    if let Some(merged) = super::super::merge::merge_local_folder_manifests(
         &ops.device.device_id,
         ops.device.now(),
         &local,
@@ -655,11 +655,15 @@ pub trait RemoteManifest: Sized {
     ) -> Result<Self, CertifValidateManifestError>;
 }
 
+/// Root and non root folder manifest have different validation rules, hence this
+/// shim to handle the root one.
+struct WorkspaceManifest(FolderManifest);
+
 impl RemoteManifest for WorkspaceManifest {
-    type LocalManifest = Arc<LocalWorkspaceManifest>;
+    type LocalManifest = Arc<LocalFolderManifest>;
 
     fn extract_base_from_local(local: Self::LocalManifest) -> Self {
-        local.base.clone()
+        Self(local.base.clone())
     }
 
     // TODO: handle entry not found
@@ -696,6 +700,7 @@ impl RemoteManifest for WorkspaceManifest {
                 encrypted,
             )
             .await
+            .map(WorkspaceManifest)
     }
 }
 

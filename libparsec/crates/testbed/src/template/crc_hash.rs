@@ -388,54 +388,6 @@ impl CrcHash for LocalUserManifest {
     }
 }
 
-impl CrcHash for WorkspaceManifest {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"WorkspaceManifest");
-
-        let WorkspaceManifest {
-            author,
-            timestamp,
-            id,
-            version,
-            created,
-            updated,
-            children,
-        } = self;
-
-        author.crc_hash(hasher);
-        timestamp.crc_hash(hasher);
-        id.crc_hash(hasher);
-        version.crc_hash(hasher);
-        created.crc_hash(hasher);
-        updated.crc_hash(hasher);
-        children.crc_hash(hasher);
-    }
-}
-
-impl CrcHash for LocalWorkspaceManifest {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"LocalWorkspaceManifest");
-
-        let LocalWorkspaceManifest {
-            base,
-            need_sync,
-            updated,
-            children,
-            speculative,
-            local_confinement_points,
-            remote_confinement_points,
-        } = self;
-
-        base.crc_hash(hasher);
-        need_sync.crc_hash(hasher);
-        updated.crc_hash(hasher);
-        children.crc_hash(hasher);
-        speculative.crc_hash(hasher);
-        local_confinement_points.crc_hash(hasher);
-        remote_confinement_points.crc_hash(hasher);
-    }
-}
-
 impl CrcHash for FolderManifest {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"FolderManifest");
@@ -473,6 +425,7 @@ impl CrcHash for LocalFolderManifest {
             children,
             local_confinement_points,
             remote_confinement_points,
+            speculative,
         } = self;
 
         base.crc_hash(hasher);
@@ -481,6 +434,7 @@ impl CrcHash for LocalFolderManifest {
         children.crc_hash(hasher);
         local_confinement_points.crc_hash(hasher);
         remote_confinement_points.crc_hash(hasher);
+        speculative.crc_hash(hasher);
     }
 }
 

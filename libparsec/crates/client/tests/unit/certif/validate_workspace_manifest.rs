@@ -208,7 +208,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
     });
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
-        TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(e) => {
+        TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
         e => panic!("Unexpected event {:?}", e),
@@ -275,7 +275,7 @@ async fn revoked(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &bob).await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
-        TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(e) => {
+        TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
         e => panic!("Unexpected event {:?}", e),
@@ -354,7 +354,7 @@ async fn cannot_write(env: &TestbedEnv) {
     let ops = certificates_ops_factory(&env, &bob).await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
-        TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(e) => {
+        TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == shared_realm_id => {
             (e.encrypted(&env.template), e.manifest.timestamp)
         }
         e => panic!("Unexpected event {:?}", e),
@@ -611,3 +611,5 @@ async fn stopped(env: &TestbedEnv) {
 
     p_assert_matches!(err, CertifValidateManifestError::Stopped);
 }
+
+// TODO: test validating a manifest with parent != id

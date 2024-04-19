@@ -58,13 +58,6 @@ fn folder_has_changed(original: &Arc<LocalFolderManifest>, new: &Arc<LocalFolder
     !Arc::ptr_eq(original, new) || **original != **new
 }
 
-fn root_has_changed(
-    original: &Arc<LocalWorkspaceManifest>,
-    new: &Arc<LocalWorkspaceManifest>,
-) -> bool {
-    !Arc::ptr_eq(original, new) || **original != **new
-}
-
 #[derive(Debug)]
 pub enum OutboundSyncOutcome {
     Done,
@@ -138,13 +131,13 @@ async fn outbound_sync_root(ops: &WorkspaceOps) -> Result<OutboundSyncOutcome, W
     // Lock back the entry or abort if it has changed in the meantime
 
     let (updater, refreshed_local) = ops.store.for_update_root().await;
-    if root_has_changed(&local, &refreshed_local) {
+    if folder_has_changed(&local, &refreshed_local) {
         return Ok(OutboundSyncOutcome::EntryIsBusy);
     }
 
     // Do the actual storage update
 
-    let local_from_remote = Arc::new(LocalWorkspaceManifest::from_remote(remote, None));
+    let local_from_remote = Arc::new(LocalFolderManifest::from_remote(remote, None));
     updater
         .update_workspace_manifest(local_from_remote, None)
         .await
@@ -394,30 +387,6 @@ trait RemoteManifest: Sized {
     fn id(&self) -> VlobID;
 
     fn dump_and_sign(&self, key: &SigningKey) -> Vec<u8>;
-}
-
-impl RemoteManifest for WorkspaceManifest {
-    type LocalManifest = Arc<LocalWorkspaceManifest>;
-
-    fn timestamp(&self) -> DateTime {
-        self.timestamp
-    }
-
-    fn update_timestamp(&mut self, timestamp: DateTime) {
-        self.timestamp = timestamp;
-    }
-
-    fn version(&self) -> VersionInt {
-        self.version
-    }
-
-    fn id(&self) -> VlobID {
-        self.id
-    }
-
-    fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-        self.dump_and_sign(author_signkey)
-    }
 }
 
 impl RemoteManifest for ChildManifest {
