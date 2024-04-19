@@ -7,7 +7,7 @@ pub use libparsec_client::workspace::{
     WorkspaceDecryptPathAddrError, WorkspaceFdCloseError, WorkspaceFdFlushError,
     WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
     WorkspaceGeneratePathAddrError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -463,6 +463,33 @@ pub async fn workspace_stat_entry(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.stat_entry(path).await
+}
+
+pub async fn workspace_stat_entry_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result<EntryStat, WorkspaceStatEntryError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.stat_entry_by_id(entry_id).await
+}
+
+pub async fn workspace_stat_folder_children(
+    workspace: Handle,
+    path: &FsPath,
+) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.stat_folder_children(path).await
+}
+
+pub async fn workspace_stat_folder_children_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.stat_folder_children_by_id(entry_id).await
 }
 
 pub async fn workspace_rename_entry(

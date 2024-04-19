@@ -12,6 +12,7 @@ mod file_operations;
 mod inbound_sync;
 mod open_file;
 mod outbound_sync;
+mod read_folder;
 mod remove_entry;
 mod rename_entry;
 mod stat_entry;
@@ -28,8 +29,7 @@ pub(crate) use file_operations::*;
 pub use inbound_sync::*;
 pub use open_file::*;
 pub use outbound_sync::*;
+pub use read_folder::*;
 pub use remove_entry::*;
 pub use rename_entry::*;
 pub use stat_entry::*;
-
-pub use stat_entry::EntryStat;

@@ -21,12 +21,13 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, InboundSyncOutcome, OpenOptions, OutboundSyncOutcome,
-    WorkspaceCreateFileError, WorkspaceCreateFolderError, WorkspaceFdCloseError,
-    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
-    WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
-    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceSyncError,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, InboundSyncOutcome, OpenOptions,
+    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
+    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOpenFileError,
+    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceRenameEntryError,
+    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceSyncError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -297,6 +298,35 @@ impl WorkspaceOps {
         transactions::stat_entry_by_id(self, entry_id).await
     }
 
+    pub async fn open_folder_reader(
+        &self,
+        path: &FsPath,
+    ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
+        transactions::open_folder_reader(self, path).await
+    }
+
+    pub async fn open_folder_reader_by_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
+        transactions::open_folder_reader_by_id(self, entry_id).await
+    }
+
+    /// Note children are listed in arbitrary order, and there is no '.' and '..'  special entries.
+    pub async fn stat_folder_children(
+        &self,
+        path: &FsPath,
+    ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+        transactions::stat_folder_children(self, path).await
+    }
+
+    pub async fn stat_folder_children_by_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+        transactions::stat_folder_children_by_id(self, entry_id).await
+    }
+
     pub async fn rename_entry(
         &self,
         path: FsPath,
@@ -462,9 +492,6 @@ impl WorkspaceOps {
 
     // TODO: a `fd_allocate` would be useful to set the blocksize according to the
     //       expected final file size
-
-    // TODO: a `stat_entry_and_children` would be useful for FUSE to implement
-    //       `readdirplus` that avoid extra round-trips when doing ls
 
     pub async fn fd_write_constrained_io(
         &self,

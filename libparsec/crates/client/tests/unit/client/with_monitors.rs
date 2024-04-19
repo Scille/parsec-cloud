@@ -80,17 +80,22 @@ async fn multi_devices(env: &TestbedEnv) {
 
     let alice2_workspace = alice2_client.start_workspace(wid).await.unwrap();
     loop {
-        let stat = alice2_workspace
-            .stat_entry(&"/".parse().unwrap())
+        let children_stats = alice2_workspace
+            .stat_folder_children(&"/".parse().unwrap())
             .await
             .unwrap();
-        match stat {
-            EntryStat::File { .. } => unreachable!(),
-            EntryStat::Folder { children, .. } => {
-                if children == [("foo".parse().unwrap(), foo_id)] {
-                    break;
-                }
-            }
+        let children: Vec<_> = children_stats
+            .into_iter()
+            .map(|(name, stat)| {
+                let id = match stat {
+                    EntryStat::File { id, .. } => id,
+                    EntryStat::Folder { id, .. } => id,
+                };
+                (name, id)
+            })
+            .collect();
+        if children == [("foo".parse().unwrap(), foo_id)] {
+            break;
         }
         // Not found, wait a bit and retry
         libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;
@@ -106,17 +111,12 @@ async fn multi_devices(env: &TestbedEnv) {
     // 4b) ...and for Alice1 to receive it !
 
     loop {
-        let stat = alice2_workspace
-            .stat_entry(&"/".parse().unwrap())
+        let children_stats = alice2_workspace
+            .stat_folder_children(&"/".parse().unwrap())
             .await
             .unwrap();
-        match stat {
-            EntryStat::File { .. } => unreachable!(),
-            EntryStat::Folder { children, .. } => {
-                if children.is_empty() {
-                    break;
-                }
-            }
+        if children_stats.is_empty() {
+            break;
         }
         // Not found, wait a bit and retry
         libparsec_platform_async::sleep(std::time::Duration::from_millis(50)).await;

@@ -11,7 +11,7 @@ use crate::{
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EntryStat {
     File {
         /// The confinement point corresponds to the entry id of the parent folderish
@@ -19,6 +19,7 @@ pub enum EntryStat {
         /// to our entry.
         confinement_point: Option<VlobID>,
         id: VlobID,
+        parent: VlobID,
         created: DateTime,
         updated: DateTime,
         base_version: VersionInt,
@@ -33,12 +34,12 @@ pub enum EntryStat {
         /// to our entry.
         confinement_point: Option<VlobID>,
         id: VlobID,
+        parent: VlobID,
         created: DateTime,
         updated: DateTime,
         base_version: VersionInt,
         is_placeholder: bool,
         need_sync: bool,
-        children: Vec<(EntryName, VlobID)>,
     },
 }
 
@@ -78,26 +79,16 @@ pub(crate) async fn stat_entry_by_id(
     if entry_id == ops.realm_id {
         let manifest = ops.store.get_workspace_manifest();
 
-        // Ensure children are sorted alphabetically to simplify testing
-        let children = {
-            let mut children: Vec<_> = manifest
-                .children
-                .iter()
-                .map(|(name, id)| (name.to_owned(), *id))
-                .collect();
-            children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
-            children
-        };
-
         let info = EntryStat::Folder {
             confinement_point: None,
             id: manifest.base.id,
+            // Special case for root: pretent it is itself its own parent
+            parent: manifest.base.id,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
-            children,
         };
 
         return Ok(info);
@@ -123,32 +114,20 @@ pub(crate) async fn stat_entry_by_id(
         })?;
 
     let info = match manifest {
-        ArcLocalChildManifest::Folder(manifest) => {
-            // Ensure children are sorted alphabetically to simplify testing
-            let children = {
-                let mut children: Vec<_> = manifest
-                    .children
-                    .iter()
-                    .map(|(name, id)| (name.to_owned(), *id))
-                    .collect();
-                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
-                children
-            };
-
-            EntryStat::Folder {
-                confinement_point: None,
-                id: manifest.base.id,
-                created: manifest.base.created,
-                updated: manifest.updated,
-                base_version: manifest.base.version,
-                is_placeholder: manifest.base.version == 0,
-                need_sync: manifest.need_sync,
-                children,
-            }
-        }
+        ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
+            confinement_point: None,
+            id: manifest.base.id,
+            parent: manifest.base.parent,
+            created: manifest.base.created,
+            updated: manifest.updated,
+            base_version: manifest.base.version,
+            is_placeholder: manifest.base.version == 0,
+            need_sync: manifest.need_sync,
+        },
         ArcLocalChildManifest::File(manifest) => EntryStat::File {
             confinement_point: None,
             id: manifest.base.id,
+            parent: manifest.base.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
@@ -185,57 +164,32 @@ pub(crate) async fn stat_entry(
         })?;
 
     let info = match manifest {
-        FsPathResolutionAndManifest::Workspace { manifest } => {
-            // Ensure children are sorted alphabetically to simplify testing
-            let children = {
-                let mut children: Vec<_> = manifest
-                    .children
-                    .iter()
-                    .map(|(name, id)| (name.to_owned(), *id))
-                    .collect();
-                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
-                children
-            };
-
-            EntryStat::Folder {
-                // Root has no parent, hence confinement_point is never possible
-                confinement_point: None,
-                id: manifest.base.id,
-                created: manifest.base.created,
-                updated: manifest.updated,
-                base_version: manifest.base.version,
-                is_placeholder: manifest.base.version == 0,
-                need_sync: manifest.need_sync,
-                children,
-            }
-        }
+        FsPathResolutionAndManifest::Workspace { manifest } => EntryStat::Folder {
+            // Root has no parent, hence confinement_point is never possible
+            confinement_point: None,
+            id: manifest.base.id,
+            // Special case for root: pretent it is itself its own parent
+            parent: manifest.base.id,
+            created: manifest.base.created,
+            updated: manifest.updated,
+            base_version: manifest.base.version,
+            is_placeholder: manifest.base.version == 0,
+            need_sync: manifest.need_sync,
+        },
 
         FsPathResolutionAndManifest::Folder {
             manifest,
             confinement_point,
-        } => {
-            // Ensure children are sorted alphabetically to simplify testing
-            let children = {
-                let mut children: Vec<_> = manifest
-                    .children
-                    .iter()
-                    .map(|(name, id)| (name.to_owned(), *id))
-                    .collect();
-                children.sort_unstable_by(|(a, _), (b, _)| a.as_ref().cmp(b.as_ref()));
-                children
-            };
-
-            EntryStat::Folder {
-                confinement_point,
-                id: manifest.base.id,
-                created: manifest.base.created,
-                updated: manifest.updated,
-                base_version: manifest.base.version,
-                is_placeholder: manifest.base.version == 0,
-                need_sync: manifest.need_sync,
-                children,
-            }
-        }
+        } => EntryStat::Folder {
+            confinement_point,
+            id: manifest.base.id,
+            parent: manifest.base.parent,
+            created: manifest.base.created,
+            updated: manifest.updated,
+            base_version: manifest.base.version,
+            is_placeholder: manifest.base.version == 0,
+            need_sync: manifest.need_sync,
+        },
 
         FsPathResolutionAndManifest::File {
             manifest,
@@ -243,6 +197,7 @@ pub(crate) async fn stat_entry(
         } => EntryStat::File {
             confinement_point,
             id: manifest.base.id,
+            parent: manifest.base.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
