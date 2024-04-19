@@ -89,7 +89,7 @@ pub(super) async fn fetch_remote_workspace_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertifOps,
     realm_id: VlobID,
-) -> Result<WorkspaceManifest, FetchRemoteManifestError> {
+) -> Result<FolderManifest, FetchRemoteManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
     let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
 

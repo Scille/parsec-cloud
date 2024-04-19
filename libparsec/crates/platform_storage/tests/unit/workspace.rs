@@ -172,23 +172,7 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         .unwrap();
     p_assert_eq!(chunk, b"<chunk1>");
 
-    // Workspace manifest
-
-    let encrypted = workspace_storage
-        .get_manifest(realm_id)
-        .await
-        .unwrap()
-        .unwrap();
-    let workspace_manifest =
-        LocalWorkspaceManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
-    p_assert_eq!(workspace_manifest.base.version, expected_version);
-    let expected_need_sync = match fetch_strategy {
-        FetchStrategy::No => true,
-        FetchStrategy::Single | FetchStrategy::Multiple => false,
-    };
-    p_assert_eq!(workspace_manifest.need_sync, expected_need_sync);
-
-    // Folder manifest
+    // File manifest
 
     if let Some(file_id) = file_id {
         let encrypted = workspace_storage
@@ -1027,22 +1011,22 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     // 2) Check the database content
 
-    let mut user_storage =
-        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
-            .await
-            .unwrap();
+    let mut storage = WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+        .await
+        .unwrap();
 
-    p_assert_eq!(user_storage.get_realm_checkpoint().await.unwrap(), 0);
+    p_assert_eq!(storage.get_realm_checkpoint().await.unwrap(), 0);
 
-    let encrypted = user_storage.get_manifest(realm_id).await.unwrap().unwrap();
+    let encrypted = storage.get_manifest(realm_id).await.unwrap().unwrap();
     let workspace_manifest =
-        LocalWorkspaceManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
+        LocalFolderManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
 
-    let expected = LocalWorkspaceManifest {
-        base: WorkspaceManifest {
+    let expected = LocalFolderManifest {
+        base: FolderManifest {
             author: alice.device_id.clone(),
             timestamp: workspace_manifest.updated,
             id: realm_id,
+            parent: realm_id,
             version: 0,
             created: workspace_manifest.updated,
             updated: workspace_manifest.updated,

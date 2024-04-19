@@ -953,33 +953,6 @@ fn event_to_pyobject(
             Some(obj.into_py(py))
         }
 
-        libparsec_testbed::TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(x) => {
-            let sequestered = match x.sequestered(template) {
-                None => py.None().into_py(py),
-                Some(sequestered) => {
-                    let pyobj = PyDict::new(py);
-                    for (id, blob) in sequestered {
-                        pyobj.set_item(
-                            SequesterServiceID::from(id.to_owned()).into_py(py),
-                            PyBytes::new(py, &blob),
-                        )?;
-                    }
-                    pyobj.into_py(py)
-                }
-            };
-            let obj = TestbedEventCreateOrUpdateOpaqueVlob {
-                timestamp: x.manifest.timestamp.into(),
-                author: x.manifest.author.clone().into(),
-                realm: x.manifest.id.into(),
-                key_index: x.key_index,
-                version: x.manifest.version,
-                vlob_id: x.manifest.id.into(),
-                encrypted: PyBytes::new(py, &x.encrypted(template)).into(),
-                sequestered,
-            };
-            Some(obj.into_py(py))
-        }
-
         libparsec_testbed::TestbedEvent::CreateOrUpdateFileManifestVlob(x) => {
             let sequestered = match x.sequestered(template) {
                 None => py.None().into_py(py),

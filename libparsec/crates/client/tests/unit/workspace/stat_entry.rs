@@ -15,12 +15,16 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
     if !local_cache {
         env.customize(|builder| {
             builder.filter_client_storage_events(|event| match event {
+                // Missing workspace manifest is replaced by a speculative one (so no
+                // server fetch will occur), that's not what we want here !
+                TestbedEvent::WorkspaceDataStorageFetchFolderVlob(e)
+                    if e.local_manifest.base.is_root() =>
+                {
+                    true
+                }
                 TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
                 | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
                 | TestbedEvent::WorkspaceCacheStorageFetchBlock(_) => false,
-                // Missing workspace manifest is replaced by a speculative one (so no
-                // server fetch will occur), that's not what we want here !
-                TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_) => true,
                 _ => true,
             });
         });
@@ -124,7 +128,11 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
         builder.filter_client_storage_events(|event| match event {
             // Don't remove the children manifests from storage: they should be
             // ignored given the speculative workspace manifest doesn't mention them.
-            TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_) => false,
+            TestbedEvent::WorkspaceDataStorageFetchFolderVlob(e)
+                if e.local_manifest.base.is_root() =>
+            {
+                false
+            }
             _ => true,
         });
     });

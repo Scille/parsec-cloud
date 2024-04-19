@@ -76,7 +76,6 @@ from parsec._parsec_pyi.manifest import (
     FileManifest,
     FolderManifest,
     UserManifest,
-    WorkspaceManifest,
     child_manifest_decrypt_verify_and_load,
     child_manifest_verify_and_load,
 )
@@ -165,7 +164,6 @@ __all__ = [
     "BlockAccess",
     "FolderManifest",
     "FileManifest",
-    "WorkspaceManifest",
     "UserManifest",
     "ChildManifest",
     "child_manifest_decrypt_verify_and_load",

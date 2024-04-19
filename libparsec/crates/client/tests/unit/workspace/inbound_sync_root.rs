@@ -176,7 +176,7 @@ async fn non_placeholder(
         .iter()
         .rev()
         .find_map(|e| match e {
-            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(e) if e.manifest.id == wksp1_id => {
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == wksp1_id => {
                 Some((e.manifest.clone(), e.encrypted(&env.template)))
             }
             _ => None,
@@ -369,7 +369,7 @@ async fn placeholder(
         .iter()
         .rev()
         .find_map(|e| match e {
-            TestbedEvent::CreateOrUpdateWorkspaceManifestVlob(e) if e.manifest.id == wksp1_id => {
+            TestbedEvent::CreateOrUpdateFolderManifestVlob(e) if e.manifest.id == wksp1_id => {
                 Some((e.manifest.clone(), e.encrypted(&env.template)))
             }
             _ => None,

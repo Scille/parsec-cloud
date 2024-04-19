@@ -146,60 +146,6 @@ class FileManifest:
         """Raise `ValueError` if invalid"""
         ...
 
-class WorkspaceManifest:
-    def __init__(
-        self,
-        author: DeviceID,
-        timestamp: DateTime,
-        id: VlobID,
-        version: int,
-        created: DateTime,
-        updated: DateTime,
-        children: dict[EntryName, VlobID],
-    ) -> None: ...
-    @property
-    def author(self) -> DeviceID: ...
-    @property
-    def id(self) -> VlobID: ...
-    @property
-    def version(self) -> int: ...
-    @property
-    def timestamp(self) -> DateTime: ...
-    @property
-    def created(self) -> DateTime: ...
-    @property
-    def updated(self) -> DateTime: ...
-    @property
-    def children(self) -> dict[EntryName, VlobID]: ...
-    def evolve(self, **kwargs: Any) -> WorkspaceManifest: ...
-    def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
-    def dump_sign_and_encrypt(self, author_signkey: SigningKey, key: SecretKey) -> bytes: ...
-    @classmethod
-    def decrypt_verify_and_load(
-        cls,
-        encrypted: bytes,
-        key: SecretKey,
-        author_verify_key: VerifyKey,
-        expected_author: DeviceID,
-        expected_timestamp: DateTime,
-        expected_id: VlobID | None = None,
-        expected_version: int | None = None,
-    ) -> WorkspaceManifest:
-        """Raise `ValueError` if invalid"""
-        ...
-    @classmethod
-    def verify_and_load(
-        cls,
-        signed: bytes,
-        author_verify_key: VerifyKey,
-        expected_author: DeviceID,
-        expected_timestamp: DateTime,
-        expected_id: VlobID | None = None,
-        expected_version: int | None = None,
-    ) -> WorkspaceManifest:
-        """Raise `ValueError` if invalid"""
-        ...
-
 class UserManifest:
     def __init__(
         self,

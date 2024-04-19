@@ -153,12 +153,16 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
 
     env.customize(|builder| {
         builder.filter_client_storage_events(|event| match event {
+            // Missing workspace manifest is replaced by a speculative one (so no
+            // server fetch will occur), that's not what we want here !
+            TestbedEvent::WorkspaceDataStorageFetchFolderVlob(e)
+                if e.local_manifest.base.is_root() =>
+            {
+                true
+            }
             TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_) => false,
-            // Missing workspace manifest is replaced by a speculative one (so no
-            // server fetch will occur), that's not what we want here !
-            TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_) => true,
             _ => true,
         });
     });
