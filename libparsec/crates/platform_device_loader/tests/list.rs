@@ -84,9 +84,9 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
         //   human_handle: None
         //   device_label: None
         let legacy_file_content = hex!(
-            "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
-            "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
-            "656cc0"
+            "85a474797065a870617373776f7264a473616c74c40473616c74aa6369706865727465"
+            "7874c40a63697068657274657874ac68756d616e5f68616e646c65c0ac646576696365"
+            "5f6c6162656cc0"
         );
 
         let parent = devices_dir.join("c17fc4c8bf#corp#adam@laptop");
@@ -240,9 +240,9 @@ async fn list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
     //   human_handle: None
     //   device_label: None
     let legacy_device = hex!(
-        "85a474797065a870617373776f7264a473616c74c40473616c74aa63697068657274657874"
-        "c40a63697068657274657874ac68756d616e5f68616e646c65c0ac6465766963655f6c6162"
-        "656cc0"
+        "85a474797065a870617373776f7264a473616c74c40473616c74aa6369706865727465"
+        "7874c40a63697068657274657874ac68756d616e5f68616e646c65c0ac646576696365"
+        "5f6c6162656cc0"
     );
     let slug = "9d84fbd57a#Org#Zack@PC1".to_string();
     let key_file_path = tmp_path.join("devices").join(slug.clone() + ".keys");

@@ -54,8 +54,9 @@ fn signature_verification_spec() {
     .unwrap();
     // Signed text generated with base python implementation
     let signed_text = hex!(
-        "32d26711dc973e8df13bbafddc23fc26efe4aca1b86a4e0e7dad7c03df7ffc25d24b865478d164f8868ad0e087587e"
-        "2c45e45d5598c7929b4605699bbab4b109616c6c20796f75722062617365206172652062656c6f6e6720746f207573"
+        "32d26711dc973e8df13bbafddc23fc26efe4aca1b86a4e0e7dad7c03df7ffc25d24b86"
+        "5478d164f8868ad0e087587e2c45e45d5598c7929b4605699bbab4b109616c6c20796f"
+        "75722062617365206172652062656c6f6e6720746f207573"
     );
 
     let text = vk.verify(&signed_text).unwrap();
@@ -145,8 +146,9 @@ fn verify_key_bad_point_decompression() {
         // libsodium style
         Ok(key) => {
             let signed_text = hex!(
-                "32d26711dc973e8df13bbafddc23fc26efe4aca1b86a4e0e7dad7c03df7ffc25d24b865478d164f8868ad0e087587e"
-                "2c45e45d5598c7929b4605699bbab4b109616c6c20796f75722062617365206172652062656c6f6e6720746f207573"
+                "32d26711dc973e8df13bbafddc23fc26efe4aca1b86a4e0e7dad7c03df7ffc25d24b865478d164f8"
+                "868ad0e087587e2c45e45d5598c7929b4605699bbab4b109616c6c20796f75722062617365206172"
+                "652062656c6f6e6720746f207573"
             );
             assert_matches!(
                 key.verify(&signed_text),
