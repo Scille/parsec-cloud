@@ -152,7 +152,7 @@ pkg-config = { version = "0.3.30", default-features = false }
 predicates = { version = "3.1.0", default-features = false }
 pretty_assertions = { version = "1.4.0", default-features = false }
 proptest = { version = "1.4.0", default-features = false }
-proptest-state-machine = { version = "0.1.0", default-features = false }
+proptest-state-machine = { version = "0.3.0", default-features = false }
 proc-macro2 = { version = "1.0.80", default-features = false }
 pyo3 = { version = "0.19.2", default-features = false }
 quote = { version = "1.0.36", default-features = false }

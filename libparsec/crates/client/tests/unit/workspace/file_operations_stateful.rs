@@ -94,6 +94,7 @@ impl FileOperationStateMachine {
         let data = self.storage.read(&self.manifest, size, offset);
         assert_eq!(data, expected);
     }
+
     fn resize(&mut self, length: u64) {
         let timestamp = self.time_provider.now();
         self.storage.resize(&mut self.manifest, length, timestamp);
