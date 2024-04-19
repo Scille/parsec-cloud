@@ -17,8 +17,8 @@ pub fn req() {
     //   claimer_nonce: hex!("666f6f626172")
     //   cmd: "invite_2b_claimer_send_nonce"
     let raw = hex!(
-        "82ad636c61696d65725f6e6f6e6365c406666f6f626172a3636d64bc696e766974655f3262"
-        "5f636c61696d65725f73656e645f6e6f6e6365"
+        "82ad636c61696d65725f6e6f6e6365c406666f6f626172a3636d64bc696e766974655f"
+        "32625f636c61696d65725f73656e645f6e6f6e6365"
     );
 
     let req = invited_cmds::invite_2b_claimer_send_nonce::Req {
