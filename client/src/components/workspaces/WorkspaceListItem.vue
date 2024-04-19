@@ -38,7 +38,7 @@
       v-show="clientProfile !== UserProfile.Outsider"
     >
       <avatar-group
-        v-show="workspace.sharing.length === 0"
+        v-show="workspace.sharing.length > 0"
         class="shared-group"
         :people="workspace.sharing.map((item) => item[0].humanHandle.label)"
         :max-display="2"
@@ -46,7 +46,7 @@
       />
       <ion-label
         class="label-not-shared cell"
-        v-show="workspace.sharing.length !== 0"
+        v-show="workspace.sharing.length === 0"
         @click.stop="$emit('shareClick', workspace, $event)"
       >
         {{ $msTranslate('WorkspacesPage.Workspace.notShared') }}
