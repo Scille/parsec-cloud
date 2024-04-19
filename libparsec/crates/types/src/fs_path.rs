@@ -65,7 +65,7 @@ impl EntryName {
         }
     }
 
-    pub fn build_next_conflicted_name(&self, attempt: usize) -> Self {
+    pub fn build_next_conflicted_name(&self, attempt: u32) -> Self {
         let (mut base_name, mut extension) = self.base_and_extension();
 
         loop {
