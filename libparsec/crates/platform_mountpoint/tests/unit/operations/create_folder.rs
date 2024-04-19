@@ -214,18 +214,20 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
-        builder.filter_client_storage_events(|e| {
-            !matches!(
-                e,
-                TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
-                    | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
-                    | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-                    | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
-                    | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
-                    | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
-                    | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
-                    | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
-            )
+        builder.filter_client_storage_events(|e| match e {
+            TestbedEvent::WorkspaceDataStorageFetchFolderVlob(e)
+                if e.local_manifest.base.is_root() =>
+            {
+                true
+            }
+            TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+            | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+            | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
+            | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)
+            | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
+            _ => true,
         });
     });
     mount_and_test!(
@@ -260,7 +262,6 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
                 TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
                     | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
                     | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-                    | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)

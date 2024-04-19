@@ -33,7 +33,6 @@ pub(crate) fn add_mod(m: &PyModule) -> PyResult<()> {
     m.add_class::<BlockAccess>()?;
     m.add_class::<FolderManifest>()?;
     m.add_class::<FileManifest>()?;
-    m.add_class::<WorkspaceManifest>()?;
     m.add_class::<UserManifest>()?;
     m.add_function(wrap_pyfunction!(child_manifest_decrypt_verify_and_load, m)?)?;
     m.add_function(wrap_pyfunction!(child_manifest_verify_and_load, m)?)?;

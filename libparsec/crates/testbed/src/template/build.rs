@@ -323,11 +323,9 @@ impl TestbedTemplateBuilder {
             | TestbedEvent::UserStorageFetchUserVlob(_)
             | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
             | TestbedEvent::UserStorageLocalUpdate(_)
-            | TestbedEvent::WorkspaceDataStorageFetchWorkspaceVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
             | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-            | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
             | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)) => filter(e),
@@ -348,6 +346,45 @@ impl TestbedTemplateBuilder {
 
     pub fn current_timestamp(&self) -> DateTime {
         self.counters.current_timestamp
+    }
+
+    /// Workspace manifest corresponds to the workspace's root folder manifest
+    pub fn create_or_update_workspace_manifest_vlob(
+        &mut self,
+        device: impl TryInto<DeviceID>,
+        realm: impl TryInto<VlobID>,
+    ) -> TestbedEventCreateOrUpdateFolderManifestVlobBuilder {
+        let realm: VlobID = realm
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid value for param realm"));
+        self.create_or_update_folder_manifest_vlob(device, realm, realm, realm)
+    }
+
+    /// Workspace manifest corresponds to the workspace's root folder manifest
+    pub fn workspace_data_storage_fetch_workspace_vlob(
+        &mut self,
+        device: impl TryInto<DeviceID>,
+        realm: impl TryInto<VlobID>,
+        prevent_sync_pattern: impl TryInto<Option<Regex>>,
+    ) -> TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder {
+        let realm: VlobID = realm
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid value for param realm"));
+        self.workspace_data_storage_fetch_folder_vlob(device, realm, realm, prevent_sync_pattern)
+    }
+
+    /// Workspace manifest corresponds to the workspace's root folder manifest
+    pub fn workspace_data_storage_local_workspace_manifest_update(
+        &mut self,
+        device: impl TryInto<DeviceID>,
+        realm: impl TryInto<VlobID>,
+    ) -> TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder {
+        let realm: VlobID = realm
+            .try_into()
+            .unwrap_or_else(|_| panic!("Invalid value for param realm"));
+        self.workspace_data_storage_local_folder_manifest_create_or_update(
+            device, realm, realm, realm,
+        )
     }
 }
 
@@ -753,44 +790,6 @@ impl<'a> TestbedEventNewShamirRecoveryBuilder<'a> {
 impl_event_builder!(CreateOrUpdateUserManifestVlob, [user: UserID]);
 
 /*
- * TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder
- */
-
-impl_event_builder!(
-    CreateOrUpdateWorkspaceManifestVlob,
-    [device: DeviceID, realm: VlobID]
-);
-
-impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
-    impl_customize_field_meth!(key_index, IndexInt);
-    impl_customize_field_meth!(key, SecretKey);
-}
-
-impl<'a> TestbedEventCreateOrUpdateWorkspaceManifestVlobBuilder<'a> {
-    pub fn customize_children(
-        self,
-        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
-    ) -> Self {
-        self.customize(|e| {
-            let manifest = Arc::make_mut(&mut e.manifest);
-            for (entry_name, change) in children {
-                let entry_name = entry_name
-                    .try_into()
-                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
-                match change {
-                    None => {
-                        manifest.children.remove(&entry_name);
-                    }
-                    Some(id) => {
-                        manifest.children.insert(entry_name, id);
-                    }
-                }
-            }
-        })
-    }
-}
-
-/*
  * TestbedEventCreateOrUpdateFileManifestVlobBuilder
  */
 
@@ -1068,19 +1067,6 @@ impl_event_builder!(
 );
 
 /*
- * TestbedEventWorkspaceDataStorageFetchWorkspaceVlobBuilder
- */
-
-impl_event_builder!(
-    WorkspaceDataStorageFetchWorkspaceVlob,
-    [
-        device: DeviceID,
-        realm: VlobID,
-        prevent_sync_pattern: Option<Regex>,
-    ]
-);
-
-/*
  * TestbedEventWorkspaceDataStorageFetchFileVlobBuilder
  */
 
@@ -1120,39 +1106,6 @@ impl_event_builder!(
     WorkspaceDataStorageChunkCreate,
     [device: DeviceID, realm: VlobID, chunk: Bytes]
 );
-
-/*
- * TestbedEventWorkspaceDataStorageLocalWorkspaceManifestCreateOrUpdateBuilder
- */
-
-impl_event_builder!(
-    WorkspaceDataStorageLocalWorkspaceManifestUpdate,
-    [device: DeviceID, realm: VlobID]
-);
-
-impl<'a> TestbedEventWorkspaceDataStorageLocalWorkspaceManifestUpdateBuilder<'a> {
-    pub fn customize_children(
-        self,
-        children: impl Iterator<Item = (impl TryInto<EntryName>, Option<VlobID>)>,
-    ) -> Self {
-        self.customize(|e| {
-            let manifest = Arc::make_mut(&mut e.local_manifest);
-            for (entry_name, change) in children {
-                let entry_name = entry_name
-                    .try_into()
-                    .unwrap_or_else(|_| panic!("Not a valid EntryName"));
-                match change {
-                    None => {
-                        manifest.children.remove(&entry_name);
-                    }
-                    Some(id) => {
-                        manifest.children.insert(entry_name, id);
-                    }
-                }
-            }
-        })
-    }
-}
 
 /*
  * TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdateBuilder

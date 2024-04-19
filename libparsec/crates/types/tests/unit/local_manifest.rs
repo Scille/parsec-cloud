@@ -14,8 +14,6 @@ use crate::prelude::*;
 use libparsec_tests_lite::prelude::*;
 
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;
-type AliceLocalWorkspaceManifest =
-    Box<dyn FnOnce(&Device) -> (&'static [u8], LocalWorkspaceManifest)>;
 type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
 
 #[rstest]
@@ -403,7 +401,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
 #[case::folder_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_folder_manifest"
         //   updated: ext(1, 1638618643.208821)
@@ -412,141 +410,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
         //     author: "alice@dev1"
         //     timestamp: ext(1, 1638618643.208821)
         //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
         //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-        //   }
-        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
-        //   need_sync: true
-        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
-        &hex!(
-            "282246c0ae88cca5c5b9eed98c0e5dc669c736f798fe61c8c23a399a48588242dd6f8007d2"
-            "72aba891e51fcac7f42569067c70fd9a003ebbf5bd93d993cc3250b323472a0941cbcf3209"
-            "9a4571e637c85bfb1430954c03490e1e22e481080526f54fb49aab2f454b41b96fe95cdcf8"
-            "f1da7eed5813f75f75d67dddee77886c4ed1bcc0b92856c47003b292e5e291b150f226579d"
-            "fe54bd5eeb334d83fe4255d83f516d297c20d01931c5d1b80ef07318fa0eea6d0f79d34aac"
-            "a63528e519b5305a7e546ddcf2030f2f524cdf20b99398712be017044d899eb84f911d586e"
-            "cbfac6223b2d34d8af7b72d92d1aee4c483f9913aee9447848a93fd15c9cfed019f2417b5a"
-            "8a1a7c3b3069750fe634c8a5fef093b31763a215db54749d11ac7439d8183dc84e0af45b50"
-            "c12746066643a1a664b4ca757447631c7f8262ec461acf0f40bfc529a248881fcaa8afa827"
-            "fdeeee2fb5b8f40daf5839936850d086e94c2b441180a029b5b2cf6bef4ca985f94e6da9e3"
-            "6786a311afa168c78119c139d5157596d6aae077c4de05b5696874c67acc99726f78d23ff9"
-            "a5ad66"
-        )[..],
-        LocalFolderManifest {
-            updated: now,
-            base: FolderManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 42,
-                created: now,
-                updated: now,
-                children: HashMap::from([
-                    ("wksp1".parse().unwrap(), VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap())
-                ]),
-                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
-            },
-            children: HashMap::from([
-                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
-            ]),
-            local_confinement_points: HashSet::from([VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap()]),
-            remote_confinement_points: HashSet::from([VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap()]),
-            need_sync: true,
-        }
-    )
-}))]
-#[case::folder_manifest_legacy_no_confinement_fields(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   type: "local_folder_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   base: {
-        //     type: "folder_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //     children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-        //   }
-        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   need_sync: false
-        &hex!(
-            "9ff2aaf585d985bf38d333b6ac48e345a52c28c4d9645ec7ad8258d4c52c7e36acefd6cbb3"
-            "cc5fee4e3a3319f39cc91d9dbd0bcd108d417cf5a7f813cfc4d859585d56bbe7a89aeb9860"
-            "3d40226b25a02bafd6a1d3b1a93ee1cc75662e363a14b93df07790cb598da337bd86aa1e1b"
-            "078871b89e4254c25f80bff6b3dec3d7838d60d7eb021c7f7cbe7b2554df9f454e1a33be8e"
-            "515a4e9fe11c0f034939c41cc2ed3ca0299f0fbb02cbd229a65ecdb401fe733f7d2a1703e4"
-            "3f7bbef050707857c57886f5402a1b325c4660000e9c6171ac7e745699477ff271c641bed4"
-            "8a3f52cdaa58ab0234977e3eb5f9627dcad489c67a6fdbc46bc2648b213ad243d6b4141e2b"
-            "9f67491aa96d9ba9501b8b9fe2788ad687b8adaebce66ca05a89462182e4ba97628b129735"
-            "b693adfb83f25cb8d0a87a80787a9dda7a3d0f16c965340f77"
-        )[..],
-        LocalFolderManifest {
-            updated: now,
-            base: FolderManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 42,
-                created: now,
-                updated: now,
-                children: HashMap::from([
-                    ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
-                ]),
-                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
-            },
-            children: HashMap::from([
-                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
-            ]),
-            local_confinement_points: HashSet::new(),
-            remote_confinement_points: HashSet::new(),
-            need_sync: false,
-        }
-    )
-}))]
-fn serde_local_folder_manifest(
-    alice: &Device,
-    #[case] generate_data_and_expected: AliceLocalFolderManifest,
-) {
-    let (data, expected) = generate_data_and_expected(alice);
-    let key = SecretKey::from(hex!(
-        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
-    ));
-
-    let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
-
-    p_assert_eq!(manifest, expected);
-
-    // Also test serialization round trip
-    let data2 = manifest.dump_and_encrypt(&key);
-    // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalFolderManifest::decrypt_and_load(&data2, &key).unwrap();
-
-    p_assert_eq!(manifest2, expected);
-}
-
-#[rstest]
-#[case::workspace_manifest(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   type: "local_workspace_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   base: {
-        //     type: "workspace_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
         //     version: 42
         //     created: ext(1, 1638618643.208821)
         //     updated: ext(1, 1638618643.208821)
@@ -554,28 +418,31 @@ fn serde_local_folder_manifest(
         //   }
         //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
         //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
-        //   need_sync: true
         //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
+        //   need_sync: true
         //   speculative: false
         &hex!(
-            "7d8fd9ebeac56689cf29c1c16370e88d84673121bbc8cc4278ddbed40b612851464f01ccac"
-            "53b10aca3c59720968d652c86f1f2ae29387294d4a3f467d86cdb67ee40ac023a72f26c9c8"
-            "f785b2b31c20bb279a7c2824fe739b4029819ac59cad0b97cda4abc558916015fb3ea3fdd4"
-            "65f9e02168ae6c5c9e6fd4c2b9c2c394b6f355f764300e22e1f49fee02936a45bf494d7819"
-            "69c14d843d017269aeea5f69fbf08b9c0d7d7ec12168cbf8eed727cd3708d9752145bef4c5"
-            "ca20ae7da5eca90f4e60be5e3375092d4df96dc793469251f6188e6fef1d4128d78c134e9b"
-            "eb2134fa7e624528dfaa1c340167982dd7308211933044bbe7380e8f3862adf3a59307a171"
-            "8bf50a41095c39ab004db8eafaab0c3c51c3a48fa310488338bd6829532a75864fc437cc64"
-            "66992bfbc1f7ef8ea49ac0bef02d2046e6b475e6ef88d54156e18109ed88ba8bad25541be9"
-            "ef7d006d6bf79b6d467243aad8df333414a927d5bd35a78358292a6f4bbf63f6901cfcc216"
-            "bcd1a8244b875aee764e3265216a212244634171e7954a9895e8ba3972caaf786811"
+            "199d17c0df1c4158f7cf9de4ddac04fc469512e34c9d711d3bce7f0892df3864ef9827"
+            "dd1af08207bfc6625619896bb5c8c0a7d2d85580f0e812aa295d0c6cb7f38925c22994"
+            "a44b2ed2a2d7b6c993b9d5f16d4ebec4ddcd39f94853b025d7a2115a37c7be2b25550f"
+            "d3c5a473ca393cf092b29e76d439f1cb0eed0e1c81aca267065b5f639befdc2f3fe02a"
+            "e2008cc185937c7cd491d733135e8ae9d2409587f4cc053e39a9c203e64fd422e3f8b7"
+            "a10c68505b378904524cfcb922817d9d37968607e9940aa488ace790d1d1f10e11b359"
+            "61832935db003ed513fe3b9d139d355228d401a318ce1fa332088fdaaf1d8d8e39a729"
+            "8cec0b5f7ca84530d906878458cfa7aefe538b96b2e8e0e7478cd7e55a9b75642f6def"
+            "90d26a0acd21d0803c1895f89fc510bb451bb40f1c4a39cd8200066535e931530d3372"
+            "faa9111e08daa13f51ccf6d055c74db7eb31acb1186b70f454adb11333cea3cb57c5fe"
+            "166fba7dc830b8951a7c7a87065020d05637be6bb35bea78c89a6f9f8314234b221123"
+            "61d6e0a72a8c37acd350d84a769a3cf1b5a11dc5a4b40271ce15aac2f0c234fe4e6516"
+            "55ea09"
         )[..],
-        LocalWorkspaceManifest {
+        LocalFolderManifest {
             updated: now,
-            base: WorkspaceManifest {
+            base: FolderManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
                 version: 42,
                 created: now,
                 updated: now,
@@ -593,18 +460,19 @@ fn serde_local_folder_manifest(
         }
     )
 }))]
-#[case::workspace_manifest_speculative(Box::new(|alice: &Device| {
+#[case::folder_manifest_speculative(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
+        // Generated from Parsec v3.0.0-b.6+dev
         // Content:
-        //   type: "local_workspace_manifest"
+        //   type: "local_folder_manifest"
         //   updated: ext(1, 1638618643.208821)
         //   base: {
-        //     type: "workspace_manifest"
+        //     type: "folder_manifest"
         //     author: "alice@dev1"
         //     timestamp: ext(1, 1638618643.208821)
         //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
         //     version: 0
         //     created: ext(1, 1638618643.208821)
         //     updated: ext(1, 1638618643.208821)
@@ -612,26 +480,28 @@ fn serde_local_folder_manifest(
         //   }
         //   children: {}
         //   local_confinement_points: []
-        //   need_sync: true
         //   remote_confinement_points: []
-        //   speculative: false
+        //   need_sync: true
+        //   speculative: true
         &hex!(
-            "c33e89c2d046596ce6f30a66ea3f52488d7fa1dd02164cfba435445dc55ffb408da44094be"
-            "f5f8ee26e498072f80bc841e77dd98fe42b1499cd97b8883c76589a9613770f1c9f9b7a044"
-            "f798a7c73944dd5b4fe1675782049027b32791c5f06d687c589a0ca444080ff26ff912b53f"
-            "4878faf3a587b8f9e1924957da366bd59d7defa8954a52bbc2c2af4f3de3f7ed777a76b17b"
-            "78b9e0a12604107fb1d0dbd3f9f05e64cf1dffe1f527b6b0d08133d999bed5c9345f7af184"
-            "1951554f84037fa9aa28782bfba596ac00b59b38f5ac75753397abee6270800545a413a994"
-            "4f408fb51d76b0ce60fccbd49a10ef0736c50e98a2a4c44ccd4917f1bd8aee9923d23e732e"
-            "d91fcf90852a7c9567a20c289a874edc5343f8a2c77a070defe074f4564853f5ccedb3238a"
-            "5177f593f3dbf6ee8eda2d9721c8c29aea5d57fb2376f5c7"
+            "7dce0d23f47e8a33eae42311870f5f030aa2dafea63e695d4eec371105e4a5182d29a5"
+            "0f0d667d187e760a36bd429f0df8440dddcfa983987d66e0d2ceeac1238a2d4c47d9a2"
+            "e267ee70f6ea84bf48912d92bda0ca6a5a1030d6b9f6b8ad431fd6026e82f4ebb38102"
+            "3744cc059cda4c4ee749868e2abd0d920e04c29edc2f2f596f6ba16f0c50a308028dd4"
+            "69c4b1265745bc5f2c0355c41f2471d99fe82b081d0da2efff6c4c87ca938159393a10"
+            "c2d0250772570caee3d0e63d9a0be05f6533a91740189038dba9b4fa80c867e068bd91"
+            "da97c9c4f4d06aff2c74d94e19da4a605631993b71adde221a3c521a26e49ce1928f7e"
+            "c38b86f9e6d2b22984eefeab64e42a0f6a83428aaf064a3f72ea8e50709323d36fcffe"
+            "56e1f331b7a0eb5cadf4201b072241f9828ea74b01c3a805060e48198537f88d9bb9c5"
+            "624260214381e8796b0dea5dda4d43054f250c9f43943953"
         )[..],
-        LocalWorkspaceManifest {
+        LocalFolderManifest {
             updated: now,
-            base: WorkspaceManifest {
+            base: FolderManifest {
                 author: alice.device_id.to_owned(),
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+                parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
                 version: 0,
                 created: now,
                 updated: now,
@@ -645,76 +515,25 @@ fn serde_local_folder_manifest(
         }
     )
 }))]
-#[case::workspace_manifest_legacy_no_confinement_and_speculative_fields(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0+dev)
-        // Content:
-        //   type: "local_workspace_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   base: {
-        //     type: "workspace_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //     children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   }
-        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   need_sync: false
-        &hex!(
-            "edd81ceda3e081ad6b3329679e55e608943416fecf095ee2613ba33a9d35087a03a728080e"
-            "b63d6c1e038cc6a959f90fb24b7d9d224f68b21e8253ff607c2203983b372e6a84113231e3"
-            "e8752766d42df2e232c9b154046184bd81f6f2eb1aaad84f0aa098c651a47579f5320ea551"
-            "9d700eb6044827e96911ec695aa91a4f686a66ba361df539686a9d13cced69768a78a88e24"
-            "6a4a92f86168f2633203919b31d61902cd234b5462c0ca2b84f89428d42e9f1da2e012e940"
-            "67dbed57b641e28688f4fe46cec83831dc8d3101fa21541050eea7db4cd3da1c5319baf792"
-            "e21bc234b9a681d91ee2a818a7dd67511fd04d0fad40538e89e1981c2d2e3bf364b9641ae7"
-            "1872f93eb0a7f160c4e0347166a1026698d9adaaf2299afb96dc6476021d940f8b3957d34d"
-            "50dbdb08d9df"
-        )[..],
-        LocalWorkspaceManifest {
-            updated: now,
-            base: WorkspaceManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 42,
-                created: now,
-                updated: now,
-                children: HashMap::from([
-                    ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
-                ]),
-            },
-            children: HashMap::from([
-                ("wksp2".parse().unwrap(), VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap())
-            ]),
-            local_confinement_points: HashSet::new(),
-            remote_confinement_points: HashSet::new(),
-            need_sync: false,
-            speculative: false,
-        }
-    )
-}))]
-fn serde_local_workspace_manifest(
+fn serde_local_folder_manifest(
     alice: &Device,
-    #[case] generate_data_and_expected: AliceLocalWorkspaceManifest,
+    #[case] generate_data_and_expected: AliceLocalFolderManifest,
 ) {
     let (data, expected) = generate_data_and_expected(alice);
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalWorkspaceManifest::decrypt_and_load(data, &key).unwrap();
+    println!("==========>{:?}", expected.dump_and_encrypt(&key));
+
+    let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
 
     p_assert_eq!(manifest, expected);
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalWorkspaceManifest::decrypt_and_load(&data2, &key).unwrap();
+    let manifest2 = LocalFolderManifest::decrypt_and_load(&data2, &key).unwrap();
 
     p_assert_eq!(manifest2, expected);
 }
@@ -1590,6 +1409,28 @@ fn local_folder_manifest_new(timestamp: DateTime) {
     p_assert_eq!(lfm.children.len(), 0);
     p_assert_eq!(lfm.local_confinement_points.len(), 0);
     p_assert_eq!(lfm.remote_confinement_points.len(), 0);
+    assert!(!lfm.speculative);
+}
+
+#[rstest]
+fn local_folder_manifest_new_root(timestamp: DateTime) {
+    let author = DeviceID::default();
+    let realm = VlobID::default();
+    let lfm = LocalFolderManifest::new_root(author.clone(), realm, timestamp, true);
+
+    p_assert_eq!(lfm.base.author, author);
+    p_assert_eq!(lfm.base.timestamp, timestamp);
+    p_assert_eq!(lfm.base.id, realm);
+    p_assert_eq!(lfm.base.parent, realm);
+    p_assert_eq!(lfm.base.version, 0);
+    p_assert_eq!(lfm.base.created, timestamp);
+    p_assert_eq!(lfm.base.updated, timestamp);
+    assert!(lfm.need_sync);
+    p_assert_eq!(lfm.updated, timestamp);
+    p_assert_eq!(lfm.children.len(), 0);
+    p_assert_eq!(lfm.local_confinement_points.len(), 0);
+    p_assert_eq!(lfm.remote_confinement_points.len(), 0);
+    assert!(lfm.speculative);
 }
 
 #[rstest]
@@ -1647,6 +1488,7 @@ fn local_folder_manifest_from_remote(
     p_assert_eq!(lfm.children, expected_children);
     p_assert_eq!(lfm.local_confinement_points.len(), 0);
     p_assert_eq!(lfm.remote_confinement_points.len(), filtered);
+    assert!(!lfm.speculative);
 }
 
 #[rstest]
@@ -1732,6 +1574,7 @@ fn local_folder_manifest_from_remote_with_local_context(
         children: local_children.clone(),
         local_confinement_points: local_children.into_values().collect(),
         remote_confinement_points: HashSet::new(),
+        speculative: false,
     };
 
     let lfm = LocalFolderManifest::from_remote_with_local_context(
@@ -1747,6 +1590,7 @@ fn local_folder_manifest_from_remote_with_local_context(
     p_assert_eq!(lfm.children, expected_children);
     p_assert_eq!(lfm.local_confinement_points.len(), merged);
     p_assert_eq!(lfm.remote_confinement_points.len(), filtered);
+    assert!(!lfm.speculative);
 }
 
 #[rstest]
@@ -1794,6 +1638,7 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
         children: HashMap::new(),
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
+        speculative: false,
     };
 
     assert!(lfm.match_remote(&fm));
@@ -1858,6 +1703,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
         children,
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
+        speculative: false,
     }
     .evolve_children_and_mark_updated(data, Some(&prevent_sync_pattern), timestamp);
 
@@ -1892,6 +1738,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
         children: HashMap::new(),
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
+        speculative: false,
     }
     .apply_prevent_sync_pattern(Some(&prevent_sync_pattern), timestamp);
 
@@ -1901,340 +1748,6 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
     p_assert_eq!(lfm.children, HashMap::new());
     p_assert_eq!(lfm.local_confinement_points, HashSet::new());
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
-}
-
-#[rstest]
-fn local_workspace_manifest_new(timestamp: DateTime) {
-    let author = DeviceID::default();
-    let id = VlobID::default();
-    let speculative = false;
-    let lwm = LocalWorkspaceManifest::new(author.clone(), timestamp, Some(id), speculative);
-
-    p_assert_eq!(lwm.base.id, id);
-    p_assert_eq!(lwm.base.author, author);
-    p_assert_eq!(lwm.base.timestamp, timestamp);
-    p_assert_eq!(lwm.base.version, 0);
-    p_assert_eq!(lwm.base.created, timestamp);
-    p_assert_eq!(lwm.base.updated, timestamp);
-    assert!(lwm.need_sync);
-    p_assert_eq!(lwm.updated, timestamp);
-    p_assert_eq!(lwm.children.len(), 0);
-    p_assert_eq!(lwm.local_confinement_points.len(), 0);
-    p_assert_eq!(lwm.remote_confinement_points.len(), 0);
-    p_assert_eq!(lwm.speculative, speculative);
-}
-
-#[rstest]
-#[case::empty((
-    HashMap::new(),
-    HashMap::new(),
-    0,
-    "",
-))]
-#[case::children_filtered((
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    HashMap::new(),
-    1,
-    ".+",
-))]
-#[case::children((
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    0,
-    ".mp4",
-))]
-fn local_workspace_manifest_from_remote(
-    timestamp: DateTime,
-    #[case] input: (
-        HashMap<EntryName, VlobID>,
-        HashMap<EntryName, VlobID>,
-        usize,
-        &str,
-    ),
-) {
-    let (children, expected_children, filtered, regex) = input;
-    let wm = WorkspaceManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children,
-    };
-
-    let lwm = LocalWorkspaceManifest::from_remote(
-        wm.clone(),
-        Some(&Regex::from_regex_str(regex).unwrap()),
-    );
-
-    p_assert_eq!(lwm.base, wm);
-    assert!(!lwm.need_sync);
-    p_assert_eq!(lwm.updated, timestamp);
-    p_assert_eq!(lwm.children, expected_children);
-    p_assert_eq!(lwm.local_confinement_points.len(), 0);
-    p_assert_eq!(lwm.remote_confinement_points.len(), filtered);
-    assert!(!lwm.speculative);
-}
-
-#[rstest]
-#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, 0, false, "")]
-#[case::children_filtered(
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    HashMap::new(),
-    HashMap::new(),
-    1,
-    0,
-    false,
-    ".+",
-)]
-#[case::children(
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    HashMap::new(),
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    0,
-    0,
-    false,
-    ".mp4",
-)]
-#[case::children_merged(
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
-    ]),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
-    ]),
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
-    ]),
-    0,
-    1,
-    false,
-    ".mp4",
-)]
-#[case::need_sync(
-    HashMap::new(),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
-    ]),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
-    ]),
-    0,
-    0,
-    true,
-    ".png",
-)]
-fn local_workspace_manifest_from_remote_with_local_context(
-    timestamp: DateTime,
-    #[case] children: HashMap<EntryName, VlobID>,
-    #[case] local_children: HashMap<EntryName, VlobID>,
-    #[case] expected_children: HashMap<EntryName, VlobID>,
-    #[case] filtered: usize,
-    #[case] merged: usize,
-    #[case] need_sync: bool,
-    #[case] regex: &str,
-) {
-    let wm = WorkspaceManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children,
-    };
-
-    let lwm = LocalWorkspaceManifest {
-        base: wm.clone(),
-        need_sync: false,
-        updated: timestamp,
-        children: local_children.clone(),
-        local_confinement_points: local_children.into_values().collect(),
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
-    };
-
-    let lwm = LocalWorkspaceManifest::from_remote_with_local_context(
-        wm.clone(),
-        Some(&Regex::from_regex_str(regex).unwrap()),
-        &lwm,
-        timestamp,
-    );
-
-    p_assert_eq!(lwm.base, wm);
-    p_assert_eq!(lwm.need_sync, need_sync);
-    p_assert_eq!(lwm.updated, timestamp);
-    p_assert_eq!(lwm.children, expected_children);
-    p_assert_eq!(lwm.local_confinement_points.len(), merged);
-    p_assert_eq!(lwm.remote_confinement_points.len(), filtered);
-    assert!(!lwm.speculative);
-}
-
-#[rstest]
-fn local_workspace_manifest_to_remote(timestamp: DateTime) {
-    let t1 = timestamp;
-    let t2 = t1.add_us(1);
-    let author = DeviceID::default();
-    let id = VlobID::default();
-    let speculative = false;
-    let mut lwm = LocalWorkspaceManifest::new(author, t1, Some(id), speculative);
-
-    lwm.children
-        .insert("file1.png".parse().unwrap(), VlobID::default());
-    lwm.updated = t2;
-
-    let author = DeviceID::default();
-    let wm = lwm.to_remote(author.clone(), timestamp);
-
-    p_assert_eq!(wm.author, author);
-    p_assert_eq!(wm.timestamp, timestamp);
-    p_assert_eq!(wm.id, lwm.base.id);
-    p_assert_eq!(wm.version, lwm.base.version + 1);
-    p_assert_eq!(wm.created, lwm.base.created);
-    p_assert_eq!(wm.updated, lwm.updated);
-    p_assert_eq!(wm.children, lwm.children);
-}
-
-#[rstest]
-fn local_workspace_manifest_match_remote(timestamp: DateTime) {
-    let wm = WorkspaceManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children: HashMap::new(),
-    };
-
-    let lwm = LocalWorkspaceManifest {
-        base: wm.clone(),
-        need_sync: false,
-        updated: timestamp,
-        children: HashMap::new(),
-        local_confinement_points: HashSet::new(),
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
-    };
-
-    assert!(lwm.match_remote(&wm));
-}
-
-#[rstest]
-#[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
-#[case::no_data(
-    HashMap::new(),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
-    ]),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
-    ]),
-    0,
-    false,
-    ".mp4",
-)]
-#[case::data(
-    HashMap::from([
-        ("file1.png".parse().unwrap(), Some(VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())),
-        ("file2.mp4".parse().unwrap(), Some(VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())),
-    ]),
-    HashMap::from([
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap())
-    ]),
-    HashMap::from([
-        ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()),
-        ("file2.mp4".parse().unwrap(), VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()),
-    ]),
-    1,
-    true,
-    ".png",
-)]
-fn local_workspace_manifest_evolve_children_and_mark_updated(
-    timestamp: DateTime,
-    #[case] data: HashMap<EntryName, Option<VlobID>>,
-    #[case] children: HashMap<EntryName, VlobID>,
-    #[case] expected_children: HashMap<EntryName, VlobID>,
-    #[case] merged: usize,
-    #[case] need_sync: bool,
-    #[case] regex: &str,
-) {
-    let prevent_sync_pattern = Regex::from_regex_str(regex).unwrap();
-    let wm = WorkspaceManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children: HashMap::new(),
-    };
-
-    let lwm = LocalWorkspaceManifest {
-        base: wm.clone(),
-        need_sync: false,
-        updated: timestamp,
-        children,
-        local_confinement_points: HashSet::new(),
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
-    }
-    .evolve_children_and_mark_updated(data, Some(&prevent_sync_pattern), timestamp);
-
-    p_assert_eq!(lwm.base, wm);
-    p_assert_eq!(lwm.need_sync, need_sync);
-    p_assert_eq!(lwm.updated, timestamp);
-    p_assert_eq!(lwm.children, expected_children);
-    p_assert_eq!(lwm.local_confinement_points.len(), merged);
-    p_assert_eq!(lwm.remote_confinement_points.len(), 0);
-}
-
-// TODO
-#[rstest]
-fn local_workspace_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
-    let prevent_sync_pattern = Regex::from_regex_str("").unwrap();
-
-    let wm = WorkspaceManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children: HashMap::new(),
-    };
-
-    let lwm = LocalWorkspaceManifest {
-        base: wm.clone(),
-        need_sync: false,
-        updated: timestamp,
-        children: HashMap::new(),
-        local_confinement_points: HashSet::new(),
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
-    }
-    .apply_prevent_sync_pattern(Some(&prevent_sync_pattern), timestamp);
-
-    p_assert_eq!(lwm.base, wm);
-    assert!(!lwm.need_sync);
-    p_assert_eq!(lwm.updated, timestamp);
-    p_assert_eq!(lwm.children, HashMap::new());
-    p_assert_eq!(lwm.local_confinement_points, HashSet::new());
-    p_assert_eq!(lwm.remote_confinement_points, HashSet::new());
 }
 
 #[rstest]

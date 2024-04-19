@@ -164,19 +164,6 @@ pub(crate) async fn stat_entry(
         })?;
 
     let info = match manifest {
-        FsPathResolutionAndManifest::Workspace { manifest } => EntryStat::Folder {
-            // Root has no parent, hence confinement_point is never possible
-            confinement_point: None,
-            id: manifest.base.id,
-            // Special case for root: pretent it is itself its own parent
-            parent: manifest.base.id,
-            created: manifest.base.created,
-            updated: manifest.updated,
-            base_version: manifest.base.version,
-            is_placeholder: manifest.base.version == 0,
-            need_sync: manifest.need_sync,
-        },
-
         FsPathResolutionAndManifest::Folder {
             manifest,
             confinement_point,
