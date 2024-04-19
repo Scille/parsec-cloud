@@ -17,8 +17,8 @@ pub fn req() {
     //   block_id: ext(2, hex!("57c629b69d6c4abbaf651cafa46dbc93"))
     //   cmd: "block_read"
     let raw = hex!(
-        "82a8626c6f636b5f6964d80257c629b69d6c4abbaf651cafa46dbc93a3636d64aa626c6f63"
-        "6b5f72656164"
+        "82a8626c6f636b5f6964d80257c629b69d6c4abbaf651cafa46dbc93a3636d64aa626c"
+        "6f636b5f72656164"
     );
 
     let req = authenticated_cmds::block_read::Req {
@@ -47,9 +47,9 @@ pub fn rep_ok() {
     //   block: hex!("666f6f626172")
     //   status: "ok"
     let raw = hex!(
-        "84a6737461747573a26f6ba5626c6f636bc406666f6f626172a96b65795f696e64657802d9"
-        "226e65656465645f7265616c6d5f63657274696669636174655f74696d657374616d70d701"
-        "41cc36a1c0000000"
+        "84a6737461747573a26f6ba5626c6f636bc406666f6f626172a96b65795f696e646578"
+        "02d9226e65656465645f7265616c6d5f63657274696669636174655f74696d65737461"
+        "6d70d70141cc36a1c0000000"
     );
     let expected = authenticated_cmds::block_read::Rep::Ok {
         block: bytes::Bytes::from_static(b"foobar"),
