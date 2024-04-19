@@ -71,13 +71,8 @@ impl From<ConnectionError> for FolderReaderStatEntryError {
     }
 }
 
-enum FolderReaderManifest {
-    Workspace(Arc<LocalWorkspaceManifest>),
-    Folder(Arc<LocalFolderManifest>),
-}
-
 pub struct FolderReader {
-    manifest: FolderReaderManifest,
+    manifest: Arc<LocalFolderManifest>,
 }
 
 impl FolderReader {
@@ -91,13 +86,10 @@ impl FolderReader {
         ops: &WorkspaceOps,
         mut offset: usize,
     ) -> Result<Option<(&'a EntryName, EntryStat)>, FolderReaderStatEntryError> {
-        let (expected_parent_id, children) = match &self.manifest {
-            FolderReaderManifest::Workspace(manifest) => (manifest.base.id, &manifest.children),
-            FolderReaderManifest::Folder(manifest) => (manifest.base.id, &manifest.children),
-        };
+        let expected_parent_id = self.manifest.base.id;
 
         loop {
-            let (child_name, child_id) = match children.iter().nth(offset) {
+            let (child_name, child_id) = match self.manifest.children.iter().nth(offset) {
                 Some((child_name, child_id)) => (child_name, *child_id),
                 None => return Ok(None),
             };
@@ -190,9 +182,7 @@ pub async fn open_folder_reader_by_id(
     if entry_id == ops.realm_id {
         let manifest = ops.store.get_workspace_manifest();
 
-        return Ok(FolderReader {
-            manifest: FolderReaderManifest::Workspace(manifest),
-        });
+        return Ok(FolderReader { manifest });
     }
 
     let manifest = ops
@@ -217,9 +207,7 @@ pub async fn open_folder_reader_by_id(
         })?;
 
     match manifest {
-        ArcLocalChildManifest::Folder(manifest) => Ok(FolderReader {
-            manifest: FolderReaderManifest::Folder(manifest),
-        }),
+        ArcLocalChildManifest::Folder(manifest) => Ok(FolderReader { manifest }),
         ArcLocalChildManifest::File(_) => Err(WorkspaceOpenFolderReaderError::EntryIsFile),
     }
 }
@@ -250,12 +238,7 @@ pub async fn open_folder_reader(
         })?;
 
     match manifest {
-        FsPathResolutionAndManifest::Workspace { manifest } => Ok(FolderReader {
-            manifest: FolderReaderManifest::Workspace(manifest),
-        }),
-        FsPathResolutionAndManifest::Folder { manifest, .. } => Ok(FolderReader {
-            manifest: FolderReaderManifest::Folder(manifest),
-        }),
+        FsPathResolutionAndManifest::Folder { manifest, .. } => Ok(FolderReader { manifest }),
         FsPathResolutionAndManifest::File { .. } => {
             Err(WorkspaceOpenFolderReaderError::EntryIsFile)
         }
@@ -370,11 +353,7 @@ async fn consume_reader(
     let mut children_stats = {
         // Manifest's children list may contains invalid entries (e.g. an entry that doesn't
         // exist, or that has a different parent that us), so it's only a hint.
-        let children_hint_len = match &reader.manifest {
-            FolderReaderManifest::Workspace(manifest) => manifest.children.len(),
-            FolderReaderManifest::Folder(manifest) => manifest.children.len(),
-        };
-        Vec::with_capacity(children_hint_len)
+        Vec::with_capacity(reader.manifest.children.len())
     };
 
     let mut index = 0;

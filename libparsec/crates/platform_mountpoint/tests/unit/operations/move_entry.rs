@@ -243,7 +243,6 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
                 TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
                     | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
                     | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
-                    | TestbedEvent::WorkspaceDataStorageLocalWorkspaceManifestUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageLocalFolderManifestCreateOrUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageLocalFileManifestCreateOrUpdate(_)
                     | TestbedEvent::WorkspaceDataStorageFetchRealmCheckpoint(_)

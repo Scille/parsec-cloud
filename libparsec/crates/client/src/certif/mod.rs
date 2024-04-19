@@ -212,7 +212,7 @@ impl CertifOps {
         version: VersionInt,
         timestamp: DateTime,
         encrypted: &[u8],
-    ) -> Result<WorkspaceManifest, CertifValidateManifestError> {
+    ) -> Result<FolderManifest, CertifValidateManifestError> {
         manifest_validate::validate_workspace_manifest(
             self,
             needed_realm_certificate_timestamp,
