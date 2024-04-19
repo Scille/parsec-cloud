@@ -11,8 +11,6 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
-    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
 
     if !local_cache {
         env.customize(|builder| {
@@ -39,22 +37,22 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
         EntryStat::Folder{
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
             is_placeholder,
             need_sync,
-            children,
         }
         if {
             p_assert_eq!(confinement_point, None);
             p_assert_eq!(id, wksp1_id);
+            p_assert_eq!(parent, wksp1_id);
             p_assert_eq!(created, "2000-01-11T00:00:00Z".parse().unwrap());
             p_assert_eq!(updated, "2000-01-11T00:00:00Z".parse().unwrap());
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
-            p_assert_eq!(children, [("bar.txt".parse().unwrap(), wksp1_bar_txt_id), ("foo".parse().unwrap(), wksp1_foo_id)]);
             true
         }
     );
@@ -67,25 +65,22 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
         EntryStat::Folder{
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
             is_placeholder,
             need_sync,
-            children,
         }
         if {
             p_assert_eq!(confinement_point, None);
             p_assert_eq!(id, wksp1_foo_id);
+            p_assert_eq!(parent, wksp1_id);
             p_assert_eq!(created, "2000-01-10T00:00:00Z".parse().unwrap());
             p_assert_eq!(updated, "2000-01-10T00:00:00Z".parse().unwrap());
             p_assert_eq!(base_version, 1);
             p_assert_eq!(is_placeholder, false);
             p_assert_eq!(need_sync, false);
-            p_assert_eq!(children, [
-                ("egg.txt".parse().unwrap(), wksp1_foo_egg_txt_id),
-                ("spam".parse().unwrap(), wksp1_foo_spam_id),
-            ]);
             true
         }
     );
@@ -98,6 +93,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
         EntryStat::File{
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
@@ -108,6 +104,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
         if {
             p_assert_eq!(confinement_point, None);
             p_assert_eq!(id, wksp1_bar_txt_id);
+            p_assert_eq!(parent, wksp1_id);
             p_assert_eq!(created, "2000-01-07T00:00:00Z".parse().unwrap());
             p_assert_eq!(updated, "2000-01-07T00:00:00Z".parse().unwrap());
             p_assert_eq!(base_version, 1);
@@ -121,7 +118,7 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
-    let wksp1_id: &VlobID = env.template.get_stuff("wksp1_id");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     env.customize(|builder| {
         builder.filter_client_storage_events(|event| match event {
@@ -137,7 +134,7 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
     let now: DateTime = "2000-12-31T00:00:00Z".parse().unwrap();
     alice.time_provider.mock_time_frozen(now);
 
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let info = ops.stat_entry(&"/".parse().unwrap()).await.unwrap();
 
@@ -146,21 +143,21 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
         EntryStat::Folder{
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
             is_placeholder,
             need_sync,
-            children,
         } if {
             p_assert_eq!(confinement_point, None);
-            p_assert_eq!(id, *wksp1_id);
+            p_assert_eq!(id, wksp1_id);
+            p_assert_eq!(parent, wksp1_id);
             p_assert_eq!(created, now);
             p_assert_eq!(updated, now);
             p_assert_eq!(base_version, 0);
             p_assert_eq!(is_placeholder, true);
             p_assert_eq!(need_sync, true);
-            p_assert_eq!(children, []);
             true
         }
     );
