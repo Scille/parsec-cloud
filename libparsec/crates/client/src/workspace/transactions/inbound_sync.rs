@@ -399,46 +399,13 @@ async fn update_store_with_remote_child(
                     Some((child_name, _)) => child_name.to_owned(),
                 };
 
-                let (child_base_name, child_extension) = child_name.base_and_extension();
                 let mut attempt = 2;
-                macro_rules! build_next_conflicted_name {
-                    () => {{
-                        let mut base_name = child_base_name;
-                        let mut extension = child_extension;
-                        loop {
-                            let name = match extension {
-                                None => format!("{} ({})", base_name, attempt),
-                                Some(extension) => {
-                                    format!("{} ({}).{}", base_name, attempt, extension)
-                                }
-                            };
-                            match name.parse::<EntryName>() {
-                                Ok(name) => break name,
-                                // Entry name too long
-                                Err(EntryNameError::NameTooLong) => {
-                                    // Simply strip 10 characters from the first name then try again
-                                    if base_name.len() > 10 {
-                                        base_name = &base_name[..base_name.len() - 10];
-                                    } else {
-                                        // Very rare case where the extensions are very long,
-                                        // we have no choice but to strip it...
-                                        let extension_str = extension.expect("must be present");
-                                        extension =
-                                            Some(&extension_str[..extension_str.len() - 10]);
-                                    }
-                                }
-                                // Not possible given name is only composed of valid characters
-                                Err(EntryNameError::InvalidName) => unreachable!(),
-                            }
-                        }
-                    }};
-                }
-                let mut conflicted_name = build_next_conflicted_name!();
+                let mut conflicted_name = child_name.build_next_conflicted_name(attempt);
                 loop {
                     match parent_manifest_mut.children.entry(conflicted_name) {
                         std::collections::hash_map::Entry::Occupied(_) => {
                             attempt += 1;
-                            conflicted_name = build_next_conflicted_name!();
+                            conflicted_name = child_name.build_next_conflicted_name(attempt);
                         }
                         std::collections::hash_map::Entry::Vacant(entry) => {
                             entry.insert(conflicted.base.id);
@@ -544,46 +511,13 @@ async fn update_store_with_remote_child(
                     Some((child_name, _)) => child_name.to_owned(),
                 };
 
-                let (child_base_name, child_extension) = child_name.base_and_extension();
                 let mut attempt = 2;
-                macro_rules! build_next_conflicted_name {
-                    () => {{
-                        let mut base_name = child_base_name;
-                        let mut extension = child_extension;
-                        loop {
-                            let name = match extension {
-                                None => format!("{} ({})", base_name, attempt),
-                                Some(extension) => {
-                                    format!("{} ({}).{}", base_name, attempt, extension)
-                                }
-                            };
-                            match name.parse::<EntryName>() {
-                                Ok(name) => break name,
-                                // Entry name too long
-                                Err(EntryNameError::NameTooLong) => {
-                                    // Simply strip 10 characters from the first name then try again
-                                    if base_name.len() > 10 {
-                                        base_name = &base_name[..base_name.len() - 10];
-                                    } else {
-                                        // Very rare case where the extensions are very long,
-                                        // we have no choice but to strip it...
-                                        let extension_str = extension.expect("must be present");
-                                        extension =
-                                            Some(&extension_str[..extension_str.len() - 10]);
-                                    }
-                                }
-                                // Not possible given name is only composed of valid characters
-                                Err(EntryNameError::InvalidName) => unreachable!(),
-                            }
-                        }
-                    }};
-                }
-                let mut conflicted_name = build_next_conflicted_name!();
+                let mut conflicted_name = child_name.build_next_conflicted_name(attempt);
                 loop {
                     match parent_manifest_mut.children.entry(conflicted_name) {
                         std::collections::hash_map::Entry::Occupied(_) => {
                             attempt += 1;
-                            conflicted_name = build_next_conflicted_name!();
+                            conflicted_name = child_name.build_next_conflicted_name(attempt);
                         }
                         std::collections::hash_map::Entry::Vacant(entry) => {
                             entry.insert(conflicted.base.id);
