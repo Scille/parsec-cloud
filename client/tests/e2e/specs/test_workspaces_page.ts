@@ -20,6 +20,10 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').should('have.length', 0);
     cy.get('.card').first().contains('The Copper Coronet');
     cy.get('.card').last().contains("Watcher's Keep");
+    cy.get('.card').first().find('.shared-group').find('.person-avatar').as('avatars').should('have.length', 2);
+    cy.get('@avatars').first().contains('Ko');
+    cy.get('@avatars').eq(1).contains('Ce');
+    cy.get('.card').first().find('.workspace-info').find('.not-shared-label').should('not.be.visible');
     // Test sometimes fails because reasons without that wait
     cy.wait(300);
   });
@@ -62,6 +66,10 @@ describe('Check workspaces page', () => {
     cy.get('#workspaces-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
     cy.get('.card').should('have.length', 0);
     cy.get('.workspace-list-item').should('have.length', 3);
+    cy.get('.workspace-list-item').first().find('.shared-group').find('.person-avatar').as('avatars').should('have.length', 2);
+    cy.get('@avatars').first().contains('Ko');
+    cy.get('@avatars').eq(1).contains('Ce');
+    cy.get('.workspace-list-item').first().find('.workspace-users').find('.label-not-shared').should('not.be.visible');
   });
 
   it('Sort workspaces in list view', () => {
