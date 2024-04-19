@@ -47,6 +47,7 @@ export {
   WorkspaceRemoveEntryErrorTag,
   WorkspaceRenameEntryErrorTag,
   WorkspaceStatEntryErrorTag,
+  WorkspaceStatFolderChildrenErrorTag,
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
@@ -142,6 +143,7 @@ export type {
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
+  WorkspaceStatFolderChildrenError,
   WorkspaceStopError,
 } from '@/plugins/libparsec';
 

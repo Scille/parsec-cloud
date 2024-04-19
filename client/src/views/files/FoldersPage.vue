@@ -257,7 +257,6 @@ const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
 const fileImports: Ref<Array<FileImportProgress>> = ref([]);
 const currentPath = ref('/');
-const folderInfo: Ref<parsec.EntryStatFolder | null> = ref(null);
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
@@ -446,25 +445,22 @@ async function listFolder(): Promise<void> {
   if (!currentRouteIs(Routes.Documents)) {
     return;
   }
-  const result = await parsec.entryStat(workspaceInfo.value.handle, currentPath.value);
+  const result = await parsec.statFolderChildren(workspaceInfo.value.handle, currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
     const newFiles: FileModel[] = [];
-    folderInfo.value = result.value as parsec.EntryStatFolder;
+
     const query = getCurrentRouteQuery();
-    for (const [childName] of (result.value as parsec.EntryStatFolder).children) {
+    for (const childStat of result.value) {
+      const childName = childStat.name;
       // Excluding files currently being imported
       if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
-        const childPath = await parsec.Path.join(currentPath.value, childName);
-        const fileResult = await parsec.entryStat(workspaceInfo.value.handle, childPath);
-        if (fileResult.ok) {
-          if (fileResult.value.isFile()) {
-            (fileResult.value as FileModel).isSelected = query.selectFile && query.selectFile === fileResult.value.name ? true : false;
-            newFiles.push(fileResult.value as FileModel);
-          } else {
-            (fileResult.value as FolderModel).isSelected = false;
-            newFolders.push(fileResult.value as FolderModel);
-          }
+        if (childStat.isFile()) {
+          (childStat as FileModel).isSelected = query.selectFile && query.selectFile === childName ? true : false;
+          newFiles.push(childStat as FileModel);
+        } else {
+          (childStat as FolderModel).isSelected = false;
+          newFolders.push(childStat as FolderModel);
         }
       }
     }

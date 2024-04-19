@@ -27,6 +27,7 @@ import {
   WorkspaceRemoveEntryError,
   WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
+  WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
 import { ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
@@ -89,35 +90,6 @@ export async function rename(
 let MOCK_FILE_ID = 1;
 
 export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<EntryStat, WorkspaceStatEntryError>> {
-  function generateEntryName(prefix: string = '', addExtension = false): string {
-    const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
-    const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
-    return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
-  }
-
-  function generateChildren(): Array<[string, string]> {
-    const fileCount = Math.floor(Math.random() * 1) + 2;
-    const folderCount = Math.floor(Math.random() * 1) + 2;
-
-    const result: Array<[string, string]> = [];
-    for (let i = 0; i < fileCount + folderCount; i++) {
-      const id = crypto.randomUUID().toString();
-      const name = generateEntryName(i < fileCount ? FILE_PREFIX : FOLDER_PREFIX, i < fileCount);
-      result.push([name, id]);
-    }
-    return result;
-  }
-
-  function generateDate(start?: DateTime): DateTime {
-    if (!start) {
-      start = DateTime.now();
-    }
-    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
-  }
-
-  const FOLDER_PREFIX = 'Dir_';
-  const FILE_PREFIX = 'File_';
-
   const fileName = (await Path.filename(path)) || '';
 
   if (!needsMocks()) {
@@ -134,45 +106,163 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       }
     }
     return result as Result<EntryStat, WorkspaceStatEntryError>;
-  } else {
-    MOCK_FILE_ID += 1;
-    const createdDate = generateDate();
-    if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
-      return {
-        ok: true,
-        value: {
-          tag: FileType.File,
-          confinementPoint: null,
-          id: `${MOCK_FILE_ID}`,
-          created: createdDate,
-          updated: generateDate(createdDate),
-          baseVersion: 1,
-          isPlaceholder: false,
-          needSync: Math.floor(Math.random() * 2) === 1,
-          size: Math.floor(Math.random() * 1_000_000),
-          name: fileName,
-          isFile: (): boolean => true,
-        },
-      };
-    } else {
-      return {
-        ok: true,
-        value: {
-          tag: FileType.Folder,
-          confinementPoint: null,
-          id: `${MOCK_FILE_ID}`,
-          created: createdDate,
-          updated: generateDate(createdDate),
-          baseVersion: 1,
-          isPlaceholder: false,
-          needSync: Math.floor(Math.random() * 2) === 1,
-          name: fileName,
-          isFile: (): boolean => false,
-          children: generateChildren(),
-        },
-      };
-    }
   }
+
+  // Mocked version
+
+  function generateDate(start?: DateTime): DateTime {
+    if (!start) {
+      start = DateTime.now();
+    }
+    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
+  }
+
+  const FILE_PREFIX = 'File_';
+
+  MOCK_FILE_ID += 1;
+
+  const createdDate = generateDate();
+  if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
+    return {
+      ok: true,
+      value: {
+        tag: FileType.File,
+        confinementPoint: null,
+        id: `${MOCK_FILE_ID}`,
+        // Invalid parent ID, but hard to craft the correct one...
+        parent: `${MOCK_FILE_ID}`,
+        created: createdDate,
+        updated: generateDate(createdDate),
+        baseVersion: 1,
+        isPlaceholder: false,
+        needSync: Math.floor(Math.random() * 2) === 1,
+        size: Math.floor(Math.random() * 1_000_000),
+        isFile: (): boolean => true,
+        name: fileName,
+      },
+    };
+  } else {
+    return {
+      ok: true,
+      value: {
+        tag: FileType.Folder,
+        confinementPoint: null,
+        id: `${MOCK_FILE_ID}`,
+        // Invalid parent ID, but hard to craft the correct one...
+        parent: `${MOCK_FILE_ID}`,
+        created: createdDate,
+        updated: generateDate(createdDate),
+        baseVersion: 1,
+        isPlaceholder: false,
+        needSync: Math.floor(Math.random() * 2) === 1,
+        isFile: (): boolean => false,
+        name: fileName,
+      },
+    };
+  }
+}
+
+export async function statFolderChildren(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+): Promise<Result<Array<EntryStat>, WorkspaceStatFolderChildrenError>> {
+  if (!needsMocks()) {
+    const result = await libparsec.workspaceStatFolderChildren(workspaceHandle, path);
+    if (!result.ok) {
+      return result;
+    }
+
+    const cooked: Array<EntryStat> = [];
+    for (const [name, stat] of result.value) {
+      stat.created = DateTime.fromSeconds(stat.created as any as number);
+      stat.updated = DateTime.fromSeconds(stat.updated as any as number);
+      if (stat.tag === FileType.File) {
+        (stat as EntryStatFile).isFile = (): boolean => true;
+        (stat as EntryStatFile).name = name;
+      } else {
+        (stat as EntryStatFolder).isFile = (): boolean => false;
+        (stat as EntryStatFolder).name = name;
+      }
+      cooked.push(stat as EntryStat);
+    }
+
+    return {
+      ok: true,
+      value: cooked,
+    };
+  }
+
+  // Mocked version
+
+  const FILE_PREFIX = 'File_';
+  const FOLDER_PREFIX = 'Folder_';
+  const fileCount = Math.floor(Math.random() * 1) + 2;
+  const folderCount = Math.floor(Math.random() * 1) + 2;
+
+  function generateEntryName(prefix: string = '', addExtension = false): string {
+    const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
+    const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
+    return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
+  }
+
+  function generateDate(start?: DateTime): DateTime {
+    if (!start) {
+      start = DateTime.now();
+    }
+    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
+  }
+
+  const items: Array<EntryStat> = [];
+
+  const parentId = crypto.randomUUID().toString();
+
+  // Add files
+  for (let i = 0; i < fileCount; i++) {
+    const name = generateEntryName(FILE_PREFIX, true);
+    const createdDate = generateDate();
+    const stat: EntryStat = {
+      tag: FileType.File,
+      confinementPoint: null,
+      id: crypto.randomUUID().toString(),
+      parent: parentId,
+      created: createdDate,
+      updated: generateDate(createdDate),
+      baseVersion: 1,
+      isPlaceholder: false,
+      needSync: Math.floor(Math.random() * 2) === 1,
+      size: Math.floor(Math.random() * 1_000_000),
+      isFile: (): boolean => true,
+      name: name,
+    };
+
+    items.push(stat);
+  }
+
+  // Add folders
+  for (let i = 0; i < folderCount; i++) {
+    const name = generateEntryName(FOLDER_PREFIX, false);
+    const createdDate = generateDate();
+    const stat: EntryStat = {
+      tag: FileType.Folder,
+      confinementPoint: null,
+      id: crypto.randomUUID().toString(),
+      parent: parentId,
+      created: createdDate,
+      updated: generateDate(createdDate),
+      baseVersion: 1,
+      isPlaceholder: false,
+      needSync: Math.floor(Math.random() * 2) === 1,
+      isFile: (): boolean => false,
+      name: name,
+    };
+
+    items.push(stat);
+  }
+
+  return {
+    ok: true,
+    value: items,
+  };
 }
 
 export enum MoveErrorTag {
