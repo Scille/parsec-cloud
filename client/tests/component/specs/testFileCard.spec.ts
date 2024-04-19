@@ -23,6 +23,7 @@ describe('File Card Item', () => {
       tag: FileType.File,
       confinementPoint: null,
       id: '67',
+      parent: '66',
       created: DateTime.now(),
       updated: DateTime.now(),
       baseVersion: 1,
@@ -60,6 +61,7 @@ describe('File Card Item', () => {
       tag: FileType.Folder,
       confinementPoint: null,
       id: '67',
+      parent: '66',
       created: DateTime.now(),
       updated: DateTime.now(),
       baseVersion: 1,
@@ -68,10 +70,6 @@ describe('File Card Item', () => {
       name: 'A Folder',
       path: '/',
       isFile: (): boolean => false,
-      children: [
-        ['A File.txt', '671'],
-        ['Another File.png', '672'],
-      ],
       isSelected: false,
     };
 

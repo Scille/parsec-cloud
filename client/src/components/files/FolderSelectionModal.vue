@@ -77,7 +77,7 @@ import { getFileIcon } from '@/common/file';
 import { FolderSelectionOptions } from '@/components/files';
 import { Folder, MsImage, MsModalResult, MsModal } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
-import { EntryStat, EntryStatFolder, FsPath, Path, StartedWorkspaceInfo, entryStat, getWorkspaceInfo } from '@/parsec';
+import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
@@ -106,16 +106,9 @@ async function update(): Promise<void> {
   }
   const components = await Path.parse(selectedPath.value);
 
-  const result = await entryStat(workspaceHandle, selectedPath.value);
+  const result = await statFolderChildren(workspaceHandle, selectedPath.value);
   if (result.ok) {
-    currentEntries.value = [];
-    for (const [childName] of (result.value as EntryStatFolder).children) {
-      const childPath = await Path.join(selectedPath.value, childName);
-      const entryResult = await entryStat(workspaceHandle, childPath);
-      if (entryResult.ok) {
-        currentEntries.value.push(entryResult.value);
-      }
-    }
+    currentEntries.value = result.value;
   }
   currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
