@@ -18,8 +18,8 @@ pub fn req() {
     //   enrollment_id: ext(2, hex!("829d8cff327b4edbb39246a3c6767b07"))
     //
     let raw = hex!(
-        "82a3636d64b3706b695f656e726f6c6c6d656e745f696e666fad656e726f6c6c6d656e745f"
-        "6964d802829d8cff327b4edbb39246a3c6767b07"
+        "82a3636d64b3706b695f656e726f6c6c6d656e745f696e666fad656e726f6c6c6d656e"
+        "745f6964d802829d8cff327b4edbb39246a3c6767b07"
     );
 
     let expected =
@@ -57,11 +57,11 @@ pub fn rep_ok() {
             //   status: "ok"
             //   submitted_on: ext(1, 1668768160.714573)
             &hex!(
-                "87ae6163636570745f7061796c6f6164c40564756d6d79b86163636570745f7061796c6f61"
-                "645f7369676e6174757265c40564756d6d79ab61636365707465645f6f6ed70141d8ddd868"
-                "2dbb6fbd61636365707465725f6465725f783530395f6365727469666963617465c4056475"
-                "6d6d79b1656e726f6c6c6d656e745f737461747573a84143434550544544a6737461747573"
-                "a26f6bac7375626d69747465645f6f6ed70141d8ddd8682dbb90"
+                "87ae6163636570745f7061796c6f6164c40564756d6d79b86163636570745f7061796c"
+                "6f61645f7369676e6174757265c40564756d6d79ab61636365707465645f6f6ed70141"
+                "d8ddd8682dbb6fbd61636365707465725f6465725f783530395f636572746966696361"
+                "7465c40564756d6d79b1656e726f6c6c6d656e745f737461747573a841434345505445"
+                "44a6737461747573a26f6bac7375626d69747465645f6f6ed70141d8ddd8682dbb90"
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
@@ -81,9 +81,9 @@ pub fn rep_ok() {
             //   status: "ok"
             //   submitted_on: ext(1, 1668768160.716395)
             &hex!(
-                "84ac63616e63656c6c65645f6f6ed70141d8ddd8682dd94db1656e726f6c6c6d656e745f73"
-                "7461747573a943414e43454c4c4544a6737461747573a26f6bac7375626d69747465645f6f"
-                "6ed70141d8ddd8682dd96a"
+                "84ac63616e63656c6c65645f6f6ed70141d8ddd8682dd94db1656e726f6c6c6d656e74"
+                "5f737461747573a943414e43454c4c4544a6737461747573a26f6bac7375626d697474"
+                "65645f6f6ed70141d8ddd8682dd96a"
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Cancelled {
@@ -100,9 +100,9 @@ pub fn rep_ok() {
             //   status: "ok"
             //   submitted_on: ext(1, 1668768160.716576)
             &hex!(
-                "84b1656e726f6c6c6d656e745f737461747573a852454a4543544544ab72656a6563746564"
-                "5f6f6ed70141d8ddd8682ddc44a6737461747573a26f6bac7375626d69747465645f6f6ed7"
-                "0141d8ddd8682ddc62"
+                "84b1656e726f6c6c6d656e745f737461747573a852454a4543544544ab72656a656374"
+                "65645f6f6ed70141d8ddd8682ddc44a6737461747573a26f6bac7375626d6974746564"
+                "5f6f6ed70141d8ddd8682ddc62"
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Rejected {
@@ -118,8 +118,8 @@ pub fn rep_ok() {
             //   status: "ok"
             //   submitted_on: ext(1, 1668768160.716755)
             &hex!(
-                "83b1656e726f6c6c6d656e745f737461747573a95355424d4954544544a6737461747573a2"
-                "6f6bac7375626d69747465645f6f6ed70141d8ddd8682ddf50"
+                "83b1656e726f6c6c6d656e745f737461747573a95355424d4954544544a67374617475"
+                "73a26f6bac7375626d69747465645f6f6ed70141d8ddd8682ddf50"
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Submitted {

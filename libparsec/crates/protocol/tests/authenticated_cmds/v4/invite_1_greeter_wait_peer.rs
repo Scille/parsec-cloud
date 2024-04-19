@@ -18,10 +18,10 @@ pub fn req() {
     //   greeter_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "83a3636d64ba696e766974655f315f677265657465725f776169745f70656572"
-        "a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45ab267726565746572"
-        "5f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b"
-        "126e44f352ea46c5f22cd5ac57"
+        "83a3636d64ba696e766974655f315f677265657465725f776169745f70656572a5746f"
+        "6b656ec410d864b93ded264aae9ae583fd3d40c45ab2677265657465725f7075626c69"
+        "635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f2"
+        "2cd5ac57"
     );
 
     let req = authenticated_cmds::invite_1_greeter_wait_peer::Req {
@@ -56,8 +56,8 @@ pub fn rep_ok() {
     //   claimer_public_key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
     //   status: "ok"
     let raw = hex!(
-        "82b2636c61696d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03f3eb"
-        "ac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
+        "82b2636c61696d65725f7075626c69635f6b6579c4206507907d33bae6b5980b32fa03"
+        "f3ebac56141b126e44f352ea46c5f22cd5ac57a6737461747573a26f6b"
     );
     let expected = authenticated_cmds::invite_1_greeter_wait_peer::Rep::Ok {
         claimer_public_key: PublicKey::from(hex!(

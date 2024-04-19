@@ -17,9 +17,8 @@ pub fn req() {
     //   cmd: "invite_2a_greeter_get_hashed_nonce"
     //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
     let raw = hex!(
-        "82a3636d64d922696e766974655f32615f677265657465725f6765745f686173"
-        "6865645f6e6f6e6365a5746f6b656ec410d864b93ded264aae9ae583fd3d40c4"
-        "5a"
+        "82a3636d64d922696e766974655f32615f677265657465725f6765745f686173686564"
+        "5f6e6f6e6365a5746f6b656ec410d864b93ded264aae9ae583fd3d40c45a"
     );
 
     let req = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Req {
@@ -51,8 +50,8 @@ pub fn rep_ok() {
     //   claimer_hashed_nonce: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
     //   status: "ok"
     let raw = hex!(
-        "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de62029972"
-        "345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
+        "82b4636c61696d65725f6861736865645f6e6f6e6365c420e37ce3b00a1f15b3de6202"
+        "9972345420b76313a885c6ccc6e3b5547857b3ecc6a6737461747573a26f6b"
     );
     let expected = authenticated_cmds::invite_2a_greeter_get_hashed_nonce::Rep::Ok {
         claimer_hashed_nonce: HashDigest::from(hex!(

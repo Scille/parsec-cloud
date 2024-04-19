@@ -62,9 +62,9 @@ pub fn rep_ok() {
             //   user_profile_outsider_allowed: true
             //   status: "ok"
             &hex!(
-                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b26163746976"
-                "655f75736572735f6c696d697408bd757365725f70726f66696c655f6f757473696465725f"
-                "616c6c6f776564c3"
+                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b2616374"
+                "6976655f75736572735f6c696d697408bd757365725f70726f66696c655f6f75747369"
+                "6465725f616c6c6f776564c3"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::ServerConfig {
@@ -80,9 +80,9 @@ pub fn rep_ok() {
             //   user_profile_outsider_allowed: false
             //   status: "ok"
             &hex!(
-                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b26163746976"
-                "655f75736572735f6c696d6974c0bd757365725f70726f66696c655f6f757473696465725f"
-                "616c6c6f776564c2"
+                "84a6737461747573a26f6ba56576656e74ad5345525645525f434f4e464947b2616374"
+                "6976655f75736572735f6c696d6974c0bd757365725f70726f66696c655f6f75747369"
+                "6465725f616c6c6f776564c2"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::ServerConfig {
@@ -99,9 +99,9 @@ pub fn rep_ok() {
             //   status: "ok"
             //   token: ext(2, hex!("d864b93ded264aae9ae583fd3d40c45a"))
             &hex!(
-                "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e76"
-                "69746174696f6e5f737461747573a449444c45a5746f6b656ec410d864b93ded"
-                "264aae9ae583fd3d40c45a"
+                "84a6737461747573a26f6ba56576656e74aa494e5649544154494f4eb1696e76697461"
+                "74696f6e5f737461747573a449444c45a5746f6b656ec410d864b93ded264aae9ae583"
+                "fd3d40c45a"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::Invitation {
@@ -127,8 +127,8 @@ pub fn rep_ok() {
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "83a6737461747573a26f6ba56576656e74b2434f4d4d4f4e5f4345525449464943415445a9"
-                "74696d657374616d70d70141cc375188000000"
+                "83a6737461747573a26f6ba56576656e74b2434f4d4d4f4e5f43455254494649434154"
+                "45a974696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::CommonCertificate {
@@ -143,8 +143,8 @@ pub fn rep_ok() {
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "83a6737461747573a26f6ba56576656e74b55345515545535445525f434552544946494341"
-                "5445a974696d657374616d70d70141cc375188000000"
+                "83a6737461747573a26f6ba56576656e74b55345515545535445525f43455254494649"
+                "43415445a974696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::SequesterCertificate {
@@ -159,8 +159,8 @@ pub fn rep_ok() {
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "83a6737461747573a26f6ba56576656e74bb5348414d49525f5245434f564552595f434552"
-                "5449464943415445a974696d657374616d70d70141cc375188000000"
+                "83a6737461747573a26f6ba56576656e74bb5348414d49525f5245434f564552595f43"
+                "45525449464943415445a974696d657374616d70d70141cc375188000000"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::ShamirRecoveryCertificate {
