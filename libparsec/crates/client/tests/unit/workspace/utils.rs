@@ -98,15 +98,13 @@ macro_rules! ls {
     ($ops:expr, $path:expr) => {
         async {
             let path = $path.parse().unwrap();
-            let info = $ops.stat_entry(&path).await.unwrap();
-            let children = match info {
-                crate::workspace::EntryStat::Folder { children, .. } => children,
-                x => panic!("Bad info type: {:?}", x),
-            };
-            children
-                .iter()
+            let children_stats = $ops.stat_folder_children(&path).await.unwrap();
+            let mut children_names = children_stats
+                .into_iter()
                 .map(|(entry_name, _)| entry_name.to_string())
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>();
+            children_names.sort();
+            children_names
         }
     };
 }

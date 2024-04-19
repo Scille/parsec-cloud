@@ -21,6 +21,7 @@ mod open_file;
 mod outbound_sync_file;
 mod outbound_sync_folder;
 mod outbound_sync_root;
+mod read_folder;
 mod remove_entry;
 mod stat_entry;
 mod utils;
