@@ -2,13 +2,13 @@
 
 <template>
   <ion-page class="modal">
-    <ion-text class="title-h1 modal-title">
-      {{ workspaceName }}
-    </ion-text>
     <ms-modal
       :title="$msTranslate('WorkspaceSharing.title')"
       :close-button="{ visible: true }"
     >
+      <ion-text class="modal-title">
+        {{ workspaceName }}
+      </ion-text>
       <!-- content -->
       <div class="modal-container">
         <ms-search-input
@@ -224,7 +224,6 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
 .ms-modal {
   display: flex;
   flex-direction: column;
-  margin-top: 2rem;
 
   .inner-content {
     height: 100%;
@@ -232,11 +231,12 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
 }
 
 .modal-title {
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 2rem;
-  color: var(--parsec-color-light-primary-800);
+  margin-bottom: 1.5rem;
+  color: var(--parsec-color-light-secondary-text);
 }
 </style>
 
