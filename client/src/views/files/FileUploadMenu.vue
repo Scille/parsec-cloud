@@ -215,7 +215,7 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
       currentTab.value = Tabs.Done;
       break;
     case ImportState.FileAdded:
-      imports.value.unshift({
+      imports.value.push({
         data: importData as ImportData,
         state: state,
         progress: 0,
