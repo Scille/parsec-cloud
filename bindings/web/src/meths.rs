@@ -3881,6 +3881,21 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     })
                     .map_err(|_| TypeError::new("Not a valid VlobID"))?
             };
+            let parent = {
+                let js_val = Reflect::get(&obj, &"parent".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
             let created = {
                 let js_val = Reflect::get(&obj, &"created".into())?;
                 {
@@ -3946,6 +3961,7 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
             Ok(libparsec::EntryStat::File {
                 confinement_point,
                 id,
+                parent,
                 created,
                 updated,
                 base_version,
@@ -3980,6 +3996,21 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
             };
             let id = {
                 let js_val = Reflect::get(&obj, &"id".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let parent = {
+                let js_val = Reflect::get(&obj, &"parent".into())?;
                 js_val
                     .dyn_into::<JsString>()
                     .ok()
@@ -4042,65 +4073,15 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                     .map_err(|_| TypeError::new("Not a boolean"))?
                     .value_of()
             };
-            let children = {
-                let js_val = Reflect::get(&obj, &"children".into())?;
-                {
-                    let js_val = js_val
-                        .dyn_into::<Array>()
-                        .map_err(|_| TypeError::new("Not an array"))?;
-                    let mut converted = Vec::with_capacity(js_val.length() as usize);
-                    for x in js_val.iter() {
-                        let x_converted = (
-                            {
-                                let js_x1 = Reflect::get_u32(&x, 1)?;
-                                js_x1
-                                    .dyn_into::<JsString>()
-                                    .ok()
-                                    .and_then(|s| s.as_string())
-                                    .ok_or_else(|| TypeError::new("Not a string"))
-                                    .and_then(|x| {
-                                        let custom_from_rs_string = |s: String| -> Result<_, _> {
-                                            s.parse::<libparsec::EntryName>()
-                                                .map_err(|e| e.to_string())
-                                        };
-                                        custom_from_rs_string(x)
-                                            .map_err(|e| TypeError::new(e.as_ref()))
-                                    })
-                                    .map_err(|_| TypeError::new("Not a valid EntryName"))?
-                            },
-                            {
-                                let js_x2 = Reflect::get_u32(&x, 2)?;
-                                js_x2
-                                    .dyn_into::<JsString>()
-                                    .ok()
-                                    .and_then(|s| s.as_string())
-                                    .ok_or_else(|| TypeError::new("Not a string"))
-                                    .and_then(|x| {
-                                        let custom_from_rs_string =
-                                            |s: String| -> Result<libparsec::VlobID, _> {
-                                                libparsec::VlobID::from_hex(s.as_str())
-                                                    .map_err(|e| e.to_string())
-                                            };
-                                        custom_from_rs_string(x)
-                                            .map_err(|e| TypeError::new(e.as_ref()))
-                                    })
-                                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
-                            },
-                        );
-                        converted.push(x_converted);
-                    }
-                    converted
-                }
-            };
             Ok(libparsec::EntryStat::Folder {
                 confinement_point,
                 id,
+                parent,
                 created,
                 updated,
                 base_version,
                 is_placeholder,
                 need_sync,
-                children,
             })
         }
         _ => Err(JsValue::from(TypeError::new("Object is not a EntryStat"))),
@@ -4114,6 +4095,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
         libparsec::EntryStat::File {
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
@@ -4146,6 +4128,16 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 .as_ref()
             });
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
+            let js_parent = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(parent) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -4180,12 +4172,12 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
         libparsec::EntryStat::Folder {
             confinement_point,
             id,
+            parent,
             created,
             updated,
             base_version,
             is_placeholder,
             need_sync,
-            children,
             ..
         } => {
             Reflect::set(&js_obj, &"tag".into(), &"EntryStatFolder".into())?;
@@ -4212,6 +4204,16 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
                 .as_ref()
             });
             Reflect::set(&js_obj, &"id".into(), &js_id)?;
+            let js_parent = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(parent) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok(dt.get_f64_with_us_precision())
@@ -4240,36 +4242,6 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
             let js_need_sync = need_sync.into();
             Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
-            let js_children = {
-                // Array::new_with_length allocates with `undefined` value, that's why we `set` value
-                let js_array = Array::new_with_length(children.len() as u32);
-                for (i, elem) in children.into_iter().enumerate() {
-                    let js_elem = {
-                        let (x1, x2) = elem;
-                        let js_array = Array::new_with_length(2);
-                        let js_value = JsValue::from_str(x1.as_ref());
-                        js_array.push(&js_value);
-                        let js_value = JsValue::from_str({
-                            let custom_to_rs_string =
-                                |x: libparsec::VlobID| -> Result<String, &'static str> {
-                                    Ok(x.hex())
-                                };
-                            match custom_to_rs_string(x2) {
-                                Ok(ok) => ok,
-                                Err(err) => {
-                                    return Err(JsValue::from(TypeError::new(err.as_ref())))
-                                }
-                            }
-                            .as_ref()
-                        });
-                        js_array.push(&js_value);
-                        js_array.into()
-                    };
-                    js_array.set(i as u32, js_elem);
-                }
-                js_array.into()
-            };
-            Reflect::set(&js_obj, &"children".into(), &js_children)?;
         }
     }
     Ok(js_obj)
@@ -6556,6 +6528,83 @@ fn variant_workspace_stat_entry_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"WorkspaceStatEntryErrorStopped".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceStatFolderChildrenError
+
+#[allow(dead_code)]
+fn variant_workspace_stat_folder_children_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceStatFolderChildrenError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceStatFolderChildrenError::EntryIsFile { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorEntryIsFile".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorOffline".into(),
+            )?;
+        }
+        libparsec::WorkspaceStatFolderChildrenError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceStatFolderChildrenErrorStopped".into(),
             )?;
         }
     }
@@ -9431,6 +9480,132 @@ pub fn workspaceStatEntry(workspace: u32, path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_stat_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_stat_entry_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceStatEntryById(workspace: u32, entry_id: String) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_stat_entry_by_id(workspace, entry_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_entry_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_stat_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_stat_folder_children
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceStatFolderChildren(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_stat_folder_children(workspace, &path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = Array::new_with_length(2);
+                            let js_value = JsValue::from_str(x1.as_ref());
+                            js_array.push(&js_value);
+                            let js_value = variant_entry_stat_rs_to_js(x2)?;
+                            js_array.push(&js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_stat_folder_children_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_stat_folder_children_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceStatFolderChildrenById(workspace: u32, entry_id: String) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_stat_folder_children_by_id(workspace, entry_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    // Array::new_with_length allocates with `undefined` value, that's why we `set` value
+                    let js_array = Array::new_with_length(value.len() as u32);
+                    for (i, elem) in value.into_iter().enumerate() {
+                        let js_elem = {
+                            let (x1, x2) = elem;
+                            let js_array = Array::new_with_length(2);
+                            let js_value = JsValue::from_str(x1.as_ref());
+                            js_array.push(&js_value);
+                            let js_value = variant_entry_stat_rs_to_js(x2)?;
+                            js_array.push(&js_value);
+                            js_array.into()
+                        };
+                        js_array.set(i as u32, js_elem);
+                    }
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_stat_folder_children_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

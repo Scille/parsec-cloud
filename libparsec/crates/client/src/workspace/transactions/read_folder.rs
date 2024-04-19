@@ -325,6 +325,48 @@ pub async fn stat_folder_children(
             }
         })?;
 
+    consume_reader(ops, reader).await
+}
+
+pub async fn stat_folder_children_by_id(
+    ops: &WorkspaceOps,
+    entry_id: VlobID,
+) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+    let reader = open_folder_reader_by_id(ops, entry_id)
+        .await
+        .map_err(|err| match err {
+            WorkspaceOpenFolderReaderError::Offline => WorkspaceStatFolderChildrenError::Offline,
+            WorkspaceOpenFolderReaderError::Stopped => WorkspaceStatFolderChildrenError::Stopped,
+            WorkspaceOpenFolderReaderError::EntryNotFound => {
+                WorkspaceStatFolderChildrenError::EntryNotFound
+            }
+            WorkspaceOpenFolderReaderError::EntryIsFile => {
+                WorkspaceStatFolderChildrenError::EntryIsFile
+            }
+            WorkspaceOpenFolderReaderError::NoRealmAccess => {
+                WorkspaceStatFolderChildrenError::NoRealmAccess
+            }
+            WorkspaceOpenFolderReaderError::InvalidKeysBundle(err) => {
+                WorkspaceStatFolderChildrenError::InvalidKeysBundle(err)
+            }
+            WorkspaceOpenFolderReaderError::InvalidCertificate(err) => {
+                WorkspaceStatFolderChildrenError::InvalidCertificate(err)
+            }
+            WorkspaceOpenFolderReaderError::InvalidManifest(err) => {
+                WorkspaceStatFolderChildrenError::InvalidManifest(err)
+            }
+            WorkspaceOpenFolderReaderError::Internal(err) => {
+                err.context("cannot open folder reader").into()
+            }
+        })?;
+
+    consume_reader(ops, reader).await
+}
+
+async fn consume_reader(
+    ops: &WorkspaceOps,
+    reader: FolderReader,
+) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
     let mut children_stats = {
         // Manifest's children list may contains invalid entries (e.g. an entry that doesn't
         // exist, or that has a different parent that us), so it's only a hint.

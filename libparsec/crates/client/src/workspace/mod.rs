@@ -320,6 +320,13 @@ impl WorkspaceOps {
         transactions::stat_folder_children(self, path).await
     }
 
+    pub async fn stat_folder_children_by_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
+        transactions::stat_folder_children_by_id(self, entry_id).await
+    }
+
     pub async fn rename_entry(
         &self,
         path: FsPath,
@@ -485,9 +492,6 @@ impl WorkspaceOps {
 
     // TODO: a `fd_allocate` would be useful to set the blocksize according to the
     //       expected final file size
-
-    // TODO: a `stat_entry_and_children` would be useful for FUSE to implement
-    //       `readdirplus` that avoid extra round-trips when doing ls
 
     pub async fn fd_write_constrained_io(
         &self,

@@ -6,17 +6,20 @@ use std::{
 };
 
 use libparsec_client::workspace::{
-    EntryStat, FileStat, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdCloseError,
-    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
-    WorkspaceOpenFileError, WorkspaceOps, WorkspaceRemoveEntryError, WorkspaceRenameEntryError,
-    WorkspaceStatEntryError,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, OpenOptions,
+    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdReadError,
+    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceOpenFileError,
+    WorkspaceOpenFolderReaderError, WorkspaceOps, WorkspaceRemoveEntryError,
+    WorkspaceRenameEntryError, WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
 use super::inode::{Inode, InodesManager};
 
-/// TODO: Do we need to change this value ?
-/// Validity timeout
+/// Validity timeout set to zero to prevent FUSE from doing caching logic on it.
+/// This is because FUSE caching is not aware of external modification (i.e. sync
+/// on data modified remotely).
+/// see: https://sourceforge.net/p/fuse/mailman/fuse-devel/thread/20140206092944.GA28534@frosties/
 const TTL: std::time::Duration = std::time::Duration::ZERO;
 
 /// TODO: Do we need to handle any other GENERATION ?
@@ -200,12 +203,17 @@ pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
 > = Mutex::new(None);
 
+// See https://libfuse.github.io/doxygen/structfuse__operations.html for documentation
+// of each of the methods implemented here.
 impl fuser::Filesystem for Filesystem {
     fn init(
         &mut self,
         _req: &fuser::Request<'_>,
-        _config: &mut fuser::KernelConfig,
+        // see https://libfuse.github.io/doxygen/structfuse__conn__info.html
+        config: &mut fuser::KernelConfig,
     ) -> Result<(), libc::c_int> {
+        // Try to enable readdirplus optimisation, if it's not possible we fallback on regular readdir
+        let _ = config.add_capabilities(fuser::consts::FUSE_DO_READDIRPLUS);
         Ok(())
     }
 
@@ -529,6 +537,8 @@ impl fuser::Filesystem for Filesystem {
         });
     }
 
+    // TODO: handle RENAME_EXCHANGE or RENAME_NOREPLACE in flags
+    // (see https://libfuse.github.io/doxygen/structfuse__operations.html#adc484e37f216a8a18b97e01a83c6a6a2)
     fn rename(
         &mut self,
         _req: &fuser::Request<'_>,
@@ -1164,11 +1174,13 @@ impl fuser::Filesystem for Filesystem {
     // The trick is the folder content may change between the `readdir` calls, in such
     // case the new entries (if any) may or may not be listed, however no already existing
     // entry should get listed twice or not at all.
-    // To solve this, we first stat the parent folder `opendir` call (hence getting an
-    // immutable list of children), then do the actual stat on each children in the `readdir`
-    // calls.
-    // For this we have to share a list of children between the `opendir` and `readdir` calls,
-    // this is done by sharing a naked pointer that is eventually destroyed in `releasedir`.
+    // To solve this, the `opendir` operations do the path lookup and retrieve an immutable
+    // list of children, then the `readdir` operations will stat each children in the list.
+    // For this we have to share the list of children (i.e. the `FolderReader` object
+    // returned by the workspace ops) between the `opendir` and `readdir` calls, this is
+    // done by sharing a naked pointer that is eventually destroyed in `releasedir`.
+    //
+    // see https://unix.stackexchange.com/a/637666
     fn opendir(
         &mut self,
         _req: &fuser::Request<'_>,
@@ -1185,56 +1197,139 @@ impl fuser::Filesystem for Filesystem {
         };
 
         let ops = self.ops.clone();
-        let inodes = self.inodes.clone();
         self.tokio_handle.spawn(async move {
-            let stat = match ops.stat_entry(&path).await {
-                Ok(stat) => stat,
+            let folder_reader = match ops.open_folder_reader(&path).await {
+                Ok(folder_reader) => folder_reader,
                 Err(err) => {
                     return match err {
-                        WorkspaceStatEntryError::EntryNotFound => {
+                        WorkspaceOpenFolderReaderError::EntryNotFound => {
                             reply.manual().error(libc::ENOENT)
                         }
-                        WorkspaceStatEntryError::Offline => {
+                        WorkspaceOpenFolderReaderError::EntryIsFile => {
+                            reply.manual().error(libc::ENOTDIR);
+                        }
+                        WorkspaceOpenFolderReaderError::Offline => {
                             reply.manual().error(libc::EHOSTUNREACH)
                         }
-                        WorkspaceStatEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                        WorkspaceStatEntryError::Stopped
-                        | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                        | WorkspaceStatEntryError::InvalidCertificate(_)
-                        | WorkspaceStatEntryError::InvalidManifest(_)
-                        | WorkspaceStatEntryError::Internal(_) => reply.manual().error(libc::EIO),
+                        WorkspaceOpenFolderReaderError::NoRealmAccess => {
+                            reply.manual().error(libc::EPERM)
+                        }
+                        WorkspaceOpenFolderReaderError::Stopped
+                        | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
+                        | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
+                        | WorkspaceOpenFolderReaderError::InvalidManifest(_)
+                        | WorkspaceOpenFolderReaderError::Internal(_) => {
+                            reply.manual().error(libc::EIO)
+                        }
                     }
                 }
             };
 
-            match stat {
-                EntryStat::File { .. } => {
-                    reply.manual().error(libc::ENOTDIR);
-                }
-                EntryStat::Folder { children, .. } => {
-                    let mut readdir_items = Vec::with_capacity(children.len());
+            let open_flags = 0; // TODO: what to set here ?
 
-                    {
-                        let mut inodes_guard = inodes.lock().expect("mutex is poisoned");
-                        for (child_name, child_id) in children {
-                            let child_path = path.join(child_name.clone());
-                            let child_inode = { inodes_guard.insert_path(child_path) };
-                            readdir_items.push((child_name, child_inode, child_id));
-                        }
-                    }
+            // Hold my beer
+            let boxed_path_and_folder_reader = Arc::new((path, folder_reader));
+            let fh = Arc::into_raw(boxed_path_and_folder_reader) as u64;
 
-                    let open_flags = 0; // TODO: what to set here ?
-
-                    // Hold my beer
-                    let boxed_readdir_items = Arc::new(readdir_items);
-                    let fh = Arc::into_raw(boxed_readdir_items) as u64;
-
-                    reply.manual().opened(fh, open_flags);
-                }
-            }
+            reply.manual().opened(fh, open_flags);
         });
     }
 
+    fn readdirplus(
+        &mut self,
+        req: &fuser::Request<'_>,
+        ino: u64,
+        fh: u64,
+        offset: i64,
+        reply: fuser::ReplyDirectoryPlus,
+    ) {
+        log::debug!(
+            "[FUSE] readdirplus(ino: {:#x?}, fh: {}, offset: {})",
+            ino,
+            fh,
+            offset
+        );
+        let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectoryPlus);
+
+        let boxed_path_and_folder_reader = {
+            let ptr = fh as *mut (FsPath, FolderReader);
+            // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
+            // We must increment the refcount given `Arc::from_raw` use in the next line
+            // "steal" the owner ship of the pointer (and hence will release the data
+            // if the counter is not incremented).
+            unsafe { Arc::increment_strong_count(ptr) };
+            // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
+            unsafe { Arc::from_raw(ptr) }
+        };
+
+        let uid = req.uid();
+        let gid = req.gid();
+        let ops = self.ops.clone();
+        let inodes = self.inodes.clone();
+        self.tokio_handle.spawn(async move {
+            let parent_path = &boxed_path_and_folder_reader.0;
+            let folder_reader = &boxed_path_and_folder_reader.1;
+
+            let mut offset = offset as usize;
+            loop {
+                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
+                    Ok(Some(stat)) => stat,
+                    Ok(None) => break,
+                    Err(err) => {
+                        return match err {
+                            FolderReaderStatEntryError::Offline => {
+                                reply.manual().error(libc::EHOSTUNREACH)
+                            }
+                            FolderReaderStatEntryError::NoRealmAccess => {
+                                reply.manual().error(libc::EPERM)
+                            }
+                            FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                            | FolderReaderStatEntryError::InvalidCertificate(_)
+                            | FolderReaderStatEntryError::InvalidManifest(_)
+                            | FolderReaderStatEntryError::Internal(_) => {
+                                reply.manual().error(libc::EIO)
+                            }
+                        }
+                    }
+                };
+
+                let child_inode = inodes
+                    .lock()
+                    .expect("mutex is poisoned")
+                    .insert_path(parent_path.join(child_name.to_owned()));
+
+                let buffer_full = match child_stat {
+                    EntryStat::File { .. } => reply.borrow().add(
+                        child_inode,
+                        (offset + 1) as i64,
+                        OsStr::new(child_name.as_ref()),
+                        &TTL,
+                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid),
+                        GENERATION,
+                    ),
+                    EntryStat::Folder { .. } => reply.borrow().add(
+                        child_inode,
+                        (offset + 1) as i64,
+                        OsStr::new(child_name.as_ref()),
+                        &TTL,
+                        &entry_stat_to_file_attr(child_stat, child_inode, uid, gid),
+                        GENERATION,
+                    ),
+                };
+                if buffer_full {
+                    break;
+                }
+
+                offset += 1;
+            }
+
+            reply.manual().ok();
+        });
+    }
+
+    // `readdir` is only implemented as a fallback in case `readdirplus` is not available
+    // on the current FUSE version.
     fn readdir(
         &mut self,
         _req: &fuser::Request<'_>,
@@ -1251,8 +1346,8 @@ impl fuser::Filesystem for Filesystem {
         );
         let mut reply = reply_on_drop_guard!(reply, fuser::ReplyDirectory);
 
-        let boxed_readdir_items = {
-            let ptr = fh as *mut Vec<(u64, EntryName, VlobID)>;
+        let boxed_path_and_folder_reader = {
+            let ptr = fh as *mut (FsPath, FolderReader);
             // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
             // We must increment the refcount given `Arc::from_raw` use in the next line
             // "steal" the owner ship of the pointer (and hence will release the data
@@ -1263,52 +1358,59 @@ impl fuser::Filesystem for Filesystem {
         };
 
         let ops = self.ops.clone();
+        let inodes = self.inodes.clone();
         self.tokio_handle.spawn(async move {
-            for (index, (child_inode, child_name, child_id)) in
-                boxed_readdir_items.iter().enumerate().skip(offset as usize)
-            {
-                let stat = match ops.stat_entry_by_id(*child_id).await {
-                    Ok(stat) => stat,
+            let parent_path = &boxed_path_and_folder_reader.0;
+            let folder_reader = &boxed_path_and_folder_reader.1;
+
+            let mut offset = offset as usize;
+            loop {
+                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
+                    Ok(Some(stat)) => stat,
+                    Ok(None) => break,
                     Err(err) => {
                         return match err {
-                            WorkspaceStatEntryError::EntryNotFound => {
-                                reply.manual().error(libc::ENOENT)
-                            }
-                            WorkspaceStatEntryError::Offline => {
+                            FolderReaderStatEntryError::Offline => {
                                 reply.manual().error(libc::EHOSTUNREACH)
                             }
-                            WorkspaceStatEntryError::NoRealmAccess => {
+                            FolderReaderStatEntryError::NoRealmAccess => {
                                 reply.manual().error(libc::EPERM)
                             }
-                            WorkspaceStatEntryError::Stopped
-                            | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                            | WorkspaceStatEntryError::InvalidCertificate(_)
-                            | WorkspaceStatEntryError::InvalidManifest(_)
-                            | WorkspaceStatEntryError::Internal(_) => {
+                            FolderReaderStatEntryError::Stopped
+                            | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                            | FolderReaderStatEntryError::InvalidCertificate(_)
+                            | FolderReaderStatEntryError::InvalidManifest(_)
+                            | FolderReaderStatEntryError::Internal(_) => {
                                 reply.manual().error(libc::EIO)
                             }
                         }
                     }
                 };
 
-                let buffer_full = match stat {
+                let child_inode = inodes
+                    .lock()
+                    .expect("mutex is poisoned")
+                    .insert_path(parent_path.join(child_name.to_owned()));
+
+                let buffer_full = match child_stat {
                     EntryStat::File { .. } => reply.borrow().add(
-                        *child_inode,
-                        (index + 1) as i64,
+                        child_inode,
+                        (offset + 1) as i64,
                         fuser::FileType::RegularFile,
                         OsStr::new(child_name.as_ref()),
                     ),
                     EntryStat::Folder { .. } => reply.borrow().add(
-                        *child_inode,
-                        (index + 1) as i64,
+                        child_inode,
+                        (offset + 1) as i64,
                         fuser::FileType::Directory,
                         OsStr::new(child_name.as_ref()),
                     ),
                 };
-
                 if buffer_full {
                     break;
                 }
+
+                offset += 1;
             }
 
             reply.manual().ok();
@@ -1332,15 +1434,13 @@ impl fuser::Filesystem for Filesystem {
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         {
-            let ptr = fh as *mut Vec<(u64, EntryName, VlobID)>;
+            let ptr = fh as *mut (FsPath, FolderReader);
             // SAFETY: `ptr` is a valid pointer that have been created by `opendir`
             let _ = unsafe { Arc::from_raw(ptr) };
         }
 
         reply.manual().ok();
     }
-
-    // TODO: Fuse exposes `readdirplus` to avoid roundtrip for stat calls.
 
     // TODO: Fuser exposes a `lseek` method to support SEEK_HOLE & SEEK_DATA.
     //       This is an optimisation for filesystem that don't store zero blocks

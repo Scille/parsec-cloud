@@ -23,11 +23,11 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
 
             tokio::fs::create_dir(&new_dir).await.unwrap();
 
-            let stat = wksp1_ops
-                .stat_entry(&"/new_dir".parse().unwrap())
+            let stats = wksp1_ops
+                .stat_folder_children(&"/new_dir".parse().unwrap())
                 .await
                 .unwrap();
-            p_assert_matches!(stat, EntryStat::Folder{children, ..} if children.is_empty());
+            assert!(stats.is_empty());
         }
     );
 }
@@ -96,12 +96,12 @@ async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
                         Some(Ok(EntryStat::Folder {
                             confinement_point: None,
                             id: VlobID::default(),
+                            parent: VlobID::default(),
                             created: "2000-01-01T00:00:00Z".parse().unwrap(),
                             updated: "2000-01-01T00:00:00Z".parse().unwrap(),
                             base_version: 0,
                             is_placeholder: false,
                             need_sync: false,
-                            children: vec![],
                         }))
                     } else {
                         // Fallback to real lookup

@@ -273,6 +273,7 @@ class EntryStat(Variant):
     class File:
         confinement_point: Optional[VlobID]
         id: VlobID
+        parent: VlobID
         created: DateTime
         updated: DateTime
         base_version: VersionInt
@@ -283,18 +284,68 @@ class EntryStat(Variant):
     class Folder:
         confinement_point: Optional[VlobID]
         id: VlobID
+        parent: VlobID
         created: DateTime
         updated: DateTime
         base_version: VersionInt
         is_placeholder: bool
         need_sync: bool
-        children: list[tuple[EntryName, VlobID]]
 
 
 async def workspace_stat_entry(
     workspace: Handle,
     path: Ref[FsPath],
 ) -> Result[EntryStat, WorkspaceStatEntryError]:
+    raise NotImplementedError
+
+
+async def workspace_stat_entry_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result[EntryStat, WorkspaceStatEntryError]:
+    raise NotImplementedError
+
+
+class WorkspaceStatFolderChildrenError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class EntryIsFile:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_stat_folder_children(
+    workspace: Handle,
+    path: Ref[FsPath],
+) -> Result[list[tuple[EntryName, EntryStat]], WorkspaceStatFolderChildrenError]:
+    raise NotImplementedError
+
+
+async def workspace_stat_folder_children_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result[list[tuple[EntryName, EntryStat]], WorkspaceStatFolderChildrenError]:
     raise NotImplementedError
 
 

@@ -923,6 +923,7 @@ export interface EntryStatFile {
     tag: "File"
     confinement_point: string | null
     id: string
+    parent: string
     created: number
     updated: number
     base_version: number
@@ -934,12 +935,12 @@ export interface EntryStatFolder {
     tag: "Folder"
     confinement_point: string | null
     id: string
+    parent: string
     created: number
     updated: number
     base_version: number
     is_placeholder: boolean
     need_sync: boolean
-    children: Array<[string, string]>
 }
 export type EntryStat =
   | EntryStatFile
@@ -1786,6 +1787,55 @@ export type WorkspaceStatEntryError =
   | WorkspaceStatEntryErrorStopped
 
 
+// WorkspaceStatFolderChildrenError
+export interface WorkspaceStatFolderChildrenErrorEntryIsFile {
+    tag: "EntryIsFile"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceStatFolderChildrenError =
+  | WorkspaceStatFolderChildrenErrorEntryIsFile
+  | WorkspaceStatFolderChildrenErrorEntryNotFound
+  | WorkspaceStatFolderChildrenErrorInternal
+  | WorkspaceStatFolderChildrenErrorInvalidCertificate
+  | WorkspaceStatFolderChildrenErrorInvalidKeysBundle
+  | WorkspaceStatFolderChildrenErrorInvalidManifest
+  | WorkspaceStatFolderChildrenErrorNoRealmAccess
+  | WorkspaceStatFolderChildrenErrorOffline
+  | WorkspaceStatFolderChildrenErrorStopped
+
+
 // WorkspaceStopError
 export interface WorkspaceStopErrorInternal {
     tag: "Internal"
@@ -2170,6 +2220,18 @@ export function workspaceStatEntry(
     workspace: number,
     path: string
 ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+export function workspaceStatEntryById(
+    workspace: number,
+    entry_id: string
+): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+export function workspaceStatFolderChildren(
+    workspace: number,
+    path: string
+): Promise<Result<Array<[string, EntryStat]>, WorkspaceStatFolderChildrenError>>
+export function workspaceStatFolderChildrenById(
+    workspace: number,
+    entry_id: string
+): Promise<Result<Array<[string, EntryStat]>, WorkspaceStatFolderChildrenError>>
 export function workspaceStop(
     workspace: number
 ): Promise<Result<null, WorkspaceStopError>>

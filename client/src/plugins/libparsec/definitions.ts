@@ -1087,6 +1087,7 @@ export interface EntryStatFile {
     tag: EntryStatTag.File
     confinementPoint: VlobID | null
     id: VlobID
+    parent: VlobID
     created: DateTime
     updated: DateTime
     baseVersion: VersionInt
@@ -1098,12 +1099,12 @@ export interface EntryStatFolder {
     tag: EntryStatTag.Folder
     confinementPoint: VlobID | null
     id: VlobID
+    parent: VlobID
     created: DateTime
     updated: DateTime
     baseVersion: VersionInt
     isPlaceholder: boolean
     needSync: boolean
-    children: Array<[EntryName, VlobID]>
 }
 export type EntryStat =
   | EntryStatFile
@@ -2139,6 +2140,66 @@ export type WorkspaceStatEntryError =
   | WorkspaceStatEntryErrorOffline
   | WorkspaceStatEntryErrorStopped
 
+// WorkspaceStatFolderChildrenError
+export enum WorkspaceStatFolderChildrenErrorTag {
+    EntryIsFile = 'WorkspaceStatFolderChildrenErrorEntryIsFile',
+    EntryNotFound = 'WorkspaceStatFolderChildrenErrorEntryNotFound',
+    Internal = 'WorkspaceStatFolderChildrenErrorInternal',
+    InvalidCertificate = 'WorkspaceStatFolderChildrenErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceStatFolderChildrenErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceStatFolderChildrenErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceStatFolderChildrenErrorNoRealmAccess',
+    Offline = 'WorkspaceStatFolderChildrenErrorOffline',
+    Stopped = 'WorkspaceStatFolderChildrenErrorStopped',
+}
+
+export interface WorkspaceStatFolderChildrenErrorEntryIsFile {
+    tag: WorkspaceStatFolderChildrenErrorTag.EntryIsFile
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorEntryNotFound {
+    tag: WorkspaceStatFolderChildrenErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInternal {
+    tag: WorkspaceStatFolderChildrenErrorTag.Internal
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidCertificate {
+    tag: WorkspaceStatFolderChildrenErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidKeysBundle {
+    tag: WorkspaceStatFolderChildrenErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorInvalidManifest {
+    tag: WorkspaceStatFolderChildrenErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorNoRealmAccess {
+    tag: WorkspaceStatFolderChildrenErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorOffline {
+    tag: WorkspaceStatFolderChildrenErrorTag.Offline
+    error: string
+}
+export interface WorkspaceStatFolderChildrenErrorStopped {
+    tag: WorkspaceStatFolderChildrenErrorTag.Stopped
+    error: string
+}
+export type WorkspaceStatFolderChildrenError =
+  | WorkspaceStatFolderChildrenErrorEntryIsFile
+  | WorkspaceStatFolderChildrenErrorEntryNotFound
+  | WorkspaceStatFolderChildrenErrorInternal
+  | WorkspaceStatFolderChildrenErrorInvalidCertificate
+  | WorkspaceStatFolderChildrenErrorInvalidKeysBundle
+  | WorkspaceStatFolderChildrenErrorInvalidManifest
+  | WorkspaceStatFolderChildrenErrorNoRealmAccess
+  | WorkspaceStatFolderChildrenErrorOffline
+  | WorkspaceStatFolderChildrenErrorStopped
+
 // WorkspaceStopError
 export enum WorkspaceStopErrorTag {
     Internal = 'WorkspaceStopErrorInternal',
@@ -2531,6 +2592,18 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+    workspaceStatEntryById(
+        workspace: Handle,
+        entry_id: VlobID
+    ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+    workspaceStatFolderChildren(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<Array<[EntryName, EntryStat]>, WorkspaceStatFolderChildrenError>>
+    workspaceStatFolderChildrenById(
+        workspace: Handle,
+        entry_id: VlobID
+    ): Promise<Result<Array<[EntryName, EntryStat]>, WorkspaceStatFolderChildrenError>>
     workspaceStop(
         workspace: Handle
     ): Promise<Result<null, WorkspaceStopError>>
