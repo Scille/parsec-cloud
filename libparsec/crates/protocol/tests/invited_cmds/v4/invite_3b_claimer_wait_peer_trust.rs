@@ -16,8 +16,8 @@ pub fn req() {
     // Content:
     //   cmd: "invite_3b_claimer_wait_peer_trust"
     let raw = hex!(
-        "81a3636d64d921696e766974655f33625f636c61696d65725f776169745f706565725f7472"
-        "757374"
+        "81a3636d64d921696e766974655f33625f636c61696d65725f776169745f706565725f"
+        "7472757374"
     );
 
     let req = invited_cmds::invite_3b_claimer_wait_peer_trust::Req;

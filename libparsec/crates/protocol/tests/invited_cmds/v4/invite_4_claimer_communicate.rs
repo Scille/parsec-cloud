@@ -17,8 +17,8 @@ pub fn req() {
     //   cmd: "invite_4_claimer_communicate"
     //   payload: hex!("666f6f626172")
     let raw = hex!(
-        "82a3636d64bc696e766974655f345f636c61696d65725f636f6d6d756e6963617465a77061"
-        "796c6f6164c406666f6f626172"
+        "82a3636d64bc696e766974655f345f636c61696d65725f636f6d6d756e6963617465a7"
+        "7061796c6f6164c406666f6f626172"
     );
 
     let req = invited_cmds::invite_4_claimer_communicate::Req {
