@@ -121,7 +121,7 @@ const options = {
     desktop: {
       MimeType: `x-scheme-handler/${PARSEC_SCHEME}`,
     },
-    target: 'snap',
+    target: 'dir',
   },
 
   snap: {

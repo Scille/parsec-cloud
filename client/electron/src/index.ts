@@ -4,11 +4,12 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import type { MenuItemConstructorOptions } from 'electron';
 import { MenuItem, app, ipcMain, shell } from 'electron';
-import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
 // import { autoUpdater } from 'electron-updater';
 
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
+
+const electronIsDev = app.isPackaged ? false : true;
 
 // Graceful handling of unhandled errors.
 unhandled();
@@ -26,7 +27,8 @@ const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig(
 // const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
 
-const lock = app.requestSingleInstanceLock();
+// const lock = app.requestSingleInstanceLock();
+const lock = true;
 
 if (!lock) {
   app.quit();
