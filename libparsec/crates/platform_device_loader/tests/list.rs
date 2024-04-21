@@ -21,12 +21,6 @@ async fn list_no_devices(tmp_path: TmpPath, #[case] path_exists: bool) {
     p_assert_eq!(devices, []);
 }
 
-// Ignore the test on MacOS given it is based on creating a non-utf8 folder,
-// which is not possible there (it causes an "Illegal byte sequence" error)
-#[cfg(not(target_os = "macos"))]
-// Also ignore the test on Windows: win32's `CreateDirectoryW` prevent from
-// creating files with an invalid UTF-16 character.
-#[cfg(not(target_family = "windows"))]
 #[parsec_test]
 async fn ignore_invalid_items(tmp_path: TmpPath) {
     let devices_dir = tmp_path.join("devices");
@@ -36,64 +30,22 @@ async fn ignore_invalid_items(tmp_path: TmpPath) {
 
     // Empty folder
     std::fs::File::create(devices_dir.join("bad1")).unwrap();
-    // Valid legacy key file dir, but not containing an actual key file
-    std::fs::create_dir(devices_dir.join("373955f566#corp#bob@laptop")).unwrap();
-    // Valid legacy key file, but with invalid content
+    // Dummy file
+    std::fs::write(
+        devices_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29.key"),
+        b"dummy",
+    )
+    .unwrap();
+    // Folder with dummy file
     {
-        let dummy_slug = String::from("a54ed6df3a#corp#alice@laptop");
-        std::fs::create_dir(devices_dir.join(&dummy_slug)).unwrap();
+        let dummy_dir =
+            devices_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29");
+        std::fs::create_dir(&dummy_dir).unwrap();
         std::fs::write(
-            devices_dir.join(&dummy_slug).join(dummy_slug + ".keys"),
+            dummy_dir.join("1797e0d4507cf1b7d0706876840d8b3105edecd61066c3c6a9c3c194eeadea29.key"),
             b"dummy",
         )
         .unwrap();
-    }
-    // Non-utf8 folder shouldn't break filename-to-slug parsing for legacy file
-    let patch_into_non_utf8 = |x: &str| {
-        assert!(x.is_ascii()); // Sanity check
-        #[cfg(target_family = "unix")]
-        {
-            let mut buf = x.as_bytes().to_owned();
-            buf[0] = 0xff; // 0xff is never valid in UTF-8
-            use std::os::unix::ffi::OsStrExt;
-            std::path::PathBuf::from(std::ffi::OsStr::from_bytes(&buf))
-        }
-
-        #[cfg(target_family = "windows")]
-        {
-            use std::os::windows::ffi::OsStringExt;
-            // Convert UTF-8 into UTF-16 is easy as long as it is only composed of ASCII
-            let mut buf: Vec<u16> = x.as_bytes().iter().map(|c| *c as u16).collect();
-            buf[0] = 0xd800; // 0xd800 is high surrogate, but here it is lacking it pair
-            let os_string = std::ffi::OsString::from_wide(&buf);
-            std::path::PathBuf::from(os_string.as_os_str())
-        }
-    };
-    {
-        let non_utf8_folder_path =
-            devices_dir.join(patch_into_non_utf8("b7619d20a5#corp#mallory@laptop"));
-        std::fs::create_dir(non_utf8_folder_path).unwrap();
-    }
-    // Non-utf8 key file name shouldn't break filename-to-slug parsing for legacy file
-    {
-        // Generated from Rust implementation (Parsec v3.0.0+dev)
-        // Content:
-        //   type: "password"
-        //   salt: b"salt"
-        //   ciphertext: b"ciphertext"
-        //   human_handle: None
-        //   device_label: None
-        let legacy_file_content = hex!(
-            "85a474797065a870617373776f7264a473616c74c40473616c74aa6369706865727465"
-            "7874c40a63697068657274657874ac68756d616e5f68616e646c65c0ac646576696365"
-            "5f6c6162656cc0"
-        );
-
-        let parent = devices_dir.join("c17fc4c8bf#corp#adam@laptop");
-        std::fs::create_dir(&parent).unwrap();
-        let non_utf8_file_path =
-            parent.join(patch_into_non_utf8("c17fc4c8bf#corp#adam@laptop.keys"));
-        std::fs::write(non_utf8_file_path, legacy_file_content).unwrap();
     }
 
     let devices = list_available_devices(&tmp_path).await;
@@ -228,42 +180,6 @@ async fn list_devices(tmp_path: TmpPath) {
     ]);
 
     p_assert_eq!(devices, expected_devices);
-}
-
-#[parsec_test]
-async fn list_devices_support_legacy_file_without_labels(tmp_path: TmpPath) {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   type: "password"
-    //   salt: b"salt"
-    //   ciphertext: b"ciphertext"
-    //   human_handle: None
-    //   device_label: None
-    let legacy_device = hex!(
-        "85a474797065a870617373776f7264a473616c74c40473616c74aa6369706865727465"
-        "7874c40a63697068657274657874ac68756d616e5f68616e646c65c0ac646576696365"
-        "5f6c6162656cc0"
-    );
-    let slug = "9d84fbd57a#Org#Zack@PC1".to_string();
-    let key_file_path = tmp_path.join("devices").join(slug.clone() + ".keys");
-
-    std::fs::create_dir_all(tmp_path.join("devices")).unwrap();
-    std::fs::write(&key_file_path, legacy_device).unwrap();
-
-    let devices = list_available_devices(&tmp_path).await;
-    let expected_device = AvailableDevice {
-        key_file_path,
-        organization_id: "Org".parse().unwrap(),
-        device_id: "Zack@PC1".parse().unwrap(),
-        human_handle: HumanHandle::new_redacted(&"Zack".parse().unwrap()),
-        device_label: "PC1".parse().unwrap(),
-        slug,
-        ty: DeviceFileType::Password,
-    };
-
-    p_assert_eq!(devices, [expected_device]);
-    p_assert_eq!(devices[0].human_handle.label(), "Zack");
-    p_assert_eq!(devices[0].human_handle.email(), "_zack@redacted.invalid");
 }
 
 #[parsec_test(testbed = "empty")]

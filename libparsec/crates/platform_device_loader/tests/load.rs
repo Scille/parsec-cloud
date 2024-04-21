@@ -11,7 +11,6 @@ use libparsec_types::prelude::*;
 // TODO: Additional tests to write !
 // - load ok
 // - load ok (relative path in access, hence config_dir is used)
-// - load ok (legacy format)
 // - bad password
 
 enum BadPathKind {

@@ -141,32 +141,6 @@ impl DeviceFile {
     }
 }
 
-parsec_data!("schema/local_device/legacy_device_file_password.json5");
-
-#[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
-#[serde(from = "LegacyDeviceFilePasswordData")]
-pub struct LegacyDeviceFilePassword {
-    pub salt: Bytes,
-    pub ciphertext: Bytes,
-    pub human_handle: Option<HumanHandle>,
-    pub device_label: Option<DeviceLabel>,
-}
-
-impl LegacyDeviceFilePassword {
-    pub fn load(serialized: &[u8]) -> Result<Self, &'static str> {
-        rmp_serde::from_slice(serialized).map_err(|_| "Invalid serialization")
-    }
-}
-
-impl_transparent_data_format_conversion!(
-    LegacyDeviceFilePassword,
-    LegacyDeviceFilePasswordData,
-    salt,
-    ciphertext,
-    human_handle,
-    device_label,
-);
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum DeviceFileType {
