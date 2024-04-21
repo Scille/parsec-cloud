@@ -4,8 +4,7 @@
     "other_fields": [
         {
             "name": "author",
-            "type": "DeviceID",
-            "default": "generate_local_author_legacy_placeholder"
+            "type": "DeviceID"
         },
         {
             "name": "timestamp",

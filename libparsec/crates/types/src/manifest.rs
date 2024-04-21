@@ -224,26 +224,6 @@ impl std::fmt::Display for RealmRole {
 }
 
 /*
- * Helpers
- */
-
-// Prior to Parsec version 1.14, author field in manifest was only mandatory
-// for non-zero manifest version (i.e. un-synced local data had empty author field)
-// TODO: remove this code ? (considering it is unlikely to still have un-synced
-// data created from version < 1.14)
-
-const LOCAL_AUTHOR_LEGACY_PLACEHOLDER: &str =
-    "LOCAL_AUTHOR_LEGACY_PLACEHOLDER@LOCAL_AUTHOR_LEGACY_PLACEHOLDER";
-fn generate_local_author_legacy_placeholder() -> DeviceID {
-    lazy_static! {
-        static ref LEGACY_PLACEHOLDER: DeviceID = LOCAL_AUTHOR_LEGACY_PLACEHOLDER
-            .parse()
-            .expect("`LOCAL_AUTHOR_LEGACY_PLACEHOLDER` string should be parsable");
-    }
-    LEGACY_PLACEHOLDER.clone()
-}
-
-/*
  * Blocksize
  */
 
