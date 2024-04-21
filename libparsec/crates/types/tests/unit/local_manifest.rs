@@ -373,13 +373,13 @@ fn serde_local_folder_manifest(
 #[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Rust implementation (Parsec v3.0.0-alpha)
+        // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_user_manifest"
         //   updated: ext(1, 1638618643.208821)
         //   need_sync: true
         //   speculative: false
-        //   workspaces: [
+        //   local_workspaces: [
         //     {
         //       name: "wksp1"
         //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
@@ -414,21 +414,21 @@ fn serde_local_folder_manifest(
         //     version: 42
         //   }
         &hex!(
-            "dda242af1e4b65c1e2e3b858588faa1f7132b820d1cab62de4cb066956476551c57c5c"
-            "9144183e4720ea536edad40c4878be651a74afa4b2d7153b1fe44fb3f882388a5df429"
-            "95b7087b97d781d9cc8ae162d6187cdb6cc7e8942c1301e080e2cce588dd5a3e097f55"
-            "1c77ac132119b6597d58f3ad499e51db4f312e8e65877188ad716987a073707f25d7a2"
-            "bd58c6267f67b5316227b0ba18a261583de145a93708ac97dfe0d0e5dcb8715a11cded"
-            "a022e76c20f2a4e7e5c190d7de5d2c7a3e08e8a15d65cdb1d3ef7a02ae1b55b35bdc6a"
-            "178dd5a7819ea76f8002c73a2480f6c71de2aa163b5d8711111212d09b62468b464b92"
-            "505ea6778eede30579a3d0158a9c2220f93ea6faec4472b89f91f5f676604c56e68d1f"
-            "ee743b8dc7a691c7cd6d404132e4c79ba001f8c6baa3225e75ac1510471cdae5510dc6"
-            "36ab526ba7b620c2a047836dfba8ab3ba6c99cab2ceb8c859fff86fc158028e95b87f4"
-            "fe95669ddecd8d9c81be86e9f468aa6c3c936cfd8cb68e2914f51e0fd3c37e62ee6d66"
-            "58e1f1e96bd6e4574588f30ef2c4b0b0736f3c0c760f387fcb9778b3468ddda3a14b59"
-            "daf83c24c9005974ecb846f6515a347685db64fd18a263e92bafa9169d10b6b5937675"
-            "0c725087b795a60a675c21da05acf14a3360a75db8a66c390d130f39972388a444292f"
-            "295eb85b6d6c2bc610d44d6f0c0191b5cd1d0ef2acca3658b4dc27b820ba06"
+            "be56b2c031af53f2f006834cb117acbfa1814633a0738b1f33dfddff3a63a3b64deec4"
+            "031f9739365ca4971cb40cc209ab167e9cfb69db0922429ae4f0e595d9f4f8eed7846d"
+            "7b553ac83256c69a5b46603b43ebe0ee4c70349806a461e180f7d7d12bc483c744195f"
+            "fd7a8cb3fd77674371bc8574433ee46e1c18f8a652ff37c435cc5f4d1e380c5902e831"
+            "f4e48c8e4a9798c13f5072eaa2730e5b5b06c1ab565ca81eea197e830817a5f1aacd87"
+            "f054eeaeb7786a1b94caab10e984f6caa926ec6998478fc27da61a2e853ebf10ca65b0"
+            "6610ebf508093dbb38dfccd60d48ae191ae547ad09be84780ff28129b67c509a2bc93f"
+            "e6def7c76b8773f34bc7a3ada6c9754ce24dc46f3df055f234bc46345e958cbd82a48b"
+            "86766f90973b1f854ad19f693e8d203367b9e7dcb7dc43c62849bbc2c3a8d027471206"
+            "3de8398cca20d52543d71a276304fbbe2e7820430f74e39bc0ab6637c4da8e300467ea"
+            "4ce5c418d06348ec06ae293e9331e89c6cb429be6ab8ecd0125a1ff516276a3f096601"
+            "e8d94614c5368f07221067f8b5b0475ad464f7594a5daa53c4fb4310168701fa4df404"
+            "1b7004bef61551d27a444dba384a66c2622d38e1a73fc5b5db1433bb4b731d170db881"
+            "56d4cb30723c72f19621b7302fc75f9b3eba2592b5723f67b28d8ff16e76c38418eb93"
+            "9af38a2dc18a102be2ec06d979b87f333f7a9d92a92257c149"
         )[..],
         LocalUserManifest {
             updated: now,
@@ -441,7 +441,6 @@ fn serde_local_folder_manifest(
                 version: 42,
                 created: now,
                 updated: now,
-                workspaces_legacy_initial_info: vec![],
             },
             local_workspaces: vec![
                 LocalUserManifestWorkspaceEntry {
@@ -465,13 +464,13 @@ fn serde_local_folder_manifest(
 #[case::synced(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Rust implementation (Parsec v3.0.0-alpha)
+        // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_user_manifest"
         //   updated: ext(1, 1638618643.208821)
         //   need_sync: false
         //   speculative: false
-        //   workspaces: [
+        //   local_workspaces: [
         //     {
         //       name: "wksp1"
         //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
@@ -494,17 +493,17 @@ fn serde_local_folder_manifest(
         //     updated: ext(1, 1638618643.208821)
         //   }
         &hex!(
-            "50010cba4177fab8462d492f50904a25ca9b4dab9ca438b3ceee4b60cc041d89778396"
-            "8da007b2246b71f092f442763ad2caae31e2c15faedd534d30df64d4668fa966ce368d"
-            "05bf6aff136dd4a245f17ebe0421518e2ae15b232b9bea8c2fc5d82247d928db9403f6"
-            "adabc4a4a5e03b9bc041110ec02e1b3c527d1ffab2162d3b6320210b9bf79dff082603"
-            "043732bb0b12cbb61b2d90935c073816877625759d5f9f489f6b26a485b60cc8cfff78"
-            "a491e8a3c5d5ff2dd3b746e2afa58aa37fe85e52e15d045020ae24439a458c5a7aba70"
-            "dccbd544fac9153cd7a6a40d9aff2492ec24dfe13f7afda8b63d4d7f31a20d94bfc03c"
-            "cf4278d2a49f5a811f293b0e732b1b5e3ee79baf9c29c79e8dd75f1d9485ea8dfa73f4"
-            "f5454b79baa4fb556f931ca8da9280b9624c46f1ab78f0f8c597d42483e362e8eb1121"
-            "eacfdec9384f743b0da370bb4c147496c5206aa3d7fa5483e9d8a7ed3202fb9822814d"
-            "1f6b6a05e2b56816fb8d29e386fd34a37b083db13c"
+            "6645e8c8e9415a69cc47a284dbd6ac1bdc9c66347374b118ba361f9e63cf868edd651d"
+            "2f110e8fa3b466a003d7eb0416bf0bc15e6e1cc3699d799b765b919c8f19fc3d3dad8f"
+            "a4a1faa0f31f0de7ecc81c120d8b49641c9b21d466db4c204ab5b943e9e91efba84099"
+            "9d128a85968103af838ceccb2a102d5ac14216c86df6cf22e1a59b5504dcac1d05f940"
+            "d00bd9d5d3ff403be15c7422eb62392c6892fe47eeb453f04300f0306405ef463d2794"
+            "8df84b63d5d47e5e78f693c9ec6cd1ffd77e7df72b8c3144c3fb8bc42bf53173ed32ff"
+            "edac9e779b09732211400b64407c81c7c5d64fe5465af0cf8f37278ad7c4def9a6d824"
+            "a2cb2d4e9b2acbba52ad0c33815ecf01b260e94ad5e4f53eee295f43454d01efe5335f"
+            "d02b666d759b7ad25edf1c53a640c008d2af20ddf21e3793b36f6ad0fc44f46caaac25"
+            "1438520389da2ef61210288e52e1a1b31d6e7565c9491e3b7873416ec5cd26c74e4c63"
+            "6102749d37e9b3424b2ee9a61461c0"
         )[..],
         LocalUserManifest {
             updated: now,
@@ -517,7 +516,6 @@ fn serde_local_folder_manifest(
                 version: 42,
                 created: now,
                 updated: now,
-                workspaces_legacy_initial_info: vec![],
             },
             local_workspaces: vec![
                 LocalUserManifestWorkspaceEntry {
@@ -534,13 +532,13 @@ fn serde_local_folder_manifest(
 #[case::speculative(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Rust implementation (Parsec v3.0.0-alpha)
+        // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_user_manifest"
         //   updated: ext(1, 1638618643.208821)
         //   need_sync: true
         //   speculative: true
-        //   workspaces: []
+        //   local_workspaces: []
         //   base: {
         //     type: "user_manifest"
         //     author: "alice@dev1"
@@ -551,14 +549,14 @@ fn serde_local_folder_manifest(
         //     updated: ext(1, 1638618643.208821)
         //   }
         &hex!(
-            "9fed0982212a0cdeeb931d76ccc1e3cc45e70d6a0166ca366fd694031487f2f5187e45"
-            "d99a55130b413f8953728ddcffca051b48b3d21487fa15c29977c5a4cdda91c34e13c6"
-            "854eb122403b60d2cbd8799680178fbfcd990463fe11791a5c62b964d9b4f699bac938"
-            "54494e06e1a848807f727039188c40246519076d626719f21e80bffeb61acdd60bd835"
-            "d7941d3e9f18ea1af94e78e5380f086ee84f5be94e400d54cba65314fb9a0e02194d77"
-            "43037bb0321e051e33653d3544d468d7cd2adb92aebb978170fc0e268d4bac3c5a960a"
-            "22fb6015bc79e6338dc36b786f4e7d49b2d5a41b466a6afe4fca858b90c8e97407e85a"
-            "acc575ec"
+            "6cf0e1fd8dc90c25e5d27a4179b9953ff5dc4b8f0dc29c005e1c9fe442a7ad83836815"
+            "064ceaa35d4dca7ca13095a7ff2ce70b9203f6697e99509bc76e7efee269ab46ca486b"
+            "9fb954d28dc2a1bb48e49bafa0f88dd3ab2da9883d69263da18898382c640610ab9748"
+            "65036f903a63a64a3ef964ceea4006210a6f1cfffeb33c7d1c575eb35d93fdb1df0cde"
+            "d890c39241495805472c1f9ee43aa5f6abb7d13ccfb6540c44d1e2dffc6ec0c6887907"
+            "ad810f88dd27cbc95a178680f3e2f00e4f51775b3bd73228dd48eee64b8edf50464606"
+            "f0335c3152db0b1bb57235c6e8d9c1ddd269c81a2873426267cccb72869517f97cb134"
+            "2e3f2c22c7f7513f6181"
         )[..],
         LocalUserManifest {
             updated: now,
@@ -571,319 +569,8 @@ fn serde_local_folder_manifest(
                 version: 0,
                 created: now,
                 updated: now,
-                workspaces_legacy_initial_info: vec![],
             },
             local_workspaces: vec![],
-        }
-    )
-}))]
-#[case::legacy_pre_parsec_v3_0_need_sync(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0)
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: true
-        //   speculative: false
-        //   last_processed_message: 4
-        //   workspaces: [
-        //     {
-        //       name: "wksp1"
-        //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //       role: "OWNER"
-        //       key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-        //       encryption_revision: 2
-        //       encrypted_on: ext(1, 1638618643.208821)
-        //       role_cached_on: ext(1, 1638618643.208821)
-        //     },
-        //     {
-        //       name: "wksp2"
-        //       id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-        //       role: None
-        //       key: hex!("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
-        //       encryption_revision: 1
-        //       encrypted_on: ext(1, 1638618643.208821)
-        //       role_cached_on: ext(1, 1638618643.208821)
-        //     }
-        //   ]
-        //   base: {
-        //     type: "user_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     created: ext(1, 1638618643.208821)}
-        //     updated: ext(1, 1638618643.208821)
-        //     last_processed_message: 3
-        //     version: 42
-        //     workspaces: [
-        //       {
-        //         name: "wksp1"
-        //         id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //         role: "OWNER"
-        //         key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-        //         encryption_revision: 2
-        //         encrypted_on: ext(1, 1638618643.208821)
-        //         role_cached_on: ext(1, 1638618643.208821)
-        //       }
-        //     ]
-        //   }
-        &hex!(
-            "ed02cad442320f04035cca2c094081b9995189a1645bc55568339a3a9233d91f8c31dee2c7"
-            "9890f0c474fb7a799deb0ad4b7ecd102453c33268354e79b612934517d599f8d53a61a9372"
-            "3dacae87922feb1a05ab987eb9922fcf751109e6ce279e38d09f6febbf3068b1bfd5390a13"
-            "f90b90f8349e8e02e4714689317b96d1778e60735b14978f5e7e2663a21a1e7b31018c1f0e"
-            "b3a945b226e0aad02fdca5327b649faa04ad064cb34aa86d5464536878227a504d3a0ffa32"
-            "17d364db018d7ea1cf3a24251582ca7f6de30e4feefbe40c09a6dbec96caca55c274043a68"
-            "5012c8272e981a2fa06fa4cdde2b5b0884a0ce4598886905b99e0148c5282e6021a57fcd4c"
-            "043cd5744abe7ae0a504e616c7853db9df70c48579d084b88b36d485992d181578b467e7e6"
-            "bdbb7417df43340548ac1a5b4a4e9f47461be954de7d5e7fb3c9ede4a2abae3a0c4d130a34"
-            "d213ad1efcd90747eb5280765c4a1e4a9fc8803bb889b5fa29e748b920c5b0ce1d88506e79"
-            "5a65a297682973735e83a59c345607a1066bf64ba08a2364750b6a8a8801b2e9f0a7309d08"
-            "d66d8ef1fb69462845e63a51f9c9035cbf0443d60d3114a7390f8a9d58e69b2b94d8a7fdfb"
-            "5437e3c516b33a3d07f81bb4d14d61522d437abd0e9979d63564555a6bfc8856d97233f5e2"
-            "8baf607b8944fe137e53eb956d78ca800721a6cd34e4f56f3d855e16be29580739b6fe03ac"
-            "2ec806f27e8d87d83386a1fc3076526e62bf298b3a2d0ec6e441e08301e4b5a5f8aa72a5ca"
-            "51aa3a683064e20a735b531e40c3a3d3e26be61841cfa53b385aee36d899890b42d62a3710"
-            "89752739effec2316199a358236bb12af40e0bf9111c8a1667002a1c1a1201df044a4f405b"
-            "fa662e4a230b31bb12c44176489dafd34ad40ce121effe130eef81175b37f0eb8bff752025"
-            "b73a08470e5869e6c7b90e8a0c061cd66880ed90d6e57f09ff49ff4286ac82c33c7ecb75cd"
-            "42abf37aa5abd4a7ef8bc406c022097f9271476503de00b476ccf3e750d9d242c49d7f6e3e"
-            "940ef3704fdef14e33f7927786bc501f40"
-        )[..],
-        LocalUserManifest {
-            updated: now,
-            need_sync: true,
-            speculative: false,
-            // Local user manifest's `last_processed_message` field is deprecated (and hence ignored)
-            base: UserManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 42,
-                created: now,
-                updated: now,
-                workspaces_legacy_initial_info: vec![
-                    LegacyUserManifestWorkspaceEntry {
-                        name: "wksp1".parse().unwrap(),
-                        id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                        key: SecretKey::from(hex!(
-                            "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                        )),
-                        encryption_revision: 2,
-                        // Fields `encrypted_on/role_cache_timestamp/role_cache_value` are deprecated
-                    }
-                ],
-                // User manifest's `last_processed_message` field is deprecated (and hence ignored)
-            },
-            local_workspaces: vec![
-                LocalUserManifestWorkspaceEntry {
-                    name: "wksp1".parse().unwrap(),
-                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    name_origin: CertificateBasedInfoOrigin::Placeholder,
-                    role: RealmRole::Owner,
-                    role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    // Fields `key/encryption_revision/encrypted_on/role_cache_timestamp/role_cache_value` are deprecated
-                }
-            ],
-        }
-    )
-}))]
-#[case::legacy_pre_parsec_v3_0_synced(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0)
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: false
-        //   speculative: false
-        //   last_processed_message: 3
-        //   workspaces: [
-        //     {
-        //       name: "wksp1"
-        //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //       role: "OWNER"
-        //       key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-        //       encryption_revision: 2
-        //       encrypted_on: ext(1, 1638618643.208821)
-        //       role_cached_on: ext(1, 1638618643.208821)
-        //     },
-        //   ]
-        //   base: {
-        //     type: "user_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)}
-        //     updated: ext(1, 1638618643.208821)
-        //     last_processed_message: 3
-        //     workspaces: [
-        //       {
-        //         name: "wksp1"
-        //         id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //         role: "OWNER"
-        //         key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-        //         encryption_revision: 2
-        //         encrypted_on: ext(1, 1638618643.208821)
-        //         role_cached_on: ext(1, 1638618643.208821)
-        //       }
-        //     ]
-        //   }
-        &hex!(
-            "07d50897a2530d094f195290dda1e120b6ca52e050aedb0d04dddc5f8d3886751cbdd62d86"
-            "928c1052f8317ff32667efdf380fa12f4da793d874d15f0ace61d48df2ab981aaffb7041d7"
-            "04fb61f0c540e1e3f7056809a31f499e32a6078be256b40cf0713984bd4040cbbe8f15aad5"
-            "94a2f9e0dc9de8b1a354166331532e25b579ee4c84aceee9508877c0be5b6a74178e74c1b5"
-            "4033793b6699540acea85d2bddaf6abf5f8ca8609670b3780994cbb408e33daf665f1c872c"
-            "33fecc799e64688ba9601c61c6fc90d5645a9fbbd0cbf26d653b1c7ca67c3e9cf43a89597d"
-            "ac825bffd8ae7556d8409442e88ee01a92bd7c4bf24a0a6b7756f30b2e5a1d5f26925c7c87"
-            "98bd9e48866c2b55de12a1fd4a3f1b89168c90b74350ae3c13a4660c999d835b75b6f043ed"
-            "bd961110b85babfc3bf442c1f780d0c8927376681a36c8e96763429e22f280a59aecf611f0"
-            "08c96a4fc2d8dd56699217b768d7dcd42262672f73a16b70946748b4b7b18d2976571014f5"
-            "a652a1c12749e0255e7052535b4bf838052ab0546cc77796d9ad45db19bc1eed127642316f"
-            "0d60c926b93d97f865959dcc297ba924c9b18fe0c091b4178183b0ec9af70cdfbf26625fef"
-            "13e8924cf54db0f625973cb1933db92fdc1afb52ffce1261e6b66d2f383f88b877f73d40f6"
-            "606b3a8d36a5323793d149c3d731fe3f86c0e1760966a4f4b5f5f2033178a6f9168999e6b3"
-            "58fa7879891e323aba8076e0a978cba6d5a9d6edc235184065f9a385a967547b4cfacf5efc"
-            "28acfb004e86194a9f9402a423bf21469821ee00ff0a28ab90bfc150682e0ca430987c9dc9"
-            "00aac57a581b7420073bef892a066f35c4f5f0"
-        )[..],
-        LocalUserManifest {
-            updated: now,
-            need_sync: false,
-            speculative: false,
-            // Local user manifest's `last_processed_message` field is deprecated (and hence ignored)
-            base: UserManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 42,
-                created: now,
-                updated: now,
-                workspaces_legacy_initial_info: vec![
-                    LegacyUserManifestWorkspaceEntry {
-                        name: "wksp1".parse().unwrap(),
-                        id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                        key: SecretKey::from(hex!(
-                            "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                        )),
-                        encryption_revision: 2,
-                    }
-                ],
-                // User manifest's `last_processed_message` field is deprecated (and hence ignored)
-            },
-            local_workspaces: vec![
-                LocalUserManifestWorkspaceEntry {
-                    name: "wksp1".parse().unwrap(),
-                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    name_origin: CertificateBasedInfoOrigin::Placeholder,
-                    role: RealmRole::Owner,
-                    role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    // Fields `key/encryption_revision/encrypted_on/role_cache_timestamp/role_cache_value` are deprecated
-                }
-            ],
-        }
-    )
-}))]
-#[case::legacy_pre_parsec_v3_0_speculative(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0)
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: true
-        //   speculative: true
-        //   last_processed_message: 0
-        //   workspaces: []
-        //   base: {
-        //     type: "user_manifest"
-        //     author: "alice@dev1"
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 0
-        //     created: ext(1, 1638618643.208821)}
-        //     updated: ext(1, 1638618643.208821)
-        //     last_processed_message: 0
-        //     workspaces: []
-        //   }
-        &hex!(
-            "ce0274b3890ec74dff002d7b587e591ba4876b7f08fa227eb1ba737f6eae2490c79c1be9c6"
-            "211179274ce62439caeea5829c9265e46371fb6e198f3d13ef5e366e11653a64f049941a1b"
-            "6c70ba424019f7e09bcab7f53872cc3d65a9f23b71ec85b2f5b4524f58a03528ccf335af19"
-            "8e87fc1f1675da3473bd6a43804b4177267c9ba55c1ec955f5068de1676f9f8731ea4932a0"
-            "c55c7eb3741893a5ce7e2c4f20406485821e964b7cf46442338c63771883da9d90098c1fea"
-            "73339fa97aba3145977114b5f4c05d3b21733d3a9f476e7abf90602bc7b538ac7794e96e76"
-            "c279e236e80564790efc67e61d8196cd4ba1806b7636070976bf4306be2f51fa705cbaa423"
-            "890ba6a40b5b33ac75f71dd2a8e1bc93532a3bbee659da075245905b5c46583e0479e8c600"
-            "60e0e8bfaa94af4c32a201f6b0"
-        )[..],
-        LocalUserManifest {
-            updated: now,
-            need_sync: true,
-            speculative: true,
-            // Local user manifest's `last_processed_message` field is deprecated (and hence ignored)
-            base: UserManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 0,
-                created: now,
-                updated: now,
-                workspaces_legacy_initial_info: vec![],
-                // User manifest's `last_processed_message` field is deprecated (and hence ignored)
-            },
-            local_workspaces: vec![],
-        }
-    )
-}))]
-#[case::legacy_pre_parsec_v1_15_missing_speculative_field(Box::new(|alice: &Device| {
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    (
-        // Generated from Python implementation (Parsec v2.6.0)
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: false
-        //   last_processed_message: 0
-        //   workspaces: []
-        //   base: {
-        //       type: "user_manifest"
-        //       author: str(alice.device_id)
-        //       timestamp: ext(1, 1638618643.208821)
-        //       id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //       version: 0
-        //       created: ext(1, 1638618643.208821)
-        //       updated: ext(1, 1638618643.208821)
-        //       last_processed_message: 0
-        //       workspaces: []
-        //   }
-        &hex!(
-            "7d38802a10c9b998d3cf460a48792a305113398fda609eb88ed2dbc40ad51098a5847e50a5"
-            "8f69bc374fba586d0b60cbc686819e4ae7d1507ed333d5f63caffae84ec5acf40ec7302c0c"
-            "62e75407b0820fdcf1f8211143ba0415074033b37b4d6d136a7ba956c4fb0e046499822d37"
-            "7d5a82e3155537db73e58c48adbd5ed41abc4d7498c72947219b49ce6de396beb42cef2f03"
-            "7e234792cebe3e46726b471ad3d0a1020a1f9d814d359b8763cb86992578c81e4c5f47d523"
-            "33694e5df74f303a99c3b744ef0c942074aacf695d4e6eb38952a1ec9b2a414e6a00f2924d"
-            "c4af0c349b0fc959a4422b6a92b7f9233403f71b1cb9bd6d367bf336b8acbc4eb82bfdacf9"
-            "48272fe53b3ecec4f06be968149c597f1e6afd529c2ece0410ec7cb6042e3eedf966c7248c"
-        )[..],
-        LocalUserManifest {
-            updated: now,
-            need_sync: false,
-            speculative: false,
-            // Local user manifest's `last_processed_message` field is deprecated (and hence ignored)
-            local_workspaces: vec![],
-            base: UserManifest {
-                author: alice.device_id.to_owned(),
-                timestamp: now,
-                id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-                version: 0,
-                created: now,
-                updated: now,
-                workspaces_legacy_initial_info: vec![],
-                // User manifest's `last_processed_message` field is deprecated (and hence ignored)
-            },
         }
     )
 }))]
@@ -896,6 +583,7 @@ fn serde_local_user_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
+    println!("{:?}", expected.dump_and_encrypt(&key));
     let manifest = LocalUserManifest::decrypt_and_load(data, &key).unwrap();
 
     p_assert_eq!(manifest, expected);
@@ -1510,7 +1198,8 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
     }
     {
         let mut lfm = lfm.clone();
-        lfm.children.insert("foo".parse().unwrap(), VlobID::default());
+        lfm.children
+            .insert("foo".parse().unwrap(), VlobID::default());
         assert!(!lfm.match_remote(&fm));
     }
 }
@@ -1638,30 +1327,11 @@ fn local_user_manifest_new(timestamp: DateTime) {
     p_assert_eq!(lum.base.updated, timestamp);
     assert!(lum.need_sync);
     p_assert_eq!(lum.updated, timestamp);
-    p_assert_eq!(lum.local_workspaces.len(), 0);
     p_assert_eq!(lum.speculative, speculative);
 }
 
 #[rstest]
-fn local_user_manifest_from_remote(
-    #[values(false, true)] with_workspaces_legacy_initial_info: bool,
-    timestamp: DateTime,
-) {
-    let workspaces_legacy_initial_info = {
-        let mut workspaces_legacy_initial_info = vec![];
-        if with_workspaces_legacy_initial_info {
-            workspaces_legacy_initial_info.push(LegacyUserManifestWorkspaceEntry {
-                name: "wksp1".parse().unwrap(),
-                id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                key: SecretKey::from(hex!(
-                    "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                )),
-                encryption_revision: 1,
-            })
-        }
-        workspaces_legacy_initial_info
-    };
-
+fn local_user_manifest_from_remote(timestamp: DateTime) {
     let um = UserManifest {
         author: DeviceID::default(),
         timestamp,
@@ -1669,7 +1339,6 @@ fn local_user_manifest_from_remote(
         version: 0,
         created: timestamp,
         updated: timestamp,
-        workspaces_legacy_initial_info,
     };
 
     let lum = LocalUserManifest::from_remote(um.clone());
@@ -1677,14 +1346,10 @@ fn local_user_manifest_from_remote(
     p_assert_eq!(lum.base, um);
     assert!(!lum.need_sync);
     p_assert_eq!(lum.updated, timestamp);
-    p_assert_eq!(lum.local_workspaces, vec![]);
 }
 
 #[rstest]
-fn local_user_manifest_to_remote(
-    #[values(false, true)] with_workspaces_legacy_initial_info: bool,
-    timestamp: DateTime,
-) {
+fn local_user_manifest_to_remote(timestamp: DateTime) {
     let t1 = timestamp;
     let t2 = t1.add_us(1);
     let author = DeviceID::default();
@@ -1692,26 +1357,7 @@ fn local_user_manifest_to_remote(
     let speculative = false;
     let lum = {
         let mut lum = LocalUserManifest::new(author, t1, Some(id), speculative);
-        lum.local_workspaces.push(LocalUserManifestWorkspaceEntry {
-            id: VlobID::default(),
-            name: "wksp1".parse().unwrap(),
-            name_origin: CertificateBasedInfoOrigin::Placeholder,
-            role: RealmRole::Contributor,
-            role_origin: CertificateBasedInfoOrigin::Placeholder,
-        });
         lum.updated = t2;
-        if with_workspaces_legacy_initial_info {
-            lum.base
-                .workspaces_legacy_initial_info
-                .push(LegacyUserManifestWorkspaceEntry {
-                    name: "wksp1".parse().unwrap(),
-                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    key: SecretKey::from(hex!(
-                        "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                    )),
-                    encryption_revision: 1,
-                });
-        }
         lum
     };
 
@@ -1724,39 +1370,17 @@ fn local_user_manifest_to_remote(
     p_assert_eq!(um.version, lum.base.version + 1);
     p_assert_eq!(um.created, lum.base.created);
     p_assert_eq!(um.updated, lum.updated);
-    p_assert_eq!(
-        um.workspaces_legacy_initial_info,
-        lum.base.workspaces_legacy_initial_info
-    );
 }
 
 #[rstest]
-fn local_user_manifest_match_remote(
-    #[values(false, true)] with_workspaces_legacy_initial_info: bool,
-    timestamp: DateTime,
-) {
-    let um = {
-        let mut um = UserManifest {
-            author: DeviceID::default(),
-            timestamp,
-            id: VlobID::default(),
-            version: 0,
-            created: timestamp,
-            updated: timestamp,
-            workspaces_legacy_initial_info: vec![],
-        };
-        if with_workspaces_legacy_initial_info {
-            um.workspaces_legacy_initial_info
-                .push(LegacyUserManifestWorkspaceEntry {
-                    name: "wksp1".parse().unwrap(),
-                    id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    key: SecretKey::from(hex!(
-                        "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                    )),
-                    encryption_revision: 1,
-                });
-        }
-        um
+fn local_user_manifest_match_remote(timestamp: DateTime) {
+    let um = UserManifest {
+        author: DeviceID::default(),
+        timestamp,
+        id: VlobID::default(),
+        version: 0,
+        created: timestamp,
+        updated: timestamp,
     };
 
     let lum = LocalUserManifest {
@@ -1774,4 +1398,50 @@ fn local_user_manifest_match_remote(
         lum.updated = um.updated.add_us(1);
         assert!(!lum.match_remote(&um));
     }
+}
+
+#[rstest]
+fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
+    let wksp1_id = VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap();
+    let wksp2_id = VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap();
+
+    let lum = LocalUserManifest {
+        base: UserManifest {
+            author: DeviceID::default(),
+            timestamp,
+            id: VlobID::default(),
+            version: 0,
+            created: timestamp,
+            updated: timestamp,
+        },
+        need_sync: false,
+        updated: timestamp,
+        local_workspaces: vec![
+            LocalUserManifestWorkspaceEntry {
+                name: "wksp1".parse().unwrap(),
+                id: wksp1_id,
+                name_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                },
+                role: RealmRole::Contributor,
+                role_origin: CertificateBasedInfoOrigin::Certificate {
+                    timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                },
+            },
+            LocalUserManifestWorkspaceEntry {
+                name: "wksp2".parse().unwrap(),
+                id: wksp2_id,
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                role: RealmRole::Contributor,
+                role_origin: CertificateBasedInfoOrigin::Placeholder,
+            },
+        ],
+        speculative: false,
+    };
+
+    p_assert_eq!(lum.get_local_workspace_entry(VlobID::default()), None);
+    p_assert_eq!(
+        lum.get_local_workspace_entry(wksp2_id),
+        Some(&lum.local_workspaces[1])
+    );
 }

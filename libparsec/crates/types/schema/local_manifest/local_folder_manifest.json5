@@ -29,9 +29,7 @@
             // confined is to have a filename that matched the "prevent sync" pattern at the time of
             // the last change (or when a new filter was successfully applied)
             "name": "local_confinement_points",
-            "type": "Set<VlobID>",
-            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
-            "introduced_in_revision": 115
+            "type": "Set<VlobID>"
         },
         {
             // Filtered entries are entries present in the base manifest that are not exposed
@@ -39,9 +37,7 @@
             // deleted locally and hence should be restored when crafting the remote manifest
             // to upload.
             "name": "remote_confinement_points",
-            "type": "Set<VlobID>",
-            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
-            "introduced_in_revision": 115
+            "type": "Set<VlobID>"
         },
         {
             // Speculative placeholders are created when we want to access a workspace

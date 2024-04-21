@@ -15,16 +15,15 @@
             "type": "DateTime"
         },
         {
-            // While this field has been deprecated in `UserManifest`, it is still in use
-            // here. This field is used to store the name of the realm:
+            // This field is used to store the name of the realm:
             // - When the realm got created, its name is stored here until the initial
             //   `RealmNameCertificate` is uploaded (which can take time, e.g. if the
             //   client is offline).
             // - After that, to access the workspace name even when the client is offline (given
             //   `RealmNameCertificate` contains the name encrypted, but the decryption key
             //   must be fetched by `realm_get_keys_bundle` (which cannot be done while offline).
-            "name": "workspaces",
-            "type": "List<LocalUserManifestWorkspaceEntryData>"
+            "name": "local_workspaces",
+            "type": "List<LocalUserManifestWorkspaceEntry>"
         },
         {
             // Speculative placeholders are created when we want to access the
@@ -37,21 +36,8 @@
             // a data is not present in the placeholder compared with a remote because:
             // a) The data is not locally known (speculative is True).
             // b) The data is known, but has been locally removed (speculative is False).
-            //
-            // Prevented to be `required=True` by backward compatibility
             "name": "speculative",
-            "type": "Boolean",
-            // Hack to indicate this field was added in Parsec v1.15, given revision is meaningless for data
-            "introduced_in_revision": 115
-        },
-
-        // Following fields are deprecated and kept only for documentation purpose.
-
-        {
-            "name": "last_processed_message",
-            "type": "Index",
-            // Deprecated in Parsec v3.0: message commands have been removed in APIv4
-            "deprecated_in_revision": 300
+            "type": "Boolean"
         }
     ],
     "nested_types": [
@@ -77,25 +63,21 @@
                 //
                 // If the info is the realm's name, another reason is that the workspace has been
                 // shared with us before it has a realm name certificate.
-                // This is theoretically possible, though unlikely: it should only be encountered
-                // when dealing with a workspace shared with Parsec < v3 (as, at that time, realm
-                // name certificate didn't exist, and in Parsec >= v3 we ensure the workspace is
-                // bootstrapped before sharing it).
+                // This is very unlikely though given the server should ensure the workspace is
+                // fully bootstrapped (i.e. has a realm name certificate) before sharing it.
                 //
                 // In any case, this is a temporary state and the eventual outcomes are:
-                // - A realm certificate is fetched and it info the placeholder.
+                // - A realm certificate is fetched and its info overwrites the placeholder.
                 // - We are the ones uploading the initial info certificate, in which case
                 //   the placeholder will become the official info.
                 {
                     "name": "Placeholder",
                     "discriminant_value": "PLACEHOLDER"
                 }
-            ],
-            // Hack to indicate this field was added in Parsec v3.0, given revision is meaningless for data
-            "introduced_in_revision": 300
+            ]
         },
         {
-            "name": "LocalUserManifestWorkspaceEntryData",
+            "name": "LocalUserManifestWorkspaceEntry",
             "fields": [
                 {
                     "name": "id",
@@ -107,62 +89,17 @@
                 },
                 {
                     "name": "name_origin",
-                    "type": "CertificateBasedInfoOrigin",
-                    // Hack to indicate this field was added in Parsec v3.0, given revision is meaningless for data
-                    // If this field is missing, it defaults to `PLACEHOLDER`.
-                    "introduced_in_revision": 300
+                    "type": "CertificateBasedInfoOrigin"
                 },
                 {
                     "name": "role",
-                    // This field should be mandatory, however it must be optional for backward compatibility.
-                    // In Parsec < v3.0, a `None` value means the workspace was no longer shared with us.
-                    // Hence the entry should be ignored during deserialization if this field is `None`.
-                    "type": "RequiredOption<RealmRole>"
+                    // Note `None` is not allowed, as the entry will simply be removed if the
+                    // workspace is no longer shared with us.
+                    "type": "RealmRole"
                 },
                 {
                     "name": "role_origin",
-                    "type": "CertificateBasedInfoOrigin",
-                    // Hack to indicate this field was added in Parsec v3.0, given revision is meaningless for data
-                    // If this field is missing, it defaults to `PLACEHOLDER`.
-                    "introduced_in_revision": 300
-                },
-
-                // Following fields are deprecated and kept only for documentation purpose.
-
-                {
-                    "name": "key",
-                    "type": "SecretKey",
-                    // Deprecated in Parsec v3.0: in APIv4 keys are accessed by `realm_get_keys_bundle` command.
-                    // Regarding backward compatibility, legacy key is only important if it
-                    // has been used to upload data, which is supposed to occured only
-                    // after a minimal sync on the realm. And at this point the user manifest
-                    // has been synced with the new workspace entry containing this key.
-                    // Hence we only need to fetch the legacy key from the user manifest.
-                    "deprecated_in_revision": 300
-                },
-                {
-                    "name": "encryption_revision",
-                    "type": "Index",
-                    // Deprecated in Parsec v3.0: APIv4 has replaced reencryption by key rotation
-                    "deprecated_in_revision": 300
-                },
-                {
-                    "name": "encrypted_on",
-                    "type": "DateTime",
-                    // Deprecated in Parsec v3.0: APIv4 has replaced reencryption by key rotation
-                    "deprecated_in_revision": 300
-                },
-                {
-                    "name": "role_cache_timestamp",
-                    "type": "DateTime",
-                    // Deprecated in Parsec v3.0: in APIv4 client greedily fetch certificates
-                    "deprecated_in_revision": 300
-                },
-                {
-                    "name": "role_cache_value",
-                    "type": "RequiredOption<RealmRole>",
-                    // Deprecated in Parsec v3.0: in APIv4 client greedily fetch certificates
-                    "deprecated_in_revision": 300
+                    "type": "CertificateBasedInfoOrigin"
                 }
             ]
         }
