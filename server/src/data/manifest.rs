@@ -515,7 +515,6 @@ impl UserManifest {
             version,
             created: created.0,
             updated: updated.0,
-            workspaces_legacy_initial_info: vec![],
         }))
     }
 

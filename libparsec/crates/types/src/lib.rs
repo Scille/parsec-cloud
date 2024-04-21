@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// Currently only used when generating the mocked version of the time provider
+#[cfg(feature = "test-mock-time")]
 #[macro_use]
 extern crate lazy_static;
 

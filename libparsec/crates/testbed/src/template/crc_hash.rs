@@ -291,24 +291,6 @@ impl CrcHash for SequesterVerifyKeyDer {
     }
 }
 
-impl CrcHash for LegacyUserManifestWorkspaceEntry {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"LegacyUserManifestWorkspaceEntry");
-
-        let LegacyUserManifestWorkspaceEntry {
-            id,
-            name,
-            key,
-            encryption_revision,
-        } = self;
-
-        id.crc_hash(hasher);
-        name.crc_hash(hasher);
-        key.crc_hash(hasher);
-        encryption_revision.crc_hash(hasher);
-    }
-}
-
 impl CrcHash for LocalUserManifestWorkspaceEntry {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"LocalUserManifestWorkspaceEntry");
@@ -355,7 +337,6 @@ impl CrcHash for UserManifest {
             version,
             created,
             updated,
-            workspaces_legacy_initial_info,
         } = self;
 
         author.crc_hash(hasher);
@@ -364,7 +345,6 @@ impl CrcHash for UserManifest {
         version.crc_hash(hasher);
         created.crc_hash(hasher);
         updated.crc_hash(hasher);
-        workspaces_legacy_initial_info.crc_hash(hasher);
     }
 }
 

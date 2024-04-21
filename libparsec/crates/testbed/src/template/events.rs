@@ -2054,7 +2054,6 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
                 version,
                 created: timestamp,
                 updated: timestamp,
-                workspaces_legacy_initial_info: vec![],
             }),
             cache: Arc::default(),
         }

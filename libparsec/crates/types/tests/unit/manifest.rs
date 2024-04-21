@@ -8,7 +8,7 @@ use libparsec_tests_lite::prelude::*;
 use crate::{
     fixtures::{alice, Device},
     BlockAccess, BlockID, Blocksize, ChildManifest, DataError, DateTime, DeviceID, FileManifest,
-    FolderManifest, HashDigest, LegacyUserManifestWorkspaceEntry, UserManifest, VlobID,
+    FolderManifest, HashDigest, UserManifest, VlobID,
 };
 
 #[rstest]
@@ -575,115 +575,6 @@ fn serde_folder_manifest(alice: &Device) {
 }
 
 #[rstest]
-fn serde_user_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "user_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   last_processed_message: 3
-    //   workspaces: [
-    //     {
-    //       name: "wksp1"
-    //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //       encrypted_on: ext(1, 1638618643.208821)
-    //       encryption_revision: 2
-    //       key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-    //       role: "OWNER"
-    //       role_cached_on: ext(1, 1638618643.208821)
-    //     }
-    //     {
-    //       name: "wksp2"
-    //       id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-    //       encrypted_on: ext(1, 1638618643.208821)
-    //       encryption_revision: 1
-    //       key: hex!("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
-    //       role: None
-    //       role_cached_on: ext(1, 1638618643.208821)
-    //     }
-    //   ]
-    let data = hex!(
-        "f4b0c4cdd53b423399100942eb063f47f802071291be37b2a8badd60f0d0065893f3af"
-        "42cc649e62d2e907e96e55df4b7fe27fc5460def6b457c85e350a9727bf4b69b181e7c"
-        "29aa3a8244d50b6d6f872e325fd2ceb7466c66e5e9a7fffca8a5b4c00302c398ef2f1b"
-        "5ee399de4b3b0cb867746df3d678804765de87f2fb1eb0d10547c6634e2a30808efee8"
-        "4dfd1232cd0799d441f8731689c86404088c9e8b8347b36aa7d3857a5f559f9ecf5a69"
-        "38542ba8650cdc0831196ec8bcde7eb533175007637379ce8404e5d0aea5ab33727f99"
-        "f74cb1ac4973703a978260e9920107c543c95f1115f0ade65e4ab15cf85426d1f3d83b"
-        "b5a1d33fff60c4e99c8a702cebccbae4b6e9aad8e820863310d0d93997e0915ea33520"
-        "0b35867ee09e9bc0243779973f84d6c3aa08cd8ffde260bca89e90b5ece3f98af0bd4d"
-        "f3812d7a31f044773741217084fbf4b7bcd0a16dfb47509c19a683840c56e81ed78cbe"
-        "d7b44298b068dae5e0ebb9f9fb4815bd2ffee6da432c3cdc2750d5c27afd2a24614666"
-        "1115e941b2dd42ede908d766af56d2a766a08b3b517a297a9cca1a3d80e7d9454abbe2"
-        "8bf91e8012ebcfe367f290d46c22a8"
-    );
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let key = SecretKey::from(hex!(
-        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
-    ));
-
-    let expected = UserManifest {
-        author: alice.device_id.to_owned(),
-        timestamp: now,
-        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-        version: 42,
-        created: now,
-        updated: now,
-        workspaces_legacy_initial_info: vec![
-            LegacyUserManifestWorkspaceEntry {
-                name: "wksp1".parse().unwrap(),
-                id: VlobID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                key: SecretKey::from(hex!(
-                    "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                )),
-                encryption_revision: 2,
-            },
-            LegacyUserManifestWorkspaceEntry {
-                name: "wksp2".parse().unwrap(),
-                id: VlobID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-                key: SecretKey::from(hex!(
-                    "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
-                )),
-                encryption_revision: 1,
-            },
-        ],
-        // User manifest's `last_processed_message` field is deprecated (and hence ignored)
-    };
-
-    let manifest = UserManifest::decrypt_verify_and_load(
-        &data,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        now,
-        None,
-        None,
-    )
-    .unwrap();
-
-    p_assert_eq!(manifest, expected);
-
-    // Also test serialization round trip
-    let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
-    // Note we cannot just compare with `data` due to signature and keys order
-    let manifest2 = UserManifest::decrypt_verify_and_load(
-        &data2,
-        &key,
-        &alice.verify_key(),
-        &alice.device_id,
-        now,
-        None,
-        None,
-    )
-    .unwrap();
-    p_assert_eq!(manifest2, expected);
-}
-
-#[rstest]
 fn serde_user_manifest(alice: &Device) {
     // Generated from Rust implementation (Parsec v3.0.0-alpha)
     // Content:
@@ -715,7 +606,6 @@ fn serde_user_manifest(alice: &Device) {
         version: 42,
         created: now,
         updated: now,
-        workspaces_legacy_initial_info: vec![],
     };
 
     let manifest = UserManifest::decrypt_verify_and_load(

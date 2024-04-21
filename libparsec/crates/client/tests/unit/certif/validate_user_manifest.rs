@@ -144,7 +144,6 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
         version: 0,
         created: timestamp,
         updated: timestamp,
-        workspaces_legacy_initial_info: vec![],
     };
 
     let err = ops
