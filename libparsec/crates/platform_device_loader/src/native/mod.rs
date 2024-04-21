@@ -110,13 +110,8 @@ fn load_available_device(
     let content = std::fs::read(&key_file_path)
         .map_err(|e| LoadAvailableDeviceFileError::InvalidPath(e.into()))?;
 
-    // Regular load
-    let device_file = DeviceFile::load(&content)
-        .or_else(|_| {
-            // In case of failure, try to use the legacy device format
-            load_legacy_device_file_from_content(&key_file_path, &content)
-        })
-        .map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
+    let device_file =
+        DeviceFile::load(&content).map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
 
     let (ty, organization_id, device_id, human_handle, device_label, slug) = match device_file {
         DeviceFile::Keyring(device) => (
@@ -164,67 +159,6 @@ fn load_available_device(
     })
 }
 
-fn load_legacy_device_file_from_content(
-    key_file: &Path,
-    content: &[u8],
-) -> Result<DeviceFile, LoadAvailableDeviceFileError> {
-    let legacy_device = LegacyDeviceFilePassword::load(content)
-        .map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
-
-    // Legacy device slug is their stem, ex: `9d84fbd57a#Org#Zack@PC1.keys`
-    let (slug, organization_id, device_id) = key_file
-        .file_stem()
-        .and_then(|x| x.to_str())
-        .and_then(|x| {
-            let (organization_id, device_id) = LocalDevice::load_slug(x).ok()?;
-            Some((x.to_owned(), organization_id, device_id))
-        })
-        .ok_or_else(|| {
-            LoadAvailableDeviceFileError::InvalidPath(anyhow::anyhow!(
-                "Cannot extract device slug from file name"
-            ))
-        })?;
-
-    // `device_label` & `human_handle` fields has been introduced in Parsec v1.14, hence
-    // they may not be present.
-    //
-    // If that's the case, we are in an exotic case (very old device), so we don't
-    // bother much an use the redacted system to obtain device label & human handle.
-    // Of course redacted certificate has nothing to do with this, but it's just
-    // convenient and "good enough" to go this way ;-)
-    //
-    // Note we no longer save in this legacy format: if save is required (e.g. the user
-    // is changing password) it will be done with the newer format. Hence there is no
-    // risk of serializing the human handle email which uses the redacted domain name
-    // (which is reserved and would cause error on deserialization !)
-    let human_handle = match legacy_device.human_handle {
-        Some(human_handle) => human_handle,
-        None => HumanHandle::new_redacted(device_id.user_id()),
-    };
-    let device_label = match legacy_device.device_label {
-        Some(device_label) => device_label,
-        None => DeviceLabel::new_redacted(device_id.device_name()),
-    };
-
-    Ok(DeviceFile::Password(DeviceFilePassword {
-        // TODO: Invalid values: legacy format used Argon2i with "interactive"
-        //       limits. This compat stuff is no longer needed and should be
-        //       entirely removed.
-        algorithm: DeviceFilePasswordAlgorithm::Argon2id {
-            salt: legacy_device.salt,
-            opslimit: ARGON2ID_DEFAULT_OPSLIMIT.into(),
-            memlimit_kb: ARGON2ID_DEFAULT_MEMLIMIT_KB.into(),
-            parallelism: ARGON2ID_DEFAULT_PARALLELISM.into(),
-        },
-        ciphertext: legacy_device.ciphertext,
-        human_handle,
-        device_label,
-        device_id,
-        organization_id,
-        slug,
-    }))
-}
-
 /*
  * Save & load
  */
@@ -270,13 +204,8 @@ pub async fn load_device(
             let content =
                 std::fs::read(key_file).map_err(|e| LoadDeviceError::InvalidPath(e.into()))?;
 
-            // Regular load
-            let device_file = DeviceFile::load(&content)
-                .or_else(|_| {
-                    // In case of failure, try to use the legacy device format
-                    load_legacy_device_file_from_content(key_file, &content)
-                })
-                .map_err(|_| LoadDeviceError::InvalidData)?;
+            let device_file =
+                DeviceFile::load(&content).map_err(|_| LoadDeviceError::InvalidData)?;
 
             match device_file {
                 DeviceFile::Password(x) => {
