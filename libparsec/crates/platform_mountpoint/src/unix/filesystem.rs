@@ -404,7 +404,9 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceCreateFolderError::EntryExists { .. } => {
                         reply.manual().error(libc::EEXIST)
                     }
-                    WorkspaceCreateFolderError::ParentIsFile => reply.manual().error(libc::ENOENT),
+                    WorkspaceCreateFolderError::ParentNotAFolder => {
+                        reply.manual().error(libc::ENOENT)
+                    }
                     WorkspaceCreateFolderError::ParentNotFound => {
                         reply.manual().error(libc::ENOENT)
                     }
@@ -1272,7 +1274,7 @@ impl fuser::Filesystem for Filesystem {
 
             let mut offset = offset as usize;
             loop {
-                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
+                let (child_name, child_stat) = match folder_reader.stat_child(&ops, offset).await {
                     Ok(Some(stat)) => stat,
                     Ok(None) => break,
                     Err(err) => {
@@ -1365,7 +1367,7 @@ impl fuser::Filesystem for Filesystem {
 
             let mut offset = offset as usize;
             loop {
-                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
+                let (child_name, child_stat) = match folder_reader.stat_child(&ops, offset).await {
                     Ok(Some(stat)) => stat,
                     Ok(None) => break,
                     Err(err) => {

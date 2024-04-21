@@ -8,10 +8,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{
-            FolderishManifestAndUpdater, GetFolderishEntryError, UpdateFolderManifestError,
-            UpdateWorkspaceManifestError,
-        },
+        store::{ForUpdateFolderError, UpdateFolderManifestError},
         WorkspaceOps,
     },
     EventWorkspaceOpsOutboundSyncNeeded,
@@ -87,114 +84,62 @@ pub(crate) async fn rename_entry(
         return Ok(());
     }
 
-    let resolution = ops
+    let (mut parent_manifest, _, parent_updater) = ops
         .store
-        .resolve_path_for_update_folderish_manifest(&parent_path)
+        .resolve_path_for_update_folder_manifest(&parent_path)
         .await
         .map_err(|err| match err {
-            GetFolderishEntryError::Offline => WorkspaceRenameEntryError::Offline,
-            GetFolderishEntryError::Stopped => WorkspaceRenameEntryError::Stopped,
-            GetFolderishEntryError::EntryNotFound => WorkspaceRenameEntryError::EntryNotFound,
-            GetFolderishEntryError::EntryIsFile => WorkspaceRenameEntryError::EntryNotFound,
-            GetFolderishEntryError::NoRealmAccess => WorkspaceRenameEntryError::NoRealmAccess,
-            GetFolderishEntryError::InvalidKeysBundle(err) => {
+            ForUpdateFolderError::Offline => WorkspaceRenameEntryError::Offline,
+            ForUpdateFolderError::Stopped => WorkspaceRenameEntryError::Stopped,
+            ForUpdateFolderError::EntryNotFound => WorkspaceRenameEntryError::EntryNotFound,
+            ForUpdateFolderError::EntryNotAFolder => WorkspaceRenameEntryError::EntryNotFound,
+            ForUpdateFolderError::NoRealmAccess => WorkspaceRenameEntryError::NoRealmAccess,
+            ForUpdateFolderError::InvalidKeysBundle(err) => {
                 WorkspaceRenameEntryError::InvalidKeysBundle(err)
             }
-            GetFolderishEntryError::InvalidCertificate(err) => {
+            ForUpdateFolderError::InvalidCertificate(err) => {
                 WorkspaceRenameEntryError::InvalidCertificate(err)
             }
-            GetFolderishEntryError::InvalidManifest(err) => {
+            ForUpdateFolderError::InvalidManifest(err) => {
                 WorkspaceRenameEntryError::InvalidManifest(err)
             }
-            GetFolderishEntryError::Internal(err) => err.context("cannot resolve path").into(),
+            ForUpdateFolderError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
-    let parent_id = match resolution {
-        FolderishManifestAndUpdater::Folder {
-            manifest: mut parent,
-            updater,
-            ..
-        } => {
-            let mut_parent = Arc::make_mut(&mut parent);
+    let mut_parent_manifest = Arc::make_mut(&mut parent_manifest);
 
-            let child_id = match mut_parent.children.remove(&old_name) {
-                None => return Err(WorkspaceRenameEntryError::EntryNotFound),
-                Some(child_id) => child_id,
-            };
-
-            match mut_parent.children.entry(new_name) {
-                std::collections::hash_map::Entry::Occupied(mut entry) => {
-                    if !overwrite {
-                        return Err(WorkspaceRenameEntryError::DestinationExists {
-                            entry_id: *entry.get(),
-                        });
-                    }
-                    entry.insert(child_id);
-                }
-                std::collections::hash_map::Entry::Vacant(entry) => {
-                    entry.insert(child_id);
-                }
-            }
-
-            mut_parent.updated = ops.device.time_provider.now();
-            mut_parent.need_sync = true;
-
-            let parent_id = parent.base.id;
-            updater
-                .update_folder_manifest(parent, None)
-                .await
-                .map_err(|err| match err {
-                    UpdateFolderManifestError::Stopped => WorkspaceRenameEntryError::Stopped,
-                    UpdateFolderManifestError::Internal(err) => {
-                        err.context("cannot update manifest").into()
-                    }
-                })?;
-
-            parent_id
-        }
-
-        FolderishManifestAndUpdater::Root {
-            manifest: mut parent,
-            updater,
-        } => {
-            let mut_parent = Arc::make_mut(&mut parent);
-
-            let child_id = match mut_parent.children.remove(&old_name) {
-                None => return Err(WorkspaceRenameEntryError::EntryNotFound),
-                Some(child_id) => child_id,
-            };
-
-            match mut_parent.children.entry(new_name) {
-                std::collections::hash_map::Entry::Occupied(mut entry) => {
-                    if !overwrite {
-                        return Err(WorkspaceRenameEntryError::DestinationExists {
-                            entry_id: *entry.get(),
-                        });
-                    }
-                    entry.insert(child_id);
-                }
-                std::collections::hash_map::Entry::Vacant(entry) => {
-                    entry.insert(child_id);
-                }
-            }
-
-            mut_parent.updated = ops.device.time_provider.now();
-            mut_parent.need_sync = true;
-
-            let parent_id = parent.base.id;
-            updater
-                .update_workspace_manifest(parent, None)
-                .await
-                .map_err(|err| match err {
-                    UpdateWorkspaceManifestError::Stopped => WorkspaceRenameEntryError::Stopped,
-                    UpdateWorkspaceManifestError::Internal(err) => {
-                        err.context("cannot update manifest").into()
-                    }
-                })?;
-
-            parent_id
-        }
+    let child_id = match mut_parent_manifest.children.remove(&old_name) {
+        None => return Err(WorkspaceRenameEntryError::EntryNotFound),
+        Some(child_id) => child_id,
     };
+
+    match mut_parent_manifest.children.entry(new_name) {
+        std::collections::hash_map::Entry::Occupied(mut entry) => {
+            if !overwrite {
+                return Err(WorkspaceRenameEntryError::DestinationExists {
+                    entry_id: *entry.get(),
+                });
+            }
+            entry.insert(child_id);
+        }
+        std::collections::hash_map::Entry::Vacant(entry) => {
+            entry.insert(child_id);
+        }
+    }
+
+    mut_parent_manifest.updated = ops.device.time_provider.now();
+    mut_parent_manifest.need_sync = true;
+
+    let parent_id = parent_manifest.base.id;
+    parent_updater
+        .update_folder_manifest(parent_manifest, None)
+        .await
+        .map_err(|err| match err {
+            UpdateFolderManifestError::Stopped => WorkspaceRenameEntryError::Stopped,
+            UpdateFolderManifestError::Internal(err) => {
+                err.context("cannot update manifest").into()
+            }
+        })?;
 
     let event = EventWorkspaceOpsOutboundSyncNeeded {
         realm_id: ops.realm_id,

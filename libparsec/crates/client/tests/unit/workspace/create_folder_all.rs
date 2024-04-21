@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -199,10 +201,76 @@ async fn file_in_the_path(env: &TestbedEnv) {
         .create_folder_all("/bar.txt/new_folder".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceCreateFolderError::ParentIsFile);
+    p_assert_matches!(err, WorkspaceCreateFolderError::ParentNotAFolder);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn invalid_child_in_path(
+    #[values("other_entry", "self_referencing")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let patched_parent_id = match kind {
+        "other_entry" => wksp1_bar_txt_id,
+        "self_referencing" => wksp1_foo_id,
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
+    let env = &env.customize(|builder| {
+        // Overwrite `/foo`so that it is now an invalid child
+        builder
+            .workspace_data_storage_local_folder_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                None,
+            )
+            .customize(|e| {
+                let manifest = Arc::make_mut(&mut e.local_manifest);
+                manifest.parent = patched_parent_id;
+            });
+    });
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let mut spy = ops.event_bus.spy.start_expecting();
+
+    // Invalid entry is just overwritten
+    let new_folder_id = ops
+        .create_folder_all("/foo/new_folder".parse().unwrap())
+        .await
+        .unwrap();
+    // First `/foo` has been overwritten...
+    let new_foo_id = {
+        let mut new_foo_id = None;
+        spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+            p_assert_eq!(e.realm_id, wksp1_id);
+            new_foo_id = Some(e.entry_id)
+        });
+        new_foo_id.unwrap()
+    };
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, wksp1_id);
+    });
+    // ...then `/foo/new_folder` has been created
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, new_folder_id);
+    });
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, new_foo_id);
+    });
+
+    assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
+    assert_ls!(ops, "/foo", ["new_folder"]).await;
+    assert_ls!(ops, "/foo/new_folder", []).await;
 }
 
 // TODO: test entry not present in local (with and without server available)

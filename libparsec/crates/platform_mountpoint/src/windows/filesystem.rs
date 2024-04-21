@@ -262,7 +262,9 @@ impl FileSystemContext for ParsecFileSystemContext {
                         WorkspaceCreateFolderError::Offline => STATUS_HOST_UNREACHABLE,
                         WorkspaceCreateFolderError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceCreateFolderError::ParentNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                        WorkspaceCreateFolderError::ParentIsFile => STATUS_OBJECT_NAME_NOT_FOUND,
+                        WorkspaceCreateFolderError::ParentNotAFolder => {
+                            STATUS_OBJECT_NAME_NOT_FOUND
+                        }
                         WorkspaceCreateFolderError::EntryExists { .. } => {
                             STATUS_OBJECT_NAME_COLLISION
                         }

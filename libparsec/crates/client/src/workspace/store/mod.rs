@@ -1,0 +1,556 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+mod cache;
+mod file_updater;
+mod folder_updater;
+mod manifest_access;
+mod per_manifest_update_lock;
+mod reparent_updater;
+mod resolve_path;
+
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
+
+use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_storage::workspace::WorkspaceStorage;
+use libparsec_types::prelude::*;
+
+use crate::{
+    certif::CertifOps, InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
+    InvalidManifestError,
+};
+
+use cache::CurrentViewCache;
+pub(crate) use file_updater::{FileUpdater, ForUpdateFileError};
+pub(crate) use folder_updater::{FolderUpdater, ForUpdateFolderError};
+pub(crate) use manifest_access::GetManifestError;
+pub(crate) use reparent_updater::{ForUpdateReparentingError, ReparentingUpdater};
+pub(crate) use resolve_path::{PathConfinementPoint, ResolvePathError};
+
+use super::fetch::FetchRemoteBlockError;
+
+// #[derive(Debug, thiserror::Error)]
+// pub(super) enum ReadChunkOrBlockLocalOnlyError {
+//     #[error("Component has stopped")]
+//     Stopped,
+//     #[error("Chunk doesn't exist")]
+//     ChunkNotFound,
+//     #[error(transparent)]
+//     Internal(#[from] anyhow::Error),
+// }
+
+// #[derive(Debug, thiserror::Error)]
+// pub(super) enum ReadChunkOrBlockError {
+//     #[error("Cannot reach the server")]
+//     Offline,
+//     #[error("Component has stopped")]
+//     Stopped,
+//     #[error("Chunk doesn't exist")]
+//     ChunkNotFound,
+//     #[error("Not allowed to access this realm")]
+//     NoRealmAccess,
+//     #[error(transparent)]
+//     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+//     #[error(transparent)]
+//     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+//     #[error(transparent)]
+//     InvalidCertificate(#[from] Box<InvalidCertificateError>),
+//     #[error(transparent)]
+//     Internal(#[from] anyhow::Error),
+// }
+
+#[derive(Debug, thiserror::Error)]
+pub enum WorkspaceStoreOperationError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub(super) type GetNeedSyncEntriesError = WorkspaceStoreOperationError;
+pub(super) type GetRealmCheckpointError = WorkspaceStoreOperationError;
+pub(super) type UpdateRealmCheckpointError = WorkspaceStoreOperationError;
+pub(super) type UpdateFolderManifestError = WorkspaceStoreOperationError;
+pub(super) type UpdateFileManifestAndContinueError = WorkspaceStoreOperationError;
+pub(super) type PromoteLocalOnlyChunkToUploadedBlockError = WorkspaceStoreOperationError;
+pub(super) type GetNotUploadedChunkError = WorkspaceStoreOperationError;
+
+#[derive(Debug, thiserror::Error)]
+pub(super) enum ReadChunkOrBlockLocalOnlyError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Chunk doesn't exist")]
+    ChunkNotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(super) enum ReadChunkOrBlockError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Chunk doesn't exist")]
+    ChunkNotFound,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error(transparent)]
+    InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(super) enum EnsureManifestExistsWithParentError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/*
+ * WorkspaceStore & friends
+ */
+
+#[derive(Debug)]
+pub(super) struct WorkspaceStore {
+    realm_id: VlobID,
+    device: Arc<LocalDevice>,
+    cmds: Arc<AuthenticatedCmds>,
+    certificates_ops: Arc<CertifOps>,
+
+    /// Note cache also contains the update locks.
+    current_view_cache: Mutex<CurrentViewCache>,
+    /// Given accessing `storage` requires exclusive access, it is better to have it
+    /// under its own lock so that all cache hit operations can occur concurrently.
+    storage: AsyncMutex<Option<WorkspaceStorage>>,
+}
+
+impl std::panic::UnwindSafe for WorkspaceStore {}
+
+impl WorkspaceStore {
+    pub async fn start(
+        data_base_dir: &Path,
+        device: Arc<LocalDevice>,
+        cmds: Arc<AuthenticatedCmds>,
+        certificates_ops: Arc<CertifOps>,
+        cache_size: u64,
+        realm_id: VlobID,
+    ) -> Result<Self, anyhow::Error> {
+        // 1) Open the database
+
+        let mut storage =
+            WorkspaceStorage::start(data_base_dir, &device, realm_id, cache_size).await?;
+
+        // 2) Load the workspace manifest (as it must always be synchronously available)
+
+        let maybe_root_manifest = storage.get_manifest(realm_id).await?;
+        let root_manifest = match maybe_root_manifest {
+            Some(encrypted) => {
+                // TODO: if we cannot load this user manifest, should we fallback on
+                //       a new speculative manifest ?
+                LocalFolderManifest::decrypt_and_load(&encrypted, &device.local_symkey)
+                    .context("Cannot load workspace manifest from local storage")?
+            }
+            // It is possible to lack the workspace manifest in local if our
+            // device hasn't tried to access it yet (and we are not the device
+            // that created this workspace, in which case the workspace local db
+            // is initialized with a non-speculative local manifest placeholder).
+            // In such case it is easy to fall back on an empty manifest
+            // which is a good enough approximation of the very first version
+            // of the manifest (field `created` is invalid, but it will be
+            // corrected by the merge during sync).
+            None => {
+                let timestamp = device.now();
+                LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, true)
+            }
+        };
+
+        // 3) All set !
+
+        Ok(Self {
+            realm_id,
+            device,
+            cmds,
+            certificates_ops,
+            current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest))),
+            storage: AsyncMutex::new(Some(storage)),
+        })
+    }
+
+    pub async fn stop(&self) -> anyhow::Result<()> {
+        let maybe_storage = self.storage.lock().await.take();
+        if let Some(storage) = maybe_storage {
+            storage.stop().await?;
+        }
+        Ok(())
+    }
+
+    pub async fn resolve_path(
+        &self,
+        path: &FsPath,
+    ) -> Result<(ArcLocalChildManifest, PathConfinementPoint), ResolvePathError> {
+        resolve_path::resolve_path(self, path).await
+    }
+
+    pub fn get_root_manifest(&self) -> Arc<LocalFolderManifest> {
+        self.current_view_cache
+            .lock()
+            .expect("Mutex is poisoned")
+            .root_manifest
+            .clone()
+    }
+
+    pub async fn get_manifest(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<ArcLocalChildManifest, GetManifestError> {
+        manifest_access::get_manifest(self, entry_id).await
+    }
+
+    /// Don't blindly trust folder manifest's `children` field !
+    ///
+    /// It may contain invalid data (i.e. referencing a non existing child ID, or a child
+    /// which `parent` field not matching).
+    ///
+    /// Hence this method that ensure the pontential child exists and *is* a child of the parent.
+    pub async fn ensure_manifest_exists_with_parent(
+        &self,
+        child_id: VlobID,
+        expected_parent_id: VlobID,
+    ) -> Result<bool, EnsureManifestExistsWithParentError> {
+        let child_manifest = match self.get_manifest(child_id).await {
+            Ok(manifest) => manifest,
+            Err(err) => {
+                return match err {
+                    GetManifestError::EntryNotFound => Ok(false),
+                    GetManifestError::Offline => Err(EnsureManifestExistsWithParentError::Offline),
+                    GetManifestError::Stopped => Err(EnsureManifestExistsWithParentError::Stopped),
+                    GetManifestError::NoRealmAccess => {
+                        Err(EnsureManifestExistsWithParentError::NoRealmAccess)
+                    }
+                    GetManifestError::InvalidKeysBundle(err) => {
+                        Err(EnsureManifestExistsWithParentError::InvalidKeysBundle(err))
+                    }
+                    GetManifestError::InvalidCertificate(err) => {
+                        Err(EnsureManifestExistsWithParentError::InvalidCertificate(err))
+                    }
+                    GetManifestError::InvalidManifest(err) => {
+                        Err(EnsureManifestExistsWithParentError::InvalidManifest(err))
+                    }
+                    GetManifestError::Internal(err) => Err(err.into()),
+                }
+            }
+        };
+
+        Ok(child_manifest.parent() == expected_parent_id)
+    }
+
+    pub async fn for_update_folder(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<(FolderUpdater<'_>, Arc<LocalFolderManifest>), ForUpdateFolderError> {
+        folder_updater::for_update_folder(self, entry_id).await
+    }
+
+    /// Resolve the given path, then lock the entry for update.
+    /// Notes:
+    /// - Server access may occur to fetch missing manifest for the path resolution or
+    ///   to get the entry manifest.
+    /// - If the entry is already locked for update, this method will wait until it
+    ///   can take the lock.
+    pub async fn resolve_path_for_update_folder_manifest<'a>(
+        &'a self,
+        path: &FsPath,
+    ) -> Result<
+        (
+            Arc<LocalFolderManifest>,
+            PathConfinementPoint,
+            FolderUpdater<'a>,
+        ),
+        ForUpdateFolderError,
+    > {
+        folder_updater::resolve_path_for_update_folder_manifest(self, path).await
+    }
+
+    pub async fn resolve_path_for_update_reparenting<'a>(
+        &'a self,
+        src_parent_path: &FsPath,
+        src_child_name: &EntryName,
+        dst_parent_path: &FsPath,
+    ) -> Result<ReparentingUpdater<'a>, ForUpdateReparentingError> {
+        reparent_updater::resolve_path_for_update_reparenting(
+            self,
+            src_parent_path,
+            src_child_name,
+            dst_parent_path,
+        )
+        .await
+    }
+
+    pub async fn for_update_file(
+        &self,
+        entry_id: VlobID,
+        wait: bool,
+    ) -> Result<(FileUpdater, Arc<LocalFileManifest>), ForUpdateFileError> {
+        file_updater::for_update_file(self, entry_id, wait).await
+    }
+
+    /// Resolve the given path, then lock the entry for update.
+    /// Notes:
+    /// - Server access may occur to fetch missing manifest for the path resolution or
+    ///   to get the entry manifest.
+    /// - If the entry is already locked for update, this method will wait until it
+    ///   can take the lock.
+    pub async fn resolve_path_for_update_file_manifest(
+        &self,
+        path: &FsPath,
+    ) -> Result<(Arc<LocalFileManifest>, PathConfinementPoint, FileUpdater), ForUpdateFileError>
+    {
+        file_updater::resolve_path_for_update_file_manifest(self, path).await
+    }
+
+    pub async fn is_child_entry_locked(&self, entry_id: VlobID) -> bool {
+        let cache_guard = self.current_view_cache.lock().expect("Mutex is poisoned");
+        cache_guard.lock_update_manifests.is_taken(entry_id)
+    }
+
+    pub async fn get_chunk_or_block_local_only(
+        &self,
+        chunk: &Chunk,
+    ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
+        {
+            let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
+            let found = cache.chunks.get(&chunk.id);
+            if let Some(data) = found {
+                return Ok(data);
+            }
+        }
+
+        // Cache miss ! Try to fetch from the local storage
+
+        let mut maybe_storage = self.storage.lock().await;
+        let storage = match &mut *maybe_storage {
+            None => return Err(ReadChunkOrBlockLocalOnlyError::Stopped),
+            Some(storage) => storage,
+        };
+
+        let mut maybe_encrypted = storage.get_chunk(chunk.id).await?;
+
+        if maybe_encrypted.is_none() {
+            maybe_encrypted = storage
+                .get_block(chunk.id.into(), self.device.now())
+                .await?;
+        }
+
+        if let Some(encrypted) = maybe_encrypted {
+            let data: Bytes = self
+                .device
+                .local_symkey
+                .decrypt(&encrypted)
+                .map_err(|err| anyhow::anyhow!("Cannot decrypt block from local storage: {}", err))?
+                .into();
+
+            // Don't forget to update the cache !
+
+            let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
+            cache.chunks.push(chunk.id, data.clone());
+
+            return Ok(data);
+        }
+
+        Err(ReadChunkOrBlockLocalOnlyError::ChunkNotFound)
+    }
+
+    pub async fn get_chunk_or_block(
+        &self,
+        chunk: &Chunk,
+        remote_manifest: &FileManifest,
+    ) -> Result<Bytes, ReadChunkOrBlockError> {
+        let outcome = self.get_chunk_or_block_local_only(chunk).await;
+        match outcome {
+            Ok(chunk_data) => return Ok(chunk_data),
+            Err(err) => match err {
+                ReadChunkOrBlockLocalOnlyError::ChunkNotFound => (),
+                ReadChunkOrBlockLocalOnlyError::Stopped => {
+                    return Err(ReadChunkOrBlockError::Stopped)
+                }
+                ReadChunkOrBlockLocalOnlyError::Internal(err) => return Err(err.into()),
+            },
+        }
+
+        // Chunk not in local, time to ask the server
+
+        let access = match &chunk.access {
+            Some(access) => access,
+            None => return Err(ReadChunkOrBlockError::ChunkNotFound),
+        };
+
+        let data = super::fetch::fetch_block(
+            &self.cmds,
+            &self.certificates_ops,
+            self.realm_id,
+            remote_manifest,
+            access,
+        )
+        .await
+        .map_err(|err| match err {
+            FetchRemoteBlockError::Stopped => ReadChunkOrBlockError::Stopped,
+            FetchRemoteBlockError::Offline | FetchRemoteBlockError::StoreUnavailable => {
+                ReadChunkOrBlockError::Offline
+            }
+            FetchRemoteBlockError::BlockNotFound => ReadChunkOrBlockError::ChunkNotFound,
+            FetchRemoteBlockError::NoRealmAccess => ReadChunkOrBlockError::NoRealmAccess,
+            FetchRemoteBlockError::InvalidBlockAccess(err) => {
+                ReadChunkOrBlockError::InvalidBlockAccess(err)
+            }
+            FetchRemoteBlockError::InvalidKeysBundle(err) => {
+                ReadChunkOrBlockError::InvalidKeysBundle(err)
+            }
+            FetchRemoteBlockError::InvalidCertificate(err) => {
+                ReadChunkOrBlockError::InvalidCertificate(err)
+            }
+            FetchRemoteBlockError::Internal(err) => {
+                err.context("cannot fetch block from server").into()
+            }
+        })?;
+
+        // Should both store the data in local storage...
+
+        let mut maybe_storage = self.storage.lock().await;
+        let storage = match &mut *maybe_storage {
+            None => return Err(ReadChunkOrBlockError::Stopped),
+            Some(storage) => storage,
+        };
+        let encrypted = self.device.local_symkey.encrypt(&data);
+        storage
+            .set_block(access.id, &encrypted, self.device.now())
+            .await?;
+
+        // ...and update the cache !
+
+        let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
+        cache.chunks.push(chunk.id, data.clone());
+
+        Ok(data)
+    }
+
+    pub async fn get_not_uploaded_chunk(
+        &self,
+        chunk_id: ChunkID,
+    ) -> Result<Option<Bytes>, GetNotUploadedChunkError> {
+        // Don't use the in-memory cache given it doesn't tell if the data is from and
+        // uploaded block or not.
+        let mut maybe_storage = self.storage.lock().await;
+        let storage = match &mut *maybe_storage {
+            None => return Err(GetNotUploadedChunkError::Stopped),
+            Some(storage) => storage,
+        };
+
+        let maybe_encrypted = storage
+            .get_chunk(chunk_id)
+            .await
+            .map_err(GetNotUploadedChunkError::Internal)?;
+
+        match maybe_encrypted {
+            None => Ok(None),
+            Some(encrypted) => {
+                let cleartext = self
+                    .device
+                    .local_symkey
+                    .decrypt(&encrypted)
+                    .map_err(|err| {
+                        anyhow::anyhow!("Cannot decrypt block from local storage: {}", err)
+                    })?;
+
+                Ok(Some(cleartext.into()))
+            }
+        }
+    }
+
+    pub async fn promote_local_only_chunk_to_uploaded_block(
+        &self,
+        chunk_id: ChunkID,
+    ) -> Result<(), PromoteLocalOnlyChunkToUploadedBlockError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| PromoteLocalOnlyChunkToUploadedBlockError::Stopped)?;
+        storage
+            .promote_chunk_to_block(chunk_id, self.device.now())
+            .await
+            .map_err(PromoteLocalOnlyChunkToUploadedBlockError::Internal)
+    }
+
+    pub async fn get_inbound_need_sync_entries(
+        &self,
+        limit: u32,
+    ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
+        storage
+            .get_inbound_need_sync(limit)
+            .await
+            .map_err(GetNeedSyncEntriesError::Internal)
+    }
+
+    pub async fn get_outbound_need_sync_entries(
+        &self,
+        limit: u32,
+    ) -> Result<Vec<VlobID>, GetNeedSyncEntriesError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| GetNeedSyncEntriesError::Stopped)?;
+        storage
+            .get_outbound_need_sync(limit)
+            .await
+            .map_err(GetNeedSyncEntriesError::Internal)
+    }
+
+    pub async fn get_realm_checkpoint(&self) -> Result<IndexInt, GetRealmCheckpointError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| GetRealmCheckpointError::Stopped)?;
+        storage
+            .get_realm_checkpoint()
+            .await
+            .map_err(GetRealmCheckpointError::Internal)
+    }
+
+    pub async fn update_realm_checkpoint(
+        &self,
+        current_checkpoint: IndexInt,
+        changes: &[(VlobID, VersionInt)],
+    ) -> Result<(), UpdateRealmCheckpointError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or_else(|| UpdateRealmCheckpointError::Stopped)?;
+        storage
+            .update_realm_checkpoint(current_checkpoint, changes)
+            .await
+            .map_err(UpdateRealmCheckpointError::Internal)
+    }
+}

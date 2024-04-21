@@ -3,6 +3,7 @@
 // TODO: remove opened file
 // TODO: test remove non existing entry doesn't change updated or need_sync fields in parent manifest
 // TODO: test remove on existing destination doesn't change updated or need_sync fields in parent manifest if overwrite is false
+// TODO: test remove need sync entry also cleans the dirty manifest & chunks in local storage
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -20,9 +21,13 @@ async fn ok(env: &TestbedEnv) {
     ops.remove_folder("/foo/spam".parse().unwrap())
         .await
         .unwrap();
+    assert_ls!(ops, "/foo", ["egg.txt"]).await;
+
     ops.remove_file("/foo/egg.txt".parse().unwrap())
         .await
         .unwrap();
+    assert_ls!(ops, "/foo", []).await;
+
     ops.remove_entry("/foo".parse().unwrap()).await.unwrap();
     ops.remove_entry("/bar.txt".parse().unwrap()).await.unwrap();
 

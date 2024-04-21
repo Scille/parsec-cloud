@@ -1,5 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
+use libparsec_client_connection::{
+    protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
+};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -63,6 +68,78 @@ async fn create_in_child(env: &TestbedEnv) {
     });
 
     assert_ls!(ops, "/foo", ["egg.txt", "new_folder", "spam"]).await;
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn create_with_existing_invalid_child(
+    #[values("unknown_child", "child_with_different_parent", "self_reference")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    let (env, bad_id) = env.customize_with_map(|builder| {
+        let bad_id = match kind {
+            "unknown_child" => VlobID::default(),
+            "child_with_different_parent" => wksp1_id,
+            "self_reference" => wksp1_foo_id,
+            uknown => panic!("Unknown kind: {}", uknown),
+        };
+        builder
+            .workspace_data_storage_local_folder_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                None,
+            )
+            .customize(|e| {
+                let manifest = Arc::make_mut(&mut e.local_manifest);
+                manifest
+                    .children
+                    .insert("new_folder".parse().unwrap(), bad_id);
+            });
+        bad_id
+    });
+
+    // Given child ID doesn't exist, the client will look for it on the server
+    if matches!(kind, "unknown_child") {
+        let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
+        let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(wksp1_id);
+        test_register_sequence_of_send_hooks!(
+            &env.discriminant_dir,
+            move |req: authenticated_cmds::latest::vlob_read_batch::Req| {
+                p_assert_eq!(req.at, None);
+                p_assert_eq!(req.realm_id, wksp1_id);
+                p_assert_eq!(req.vlobs, [bad_id]);
+                authenticated_cmds::latest::vlob_read_batch::Rep::Ok {
+                    items: vec![],
+                    needed_common_certificate_timestamp: last_common_certificate_timestamp,
+                    needed_realm_certificate_timestamp: last_realm_certificate_timestamp,
+                }
+            }
+        );
+    }
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let mut spy = ops.event_bus.spy.start_expecting();
+
+    let new_folder_id = ops
+        .create_folder("/foo/new_folder".parse().unwrap())
+        .await
+        .unwrap();
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, new_folder_id);
+    });
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, wksp1_foo_id);
+    });
+
+    assert_ls!(ops, "/foo", ["egg.txt", "new_folder", "spam"]).await;
+    assert_ls!(ops, "/foo/new_folder", []).await;
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -136,6 +213,51 @@ async fn already_exists_in_child(#[values(true, false)] existing_is_file: bool, 
     spy.assert_no_events();
 
     // Ensure nothing has changed
+    assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn invalid_path(
+    #[values("unknown_path", "invalid_child_in_path", "file_in_path")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    let (env, path) = env.customize_with_map(|builder| match kind {
+        "unknown_path" => "/foo/unknown/new_folder",
+        "invalid_child_in_path" => {
+            let bad_id = wksp1_id;
+            builder
+                .workspace_data_storage_local_folder_manifest_create_or_update(
+                    "alice@dev1",
+                    wksp1_id,
+                    wksp1_foo_id,
+                    None,
+                )
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.local_manifest);
+                    manifest.children.insert("invalid".parse().unwrap(), bad_id);
+                });
+            "/foo/invalid/new_folder"
+        }
+        "file_in_path" => "/foo/egg.txt/new_folder",
+        unknown => panic!("Unknown kind: {}", unknown),
+    });
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let spy = ops.event_bus.spy.start_expecting();
+
+    let err = ops.create_folder(path.parse().unwrap()).await.unwrap_err();
+    if matches!(kind, "file_in_path") {
+        p_assert_matches!(err, WorkspaceCreateFolderError::ParentNotAFolder);
+    } else {
+        p_assert_matches!(err, WorkspaceCreateFolderError::ParentNotFound);
+    }
+    spy.assert_no_events();
+
     assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
 }
 

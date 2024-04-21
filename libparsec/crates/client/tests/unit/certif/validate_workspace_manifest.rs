@@ -142,7 +142,10 @@ async fn non_existent_author(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn corrupted(env: &TestbedEnv) {
+async fn corrupted(
+    #[values("dummy", "parent_not_pointing_on_itself")] kind: &str,
+    env: &TestbedEnv,
+) {
     let (env, realm_id) = env.customize_with_map(|builder| {
         let realm_id = builder
             .new_realm("alice")
@@ -151,11 +154,31 @@ async fn corrupted(env: &TestbedEnv) {
         builder.certificates_storage_fetch_certificates("alice@dev1");
         realm_id
     });
-    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+    let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
 
     let alice = env.local_device("alice@dev1");
+
+    let encrypted = match kind {
+        "dummy" => b"<dummy data>".to_vec(),
+        "parent_not_pointing_on_itself" => {
+            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
+            let manifest = FolderManifest {
+                author: alice.device_id.clone(),
+                timestamp: now,
+                id: realm_id,
+                // The parent should be `realm_id` !
+                parent: VlobID::default(),
+                version: 1,
+                created: now,
+                updated: now,
+                children: Default::default(),
+            };
+            manifest.dump_sign_and_encrypt(&alice.signing_key, &realm_last_key)
+        }
+        unknown => panic!("Unknown kind {}", unknown),
+    };
 
     let ops = certificates_ops_factory(&env, &alice).await;
 
@@ -180,7 +203,7 @@ async fn corrupted(env: &TestbedEnv) {
             &alice.device_id,
             0,
             now,
-            b"",
+            &encrypted,
         )
         .await
         .unwrap_err();
@@ -611,5 +634,3 @@ async fn stopped(env: &TestbedEnv) {
 
     p_assert_matches!(err, CertifValidateManifestError::Stopped);
 }
-
-// TODO: test validating a manifest with parent != id

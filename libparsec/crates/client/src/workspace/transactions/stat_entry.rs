@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{FsPathResolutionAndManifest, GetEntryError},
+        store::{GetManifestError, PathConfinementPoint, ResolvePathError},
         WorkspaceOps,
     },
 };
@@ -43,6 +43,15 @@ pub enum EntryStat {
     },
 }
 
+impl EntryStat {
+    pub fn id(&self) -> VlobID {
+        match self {
+            EntryStat::File { id, .. } => *id,
+            EntryStat::Folder { id, .. } => *id,
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStatEntryError {
     #[error("Cannot reach the server")]
@@ -76,48 +85,30 @@ pub(crate) async fn stat_entry_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<EntryStat, WorkspaceStatEntryError> {
-    if entry_id == ops.realm_id {
-        let manifest = ops.store.get_workspace_manifest();
-
-        let info = EntryStat::Folder {
-            confinement_point: None,
-            id: manifest.base.id,
-            // Special case for root: pretent it is itself its own parent
-            parent: manifest.base.id,
-            created: manifest.base.created,
-            updated: manifest.updated,
-            base_version: manifest.base.version,
-            is_placeholder: manifest.base.version == 0,
-            need_sync: manifest.need_sync,
-        };
-
-        return Ok(info);
-    }
-
     let manifest = ops
         .store
-        .get_child_manifest(entry_id)
+        .get_manifest(entry_id)
         .await
         .map_err(|err| match err {
-            GetEntryError::Offline => WorkspaceStatEntryError::Offline,
-            GetEntryError::Stopped => WorkspaceStatEntryError::Stopped,
-            GetEntryError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-            GetEntryError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-            GetEntryError::InvalidKeysBundle(err) => {
+            GetManifestError::Offline => WorkspaceStatEntryError::Offline,
+            GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
+            GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+            GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+            GetManifestError::InvalidKeysBundle(err) => {
                 WorkspaceStatEntryError::InvalidKeysBundle(err)
             }
-            GetEntryError::InvalidCertificate(err) => {
+            GetManifestError::InvalidCertificate(err) => {
                 WorkspaceStatEntryError::InvalidCertificate(err)
             }
-            GetEntryError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
-            GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
+            GetManifestError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
+            GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
             confinement_point: None,
             id: manifest.base.id,
-            parent: manifest.base.parent,
+            parent: manifest.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
@@ -127,7 +118,7 @@ pub(crate) async fn stat_entry_by_id(
         ArcLocalChildManifest::File(manifest) => EntryStat::File {
             confinement_point: None,
             id: manifest.base.id,
-            parent: manifest.base.parent,
+            parent: manifest.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
@@ -144,47 +135,47 @@ pub(crate) async fn stat_entry(
     ops: &WorkspaceOps,
     path: &FsPath,
 ) -> Result<EntryStat, WorkspaceStatEntryError> {
-    let manifest = ops
-        .store
-        .resolve_path_and_get_manifest(path)
-        .await
-        .map_err(|err| match err {
-            GetEntryError::Offline => WorkspaceStatEntryError::Offline,
-            GetEntryError::Stopped => WorkspaceStatEntryError::Stopped,
-            GetEntryError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-            GetEntryError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-            GetEntryError::InvalidKeysBundle(err) => {
-                WorkspaceStatEntryError::InvalidKeysBundle(err)
-            }
-            GetEntryError::InvalidCertificate(err) => {
-                WorkspaceStatEntryError::InvalidCertificate(err)
-            }
-            GetEntryError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
-            GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
-        })?;
+    let (manifest, confinement_point) =
+        ops.store
+            .resolve_path(path)
+            .await
+            .map_err(|err| match err {
+                ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
+                ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
+                ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+                ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                ResolvePathError::InvalidKeysBundle(err) => {
+                    WorkspaceStatEntryError::InvalidKeysBundle(err)
+                }
+                ResolvePathError::InvalidCertificate(err) => {
+                    WorkspaceStatEntryError::InvalidCertificate(err)
+                }
+                ResolvePathError::InvalidManifest(err) => {
+                    WorkspaceStatEntryError::InvalidManifest(err)
+                }
+                ResolvePathError::Internal(err) => err.context("cannot resolve path").into(),
+            })?;
+
+    let confinement_point = match confinement_point {
+        PathConfinementPoint::None => None,
+        PathConfinementPoint::Confined(id) => Some(id),
+    };
 
     let info = match manifest {
-        FsPathResolutionAndManifest::Folder {
-            manifest,
-            confinement_point,
-        } => EntryStat::Folder {
+        ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
             confinement_point,
             id: manifest.base.id,
-            parent: manifest.base.parent,
+            parent: manifest.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
         },
-
-        FsPathResolutionAndManifest::File {
-            manifest,
-            confinement_point,
-        } => EntryStat::File {
+        ArcLocalChildManifest::File(manifest) => EntryStat::File {
             confinement_point,
             id: manifest.base.id,
-            parent: manifest.base.parent,
+            parent: manifest.parent,
             created: manifest.base.created,
             updated: manifest.updated,
             base_version: manifest.base.version,

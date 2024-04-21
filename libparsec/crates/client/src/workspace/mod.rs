@@ -21,13 +21,14 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, InboundSyncOutcome, OpenOptions,
-    OutboundSyncOutcome, WorkspaceCreateFileError, WorkspaceCreateFolderError,
-    WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError,
-    WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceGetNeedInboundSyncEntriesError,
-    WorkspaceGetNeedOutboundSyncEntriesError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceRemoveEntryError, WorkspaceRenameEntryError,
-    WorkspaceStatEntryError, WorkspaceStatFolderChildrenError, WorkspaceSyncError,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, InboundSyncOutcome,
+    MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
+    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
+    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
+    WorkspaceRemoveEntryError, WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    WorkspaceStatFolderChildrenError, WorkspaceSyncError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -327,6 +328,7 @@ impl WorkspaceOps {
         transactions::stat_folder_children_by_id(self, entry_id).await
     }
 
+    // TODO: remove me !
     pub async fn rename_entry(
         &self,
         path: FsPath,
@@ -340,16 +342,30 @@ impl WorkspaceOps {
         &self,
         src: FsPath,
         dst: FsPath,
-        overwrite: bool,
-    ) -> Result<(), WorkspaceRenameEntryError> {
-        if src.parent() == dst.parent() {
-            if let Some(dst_name) = dst.name() {
-                return self.rename_entry(src, dst_name.to_owned(), overwrite).await;
-            }
-        }
-        todo!()
-        // transactions::move_entry(self, path, new_name, overwrite).await
+        mode: MoveEntryMode,
+    ) -> Result<(), WorkspaceMoveEntryError> {
+        transactions::move_entry(self, src, dst, mode).await
     }
+
+    pub async fn rename_entry_by_id(
+        &self,
+        src_parent_id: VlobID,
+        src_name: EntryName,
+        dst_name: EntryName,
+        mode: MoveEntryMode,
+    ) -> Result<(), WorkspaceMoveEntryError> {
+        transactions::rename_entry_by_id(self, src_parent_id, src_name, dst_name, mode).await
+    }
+
+    // // TODO
+    // pub async fn copy_entry(
+    //     &self,
+    //     src: FsPath,
+    //     dst: FsPath,
+    //     overwrite: bool,
+    // ) -> Result<(), WorkspaceCopyEntryError> {
+    //     todo!()
+    // }
 
     pub async fn create_folder(&self, path: FsPath) -> Result<VlobID, WorkspaceCreateFolderError> {
         transactions::create_folder(self, path).await
@@ -364,34 +380,7 @@ impl WorkspaceOps {
         &self,
         path: FsPath,
     ) -> Result<VlobID, WorkspaceCreateFolderError> {
-        // Start by trying the most common case: the parent folder already exists
-        let outcome = transactions::create_folder(self, path.clone()).await;
-        if !matches!(outcome, Err(WorkspaceCreateFolderError::ParentNotFound)) {
-            return outcome;
-        }
-
-        // Some parents are missing, recursively try to create them all.
-        // Note it would probably be more efficient to do that in reverse order
-        // (given most of the time only the last part of the path is missing)
-        // but it is just simpler to do it this way.
-
-        let mut path_parts = path.parts().iter();
-        // If `path` is root, it has already been handled in `transactions::create_folder`
-        let in_root_entry_name = path_parts.next().expect("path cannot be root");
-        let mut ancestor_path = FsPath::from_parts(vec![in_root_entry_name.to_owned()]);
-        loop {
-            let outcome = transactions::create_folder(self, ancestor_path.clone()).await;
-            let entry_id = match outcome {
-                Ok(entry_id) => Result::<_, WorkspaceCreateFolderError>::Ok(entry_id),
-                Err(WorkspaceCreateFolderError::EntryExists { entry_id }) => Ok(entry_id),
-                Err(err) => return Err(err),
-            }?;
-            ancestor_path = match path_parts.next() {
-                Some(part) => ancestor_path.join(part.to_owned()),
-                // All done !
-                None => return Ok(entry_id),
-            };
-        }
+        transactions::create_folder_all(self, path).await
     }
 
     pub async fn create_file(&self, path: FsPath) -> Result<VlobID, WorkspaceCreateFileError> {

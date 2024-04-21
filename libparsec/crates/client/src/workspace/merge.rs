@@ -56,7 +56,7 @@ pub(super) fn merge_local_folder_manifests(
     // So next time alice tries to access this workspace she will
     // creates a speculative workspace manifest.
     // This speculative manifest will eventually be synced against
-    // the previous remote remote manifest which appears to be remote
+    // the previous remote manifest which appears to be remote
     // changes we know about (given we are the author of it !).
     // If the speculative flag is not taken into account, we would
     // consider we have  willingly removed all entries from the remote,
@@ -77,6 +77,7 @@ pub(super) fn merge_local_folder_manifests(
 
     // Solve the folder conflict
     let new_children = merge_children(&local.base.children, &local.children, &remote.children);
+    let new_parent = merge_parent(local.base.parent, local.parent, remote.parent);
 
     // Children merge can end up with nothing to sync.
     //
@@ -96,14 +97,41 @@ pub(super) fn merge_local_folder_manifests(
     // /!\ Extra attention should be paid here if we want to add new fields
     // /!\ with their own sync logic, as this optimization may shadow them!
 
-    if new_children == remote.children {
+    if new_children == remote.children && new_parent == remote.parent {
         Some(LocalFolderManifest::from_remote(remote, None))
     } else {
         let mut local_from_remote = LocalFolderManifest::from_remote(remote, None);
         local_from_remote.children = new_children;
+        local_from_remote.parent = new_parent;
         local_from_remote.updated = timestamp;
         local_from_remote.need_sync = true;
         Some(local_from_remote)
+    }
+}
+
+fn merge_parent(base: VlobID, local: VlobID, remote: VlobID) -> VlobID {
+    let remote_change = remote != base;
+    let local_change = local != base;
+    match (local_change, remote_change) {
+        // No change
+        (false, false) => base,
+        // Local change
+        (true, false) => local,
+        // Remote change
+        (false, true) => remote,
+        // Both remote and local change, conflict !
+        //
+        // In this case, we simply decide that the remote is right since it means
+        // another user managed to upload their change first. Tough luck for the
+        // local device!
+        //
+        // Note the changing the parent is most likely part of a reparenting operation,
+        // hence dropping the local change means the destination parent folder will
+        // contain an invalid entry (i.e. an entry pointing to our manifest, which
+        // itself points to another parent). This is considered okay given parent
+        // merge conflict is considered as a rare event and the entry will simply
+        // be ignored for all practical purpose.
+        (true, true) => remote,
     }
 }
 

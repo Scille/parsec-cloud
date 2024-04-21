@@ -7,7 +7,20 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::EntryStat;
+use crate::workspace::{transactions::FolderReaderStatNextOutcome, EntryStat};
+
+fn expect_entry(stat: FolderReaderStatNextOutcome<'_>) -> (&EntryName, EntryStat) {
+    match stat {
+        FolderReaderStatNextOutcome::Entry { name, stat } => (name, stat),
+        _ => panic!("Expected an entry, got {:?}", stat),
+    }
+}
+
+fn expect_no_more_entries(stat: FolderReaderStatNextOutcome<'_>) {
+    if !matches!(stat, FolderReaderStatNextOutcome::NoMoreEntries) {
+        panic!("Expected no more entries, got {:?}", stat);
+    }
+}
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &TestbedEnv) {
@@ -92,12 +105,11 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
 
     let reader = ops.open_folder_reader(&target_path).await.unwrap();
 
-    let a0 = reader.stat_next(&ops, 0).await.unwrap().unwrap();
-    let a1 = reader.stat_next(&ops, 1).await.unwrap().unwrap();
-    let a2 = reader.stat_next(&ops, 2).await.unwrap();
-    assert!(a2.is_none());
+    let a0 = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
+    let a1 = expect_entry(reader.stat_child(&ops, 1).await.unwrap());
+    expect_no_more_entries(reader.stat_child(&ops, 2).await.unwrap());
 
-    let a0_retry = reader.stat_next(&ops, 0).await.unwrap().unwrap();
+    let a0_retry = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
     p_assert_eq!(a0, a0_retry);
 
     p_assert_eq!(
@@ -116,12 +128,11 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
 
     let reader = ops.open_folder_reader_by_id(target_id).await.unwrap();
 
-    let a0 = reader.stat_next(&ops, 0).await.unwrap().unwrap();
-    let a1 = reader.stat_next(&ops, 1).await.unwrap().unwrap();
-    let a2 = reader.stat_next(&ops, 2).await.unwrap();
-    assert!(a2.is_none());
+    let a0 = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
+    let a1 = expect_entry(reader.stat_child(&ops, 1).await.unwrap());
+    expect_no_more_entries(reader.stat_child(&ops, 2).await.unwrap());
 
-    let a0_retry = reader.stat_next(&ops, 0).await.unwrap().unwrap();
+    let a0_retry = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
     p_assert_eq!(a0, a0_retry);
 
     p_assert_eq!(
@@ -242,12 +253,11 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
 
     let reader = ops.open_folder_reader(&target_path).await.unwrap();
 
-    let a0 = reader.stat_next(&ops, 0).await.unwrap().unwrap();
-    let a1 = reader.stat_next(&ops, 1).await.unwrap().unwrap();
-    let a2 = reader.stat_next(&ops, 2).await.unwrap();
-    assert!(a2.is_none());
+    let a0 = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
+    let a1 = expect_entry(reader.stat_child(&ops, 1).await.unwrap());
+    expect_no_more_entries(reader.stat_child(&ops, 2).await.unwrap());
 
-    let a0_retry = reader.stat_next(&ops, 0).await.unwrap().unwrap();
+    let a0_retry = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
     p_assert_eq!(a0, a0_retry);
 
     p_assert_eq!(
@@ -266,12 +276,11 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
 
     let reader = ops.open_folder_reader_by_id(target_id).await.unwrap();
 
-    let a0 = reader.stat_next(&ops, 0).await.unwrap().unwrap();
-    let a1 = reader.stat_next(&ops, 1).await.unwrap().unwrap();
-    let a2 = reader.stat_next(&ops, 2).await.unwrap();
-    assert!(a2.is_none());
+    let a0 = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
+    let a1 = expect_entry(reader.stat_child(&ops, 1).await.unwrap());
+    expect_no_more_entries(reader.stat_child(&ops, 2).await.unwrap());
 
-    let a0_retry = reader.stat_next(&ops, 0).await.unwrap().unwrap();
+    let a0_retry = expect_entry(reader.stat_child(&ops, 0).await.unwrap());
     p_assert_eq!(a0, a0_retry);
 
     p_assert_eq!(
@@ -298,6 +307,7 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
     let non_existing_id = VlobID::default();
+    let bad_parent_id = wksp1_foo_egg_txt_id;
     let env = env.customize(|builder| {
         builder
             .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
@@ -306,7 +316,7 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
                     // Non existing entry
                     ("non_existing.txt", Some(non_existing_id)),
                     // Existing entry, but with a parent field not pointing to us
-                    ("bad_parent.txt", Some(wksp1_foo_egg_txt_id)),
+                    ("bad_parent.txt", Some(bad_parent_id)),
                 ]
                 .into_iter(),
             );
@@ -332,20 +342,30 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
         }
     );
 
+    // Note we don't test `WorkspaceOps::open_folder_reader` given
+    // `WorkspaceOps::stat_folder_children` is just a thin wrapper around it
     let children_stats = ops
         .stat_folder_children(&"/".parse().unwrap())
         .await
         .unwrap();
+
+    let mut children_names = children_stats
+        .iter()
+        .map(|(entry_name, _)| entry_name.to_string())
+        .collect::<Vec<_>>();
+    children_names.sort();
+    p_assert_eq!(children_names, ["bar.txt", "foo"]);
+
     p_assert_eq!(
         children_stats
             .iter()
-            .any(|(name, _)| name.as_ref() == "non_existing.txt"),
+            .any(|(_, stat)| stat.id() == non_existing_id),
         false
     );
     p_assert_eq!(
         children_stats
             .iter()
-            .any(|(name, _)| name.as_ref() == "bad_parent.txt"),
+            .any(|(_, stat)| stat.id() == bad_parent_id),
         false
     );
 }
