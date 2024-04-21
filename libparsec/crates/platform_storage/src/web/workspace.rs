@@ -14,7 +14,7 @@ use crate::{
         model::{RealmCheckpoint, Vlob},
         DB_VERSION,
     },
-    workspace::UpdateManifestData,
+    workspace::{PopulateManifestOutcome, UpdateManifestData},
 };
 
 #[derive(Debug)]
@@ -159,6 +159,14 @@ impl PlatformWorkspaceStorage {
             }
             _ => Ok(None),
         }
+    }
+
+    pub async fn populate_manifest(
+        &mut self,
+        manifest: &UpdateManifestData,
+    ) -> anyhow::Result<PopulateManifestOutcome> {
+        let transaction = Vlob::write(&self.conn)?;
+        db_populate_manifest(&transaction, manifest).await
     }
 
     pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
@@ -395,7 +403,7 @@ pub async fn workspace_storage_non_speculative_init(
 
     let timestamp = device.now();
     let manifest =
-        LocalWorkspaceManifest::new(device.device_id.clone(), timestamp, Some(realm_id), false);
+        LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, false);
 
     storage
         .update_manifest(&UpdateManifestData {
@@ -412,6 +420,27 @@ pub async fn workspace_storage_non_speculative_init(
     storage.stop().await?;
 
     Ok(())
+}
+
+pub async fn db_populate_manifest<'a>(
+    tx: &IdbTransaction<'a>,
+    manifest: &UpdateManifestData,
+) -> anyhow::Result<PopulateManifestOutcome> {
+    match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
+        Some(_) => Ok(PopulateManifestOutcome::AlreadyPresent),
+        None => {
+            Vlob {
+                vlob_id: manifest.entry_id.as_bytes().to_vec().into(),
+                blob: manifest.encrypted.to_vec().into(),
+                need_sync: manifest.need_sync,
+                base_version: manifest.base_version,
+                remote_version: manifest.base_version,
+            }
+            .insert(tx)
+            .await?;
+            Ok(PopulateManifestOutcome::Stored)
+        }
+    }
 }
 
 async fn db_update_manifest<'a>(

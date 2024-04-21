@@ -6,11 +6,11 @@ use std::{
 };
 
 use libparsec_client::workspace::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, OpenOptions,
-    WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdReadError,
-    WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError, WorkspaceOpenFileError,
-    WorkspaceOpenFolderReaderError, WorkspaceOps, WorkspaceRemoveEntryError,
-    WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
+    MoveEntryMode, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdCloseError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps,
+    WorkspaceRemoveEntryError, WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -404,7 +404,9 @@ impl fuser::Filesystem for Filesystem {
                     WorkspaceCreateFolderError::EntryExists { .. } => {
                         reply.manual().error(libc::EEXIST)
                     }
-                    WorkspaceCreateFolderError::ParentIsFile => reply.manual().error(libc::ENOENT),
+                    WorkspaceCreateFolderError::ParentNotAFolder => {
+                        reply.manual().error(libc::ENOENT)
+                    }
                     WorkspaceCreateFolderError::ParentNotFound => {
                         reply.manual().error(libc::ENOENT)
                     }
@@ -537,8 +539,6 @@ impl fuser::Filesystem for Filesystem {
         });
     }
 
-    // TODO: handle RENAME_EXCHANGE or RENAME_NOREPLACE in flags
-    // (see https://libfuse.github.io/doxygen/structfuse__operations.html#adc484e37f216a8a18b97e01a83c6a6a2)
     fn rename(
         &mut self,
         _req: &fuser::Request<'_>,
@@ -559,6 +559,16 @@ impl fuser::Filesystem for Filesystem {
             flags,
         );
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
+
+        // Flags only contain RENAME_EXCHANGE or RENAME_NOREPLACE
+        // (see https://libfuse.github.io/doxygen/structfuse__operations.html#adc484e37f216a8a18b97e01a83c6a6a2)
+        let mode = if flags & libc::RENAME_NOREPLACE != 0 {
+            MoveEntryMode::NoReplace
+        } else if flags & libc::RENAME_EXCHANGE != 0 {
+            MoveEntryMode::Exchange
+        } else {
+            MoveEntryMode::CanReplace
+        };
 
         let src_name = match os_name_to_entry_name(src_name) {
             Ok(name) => name,
@@ -598,34 +608,29 @@ impl fuser::Filesystem for Filesystem {
             };
 
             match ops
-                .move_entry(src_path.clone(), dst_path.clone(), false)
+                .move_entry(src_path.clone(), dst_path.clone(), mode)
                 .await
             {
                 Ok(()) => {
                     reply.manual().ok();
                 }
                 Err(err) => match err {
-                    WorkspaceRenameEntryError::EntryNotFound => todo!(),
-                    WorkspaceRenameEntryError::CannotRenameRoot => todo!(),
-                    WorkspaceRenameEntryError::ReadOnlyRealm => todo!(),
-                    WorkspaceRenameEntryError::NoRealmAccess => todo!(),
-                    WorkspaceRenameEntryError::DestinationExists { .. } => todo!(),
-                    // WorkspaceRenameEntryError::EntryNotFound => reply.manual().error(libc::ENOENT),
-                    // WorkspaceRenameEntryError::EntryIsFolder => reply.manual().error(libc::EISDIR),
-                    // WorkspaceRenameEntryError::EntryIsNonEmptyFolder => {
-                    //     reply.manual().error(libc::ENOTEMPTY)
-                    // }
-                    WorkspaceRenameEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
-                    // WorkspaceRenameEntryError::CannotRemoveRoot => reply.manual().error(libc::EPERM),
-                    // WorkspaceRenameEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
-                    // WorkspaceRenameEntryError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
-                    WorkspaceRenameEntryError::Stopped
-                    | WorkspaceRenameEntryError::InvalidKeysBundle(_)
-                    | WorkspaceRenameEntryError::InvalidCertificate(_)
-                    | WorkspaceRenameEntryError::InvalidManifest(_)
-                    | WorkspaceRenameEntryError::Internal(_) => reply.manual().error(libc::EIO),
-                    // // Never returned given we *are* removing a file
-                    // WorkspaceRenameEntryError::EntryIsFile => unreachable!(),
+                    WorkspaceMoveEntryError::SourceNotFound
+                    | WorkspaceMoveEntryError::DestinationNotFound => {
+                        reply.manual().error(libc::ENOENT)
+                    }
+                    WorkspaceMoveEntryError::DestinationExists { .. } => {
+                        reply.manual().error(libc::EEXIST)
+                    }
+                    WorkspaceMoveEntryError::CannotMoveRoot => reply.manual().error(libc::EPERM),
+                    WorkspaceMoveEntryError::Offline => reply.manual().error(libc::EHOSTUNREACH),
+                    WorkspaceMoveEntryError::NoRealmAccess => reply.manual().error(libc::EPERM),
+                    WorkspaceMoveEntryError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
+                    WorkspaceMoveEntryError::Stopped
+                    | WorkspaceMoveEntryError::InvalidKeysBundle(_)
+                    | WorkspaceMoveEntryError::InvalidCertificate(_)
+                    | WorkspaceMoveEntryError::InvalidManifest(_)
+                    | WorkspaceMoveEntryError::Internal(_) => reply.manual().error(libc::EIO),
                 },
             }
         });
@@ -1272,9 +1277,14 @@ impl fuser::Filesystem for Filesystem {
 
             let mut offset = offset as usize;
             loop {
-                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
-                    Ok(Some(stat)) => stat,
-                    Ok(None) => break,
+                let (child_name, child_stat) = match folder_reader.stat_child(&ops, offset).await {
+                    Ok(FolderReaderStatNextOutcome::Entry { name, stat }) => (name, stat),
+                    Ok(FolderReaderStatNextOutcome::NoMoreEntries) => break,
+                    Ok(FolderReaderStatNextOutcome::InvalidChild) => {
+                        // Current entry is invalid, just ignore it
+                        offset += 1;
+                        continue;
+                    }
                     Err(err) => {
                         return match err {
                             FolderReaderStatEntryError::Offline => {
@@ -1365,9 +1375,14 @@ impl fuser::Filesystem for Filesystem {
 
             let mut offset = offset as usize;
             loop {
-                let (child_name, child_stat) = match folder_reader.stat_next(&ops, offset).await {
-                    Ok(Some(stat)) => stat,
-                    Ok(None) => break,
+                let (child_name, child_stat) = match folder_reader.stat_child(&ops, offset).await {
+                    Ok(FolderReaderStatNextOutcome::Entry { name, stat }) => (name, stat),
+                    Ok(FolderReaderStatNextOutcome::NoMoreEntries) => break,
+                    Ok(FolderReaderStatNextOutcome::InvalidChild) => {
+                        // Current entry is invalid, just ignore it
+                        offset += 1;
+                        continue;
+                    }
                     Err(err) => {
                         return match err {
                             FolderReaderStatEntryError::Offline => {

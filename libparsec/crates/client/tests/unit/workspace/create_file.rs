@@ -77,23 +77,26 @@ async fn create_in_child(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn create_as_root(env: &TestbedEnv) {
+async fn target_is_folder(#[values(false, true)] target_is_root: bool, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    let err = ops.create_file("/".parse().unwrap()).await.unwrap_err();
-    p_assert_matches!(err, WorkspaceCreateFileError::EntryExists { entry_id } if entry_id == wksp1_id);
+    let (path, expected_already_exist_id) = if target_is_root {
+        ("/", wksp1_id)
+    } else {
+        ("/foo", wksp1_foo_id)
+    };
+    let err = ops.create_file(path.parse().unwrap()).await.unwrap_err();
+    p_assert_matches!(err, WorkspaceCreateFileError::EntryExists { entry_id } if entry_id == expected_already_exist_id);
     spy.assert_no_events();
 
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
-
-    // Restart the workspace ops to make sure the change are not only in cache
-    let ops = restart_workspace_ops(ops).await;
-    assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
+    assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -126,7 +129,7 @@ async fn already_exists_in_root(#[values(true, false)] existing_is_file: bool, e
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn already_exists_in_child(#[values(true, false)] existing_is_file: bool, env: &TestbedEnv) {
+async fn already_exists_in_child(#[values("file", "folder")] kind: &str, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
@@ -137,14 +140,18 @@ async fn already_exists_in_child(#[values(true, false)] existing_is_file: bool, 
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    let (path, already_exists_id) = if existing_is_file {
-        let path = "/foo/egg.txt".parse().unwrap();
-        let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
-        (path, wksp1_foo_egg_txt_id)
-    } else {
-        let path = "/foo/spam".parse().unwrap();
-        let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
-        (path, wksp1_foo_spam_id)
+    let (path, already_exists_id) = match kind {
+        "file" => {
+            let path = "/foo/egg.txt".parse().unwrap();
+            let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+            (path, wksp1_foo_egg_txt_id)
+        }
+        "folder" => {
+            let path = "/foo/spam".parse().unwrap();
+            let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
+            (path, wksp1_foo_spam_id)
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
     };
     let err = ops.create_file(path).await.unwrap_err();
     p_assert_matches!(err, WorkspaceCreateFileError::EntryExists { entry_id } if entry_id == already_exists_id);

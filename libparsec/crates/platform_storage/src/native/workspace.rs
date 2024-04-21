@@ -12,7 +12,7 @@ use std::path::Path;
 
 use libparsec_types::prelude::*;
 
-use crate::workspace::UpdateManifestData;
+use crate::workspace::{PopulateManifestOutcome, UpdateManifestData};
 
 use super::model::{
     get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
@@ -204,6 +204,13 @@ impl PlatformWorkspaceStorage {
         now: DateTime,
     ) -> anyhow::Result<Option<Vec<u8>>> {
         db_get_block_and_update_accessed_on(&mut self.cache_conn, block_id, now).await
+    }
+
+    pub async fn populate_manifest(
+        &mut self,
+        manifest: &UpdateManifestData,
+    ) -> anyhow::Result<PopulateManifestOutcome> {
+        db_populate_manifest(&mut self.conn, manifest).await
     }
 
     pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
@@ -560,6 +567,37 @@ pub async fn db_get_block_and_update_accessed_on(
             Ok(Some(blob))
         }
         None => Ok(None),
+    }
+}
+
+pub async fn db_populate_manifest(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+    manifest: &UpdateManifestData,
+) -> anyhow::Result<PopulateManifestOutcome> {
+    let result = sqlx::query(
+        " \
+        INSERT OR IGNORE INTO vlobs(vlob_id, need_sync, blob, base_version, remote_version) \
+        VALUES ( \
+            ?1, \
+            ?2, \
+            ?3, \
+            ?4, \
+            ?5 \
+        ) \
+        ",
+    )
+    .bind(manifest.entry_id.as_bytes())
+    .bind(manifest.need_sync)
+    .bind(&manifest.encrypted)
+    .bind(manifest.base_version)
+    .bind(manifest.base_version) // Use base version as default for remote version
+    .execute(executor)
+    .await?;
+
+    if result.rows_affected() != 0 {
+        Ok(PopulateManifestOutcome::Stored)
+    } else {
+        Ok(PopulateManifestOutcome::AlreadyPresent)
     }
 }
 

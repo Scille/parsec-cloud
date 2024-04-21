@@ -10,7 +10,7 @@ use super::utils::workspace_ops_factory;
 use crate::workspace::{OpenOptions, WorkspaceFdReadError};
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn ok(#[values(false)] local_cache: bool, env: &TestbedEnv) {
+async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_bar_txt_block_access = env
