@@ -72,7 +72,6 @@ async fn corrupted_serialization(env: &TestbedEnv) {
         version: 0,
         created: now,
         updated: now,
-        workspaces_legacy_initial_info: vec![],
     };
 
     let signed = Bytes::from(manifest.dump_and_sign(&alice.signing_key));

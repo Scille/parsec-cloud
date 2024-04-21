@@ -385,46 +385,22 @@ pub struct UserManifest {
     pub version: VersionInt,
     pub created: DateTime,
     pub updated: DateTime,
-
-    pub workspaces_legacy_initial_info: Vec<LegacyUserManifestWorkspaceEntry>,
 }
 
 parsec_data!("schema/manifest/user_manifest.json5");
 
 impl_manifest_dump_load!(UserManifest);
 
-impl From<UserManifestData> for UserManifest {
-    fn from(data: UserManifestData) -> Self {
-        Self {
-            author: data.author,
-            timestamp: data.timestamp,
-            id: data.id,
-            version: data.version,
-            created: data.created,
-            updated: data.updated,
-            workspaces_legacy_initial_info: data.workspaces.unwrap_or_default(),
-        }
-    }
-}
-impl From<UserManifest> for UserManifestData {
-    fn from(obj: UserManifest) -> Self {
-        let workspaces = if obj.workspaces_legacy_initial_info.is_empty() {
-            None
-        } else {
-            Some(obj.workspaces_legacy_initial_info)
-        };
-        Self {
-            ty: Default::default(),
-            author: obj.author,
-            timestamp: obj.timestamp,
-            id: obj.id,
-            version: obj.version,
-            created: obj.created,
-            updated: obj.updated,
-            workspaces,
-        }
-    }
-}
+impl_transparent_data_format_conversion!(
+    UserManifest,
+    UserManifestData,
+    author,
+    timestamp,
+    id,
+    version,
+    created,
+    updated,
+);
 
 /*
  * ChildManifest
