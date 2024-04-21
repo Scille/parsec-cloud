@@ -296,12 +296,14 @@ impl WorkspaceStore {
         src_parent_path: &FsPath,
         src_child_name: &EntryName,
         dst_parent_path: &FsPath,
+        maybe_dst_child_name: Option<&EntryName>,
     ) -> Result<ReparentingUpdater<'a>, ForUpdateReparentingError> {
         reparent_updater::resolve_path_for_update_reparenting(
             self,
             src_parent_path,
             src_child_name,
             dst_parent_path,
+            maybe_dst_child_name,
         )
         .await
     }

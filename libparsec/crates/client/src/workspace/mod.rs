@@ -21,8 +21,8 @@ pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
-    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, InboundSyncOutcome,
-    MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
+    InboundSyncOutcome, MoveEntryMode, OpenOptions, OutboundSyncOutcome, WorkspaceCreateFileError,
     WorkspaceCreateFolderError, WorkspaceFdCloseError, WorkspaceFdFlushError, WorkspaceFdReadError,
     WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,

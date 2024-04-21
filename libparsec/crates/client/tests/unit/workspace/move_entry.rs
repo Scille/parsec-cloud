@@ -5,76 +5,153 @@
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use super::utils::{assert_ls, ls, workspace_ops_factory};
+use super::utils::{assert_ls_with_id, workspace_ops_factory};
 use crate::workspace::{MoveEntryMode, WorkspaceMoveEntryError};
 use std::sync::Arc;
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn ok_same_parent(#[values(false, true)] overwrite_dst: bool, env: &TestbedEnv) {
+async fn ok_same_parent(
+    #[values("empty_dst", "overwrite", "echange")] kind: &str,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
-    ops.move_entry(
-        "/foo/spam".parse().unwrap(),
-        if overwrite_dst {
-            "/foo/egg.txt"
-        } else {
-            "/foo/spam2"
+    let rename_entry_by_id_src = "bar.txt";
+    let move_entry_src = "/foo/spam";
+    let (
+        mode,
+        rename_entry_by_id_dst,
+        move_entry_dst,
+        expected_root_children,
+        expected_foo_children,
+    ) = match kind {
+        "empty_dst" => (
+            MoveEntryMode::NoReplace,
+            "bar2.txt",
+            "/foo/spam2",
+            vec![("bar2.txt", wksp1_bar_txt_id), ("foo", wksp1_foo_id)],
+            vec![
+                ("egg.txt", wksp1_foo_egg_txt_id),
+                ("spam2", wksp1_foo_spam_id),
+            ],
+        ),
+        "overwrite" => {
+            ops.create_file("/other.txt".parse().unwrap())
+                .await
+                .unwrap();
+            (
+                MoveEntryMode::CanReplace,
+                "other.txt",
+                "/foo/egg.txt",
+                vec![("foo", wksp1_foo_id), ("other.txt", wksp1_bar_txt_id)],
+                vec![("egg.txt", wksp1_foo_spam_id)],
+            )
         }
-        .parse()
-        .unwrap(),
-        MoveEntryMode::CanReplace,
+        "echange" => {
+            let wksp1_other_txt_id = ops
+                .create_file("/other.txt".parse().unwrap())
+                .await
+                .unwrap();
+            (
+                MoveEntryMode::Exchange,
+                "other.txt",
+                "/foo/egg.txt",
+                vec![
+                    ("bar.txt", wksp1_other_txt_id),
+                    ("foo", wksp1_foo_id),
+                    ("other.txt", wksp1_bar_txt_id),
+                ],
+                vec![
+                    ("egg.txt", wksp1_foo_spam_id),
+                    ("spam", wksp1_foo_egg_txt_id),
+                ],
+            )
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
+
+    ops.move_entry(
+        move_entry_src.parse().unwrap(),
+        move_entry_dst.parse().unwrap(),
+        mode,
     )
     .await
     .unwrap();
 
     ops.rename_entry_by_id(
-        wksp1_foo_id,
-        "egg.txt".parse().unwrap(),
-        "egg2.txt".parse().unwrap(),
-        MoveEntryMode::CanReplace,
+        wksp1_id,
+        rename_entry_by_id_src.parse().unwrap(),
+        rename_entry_by_id_dst.parse().unwrap(),
+        mode,
     )
     .await
     .unwrap();
 
-    if overwrite_dst {
-        assert_ls!(ops, "/foo", ["egg2.txt"]).await;
-    } else {
-        assert_ls!(ops, "/foo", ["egg2.txt", "spam2"]).await;
-    }
+    assert_ls_with_id!(ops, "/", expected_root_children).await;
+    assert_ls_with_id!(ops, "/foo", expected_foo_children).await;
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn ok_different_parents(#[values(false, true)] overwrite_dst: bool, env: &TestbedEnv) {
+async fn ok_different_parents(
+    #[values("empty_dst", "overwrite", "echange")] kind: &str,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
+    let move_entry_src = "/foo/spam";
+    let (mode, move_entry_dst, expected_root_children, expected_foo_children) = match kind {
+        "empty_dst" => (
+            MoveEntryMode::NoReplace,
+            "/spam2",
+            vec![
+                ("bar.txt", wksp1_bar_txt_id),
+                ("foo", wksp1_foo_id),
+                ("spam2", wksp1_foo_spam_id),
+            ],
+            vec![("egg.txt", wksp1_foo_egg_txt_id)],
+        ),
+        "overwrite" => (
+            MoveEntryMode::CanReplace,
+            "/bar.txt",
+            vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],
+            vec![("egg.txt", wksp1_foo_egg_txt_id)],
+        ),
+        "echange" => (
+            MoveEntryMode::Exchange,
+            "/bar.txt",
+            vec![("bar.txt", wksp1_foo_spam_id), ("foo", wksp1_foo_id)],
+            vec![
+                ("egg.txt", wksp1_foo_egg_txt_id),
+                ("spam", wksp1_bar_txt_id),
+            ],
+        ),
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
+
     ops.move_entry(
-        "/bar.txt".parse().unwrap(),
-        if overwrite_dst {
-            "/foo/spam"
-        } else {
-            "/foo/bar2.txt"
-        }
-        .parse()
-        .unwrap(),
-        MoveEntryMode::CanReplace,
+        move_entry_src.parse().unwrap(),
+        move_entry_dst.parse().unwrap(),
+        mode,
     )
     .await
     .unwrap();
 
-    if overwrite_dst {
-        assert_ls!(ops, "/", ["foo"]).await;
-        assert_ls!(ops, "/foo", ["egg.txt", "spam"]).await;
-    } else {
-        assert_ls!(ops, "/", ["foo"]).await;
-        assert_ls!(ops, "/foo", ["bar2.txt", "egg.txt", "spam"]).await;
-    }
+    assert_ls_with_id!(ops, "/", expected_root_children).await;
+    assert_ls_with_id!(ops, "/foo", expected_foo_children).await;
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

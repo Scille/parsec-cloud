@@ -3,11 +3,11 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    EntryStat, OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
+    EntryStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
     WorkspaceDecryptPathAddrError, WorkspaceFdCloseError, WorkspaceFdFlushError,
     WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
-    WorkspaceGeneratePathAddrError, WorkspaceOpenFileError, WorkspaceRemoveEntryError,
-    WorkspaceRenameEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceGeneratePathAddrError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
+    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_types::prelude::*;
@@ -492,15 +492,15 @@ pub async fn workspace_stat_folder_children_by_id(
     workspace.stat_folder_children_by_id(entry_id).await
 }
 
-pub async fn workspace_rename_entry(
+pub async fn workspace_move_entry(
     workspace: Handle,
-    path: FsPath,
-    new_name: EntryName,
-    overwrite: bool,
-) -> Result<(), WorkspaceRenameEntryError> {
+    src: FsPath,
+    dst: FsPath,
+    mode: MoveEntryMode,
+) -> Result<(), WorkspaceMoveEntryError> {
     let workspace = borrow_workspace(workspace)?;
 
-    workspace.rename_entry(path, new_name, overwrite).await
+    workspace.move_entry(src, dst, mode).await
 }
 
 pub async fn workspace_create_folder(

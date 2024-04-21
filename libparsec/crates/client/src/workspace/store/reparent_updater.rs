@@ -17,12 +17,19 @@ pub(super) async fn resolve_path_for_update_reparenting<'a>(
     src_parent_path: &FsPath,
     src_child_name: &EntryName,
     dst_parent_path: &FsPath,
+    // In most reparenting we don't even care if the destination exists given
+    // it is simply overwritten by the source.
+    // However this is not the case when doing an exchange between source and
+    // destination, given in this case the destination's `parent` field must
+    // also be modified.
+    dst_child_name: Option<&EntryName>,
 ) -> Result<ReparentingUpdater<'a>, ForUpdateReparentingError> {
     let resolution = super::resolve_path::resolve_path_for_reparenting(
         store,
         src_parent_path,
         src_child_name,
         dst_parent_path,
+        dst_child_name,
     )
     .await?;
 
@@ -30,12 +37,14 @@ pub(super) async fn resolve_path_for_update_reparenting<'a>(
         src_parent_manifest: resolution.src_parent_manifest,
         src_child_manifest: resolution.src_child_manifest,
         dst_parent_manifest: resolution.dst_parent_manifest,
+        dst_child_manifest: resolution.dst_child_manifest,
         guards: ReparentingUpdaterGuards {
             store,
             update_guards: Some((
-                resolution.dst_parent_update_lock_guard,
                 resolution.src_parent_update_lock_guard,
                 resolution.src_child_update_lock_guard,
+                resolution.dst_parent_update_lock_guard,
+                resolution.dst_child_update_lock_guard,
             )),
         },
     })
@@ -45,6 +54,7 @@ pub(crate) struct ReparentingUpdater<'a> {
     pub src_parent_manifest: Arc<LocalFolderManifest>,
     pub src_child_manifest: ArcLocalChildManifest,
     pub dst_parent_manifest: Arc<LocalFolderManifest>,
+    pub dst_child_manifest: Option<ArcLocalChildManifest>,
     guards: ReparentingUpdaterGuards<'a>,
 }
 
@@ -58,12 +68,13 @@ struct ReparentingUpdaterGuards<'a> {
         ManifestUpdateLockGuard,
         ManifestUpdateLockGuard,
         ManifestUpdateLockGuard,
+        Option<ManifestUpdateLockGuard>,
     )>,
 }
 
 impl Drop for ReparentingUpdaterGuards<'_> {
     fn drop(&mut self) {
-        if let Some((guard1, guard2, guard3)) = self.update_guards.take() {
+        if let Some((guard1, guard2, guard3, guard4)) = self.update_guards.take() {
             let mut cache = self
                 .store
                 .current_view_cache
@@ -72,6 +83,9 @@ impl Drop for ReparentingUpdaterGuards<'_> {
             cache.lock_update_manifests.release(guard1);
             cache.lock_update_manifests.release(guard2);
             cache.lock_update_manifests.release(guard3);
+            if let Some(guard4) = guard4 {
+                cache.lock_update_manifests.release(guard4);
+            }
         }
     }
 }
@@ -84,6 +98,7 @@ impl ReparentingUpdater<'_> {
             src_parent_manifest,
             src_child_manifest,
             dst_parent_manifest,
+            dst_child_manifest,
             guards,
         } = self;
         let store = guards.store;
@@ -123,16 +138,52 @@ impl ReparentingUpdater<'_> {
         };
 
         let src_child_id = src_child_update_data.entry_id;
-        storage
-            .update_manifests(
-                [
-                    src_parent_update_data,
-                    src_child_update_data,
-                    dst_parent_update_data,
-                ]
-                .into_iter(),
-            )
-            .await?;
+
+        match &dst_child_manifest {
+            // 3 manifests to update
+            None => {
+                storage
+                    .update_manifests(
+                        [
+                            src_parent_update_data,
+                            src_child_update_data,
+                            dst_parent_update_data,
+                        ]
+                        .into_iter(),
+                    )
+                    .await?;
+            }
+
+            // 4 manifests to update (including destination child manifest)
+            Some(dst_child_manifest) => {
+                let dst_child_update_data = match &dst_child_manifest {
+                    ArcLocalChildManifest::File(dst_child_manifest) => UpdateManifestData {
+                        entry_id: dst_child_manifest.base.id,
+                        base_version: dst_child_manifest.base.version,
+                        need_sync: dst_child_manifest.need_sync,
+                        encrypted: dst_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                    },
+                    ArcLocalChildManifest::Folder(dst_child_manifest) => UpdateManifestData {
+                        entry_id: dst_child_manifest.base.id,
+                        base_version: dst_child_manifest.base.version,
+                        need_sync: dst_child_manifest.need_sync,
+                        encrypted: dst_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                    },
+                };
+
+                storage
+                    .update_manifests(
+                        [
+                            src_parent_update_data,
+                            src_child_update_data,
+                            dst_parent_update_data,
+                            dst_child_update_data,
+                        ]
+                        .into_iter(),
+                    )
+                    .await?;
+            }
+        }
 
         // 2) Update the cache
 
@@ -157,6 +208,11 @@ impl ReparentingUpdater<'_> {
         cache
             .child_manifests
             .insert(src_child_id, src_child_manifest);
+        if let Some(dst_child_manifest) = dst_child_manifest {
+            cache
+                .child_manifests
+                .insert(dst_child_manifest.id(), dst_child_manifest);
+        }
 
         Ok(())
     }

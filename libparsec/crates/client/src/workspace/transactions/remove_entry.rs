@@ -165,13 +165,13 @@ pub(crate) async fn remove_entry(
         // remove a non-empty folder, hence here we are ;-)
         (RemoveEntryExpect::Folder, ArcLocalChildManifest::Folder(_)) => (),
         (RemoveEntryExpect::EmptyFolder, ArcLocalChildManifest::Folder(child)) => {
-            for (_, maybe_child_id) in child.children.iter() {
+            for (_, maybe_grandchild_id) in child.children.iter() {
                 // The parent's `children` filed may contain invalid data (i.e. referencing
                 // a non existing child ID, or a child which `parent` field doesn't correspond
                 // to us). In this case we just pretend the entry doesn't exist.
-                let is_child = ops
+                let is_grandchild = ops
                     .store
-                    .ensure_manifest_exists_with_parent(*maybe_child_id, parent_id)
+                    .ensure_manifest_exists_with_parent(*maybe_grandchild_id, child_id)
                     .await
                     .map_err(|err| match err {
                         EnsureManifestExistsWithParentError::Offline => {
@@ -197,7 +197,7 @@ pub(crate) async fn remove_entry(
                         }
                     })?;
 
-                if is_child {
+                if is_grandchild {
                     return Err(WorkspaceRemoveEntryError::EntryIsNonEmptyFolder);
                 }
             }

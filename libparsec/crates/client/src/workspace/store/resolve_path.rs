@@ -305,6 +305,13 @@ pub(crate) struct ResolvePathForReparenting {
     pub src_child_update_lock_guard: ManifestUpdateLockGuard,
     pub dst_parent_manifest: Arc<LocalFolderManifest>,
     pub dst_parent_update_lock_guard: ManifestUpdateLockGuard,
+    // In most reparenting we don't even care if the destination exists given
+    // it is simply overwritten by the source.
+    // However this is not the case when doing an exchange between source and
+    // destination, given in this case the destination's `parent` field must
+    // also be modified.
+    pub dst_child_manifest: Option<ArcLocalChildManifest>,
+    pub dst_child_update_lock_guard: Option<ManifestUpdateLockGuard>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -315,10 +322,8 @@ pub(crate) enum ResolvePathForReparentingError {
     Stopped,
     #[error("Source doesn't exist")]
     SourceNotFound,
-    #[error("Destination parent doesn't exist")]
-    DestinationParentNotFound,
-    #[error("Destination parent exists but is not a folder")]
-    DestinationParentNotAFolder,
+    #[error("Destination doesn't exist")]
+    DestinationNotFound,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
     #[error(transparent)]
@@ -336,6 +341,12 @@ pub(crate) async fn resolve_path_for_reparenting(
     src_parent_path: &FsPath,
     src_child_name: &EntryName,
     dst_parent_path: &FsPath,
+    // In most reparenting we don't even care if the destination exists given
+    // it is simply overwritten by the source.
+    // However this is not the case when doing an exchange between source and
+    // destination, given in this case the destination's `parent` field must
+    // also be modified.
+    dst_child_name: Option<&EntryName>,
 ) -> Result<ResolvePathForReparenting, ResolvePathForReparentingError> {
     // A word about circular path detection:
     // - The path is resolved from the root, which itself is guaranteed to have its
@@ -368,6 +379,7 @@ pub(crate) async fn resolve_path_for_reparenting(
             src_parent_guard: Option<ManifestUpdateLockGuard>,
             src_child_guard: Option<ManifestUpdateLockGuard>,
             dst_parent_guard: Option<ManifestUpdateLockGuard>,
+            dst_child_guard: Option<ManifestUpdateLockGuard>,
         }
         impl Drop for AutoReleaseGuards<'_> {
             fn drop(&mut self) {
@@ -387,6 +399,7 @@ pub(crate) async fn resolve_path_for_reparenting(
             SrcParent,
             SrcChild,
             DstParent,
+            DstChild,
         }
 
         let (needed_before_resolution, who_need) = 'needed_before_resolution: {
@@ -396,6 +409,7 @@ pub(crate) async fn resolve_path_for_reparenting(
                 src_parent_guard: None,
                 src_child_guard: None,
                 dst_parent_guard: None,
+                dst_child_guard: None,
             };
 
             // 1) Resolve the destination parent path and lock for update
@@ -416,14 +430,14 @@ pub(crate) async fn resolve_path_for_reparenting(
                         Some(maybe_update_lock_guard.expect("always present"));
                     match manifest {
                         ArcLocalChildManifest::File(_) => {
-                            return Err(ResolvePathForReparentingError::DestinationParentNotAFolder)
+                            return Err(ResolvePathForReparentingError::DestinationNotFound)
                         }
                         ArcLocalChildManifest::Folder(manifest) => manifest,
                     }
                 }
 
                 CacheOnlyPathResolutionOutcome::EntryNotFound => {
-                    return Err(ResolvePathForReparentingError::DestinationParentNotFound)
+                    return Err(ResolvePathForReparentingError::DestinationNotFound)
                 }
 
                 other_outcome => {
@@ -508,13 +522,55 @@ pub(crate) async fn resolve_path_for_reparenting(
                 src_child_manifest
             };
 
-            // 4) All done, we defuse the auto release system to return it guards
+            // 4) Resolve the destination child path and lock for update
+
+            let dst_child_manifest = if let Some(dst_child_name) = dst_child_name {
+                let dst_child_id = match dst_parent_manifest.children.get(&dst_child_name) {
+                    Some(dst_child_id) => *dst_child_id,
+                    None => return Err(ResolvePathForReparentingError::DestinationNotFound),
+                };
+
+                let dst_child_manifest =
+                    match auto_release_guards.cache.child_manifests.get(&dst_child_id) {
+                        Some(manifest) => manifest.to_owned(),
+                        // Cache miss !
+                        None => {
+                            break 'needed_before_resolution (
+                                CacheOnlyPathResolutionOutcome::NeedPopulateCache(dst_child_id),
+                                WhoIsInNeed::DstChild,
+                            )
+                        }
+                    };
+
+                // Ensure the child agrees with the parent on the parenting relationship
+                if dst_child_manifest.parent() != dst_parent_manifest.base.id {
+                    return Err(ResolvePathForReparentingError::DestinationNotFound);
+                }
+
+                let maybe_update_lock_guard = match auto_release_guards
+                    .cache
+                    .lock_update_manifests
+                    .take(dst_child_id)
+                {
+                    ManifestUpdateLockTakeOutcome::Taken(lock) => Some(lock),
+                    ManifestUpdateLockTakeOutcome::NeedWait(need_wait) => {
+                        break 'needed_before_resolution (
+                            CacheOnlyPathResolutionOutcome::NeedWaitForTakenUpdateLock(need_wait),
+                            WhoIsInNeed::DstChild,
+                        );
+                    }
+                };
+                auto_release_guards.dst_child_guard =
+                    Some(maybe_update_lock_guard.expect("always present"));
+
+                Some(dst_child_manifest)
+            } else {
+                None
+            };
+
+            // 5) All done, we defuse the auto release system to return it guards
 
             return Ok(ResolvePathForReparenting {
-                dst_parent_update_lock_guard: auto_release_guards
-                    .dst_parent_guard
-                    .take()
-                    .expect("always present"),
                 src_parent_update_lock_guard: auto_release_guards
                     .src_parent_guard
                     .take()
@@ -523,9 +579,15 @@ pub(crate) async fn resolve_path_for_reparenting(
                     .src_child_guard
                     .take()
                     .expect("always present"),
+                dst_parent_update_lock_guard: auto_release_guards
+                    .dst_parent_guard
+                    .take()
+                    .expect("always present"),
+                dst_child_update_lock_guard: auto_release_guards.dst_parent_guard.take(),
                 src_parent_manifest,
                 src_child_manifest,
                 dst_parent_manifest,
+                dst_child_manifest,
             });
         };
 
@@ -543,8 +605,8 @@ pub(crate) async fn resolve_path_for_reparenting(
                         }
                         PopulateCacheFromLocalStorageOrServerError::EntryNotFound => match who_need
                         {
-                            WhoIsInNeed::DstParent => {
-                                ResolvePathForReparentingError::DestinationParentNotFound
+                            WhoIsInNeed::DstParent | WhoIsInNeed::DstChild => {
+                                ResolvePathForReparentingError::DestinationNotFound
                             }
                             WhoIsInNeed::SrcParent | WhoIsInNeed::SrcChild => {
                                 ResolvePathForReparentingError::SourceNotFound

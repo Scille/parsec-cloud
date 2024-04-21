@@ -4,11 +4,42 @@ use std::{path::PathBuf, sync::Arc};
 
 use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::prelude::*;
 
 use super::utils::{mount_and_test, os_ls};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
+    mount_and_test!(
+        env,
+        &tmp_path,
+        |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
+            let mut items = os_ls!(mountpoint_path).await;
+            // Children are stored in the workspace/folder manifests as a hashmap, so
+            // the order of iteration is not stable between runs...
+            items.sort();
+            p_assert_eq!(items, ["bar.txt", "foo"]);
+        }
+    );
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn ignore_invalid_children(tmp_path: TmpPath, env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+    let bad_parent_id = wksp1_foo_egg_txt_id;
+    let env = &env.customize(|builder| {
+        builder
+            .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
+            .customize_children(
+                [
+                    // Existing entry, but with a parent field not pointing to us
+                    ("bad_parent.txt", Some(bad_parent_id)),
+                ]
+                .into_iter(),
+            );
+    });
+
     mount_and_test!(
         env,
         &tmp_path,
