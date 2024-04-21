@@ -7,7 +7,7 @@ use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, DateTime, DeviceID, DeviceLabel, DeviceName, HumanHandle, Maybe,
+    self as libparsec_types, DateTime, DeviceID, DeviceLabel, DeviceName, HumanHandle,
     OrganizationID, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
 
@@ -182,61 +182,16 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;
 
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
-        // Since the introduction of UserUpdateCertificate, user profile can change.
-        // Hence this field only contains the initial profile the user had when it
-        // was enrolled.
-        let initial_profile = match data.profile {
-            Maybe::Present(profile) => {
-                // `profile` field is defined, however `is_admin` is also present for
-                // backward compatibility and we must ensure they are both compatible.
-                let expected_is_admin = profile == UserProfile::Admin;
-                if data.is_admin != expected_is_admin {
-                    return Err("Fields `profile` and `is_admin` have incompatible values");
-                }
-                profile
-            }
-            Maybe::Absent => {
-                // `profile` field not present, this is legacy data
-                if data.is_admin {
-                    UserProfile::Admin
-                } else {
-                    UserProfile::Standard
-                }
-            }
-        };
-
-        // `device_label` & `human_handle` fields has been introduced in Parsec v1.14,
-        // hence they are basically always here.
-        // If it's not the case, we are in an exotic case (very old device), so we don't
-        // bother much an use the redacted system to obtain device label & human handle.
-        // Of course redacted certificate has nothing to do with this, but it's just
-        // convenient and "good enough" to go this way ;-)
-        let device_label = match data.device_label {
-            Maybe::Absent | Maybe::Present(None) => {
-                DeviceLabel::new_redacted(data.device_id.device_name())
-            }
-            Maybe::Present(Some(device_label)) => device_label,
-        };
-        let human_handle = match data.human_handle {
-            Maybe::Absent | Maybe::Present(None) => {
-                HumanHandle::new_redacted(data.device_id.user_id())
-            }
-            Maybe::Present(Some(human_handle)) => human_handle,
-        };
-
         Ok(Self {
             organization_addr: data.organization_addr,
             device_id: data.device_id,
-            // Consider missing field as a `None` value
-            device_label,
-            human_handle,
+            device_label: data.device_label,
+            human_handle: data.human_handle,
             signing_key: data.signing_key,
             private_key: data.private_key,
-            initial_profile,
-            // For historical reason, we focus on the user manifest but in fact we
-            // refer to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
-            user_realm_id: data.user_manifest_id,
-            user_realm_key: data.user_manifest_key,
+            initial_profile: data.initial_profile,
+            user_realm_id: data.user_realm_id,
+            user_realm_key: data.user_realm_key,
             local_symkey: data.local_symkey,
             time_provider: TimeProvider::default(),
         })
@@ -245,32 +200,16 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
 
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
-        // Handle legacy `is_admin` field
-        let is_admin = obj.initial_profile == UserProfile::Admin;
-        // In case the human handle is redacted (i.e. we are dealing with a device
-        // created before Parsec v1.14) we cannot serialize it given then it would
-        // appear as if the human handle is a regular one using the redacted domain,
-        // which is not allowed !
-        let human_handle = {
-            if obj.human_handle.uses_redacted_domain() {
-                Maybe::Absent
-            } else {
-                Maybe::Present(Some(obj.human_handle))
-            }
-        };
         Self {
             organization_addr: obj.organization_addr,
             device_id: obj.device_id,
-            device_label: Maybe::Present(Some(obj.device_label)),
-            human_handle,
+            device_label: obj.device_label,
+            human_handle: obj.human_handle,
             signing_key: obj.signing_key,
             private_key: obj.private_key,
-            profile: Maybe::Present(obj.initial_profile),
-            is_admin,
-            // For historical reason, we focus on the user manifest but in fact we
-            // refer to the realm here, so rename `user_manifest_*` -> `user_realm_*`.
-            user_manifest_id: obj.user_realm_id,
-            user_manifest_key: obj.user_realm_key,
+            initial_profile: obj.initial_profile,
+            user_realm_id: obj.user_realm_id,
+            user_realm_key: obj.user_realm_key,
             local_symkey: obj.local_symkey,
         }
     }
