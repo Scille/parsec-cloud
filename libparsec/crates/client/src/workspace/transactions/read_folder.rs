@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{FsPathResolutionAndManifest, GetEntryError},
+        store::{GetManifestError, ResolvePathError},
         EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
@@ -75,6 +75,18 @@ pub struct FolderReader {
     manifest: Arc<LocalFolderManifest>,
 }
 
+#[derive(Debug)]
+pub enum FolderReaderStatNextOutcome<'a> {
+    Entry {
+        name: &'a EntryName,
+        stat: EntryStat,
+    },
+    /// The entry listen in the parent manifest turned not to be an actual
+    /// child (e.g. has been reparented)
+    InvalidChild,
+    NoMoreEntries,
+}
+
 impl FolderReader {
     // TODO: A possible future improvement here would be to read by batch in order
     //       to first ensure all children are available locally (and do a single
@@ -95,61 +107,60 @@ impl FolderReader {
     }
 
     /// Note children are listed in arbitrary order, and there is no '.' and '..'  special entries.
-    pub async fn stat_next<'a>(
+    pub async fn stat_child<'a>(
         &'a self,
         ops: &WorkspaceOps,
-        mut offset: usize,
-    ) -> Result<Option<(&'a EntryName, EntryStat)>, FolderReaderStatEntryError> {
+        index: usize,
+    ) -> Result<FolderReaderStatNextOutcome, FolderReaderStatEntryError> {
         let expected_parent_id = self.manifest.base.id;
 
-        loop {
-            let (child_name, child_id) = match self.manifest.children.iter().nth(offset) {
-                Some((child_name, child_id)) => (child_name, *child_id),
-                None => return Ok(None),
-            };
-            let child_stat = match ops.stat_entry_by_id(child_id).await {
-                Ok(stat) => stat,
-                Err(err) => {
-                    return Err(match err {
-                        // Special case: if the entry is not found it means this child is
-                        // invalid (e.g. the entry has been reparented during a move) and
-                        // should just be ignored.
-                        WorkspaceStatEntryError::EntryNotFound => {
-                            offset += 1;
-                            continue;
-                        }
-                        WorkspaceStatEntryError::Offline => FolderReaderStatEntryError::Offline,
-                        WorkspaceStatEntryError::Stopped => FolderReaderStatEntryError::Stopped,
-                        WorkspaceStatEntryError::NoRealmAccess => {
-                            FolderReaderStatEntryError::NoRealmAccess
-                        }
-                        WorkspaceStatEntryError::InvalidKeysBundle(err) => {
-                            FolderReaderStatEntryError::InvalidKeysBundle(err)
-                        }
-                        WorkspaceStatEntryError::InvalidCertificate(err) => {
-                            FolderReaderStatEntryError::InvalidCertificate(err)
-                        }
-                        WorkspaceStatEntryError::InvalidManifest(err) => {
-                            FolderReaderStatEntryError::InvalidManifest(err)
-                        }
-                        WorkspaceStatEntryError::Internal(err) => err.into(),
-                    });
-                }
-            };
-
-            // Last check is to ensure the parent and child manifests agree they are related,
-            // if that's not the case we just ignore this child and move to the next one.
-            let child_parent = match child_stat {
-                EntryStat::File { parent, .. } => parent,
-                EntryStat::Folder { parent, .. } => parent,
-            };
-            if child_parent != expected_parent_id {
-                offset += 1;
-                continue;
+        let (child_name, child_id) = match self.manifest.children.iter().nth(index) {
+            Some((child_name, child_id)) => (child_name, *child_id),
+            None => return Ok(FolderReaderStatNextOutcome::NoMoreEntries),
+        };
+        let child_stat = match ops.stat_entry_by_id(child_id).await {
+            Ok(stat) => stat,
+            Err(err) => {
+                return Err(match err {
+                    // Special case: if the entry is not found it means this child is
+                    // invalid (e.g. the entry has been reparented during a move) and
+                    // should just be ignored.
+                    WorkspaceStatEntryError::EntryNotFound => {
+                        return Ok(FolderReaderStatNextOutcome::InvalidChild)
+                    }
+                    WorkspaceStatEntryError::Offline => FolderReaderStatEntryError::Offline,
+                    WorkspaceStatEntryError::Stopped => FolderReaderStatEntryError::Stopped,
+                    WorkspaceStatEntryError::NoRealmAccess => {
+                        FolderReaderStatEntryError::NoRealmAccess
+                    }
+                    WorkspaceStatEntryError::InvalidKeysBundle(err) => {
+                        FolderReaderStatEntryError::InvalidKeysBundle(err)
+                    }
+                    WorkspaceStatEntryError::InvalidCertificate(err) => {
+                        FolderReaderStatEntryError::InvalidCertificate(err)
+                    }
+                    WorkspaceStatEntryError::InvalidManifest(err) => {
+                        FolderReaderStatEntryError::InvalidManifest(err)
+                    }
+                    WorkspaceStatEntryError::Internal(err) => err.into(),
+                });
             }
+        };
 
-            return Ok(Some((child_name, child_stat)));
+        // Last check is to ensure the parent and child manifests agree they are related,
+        // if that's not the case we just ignore this child and move to the next one.
+        let child_parent = match child_stat {
+            EntryStat::File { parent, .. } => parent,
+            EntryStat::Folder { parent, .. } => parent,
+        };
+        if child_parent != expected_parent_id {
+            return Ok(FolderReaderStatNextOutcome::InvalidChild);
         }
+
+        return Ok(FolderReaderStatNextOutcome::Entry {
+            name: child_name,
+            stat: child_stat,
+        });
     }
 
     /// Needed by WinFSP
@@ -172,31 +183,25 @@ pub async fn open_folder_reader_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
-    if entry_id == ops.realm_id {
-        let manifest = ops.store.get_workspace_manifest();
-
-        return Ok(FolderReader { manifest });
-    }
-
     let manifest = ops
         .store
-        .get_child_manifest(entry_id)
+        .get_manifest(entry_id)
         .await
         .map_err(|err| match err {
-            GetEntryError::Offline => WorkspaceOpenFolderReaderError::Offline,
-            GetEntryError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
-            GetEntryError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
-            GetEntryError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
-            GetEntryError::InvalidKeysBundle(err) => {
+            GetManifestError::Offline => WorkspaceOpenFolderReaderError::Offline,
+            GetManifestError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
+            GetManifestError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
+            GetManifestError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            GetManifestError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
-            GetEntryError::InvalidCertificate(err) => {
+            GetManifestError::InvalidCertificate(err) => {
                 WorkspaceOpenFolderReaderError::InvalidCertificate(err)
             }
-            GetEntryError::InvalidManifest(err) => {
+            GetManifestError::InvalidManifest(err) => {
                 WorkspaceOpenFolderReaderError::InvalidManifest(err)
             }
-            GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
+            GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
     match manifest {
@@ -209,32 +214,30 @@ pub async fn open_folder_reader(
     ops: &WorkspaceOps,
     path: &FsPath,
 ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
-    let manifest = ops
+    let (manifest, _) = ops
         .store
-        .resolve_path_and_get_manifest(path)
+        .resolve_path(path)
         .await
         .map_err(|err| match err {
-            GetEntryError::Offline => WorkspaceOpenFolderReaderError::Offline,
-            GetEntryError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
-            GetEntryError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
-            GetEntryError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
-            GetEntryError::InvalidKeysBundle(err) => {
+            ResolvePathError::Offline => WorkspaceOpenFolderReaderError::Offline,
+            ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
+            ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
+            ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            ResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
-            GetEntryError::InvalidCertificate(err) => {
+            ResolvePathError::InvalidCertificate(err) => {
                 WorkspaceOpenFolderReaderError::InvalidCertificate(err)
             }
-            GetEntryError::InvalidManifest(err) => {
+            ResolvePathError::InvalidManifest(err) => {
                 WorkspaceOpenFolderReaderError::InvalidManifest(err)
             }
-            GetEntryError::Internal(err) => err.context("cannot resolve path").into(),
+            ResolvePathError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
     match manifest {
-        FsPathResolutionAndManifest::Folder { manifest, .. } => Ok(FolderReader { manifest }),
-        FsPathResolutionAndManifest::File { .. } => {
-            Err(WorkspaceOpenFolderReaderError::EntryIsFile)
-        }
+        ArcLocalChildManifest::Folder(manifest) => Ok(FolderReader { manifest }),
+        ArcLocalChildManifest::File(_) => Err(WorkspaceOpenFolderReaderError::EntryIsFile),
     }
 }
 
@@ -343,16 +346,14 @@ async fn consume_reader(
     ops: &WorkspaceOps,
     reader: FolderReader,
 ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
-    let mut children_stats = {
-        // Manifest's children list may contains invalid entries (e.g. an entry that doesn't
-        // exist, or that has a different parent that us), so it's only a hint.
-        Vec::with_capacity(reader.manifest.children.len())
-    };
+    // Manifest's children list may contains invalid entries (e.g. an entry that doesn't
+    // exist, or that has a different parent that us), so it's only a hint.
+    let max_children = reader.manifest.children.len();
+    let mut children_stats = Vec::with_capacity(max_children);
 
-    let mut index = 0;
-    loop {
-        let maybe_entry = reader
-            .stat_next(ops, index)
+    for index in 0..max_children {
+        let stat_outcome = reader
+            .stat_child(ops, index)
             .await
             .map_err(|err| match err {
                 FolderReaderStatEntryError::Offline => WorkspaceStatFolderChildrenError::Offline,
@@ -374,12 +375,17 @@ async fn consume_reader(
                 }
             })?;
 
-        let (child_name, child_stat) = match maybe_entry {
-            None => break,
-            Some((child_name, child_stat)) => (child_name.to_owned(), child_stat),
-        };
-        children_stats.push((child_name, child_stat));
-        index += 1;
+        match stat_outcome {
+            FolderReaderStatNextOutcome::Entry {
+                name: child_name,
+                stat: child_stat,
+            } => {
+                children_stats.push((child_name.to_owned(), child_stat));
+            }
+            FolderReaderStatNextOutcome::InvalidChild => (),
+            // Our for loop already stops before `index` reaches `max_children`
+            FolderReaderStatNextOutcome::NoMoreEntries => unreachable!(),
+        }
     }
 
     Ok(children_stats)

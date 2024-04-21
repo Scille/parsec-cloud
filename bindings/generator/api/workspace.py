@@ -13,6 +13,7 @@ from .common import (
     Result,
     SizeInt,
     Variant,
+    VariantItemUnit,
     VersionInt,
     VlobID,
     Structure,
@@ -113,7 +114,7 @@ class WorkspaceCreateFileError(ErrorVariant):
     class ParentNotFound:
         pass
 
-    class ParentIsFile:
+    class ParentNotAFolder:
         pass
 
     class EntryExists:
@@ -148,7 +149,7 @@ class WorkspaceCreateFolderError(ErrorVariant):
     class ParentNotFound:
         pass
 
-    class ParentIsFile:
+    class ParentNotAFolder:
         pass
 
     class EntryExists:
@@ -208,17 +209,17 @@ class WorkspaceRemoveEntryError(ErrorVariant):
         pass
 
 
-class WorkspaceRenameEntryError(ErrorVariant):
+class WorkspaceMoveEntryError(ErrorVariant):
     class Offline:
         pass
 
     class Stopped:
         pass
 
-    class EntryNotFound:
+    class SourceNotFound:
         pass
 
-    class CannotRenameRoot:
+    class CannotMoveRoot:
         pass
 
     class ReadOnlyRealm:
@@ -228,6 +229,9 @@ class WorkspaceRenameEntryError(ErrorVariant):
         pass
 
     class DestinationExists:
+        pass
+
+    class DestinationNotFound:
         pass
 
     class InvalidKeysBundle:
@@ -349,12 +353,18 @@ async def workspace_stat_folder_children_by_id(
     raise NotImplementedError
 
 
-async def workspace_rename_entry(
+class MoveEntryMode(Variant):
+    CanReplace = VariantItemUnit()
+    NoReplace = VariantItemUnit()
+    Exchange = VariantItemUnit()
+
+
+async def workspace_move_entry(
     workspace: Handle,
-    path: FsPath,
-    new_name: EntryName,
-    overwrite: bool,
-) -> Result[None, WorkspaceRenameEntryError]:
+    src: FsPath,
+    dst: FsPath,
+    mode: MoveEntryMode,
+) -> Result[None, WorkspaceMoveEntryError]:
     raise NotImplementedError
 
 

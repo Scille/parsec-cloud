@@ -119,5 +119,29 @@ macro_rules! assert_ls {
         }
     };
 }
+
+macro_rules! assert_ls_with_id {
+    ($ops:expr, $path:expr, $expected:expr) => {
+        async {
+            let children = {
+                let path = $path.parse().unwrap();
+                let children_stats = $ops.stat_folder_children(&path).await.unwrap();
+                let mut children = children_stats
+                    .into_iter()
+                    .map(|(entry_name, entry_stat)| (entry_name.to_string(), entry_stat.id()))
+                    .collect::<Vec<_>>();
+                children.sort_by(|a, b| a.0.cmp(&b.0));
+                children
+            };
+            // Must specify `$expected` type to handle empty array
+            let expected: &[(&str, VlobID)] = &$expected;
+            let children = children.iter().map(|(name, id)| (name.as_str(), *id)).collect::<Vec<_>>();
+            // let expected = expected.into_iter().map(|(name, id)| (name.to_string(), *id)).collect::<Vec<_>>();
+            p_assert_eq!(children, expected);
+        }
+    };
+}
+
 pub(super) use assert_ls;
+pub(super) use assert_ls_with_id;
 pub(super) use ls;

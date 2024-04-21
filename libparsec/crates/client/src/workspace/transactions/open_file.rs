@@ -10,7 +10,7 @@ use super::WorkspaceCreateFileError;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{ForUpdateFileError, GetEntryError},
+        store::{ForUpdateFileError, ResolvePathError},
         OpenedFile, OpenedFileCursor, ReadMode, WorkspaceOps, WriteMode,
     },
 };
@@ -86,7 +86,7 @@ pub async fn open_file(
     path: FsPath,
     options: OpenOptions,
 ) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
-    // 0) Access control
+    // 1) Access control
 
     if options.write || options.truncate || options.create || options.create_new {
         let guard = ops
@@ -98,27 +98,21 @@ pub async fn open_file(
         }
     }
 
-    // 1) Handle root early as it is a special case (cannot use `get_child_manifest` for it)
-
-    if path.is_root() {
-        return Err(WorkspaceOpenFileError::EntryNotAFile);
-    }
-
     // 2) Resolve the file path (and create the file if needed)
 
     let entry_id = {
         let outcome = ops.store.resolve_path(&path).await;
         match outcome {
-            Ok(resolution) => {
+            Ok((manifest, _)) => {
                 if options.create_new {
                     return Err(WorkspaceOpenFileError::EntryExistsInCreateNewMode {
-                        entry_id: resolution.entry_id,
+                        entry_id: manifest.id(),
                     });
                 }
-                resolution.entry_id
+                manifest.id()
             }
             // Special case if the file doesn't exist but we are allowed to create it
-            Err(GetEntryError::EntryNotFound) if options.create || options.create_new => {
+            Err(ResolvePathError::EntryNotFound) if options.create || options.create_new => {
                 let outcome = super::create_file(ops, path).await;
                 outcome.or_else(|err| match err {
                     // Concurrent operation has created the file in the meantime
@@ -135,7 +129,7 @@ pub async fn open_file(
                     WorkspaceCreateFileError::ParentNotFound => {
                         Err(WorkspaceOpenFileError::EntryNotFound)
                     }
-                    WorkspaceCreateFileError::ParentIsFile => {
+                    WorkspaceCreateFileError::ParentNotAFolder => {
                         Err(WorkspaceOpenFileError::EntryNotFound)
                     }
                     WorkspaceCreateFileError::InvalidKeysBundle(err) => {
@@ -155,20 +149,22 @@ pub async fn open_file(
             // Actual errors, republishing
             Err(err) => {
                 return match err {
-                    GetEntryError::Offline => Err(WorkspaceOpenFileError::Offline),
-                    GetEntryError::Stopped => Err(WorkspaceOpenFileError::Stopped),
-                    GetEntryError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
-                    GetEntryError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
-                    GetEntryError::InvalidKeysBundle(err) => {
+                    ResolvePathError::Offline => Err(WorkspaceOpenFileError::Offline),
+                    ResolvePathError::Stopped => Err(WorkspaceOpenFileError::Stopped),
+                    ResolvePathError::EntryNotFound => Err(WorkspaceOpenFileError::EntryNotFound),
+                    ResolvePathError::NoRealmAccess => Err(WorkspaceOpenFileError::NoRealmAccess),
+                    ResolvePathError::InvalidKeysBundle(err) => {
                         Err(WorkspaceOpenFileError::InvalidKeysBundle(err))
                     }
-                    GetEntryError::InvalidCertificate(err) => {
+                    ResolvePathError::InvalidCertificate(err) => {
                         Err(WorkspaceOpenFileError::InvalidCertificate(err))
                     }
-                    GetEntryError::InvalidManifest(err) => {
+                    ResolvePathError::InvalidManifest(err) => {
                         Err(WorkspaceOpenFileError::InvalidManifest(err))
                     }
-                    GetEntryError::Internal(err) => Err(err.context("cannot resolve path").into()),
+                    ResolvePathError::Internal(err) => {
+                        Err(err.context("cannot resolve path").into())
+                    }
                 }
             }
         }

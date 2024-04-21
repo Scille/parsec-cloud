@@ -4,7 +4,7 @@
 //! - No cache&concurrency is handled at this level: better let the higher level
 //!   components do that since they have a better idea of what should be cached.
 //! - No encryption/serialization: simplify code (no need for type dispatching)
-//!   and testing (no need to build valid certificates objects.
+//!   and testing (no need to build valid certificates objects).
 
 use std::path::Path;
 
@@ -27,6 +27,11 @@ pub struct UpdateManifestData {
     pub encrypted: Vec<u8>,
     pub need_sync: bool,
     pub base_version: VersionInt,
+}
+
+pub enum PopulateManifestOutcome {
+    Stored,
+    AlreadyPresent,
 }
 
 impl WorkspaceStorage {
@@ -95,6 +100,13 @@ impl WorkspaceStorage {
 
     pub async fn get_manifest(&mut self, entry_id: VlobID) -> anyhow::Result<Option<Vec<u8>>> {
         self.platform.get_manifest(entry_id).await
+    }
+
+    pub async fn populate_manifest(
+        &mut self,
+        manifest: &UpdateManifestData,
+    ) -> anyhow::Result<PopulateManifestOutcome> {
+        self.platform.populate_manifest(manifest).await
     }
 
     pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
