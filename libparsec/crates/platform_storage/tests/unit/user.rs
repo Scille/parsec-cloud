@@ -167,7 +167,6 @@ async fn non_speculative_init(env: &TestbedEnv) {
             version: 0,
             created: user_manifest.updated,
             updated: user_manifest.updated,
-            workspaces_legacy_initial_info: vec![],
         },
         need_sync: true,
         updated: user_manifest.updated,

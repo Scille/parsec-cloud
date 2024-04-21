@@ -15,7 +15,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
     Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, RealmRole, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
+    FolderManifest, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
@@ -720,122 +720,40 @@ pub struct LocalUserManifest {
     pub base: UserManifest,
     pub need_sync: bool,
     pub updated: DateTime,
-    /// In Parsec < v3, `workspaces` field used to be synchronized and stored multiple
-    /// informations related to each workspace (workspace name, encryption key,
-    /// current self role).
-    /// However now all those informations are retrieved from certificates, so this
-    /// field is no longer synchronized (i.e. it is not present in the remote
-    /// `UserManifest`).
-    /// It is still in used though: it stores the name of each workspace, which is
-    /// needed to 1) keep this information between the local workspace creation and
-    /// the upload of it initial `RealmNameCertificate` and 2) to avoid having to
-    /// fetch from the server the workspace keys to decrypt the name from the
-    /// `RealmNameCertificate` (otherwise the workspace name wouldn't be available
-    /// while offline...)
+    /// This field is used to store the name of the realm:
+    /// - When the realm got created, its name is stored here until the initial
+    ///   `RealmNameCertificate` is uploaded (which can take time, e.g. if the
+    ///   client is offline).
+    /// - After that, to access the workspace name even when the client is offline (given
+    ///   `RealmNameCertificate` contains the name encrypted, but the decryption key
+    ///   must be fetched by `realm_get_keys_bundle` (which cannot be done while offline).
     pub local_workspaces: Vec<LocalUserManifestWorkspaceEntry>,
-    // Speculative placeholders are created when we want to access the
-    // user manifest but didn't retrieve it from server yet. This implies:
-    // - non-placeholders cannot be speculative
-    // - the only non-speculative placeholder is the placeholder initialized
-    //   during the initial user claim (by opposition of subsequent device
-    //   claims on the same user)
-    // This speculative information is useful during merge to understand if
-    // a data is not present in the placeholder compared with a remote because:
-    // a) the data is not locally known (speculative is True)
-    // b) the data is known, but has been locally removed (speculative is False)
+    /// Speculative placeholders are created when we want to access the
+    /// user manifest but didn't retrieve it from server yet. This implies:
+    /// - non-placeholders cannot be speculative
+    /// - the only non-speculative placeholder is the placeholder initialized
+    ///   during the initial user claim (by opposition of subsequent device
+    ///   claims on the same user)
+    /// This speculative information is useful during merge to understand if
+    /// a data is not present in the placeholder compared with a remote because:
+    /// a) the data is not locally known (speculative is True)
+    /// b) the data is known, but has been locally removed (speculative is False)
     pub speculative: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(
-    into = "LocalUserManifestWorkspaceEntryData",
-    from = "LocalUserManifestWorkspaceEntryData"
-)]
-pub struct LocalUserManifestWorkspaceEntry {
-    pub id: VlobID,
-    pub name: EntryName,
-    pub name_origin: CertificateBasedInfoOrigin,
-    pub role: RealmRole,
-    pub role_origin: CertificateBasedInfoOrigin,
-}
-
-impl From<LocalUserManifestWorkspaceEntryData> for LocalUserManifestWorkspaceEntry {
-    fn from(data: LocalUserManifestWorkspaceEntryData) -> Self {
-        let name_origin = match data.name_origin {
-            libparsec_types::Maybe::Present(name_origin) => name_origin,
-            // Backward compatibility for Parsec < v3.0
-            // Back in those dark ages there was no realm name certificate, hence the
-            // name can be nothing but a placeholder !
-            libparsec_types::Maybe::Absent => CertificateBasedInfoOrigin::Placeholder,
-        };
-
-        // Handling of legacy `None` in role should have been taken care of in our
-        // caller (i.e. `LocalUserManifestData` -> `LocalUserManifest` converter)
-
-        let role = data.role.expect("Legacy no longer shared workspace entry");
-
-        let role_origin = match data.role_origin {
-            libparsec_types::Maybe::Present(role_origin) => role_origin,
-            // Backward compatibility for Parsec < v3.0
-            libparsec_types::Maybe::Absent => CertificateBasedInfoOrigin::Placeholder,
-        };
-
-        Self {
-            id: data.id,
-            name: data.name,
-            name_origin,
-            role,
-            role_origin,
-        }
-    }
-}
-impl From<LocalUserManifestWorkspaceEntry> for LocalUserManifestWorkspaceEntryData {
-    fn from(obj: LocalUserManifestWorkspaceEntry) -> Self {
-        Self {
-            id: obj.id,
-            name: obj.name,
-            name_origin: libparsec_types::Maybe::Present(obj.name_origin),
-            role: Some(obj.role),
-            role_origin: libparsec_types::Maybe::Present(obj.role_origin),
-        }
-    }
 }
 
 impl_local_manifest_dump_load!(LocalUserManifest);
 
 parsec_data!("schema/local_manifest/local_user_manifest.json5");
 
-impl From<LocalUserManifestData> for LocalUserManifest {
-    fn from(data: LocalUserManifestData) -> Self {
-        Self {
-            base: data.base,
-            need_sync: data.need_sync,
-            updated: data.updated,
-            local_workspaces: data
-                .workspaces
-                .into_iter()
-                .filter_map(
-                    // Parsec < v3.0 backward compatibility: workspaces with `None` role
-                    // are not longer shared with us and hence must be ignored
-                    |e| e.role.map(|_| e.into()),
-                )
-                .collect(),
-            speculative: data.speculative.into(),
-        }
-    }
-}
-impl From<LocalUserManifest> for LocalUserManifestData {
-    fn from(obj: LocalUserManifest) -> Self {
-        Self {
-            ty: Default::default(),
-            base: obj.base,
-            need_sync: obj.need_sync,
-            updated: obj.updated,
-            workspaces: obj.local_workspaces.into_iter().map(|e| e.into()).collect(),
-            speculative: obj.speculative.into(),
-        }
-    }
-}
+impl_transparent_data_format_conversion!(
+    LocalUserManifest,
+    LocalUserManifestData,
+    base,
+    need_sync,
+    updated,
+    local_workspaces,
+    speculative,
+);
 
 impl LocalUserManifest {
     pub fn new(
@@ -852,7 +770,6 @@ impl LocalUserManifest {
                 version: 0,
                 created: timestamp,
                 updated: timestamp,
-                workspaces_legacy_initial_info: Vec::new(),
             },
             need_sync: true,
             updated: timestamp,
@@ -875,7 +792,6 @@ impl LocalUserManifest {
             base,
             need_sync: false,
             updated: remote.updated,
-            // `workspaces` field is deprecated on non-local user manifest
             local_workspaces: vec![],
             speculative: false,
         }
@@ -889,7 +805,6 @@ impl LocalUserManifest {
             version: self.base.version + 1,
             created: self.base.created,
             updated: self.updated,
-            workspaces_legacy_initial_info: self.base.workspaces_legacy_initial_info.clone(),
         }
     }
 
