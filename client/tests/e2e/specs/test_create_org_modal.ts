@@ -27,7 +27,7 @@ describe('Create a new organization', () => {
     cy.get('.create-organization-modal').find('#next-button').as('okButton').should('have.class', 'button-disabled');
     cy.get('.create-organization-modal').find('.org-name').find('.form-error').as('error').should('not.be.visible');
 
-    cy.get('@input').find('input').type('Org#');
+    cy.get('@input').find('input').type('Org#').blur();
     cy.get('@input').should('have.class', 'input-invalid');
     cy.get('@error').should('be.visible');
     cy.get('@error').contains('Only letters, digits, underscores and hyphens. No spaces.');
@@ -38,7 +38,7 @@ describe('Create a new organization', () => {
     cy.get('@error').should('not.be.visible');
     cy.get('@okButton').should('have.class', 'button-disabled');
 
-    cy.get('@input').find('input').type('MyOrg');
+    cy.get('@input').find('input').type('MyOrg').blur();
     cy.get('@input').should('have.class', 'input-valid');
     cy.get('@error').should('not.be.visible');
     cy.get('@okButton').should('not.have.class', 'button-disabled');

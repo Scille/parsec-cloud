@@ -27,6 +27,7 @@
         ref="inputRef"
         :placeholder="$msTranslate(placeholder)"
         :value="modelValue"
+        @ion-blur="validate(modelValue || '')"
         @ion-input="onChange($event.detail.value || '')"
         @keyup.enter="enterPressed($event.target.value)"
         :disabled="$props.disabled"
@@ -86,6 +87,7 @@ function setFocus(): void {
 }
 
 async function enterPressed(value: string): Promise<void> {
+  await validate(value);
   if (!props.validator || validity.value === Validity.Valid) {
     emits('onEnterKeyup', value);
   }
@@ -114,7 +116,9 @@ async function validate(value: string): Promise<void> {
 async function onChange(value: string): Promise<void> {
   emits('update:modelValue', value);
   emits('change', value);
-  await validate(value);
+  if (validity.value === Validity.Invalid) {
+    await validate(value);
+  }
 }
 </script>
 
