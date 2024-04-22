@@ -145,13 +145,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.84"
-description = "Type annotations for boto3 1.34.84 generated with mypy-boto3-builder 7.23.2"
+version = "1.34.88"
+description = "Type annotations for boto3 1.34.88 generated with mypy-boto3-builder 7.23.2"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.34.84-py3-none-any.whl", hash = "sha256:dd8b6147297b5aefd52212645179c96c4b5bcb4e514667dca6170485c1d4954a"},
-    {file = "boto3_stubs-1.34.84.tar.gz", hash = "sha256:73bbb509a69c4ac8cce038afb1510686b88398cbd46d5df1e3238fce66df9af5"},
+    {file = "boto3_stubs-1.34.88-py3-none-any.whl", hash = "sha256:8f472d1bf09743c3d33304ecc8830d70ebe3ca19ac9604ae8da9af55421b0fce"},
+    {file = "boto3_stubs-1.34.88.tar.gz", hash = "sha256:23ca9e0cd0d3e7702d6631a1e94a4208a26b39fa6b12c734427e68a7fa649477"},
 ]
 
 [package.dependencies]
@@ -201,7 +201,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.84)", "botocore (==1.34.84)"]
+boto3 = ["boto3 (==1.34.88)", "botocore (==1.34.88)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -882,13 +882,13 @@ testing = ["pre-commit"]
 
 [[package]]
 name = "fastapi"
-version = "0.110.1"
+version = "0.110.2"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fastapi-0.110.1-py3-none-any.whl", hash = "sha256:5df913203c482f820d31f48e635e022f8cbfe7350e4830ef05a3163925b1addc"},
-    {file = "fastapi-0.110.1.tar.gz", hash = "sha256:6feac43ec359dfe4f45b2c18ec8c94edb8dc2dfc461d417d9e626590c071baad"},
+    {file = "fastapi-0.110.2-py3-none-any.whl", hash = "sha256:239403f2c0a3dda07a9420f95157a7f014ddb2b770acdbc984f9bdf3ead7afdb"},
+    {file = "fastapi-0.110.2.tar.gz", hash = "sha256:b53d673652da3b65e8cd787ad214ec0fe303cad00d2b529b86ce7db13f17518d"},
 ]
 
 [package.dependencies]
@@ -1383,13 +1383,13 @@ typing-extensions = ">=4.6.0,<4.7.0 || >4.7.0"
 
 [[package]]
 name = "pyright"
-version = "1.1.358"
+version = "1.1.359"
 description = "Command line wrapper for pyright"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pyright-1.1.358-py3-none-any.whl", hash = "sha256:0995b6a95eb11bd26f093cd5dee3d5e7258441b1b94d4a171b5dc5b79a1d4f4e"},
-    {file = "pyright-1.1.358.tar.gz", hash = "sha256:185524a8d52f6f14bbd3b290b92ad905f25b964dddc9e7148aad760bd35c9f60"},
+    {file = "pyright-1.1.359-py3-none-any.whl", hash = "sha256:5582777be7eab73512277ac7da7b41e15bc0737f488629cb9babd96e0769be61"},
+    {file = "pyright-1.1.359.tar.gz", hash = "sha256:f0eab50f3dafce8a7302caeafd6a733f39901a2bf5170bb23d77fd607c8a8dbc"},
 ]
 
 [package.dependencies]
