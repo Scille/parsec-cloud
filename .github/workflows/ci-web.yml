@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # pin v4.1.2
+      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # pin v4.1.3
         timeout-minutes: 5
 
       - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # pin v4.0.2
@@ -110,7 +110,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@99774fec7fd4f75144bd0134a24a992297768308 # pin v2.32.17
+      - uses: taiki-e/install-action@e553ccd87e21fd7eeca7478760ec8dbf0bd45831 # pin v2.33.3
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
