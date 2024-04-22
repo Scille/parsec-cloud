@@ -44,6 +44,9 @@ import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { TranslationPlugin, initTranslations } from '@/services/translation';
+// import { TranslationPlugin, I18n } from 'megashark-lib';
+// import appEnUS from '@/locales/en-US.json';
+// import appFrFR from '@/locales/fr-FR.json';
 import '@/theme/global.scss';
 
 import { Base64 } from '@/common/base64';
@@ -56,6 +59,13 @@ async function setupApp(): Promise<void> {
   const config = await storageManager.retrieveConfig();
 
   const i18n = initTranslations(config.locale);
+  // const i18n = I18n.init({
+  //   defaultLocale: 'en-US',
+  //   customAssets: {
+  //     'fr-FR': appFrFR,
+  //     'en-US': appEnUS,
+  //   },
+  // });
 
   const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
