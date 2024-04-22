@@ -54,7 +54,7 @@
     </ion-radio-group>
     <ms-input
       class="item-radio__input"
-      :placeholder="$msTranslate('CreateOrganization.parsecServerUrl')"
+      :placeholder="'CreateOrganization.parsecServerUrl'"
       v-model="serverAddr"
       name="serverUrl"
       v-show="mode === ServerMode.Custom"

@@ -5,7 +5,7 @@ import { ConnectionHandle, EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, 
 import { getConnectionHandle } from '@/router';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
-import { Translatable, translate } from '@/services/translation';
+import { Translatable } from '@/services/translation';
 import { modalController } from '@ionic/vue';
 import { v4 as uuid4 } from 'uuid';
 
@@ -147,7 +147,7 @@ export class InformationManager {
   private async showModal(information: Information): Promise<void> {
     const alertModalConfig: MsAlertModalConfig = {
       theme: information.theme,
-      message: translate(information.message),
+      message: information.message,
     };
 
     await this._createAndPresentModal(alertModalConfig);
