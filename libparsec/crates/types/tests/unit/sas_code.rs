@@ -7,12 +7,12 @@ use crate::{SASCode, SecretKey};
 #[test]
 fn generate() {
     let claimer_nonce = hex!(
-        "f4b8b6327c5d49580d34fdb0512cbcb9b794511eb33631258dfdbcf7ebccc875909e"
-        "79ae346d6eefbf775fed9fe9027cae0f56bb9269f0aae3eaf614cd89e77e"
+        "f4b8b6327c5d49580d34fdb0512cbcb9b794511eb33631258dfdbcf7ebccc875909e79"
+        "ae346d6eefbf775fed9fe9027cae0f56bb9269f0aae3eaf614cd89e77e"
     );
     let greeter_nonce = hex!(
-        "031a533ea63a2d85f5ca69720dfdde2799982aebff22cca1d97b433770492f291721"
-        "c59b088afcecb80385ce313b58902ea3bac3857856194af4d08c8f0b8c3c"
+        "031a533ea63a2d85f5ca69720dfdde2799982aebff22cca1d97b433770492f291721c5"
+        "9b088afcecb80385ce313b58902ea3bac3857856194af4d08c8f0b8c3c"
     );
     let shared_secret_key = SecretKey::from(hex!(
         "1452fb69a5eed5c1e432c3e666d7b17bdf21b33088086682ddc45b6fa33a0460"
