@@ -284,7 +284,7 @@ std::sync::Arc::new(
 {%- elif type.kind == "list" -%}
 {
     // JsArray::new allocates with `undefined` value, that's why we `set` value
-    let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len() as u32);
+    let js_array = JsArray::new({{ mut_cx_ref }}, {{ rs_value }}.len());
     for (i, elem) in {{ rs_value }}.into_iter().enumerate() {
         let js_elem = {{ render_rs_to_js("elem", type.elem, mut_cx_ref) }};
         js_array.set({{ mut_cx_ref }}, i as u32, js_elem)?;

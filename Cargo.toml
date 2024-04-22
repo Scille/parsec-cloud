@@ -124,7 +124,7 @@ futures = { version = "0.3.30", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
 # Two versions of `getrandom` needed in `libparsec_crypto`
 getrandom_01 = { package = "getrandom", version = "0.1.16", default-features = false }
-getrandom_02 = { package = "getrandom", version = "0.2.10", default-features = false }
+getrandom_02 = { package = "getrandom", version = "0.2.14", default-features = false }
 glob = { version = "0.3.1", default-features = false }
 gloo-timers = { version = "0.3.0", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
@@ -141,7 +141,7 @@ libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.21", default-features = false }
 miniserde = { version = "0.1.39", default-features = false }
-neon = { version = "0.10.1", default-features = false }
+neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 openssl = { version = "0.10.64", default-features = false }
 paste = { version = "1.0.14", default-features = false }
