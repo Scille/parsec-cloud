@@ -136,11 +136,6 @@ impl UserCertificate {
     }
 
     #[getter]
-    fn is_admin(&self) -> bool {
-        self.0.profile == libparsec_types::UserProfile::Admin
-    }
-
-    #[getter]
     fn author(&self) -> Option<DeviceID> {
         match &self.0.author {
             CertificateSignerOwned::Root => None,
