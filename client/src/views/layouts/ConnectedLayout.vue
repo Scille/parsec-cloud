@@ -10,8 +10,9 @@
 </template>
 
 <script lang="ts" setup>
+import { needsMocks } from '@/parsec';
 import { getConnectionHandle } from '@/router';
-import { EventDistributorKey } from '@/services/eventDistributor';
+import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
 import { ImportManagerKey } from '@/services/importManager';
 import { InformationManagerKey } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
@@ -26,6 +27,9 @@ onMounted(async () => {
   if (!handle) {
     console.error('Could not retrieve connection handle');
     return;
+  }
+  if (needsMocks() && !injectionProvider.hasInjections(handle)) {
+    injectionProvider.createNewInjections(handle, new EventDistributor());
   }
   const inj = injectionProvider.getInjections(handle);
   // Provide the injections to children

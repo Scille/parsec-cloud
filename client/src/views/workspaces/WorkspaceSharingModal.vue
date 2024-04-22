@@ -3,7 +3,7 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="$msTranslate('WorkspaceSharing.title')"
+      :title="'WorkspaceSharing.title'"
       :close-button="{ visible: true }"
     >
       <ion-text class="modal-title">
@@ -62,7 +62,7 @@ import {
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey, translate } from '@/services/translation';
-import { IonList, IonPage } from '@ionic/vue';
+import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const search = ref('');
