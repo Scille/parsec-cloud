@@ -616,7 +616,7 @@ fn struct_device_claim_in_progress1_info_rs_to_js<'a>(
     js_obj.set(cx, "greeterSas", js_greeter_sas)?;
     let js_greeter_sas_choices = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.greeter_sas_choices.len() as u32);
+        let js_array = JsArray::new(cx, rs_obj.greeter_sas_choices.len());
         for (i, elem) in rs_obj.greeter_sas_choices.into_iter().enumerate() {
             let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
             js_array.set(cx, i as u32, js_elem)?;
@@ -814,7 +814,7 @@ fn struct_device_greet_in_progress2_info_rs_to_js<'a>(
     js_obj.set(cx, "claimerSas", js_claimer_sas)?;
     let js_claimer_sas_choices = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len() as u32);
+        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len());
         for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
             let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
             js_array.set(cx, i as u32, js_elem)?;
@@ -1397,7 +1397,7 @@ fn struct_started_workspace_info_rs_to_js<'a>(
     js_obj.set(cx, "currentSelfRole", js_current_self_role)?;
     let js_mountpoints = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.mountpoints.len() as u32);
+        let js_array = JsArray::new(cx, rs_obj.mountpoints.len());
         for (i, elem) in rs_obj.mountpoints.into_iter().enumerate() {
             let js_elem = {
                 let (x0, x1) = elem;
@@ -1522,7 +1522,7 @@ fn struct_user_claim_in_progress1_info_rs_to_js<'a>(
     js_obj.set(cx, "greeterSas", js_greeter_sas)?;
     let js_greeter_sas_choices = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.greeter_sas_choices.len() as u32);
+        let js_array = JsArray::new(cx, rs_obj.greeter_sas_choices.len());
         for (i, elem) in rs_obj.greeter_sas_choices.into_iter().enumerate() {
             let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
             js_array.set(cx, i as u32, js_elem)?;
@@ -1720,7 +1720,7 @@ fn struct_user_greet_in_progress2_info_rs_to_js<'a>(
     js_obj.set(cx, "claimerSas", js_claimer_sas)?;
     let js_claimer_sas_choices = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len() as u32);
+        let js_array = JsArray::new(cx, rs_obj.claimer_sas_choices.len());
         for (i, elem) in rs_obj.claimer_sas_choices.into_iter().enumerate() {
             let js_elem = JsString::try_new(cx, elem).or_throw(cx)?;
             js_array.set(cx, i as u32, js_elem)?;
@@ -3868,7 +3868,7 @@ fn variant_entry_stat_rs_to_js<'a>(
             js_obj.set(cx, "needSync", js_need_sync)?;
             let js_children = {
                 // JsArray::new allocates with `undefined` value, that's why we `set` value
-                let js_array = JsArray::new(cx, children.len() as u32);
+                let js_array = JsArray::new(cx, children.len());
                 for (i, elem) in children.into_iter().enumerate() {
                     let js_elem = {
                         let (x0, x1) = elem;
@@ -7175,7 +7175,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            let js_array = JsArray::new(&mut cx, ok.len());
                             for (i, elem) in ok.into_iter().enumerate() {
                                 let js_elem = variant_invite_list_item_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
@@ -7241,7 +7241,7 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            let js_array = JsArray::new(&mut cx, ok.len());
                             for (i, elem) in ok.into_iter().enumerate() {
                                 let js_elem = struct_device_info_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
@@ -7302,7 +7302,7 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            let js_array = JsArray::new(&mut cx, ok.len());
                             for (i, elem) in ok.into_iter().enumerate() {
                                 let js_elem = struct_user_info_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
@@ -7371,7 +7371,7 @@ fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            let js_array = JsArray::new(&mut cx, ok.len());
                             for (i, elem) in ok.into_iter().enumerate() {
                                 let js_elem =
                                     struct_workspace_user_access_info_rs_to_js(&mut cx, elem)?;
@@ -7430,7 +7430,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
                             // JsArray::new allocates with `undefined` value, that's why we `set` value
-                            let js_array = JsArray::new(&mut cx, ok.len() as u32);
+                            let js_array = JsArray::new(&mut cx, ok.len());
                             for (i, elem) in ok.into_iter().enumerate() {
                                 let js_elem = struct_workspace_info_rs_to_js(&mut cx, elem)?;
                                 js_array.set(&mut cx, i as u32, js_elem)?;
@@ -9429,7 +9429,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = {
                     // JsArray::new allocates with `undefined` value, that's why we `set` value
-                    let js_array = JsArray::new(&mut cx, ret.len() as u32);
+                    let js_array = JsArray::new(&mut cx, ret.len());
                     for (i, elem) in ret.into_iter().enumerate() {
                         let js_elem = struct_available_device_rs_to_js(&mut cx, elem)?;
                         js_array.set(&mut cx, i as u32, js_elem)?;
@@ -9749,7 +9749,7 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let ret = libparsec::path_split(&path);
     let js_ret = {
         // JsArray::new allocates with `undefined` value, that's why we `set` value
-        let js_array = JsArray::new(&mut cx, ret.len() as u32);
+        let js_array = JsArray::new(&mut cx, ret.len());
         for (i, elem) in ret.into_iter().enumerate() {
             let js_elem = JsString::try_new(&mut cx, elem).or_throw(&mut cx)?;
             js_array.set(&mut cx, i as u32, js_elem)?;

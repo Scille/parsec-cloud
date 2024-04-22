@@ -22,7 +22,7 @@ workspace = true
 libparsec = { workspace = true }
 lazy_static = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
-neon = { workspace = true, features = ["napi-6", "channel-api", "promise-api"] }
+neon = { workspace = true, features = ["napi-8"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
