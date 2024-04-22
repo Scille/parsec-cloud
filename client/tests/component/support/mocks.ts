@@ -51,6 +51,13 @@ function mockLibParsec(): void {
       },
       Path: {
         ...Path,
+        parent: async (path: string): Promise<string> => {
+          const idx = path.lastIndexOf('/');
+          if (idx === -1 || idx === 0) {
+            return path;
+          }
+          return path.slice(0, idx);
+        },
         join: async (path: string, fileName: string): Promise<string> => {
           return `${path}/${fileName}`;
         },
