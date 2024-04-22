@@ -29,7 +29,7 @@ export interface IValidator {
 
 export const emailValidator: IValidator = async function (value: string) {
   value = value.trim();
-  if (!value.includes('@') || value.length === 0) {
+  if (value.length === 0) {
     return { validity: Validity.Intermediate };
   }
   return (await isValidEmail(value)) ? { validity: Validity.Valid } : { validity: Validity.Invalid, reason: 'validators.userInfo.email' };
