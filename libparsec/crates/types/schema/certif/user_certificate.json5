@@ -15,10 +15,9 @@
             "type": "UserID"
         },
         {
+            // None in case of redacted certificate
             "name": "human_handle",
-            "type": "NonRequiredOption<HumanHandle>",
-            // Hack to indicate this field was added in Parsec v1.13, given revision is meaningless for data
-            "introduced_in_revision": 113
+            "type": "RequiredOption<HumanHandle>"
         },
         {
             "name": "public_key",
@@ -29,16 +28,8 @@
             "type": "PrivateKeyAlgorithm"
         },
         {
-            // `profile` replaces `is_admin` field (which is still required for backward
-            // compatibility), hence `None` is not allowed
-            "name": "is_admin",
-            "type": "Boolean"
-        },
-        {
             "name": "profile",
-            "type": "UserProfile",
-            // Hack to indicate this field was added in Parsec v1.14, given revision is meaningless for data
-            "introduced_in_revision": 114
+            "type": "UserProfile"
         }
     ],
     "nested_types": [

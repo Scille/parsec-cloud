@@ -309,21 +309,9 @@ parsec_data!("schema/certif/user_certificate.json5");
 
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
-        let profile = data.profile.unwrap_or(match data.is_admin {
-            true => UserProfile::Admin,
-            false => UserProfile::Standard,
-        });
         let human_handle = match data.human_handle {
-            libparsec_types::Maybe::Absent | libparsec_types::Maybe::Present(None) => {
-                // Human handle can be none for:
-                // - redacted certificate
-                // - legacy non-redacted certificate
-                // We consider legacy a corner case and hence handle it as redacted
-                MaybeRedacted::Redacted(HumanHandle::new_redacted(&data.user_id))
-            }
-            libparsec_types::Maybe::Present(Some(human_handle)) => {
-                MaybeRedacted::Real(human_handle)
-            }
+            None => MaybeRedacted::Redacted(HumanHandle::new_redacted(&data.user_id)),
+            Some(human_handle) => MaybeRedacted::Real(human_handle),
         };
         Self {
             author: data.author,
@@ -332,7 +320,7 @@ impl From<UserCertificateData> for UserCertificate {
             human_handle,
             public_key: data.public_key,
             algorithm: data.algorithm,
-            profile,
+            profile: data.profile,
         }
     }
 }
@@ -340,10 +328,8 @@ impl From<UserCertificateData> for UserCertificate {
 impl From<UserCertificate> for UserCertificateData {
     fn from(obj: UserCertificate) -> Self {
         let human_handle = match obj.human_handle {
-            MaybeRedacted::Real(human_handle) => {
-                libparsec_types::Maybe::Present(Some(human_handle))
-            }
-            MaybeRedacted::Redacted(_) => libparsec_types::Maybe::Present(None),
+            MaybeRedacted::Real(human_handle) => Some(human_handle),
+            MaybeRedacted::Redacted(_) => None,
         };
         Self {
             ty: Default::default(),
@@ -352,9 +338,8 @@ impl From<UserCertificate> for UserCertificateData {
             user_id: obj.user_id,
             human_handle,
             public_key: obj.public_key,
-            profile: obj.profile.into(),
             algorithm: obj.algorithm,
-            is_admin: obj.profile == UserProfile::Admin,
+            profile: obj.profile,
         }
     }
 }
@@ -537,16 +522,10 @@ impl DeviceCertificate {
 impl From<DeviceCertificateData> for DeviceCertificate {
     fn from(data: DeviceCertificateData) -> Self {
         let device_label = match data.device_label {
-            libparsec_types::Maybe::Absent | libparsec_types::Maybe::Present(None) => {
-                // Device label can be none for:
-                // - redacted certificate
-                // - legacy non-redacted certificate
-                // We consider legacy a corner case and hence handle it as redacted
+            None => {
                 MaybeRedacted::Redacted(DeviceLabel::new_redacted(data.device_id.device_name()))
             }
-            libparsec_types::Maybe::Present(Some(device_label)) => {
-                MaybeRedacted::Real(device_label)
-            }
+            Some(device_label) => MaybeRedacted::Real(device_label),
         };
         Self {
             author: data.author,
@@ -562,10 +541,8 @@ impl From<DeviceCertificateData> for DeviceCertificate {
 impl From<DeviceCertificate> for DeviceCertificateData {
     fn from(obj: DeviceCertificate) -> Self {
         let device_label = match obj.device_label {
-            MaybeRedacted::Real(device_label) => {
-                libparsec_types::Maybe::Present(Some(device_label))
-            }
-            MaybeRedacted::Redacted(_) => libparsec_types::Maybe::Present(None),
+            MaybeRedacted::Real(device_label) => Some(device_label),
+            MaybeRedacted::Redacted(_) => None,
         };
         Self {
             ty: Default::default(),
