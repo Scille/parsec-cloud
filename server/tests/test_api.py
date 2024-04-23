@@ -5,8 +5,6 @@ from importlib import import_module
 from pathlib import Path
 from typing import Any
 
-import pytest
-
 
 def parse_json_with_comment(raw: str) -> Any:
     return json.loads(
@@ -14,8 +12,7 @@ def parse_json_with_comment(raw: str) -> Any:
     )
 
 
-@pytest.mark.xfail(reason="TODO: tests are missing !")
-def test_each_cmds_req_reps_have_dedicated_test() -> None:
+def test_each_cmd_req_rep_has_dedicated_test() -> None:
     schema_dir = (Path(__file__) / "../../../libparsec/crates/protocol/schema/").resolve()
 
     missing = []
@@ -39,7 +36,7 @@ def test_each_cmds_req_reps_have_dedicated_test() -> None:
                         cmd_rep_x_test_fn = getattr(api_mod, test_name, None)
 
                         if cmd_rep_x_test_fn is None or not callable(cmd_rep_x_test_fn):
-                            # Last chance: the command might have multiple tests and hence have it name be used as prefix
+                            # Last chance: the command might have multiple tests and hence have its name used as prefix
                             tests = [x for x in dir(api_mod) if x.startswith(test_name)]
                             if tests:
                                 assert (
