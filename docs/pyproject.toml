@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.12.0"
 sphinx = "<8.0.0"
-sphinx-intl = "^2.1.0"
+sphinx-intl = "^2.2.0"
 sphinx-rtd-theme = "^2.0.0"
 sphinx-copybutton = "^0.5.2"
 docutils = "0.20.1"
