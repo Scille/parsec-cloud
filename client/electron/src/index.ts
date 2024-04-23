@@ -58,7 +58,7 @@ if (!lock) {
 
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     if (!myCapacitorApp.isMainWindowVisible()) {
-      myCapacitorApp.showMainWindow();
+      myCapacitorApp.getMainWindow().show();
     } else {
       myCapacitorApp.getMainWindow().focus();
     }
@@ -87,6 +87,14 @@ app.on('open-url', (_event, url) => {
   }
 });
 
+// This is triggered only on cmd+Q on MacOS right before the window `close` event.
+// This is used to differentiate cmd+Q from red X which also fires `close`.
+app.on('before-quit', async () => {
+  if (process.platform === 'darwin') {
+    myCapacitorApp.macOSForceQuit = true;
+  }
+});
+
 // Handle when all of our windows are close (platforms have their own expectations).
 app.on('window-all-closed', async () => {
   // On OS X it is common for applications and their menu bar
@@ -96,13 +104,9 @@ app.on('window-all-closed', async () => {
   }
 });
 
-// When the dock icon is clicked.
+// When the MacOS dock icon is clicked.
 app.on('activate', async () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (myCapacitorApp.getMainWindow().isDestroyed()) {
-    await myCapacitorApp.init();
-  }
+  myCapacitorApp.getMainWindow().show();
 });
 
 ipcMain.on(PageToWindowChannel.ConfigUpdate, (_event, data) => {

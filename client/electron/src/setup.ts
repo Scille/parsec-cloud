@@ -59,6 +59,7 @@ export class ElectronCapacitorApp {
   private customScheme: string;
   private config: object;
   public forceClose: boolean;
+  public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
 
@@ -134,22 +135,24 @@ export class ElectronCapacitorApp {
   updateConfig(newConfig: object): void {
     this.config = newConfig;
 
+    const locale = this.config.hasOwnProperty('locale') ? (this.config as any).locale : 'en-US';
     this.TrayMenuTemplate = [
       new MenuItem({
-        label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Afficher Parsec' : 'Show Parsec',
+        label: locale === 'fr-FR' ? 'Afficher Parsec' : 'Show Parsec',
         click: () => {
-          this.showMainWindow();
+          this.MainWindow.show();
         },
       }),
       new MenuItem({
-        label: this.config.hasOwnProperty('locale') && (this.config as any).locale === 'fr-FR' ? 'Quitter' : 'Quit',
+        label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
         click: () => {
-          this.showMainWindow();
-          this.sendEvent(WindowToPageChannel.CloseRequest);
+          this.MainWindow.show();
+          this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
         },
       }),
     ];
     this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
+    this.setAppMenu(locale);
   }
 
   updateMountpoint(path: string): void {
@@ -163,20 +166,11 @@ export class ElectronCapacitorApp {
     return false;
   }
 
-  hideMainWindow(): void {
-    if (process.platform === 'darwin') {
-      this.MainWindow.minimize();
-    } else {
-      this.MainWindow.hide();
+  skipConfirmBeforeQuit(): boolean {
+    if (process.platform === 'darwin' && 'confirmBeforeQuit' in this.config) {
+      return !(this.config as any).confirmBeforeQuit;
     }
-  }
-
-  showMainWindow(): void {
-    if (process.platform === 'darwin') {
-      this.MainWindow.restore();
-    } else {
-      this.MainWindow.show();
-    }
+    return false;
   }
 
   isMainWindowVisible(): boolean {
@@ -207,6 +201,27 @@ export class ElectronCapacitorApp {
       app: join(app.getAppPath(), 'assets', appIconName),
       tray: join(app.getAppPath(), 'assets', trayIconName),
     };
+  }
+
+  setAppMenu(locale: any): void {
+    if (process.platform === 'darwin') {
+      const menu = new Menu();
+      menu.append(
+        new MenuItem({
+          label: app.name,
+          submenu: [
+            {
+              label: locale === 'fr-FR' ? 'Quitter' : 'Quit',
+              accelerator: 'Cmd+Q',
+              click: (): void => {
+                this.sendEvent(WindowToPageChannel.CloseRequest, this.skipConfirmBeforeQuit());
+              },
+            },
+          ],
+        }),
+      );
+      Menu.setApplicationMenu(menu);
+    }
   }
 
   async init(): Promise<void> {
@@ -256,17 +271,33 @@ export class ElectronCapacitorApp {
     });
 
     this.MainWindow.on('close', (event) => {
-      if (this.forceClose) {
-        return;
-      }
-
-      const tray = this.isTrayEnabled();
-      if (tray) {
-        this.hideMainWindow();
+      if (process.platform === 'darwin') {
+        if (!this.macOSForceQuit) {
+          // Red X clicked
+          if (this.MainWindow.isFullScreen()) {
+            // If fullscreen, exit fullscreen first then hide window with a one-time listener
+            this.MainWindow.once('leave-full-screen', () => {
+              this.MainWindow.hide();
+            });
+            this.MainWindow.setFullScreen(false);
+          } else {
+            this.MainWindow.hide();
+          }
+          event.preventDefault();
+        }
       } else {
-        this.sendEvent(WindowToPageChannel.CloseRequest);
+        if (this.forceClose) {
+          return;
+        }
+
+        const tray = this.isTrayEnabled();
+        if (tray) {
+          this.MainWindow.hide();
+        } else {
+          this.sendEvent(WindowToPageChannel.CloseRequest);
+        }
+        event.preventDefault();
       }
-      event.preventDefault();
     });
 
     // When the tray icon is enabled, setup the options.
@@ -274,7 +305,7 @@ export class ElectronCapacitorApp {
       this.TrayIcon = new Tray(trayIcon);
 
       const trayToggleVisibility = () => {
-        this.showMainWindow();
+        this.MainWindow.show();
       };
 
       // Does not seem to do anything, at least on Linux
