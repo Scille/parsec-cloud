@@ -334,7 +334,7 @@ async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
     "timestamp_offset",
     (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
 )
-async def test_authenticated_vlob_create_require_greater_timestamp(
+async def test_authenticated_vlob_update_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     timestamp_offset: int,

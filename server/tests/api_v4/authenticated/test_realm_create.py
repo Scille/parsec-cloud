@@ -56,7 +56,7 @@ async def test_authenticated_realm_create_ok(
         )
 
 
-async def test_authenticated_realm_create_already_exists(
+async def test_authenticated_realm_create_realm_already_exists(
     coolorg: CoolorgRpcClients,
     alice_owner_role_certificate: RealmRoleCertificate,
 ) -> None:

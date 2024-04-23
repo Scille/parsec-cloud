@@ -12,7 +12,9 @@ Response = authenticated_cmds.v4.invite_1_greeter_wait_peer.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
+async def test_authenticated_invite_1_greeter_wait_peer_ok(
+    run_order: str, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
     claimer_private_key = PrivateKey.generate()
     invitation_token = coolorg.invited_alice_dev3.token
     rep: Response = None
@@ -56,7 +58,9 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     )
 
 
-async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_1_greeter_wait_peer_invitation_not_found(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.alice.invite_1_greeter_wait_peer(
         token=InvitationToken.new(),
         greeter_public_key=PrivateKey.generate().public_key,
@@ -65,7 +69,9 @@ async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
     assert rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepInvitationNotFound()
 
 
-async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_1_greeter_wait_peer_invitation_deleted(
+    coolorg: CoolorgRpcClients,
+) -> None:
     await coolorg.alice.invite_cancel(token=coolorg.invited_alice_dev3.token)
 
     rep = await coolorg.alice.invite_1_greeter_wait_peer(

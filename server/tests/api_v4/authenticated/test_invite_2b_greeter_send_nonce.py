@@ -13,7 +13,9 @@ Response = authenticated_cmds.v4.invite_2b_greeter_send_nonce.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
+async def test_authenticated_invite_2b_greeter_send_nonce_ok(
+    run_order: str, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
     rep: Response = None
     invitation_token = coolorg.invited_alice_dev3.token
     await pass_state_2a_claimer_send_hashed_nonce(
@@ -66,7 +68,9 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     )
 
 
-async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_2b_greeter_send_nonce_invitation_not_found(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.alice.invite_2b_greeter_send_nonce(
         token=InvitationToken.new(),
         greeter_nonce=b"greeter-hello-world",
@@ -75,7 +79,9 @@ async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
     assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationNotFound()
 
 
-async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_2b_greeter_send_nonce_invitation_deleted(
+    coolorg: CoolorgRpcClients,
+) -> None:
     await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
 
     rep = await coolorg.alice.invite_2b_greeter_send_nonce(
@@ -86,7 +92,9 @@ async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
     assert rep == authenticated_cmds.v4.invite_2b_greeter_send_nonce.RepInvitationDeleted()
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_2b_greeter_send_nonce_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.alice.invite_2b_greeter_send_nonce(
         token=coolorg.invited_alice_dev3.token,
         greeter_nonce=b"greeter-hello-world",

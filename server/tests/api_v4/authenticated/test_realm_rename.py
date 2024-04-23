@@ -69,7 +69,7 @@ def realm_key_rotation_certificate(
     )
 
 
-async def test_authenticated_realm_rename_rotate_key_ok_subsequent_rename(
+async def test_authenticated_realm_rename_ok_subsequent_rename(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     alice_name_certificate: RealmNameCertificate,
@@ -91,7 +91,7 @@ async def test_authenticated_realm_rename_rotate_key_ok_subsequent_rename(
         )
 
 
-async def test_authenticated_realm_rename_rotate_key_ok_initial_rename(
+async def test_authenticated_realm_rename_ok_initial_rename(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     alice_name_certificate: RealmNameCertificate,

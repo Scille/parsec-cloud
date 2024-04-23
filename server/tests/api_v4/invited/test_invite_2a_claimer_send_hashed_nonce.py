@@ -12,7 +12,9 @@ Response = invited_cmds.v4.invite_2a_claimer_send_hashed_nonce.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
+async def test_invited_invite_2a_claimer_send_hashed_nonce_ok(
+    run_order: str, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
     rep: Response = None
     invitation_token = coolorg.invited_alice_dev3.token
     await pass_state_1_wait_peer(coolorg.invited_alice_dev3, coolorg.alice)
@@ -60,7 +62,9 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     )
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_2a_claimer_send_hashed_nonce_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.invited_alice_dev3.invite_2a_claimer_send_hashed_nonce(
         claimer_hashed_nonce=HashDigest.from_data(b"hello-world")
     )

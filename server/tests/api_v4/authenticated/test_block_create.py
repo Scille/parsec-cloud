@@ -84,7 +84,7 @@ async def test_authenticated_block_create_realm_not_found(
     assert not dump  # No changes!
 
 
-async def test_authenticated_block_create_already_exists(
+async def test_authenticated_block_create_block_already_exists(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     block_id = BlockID.new()
@@ -111,7 +111,7 @@ async def test_authenticated_block_create_already_exists(
     assert dump == expected_dump  # No changes!
 
 
-async def test_authenticated_block_create_not_allowed(
+async def test_authenticated_block_create_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     block_id = BlockID.new()

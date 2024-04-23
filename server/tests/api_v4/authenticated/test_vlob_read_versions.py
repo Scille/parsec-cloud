@@ -136,7 +136,7 @@ async def test_authenticated_vlob_read_versions_ok(
     )
 
 
-async def test_authenticated_vlob_read_version_realm_not_found(
+async def test_authenticated_vlob_read_versions_realm_not_found(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     bad_realm_id = VlobID.new()
@@ -144,7 +144,7 @@ async def test_authenticated_vlob_read_version_realm_not_found(
     assert rep == authenticated_cmds.v4.vlob_read_versions.RepRealmNotFound()
 
 
-async def test_authenticated_vlob_read_version_author_not_allowed(
+async def test_authenticated_vlob_read_versions_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     rep = await coolorg.mallory.vlob_read_versions(
@@ -153,7 +153,7 @@ async def test_authenticated_vlob_read_version_author_not_allowed(
     assert rep == authenticated_cmds.v4.vlob_read_versions.RepAuthorNotAllowed()
 
 
-async def test_authenticated_vlob_read_version_too_many_elements(
+async def test_authenticated_vlob_read_versions_too_many_elements(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     too_many_items = [(VlobID.new(), int(1))] * (VLOB_READ_REQUEST_ITEMS_LIMIT + 1)

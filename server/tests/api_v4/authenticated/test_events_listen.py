@@ -125,7 +125,7 @@ ALICE_USER_ID = UserID("alice")
         ),
     ],
 )
-async def test_ok(
+async def test_authenticated_events_listen_ok(
     gen_event: GenerateEvent,
     expected: authenticated_cmds.v4.events_listen.APIEvent,
     coolorg: CoolorgRpcClients,
@@ -248,7 +248,7 @@ async def test_conn_closed_on_bad_outcome(
             assert await alice_sse.next_event(), "The connection should have been closed"
 
 
-async def test_non_sse_request(minimalorg: MinimalorgRpcClients) -> None:
+async def test_authenticated_events_listen_not_available(minimalorg: MinimalorgRpcClients) -> None:
     alice = minimalorg.alice
     alice_client = alice.raw_client
     res = await alice_client.get(
