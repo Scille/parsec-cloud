@@ -172,14 +172,14 @@ jobs:
 
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin v4.3.3
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-snap
           path: |
             Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
             Parsec-SBOM-Electron-linux.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
 
-  electron-non-linux:
+  electron-non-snap:
     needs: version
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
@@ -190,9 +190,21 @@ jobs:
           - name: 🏁 Windows
             platform: windows
             os: windows-2022
+            raw_latest_file: latest.yml
+            extension: exe
+            os_alias: win
           - name: 🍎 macOS
             platform: macos
             os: macos-12
+            raw_latest_file: latest-mac.yml
+            extension: dmg
+            os_alias: mac
+          - name: 🐧 AppImage 4 Linux
+            platform: linux
+            os: ubuntu-22.04
+            raw_latest_file: latest-linux.yml
+            os_alias: linux
+            extension: AppImage
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -236,6 +248,12 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
 
+      - name: Linux > Install system dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get install -y fuse3 libfuse3-dev
+        timeout-minutes: 2
+
       - name: Install dependencies
         shell: bash
         run: |
@@ -252,7 +270,7 @@ jobs:
         timeout-minutes: 30
 
       - name: Build Electron apps
-        run: npm run electron:release
+        run: npm run electron:release ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
         working-directory: client
         timeout-minutes: 5
 
@@ -264,31 +282,42 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
-      - name: Windows > rename artifacts
-        if: matrix.platform == 'windows'
-        shell: bash
-        run: |
-          ARCH=$(uname -m)
-          mv -v 'parsec-v3 Setup '*.exe Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe
-          mv -v 'parsec-v3 Setup '*.exe.blockmap Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe.blockmap
-        working-directory: client/electron/dist
-        env:
-          BASH_XTRACEFD: 1
+      - name: Debug dist folder
+        if: runner.debug || false
+        run: ls client/electron/dist
 
-      - name: MacOS > rename artifacts
-        if: matrix.platform == 'macos'
+      - name: Build info
+        id: build-info
         shell: bash
         run: |
-          ARCH=$(uname -m)
-          mv -v parsec-v3-*.dmg Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg
-          mv -v parsec-v3-*.dmg.blockmap Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg.blockmap
+          arch=$(uname -m)
+          app_file="Parsec-v3_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}.${{ matrix.extension }}"
+          latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
+
+          cat << EOF | tee -a $GITHUB_OUTPUT
+          arch=$arch
+          app_file=$app_file
+          latest_file=$latest_file
+          EOF
+
+      - name: Rename "latest" file
+        shell: bash
+        run: mv -v "${{ matrix.raw_latest_file }}" "${{ steps.build-info.outputs.latest_file }}"
+        working-directory: client/electron/dist
+
+      - name: Sanity check that "latest" file contain the correct application file
+        run: |
+          cat "${{ steps.build-info.outputs.latest_file }}"
+          grep -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin v4.3.3
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-${{ matrix.extension }}
           path: |
-            client/electron/dist/Parsec-v3_${{ steps.version.outputs.full }}_*
+            client/electron/dist/${{ steps.build-info.outputs.app_file }}
+            client/electron/dist/${{ steps.build-info.outputs.app_file }}.blockmap
+            client/electron/dist/${{ steps.build-info.outputs.latest_file }}
             client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json
           if-no-files-found: error
         timeout-minutes: 10

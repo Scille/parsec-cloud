@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 const builder = require('electron-builder');
+const os = require('node:os');
 
 const PARSEC_SCHEME = 'parsec3';
 
@@ -59,12 +60,30 @@ console.warn(OPTS);
 const BUILD_TARGETS = getBuildTargets(OPTS.platform, OPTS.targets);
 console.warn('BUILD_TARGETS', BUILD_TARGETS);
 
+// The machine arch the electron-builder is running on.
+process.env.BUILD_MACHINE_ARCH = os.machine();
+
+/** @type {import('./assets/publishConfig').CustomPublishOptions} */
+const publishConfig = {
+  provider: 'custom',
+  owner: 'Scille',
+  repo: 'parsec-cloud',
+  buildMachineArch: process.env.BUILD_MACHINE_ARCH,
+};
+
+const fs = require('node:fs');
+
+fs.mkdirSync('build/assets', { recursive: true });
+fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
+
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration/configuration
  */
 const options = {
   appId: 'cloud.parsec.parsec-v3',
+  artifactName: 'Parsec-v3_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}',
+  buildVersion: '3.0.0-b.6+dev',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],
@@ -78,9 +97,7 @@ const options = {
 
   files: ['assets/**/*', '!assets/installer.nsh', 'build/**/*', '!build/**/*.msi', 'app/**/*'],
 
-  publish: {
-    provider: 'github',
-  },
+  publish: publishConfig,
 
   // Asar is the electron archive format to bundle all the resources together.
   // Node files are shared library, hence keeping them unpacked avoid weird trick

@@ -10,6 +10,7 @@ import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
+import AppUpdater from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
@@ -62,6 +63,7 @@ export class ElectronCapacitorApp {
   public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
+  updater: AppUpdater;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
@@ -98,6 +100,8 @@ export class ElectronCapacitorApp {
       scheme: this.customScheme,
     });
 
+    this.updater = new AppUpdater();
+
     // Check periodically if an update is available
     setInterval(async () => {
       const updateInfo = await this.getUpdateInfo();
@@ -132,12 +136,13 @@ export class ElectronCapacitorApp {
     console.log('In electron update app. Sadly does nothing for now :(');
   }
 
-  // Will evolve with auto-update
   async getUpdateInfo(): Promise<{ updateAvailable: boolean; version?: string }> {
-    const rand = Math.floor(Math.random() * 2);
-    // const result = await appUpdater.checkForUpdates();
-    // return result.updateInfo....
-    return rand === 1 ? { updateAvailable: true, version: '3.1.0' } : { updateAvailable: false };
+    const updateRes = await this.updater?.checkForUpdates();
+    if (updateRes === undefined) {
+      return { updateAvailable: false };
+    } else {
+      return { updateAvailable: true, version: updateRes.version };
+    }
   }
 
   updateConfig(newConfig: object): void {
