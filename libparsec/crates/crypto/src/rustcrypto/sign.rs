@@ -36,9 +36,7 @@ impl SigningKey {
     }
 
     pub fn generate() -> Self {
-        Self(ed25519_dalek::SigningKey::generate(
-            &mut rand_08::thread_rng(),
-        ))
+        Self(ed25519_dalek::SigningKey::generate(&mut rand::thread_rng()))
     }
 
     /// Sign the message and prefix it with the signature.

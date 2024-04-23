@@ -42,7 +42,7 @@ impl SequesterPrivateKeyDer {
     const ALGORITHM: &'static str = "RSAES-OAEP-SHA256-XSALSA20-POLY1305";
 
     pub fn generate_pair(size_in_bits: SequesterKeySize) -> (Self, SequesterPublicKeyDer) {
-        let priv_key = RsaPrivateKey::new(&mut rand_08::thread_rng(), size_in_bits as usize)
+        let priv_key = RsaPrivateKey::new(&mut rand::thread_rng(), size_in_bits as usize)
             .expect("Cannot generate the RSA key");
         let pub_key = RsaPublicKey::from(&priv_key);
 
@@ -148,7 +148,7 @@ impl SequesterPublicKeyDer {
     // Encryption format:
     //   <algorithm name>:<encrypted secret key with RSA key><encrypted data with secret key>
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand_08::thread_rng();
+        let mut rng = rand::thread_rng();
         let padding = Oaep::new::<Sha256>();
         let secret_key = SecretKey::generate();
         let secret_key_encrypted = self
@@ -230,7 +230,7 @@ impl SequesterSigningKeyDer {
     // Signature format:
     //   <algorithm name>:<signature><data>
     pub fn sign(&self, data: &[u8]) -> Vec<u8> {
-        let mut rng = rand_08::thread_rng();
+        let mut rng = rand::thread_rng();
         let signature = self.0.sign_with_rng(&mut rng, data);
 
         serialize_with_armor(

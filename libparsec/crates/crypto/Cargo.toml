@@ -119,14 +119,9 @@ sha2 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
 x25519-dalek = { workspace = true, features = ["alloc", "zeroize", "precomputed-tables"] }  # Optional rustcrypto dep
 crypto_secretbox = { workspace = true, features = ["alloc", "getrandom", "salsa20"] }  # Optional rustcrypto dep
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
-# For SecretKey, we have `crypto_box` -> [...] -> `rand_core~=0.6` -> `getrandom~=0.2`
-# For SingingKey&PrivateKey we have `<dalek stuff>` -> `rand~=0.5` -> `getrandom~=0.1`
-# So we end up with two version of `getrandom` which have each they own way of
-# configuring wasm-unknown-unknown web support (see [features] part).
-getrandom_01 = { workspace = true }  # Optional rustcrypto dep
-getrandom_02 = { workspace = true }  # Optional rustcrypto dep
-# rand 0.8 relies on rand_core~=0.6/getrandom~=0.2
-rand_08 = { workspace = true, features = ["std", "std_rng"] }  # Optional rustcrypto dep
+# `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
+getrandom = { workspace = true }  # Optional rustcrypto dep
+rand = { workspace = true, features = ["std", "std_rng"] }  # Optional rustcrypto dep
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = ["std", "unstable"] }
@@ -141,8 +136,7 @@ rstest = { workspace = true, features = ["async-timeout"] }
 # RustCrypto stuff
 #
 
-getrandom_01 = { workspace = true, features = ["wasm-bindgen"] }  # Optional rustcrypto dep
-getrandom_02 = { workspace = true, features = ["js"] }  # Optional rustcrypto dep
+getrandom = { workspace = true, features = ["js"] }  # Optional rustcrypto dep
 
 [target.'cfg(target_os = "macos")'.dependencies]
 openssl = { workspace = true, optional = true, features = ["vendored"] }
