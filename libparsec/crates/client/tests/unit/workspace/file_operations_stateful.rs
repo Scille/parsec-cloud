@@ -94,7 +94,6 @@ impl FileOperationStateMachine {
         let data = self.storage.read(&self.manifest, size, offset);
         assert_eq!(data, expected);
     }
-
     fn resize(&mut self, length: u64) {
         let timestamp = self.time_provider.now();
         self.storage.resize(&mut self.manifest, length, timestamp);
@@ -112,11 +111,116 @@ impl FileOperationStateMachine {
     }
 }
 
-impl StateMachineTest for FileOperationStateMachine {
+pub trait AsyncStateMachineTest {
+    /// The concrete state, that is the system under test (SUT).
+    type SystemUnderTest;
+
+    /// The abstract state machine that implements [`ReferenceStateMachine`]
+    /// drives the generation of the state machine's transitions.
+    type Reference: ReferenceStateMachine;
+
+    /// Initialize the state of SUT.
+    ///
+    /// If the reference state machine is generated from a non-constant
+    /// strategy, ensure to use it to initialize the SUT to a corresponding
+    /// state.
+    async fn init_test(
+        ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+    ) -> Self::SystemUnderTest;
+
+    /// Apply a transition in the SUT state and check post-conditions.
+    /// The post-conditions are properties of your state machine that you want
+    /// to assert.
+    ///
+    /// Note that the `ref_state` is the state *after* this `transition` is
+    /// applied. You can use it to compare it with your SUT after you apply
+    /// the transition.
+    async fn apply(
+        state: Self::SystemUnderTest,
+        ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+        transition: <Self::Reference as ReferenceStateMachine>::Transition,
+    ) -> Self::SystemUnderTest;
+
+    /// Check some invariant on the SUT state after every transition.
+    ///
+    /// Note that just like in [`StateMachineTest::apply`] you can use
+    /// the `ref_state` to compare it with your SUT.
+    async fn check_invariants(
+        state: &Self::SystemUnderTest,
+        ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+    ) {
+        // This is to avoid `unused_variables` warning
+        let _ = (state, ref_state);
+    }
+
+    /// Override this function to add some teardown logic on the SUT state
+    /// at the end of each test case. The default implementation simply drops
+    /// the state.
+    async fn teardown(state: Self::SystemUnderTest) {
+        // This is to avoid `unused_variables` warning
+        let _ = state;
+    }
+}
+
+macro_rules! impl_state_machine_for_async {
+    ($t:ty) => {
+        impl StateMachineTest for $t {
+            type SystemUnderTest = (
+                tokio::runtime::Runtime,
+                <Self as AsyncStateMachineTest>::SystemUnderTest,
+            );
+            type Reference = <Self as AsyncStateMachineTest>::Reference;
+
+            fn init_test(
+                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+            ) -> Self::SystemUnderTest {
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap();
+                let state = rt.block_on(async {
+                    <Self as AsyncStateMachineTest>::init_test(ref_state).await
+                });
+                (rt, state)
+            }
+
+            fn apply(
+                state: Self::SystemUnderTest,
+                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+                transition: <Self::Reference as ReferenceStateMachine>::Transition,
+            ) -> Self::SystemUnderTest {
+                let (rt, state) = state;
+                let state = rt.block_on(async {
+                    <Self as AsyncStateMachineTest>::apply(state, ref_state, transition).await
+                });
+                (rt, state)
+            }
+
+            fn check_invariants(
+                state: &Self::SystemUnderTest,
+                ref_state: &<Self::Reference as ReferenceStateMachine>::State,
+            ) {
+                let (rt, state) = state;
+                rt.block_on(async {
+                    <Self as AsyncStateMachineTest>::check_invariants(state, ref_state).await
+                });
+            }
+
+            fn teardown(state: Self::SystemUnderTest) {
+                let (rt, state) = state;
+                rt.block_on(async { <Self as AsyncStateMachineTest>::teardown(state).await });
+            }
+        }
+    };
+}
+
+impl_state_machine_for_async!(FileOperationStateMachine);
+
+impl AsyncStateMachineTest for FileOperationStateMachine {
     type SystemUnderTest = Self;
     type Reference = FileOperationOracleStateMachine;
 
-    fn init_test(
+    async fn init_test(
         _ref_state: &<Self::Reference as ReferenceStateMachine>::State,
     ) -> Self::SystemUnderTest {
         let time_provider = TimeProvider::default();
@@ -133,7 +237,7 @@ impl StateMachineTest for FileOperationStateMachine {
         }
     }
 
-    fn apply(
+    async fn apply(
         mut state: Self::SystemUnderTest,
         ref_state: &<Self::Reference as ReferenceStateMachine>::State,
         transition: Transition,
@@ -155,7 +259,7 @@ impl StateMachineTest for FileOperationStateMachine {
         state
     }
 
-    fn check_invariants(
+    async fn check_invariants(
         state: &Self::SystemUnderTest,
         ref_state: &<Self::Reference as ReferenceStateMachine>::State,
     ) {
