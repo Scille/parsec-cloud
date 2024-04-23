@@ -10,7 +10,9 @@ Response = authenticated_cmds.v4.invite_3b_greeter_signify_trust.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_3b_greeter_signify_trust_ok(
+    run_order: str, coolorg: CoolorgRpcClients
+) -> None:
     rep: Response = None
 
     await pass_state_3a_claimer_signify_trust(coolorg.invited_alice_dev3, coolorg.alice)
@@ -42,18 +44,24 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
     assert rep == authenticated_cmds.v4.invite_3b_greeter_signify_trust.RepOk()
 
 
-async def test_invitation_not_found(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_3b_greeter_signify_trust_invitation_not_found(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.alice.invite_3b_greeter_signify_trust(InvitationToken.new())
     assert rep == authenticated_cmds.v4.invite_3b_greeter_signify_trust.RepInvitationNotFound()
 
 
-async def test_invitation_deleted(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_3b_greeter_signify_trust_invitation_deleted(
+    coolorg: CoolorgRpcClients,
+) -> None:
     await coolorg.alice.invite_cancel(coolorg.invited_alice_dev3.token)
 
     rep = await coolorg.alice.invite_3b_greeter_signify_trust(coolorg.invited_alice_dev3.token)
     assert rep == authenticated_cmds.v4.invite_3b_greeter_signify_trust.RepInvitationDeleted()
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_authenticated_invite_3b_greeter_signify_trust_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.alice.invite_3b_greeter_signify_trust(coolorg.invited_alice_dev3.token)
     assert rep == authenticated_cmds.v4.invite_3b_greeter_signify_trust.RepEnrollmentWrongState()

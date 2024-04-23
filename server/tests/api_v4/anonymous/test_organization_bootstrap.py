@@ -89,7 +89,7 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
-async def test_ok(
+async def test_anonymous_organization_bootstrap_ok(
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
@@ -145,7 +145,7 @@ class OverrideCertifData:
     ],
 )
 @pytest.mark.usefixtures("ballpark_always_ok")
-async def test_invalid_certificate(
+async def test_anonymous_organization_bootstrap_invalid_certificate(
     override_certif_data: OverrideCertifData,
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
@@ -193,7 +193,7 @@ async def test_invalid_certificate(
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
-async def test_organization_already_bootstrapped(
+async def test_anonymous_organization_bootstrap_organization_already_bootstrapped(
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
@@ -242,7 +242,7 @@ async def test_organization_already_bootstrapped(
 
 
 @pytest.mark.usefixtures("ballpark_always_ok")
-async def test_invalid_bootstrap_token(
+async def test_anonymous_organization_bootstrap_invalid_bootstrap_token(
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
     testbed: TestbedBackend,
@@ -297,7 +297,7 @@ async def test_invalid_bootstrap_token(
         pytest.param(-BALLPARK_CLIENT_LATE_OFFSET - 5, id="late"),
     ],
 )
-async def test_timestamp_out_of_ballpark(
+async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     user_certif_late: bool,
     device_certif_late: bool,
     sequester_auth_certif_late: bool,

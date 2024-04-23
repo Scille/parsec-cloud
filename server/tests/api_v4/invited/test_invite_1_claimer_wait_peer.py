@@ -10,7 +10,9 @@ from tests.common import Backend, CoolorgRpcClients
 
 
 @pytest.mark.parametrize("first_to_run", ("greeter_first", "claimer_first"))
-async def test_ok(first_to_run: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
+async def test_invited_invite_1_claimer_wait_peer_ok(
+    first_to_run: str, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
     greeter_private_key = PrivateKey.generate()
     claimer_private_key = PrivateKey.generate()
     invitation_token = coolorg.invited_alice_dev3.token

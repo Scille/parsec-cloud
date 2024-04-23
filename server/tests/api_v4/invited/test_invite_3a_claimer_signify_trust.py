@@ -10,7 +10,9 @@ Response = invited_cmds.v4.invite_3a_claimer_signify_trust.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_3a_claimer_signify_trust_ok(
+    run_order: str, coolorg: CoolorgRpcClients
+) -> None:
     rep: Response = None
     await pass_state_2_exchange_nonce(coolorg.invited_alice_dev3, coolorg.alice)
 
@@ -43,6 +45,8 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
     assert rep == invited_cmds.v4.invite_3a_claimer_signify_trust.RepOk()
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_3a_claimer_signify_trust_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.invited_alice_dev3.invite_3a_claimer_signify_trust()
     assert rep == invited_cmds.v4.invite_3a_claimer_signify_trust.RepEnrollmentWrongState()

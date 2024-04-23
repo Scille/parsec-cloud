@@ -15,7 +15,9 @@ Response = invited_cmds.v4.invite_2b_claimer_send_nonce.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) -> None:
+async def test_invited_invite_2b_claimer_send_nonce_ok(
+    run_order: str, coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
     rep: Response = None
 
     await pass_state_2_2_greeter_nonce(coolorg.invited_alice_dev3, coolorg.alice, backend)
@@ -56,7 +58,9 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients, backend: Backend) 
     assert rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepOk()
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_2b_claimer_send_nonce_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.invited_alice_dev3.invite_2b_claimer_send_nonce(
         claimer_nonce=b"claimer-hello-world",
     )

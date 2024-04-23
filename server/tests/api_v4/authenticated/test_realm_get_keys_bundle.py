@@ -89,7 +89,7 @@ async def test_authenticated_realm_get_keys_bundle_access_not_available_for_auth
     assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepAccessNotAvailableForAuthor()
 
 
-async def test_authenticated_realm_get_keys_bundle_access_author_not_allowed(
+async def test_authenticated_realm_get_keys_bundle_author_not_allowed(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.mallory.realm_get_keys_bundle(
@@ -99,7 +99,7 @@ async def test_authenticated_realm_get_keys_bundle_access_author_not_allowed(
     assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepAuthorNotAllowed()
 
 
-async def test_authenticated_realm_get_keys_bundle_access_bad_key_index(
+async def test_authenticated_realm_get_keys_bundle_bad_key_index(
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.alice.realm_get_keys_bundle(

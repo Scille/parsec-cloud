@@ -10,7 +10,9 @@ Response = invited_cmds.v4.invite_4_claimer_communicate.Rep | None
 
 
 @pytest.mark.parametrize("run_order", ("greeter_first", "claimer_first"))
-async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_4_claimer_communicate_ok(
+    run_order: str, coolorg: CoolorgRpcClients
+) -> None:
     rep: Response = None
     claimer_payload = b"claimer-payload"
     greeter_payload = b"greeter-payload"
@@ -49,6 +51,8 @@ async def test_ok(run_order: str, coolorg: CoolorgRpcClients) -> None:
     )
 
 
-async def test_enrollment_wrong_state(coolorg: CoolorgRpcClients) -> None:
+async def test_invited_invite_4_claimer_communicate_enrollment_wrong_state(
+    coolorg: CoolorgRpcClients,
+) -> None:
     rep = await coolorg.invited_alice_dev3.invite_4_claimer_communicate(b"payload")
     assert rep == invited_cmds.v4.invite_4_claimer_communicate.RepEnrollmentWrongState()
