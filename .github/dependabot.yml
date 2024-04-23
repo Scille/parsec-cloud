@@ -187,6 +187,10 @@ updates:
     labels:
       - I-Dependency
       - I-Javascript
+    ignore:
+      # `electron-is-dev@3` require to build the electron app in ESM mode, but capacitor doesn't support it yet.
+      - dependency-name: electron-is-dev
+        versions: [^3.0.0]
     schedule:
       interval: weekly
       day: monday
