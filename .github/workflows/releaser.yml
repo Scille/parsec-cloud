@@ -91,9 +91,10 @@ jobs:
           cp -v artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp -v artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
-          cp -v artifacts/Linux-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
-          cp -v artifacts/macOS-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg{,.blockmap} release-files
-          cp -v artifacts/Windows-X64-electron-app/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
+          cp -v artifacts/Linux-X64-electron-app-snap/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
+          cp -v artifacts/Linux-X64-electron-app-AppImage/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
+          cp -v artifacts/macOS-X64-electron-app-dmg/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg{,.blockmap} release-files
+          cp -v artifacts/Windows-X64-electron-app-exe/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
         env:
           BASH_XTRACEFD: 1
 
@@ -171,6 +172,7 @@ jobs:
           files: |
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap*
+            release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.AppImage*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_macos_*.dmg*
             release-files/Parsec-SBOM-Wheel-linux.spdx.json
