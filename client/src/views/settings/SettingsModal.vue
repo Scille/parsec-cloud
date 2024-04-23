@@ -77,11 +77,19 @@
                 </settings-option>
                 <!-- minimize in status bar -->
                 <settings-option
-                  v-if="isPlatform('electron')"
+                  v-if="isPlatform('electron') && !isMacOS()"
                   :title="'SettingsModal.minimizeToSystemTray.label'"
                   :description="'SettingsModal.minimizeToSystemTray.description'"
                 >
                   <ion-toggle v-model="config.minimizeToTray" />
+                </settings-option>
+                <!-- MacOS-only toggle confirm -->
+                <settings-option
+                  v-if="isPlatform('electron') && isMacOS()"
+                  :title="'SettingsModal.confirmBeforeQuit.label'"
+                  :description="'SettingsModal.confirmBeforeQuit.description'"
+                >
+                  <ion-toggle v-model="config.confirmBeforeQuit" />
                 </settings-option>
               </ion-list>
             </div>
@@ -126,6 +134,7 @@
 <script setup lang="ts">
 import { MsDropdown, MsModal, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
+import { isMacOS } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { Locale, changeLocale, getLocale } from '@/services/translation';
 import { toggleDarkMode } from '@/states/darkMode';

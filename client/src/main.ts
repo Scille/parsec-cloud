@@ -159,11 +159,14 @@ async function setupApp(): Promise<void> {
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
-    window.electronAPI.receive('parsec-close-request', async () => {
-      const answer = await askQuestion('quit.title', 'quit.subtitle', {
-        yesText: 'quit.yes',
-        noText: 'quit.no',
-      });
+    window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
+      let answer: Answer = Answer.Yes;
+      if (force === false) {
+        answer = await askQuestion('quit.title', 'quit.subtitle', {
+          yesText: 'quit.yes',
+          noText: 'quit.no',
+        });
+      }
       if (answer === Answer.Yes) {
         const devices = await getLoggedInDevices();
         await injectionProvider.cleanAll();

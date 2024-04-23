@@ -265,6 +265,10 @@
             "label": "Minimize to system tray",
             "description": "When the window is closed, Parsec will continue to run in the background"
         },
+        "confirmBeforeQuit": {
+            "label": "Confirm before quitting",
+            "description": "Opens a confirmation screen when quitting the application"
+        },
         "unsyncFiles": {
             "label": "Show files excluded from synchronization",
             "description": "Show files excluded from synchronization in the file explorer"

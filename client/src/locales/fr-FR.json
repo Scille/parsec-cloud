@@ -265,6 +265,10 @@
             "label": "Réduire dans la barre d'état",
             "description": "Lorsque la fenêtre est fermée, Parsec continuera à fonctionner en arrière-plan"
         },
+        "confirmBeforeQuit": {
+            "label": "Confirmer avant de quitter",
+            "description": "Ouvre une fenêtre de confirmation lorsque vous quittez l'application"
+        },
         "unsyncFiles": {
             "label": "Afficher les fichiers exclus de la synchronisation",
             "description": "Les fichiers exclus de la synchronisation seront visibles"
