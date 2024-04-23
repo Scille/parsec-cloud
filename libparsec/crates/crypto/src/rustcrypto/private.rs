@@ -48,7 +48,7 @@ mod sealed_box {
     pub fn seal(data: &[u8], pk: &PublicKey) -> Vec<u8> {
         let mut out = Vec::with_capacity(SEALED_OVERHEAD + data.len());
 
-        let ep_sk = SecretKey::generate(&mut rand_08::thread_rng());
+        let ep_sk = SecretKey::generate(&mut rand::thread_rng());
         let ep_pk = ep_sk.public_key();
         out.extend_from_slice(ep_pk.as_bytes());
 
@@ -126,7 +126,7 @@ impl PrivateKey {
     }
 
     pub fn generate() -> Self {
-        Self(crypto_box::SecretKey::generate(&mut rand_08::thread_rng()))
+        Self(crypto_box::SecretKey::generate(&mut rand::thread_rng()))
     }
 
     pub fn decrypt_from_self(&self, ciphered: &[u8]) -> Result<Vec<u8>, CryptoError> {

@@ -3,9 +3,11 @@
 use argon2::{Algorithm, Argon2, Params, Version};
 use blake2::Blake2bMac;
 use crypto_box::aead::Aead;
-use crypto_secretbox::{AeadCore, Key, XSalsa20Poly1305};
+use crypto_secretbox::{
+    aead::{rand_core::RngCore, OsRng},
+    AeadCore, Key, XSalsa20Poly1305,
+};
 use digest::{consts::U5, KeyInit, Mac};
-use rand_08::{rngs::OsRng, RngCore};
 use serde::Deserialize;
 use serde_bytes::Bytes;
 
@@ -25,7 +27,7 @@ impl SecretKey {
     pub const SIZE: usize = XSalsa20Poly1305::KEY_SIZE;
 
     pub fn generate() -> Self {
-        Self(XSalsa20Poly1305::generate_key(rand_08::thread_rng()))
+        Self(XSalsa20Poly1305::generate_key(rand::thread_rng()))
     }
 
     pub fn encrypt(&self, data: &[u8]) -> Vec<u8> {
@@ -33,7 +35,7 @@ impl SecretKey {
         // TODO: zero copy with preallocated buffer
         // let mut ciphered = Vec::with_capacity(NONCE_SIZE + TAG_SIZE + data.len());
         let cipher = XSalsa20Poly1305::new(&self.0);
-        let nonce = XSalsa20Poly1305::generate_nonce(&mut rand_08::thread_rng());
+        let nonce = XSalsa20Poly1305::generate_nonce(&mut rand::thread_rng());
         // TODO: handle this error ?
         let mut ciphered = cipher.encrypt(&nonce, data).expect("encryption failure !");
         let mut res = vec![];
