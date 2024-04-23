@@ -264,31 +264,43 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
 
-      - name: Windows > rename artifacts
-        if: matrix.platform == 'windows'
-        shell: bash
-        run: |
-          ARCH=$(uname -m)
-          mv -v 'parsec-v3 Setup '*.exe Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe
-          mv -v 'parsec-v3 Setup '*.exe.blockmap Parsec-v3_${{ steps.version.outputs.full }}_win_$ARCH.exe.blockmap
-        working-directory: client/electron/dist
-        env:
-          BASH_XTRACEFD: 1
+      - name: Debug dist folder
+        if: runner.debug || false
+        run: ls client/electron/dist
 
-      - name: MacOS > rename artifacts
-        if: matrix.platform == 'macos'
+      - name: Build info
+        id: build-info
         shell: bash
         run: |
-          ARCH=$(uname -m)
-          mv -v parsec-v3-*.dmg Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg
-          mv -v parsec-v3-*.dmg.blockmap Parsec-v3_${{ steps.version.outputs.full }}_macos_$ARCH.dmg.blockmap
+          arch=$(uname -m)
+          os=${{ matrix.platform == 'windows' && 'win' || 'macos' }}
+          ext=${{ matrix.platform == 'windows' && 'exe' || 'dmg' }}
+          app_file="Parsec-v3_${{ steps.version.outputs.full }}_${os}_${arch}.${ext}"
+
+          cat << EOF | tee -a $GITHUB_OUTPUT
+          arch=$arch
+          os=$os
+          ext=$ext
+          app_file=$app_file
+          EOF
+
+      - name: Rename artifacts
+        shell: bash
+        run: |
+          set -eux
+          RAW_APP_FILE=Parsec-v3_*.${{ steps.build-info.outputs.ext }}
+          mv -v $RAW_APP_FILE "${{ steps.build-info.outputs.app_file }}"
+          mv -v $RAW_APP_FILE.blockmap "${{ steps.build-info.outputs.app_file }}.blockmap"
+          mv -v latest*.yml latest-${{ steps.build-info.outputs.os }}.yml
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@1746f4ab65b179e0ea60a494b83293b640dd5bba # pin v4.3.2
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app
           path: |
-            client/electron/dist/Parsec-v3_${{ steps.version.outputs.full }}_*
+            client/electron/dist/${{ steps.build-info.outputs.app_file }}
+            client/electron/dist/${{ steps.build-info.outputs.app_file }}.blockmap
+            client/electron/dist/latest-${{ steps.build-info.outputs.os }}.yml
             client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json
           if-no-files-found: error
         timeout-minutes: 10

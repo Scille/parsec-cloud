@@ -65,6 +65,7 @@ console.warn('BUILD_TARGETS', BUILD_TARGETS);
  */
 const options = {
   appId: 'cloud.parsec.parsec-v3',
+  artifactName: 'Parsec-v3_${version}_${os}_${arch}.${ext}',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],
