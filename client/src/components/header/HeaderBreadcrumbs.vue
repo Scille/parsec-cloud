@@ -44,7 +44,7 @@ export interface RouterPathNode {
 
 <script setup lang="ts">
 import { Query } from '@/router';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonBreadcrumb, IonBreadcrumbs, IonIcon } from '@ionic/vue';
 import { caretForward } from 'ionicons/icons';
 import { Ref, computed, ref } from 'vue';

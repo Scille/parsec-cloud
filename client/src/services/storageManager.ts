@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { isElectron } from '@/parsec';
-import { Locale } from '@/services/translation';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
+import { Locale } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
 

@@ -235,7 +235,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import {
   IonButton,
   IonButtons,

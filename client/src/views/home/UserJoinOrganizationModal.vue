@@ -199,7 +199,7 @@ import {
   UserClaim,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 

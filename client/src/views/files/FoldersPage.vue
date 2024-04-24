@@ -223,7 +223,7 @@ import {
 } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';

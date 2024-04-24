@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { eye, eyeOff, warning } from 'ionicons/icons';
 import { inject, ref } from 'vue';

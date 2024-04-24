@@ -2,7 +2,7 @@
 
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, WorkspaceRole } from '@/parsec';
-import { translate } from '@/services/translation';
+import { I18n } from 'megashark-lib';
 import { it } from 'vitest';
 
 describe('Workspace role', () => {
@@ -137,6 +137,6 @@ describe('Workspace role', () => {
     [UserProfile.Standard, WorkspaceRole.Manager, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
   ])('test workspace role can change', async (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
     expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).authorized).to.equal(expected);
-    expect(translate(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason)).to.equal(reason);
+    expect(I18n.translate(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason)).to.equal(reason);
   });
 });

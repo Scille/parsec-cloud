@@ -3,7 +3,7 @@
 import { IValidator } from '@/common/validators';
 import { MsReportTheme } from '@/components/core/ms-types';
 import { FsPath, WorkspaceHandle } from '@/parsec';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 
 export enum Answer {
   No = 0,

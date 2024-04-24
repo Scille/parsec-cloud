@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { formatDate, Translatable } from '@/services/translation';
 import { DateTime } from 'luxon';
+import { I18n, Translatable } from 'megashark-lib';
 
 export function formatTimeSince(
   date: DateTime | undefined,
@@ -17,7 +17,7 @@ export function formatTimeSince(
 
   // More than 6 days, just display the date as is
   if (!diff || (diff.years && diff.years > 0) || (diff.months && diff.months > 0) || (diff.days && diff.days > 6)) {
-    return formatDate(date, format);
+    return I18n.formatDate(date, format);
   } else if (roundDays) {
     return { key: 'common.date.lastLoginDays', data: { days: diff.days || 0 }, count: diff.days || 0 };
   } else if (diff.days && diff.days > 0) {

@@ -192,7 +192,7 @@ import {
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable, formatDate, translate } from '@/services/translation';
+import { Translatable, I18n } from 'megashark-lib';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';
@@ -417,8 +417,8 @@ async function nextStep(): Promise<void> {
           message = {
             key: 'CreateOrganization.errors.timestampOutOfBallpark',
             data: {
-              clientTime: translate(formatDate(result.error.clientTimestamp, 'long')),
-              serverTime: translate(formatDate(result.error.serverTimestamp, 'long')),
+              clientTime: I18n.translate(I18n.formatDate(result.error.clientTimestamp, 'long')),
+              serverTime: I18n.translate(I18n.formatDate(result.error.serverTimestamp, 'long')),
             },
           };
           pageStep.value = CreateOrganizationStep.SummaryStep;

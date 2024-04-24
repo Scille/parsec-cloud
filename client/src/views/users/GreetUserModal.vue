@@ -177,7 +177,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 

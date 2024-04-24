@@ -5,8 +5,8 @@ import { ConnectionHandle, EntryName, FsPath, SizeInt, UserID, WorkspaceHandle, 
 import { getConnectionHandle } from '@/router';
 import { NotificationManager } from '@/services/notificationManager';
 import { ToastManager } from '@/services/toastManager';
-import { Translatable } from '@/services/translation';
 import { modalController } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
 import { v4 as uuid4 } from 'uuid';
 
 export const InformationManagerKey = 'information';
