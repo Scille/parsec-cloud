@@ -45,7 +45,7 @@
         @click.stop="$emit('shareClick', workspace, $event)"
       />
       <ion-label
-        class="label-not-shared cell"
+        class="not-shared-label cell"
         v-show="workspace.sharing.length === 0"
         @click.stop="$emit('shareClick', workspace, $event)"
       >
@@ -193,7 +193,7 @@ defineEmits<{
     }
   }
 
-  .label-not-shared {
+  .not-shared-label {
     color: var(--parsec-color-light-secondary-grey);
     padding: 0.375rem 0.5rem;
     border-radius: var(--parsec-radius-6);
