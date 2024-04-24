@@ -735,7 +735,7 @@ class PGRealmComponent(BaseRealmComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        if last_realm_certificate_timestamp >= certif.timestamp:
+        if certif.timestamp <= last_realm_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         # TODO: compare with vlob timestamps too
@@ -874,7 +874,7 @@ class PGRealmComponent(BaseRealmComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        if last_realm_certificate_timestamp >= certif.timestamp:
+        if certif.timestamp <= last_realm_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         # TODO: compare with vlob timestamps too

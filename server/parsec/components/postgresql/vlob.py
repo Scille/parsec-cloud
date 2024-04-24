@@ -293,10 +293,10 @@ class PGVlobComponent(BaseVlobComponent):
             case _:
                 pass
 
-        if last_common_certificate_timestamp >= timestamp:
+        if timestamp <= last_common_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
 
-        if last_realm_certificate_timestamp >= timestamp:
+        if timestamp <= last_realm_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         if org.is_sequestered:
@@ -410,10 +410,10 @@ class PGVlobComponent(BaseVlobComponent):
         if maybe_error is not None:
             return maybe_error
 
-        if last_common_certificate_timestamp >= timestamp:
+        if timestamp <= last_common_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_common_certificate_timestamp)
 
-        if last_realm_certificate_timestamp >= timestamp:
+        if timestamp <= last_realm_certificate_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         if org.is_sequestered:
