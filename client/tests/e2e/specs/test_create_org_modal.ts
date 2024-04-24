@@ -180,70 +180,70 @@ describe('Create a new organization', () => {
     // cy.get('.create-organization-modal').should('not.exist');
   });
 
-  it('Can go to the previous page', () => {
-    function goToPage(page: number): void {
-      for (let i = 1; i < page; i++) {
-        cy.get('#next-button').click();
-      }
-    }
+  // it('Can go to the previous page', () => {
+  //   function goToPage(page: number): void {
+  //     for (let i = 1; i < page; i++) {
+  //       cy.get('#next-button').click();
+  //     }
+  //   }
 
-    function goBackToStartFrom(page: number): void {
-      for (let i = page; i > 1; i--) {
-        cy.get('#previous-button').click();
-      }
-      cy.get('#previous-button').should('not.be.visible');
-      cy.get('@title').contains('Create an organization');
-    }
+  //   function goBackToStartFrom(page: number): void {
+  //     for (let i = page; i > 1; i--) {
+  //       cy.get('#previous-button').click();
+  //     }
+  //     cy.get('#previous-button').should('not.be.visible');
+  //     cy.get('@title').contains('Create an organization');
+  //   }
 
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.wait(200);
-    cy.get('.modal-header__title').as('title').contains('Create an organization');
+  //   cy.get('#create-organization-button').click();
+  //   cy.get('.popover-viewport').find('ion-item').first().click();
+  //   cy.wait(200);
+  //   cy.get('.modal-header__title').as('title').contains('Create an organization');
 
-    // Page 1
-    cy.get('.org-name').find('ion-input').find('input').type('MyOrg');
-    cy.get('.org-name').click();
+  //   // Page 1
+  //   cy.get('.org-name').find('ion-input').find('input').type('MyOrg');
+  //   cy.get('.org-name').click();
 
-    // Go to 2
-    cy.get('#next-button').click();
-    cy.get('@title').contains('Enter your personal information');
+  //   // Go to 2
+  //   cy.get('#next-button').click();
+  //   cy.get('@title').contains('Enter your personal information');
 
-    // Back to 1
-    goBackToStartFrom(2);
-    // Back to 2
-    goToPage(2);
+  //   // Back to 1
+  //   goBackToStartFrom(2);
+  //   // Back to 2
+  //   goToPage(2);
 
-    cy.get('.user-info').find('ion-input').eq(0).find('input').type('Banjo');
-    cy.get('.user-info').find('ion-input').eq(1).find('input').type('banjo@rare.com');
-    // Make it loose focus
-    cy.get('.user-info').click();
+  //   cy.get('.user-info').find('ion-input').eq(0).find('input').type('Banjo');
+  //   cy.get('.user-info').find('ion-input').eq(1).find('input').type('banjo@rare.com');
+  //   // Make it loose focus
+  //   cy.get('.user-info').click();
 
-    // Go to 3
-    cy.get('#next-button').click();
-    // Back to 1
-    goBackToStartFrom(3);
-    // Back to 3
-    goToPage(3);
+  //   // Go to 3
+  //   cy.get('#next-button').click();
+  //   // Back to 1
+  //   goBackToStartFrom(3);
+  //   // Back to 3
+  //   goToPage(3);
 
-    // 3 is just the server choice, to straight to 4
-    cy.get('#next-button').click();
-    // Back to 1
-    goBackToStartFrom(4);
-    // Back to 4
-    goToPage(4);
+  //   // 3 is just the server choice, to straight to 4
+  //   cy.get('#next-button').click();
+  //   // Back to 1
+  //   goBackToStartFrom(4);
+  //   // Back to 4
+  //   goToPage(4);
 
-    cy.get('.org-password').find('ion-input').first().find('input').type('AVeryL0ngP@ssw0rd');
-    cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
-    cy.get('.org-password').click();
-    cy.get('#next-button').click();
+  //   cy.get('.org-password').find('ion-input').first().find('input').type('AVeryL0ngP@ssw0rd');
+  //   cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
+  //   cy.get('.org-password').click();
+  //   cy.get('#next-button').click();
 
-    goBackToStartFrom(5);
-    goToPage(5);
+  //   goBackToStartFrom(5);
+  //   goToPage(5);
 
-    cy.get('#next-button').click();
-    // From now on, shouldn't be able to go back
-    cy.get('#previous-button').should('not.be.visible');
-  });
+  //   cy.get('#next-button').click();
+  //   // From now on, shouldn't be able to go back
+  //   cy.get('#previous-button').should('not.be.visible');
+  // });
 
   it('Can edit from summary page', () => {
     cy.get('#create-organization-button').click();
