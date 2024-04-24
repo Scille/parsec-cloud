@@ -26,6 +26,7 @@ describe('Check invitations page', () => {
     cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('inviteButton').contains('Invite');
     cy.get('@inviteButton').should('have.class', 'button-disabled');
     cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
+    cy.get('.ms-modal-footer-buttons').click();
     cy.get('@inviteButton').should('not.have.class', 'button-disabled');
     cy.get('@inviteButton').click();
     cy.checkToastMessageWithSidebar('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
@@ -33,7 +34,7 @@ describe('Check invitations page', () => {
 
   it('Check copy link button', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
-    cy.get('@invitations').first().realHover().invoke('show').find('.copy-link').click();
+    cy.get('@invitations').first().realHover().invoke('show').find('.copy-link').click({ force: true });
     cy.checkToastMessageWithSidebar('info', 'Invitation link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
