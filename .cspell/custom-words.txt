@@ -424,6 +424,7 @@ originalname
 oscrypt
 oscrypto
 OSXFUSE
+osxkeychain
 OURCYGPATTERN
 outform
 Owholemodule
@@ -576,6 +577,7 @@ secho
 secretbox
 secretkey
 SecretKeyBytes
+secretservice
 sectionauthor
 seealso
 SeedBytes
