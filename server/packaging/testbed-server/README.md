@@ -1,94 +1,128 @@
-# Testbed server in a box
+# Parsec testbed server in a nutshell
 
-Parsec provides a Docker image for the testbed server that can be used for testing.
+Parsec testbed server is provided as a Docker image. The instructions below explain how to build and publish a new version of the Docker image.
 
-- [Build and publish a new testbed server docker image](#build-and-publish-a-new-testbed-server-docker-image)
-  - [Generate a github token](#generate-a-github-token)
-    - [How I regenerate my token](#how-i-regenerate-my-token)
-  - [Setup docker](#setup-docker)
-    - [Authenticate to the github container registry](#authenticate-to-the-github-container-registry)
-      - [Setup `pass` credentials store](#setup-pass-credentials-store)
-  - [Build the docker image](#build-the-docker-image)
-  - [Publish the image](#publish-the-image)
+- [Introduction](#introduction)
+- [Testbed server in the CI](#testbed-server-in-the-ci)
+- [Build and Publish a new testbed server Docker image](#build-and-publish-a-new-testbed-server-docker-image)
+  - [Using GitHub Action](#using-github-action)
+  - [Locally](#locally)
+    - [Setup](#setup)
+      - [Generate a GitHub Personal Access Token](#generate-a-github-personal-access-token)
+        - [How to regenerate your token](#how-to-regenerate-your-token)
+      - [Setup Docker](#setup-docker)
+      - [Setup Docker credential store](#setup-docker-credential-store)
+        - [Setup `pass` credential store](#setup-pass-credential-store)
+      - [Authenticate to Github's Container registry](#authenticate-to-githubs-container-registry)
+    - [Build the testbed server Docker image](#build-the-testbed-server-docker-image)
+    - [Publish the testbed server Docker image](#publish-the-testbed-server-docker-image)
 
-## Build and publish a new testbed server docker image
+## Introduction
 
-Here we will detail how to build and publish a new Docker image for the testbed server.
+The Parsec testbed server is used to simplify the mockup of organizations for testing purposes.
 
-### Generate a github token
+Organization templates are defined in the [testbed](https://github.com/Scille/parsec-cloud/tree/master/libparsec/crates/testbed) crate. See the [templates](https://github.com/Scille/parsec-cloud/tree/master/libparsec/crates/testbed/src/templates) directory.
 
-To publish a package to GitHub, you need to have a [personnel access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) (PAT) with the correct permissions (scopes).
+Releases of `parsec-testbed-server` can be found on <https://github.com/Scille/parsec-cloud/pkgs/container/parsec-cloud%2Fparsec-testbed-server>.
 
-Currently GitHub only allow to use PAT in classic mode (not fine-grained).
+## Testbed server in the CI
+
+The CI uses one of the published testbed server Docker images to run tests.
+
+To see which image is used, look for the `parsec-testbed-server` service in the GitHub actions.
+
+For example, `https://github.com/Scille/parsec-cloud/blob/master/.github/workflows/ci-rust.yml`:
+
+```yaml
+    services:
+      parsec-testbed-server:
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.0.0-b.6.dev.19837.df6299086
+```
+
+## Build and Publish a new testbed server Docker image
+
+### Using GitHub Action
+
+The easiest way to build and publish a new testbed image is by using the dedicated [`docker-testbed`](https://github.com/Scille/parsec-cloud/actions/workflows/docker-testbed.yml) GitHub Action.
+
+Click on `Run workflow`, select the branch to be used (i.e. `master`) and click `Run workflow`.
+
+### Locally
+
+This section describes how to locally build and publish a new testbed server Docker image.
+
+#### Setup
+
+##### Generate a GitHub Personal Access Token
+
+To publish a package to GitHub, you need to have a [personnel access token (PAT)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) with the correct permissions (scopes). Currently GitHub only allows to use PAT in classic mode (not fine-grained).
 
 So you need to go to <https://github.com/settings/tokens/new> and:
 
-- Set a correct name for the to be generated token (Mine is called `read-write-del-packages`).
-- Set the expiration time (I let the default to `30 days`).
+- Set a name for the to be generated token (for example: `read-write-del-packages`).
+- Set the expiration time (you can leave the default to `30 days`).
 - Select `write:packages` (will include `read:packages`).
 - Select `delete:packages`.
 
 After that click on `Generate token`, it will display the generated token. **Make sure to keep it somewhere safe** (like you would do for a password).
 
-#### How I regenerate my token
+###### How to regenerate your token
 
-My token is about to expire how do I regenerate it ?
+GitHub will notify you if your token is about to expire. To regenerate it:
 
-To regenerate your token (you will be notified by github when one is about to expire), go to <https://github.com/settings/tokens> click on the token to regenerate (the name of the token).
+1. Go to <https://github.com/settings/tokens>.
+2. Click on the name of the token, its details will be displayed.
+3. Click `Regenerate Token` to regenerate it (as before, **keep the new token safe**).
 
-This will open a page with the details of the selected token and at the top of it, we have the button `Regenerate Token` (like when generating a token, keep the new one safe).
+##### Setup Docker
 
-### Setup docker
+For this step, we will consider you already have a working Docker installation (the command `docker run hello-world` work as expected). If not, follow the instructions on <https://docs.docker.com/get-docker/>.
 
-For this step, we will consider you already have a functioning docker installation (the command `docker run hello-world` work as expected).
+##### Setup Docker credential store
 
-Here, we will setup docker to be able to authenticate to the [github docker registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-docker-registry).
+In order to safely store your credentials, you need to setup a credential store (otherwise they are saved in plaintext).
 
-#### Authenticate to the github container registry
+Depending on your platform, you have the following `docker-credential-helper` alternatives:
 
-You need to setup a credential store with docker to safely store the credentials (otherwise they are saved in plaintext).
-Depending on your platform, you have the following credentials store:
+| Name                                 | Platform   | Package                        |
+| ------------------------------------ | ---------- | ------------------------------ |
+| D-Bus Secret Service                 | 🐧 Linux   | docker-credential-secretservice |
+| Pass                                 | 🐧 Linux   | docker-credential-pass          |
+| Microsoft Windows Credential Manager | 🪟 Windows | docker-credential-wincred       |
+| Apple macOS keychain                 | 🍎 macOS   | docker-credential-osxkeychain   |
 
-| Name                                 | Platform |
-| ------------------------------------ | -------- |
-| D-Bus Secret Service                 | 🐧 Linux  |
-| Pass                                 | 🐧 Linux  |
-| Microsoft Windows Credential Manager | Windows  |
-| Apple macOS keychain                 | 🍎 macOS  |
+Download the binary that works better for you from the [releases page](https://github.com/docker/docker-credential-helpers/releases) and put that binary in your $PATH, so Docker can find it (take a look at <https://github.com/docker/docker-credential-helpers/blob/master/README.md#installation>).
 
-You can download them from <https://github.com/docker/docker-credential-helpers/releases>.
+The following steps describe how to setup and use the `pass` credential store.
 
-For the setup instructions, take a look at <https://github.com/docker/docker-credential-helpers/blob/master/README.md>.
+###### Setup `pass` credential store
 
-I will detail the setup for `pass` since it's the one I'm using.
+Install [`pass`](https://www.passwordstore.org/) and initialize it with a GPG key (take a look at <https://wiki.archlinux.org/title/Pass>).
 
-##### Setup `pass` credentials store
+As specified above, download the artifact `docker-credential-pass-v{{ version }}.linux-{{ arch }}` from the [releases page](https://github.com/docker/docker-credential-helpers/releases) and add it to your $PATH so Docker can find it (for example: `~/.local/bin`). It should be renamed `docker-credential-pass`.
 
-We consider you already installed [`pass`](https://www.passwordstore.org/) and initialized `pass` with a gpg key (you can take a look at <https://wiki.archlinux.org/title/Pass>).
-
-Download the artifact `docker-credential-pass-v{{ version }}.linux-{{ arch }}` at <https://github.com/docker/docker-credential-helpers/releases/latest>
-
-After you complete the download, you need to install the binary somewhere accessible in your path.
-I put mine in `~/.local/bin`, so I have the following output with the command `whereis docker-credential-pass`
+Check that the command is found:
 
 ```shell
 $ whereis docker-credential-pass
 docker-credential-pass: /home/.../.local/bin/docker-credential-pass
 ```
 
-> If you have `docker-credential-pass:` with nothing after, it can mean:
+> If you get `docker-credential-pass:` with nothing after, it can mean that:
 >
 > - You put the binary in a folder that isn't already in the env var `PATH` (note `~/.local/bin` isn't always present by default in `PATH`).
 > - You copied the binary in a correct folder but with the wrong name.
 
-And the command `docker-credential-pass version` work (you may need to give it the execution permission with `chmod +x docker-credential-pass`):
+Check that the command is working:
 
 ```shell
 $ docker-credential-pass version
 docker-credential-pass (github.com/docker/docker-credential-helpers) v0.7.0
 ```
 
-Modify the docker config file at `~/.docker/config.json`, you need to set the key `credsStore` to `pass`.
+> If you get permission denied, you may need to give it execution permission `chmod +x docker-credential-pass`
+
+Edit the Docker configuration file at `~/.docker/config.json` (you can create it if it does not exists) and set the key `credsStore` to `pass`.
 
 ```json
 {
@@ -96,7 +130,9 @@ Modify the docker config file at `~/.docker/config.json`, you need to set the ke
 }
 ```
 
-Then execute `docker login`
+##### Authenticate to Github's Container registry
+
+Use Docker to login to [GitHub's Container registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry) using your GitHub's username and personal access token:
 
 ```shell
 $ docker login ghcr.io
@@ -105,7 +141,7 @@ Password: <PAT>
 Login Succeeded
 ```
 
-You can then verify, that you correctly configured docker with
+Check that it is correctly configured:
 
 ```shell
 $ docker-credential-pass list
@@ -116,33 +152,31 @@ docker-credential-helpers
     └── <USERNAME>
 ```
 
-### Build the docker image
+#### Build the testbed server Docker image
 
-To build the docker image, simply execute
+To build the testbed server Docker image, run:
 
 ```shell
 bash packaging/testbed-server/build.sh
 ```
 
-> If you are adventurous, you can replace the `bash` by `source` if you're already in a bash shell (will close if something fail, use `set +x` after).
-> That will provide access to the env var `PREFIX` & `UNIQ_TAG`.
+If build succeeds, it will display the command to run the testbed docker image (look for the command after `You can now test/use the docker image with:`).
 
-The script will give you the instruction to run the generated docker image (look for the command after `You can now test/use the docker image with:`).
+> Alternative, if you are in a bash shell, you can `source` the build script (will close if something fail, use `set +x` after).
+> This will provide access to `PREFIX` and `UNIQ_TAG` environment variables so you can run the testbed Docker image as:
+>
+> ```shell
+> docker run --publish 6777:6777 --rm --name=parsec-testbed-server $PREFIX/parsec-testbed-server:$UNIQ_TAG
+> ```
 
-```shell
-docker run --publish 6777:6777 --rm --name=parsec-testbed-server $PREFIX/parsec-testbed-server:$UNIQ_TAG
-```
+#### Publish the testbed server Docker image
 
-> The env var `PREFIX` & `UNIQ_TAG` are only available if you used `source` instead of `bash`, otherwise use the command displayed by the script.
+Once you have tested that the image works, upload it to the GitHub Container registry with the command provided by the script (look for the command after `Once You have tested that the image is working you can push it with`)
 
-### Publish the image
-
-Once you have tested that the image works, upload it to the GitHub container registry with the command provided by the script (look for the command after `Once You have tested that the image is working you can push it with`)
-
-```shell
-for tag in $UNIQ_TAG; do
-  docker push $PREFIX/parsec-testbed-server:\$tag;
-done
-```
-
-> The env var `PREFIX` & `UNIQ_TAG` are only available if you used `source` instead of `bash`, otherwise use the command displayed by the script.
+> Alternative, if you have **sourced* the build script, you can run the testbed Docker image as:
+>
+> ```shell
+> for tag in $UNIQ_TAG; do
+>   docker push $PREFIX/parsec-testbed-server:\$tag;
+> done
+> ```
