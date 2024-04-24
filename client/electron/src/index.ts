@@ -4,8 +4,8 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import type { MenuItemConstructorOptions } from 'electron';
 import { MenuItem, app, ipcMain, shell } from 'electron';
-import electronIsDev from 'electron-is-dev';
 import unhandled from 'electron-unhandled';
+import { electronIsDev } from './utils';
 // import { autoUpdater } from 'electron-updater';
 
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';

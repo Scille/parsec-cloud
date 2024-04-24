@@ -5,12 +5,12 @@ import { CapElectronEventEmitter, CapacitorSplashScreen, setupCapacitorElectronP
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
-import electronIsDev from 'electron-is-dev';
 import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
+import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
