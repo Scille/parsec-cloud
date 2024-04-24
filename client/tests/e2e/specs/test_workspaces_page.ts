@@ -69,7 +69,7 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').first().find('.shared-group').find('.person-avatar').as('avatars').should('have.length', 2);
     cy.get('@avatars').first().contains('Ko');
     cy.get('@avatars').eq(1).contains('Ce');
-    cy.get('.workspace-list-item').first().find('.workspace-users').find('.label-not-shared').should('not.be.visible');
+    cy.get('.workspace-list-item').first().find('.workspace-users').find('.not-shared-label').should('not.be.visible');
   });
 
   it('Sort workspaces in list view', () => {
