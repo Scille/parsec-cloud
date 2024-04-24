@@ -164,18 +164,25 @@ async function setupApp(): Promise<void> {
   }
 
   if (isElectron()) {
+    let isQuitDialogOpen: boolean = false;
+
     if ((await libparsec.getPlatform()) === Platform.Windows) {
       const mountpoint = await libparsec.getDefaultMountpointBaseDir();
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
     window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
+      if (isQuitDialogOpen) {
+        return;
+      }
       let answer: Answer = Answer.Yes;
       if (force === false) {
+        isQuitDialogOpen = true;
         answer = await askQuestion('quit.title', 'quit.subtitle', {
           yesText: 'quit.yes',
           noText: 'quit.no',
         });
+        isQuitDialogOpen = false;
       }
       if (answer === Answer.Yes) {
         const devices = await getLoggedInDevices();
