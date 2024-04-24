@@ -2,8 +2,8 @@
 
 // cSpell:disable
 
-import { Translatable } from '@/services/translation';
 import { DateTime } from 'luxon';
+import { Translatable } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
 

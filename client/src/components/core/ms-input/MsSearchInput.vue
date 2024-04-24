@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { search } from 'ionicons/icons';
 import { ref } from 'vue';

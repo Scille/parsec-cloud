@@ -2,8 +2,8 @@
 
 import { HotkeyManagerKey } from '@/services/hotkeyManager';
 import { InformationManagerKey } from '@/services/informationManager';
-import { Translatable, translate } from '@/services/translation';
 import { config } from '@vue/test-utils';
+import { I18n, Translatable } from 'megashark-lib';
 import { vi } from 'vitest';
 
 async function mockShowToast(_notif: Notification): Promise<void> {
@@ -68,7 +68,7 @@ function mockLibParsec(): void {
 
 function mockI18n(): void {
   config.global.mocks = {
-    $msTranslate: (tr: Translatable): string => translate(tr),
+    $msTranslate: (tr: Translatable): string => I18n.translate(tr),
   };
 }
 

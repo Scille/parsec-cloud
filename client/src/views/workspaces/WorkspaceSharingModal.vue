@@ -61,7 +61,8 @@ import {
   shareWorkspace,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { getWorkspaceRoleTranslationKey, translate } from '@/services/translation';
+import { getWorkspaceRoleTranslationKey } from '@/services/translation';
+import { I18n } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -161,7 +162,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.listFailure.alreadyHasRole',
             data: {
               user: user.humanHandle.label,
-              role: translate(getWorkspaceRoleTranslationKey(role).label),
+              role: I18n.translate(getWorkspaceRoleTranslationKey(role).label),
             },
           },
           level: InformationLevel.Info,
@@ -193,7 +194,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.updateRoleSuccess',
             data: {
               user: user.humanHandle.label,
-              role: translate(getWorkspaceRoleTranslationKey(role).label),
+              role: I18n.translate(getWorkspaceRoleTranslationKey(role).label),
             },
           },
           level: InformationLevel.Success,

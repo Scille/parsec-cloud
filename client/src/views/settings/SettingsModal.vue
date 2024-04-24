@@ -57,7 +57,7 @@
                   <ms-dropdown
                     class="dropdown"
                     :options="languageOptions"
-                    :default-option-key="getLocale()"
+                    :default-option-key="I18n.getLocale()"
                     @change="changeLang($event.option.key)"
                   />
                 </settings-option>
@@ -136,7 +136,7 @@ import { MsDropdown, MsModal, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isMacOS } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Locale, changeLocale, getLocale } from '@/services/translation';
+import { Locale, I18n } from 'megashark-lib';
 import { toggleDarkMode } from '@/states/darkMode';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
@@ -192,7 +192,7 @@ const configUnwatch = watch(
 
 async function changeLang(lang: Locale): Promise<void> {
   config.value.locale = lang;
-  changeLocale(lang);
+  I18n.changeLocale(lang);
 }
 
 async function changeTheme(selectedTheme: string): Promise<void> {

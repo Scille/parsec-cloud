@@ -6,8 +6,8 @@ import MsQuestionModal from '@/components/core/ms-modal/MsQuestionModal.vue';
 import MsTextInputModal from '@/components/core/ms-modal/MsTextInputModal.vue';
 import { Answer, FolderSelectionOptions, GetPasswordOptions, GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { FsPath } from '@/parsec';
-import { Translatable } from '@/services/translation';
 import { modalController } from '@ionic/vue';
+import { Translatable } from 'megashark-lib';
 
 export interface QuestionOptions {
   yesText?: Translatable;

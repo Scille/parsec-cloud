@@ -20,7 +20,7 @@
 import MsSorterPopover from '@/components/core/ms-sorter/MsSorterPopover.vue';
 import { MsSorterChangeEvent, MsSorterLabels } from '@/components/core/ms-sorter/types';
 import { MsOption, MsOptions } from '@/components/core/ms-types';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonButton, IonIcon, popoverController } from '@ionic/vue';
 import { swapVertical } from 'ionicons/icons';
 import { Ref, ref } from 'vue';

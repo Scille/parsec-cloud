@@ -1,12 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { translate } from '@/services/translation';
 import { mockLibParsec } from '@tests/component/support/mocks';
 import { it } from 'vitest';
 
 mockLibParsec();
 
 import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator, organizationValidator } from '@/common/validators';
+import { I18n } from 'megashark-lib';
 
 // cspell:disable-next-line
 const VALID_PAYLOAD = 'xBCqqqqqqqqqqqqqqqqqqqqq';
@@ -14,10 +14,10 @@ const VALID_PAYLOAD = 'xBCqqqqqqqqqqqqqqqqqqqqq';
 describe('Validators', () => {
   it('Validates organization name', async () => {
     const invalidNameResult = await organizationValidator('Org#');
-    expect(translate(invalidNameResult.reason)).to.equal('Only letters, digits, underscores and hyphens. No spaces.');
+    expect(I18n.translate(invalidNameResult.reason)).to.equal('Only letters, digits, underscores and hyphens. No spaces.');
 
     const nameTooLongResult = await organizationValidator('a'.repeat(33));
-    expect(translate(nameTooLongResult.reason)).to.equal('Name is too long, limit is 32 characters.');
+    expect(I18n.translate(nameTooLongResult.reason)).to.equal('Name is too long, limit is 32 characters.');
   });
 
   it.each([
@@ -29,7 +29,7 @@ describe('Validators', () => {
     ['parsec3://host/org?a=claim_user&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim link', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimLinkValidator(link);
-    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
+    expect(I18n.translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
   it.each([
@@ -41,7 +41,7 @@ describe('Validators', () => {
     ['parsec3://host/org?a=claim_user&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim user', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimUserLinkValidator(link);
-    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
+    expect(I18n.translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 
   it.each([
@@ -52,6 +52,6 @@ describe('Validators', () => {
     ['parsec3://host/org?a=claim_device&p=abcdefg', 'Link contains an invalid token.'],
   ])('Validates claim device', async (link: string, expected: string) => {
     const invalidProtocolResult = await claimDeviceLinkValidator(link);
-    expect(translate(invalidProtocolResult.reason)).to.equal(expected);
+    expect(I18n.translate(invalidProtocolResult.reason)).to.equal(expected);
   });
 });

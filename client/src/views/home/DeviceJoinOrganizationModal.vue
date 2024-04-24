@@ -164,7 +164,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';

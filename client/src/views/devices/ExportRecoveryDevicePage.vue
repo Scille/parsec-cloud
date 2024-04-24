@@ -155,7 +155,7 @@ import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { Translatable, translate } from '@/services/translation';
+import { Translatable, I18n } from 'megashark-lib';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
@@ -238,7 +238,7 @@ async function downloadRecoveryFile(): Promise<void> {
 
 async function fileDownload(data: string, fileName: Translatable): Promise<void> {
   downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8, ${encodeURIComponent(data)}`);
-  downloadLink.value.setAttribute('download', translate(fileName));
+  downloadLink.value.setAttribute('download', I18n.translate(fileName));
   downloadLink.value.click();
 }
 </script>

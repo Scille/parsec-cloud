@@ -10,7 +10,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { ParsedParsecAddrTag } from '@/plugins/libparsec';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 
 export enum Validity {
   Invalid = 0,

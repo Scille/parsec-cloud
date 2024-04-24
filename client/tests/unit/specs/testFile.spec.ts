@@ -1,8 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { formatFileSize, shortenFileName } from '@/common/file';
+import appEnUS from '@/locales/en-US.json';
+import appFrFR from '@/locales/fr-FR.json';
 import { Path } from '@/parsec';
-import { initTranslations, translate } from '@/services/translation';
+import { I18n } from 'megashark-lib';
 import { it } from 'vitest';
 
 describe('File', () => {
@@ -19,7 +21,13 @@ describe('File', () => {
   });
 
   beforeEach(() => {
-    initTranslations('en-US');
+    I18n.init({
+      defaultLocale: 'en-US',
+      customAssets: {
+        'fr-FR': appFrFR,
+        'en-US': appEnUS,
+      },
+    });
   });
 
   // Values taken for the Python test:
@@ -83,11 +91,11 @@ describe('File', () => {
     ['9.99 GB', 10_737_418_239],
     ['10.0 GB', 10_737_418_240],
   ])('Gets the right format for the size', async (expected, bytes) => {
-    expect(translate(formatFileSize(bytes))).to.equal(expected);
+    expect(I18n.translate(formatFileSize(bytes))).to.equal(expected);
   });
 
   it('Handles negative bytes', async () => {
-    expect(() => translate(formatFileSize(-1234))).to.throw('Bytes must be >= 0');
+    expect(() => I18n.translate(formatFileSize(-1234))).to.throw('Bytes must be >= 0');
   });
 
   it('Test shorten name', async () => {

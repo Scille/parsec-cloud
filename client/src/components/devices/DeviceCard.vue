@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonIcon, IonText } from '@ionic/vue';
 import { desktopOutline } from 'ionicons/icons';
 import { DateTime } from 'luxon';

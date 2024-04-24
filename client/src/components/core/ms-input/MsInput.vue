@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { IValidator, Validity } from '@/common/validators';
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonIcon, IonInput, IonItem } from '@ionic/vue';
 import { warning } from 'ionicons/icons';
 import { Ref, ref } from 'vue';

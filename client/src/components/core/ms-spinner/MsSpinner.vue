@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { Translatable } from '@/services/translation';
+import { Translatable } from 'megashark-lib';
 import { IonSpinner, IonText } from '@ionic/vue';
 
 defineProps<{
