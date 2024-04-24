@@ -837,9 +837,9 @@ class PGInviteComponent(BaseInviteComponent):
         is_last_exchange = row["last_exchange"]
 
         # Ignore `invitation.is_deleted` here:
-        # - The check have already been done during `_conduit_talk`.
-        # - The peer may have already updated the conduite in it final (i.e. deleted)
-        #   state, so it's hard to detect that we *are* the last listen allowed.
+        # - The check has already been done during `_conduit_talk`.
+        # - The peer may have already updated the conduit in its final (i.e. deleted)
+        #   state, so it's hard to detect that this *is* the last listen allowed.
 
         if ctx.is_greeter:
             curr_our_payload = row["conduit_greeter_payload"]
@@ -868,7 +868,7 @@ class PGInviteComponent(BaseInviteComponent):
                     )
                 )
 
-                # If this was the last exchange, we can mark the invitation as finished
+                # If this was the last exchange, the invitation can be marked as finished
                 if ctx.state == ConduitState.STATE_4_COMMUNICATE and is_last_exchange:
                     await conn.execute(
                         *_q_delete_invitation(

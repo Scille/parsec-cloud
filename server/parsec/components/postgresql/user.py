@@ -676,8 +676,8 @@ class PGUserComponent(BaseUserComponent):
         record = await conn.fetchrow(
             *_q_check_active_users_limit(organization_id=organization_id.str)
         )
-        # Note with the user/device write lock held we have the guarantee the active users
-        # limit won't change in our back.
+        # Note that with the user/device write lock held, we have guarantee that
+        # the active users limit won't change behind our back.
         if record is not None and not record["allowed"]:
             return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
@@ -768,7 +768,7 @@ class PGUserComponent(BaseUserComponent):
             case error:
                 return error
 
-        if common_topic_timestamp >= device_certificate_cooked.timestamp:
+        if device_certificate_cooked.timestamp <= common_topic_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
         match await self._create_device(
@@ -862,7 +862,7 @@ class PGUserComponent(BaseUserComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        if common_topic_timestamp >= certif.timestamp:
+        if certif.timestamp <= common_topic_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
         # TODO: validate it's okay not to check this
@@ -1142,7 +1142,7 @@ class PGUserComponent(BaseUserComponent):
         # approach by considering certificates don't change often so it's no big deal to
         # have a much more coarse approach.
 
-        if common_topic_timestamp >= certif.timestamp:
+        if certif.timestamp <= common_topic_timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
         # All checks are good, now we do the actual insertion
