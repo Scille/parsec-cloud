@@ -349,6 +349,7 @@ manylinux
 mapbox
 mapboxgl
 mediaservice
+megashark
 memfs
 MemLimit
 metaraw
