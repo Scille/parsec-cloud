@@ -15,7 +15,7 @@
           <div class="version">
             <ion-text class="version-title title-h3"> {{ $msTranslate('app.name') }} v{{ versionChange.version }} </ion-text>
             <ion-text class="version-date body">
-              {{ $d(versionChange.date.toJSDate(), 'short') }}
+              {{ $msTranslate(I18n.formatDate(versionChange.date, 'short')) }}
             </ion-text>
           </div>
 
@@ -120,6 +120,7 @@ import { MsModal } from '@/components/core';
 import { IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
 import { construct, infinite, sparkles } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
+import { I18n } from 'megashark-lib';
 
 const changes: Ref<VersionChange[]> = ref([]);
 
