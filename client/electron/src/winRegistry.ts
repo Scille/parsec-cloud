@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import electronIsDev from 'electron-is-dev';
 import { join } from 'path';
+import { electronIsDev } from './utils';
 
 export class WinRegistry {
   private regedit: any = null;
