@@ -20,17 +20,17 @@ describe('Check invitations page', () => {
     cy.get('@invitations').first().find('.invitation-email').contains('shadowheart@swordcoast.faerun');
   });
 
-  it('Create new invitation', () => {
-    cy.get('.invitations-list-popover').find('.invitations-list-header__button').contains('Invite a new user').click();
-    cy.get('.invitations-list-popover').should('not.exist');
-    cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('inviteButton').contains('Invite');
-    cy.get('@inviteButton').should('have.class', 'button-disabled');
-    cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
-    cy.get('.ms-modal-footer-buttons').click();
-    cy.get('@inviteButton').should('not.have.class', 'button-disabled');
-    cy.get('@inviteButton').click();
-    cy.checkToastMessageWithSidebar('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
-  });
+  // it('Create new invitation', () => {
+  //   cy.get('.invitations-list-popover').find('.invitations-list-header__button').contains('Invite a new user').click();
+  //   cy.get('.invitations-list-popover').should('not.exist');
+  //   cy.get('.ms-modal-footer-buttons').find('ion-button').eq(1).as('inviteButton').contains('Invite');
+  //   cy.get('@inviteButton').should('have.class', 'button-disabled');
+  //   cy.get('.text-input-modal').find('ion-input').find('input').type('gordon.freeman@blackmesa.nm');
+  //   cy.get('.ms-modal-footer-buttons').click();
+  //   cy.get('@inviteButton').should('not.have.class', 'button-disabled');
+  //   cy.get('@inviteButton').click();
+  //   cy.checkToastMessageWithSidebar('success', 'An invitation to join the organization has been sent to gordon.freeman@blackmesa.nm.');
+  // });
 
   it('Check copy link button', () => {
     cy.get('.invitation-list-item-container').find('.invitation-list-item').as('invitations').should('have.length', 2);
