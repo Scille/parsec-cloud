@@ -62,9 +62,6 @@ async function setupApp(): Promise<void> {
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
 
-  const injections = injectionProvider.getDefault();
-  const informationManager = injections.informationManager;
-
   const app = createApp(App)
     .use(IonicVue, {
       rippleEffect: false,
@@ -177,8 +174,9 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('parsec-open-link', async (link: string) => {
+      const currentInformationManager = getCurrentInformationManager(injectionProvider);
       if (await modalController.getTop()) {
-        informationManager.present(
+        currentInformationManager.present(
           new Information({
             message: 'link.appIsBusy',
             level: InformationLevel.Error,
@@ -190,9 +188,9 @@ async function setupApp(): Promise<void> {
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
       } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
-        await handleFileLink(link, informationManager);
+        await handleFileLink(link, currentInformationManager);
       } else {
-        await informationManager.present(
+        await currentInformationManager.present(
           new Information({
             message: 'link.invalid',
             level: InformationLevel.Error,
@@ -202,7 +200,7 @@ async function setupApp(): Promise<void> {
       }
     });
     window.electronAPI.receive('parsec-open-path-failed', async (path: string, _error: string) => {
-      informationManager.present(
+      getCurrentInformationManager(injectionProvider).present(
         new Information({
           message: { key: 'globalErrors.openFileFailed', data: { path: path } },
           level: InformationLevel.Error,
@@ -230,6 +228,19 @@ async function setupApp(): Promise<void> {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       updateApp: (): void => {},
     };
+  }
+}
+
+function getCurrentInformationManager(injectionProvider: InjectionProvider): InformationManager {
+  const currentHandle = getConnectionHandle();
+
+  // If we're logged in, we try to get the organization information manager
+  if (currentHandle) {
+    const injections = injectionProvider.getInjections(currentHandle);
+    return injections.informationManager;
+    // Otherwise, we use the default one
+  } else {
+    return injectionProvider.getDefault().informationManager;
   }
 }
 
