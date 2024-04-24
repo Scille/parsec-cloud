@@ -202,6 +202,7 @@ describe('Create a new organization', () => {
 
     // Page 1
     cy.get('.org-name').find('ion-input').find('input').type('MyOrg');
+    cy.get('.org-name').click();
 
     // Go to 2
     cy.get('#next-button').click();
@@ -214,6 +215,8 @@ describe('Create a new organization', () => {
 
     cy.get('.user-info').find('ion-input').eq(0).find('input').type('Banjo');
     cy.get('.user-info').find('ion-input').eq(1).find('input').type('banjo@rare.com');
+    // Make it loose focus
+    cy.get('.user-info').click();
 
     // Go to 3
     cy.get('#next-button').click();
@@ -231,6 +234,7 @@ describe('Create a new organization', () => {
 
     cy.get('.org-password').find('ion-input').first().find('input').type('AVeryL0ngP@ssw0rd');
     cy.get('.org-password').find('ion-input').last().find('input').type('AVeryL0ngP@ssw0rd');
+    cy.get('.org-password').click();
     cy.get('#next-button').click();
 
     goBackToStartFrom(5);
