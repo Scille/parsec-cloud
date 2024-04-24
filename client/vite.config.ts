@@ -55,6 +55,11 @@ if (platform === 'web') {
 const config: UserConfigExport = () => ({
   test: {
     setupFiles: [path.resolve(__dirname, './tests/component/support/setup.ts')],
+    server: {
+      deps: {
+        inline: ['megashark-lib'],
+      },
+    },
     globals: true,
     alias: {
       '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
