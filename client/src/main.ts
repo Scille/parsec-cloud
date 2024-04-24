@@ -210,7 +210,7 @@ async function setupApp(): Promise<void> {
         PresentationMode.Toast,
       );
     });
-    window.electronAPI.receive('parsec-update-availability', async ([updateAvailable, version]: [boolean, string?]) => {
+    window.electronAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
       injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
     });
   } else {

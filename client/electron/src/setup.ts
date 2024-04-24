@@ -114,7 +114,7 @@ export class ElectronCapacitorApp {
   }
 
   sendEvent(event: WindowToPageChannel, ...args: any[]): void {
-    this.MainWindow.webContents.send(event, args);
+    this.MainWindow.webContents.send(event, ...args);
   }
 
   getCustomURLScheme(): string {
@@ -264,7 +264,7 @@ export class ElectronCapacitorApp {
       if (tray) {
         this.hideMainWindow();
       } else {
-        this.MainWindow.webContents.send('close-request');
+        this.sendEvent(WindowToPageChannel.CloseRequest);
       }
       event.preventDefault();
     });
@@ -352,7 +352,7 @@ export class ElectronCapacitorApp {
           const lastArg = process.argv.at(-1);
           // We're only interested in potential Parsec links
           if (lastArg.startsWith('parsec3://')) {
-            this.MainWindow.webContents.send('open-link', lastArg);
+            this.sendEvent(WindowToPageChannel.OpenLink, lastArg);
           }
         }
       }, 400);
