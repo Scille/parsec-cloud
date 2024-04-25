@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
+import { formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { InformationLevel } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';

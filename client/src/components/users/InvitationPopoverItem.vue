@@ -49,11 +49,10 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
-import { Clipboard } from 'megashark-lib';
+import { formatTimeSince, Clipboard } from 'megashark-lib';
 
 const props = defineProps<{
   invitation: UserInvitation;

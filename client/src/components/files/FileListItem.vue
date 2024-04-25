@@ -94,9 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { Folder, MsImage } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage } from 'megashark-lib';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';

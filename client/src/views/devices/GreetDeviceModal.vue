@@ -228,14 +228,13 @@
 
 <script setup lang="ts">
 import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
-import { startCounter } from '@/common/date';
 import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Clipboard, Translatable } from 'megashark-lib';
+import { Clipboard, startCounter, Translatable } from 'megashark-lib';
 import {
   IonButton,
   IonButtons,

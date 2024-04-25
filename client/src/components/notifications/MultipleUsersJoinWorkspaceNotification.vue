@@ -36,7 +36,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
+import { formatTimeSince } from 'megashark-lib';
 import MultipleUsersJoinPopover from '@/components/notifications/MultipleUsersJoinPopover.vue';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
