@@ -30,7 +30,10 @@
         "electron:release": "npm run electron:copy && cd electron && npm run electron:release",
         "electron:debug": "npm run electron:copy && cd electron && npm run electron:start",
         "prettier:check": "prettier . --check",
-        "prettier:fix": "prettier . --write"
+        "prettier:fix": "prettier . --write",
+        "megashark:update": "rm -rf node_modules/megashark-lib && rm package-lock.json && npm install",
+        "megashark:local:start": "npm link megashark-lib",
+        "megashark:local:stop": "npm unlink megashark-lib --no-save && npm install"
     },
     "dependencies": {
         "@capacitor-community/electron": "^5.0.1",
