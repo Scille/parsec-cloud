@@ -17,9 +17,8 @@
 </template>
 
 <script setup lang="ts">
-import { Base64 } from '@/common/base64';
 import { MsSpinner } from '@/components/core';
-import { LogoIconGradient, MsImage } from 'megashark-lib';
+import { Base64, LogoIconGradient, MsImage } from 'megashark-lib';
 import { needsMocks } from '@/parsec';
 import { RouteBackup, Routes, getCurrentRouteQuery, navigateTo } from '@/router';
 import { IonContent, IonPage } from '@ionic/vue';
