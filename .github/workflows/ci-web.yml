@@ -146,7 +146,7 @@ jobs:
         timeout-minutes: 20
 
       - name: Install Playwright dependencies
-        run: npx playwright install
+        run: npx playwright install --with-deps
         working-directory: client
         timeout-minutes: 5
 
