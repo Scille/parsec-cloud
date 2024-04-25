@@ -104,7 +104,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
+import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';

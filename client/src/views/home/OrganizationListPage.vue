@@ -153,10 +153,9 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { MsModalResult, MsOptions } from '@/components/core';
-import { MsImage, NoOrganization, MsSorter, MsSorterChangeEvent, MsSearchInput, MsInput } from 'megashark-lib';
+import { formatTimeSince, MsImage, NoOrganization, MsSorter, MsSorterChangeEvent, MsSearchInput, MsInput } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
 import { Routes } from '@/router';

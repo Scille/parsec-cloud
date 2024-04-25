@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
+import { formatTimeSince } from 'megashark-lib';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';

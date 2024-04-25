@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { formatTimeSince } from '@/common/date';
 import { DateTime } from 'luxon';
-import { I18n } from 'megashark-lib';
+import { I18n, formatTimeSince } from 'megashark-lib';
 import { it, vi } from 'vitest';
 
 describe('Date formatting', () => {

@@ -83,7 +83,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from '@/common/date';
+import { formatTimeSince } from 'megashark-lib';
 import { MsModal } from '@/components/core';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
