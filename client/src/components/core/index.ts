@@ -3,9 +3,6 @@
 // ** ms-types ** //
 export * from '@/components/core/ms-types';
 
-// ** ms-action-bar ** //
-export * from '@/components/core/ms-action-bar';
-
 // ** ms-image ** //
 export * from '@/components/core/ms-image';
 
