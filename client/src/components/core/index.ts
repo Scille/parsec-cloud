@@ -3,9 +3,6 @@
 // ** ms-types ** //
 export * from '@/components/core/ms-types';
 
-// ** ms-input ** //
-export * from '@/components/core/ms-input';
-
 // ** ms-modal ** //
 export * from '@/components/core/ms-modal';
 

@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import SpinnerJSON from '@/assets/spinner.json';
-import { MsInput, MsPasswordInput } from '@/components/core';
+import { MsInput, MsPasswordInput } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';

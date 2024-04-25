@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsPasswordInput } from '@/components/core/ms-input';
+import { MsPasswordInput } from 'megashark-lib';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { GetPasswordOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { modalController } from '@ionic/vue';

@@ -178,7 +178,8 @@
 import { asyncComputed } from '@/common/asyncComputed';
 import { getDefaultDeviceName } from '@/common/device';
 import { IValidator, Validity, organizationValidator } from '@/common/validators';
-import { Answer, MsInformativeText, MsInput, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
+import { Answer, MsInformativeText, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
+import { MsInput } from 'megashark-lib';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
