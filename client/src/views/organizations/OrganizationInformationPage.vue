@@ -210,13 +210,13 @@
 </template>
 
 <script setup lang="ts">
-import { writeTextToClipboard } from '@/common/clipboard';
 import { formatFileSize } from '@/common/file';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { OrganizationInfo, UserProfile, getOrganizationInfo } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonContent, IonIcon, IonLabel, IonPage, IonText, IonTitle } from '@ionic/vue';
 import { copy, warning } from 'ionicons/icons';
+import { Clipboard } from 'megashark-lib';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const orgInfo: Ref<OrganizationInfo | null> = ref(null);
@@ -224,7 +224,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const addressCopiedToClipboard = ref(false);
 
 async function copyAddress(address: string): Promise<void> {
-  const result = await writeTextToClipboard(address);
+  const result = await Clipboard.writeText(address);
   if (result) {
     addressCopiedToClipboard.value = true;
     setTimeout(() => {

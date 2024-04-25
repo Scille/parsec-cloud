@@ -178,7 +178,6 @@
 </template>
 
 <script setup lang="ts">
-import { writeTextToClipboard } from '@/common/clipboard';
 import { entryNameValidator } from '@/common/validators';
 import { Answer, MsModalResult, askQuestion, getTextInputFromUser, selectFolder, MsOptions } from '@/components/core';
 import {
@@ -191,6 +190,7 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   Translatable,
+  Clipboard,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -767,7 +767,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   const filePath = await parsec.Path.join(currentPath.value, entry.name);
   const result = await parsec.getPathLink(workspaceInfo.value.handle, filePath);
   if (result.ok) {
-    if (!(await writeTextToClipboard(result.value))) {
+    if (!(await Clipboard.writeText(result.value))) {
       informationManager.present(
         new Information({
           message: 'FoldersPage.linkNotCopiedToClipboard',

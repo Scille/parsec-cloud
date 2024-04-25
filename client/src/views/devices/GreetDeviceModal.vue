@@ -235,7 +235,7 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { DeviceGreet } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from 'megashark-lib';
+import { Clipboard, Translatable } from 'megashark-lib';
 import {
   IonButton,
   IonButtons,
@@ -482,18 +482,27 @@ async function nextStep(): Promise<void> {
 }
 
 async function copyLink(): Promise<void> {
-  await navigator.clipboard.writeText(greeter.value.invitationLink);
-  linkCopiedToClipboard.value = true;
-  setTimeout(() => {
-    linkCopiedToClipboard.value = false;
-  }, 5000);
-  props.informationManager.present(
-    new Information({
-      message: 'DevicesPage.greet.linkCopiedToClipboard',
-      level: InformationLevel.Info,
-    }),
-    PresentationMode.Toast,
-  );
+  if (!(await Clipboard.writeText(greeter.value.invitationLink))) {
+    props.informationManager.present(
+      new Information({
+        message: 'DevicesPage.greet.linkNotCopiedToClipboard',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    linkCopiedToClipboard.value = true;
+    setTimeout(() => {
+      linkCopiedToClipboard.value = false;
+    }, 5000);
+    props.informationManager.present(
+      new Information({
+        message: 'DevicesPage.greet.linkCopiedToClipboard',
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+  }
 }
 
 async function sendEmail(): Promise<void> {

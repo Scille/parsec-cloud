@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { writeTextToClipboard } from '@/common/clipboard';
 import { workspaceNameValidator } from '@/common/validators';
 import { getTextInputFromUser } from '@/components/core';
 import {
@@ -21,7 +20,7 @@ import { StorageManager } from '@/services/storageManager';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { DisplayState, Translatable } from 'megashark-lib';
+import { Clipboard, DisplayState, Translatable } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -238,7 +237,7 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo, informationManager:
   const result = await parsecGetPathLink(workspace.handle, '/');
 
   if (result.ok) {
-    if (!(await writeTextToClipboard(result.value))) {
+    if (!(await Clipboard.writeText(result.value))) {
       informationManager.present(
         new Information({
           message: 'WorkspacesPage.linkNotCopiedToClipboard',

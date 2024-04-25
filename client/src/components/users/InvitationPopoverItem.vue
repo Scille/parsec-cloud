@@ -49,11 +49,11 @@
 </template>
 
 <script setup lang="ts">
-import { writeTextToClipboard } from '@/common/clipboard';
 import { formatTimeSince } from '@/common/date';
 import { UserInvitation } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonButtons, IonItem, IonLabel } from '@ionic/vue';
+import { Clipboard } from 'megashark-lib';
 
 const props = defineProps<{
   invitation: UserInvitation;
@@ -66,7 +66,7 @@ defineEmits<{
 }>();
 
 async function copyLink(invitation: UserInvitation): Promise<void> {
-  const result = await writeTextToClipboard(invitation.addr);
+  const result = await Clipboard.writeText(invitation.addr);
   if (result) {
     props.informationManager.present(
       new Information({
