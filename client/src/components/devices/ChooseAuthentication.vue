@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsChoosePasswordInput } from '@/components/core';
+import { MsChoosePasswordInput } from 'megashark-lib';
 import KeyringInformation from '@/components/devices/KeyringInformation.vue';
 import { DeviceSaveStrategy, DeviceSaveStrategyTag, SaveStrategy, isDesktop, isKeyringAvailable, isWeb } from '@/parsec';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';

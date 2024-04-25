@@ -72,7 +72,7 @@ export enum ServerMode {
 
 <script setup lang="ts">
 import { Validity, parsecAddrValidator } from '@/common/validators';
-import { MsInput } from '@/components/core';
+import { MsInput } from 'megashark-lib';
 import { IonList, IonRadio, IonRadioGroup, IonText } from '@ionic/vue';
 import { ref } from 'vue';
 

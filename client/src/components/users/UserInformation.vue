@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { Validity, emailValidator, userNameValidator } from '@/common/validators';
-import { MsInput } from '@/components/core';
+import { MsInput } from 'megashark-lib';
 import { ref } from 'vue';
 
 const props = defineProps({
