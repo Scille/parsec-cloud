@@ -273,7 +273,7 @@ def transaction[**P, T, S: WithPool](
     func: Callable[Concatenate[S, AsyncpgConnection, P], Awaitable[T]],
 ):
     """
-    This is used to decorate API method that need to be executed in a transaction.
+    This is used to decorate an API method that needs to be executed in a transaction.
 
     It makes sure that the transaction is rolled back if the function returns a BadOutcome.
     """

@@ -336,7 +336,7 @@ class BaseInviteComponent:
             server_url=self._config.server_addr.to_http_domain_url(),
         )
 
-        await send_email(
+        return await send_email(
             email_config=self._config.email_config,
             to_addr=claimer_email,
             message=message,
@@ -369,7 +369,7 @@ class BaseInviteComponent:
             server_url=self._config.server_addr.to_http_domain_url(),
         )
 
-        await send_email(
+        return await send_email(
             email_config=self._config.email_config,
             to_addr=email,
             message=message,

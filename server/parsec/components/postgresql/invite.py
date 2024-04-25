@@ -69,9 +69,9 @@ _q_get_human_handle_from_user_id = Q(
 SELECT
     human.email,
     human.label
-FROM human LEFT JOIN user ON human._id = user.human
+FROM human LEFT JOIN user_ ON human._id = user_.human
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    human.organization = { q_organization_internal_id("$organization_id") }
     AND user_.user_id = $user_id
 LIMIT 1
 """
@@ -371,9 +371,16 @@ async def _do_new_user_or_device_invitation(
 
 async def _human_handle_from_user_id(
     conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
-) -> HumanHandle:
-    # TODO: implement this query and write the corresponding test
-    raise NotImplementedError
+) -> HumanHandle | None:
+    result = await conn.fetchrow(
+        *_q_get_human_handle_from_user_id(
+            organization_id=organization_id.str,
+            user_id=user_id.str,
+        )
+    )
+    if result:
+        return HumanHandle(email=result["email"], label=result["label"])
+    return None
 
 
 class PGInviteComponent(BaseInviteComponent):
@@ -440,6 +447,10 @@ class PGInviteComponent(BaseInviteComponent):
             greeter_human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author.user_id
             )
+            if not greeter_human_handle:
+                assert (
+                    False
+                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
             send_email_outcome = await self._send_user_invitation_email(
                 organization_id=organization_id,
                 claimer_email=claimer_email,
@@ -495,6 +506,10 @@ class PGInviteComponent(BaseInviteComponent):
             human_handle = await _human_handle_from_user_id(
                 conn, organization_id=organization_id, user_id=author.user_id
             )
+            if not human_handle:
+                assert (
+                    False
+                )  # TODO: Need a specific SendEmailBadOutcome or InviteNewForUserBadOutcome
             send_email_outcome = await self._send_device_invitation_email(
                 organization_id=organization_id,
                 email=human_handle.email,
