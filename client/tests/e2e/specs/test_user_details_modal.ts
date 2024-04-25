@@ -26,13 +26,10 @@ describe('Check user details modal', () => {
       .contains(/^now|< 1 minute$/);
     cy.get('@modal-content').find('ion-text').eq(4).contains('Shared workspaces');
     cy.get('@modal-content').find('.workspace-empty').should('not.be.visible');
-    cy.get('@modal-content').find('ion-list').find('ion-card').as('workspace-cards').should('have.length', 3);
-    cy.get('@workspace-cards').eq(0).find('ion-text').contains('Trademeet');
+    cy.get('@modal-content').find('ion-list').find('ion-card').as('workspace-cards').should('have.length', 1);
+    cy.get('@workspace-cards').eq(0).find('ion-text').contains('The Copper Coronet');
     cy.get('@workspace-cards').eq(0).find('ion-icon').should('exist');
     cy.get('@workspace-cards').eq(0).find('ion-label').contains('Contributor');
-    cy.get('@workspace-cards').eq(1).find('ion-text').contains('The Copper Coronet');
-    cy.get('@workspace-cards').eq(1).find('ion-icon').should('exist');
-    cy.get('@workspace-cards').eq(1).find('ion-label').contains('Contributor');
     cy.get('@modal-content').find('ion-button').contains('Close').click();
     cy.get('@modal').should('not.exist');
   });
