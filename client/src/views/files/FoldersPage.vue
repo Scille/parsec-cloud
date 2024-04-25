@@ -189,10 +189,8 @@ import {
   getTextInputFromUser,
   selectFolder,
   MsOptions,
-  MsSorter,
-  MsSorterChangeEvent,
 } from '@/components/core';
-import { DisplayState, MsGridListToggle } from 'megashark-lib';
+import { DisplayState, MsGridListToggle, MsSorter, MsSorterChangeEvent, Translatable } from 'megashark-lib';
 import { EmptyFolder, MsImage } from '@/components/core/ms-image';
 import * as parsec from '@/parsec';
 
@@ -224,7 +222,6 @@ import {
 } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Translatable } from 'megashark-lib';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';

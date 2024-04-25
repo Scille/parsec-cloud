@@ -155,7 +155,8 @@
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
 import { Validity, claimLinkValidator } from '@/common/validators';
-import { MsModalResult, MsOptions, MsSearchInput, MsSorter, MsSorterChangeEvent } from '@/components/core';
+import { MsModalResult, MsOptions, MsSearchInput } from '@/components/core';
+import { MsSorter, MsSorterChangeEvent } from 'megashark-lib';
 import { MsImage, NoOrganization } from '@/components/core/ms-image';
 import { MsInput } from '@/components/core/ms-input';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';

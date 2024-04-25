@@ -107,17 +107,8 @@
 
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
-import {
-  Answer,
-  MsActionBar,
-  MsActionBarButton,
-  MsOptions,
-  MsSorter,
-  MsSorterChangeEvent,
-  askQuestion,
-  getTextInputFromUser,
-} from '@/components/core';
-import { DisplayState, MsGridListToggle } from 'megashark-lib';
+import { Answer, MsActionBar, MsActionBarButton, MsOptions, askQuestion, getTextInputFromUser } from '@/components/core';
+import { DisplayState, MsGridListToggle, MsSorter, MsSorterChangeEvent, Translatable } from 'megashark-lib';
 import { MsImage, NoActiveUser } from '@/components/core/ms-image';
 import { SortProperty, UserCollection, UserFilter, UserModel } from '@/components/users';
 import {
@@ -136,7 +127,6 @@ import { Routes, getCurrentRouteQuery, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { Translatable } from 'megashark-lib';
 import UserContextMenu, { UserAction } from '@/views/users/UserContextMenu.vue';
 import UserDetailsModal from '@/views/users/UserDetailsModal.vue';
 import UserGridDisplay from '@/views/users/UserGridDisplay.vue';
