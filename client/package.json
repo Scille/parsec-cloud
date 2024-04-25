@@ -49,7 +49,6 @@
         "@ionic/vue": "^7.6.4",
         "@ionic/vue-router": "^7.6.4",
         "@types/luxon": "^3.3.4",
-        "async-mutex": "^0.4.0",
         "luxon": "^3.4.4",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git",
         "qrcode-vue3": "^1.6.8",
