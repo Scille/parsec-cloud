@@ -135,13 +135,13 @@ defineEmits<{
   font-size: 1.5rem;
   padding: 0.75rem;
   &-on {
-    color: var(--parsec-color-light-primary-500);
+    color: var(--parsec-color-light-primary-600);
   }
   &-off {
-    color: var(--parsec-color-light-secondary-disabled);
+    color: var(--parsec-color-light-secondary-light);
   }
   &:hover {
-    color: var(--parsec-color-light-primary-300);
+    color: var(--parsec-color-light-secondary-grey);
   }
 }
 

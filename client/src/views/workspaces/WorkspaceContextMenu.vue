@@ -3,9 +3,14 @@
 <template>
   <ion-content id="workspace-context-menu">
     <div class="list-title">
-      <ion-label class="list-title__text button-large">
+      <ion-label class="list-title__text button-medium">
         {{ workspaceName }}
       </ion-label>
+      <ion-icon
+        v-show="isFavorite"
+        class="favorite"
+        :icon="star"
+      />
     </div>
     <ion-list class="menu-list">
       <ion-item-group
@@ -182,9 +187,18 @@ defineProps<{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
   &__text {
     color: var(--parsec-color-light-secondary-soft-text);
+  }
+
+  .favorite {
+    display: flex;
+    font-size: 1rem;
+    color: var(--parsec-color-light-primary-600);
   }
 }
 </style>

@@ -225,6 +225,6 @@ describe('Check workspaces page', () => {
     cy.get('@workspaceItems').eq(1).find('.workspace-option').click();
     cy.get('@menuItem').eq(11).contains('Add to favorites').click();
     cy.get('@workspaceItems').eq(0).contains('The Copper Coronet');
-    cy.get('@workspaceItems').eq(0).find('.workspace-favorite').should('be.visible');
+    cy.get('.favorites').eq(0).find('.sidebar-item').should('be.visible');
   });
 });
