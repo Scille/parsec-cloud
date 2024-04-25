@@ -182,7 +182,6 @@ import {
   modalController,
 } from '@ionic/vue';
 
-import { asyncComputed } from '@/common/asyncComputed';
 import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
@@ -199,7 +198,7 @@ import {
   UserClaim,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from 'megashark-lib';
+import { Translatable, asyncComputed } from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 
