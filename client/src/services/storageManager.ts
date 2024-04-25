@@ -115,10 +115,7 @@ export class StorageManager {
     const data = await this.internalStore.get(key);
 
     try {
-      let parsedData = JSON.parse(data);
-      if (!parsedData) {
-        parsedData = {};
-      }
+      const parsedData = JSON.parse(data) || {};
       for (const element in defaultValues) {
         if (!(element in parsedData)) {
           parsedData[element] = defaultValues[element];
