@@ -7,12 +7,7 @@
   >
     <div class="file-list-item">
       <div class="file-loading">
-        <vue3-lottie
-          :animation-data="SpinnerJSON"
-          :height="24"
-          :width="24"
-          :loop="true"
-        />
+        <ms-spinner />
       </div>
       <!-- file name -->
       <div class="file-name">
@@ -62,7 +57,6 @@
 </template>
 
 <script setup lang="ts">
-import SpinnerJSON from '@/assets/spinner.json';
 import { formatFileSize, getFileIcon } from '@/common/file';
 import { MsImage } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
@@ -71,7 +65,7 @@ import { ImportData } from '@/services/importManager';
 import { IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudOffline } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
+import { MsSpinner } from 'megashark-lib';
 
 defineProps<{
   data: ImportData;

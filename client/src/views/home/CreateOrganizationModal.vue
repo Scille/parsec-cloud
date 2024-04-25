@@ -177,8 +177,7 @@
 <script setup lang="ts">
 import { getDefaultDeviceName } from '@/common/device';
 import { organizationValidator } from '@/common/validators';
-import { Answer, MsInformativeText, MsModalResult, MsSpinner, askQuestion } from '@/components/core';
-import { IValidator, MsInput, asyncComputed, Validity, Translatable, I18n } from 'megashark-lib';
+import { Answer, MsInformativeText, MsModalResult, askQuestion } from '@/components/core';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import ChooseServer, { ServerMode } from '@/components/organizations/ChooseServer.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
@@ -192,6 +191,7 @@ import {
   createOrganization as parsecCreateOrganization,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { IValidator, MsInput, asyncComputed, Validity, Translatable, MsSpinner, I18n } from 'megashark-lib';
 import SummaryStep, { OrgInfo } from '@/views/home/SummaryStep.vue';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 import { checkmarkDone, chevronBack, chevronForward, close } from 'ionicons/icons';

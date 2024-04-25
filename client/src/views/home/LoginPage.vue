@@ -53,13 +53,11 @@
           />
           {{ $msTranslate('HomePage.organizationLogin.login') }}
         </ion-button>
-        <vue3-lottie
+        <ms-spinner
           v-show="loginInProgress === true"
-          :animation-data="SpinnerJSON"
           :height="28"
           :width="28"
           :speed="2"
-          :loop="true"
         />
       </ion-footer>
     </ion-card>
@@ -68,14 +66,12 @@
 </template>
 
 <script setup lang="ts">
-import SpinnerJSON from '@/assets/spinner.json';
-import { MsInput, MsPasswordInput } from 'megashark-lib';
+import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { Vue3Lottie } from 'vue3-lottie';
 
 const props = defineProps<{
   device: AvailableDevice;

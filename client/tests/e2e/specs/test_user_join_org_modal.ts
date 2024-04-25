@@ -35,11 +35,11 @@ describe('User join an organization', () => {
     cy.get('.join-organization-modal').should('exist');
     cy.get('.modal-header__title').contains('Welcome to Parsec!');
 
-    cy.get('.label-waiting').should('be.visible');
+    cy.get('.spinner-container').should('be.visible');
     cy.get('#next-button').should('not.be.visible');
 
     cy.wait(WAIT_TIME);
-    cy.get('.label-waiting').should('not.be.visible');
+    cy.get('.spinner-container').should('not.be.visible');
     cy.get('#next-button').should('be.visible');
     cy.get('#next-button').contains('I understand!');
   });
@@ -92,7 +92,7 @@ describe('User join an organization', () => {
 
     // Page with one code, guest SAS code
     cy.get('.caption-code').contains('1337');
-    cy.get('.label-waiting').should('be.visible');
+    cy.get('.spinner-container').should('be.visible');
     checkStepper(1);
 
     // Waiting for the host to enter the code
@@ -114,7 +114,7 @@ describe('User join an organization', () => {
     cy.get('#next-button').click();
 
     // Waiting for the host to validate
-    cy.get('.label-waiting').should('be.visible');
+    cy.get('.spinner-container').should('be.visible');
     cy.wait(WAIT_TIME);
 
     // Page with two inputs, choose and confirm password

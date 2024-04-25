@@ -141,11 +141,7 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-label class="label-waiting" />
-            <ion-spinner
-              name="crescent"
-              color="primary"
-            />
+            <ms-spinner class="spinner" />
           </div>
         </ion-buttons>
       </ion-footer>
@@ -154,19 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonButton,
-  IonButtons,
-  IonFooter,
-  IonHeader,
-  IonIcon,
-  IonLabel,
-  IonPage,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  modalController,
-} from '@ionic/vue';
+import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
 import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsInformativeText, MsModalResult, MsOptions, MsWizardStepper, askQuestion } from '@/components/core';
@@ -177,7 +161,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { MsDropdown, Translatable } from 'megashark-lib';
+import { MsDropdown, MsSpinner, Translatable } from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -472,5 +456,9 @@ onUnmounted(async () => {
       }
     }
   }
+}
+
+.spinner {
+  padding-bottom: 0.4rem;
 }
 </style>

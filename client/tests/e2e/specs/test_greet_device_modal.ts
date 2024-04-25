@@ -73,7 +73,7 @@ describe('Greet a new device', () => {
     checkStepper(1);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(1).click();
     cy.get('@title').contains('Waiting for device information');
-    cy.get('@footer').find('ion-spinner').should('be.visible');
+    cy.get('@footer').find('.spinner').should('be.visible');
     cy.get('@nextButton').should('not.be.visible');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('New device added');
