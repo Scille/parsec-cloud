@@ -180,17 +180,8 @@
 <script setup lang="ts">
 import { writeTextToClipboard } from '@/common/clipboard';
 import { entryNameValidator } from '@/common/validators';
-import {
-  Answer,
-  MsActionBar,
-  MsActionBarButton,
-  MsModalResult,
-  askQuestion,
-  getTextInputFromUser,
-  selectFolder,
-  MsOptions,
-} from '@/components/core';
-import { DisplayState, MsGridListToggle, MsSorter, MsSorterChangeEvent, Translatable } from 'megashark-lib';
+import { Answer, MsModalResult, askQuestion, getTextInputFromUser, selectFolder, MsOptions } from '@/components/core';
+import { DisplayState, MsActionBar, MsActionBarButton, MsGridListToggle, MsSorter, MsSorterChangeEvent, Translatable } from 'megashark-lib';
 import { EmptyFolder, MsImage } from '@/components/core/ms-image';
 import * as parsec from '@/parsec';
 
