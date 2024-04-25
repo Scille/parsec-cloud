@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { getFileIcon } from '@/common/file';
-import { Folder, MsImage } from '@/components/core/ms-image';
+import { Folder, MsImage } from 'megashark-lib';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { FolderSelectionOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';

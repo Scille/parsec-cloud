@@ -1,8 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { File } from '@/components/core/ms-image';
 import { Path } from '@/parsec';
-import { Translatable } from 'megashark-lib';
+import { File, Translatable } from 'megashark-lib';
 
 // Shorten a file name by adding ellipsis in the middle if it is above a certain length.
 // It may be a bit scuffed in some edge cases but the default config should work fine.

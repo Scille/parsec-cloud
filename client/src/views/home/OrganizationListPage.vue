@@ -156,8 +156,7 @@
 import { formatTimeSince } from '@/common/date';
 import { Validity, claimLinkValidator } from '@/common/validators';
 import { MsModalResult, MsOptions, MsSearchInput } from '@/components/core';
-import { MsSorter, MsSorterChangeEvent } from 'megashark-lib';
-import { MsImage, NoOrganization } from '@/components/core/ms-image';
+import { MsImage, NoOrganization, MsSorter, MsSorterChangeEvent } from 'megashark-lib';
 import { MsInput } from '@/components/core/ms-input';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';

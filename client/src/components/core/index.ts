@@ -3,9 +3,6 @@
 // ** ms-types ** //
 export * from '@/components/core/ms-types';
 
-// ** ms-image ** //
-export * from '@/components/core/ms-image';
-
 // ** ms-input ** //
 export * from '@/components/core/ms-input';
 
