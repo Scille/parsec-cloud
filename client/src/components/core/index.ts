@@ -6,9 +6,6 @@ export * from '@/components/core/ms-types';
 // ** ms-action-bar ** //
 export * from '@/components/core/ms-action-bar';
 
-// ** ms-dropdown ** //
-export * from '@/components/core/ms-dropdown';
-
 // ** ms-image ** //
 export * from '@/components/core/ms-image';
 

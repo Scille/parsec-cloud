@@ -20,7 +20,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsAppearance, MsDropdown, MsOptions } from '@/components/core';
+import { MsAppearance, MsOptions } from '@/components/core';
+import { MsDropdown } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';

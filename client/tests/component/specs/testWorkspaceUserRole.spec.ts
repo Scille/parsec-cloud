@@ -6,11 +6,11 @@ import { it } from 'vitest';
 // Mock before importing anything else
 mockRouter();
 
-import MsDropdown from '@/components/core/ms-dropdown/MsDropdown.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import { UserProfile, WorkspaceRole } from '@/parsec';
 import { mount } from '@vue/test-utils';
+import { MsDropdown } from 'megashark-lib';
 
 describe('Workspace user role selector', () => {
   it('Display workspace user role selector', () => {

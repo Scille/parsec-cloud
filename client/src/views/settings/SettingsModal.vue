@@ -132,7 +132,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsDropdown, MsModal, MsOptions } from '@/components/core';
+import { MsModal, MsOptions } from '@/components/core';
+import { MsDropdown } from 'megashark-lib';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isMacOS } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
