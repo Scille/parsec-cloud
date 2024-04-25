@@ -109,16 +109,15 @@
 import { emailValidator } from '@/common/validators';
 import {
   Answer,
-  DisplayState,
   MsActionBar,
   MsActionBarButton,
-  MsGridListToggle,
   MsOptions,
   MsSorter,
   MsSorterChangeEvent,
   askQuestion,
   getTextInputFromUser,
 } from '@/components/core';
+import { DisplayState, MsGridListToggle } from 'megashark-lib';
 import { MsImage, NoActiveUser } from '@/components/core/ms-image';
 import { SortProperty, UserCollection, UserFilter, UserModel } from '@/components/users';
 import {

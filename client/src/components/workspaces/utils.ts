@@ -2,7 +2,7 @@
 
 import { writeTextToClipboard } from '@/common/clipboard';
 import { workspaceNameValidator } from '@/common/validators';
-import { DisplayState, getTextInputFromUser } from '@/components/core';
+import { getTextInputFromUser } from '@/components/core';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
@@ -21,7 +21,7 @@ import { StorageManager } from '@/services/storageManager';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Translatable } from 'megashark-lib';
+import { DisplayState, Translatable } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
