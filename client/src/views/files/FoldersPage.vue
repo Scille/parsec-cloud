@@ -182,19 +182,20 @@ import { writeTextToClipboard } from '@/common/clipboard';
 import { entryNameValidator } from '@/common/validators';
 import {
   Answer,
-  DisplayState,
   MsActionBar,
   MsActionBarButton,
-  MsGridListToggle,
   MsModalResult,
   askQuestion,
   getTextInputFromUser,
   selectFolder,
+  MsOptions,
+  MsSorter,
+  MsSorterChangeEvent,
 } from '@/components/core';
+import { DisplayState, MsGridListToggle } from 'megashark-lib';
 import { EmptyFolder, MsImage } from '@/components/core/ms-image';
 import * as parsec from '@/parsec';
 
-import { MsOptions, MsSorter, MsSorterChangeEvent } from '@/components/core';
 import {
   EntryCollection,
   FileDropZone,

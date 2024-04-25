@@ -30,8 +30,5 @@ export * from '@/components/core/ms-stepper';
 // ** ms-text ** //
 export * from '@/components/core/ms-text';
 
-// ** ms-toggle ** //
-export * from '@/components/core/ms-toggle';
-
 // ** ms-tooltip ** //
 export * from '@/components/core/ms-tooltip';
