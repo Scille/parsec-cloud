@@ -280,8 +280,10 @@ export async function getWorkspaceSharing(
     }
     return { ok: false, error: result.error };
   } else {
-    const value: Array<[UserTuple, WorkspaceRole | null]> = [
-      [
+    const value: Array<[UserTuple, WorkspaceRole | null]> = [];
+
+    if (workspaceId === '1' || workspaceId === '2') {
+      value.push([
         {
           id: 'id1',
           // cspell:disable-next-line
@@ -289,8 +291,10 @@ export async function getWorkspaceSharing(
           profile: UserProfile.Standard,
         },
         WorkspaceRole.Reader,
-      ],
-      [
+      ]);
+    }
+    if (workspaceId === '2') {
+      value.push([
         {
           id: 'id2',
           // cspell:disable-next-line
@@ -298,8 +302,8 @@ export async function getWorkspaceSharing(
           profile: UserProfile.Admin,
         },
         WorkspaceRole.Contributor,
-      ],
-    ];
+      ]);
+    }
 
     if (includeSelf) {
       value.push([
