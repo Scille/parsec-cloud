@@ -214,11 +214,7 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-label class="label-waiting" />
-            <ion-spinner
-              name="crescent"
-              color="primary"
-            />
+            <ms-spinner class="spinner" />
           </div>
         </ion-buttons>
       </ion-footer>
@@ -243,9 +239,7 @@ import {
   IonFooter,
   IonHeader,
   IonIcon,
-  IonLabel,
   IonPage,
-  IonSpinner,
   IonText,
   IonTitle,
   modalController,
@@ -253,6 +247,7 @@ import {
 import { checkmarkCircle, close, copy } from 'ionicons/icons';
 import QRCodeVue3 from 'qrcode-vue3';
 import { computed, onMounted, ref } from 'vue';
+import { MsSpinner } from 'megashark-lib';
 
 enum GreetDeviceStep {
   WaitForGuest = 1,
@@ -725,5 +720,9 @@ onMounted(async () => {
   justify-content: space-between;
   color: var(--parsec-color-light-secondary-text);
   width: 20rem;
+}
+
+.spinner {
+  padding-bottom: 0.5rem;
 }
 </style>

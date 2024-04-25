@@ -60,12 +60,12 @@ describe('Greet user into an organization', () => {
     checkStepper(1);
     cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(1).click();
     cy.get('@title').contains('Contact details');
-    cy.get('@footer').find('ion-spinner').should('be.visible');
+    cy.get('@footer').find('.spinner-container').should('be.visible');
     cy.get('@nextButton').should('not.be.visible');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Contact details');
     checkStepper(2);
-    cy.get('@footer').find('ion-spinner').should('not.be.visible');
+    cy.get('@footer').find('.spinner-container').should('not.be.visible');
     cy.get('.greet-organization-modal').find('.user-info-page').find('ion-input').as('inputs').should('have.length', 2);
     cy.get('@inputs').eq(1).should('have.class', 'input-disabled');
     cy.get('.user-info-page').find('#dropdown-popover-button').as('select');

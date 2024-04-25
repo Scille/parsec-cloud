@@ -3,13 +3,7 @@
 <template>
   <ion-item class="file-card-item ion-no-padding">
     <div class="card-content">
-      <vue3-lottie
-        class="card-content__spinner"
-        :animation-data="SpinnerJSON"
-        :height="24"
-        :width="24"
-        :loop="true"
-      />
+      <ms-spinner class="card-content__spinner" />
       <ion-avatar class="card-content-icons">
         <ion-icon
           class="icon-item"
@@ -29,11 +23,10 @@
 </template>
 
 <script setup lang="ts">
-import SpinnerJSON from '@/assets/spinner.json';
 import { ImportData } from '@/services/importManager';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { document } from 'ionicons/icons';
-import { Vue3Lottie } from 'vue3-lottie';
+import { MsSpinner } from 'megashark-lib';
 
 defineProps<{
   data: ImportData;

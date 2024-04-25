@@ -117,13 +117,7 @@
             v-show="waitingForHost"
             class="spinner-container"
           >
-            <ion-label class="label-waiting">
-              {{ $msTranslate('JoinOrganization.waitingForHost') }}
-            </ion-label>
-            <ion-spinner
-              name="crescent"
-              color="primary"
-            />
+            <ms-spinner title="JoinOrganization.waitingForHost" />
           </div>
         </ion-buttons>
       </ion-footer>
@@ -132,19 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonButton,
-  IonButtons,
-  IonFooter,
-  IonHeader,
-  IonIcon,
-  IonLabel,
-  IonPage,
-  IonSpinner,
-  IonText,
-  IonTitle,
-  modalController,
-} from '@ionic/vue';
+import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
 import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsInformativeText, MsModalResult, MsWizardStepper, askQuestion } from '@/components/core';
@@ -163,7 +145,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable, asyncComputed } from 'megashark-lib';
+import { MsSpinner, Translatable, asyncComputed } from 'megashark-lib';
 import InformationJoinDevice from '@/views/home/InformationJoinDeviceStep.vue';
 import { checkmarkCircle, close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';

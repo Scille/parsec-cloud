@@ -36,7 +36,7 @@ describe('Claim new device', () => {
     cy.get('.modal-header__title').contains('Add a new device');
 
     cy.wait(WAIT_TIME);
-    cy.get('.label-waiting').should('not.be.visible');
+    cy.get('.spinner-container').should('not.be.visible');
     cy.get('#next-button').should('be.visible');
     cy.get('#next-button').contains('I understand!');
   });
@@ -87,7 +87,7 @@ describe('Claim new device', () => {
     cy.get('@choiceButtons').eq(2).click();
 
     // Page with one code, guest SAS code
-    cy.get('.label-waiting').should('be.visible');
+    cy.get('.spinner-container').should('be.visible');
     checkStepper(1);
 
     // Waiting for the host to enter the code
