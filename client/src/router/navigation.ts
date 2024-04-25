@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Base64 } from '@/common/base64';
 import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
 import { Query, RouteBackup, Routes, getCurrentRoute, getRouter } from '@/router/types';
+import { Base64 } from 'megashark-lib';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
 export interface NavigationOptions {
