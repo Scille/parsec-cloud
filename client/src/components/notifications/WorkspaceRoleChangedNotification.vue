@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
-import { LogoIconGradient, MsImage } from '@/components/core/ms-image';
+import { LogoIconGradient, MsImage } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { WorkspaceRoleChangedData } from '@/services/informationManager';

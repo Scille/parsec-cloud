@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { AddDocument, MsImage } from '@/components/core';
+import { AddDocument, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonLabel } from '@ionic/vue';

@@ -12,8 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, WavyCaretUp } from '@/components/core/ms-image';
-import { Translatable } from 'megashark-lib';
+import { MsImage, WavyCaretUp, Translatable } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
 
 defineProps<{

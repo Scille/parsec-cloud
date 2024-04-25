@@ -212,7 +212,8 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { CaretExpand, MsImage, getTextInputFromUser } from '@/components/core';
+import { getTextInputFromUser } from '@/components/core';
+import { CaretExpand, MsImage } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {

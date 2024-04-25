@@ -170,7 +170,6 @@ import {
 
 import { getDefaultDeviceName } from '@/common/device';
 import { Answer, MsInformativeText, MsModalResult, MsOptions, MsWizardStepper, askQuestion } from '@/components/core';
-import { MsDropdown } from 'megashark-lib';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
@@ -178,7 +177,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { Translatable } from 'megashark-lib';
+import { MsDropdown, Translatable } from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { Ref, computed, onMounted, onUnmounted, ref, watch } from 'vue';
 

@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import SpinnerJSON from '@/assets/spinner.json';
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { MsImage } from '@/components/core/ms-image';
+import { MsImage } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, getClientInfo } from '@/parsec';
 import { ImportData } from '@/services/importManager';

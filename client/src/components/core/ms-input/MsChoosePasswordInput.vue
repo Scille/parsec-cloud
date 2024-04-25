@@ -60,9 +60,8 @@
 
 <script setup lang="ts">
 import { PasswordStrength, getPasswordStrength, getPasswordStrengthText } from '@/common/passwordValidation';
-import { MsImage, PasswordLock } from '@/components/core/ms-image';
 import MsPasswordInput from '@/components/core/ms-input/MsPasswordInput.vue';
-import { Translatable } from 'megashark-lib';
+import { MsImage, PasswordLock, Translatable } from 'megashark-lib';
 import { IonText } from '@ionic/vue';
 import { ref } from 'vue';
 

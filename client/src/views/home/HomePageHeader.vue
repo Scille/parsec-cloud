@@ -64,7 +64,7 @@
 
 <script setup lang="ts">
 import { APP_VERSION } from '@/common/mocks';
-import { LogoRowWhite, MsImage } from '@/components/core';
+import { LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
 

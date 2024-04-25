@@ -126,7 +126,8 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, MsModalResult, PasswordLock } from '@/components/core';
+import { MsModalResult } from '@/components/core';
+import { MsImage, PasswordLock } from 'megashark-lib';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo } from '@/router';

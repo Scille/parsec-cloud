@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from '@/components/core/ms-image';
+import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
 import { FileUploadItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';

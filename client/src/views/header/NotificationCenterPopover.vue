@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, NoNotification } from '@/components/core/ms-image';
+import { MsImage, NoNotification } from 'megashark-lib';
 import { Notifications } from '@/components/notifications';
 import { InformationDataType } from '@/services/informationManager';
 import { Notification, NotificationManager } from '@/services/notificationManager';

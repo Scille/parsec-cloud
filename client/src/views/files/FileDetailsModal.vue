@@ -99,7 +99,7 @@
 import { writeTextToClipboard } from '@/common/clipboard';
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsModal } from '@/components/core';
-import { Folder, MsImage } from '@/components/core/ms-image';
+import { Folder, MsImage } from 'megashark-lib';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';

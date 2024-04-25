@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { formatTimeSince } from '@/common/date';
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { Folder, MsImage } from '@/components/core/ms-image';
+import { Folder, MsImage } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { StartedWorkspaceInfo, UserInfo, getUserInfo, getWorkspaceInfo } from '@/parsec';
