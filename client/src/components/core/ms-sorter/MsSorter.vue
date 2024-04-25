@@ -76,7 +76,7 @@ async function onDidDismissPopover(popover: any): Promise<void> {
 
 <style lang="scss" scoped>
 .sorter-button {
-  --background: var(--parsec-color-light-secondary-white);
+  --background: transparent;
   --background-hover: var(--parsec-color-light-secondary-medium);
   --color: var(--parsec-color-light-secondary-text);
 
