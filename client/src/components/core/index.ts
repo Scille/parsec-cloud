@@ -18,9 +18,6 @@ export * from '@/components/core/ms-input';
 // ** ms-modal ** //
 export * from '@/components/core/ms-modal';
 
-// ** ms-sorter ** //
-export * from '@/components/core/ms-sorter';
-
 // ** ms-spinner ** //
 export * from '@/components/core/ms-spinner';
 

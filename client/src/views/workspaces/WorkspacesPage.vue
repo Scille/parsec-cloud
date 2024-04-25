@@ -142,8 +142,8 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { MsActionBar, MsActionBarButton, MsOptions, MsSorter, MsSorterChangeEvent, getTextInputFromUser } from '@/components/core';
-import { DisplayState, MsGridListToggle } from 'megashark-lib';
+import { DisplayState, MsGridListToggle, MsSorter, MsSorterChangeEvent } from 'megashark-lib';
+import { MsActionBar, MsActionBarButton, MsOptions, getTextInputFromUser } from '@/components/core';
 import { MsImage, NoWorkspace } from '@/components/core/ms-image';
 import {
   WORKSPACES_PAGE_DATA_KEY,
