@@ -412,7 +412,7 @@ describe('Check folders page', () => {
   // });
 
   it('Check reader role', () => {
-    cy.get('.list-workspaces').find('.list-workspaces-header').contains('Workspaces').click();
+    cy.get('.breadcrumb').find('.breadcrumb-element').eq(0).click();
     cy.get('.workspaces-grid-item').eq(2).contains("Watcher's Keep").click({ force: true });
 
     cy.get('#folders-ms-action-bar').find('#button-new-folder').should('not.be.visible');

@@ -3,7 +3,7 @@
 <template>
   <ion-page>
     <div
-      class="divider"
+      class="resize-divider"
       ref="divider"
     />
     <ion-split-pane content-id="main">
@@ -17,7 +17,7 @@
             <ion-card class="organization-card">
               <ion-card-header
                 class="organization-card-header"
-                :class="{ 'organization-card-header-hover': isDesktop() }"
+                :class="{ 'organization-card-header-desktop': isDesktop() }"
                 @click="openOrganizationChoice($event)"
               >
                 <div class="header-container">
@@ -25,10 +25,7 @@
                     <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
                   </ion-avatar>
                   <div class="orga-text">
-                    <ion-card-subtitle class="caption-info">
-                      {{ $msTranslate('HomePage.organizationActionSheet') }}
-                    </ion-card-subtitle>
-                    <ion-card-title class="title-h4">
+                    <ion-card-title class="title-h3">
                       {{ userInfo?.organizationId }}
                     </ion-card-title>
                   </div>
@@ -47,7 +44,7 @@
                 @click="navigateTo(Routes.Users)"
               >
                 <ion-text
-                  class="subtitles-sm"
+                  class="button-medium"
                   button
                 >
                   {{
@@ -76,56 +73,41 @@
           </div>
         </ion-header>
 
-        <ion-content class="ion-padding">
+        <ion-content class="ion-padding sidebar-content">
+          <!-- workspaces -->
           <div
             v-show="!currentRouteIsOrganizationManagementRoute()"
-            class="workspaces-organization"
+            class="organization-workspaces"
           >
-            <!-- list of workspaces -->
-            <ion-list class="list-workspaces">
+            <!-- list of favorite workspaces -->
+            <!-- show only favorites -->
+            <ion-list
+              class="list-workspaces favorites"
+              v-if="favoritesWorkspaces.length > 0"
+            >
               <ion-header
                 lines="none"
-                button
                 class="list-workspaces-header menu-default"
               >
-                <span
-                  @click="goToWorkspaceList()"
-                  class="list-workspaces-header__title"
-                >
-                  {{ $msTranslate('SideMenu.workspaces') }}
-                </span>
-                <ion-icon
-                  class="list-workspaces-header__button"
-                  id="new-workspace"
-                  :icon="add"
-                  v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
-                  @click="createWorkspace"
-                />
+                <div class="list-workspaces-header-title">
+                  <ion-icon
+                    class="list-workspaces-header-title__icon"
+                    :icon="star"
+                  />
+                  <ion-text class="list-workspaces-header-title__text">
+                    {{ $msTranslate('SideMenu.favorites') }}
+                  </ion-text>
+                </div>
               </ion-header>
-              <ion-text
-                class="body list-workspaces__no-workspace"
-                v-if="filteredWorkspaces.length === 0"
-              >
-                {{ $msTranslate('SideMenu.noWorkspace') }}
-              </ion-text>
               <ion-item
                 lines="none"
                 button
-                v-for="workspace in filteredWorkspaces"
+                v-for="workspace in favoritesWorkspaces"
                 :key="workspace.id"
                 @click="goToWorkspace(workspace.handle)"
                 :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
                 class="sidebar-item menu-default"
               >
-                <ion-icon
-                  :icon="business"
-                  class="sidebar-item-business"
-                />
-                <ion-icon
-                  v-if="favorites.includes(workspace.id)"
-                  class="workspace-favorite"
-                  :icon="star"
-                />
                 <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
                 <div
                   class="workspace-option"
@@ -137,8 +119,63 @@
                 </div>
               </ion-item>
             </ion-list>
+
+            <div
+              class="list-workspaces-divider"
+              v-if="favoritesWorkspaces.length > 0"
+            />
+
             <!-- list of workspaces -->
+            <ion-list class="list-workspaces">
+              <ion-header
+                lines="none"
+                class="list-workspaces-header menu-default"
+              >
+                <div class="list-workspaces-header-title">
+                  <ion-icon
+                    class="list-workspaces-header-title__icon"
+                    :icon="business"
+                  />
+                  <ion-text class="list-workspaces-header-title__text">
+                    {{ $msTranslate('SideMenu.workspaces') }}
+                  </ion-text>
+                </div>
+                <ion-icon
+                  class="list-workspaces-header__button"
+                  id="new-workspace"
+                  :icon="add"
+                  v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
+                  @click="createWorkspace"
+                />
+              </ion-header>
+              <ion-text
+                class="body list-workspaces__no-workspace"
+                v-if="workspaces.length === 0"
+              >
+                {{ $msTranslate('SideMenu.noWorkspace') }}
+              </ion-text>
+              <ion-item
+                lines="none"
+                button
+                v-for="workspace in nonFavoriteWorkspaces"
+                :key="workspace.id"
+                @click="goToWorkspace(workspace.handle)"
+                :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
+                class="sidebar-item menu-default"
+              >
+                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
+                <div
+                  class="workspace-option"
+                  @click.stop="
+                    openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                  "
+                >
+                  <ion-icon :icon="ellipsisHorizontal" />
+                </div>
+              </ion-item>
+            </ion-list>
           </div>
+          <!-- manage organization -->
           <div
             v-show="currentRouteIsOrganizationManagementRoute()"
             class="manage-organization"
@@ -153,8 +190,9 @@
             <!-- user actions -->
             <ion-list class="manage-organization-list users">
               <ion-item
+                button
                 lines="none"
-                class="sidebar-item users-title menu-default"
+                class="sidebar-item menu-default users-title"
                 :class="currentRouteIsUserRoute() ? 'item-selected' : 'item-not-selected'"
                 @click="navigateTo(Routes.Users)"
               >
@@ -172,6 +210,7 @@
               v-show="userInfo && userInfo.currentProfile === UserProfile.Admin && false"
             >
               <ion-item
+                button
                 lines="none"
                 class="sidebar-item storage-title menu-default"
                 :class="currentRouteIs(Routes.Storage) ? 'item-selected' : 'item-not-selected'"
@@ -188,6 +227,7 @@
             <!-- org info -->
             <ion-list class="manage-organization-list organization">
               <ion-item
+                button
                 lines="none"
                 class="sidebar-item organization-title menu-default"
                 :class="currentRouteIs(Routes.Organization) ? 'item-selected' : 'item-not-selected'"
@@ -246,7 +286,6 @@ import {
   IonButton,
   IonCard,
   IonCardHeader,
-  IonCardSubtitle,
   IonCardTitle,
   IonContent,
   IonHeader,
@@ -289,11 +328,6 @@ const resetWatchCancel: WatchStopHandle = watch(wasReset, (value) => {
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
   await navigateToWorkspace(workspaceHandle);
-  await menuController.close();
-}
-
-async function goToWorkspaceList(): Promise<void> {
-  await navigateTo(Routes.Workspaces);
   await menuController.close();
 }
 
@@ -366,21 +400,27 @@ onUnmounted(() => {
   }
 });
 
-const filteredWorkspaces = computed(() => {
-  return Array.from(workspaces.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-    if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
-      return favorites.value.includes(b.id) ? 1 : -1;
-    }
-    return 0;
-  });
+const favoritesWorkspaces = computed(() => {
+  return Array.from(workspaces.value)
+    .filter((workspace: WorkspaceInfo) => favorites.value.includes(workspace.id))
+    .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
+      if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
+        return favorites.value.includes(b.id) ? 1 : -1;
+      }
+      return 0;
+    });
+});
+
+const nonFavoriteWorkspaces = computed(() => {
+  return workspaces.value.filter((workspace: WorkspaceInfo) => !favorites.value.includes(workspace.id));
 });
 
 function onMove(detail: GestureDetail): void {
   requestAnimationFrame(() => {
     let currentWidth = initialWidth.value + detail.deltaX;
-    if (currentWidth >= 4 && currentWidth <= 500) {
+    if (currentWidth >= 2 && currentWidth <= 500) {
       if (currentWidth <= 150) {
-        currentWidth = 4;
+        currentWidth = 2;
       }
       resizeMenu(currentWidth);
       computedWidth.value = currentWidth;
@@ -417,11 +457,11 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.divider {
-  width: 8px;
+.resize-divider {
+  width: 0.25rem;
   height: 100%;
   position: absolute;
-  left: calc(var(--parsec-sidebar-menu-width) - 4px);
+  left: calc(var(--parsec-sidebar-menu-width) - 2px);
   top: 0;
   z-index: 10000;
   cursor: ew-resize;
@@ -430,7 +470,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
   &::after {
     content: '';
-    width: 4px;
+    width: 0.125rem;
     height: 100%;
     padding: 20rem 0;
   }
@@ -454,8 +494,10 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   user-select: none;
   border-radius: 0 0.5rem 0.5rem 0;
 
-  &-header {
+  &::part(container) {
     padding: 0.5rem;
+    display: flex;
+    gap: 1.5rem;
   }
 
   // logo parsec
@@ -465,23 +507,23 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     width: 100%;
     max-width: 270px;
     max-height: 170px;
-    display: block;
-    position: fixed;
+    position: absolute;
     bottom: 16px;
     right: -60px;
+    z-index: 0;
   }
 
-  .workspaces-organization {
+  .sidebar-content {
+    position: relative;
+    z-index: 12;
+  }
+
+  .organization-workspaces {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding: 0 1.25rem;
+    padding: 0 0.75rem;
   }
-}
-
-.organization-card-header-hover:hover {
-  cursor: pointer;
-  background: var(--parsec-color-light-primary-30-opacity15);
 }
 
 .organization-card {
@@ -495,6 +537,11 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     flex-direction: row;
   }
 
+  &-header-desktop:hover {
+    cursor: pointer;
+    background: var(--parsec-color-light-primary-30-opacity15);
+  }
+
   .header-container {
     box-shadow: none;
     display: flex;
@@ -506,11 +553,11 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     min-width: 0;
 
     .orga-avatar {
-      background-color: var(--parsec-color-light-primary-800);
-      color: var(--parsec-color-light-primary-50);
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
+      background-color: var(--parsec-color-light-secondary-premiere);
+      color: var(--parsec-color-light-primary-600);
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--parsec-radius-8);
       text-align: center;
       display: flex;
       align-items: center;
@@ -525,12 +572,6 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       flex-direction: column;
       white-space: nowrap;
       overflow: hidden;
-      ion-card-subtitle {
-        --color: var(--parsec-color-light-secondary-light);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
 
       ion-card-title {
         padding: 0.1875em 0;
@@ -588,7 +629,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
     & > ion-icon {
       font-size: 1.25em;
-      margin-inline-end: 12px;
+      margin-inline-end: 0.75rem;
     }
   }
 
@@ -601,6 +642,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 // eslint-disable-next-line vue-scoped-css/no-unused-selector
 .list-md {
   background: none;
+  padding: 0;
 }
 
 ion-split-pane {
@@ -623,35 +665,26 @@ ion-menu {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    color: var(--parsec-color-light-primary-100);
     margin-bottom: 0.5rem;
     transition: border 0.2s ease-in-out;
+    position: relative;
+    overflow: visible;
 
-    &__title {
-      position: relative;
+    &-title {
+      color: var(--parsec-color-light-secondary-inversed-contrast);
       opacity: 0.6;
-      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 0.125rem 0;
 
-      &::after {
-        content: '';
-        position: absolute;
-        width: 0;
-        left: 0;
-        background: var(--parsec-color-light-primary-100);
-        border-radius: var(--parsec-radius-6);
-        transition: width 0.2s ease-in-out;
-        transition-delay: 100ms;
+      &__icon {
+        font-size: 1rem;
+        margin-right: 0.5rem;
       }
 
-      &:hover::after {
-        content: '';
-        position: absolute;
-        bottom: -0.25rem;
-        left: 0;
-        height: 2px;
-        width: 100%;
-        background: var(--parsec-color-light-primary-100);
-        border-radius: var(--parsec-radius-6);
+      &__text {
+        margin-right: 0.5rem;
+        position: relative;
       }
     }
 
@@ -666,6 +699,8 @@ ion-menu {
       scale: 1;
       transition: scale 0.2s ease-in-out;
       opacity: 0.6;
+      position: relative;
+      z-index: 4;
 
       &:hover {
         opacity: 1;
@@ -680,34 +715,49 @@ ion-menu {
   }
 }
 
+.list-workspaces-divider {
+  background: var(--parsec-color-light-primary-30-opacity15);
+  display: flex;
+  justify-content: center;
+  height: 1px;
+  width: 100%;
+}
+
 .sidebar-item {
   --background: none;
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
   border: solid 1px var(--parsec-color-light-primary-800);
   --min-height: 0;
+
+  .workspace-option {
+    color: var(--parsec-color-light-secondary-grey);
+    text-align: right;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    top: 0;
+    right: 1rem;
+    font-size: 1.2rem;
+    padding-top: 0.5rem;
+    opacity: 0;
+
+    &:hover {
+      color: var(--parsec-color-light-primary-30);
+    }
+  }
 
   &:hover {
     border: solid 1px var(--parsec-color-light-primary-30-opacity15);
     cursor: pointer;
+
+    .workspace-option {
+      opacity: 1;
+    }
   }
 
   &:active,
   &.item-selected {
     --background: var(--parsec-color-light-primary-30-opacity15);
-  }
-
-  & > ion-label {
-    --color: var(--parsec-color-light-primary-100);
-  }
-
-  &-workspace-label {
-    position: relative;
-    margin-left: 2rem;
-    margin-right: 1.1rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-    --color: var(--parsec-color-light-primary-100);
   }
 
   &-icon {
@@ -717,12 +767,17 @@ ion-menu {
     margin-inline-end: 12px;
   }
 
-  &-business {
-    color: var(--parsec-color-light-primary-100);
-    position: absolute;
-    align-items: center;
-    font-size: 1.25em;
-    margin-inline-end: 12px;
+  & > ion-label {
+    --color: var(--parsec-color-light-primary-100);
+  }
+
+  &-workspace-label {
+    position: relative;
+    margin-right: 1.1rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    --color: var(--parsec-color-light-primary-100);
   }
 }
 
@@ -740,33 +795,6 @@ ion-menu {
 
   &-list {
     padding: 0;
-  }
-}
-
-.workspace-favorite {
-  color: var(--parsec-color-light-primary-100);
-  position: absolute;
-  display: flex;
-  align-items: center;
-  left: 0.6rem;
-  top: 0.1rem;
-  margin: auto 0;
-  font-size: 0.8rem;
-}
-
-.workspace-option {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: right;
-  position: absolute;
-  display: flex;
-  align-items: center;
-  top: 0;
-  right: 1rem;
-  font-size: 1.2rem;
-  padding-top: 0.5rem;
-
-  &:hover {
-    color: var(--parsec-color-light-primary-30);
   }
 }
 </style>
