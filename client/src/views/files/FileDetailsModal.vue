@@ -96,10 +96,9 @@
 </template>
 
 <script setup lang="ts">
-import { writeTextToClipboard } from '@/common/clipboard';
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsModal } from '@/components/core';
-import { Folder, MsImage } from 'megashark-lib';
+import { Clipboard, Folder, MsImage } from 'megashark-lib';
 import { EntryStat, EntryStatFile } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
@@ -113,7 +112,7 @@ const props = defineProps<{
 const pathCopiedToClipboard = ref(false);
 
 async function copyPath(): Promise<void> {
-  await writeTextToClipboard(props.path);
+  await Clipboard.writeText(props.path);
   pathCopiedToClipboard.value = true;
   setTimeout(() => {
     pathCopiedToClipboard.value = false;
