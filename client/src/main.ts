@@ -28,8 +28,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, Base64, I18n, TranslationPlugin, Validity, askQuestion } from 'megashark-lib';
-import Vue3Lottie from 'vue3-lottie';
+import { Answer, Base64, I18n, MegaSharkPlugin, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -59,8 +58,7 @@ async function setupApp(): Promise<void> {
       rippleEffect: false,
     })
     .use(router)
-    .use(TranslationPlugin)
-    .use(Vue3Lottie);
+    .use(MegaSharkPlugin);
 
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);

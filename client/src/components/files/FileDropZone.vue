@@ -15,7 +15,7 @@
       class="drop-message"
     >
       <ms-image
-        :image="AddDocument"
+        :image="DocumentImport"
         class="restore-password-header-img"
       />
       <ion-label class="subtitles-normal">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { AddDocument, MsImage } from 'megashark-lib';
+import { DocumentImport, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonLabel } from '@ionic/vue';
