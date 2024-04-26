@@ -28,8 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { Validity } from '@/common/validators';
-import { MsInput, asyncComputed } from 'megashark-lib';
+import { MsInput, asyncComputed, Validity } from 'megashark-lib';
 import MsModal from '@/components/core/ms-modal/MsModal.vue';
 import { GetTextOptions, MsModalResult } from '@/components/core/ms-modal/types';
 import { modalController } from '@ionic/vue';

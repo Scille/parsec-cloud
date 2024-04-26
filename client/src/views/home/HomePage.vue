@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { Validity, claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
+import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
 import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import {
   AccessStrategy,
@@ -86,7 +86,7 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Base64 } from 'megashark-lib';
+import { Base64, Validity } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
 enum HomePageState {
