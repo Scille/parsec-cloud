@@ -38,7 +38,7 @@ import { isPlatform } from '@ionic/vue';
 /* Theme variables */
 import '@/theme/global.scss';
 
-import { Validity, claimLinkValidator, fileLinkValidator } from '@/common/validators';
+import { claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
@@ -48,7 +48,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Base64, I18n, TranslationPlugin } from 'megashark-lib';
+import { Base64, I18n, TranslationPlugin, Validity } from 'megashark-lib';
 import Vue3Lottie from 'vue3-lottie';
 
 enum AppState {

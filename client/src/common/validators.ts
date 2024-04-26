@@ -10,22 +10,7 @@ import {
   parseParsecAddr,
 } from '@/parsec';
 import { ParsedParsecAddrTag } from '@/plugins/libparsec';
-import { Translatable } from 'megashark-lib';
-
-export enum Validity {
-  Invalid = 0,
-  Intermediate = 1,
-  Valid = 2,
-}
-
-export interface ValidationResult {
-  validity: Validity;
-  reason?: Translatable;
-}
-
-export interface IValidator {
-  (value: string): Promise<ValidationResult>;
-}
+import { IValidator, Validity } from 'megashark-lib';
 
 export const emailValidator: IValidator = async function (value: string) {
   value = value.trim();

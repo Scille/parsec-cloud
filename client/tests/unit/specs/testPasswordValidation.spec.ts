@@ -1,27 +1,26 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { getPasswordStrength, getPasswordStrengthText, PasswordStrength } from '@/common/passwordValidation';
-import { I18n } from 'megashark-lib';
+import { I18n, PasswordValidation } from 'megashark-lib';
 
 describe('Password validation', () => {
   it('Checks password strength', () => {
-    expect(getPasswordStrength('')).to.equal(PasswordStrength.None);
-    expect(getPasswordStrength('Black')).to.equal(PasswordStrength.Low);
-    expect(getPasswordStrength('BlackMesa')).to.equal(PasswordStrength.Medium);
-    expect(getPasswordStrength('BlackMesaIncident')).to.equal(PasswordStrength.High);
+    expect(PasswordValidation.getStrength('').level).to.equal(PasswordValidation.StrengthLevel.None);
+    expect(PasswordValidation.getStrength('Black').level).to.equal(PasswordValidation.StrengthLevel.Low);
+    expect(PasswordValidation.getStrength('BlackMesa').level).to.equal(PasswordValidation.StrengthLevel.Medium);
+    expect(PasswordValidation.getStrength('BlackMesaIncident').level).to.equal(PasswordValidation.StrengthLevel.High);
     // Long, but same letter
-    expect(getPasswordStrength('aaaaaaaaaaaaaaaaaaaaaaaaaaaa')).to.equal(PasswordStrength.Low);
+    expect(PasswordValidation.getStrength('aaaaaaaaaaaaaaaaaaaaaaaaaaaa').level).to.equal(PasswordValidation.StrengthLevel.Low);
     // Sequences
     // cspell:disable-next
-    expect(getPasswordStrength('qwertyuiop')).to.equal(PasswordStrength.Low);
+    expect(PasswordValidation.getStrength('qwertyuiop').level).to.equal(PasswordValidation.StrengthLevel.Low);
     // cspell:disable-next
-    expect(getPasswordStrength('abcdefghijklmnopqrstuvwxyz')).to.equal(PasswordStrength.Low);
+    expect(PasswordValidation.getStrength('abcdefghijklmnopqrstuvwxyz').level).to.equal(PasswordValidation.StrengthLevel.Low);
   });
 
   it('Checks password strength texts', () => {
-    expect(I18n.translate(getPasswordStrengthText(PasswordStrength.None))).to.equal('');
-    expect(I18n.translate(getPasswordStrengthText(PasswordStrength.Low))).to.equal('Low');
-    expect(I18n.translate(getPasswordStrengthText(PasswordStrength.Medium))).to.equal('Moderate');
-    expect(I18n.translate(getPasswordStrengthText(PasswordStrength.High))).to.equal('Strong');
+    expect(I18n.translate(PasswordValidation.getStrength('').label)).to.equal('');
+    expect(I18n.translate(PasswordValidation.getStrength('Black').label)).to.equal('Low');
+    expect(I18n.translate(PasswordValidation.getStrength('BlackMesa').label)).to.equal('Moderate');
+    expect(I18n.translate(PasswordValidation.getStrength('BlackMesaIncident').label)).to.equal('Strong');
   });
 });
