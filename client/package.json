@@ -31,7 +31,7 @@
         "electron:debug": "npm run electron:copy && cd electron && npm run electron:start",
         "prettier:check": "prettier . --check",
         "prettier:fix": "prettier . --write",
-        "megashark:update": "rm -rf node_modules/megashark-lib && rm package-lock.json && npm install",
+        "megashark:update": "npm cache clean --force && rm -rf node_modules && rm package-lock.json && npm install",
         "megashark:local:start": "npm link megashark-lib",
         "megashark:local:stop": "npm unlink megashark-lib --no-save && npm install"
     },
