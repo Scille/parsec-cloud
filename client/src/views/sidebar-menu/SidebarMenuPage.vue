@@ -34,7 +34,7 @@
                   class="header-icon"
                   v-show="isDesktop()"
                 >
-                  <ms-image :image="CaretExpand" />
+                  <ms-image :image="ChevronExpand" />
                 </div>
               </ion-card-header>
 
@@ -252,7 +252,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { CaretExpand, MsImage, getTextFromUser } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
