@@ -81,7 +81,6 @@ async fn non_placeholder(
                         manifest.size = block_data.len() as u64;
                         manifest.blocks.push(BlockAccess {
                             id: wksp1_bar_txt_new_block_id,
-                            key: None,
                             offset: 0,
                             size: manifest.size.try_into().unwrap(),
                             digest: HashDigest::from_data(block_data),
@@ -281,12 +280,14 @@ async fn non_placeholder(
 
         let LocalFileManifest {
             base,
+            parent,
             need_sync,
             updated,
             size,
             blocksize,
             blocks,
         } = conflicted_manifest.as_ref();
+        p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
         p_assert_eq!(*updated, before_sync_bar_txt_manifest.updated);
         p_assert_eq!(*size, before_sync_bar_txt_manifest.size);
@@ -341,12 +342,14 @@ async fn non_placeholder(
 
         let LocalFileManifest {
             base,
+            parent,
             need_sync,
             updated,
             size,
             blocksize,
             blocks,
         } = conflicted_manifest.as_ref();
+        p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
         p_assert_eq!(*updated, before_sync_bar_txt_manifest.updated);
         p_assert_eq!(*size, before_sync_bar_txt_manifest.size);

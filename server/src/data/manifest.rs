@@ -54,7 +54,6 @@ impl BlockAccess {
     fn new(id: BlockID, offset: u64, size: u64, digest: HashDigest) -> PyResult<Self> {
         Ok(Self(libparsec_types::BlockAccess {
             id: id.0,
-            key: None,
             offset,
             size: NonZeroU64::try_from(size)
                 .map_err(|_| PyValueError::new_err("Invalid `size` field"))?,

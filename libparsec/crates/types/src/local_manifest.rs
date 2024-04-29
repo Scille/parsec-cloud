@@ -157,8 +157,6 @@ impl Chunk {
         // Craft access
         self.access = Some(BlockAccess {
             id: BlockID::from(*self.id),
-            // Key is legacy and should not be used
-            key: None,
             offset: self.start,
             size: self.size().try_into().expect("size must be > 0"),
             digest: HashDigest::from_data(data),
@@ -213,6 +211,7 @@ impl Chunk {
 #[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
 pub struct LocalFileManifest {
     pub base: FileManifest,
+    pub parent: VlobID,
     pub need_sync: bool,
     pub updated: DateTime,
     pub size: u64,
@@ -227,6 +226,7 @@ impl TryFrom<LocalFileManifestData> for LocalFileManifest {
     fn try_from(data: LocalFileManifestData) -> Result<Self, Self::Error> {
         Ok(Self {
             base: data.base,
+            parent: data.parent,
             need_sync: data.need_sync,
             updated: data.updated,
             size: data.size,
@@ -240,6 +240,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
     fn from(obj: LocalFileManifest) -> Self {
         Self {
             ty: Default::default(),
+            parent: obj.parent,
             base: obj.base,
             need_sync: obj.need_sync,
             updated: obj.updated,
@@ -267,6 +268,7 @@ impl LocalFileManifest {
                 size: 0,
                 blocks: vec![],
             },
+            parent,
             need_sync: true,
             updated: timestamp,
             blocksize: DEFAULT_BLOCK_SIZE,
@@ -328,6 +330,7 @@ impl LocalFileManifest {
 
         let manifest = Self {
             base,
+            parent: remote.parent,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
@@ -361,9 +364,9 @@ impl LocalFileManifest {
             author,
             timestamp,
             id: self.base.id,
-            parent: self.base.parent,
             version: self.base.version + 1,
             created: self.base.created,
+            parent: self.parent,
             updated: self.updated,
             size: self.size,
             blocksize: self.blocksize,
@@ -395,6 +398,7 @@ impl LocalFileManifest {
 #[serde(into = "LocalFolderManifestData", from = "LocalFolderManifestData")]
 pub struct LocalFolderManifest {
     pub base: FolderManifest,
+    pub parent: VlobID,
     pub need_sync: bool,
     pub updated: DateTime,
     pub children: HashMap<EntryName, VlobID>,
@@ -427,6 +431,7 @@ impl_transparent_data_format_conversion!(
     LocalFolderManifest,
     LocalFolderManifestData,
     base,
+    parent,
     need_sync,
     updated,
     children,
@@ -450,6 +455,7 @@ impl LocalFolderManifest {
                 updated: timestamp,
                 children: HashMap::new(),
             },
+            parent,
             need_sync: true,
             updated: timestamp,
             children: HashMap::new(),
@@ -479,6 +485,7 @@ impl LocalFolderManifest {
                 updated: timestamp,
                 children: HashMap::new(),
             },
+            parent: realm,
             need_sync: true,
             updated: timestamp,
             children: HashMap::new(),
@@ -650,6 +657,7 @@ impl LocalFolderManifest {
         let children = remote.children.clone();
 
         Self {
+            parent: remote.parent,
             base: remote,
             need_sync: false,
             updated,
@@ -686,9 +694,9 @@ impl LocalFolderManifest {
             author,
             timestamp,
             id: result.base.id,
-            parent: result.base.parent,
             version: result.base.version + 1,
             created: result.base.created,
+            parent: result.parent,
             updated: result.updated,
             children: result.children,
         }
@@ -901,6 +909,22 @@ impl LocalUserManifest {
 pub enum ArcLocalChildManifest {
     File(Arc<LocalFileManifest>),
     Folder(Arc<LocalFolderManifest>),
+}
+
+impl ArcLocalChildManifest {
+    pub fn id(&self) -> VlobID {
+        match self {
+            ArcLocalChildManifest::File(m) => m.base.id,
+            ArcLocalChildManifest::Folder(m) => m.base.id,
+        }
+    }
+
+    pub fn parent(&self) -> VlobID {
+        match self {
+            ArcLocalChildManifest::File(m) => m.parent,
+            ArcLocalChildManifest::Folder(m) => m.parent,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
