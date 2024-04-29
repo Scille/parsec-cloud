@@ -132,11 +132,10 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsOptions } from '@/components/core';
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isMacOS } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { MsDropdown, Locale, I18n } from 'megashark-lib';
+import { MsModal, MsOptions, MsDropdown, Locale, I18n } from 'megashark-lib';
 import { toggleDarkMode } from '@/states/darkMode';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';

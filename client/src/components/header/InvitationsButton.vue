@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, MsModalResult, askQuestion } from '@/components/core';
+import { Answer, MsModalResult, askQuestion } from 'megashark-lib';
 import { InvitationAction } from '@/components/users';
 import InvitationsListPopover from '@/components/users/InvitationsListPopover.vue';
 import { ClientCancelInvitationErrorTag, UserInvitation, cancelInvitation, listUserInvitations } from '@/parsec';

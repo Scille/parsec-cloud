@@ -56,7 +56,6 @@
 
 <script setup lang="ts">
 import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
-import { MsModalResult, getTextInputFromUser } from '@/components/core';
 import {
   AccessStrategy,
   AvailableDevice,
@@ -86,7 +85,7 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Base64, Validity } from 'megashark-lib';
+import { Base64, Validity, MsModalResult, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
 enum HomePageState {
@@ -392,7 +391,7 @@ async function openAboutModal(): Promise<void> {
 }
 
 async function onJoinOrganizationClicked(): Promise<void> {
-  const link = await getTextInputFromUser({
+  const link = await getTextFromUser({
     title: 'JoinByLinkModal.pageTitle',
     subtitle: 'JoinByLinkModal.pleaseEnterUrl',
     trim: true,

@@ -1,9 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MsReportTheme } from '@/components/core';
 import { WorkspaceRole } from '@/parsec';
 import { InformationDataType, InformationLevel } from '@/services/informationManager';
 import { Notification as MsNotification, NotificationManager } from '@/services/notificationManager';
+import { MsReportTheme } from 'megashark-lib';
 import { vi } from 'vitest';
 
 describe('Notification Manager', () => {

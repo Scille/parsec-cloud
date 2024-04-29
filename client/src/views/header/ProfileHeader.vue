@@ -26,7 +26,6 @@
 </template>
 
 <script setup lang="ts">
-import { Answer, askQuestion } from '@/components/core';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, logout as parsecLogout } from '@/parsec';
 import { Routes, getConnectionHandle, navigateTo } from '@/router';
@@ -35,7 +34,7 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { I18n } from 'megashark-lib';
+import { Answer, askQuestion, I18n } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';

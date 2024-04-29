@@ -13,8 +13,8 @@ import FileUploadItem from '@/components/files/FileUploadItem.vue';
 
 export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
 export type { EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
-export { getFilesFromDrop } from '@/components/files/utils';
-export type { FileImportTuple } from '@/components/files/utils';
+export { getFilesFromDrop, selectFolder } from '@/components/files/utils';
+export type { FileImportTuple, FolderSelectionOptions } from '@/components/files/utils';
 export {
   FileCard,
   FileCardImporting,

@@ -1,10 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MsReportTheme } from '@/components/core';
 import { isLoggedIn } from '@/router';
 import { toastController } from '@ionic/vue';
 import { checkmark, closeCircle, information, warning } from 'ionicons/icons';
-import { I18n, Translatable } from 'megashark-lib';
+import { I18n, MsReportTheme, Translatable } from 'megashark-lib';
 
 const DEFAULT_TOAST_DURATION = 5000;
 

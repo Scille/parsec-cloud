@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core';
+import { MsModalResult } from 'megashark-lib';
 import { ImportType } from '@/components/files/types';
 import { popoverController } from '@ionic/core';
 import { IonItem, IonLabel, IonList } from '@ionic/vue';

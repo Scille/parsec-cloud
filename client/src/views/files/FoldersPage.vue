@@ -179,8 +179,12 @@
 
 <script setup lang="ts">
 import { entryNameValidator } from '@/common/validators';
-import { Answer, MsModalResult, askQuestion, getTextInputFromUser, selectFolder, MsOptions } from '@/components/core';
 import {
+  Answer,
+  MsModalResult,
+  askQuestion,
+  getTextFromUser,
+  MsOptions,
   EmptyFolder,
   MsImage,
   DisplayState,
@@ -207,6 +211,7 @@ import {
   FolderModel,
   ImportType,
   SortProperty,
+  selectFolder,
 } from '@/components/files';
 import { Path, entryStat } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
@@ -585,7 +590,7 @@ async function createFolder(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
-  const folderName = await getTextInputFromUser({
+  const folderName = await getTextFromUser({
     title: 'FoldersPage.CreateFolderModal.title',
     trim: true,
     validator: entryNameValidator,
@@ -722,7 +727,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
   const entry = entries[0];
   const ext = parsec.Path.getFileExtension(entry.name);
-  const newName = await getTextInputFromUser({
+  const newName = await getTextFromUser({
     title: entry.isFile() ? 'FoldersPage.RenameModal.fileTitle' : 'FoldersPage.RenameModal.folderTitle',
     trim: true,
     validator: entryNameValidator,

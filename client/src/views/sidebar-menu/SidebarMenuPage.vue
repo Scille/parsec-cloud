@@ -252,8 +252,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { getTextInputFromUser } from '@/components/core';
-import { CaretExpand, MsImage } from 'megashark-lib';
+import { CaretExpand, MsImage, getTextFromUser } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -332,7 +331,7 @@ async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
 }
 
 async function createWorkspace(): Promise<void> {
-  const workspaceName = await getTextInputFromUser({
+  const workspaceName = await getTextFromUser({
     title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,
