@@ -12,15 +12,23 @@
       class="avatar medium"
       :class="{ online: isOnline, offline: !isOnline }"
     />
-    <div class="text-icon">
-      <ion-text class="body">
-        {{ name }}
+    <div class="text-content">
+      <div class="text-content-name">
+        <ion-text class="body">
+          {{ name }}
+        </ion-text>
+        <ion-icon
+          :class="{ 'popover-is-open': isPopoverOpen }"
+          slot="end"
+          :icon="chevronDown"
+        />
+      </div>
+      <ion-text
+        class="text-content-update button-small"
+        v-show="updateAvailability.updateAvailable"
+      >
+        {{ $msTranslate('HomePage.topbar.updateAvailable') }}
       </ion-text>
-      <ion-icon
-        :class="{ 'popover-is-open': isPopoverOpen }"
-        slot="end"
-        :icon="chevronDown"
-      />
     </div>
   </ion-item>
 </template>
@@ -29,7 +37,7 @@
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { UserProfile, logout as parsecLogout } from '@/parsec';
 import { Routes, getConnectionHandle, navigateTo } from '@/router';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { ImportManager, ImportManagerKey } from '@/services/importManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
@@ -48,8 +56,9 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
-
+let updateAvailability: UpdateAvailabilityData = { updateAvailable: false };
 let eventCbId: null | string = null;
+let intervalId: any = null;
 
 const props = defineProps<{
   name: string;
@@ -58,18 +67,32 @@ const props = defineProps<{
 }>();
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(Events.Offline | Events.Online, async (event: Events, _data: EventData) => {
-    if (event === Events.Offline) {
-      isOnline.value = false;
-    } else if (event === Events.Online) {
-      isOnline.value = true;
-    }
-  });
+  eventCbId = await eventDistributor.registerCallback(
+    Events.Offline | Events.Online | Events.UpdateAvailability,
+    async (event: Events, data: EventData) => {
+      if (event === Events.Offline) {
+        isOnline.value = false;
+      } else if (event === Events.Online) {
+        isOnline.value = true;
+      } else if (event === Events.UpdateAvailability) {
+        updateAvailability = data as UpdateAvailabilityData;
+      }
+    },
+  );
+
+  intervalId = setInterval(async () => {
+    window.electronAPI.getUpdateAvailability();
+  }, 600000); // Checking every 10min
+  // Also calling it right now
+  window.electronAPI.getUpdateAvailability();
 });
 
 onUnmounted(async () => {
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
+  }
+  if (intervalId) {
+    clearInterval(intervalId);
   }
 });
 
@@ -81,7 +104,7 @@ async function openPopover(event: Event): Promise<void> {
     componentProps: {
       email: props.email,
       profile: props.profile,
-      eventDistributor: eventDistributor,
+      updateAvailability: updateAvailability,
     },
     event: event,
     showBackdrop: false,
@@ -145,9 +168,11 @@ async function openPopover(event: Event): Promise<void> {
   flex-direction: column;
   --background: none;
   cursor: pointer;
+
   &:hover {
     --background-hover: none;
   }
+
   & * {
     pointer-events: none;
   }
@@ -177,17 +202,27 @@ async function openPopover(event: Event): Promise<void> {
   }
 }
 
-.text-icon {
+.text-content {
   display: flex;
-  align-items: center;
-  color: var(--parsec-color-light-secondary-text);
+  flex-direction: column;
 
-  ion-icon {
-    transition: transform ease-out 300ms;
-    font-size: 1.125rem;
-    &.popover-is-open {
-      transform: rotate(180deg);
+  &-name {
+    display: flex;
+    align-items: center;
+    color: var(--parsec-color-light-secondary-text);
+
+    ion-icon {
+      transition: transform ease-out 300ms;
+      font-size: 1.125rem;
+
+      &.popover-is-open {
+        transform: rotate(180deg);
+      }
     }
+  }
+
+  &-update {
+    color: var(--parsec-color-light-primary-500);
   }
 }
 </style>
