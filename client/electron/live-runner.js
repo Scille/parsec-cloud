@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const cp = require('child_process');
 const chokidar = require('chokidar');
-const electron = require('electron');
+const electron = process.env.ELECTRON_OVERRIDE_DIST_PATH ? `${process.env.ELECTRON_OVERRIDE_DIST_PATH}/electron` : require('electron');
 
 let child = null;
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
