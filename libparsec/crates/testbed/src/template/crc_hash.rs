@@ -420,6 +420,7 @@ impl CrcHash for LocalFolderManifest {
 
         let LocalFolderManifest {
             base,
+            parent,
             need_sync,
             updated,
             children,
@@ -429,6 +430,7 @@ impl CrcHash for LocalFolderManifest {
         } = self;
 
         base.crc_hash(hasher);
+        parent.crc_hash(hasher);
         need_sync.crc_hash(hasher);
         updated.crc_hash(hasher);
         children.crc_hash(hasher);
@@ -474,14 +476,12 @@ impl CrcHash for BlockAccess {
 
         let BlockAccess {
             id,
-            key,
             offset,
             size,
             digest,
         } = self;
 
         id.crc_hash(hasher);
-        key.crc_hash(hasher);
         offset.crc_hash(hasher);
         size.crc_hash(hasher);
         digest.crc_hash(hasher);
@@ -515,6 +515,7 @@ impl CrcHash for LocalFileManifest {
 
         let LocalFileManifest {
             base,
+            parent,
             need_sync,
             updated,
             size,
@@ -523,6 +524,7 @@ impl CrcHash for LocalFileManifest {
         } = self;
 
         base.crc_hash(hasher);
+        parent.crc_hash(hasher);
         need_sync.crc_hash(hasher);
         updated.crc_hash(hasher);
         size.crc_hash(hasher);

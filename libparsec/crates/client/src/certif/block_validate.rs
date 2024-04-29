@@ -70,22 +70,6 @@ pub(super) async fn validate_block(
     access: &BlockAccess,
     encrypted: &[u8],
 ) -> Result<Vec<u8>, CertifValidateBlockError> {
-    // Special case for legacy blocks created with Parsec < v3
-    if let Some(key) = &access.key {
-        return key.decrypt(encrypted).map_err(|_| {
-            let err = Box::new(InvalidBlockAccessError::CannotDecrypt {
-                realm_id,
-                manifest_id: manifest.id,
-                manifest_version: manifest.version,
-                manifest_timestamp: manifest.timestamp,
-                manifest_author: manifest.author.clone(),
-                block_id: access.id,
-                key_index: 0,
-            });
-            CertifValidateBlockError::InvalidBlockAccess(err)
-        });
-    }
-
     let needed_timestamps =
         PerTopicLastTimestamps::new_for_realm(realm_id, needed_realm_certificate_timestamp);
 

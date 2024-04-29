@@ -18,9 +18,10 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
 
 #[rstest]
 fn serde_local_file_manifest_ok(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Parsec v3.0.0-b.6+dev
     // Content:
     //   type: "local_file_manifest"
+    //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
     //   updated: ext(1, 1638618643.208821)
     //   base: {
     //     type: "file_manifest"
@@ -77,31 +78,34 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //   need_sync: true
     //   size: 500
     let data = hex!(
-        "a4c84fa2b11cbdf2f60a8da8c04c17fb2a23f854d6018f07d19ed6aff2e8d22c15f3c8402a"
-        "318c53b21a9a12b9f3d7ede7080ed07bc93237ce18358962a3f10f4733e050294883baaa9a"
-        "4074696adfc8377f9590f0e94bc9f81d785a1d9d4f1ae631d43ae9e730fe2f90705ce3337c"
-        "5bf993133504a507f9abeb428a70c4d26e86afd3b0b581067d8690b144e94e82c45ae08f79"
-        "a9a7a91aa0d29eec3be9c3760deda111797428755a76950fd9d801931df08f815aa58afc35"
-        "5ef119e4e0efbebd66794327ff6823d84bbd2324f28fc84d269ce07a5786395bf239ee45d0"
-        "ca50c023f8e06f440521595b667507a1610cb42a4c61d2778134a0c86a399a8a18e688d814"
-        "e9a416ba8160550ab517627bca81e40466e1c1c318468d20e9b0f6ba7ac58a3072e123ee80"
-        "7e66c75f770a78d85088cac2b0a4d2fc6103dc38518c08f9774053e9843576e0359e29b1d2"
-        "ab2f01f9306c22841f2343c6cfa2e74378867ac7158459c30886bcfdb28111799e36838867"
-        "76e6c9ca87e79bf1b77b86b75aac5199ca3523a5b5a28cc029e9ab2adfaa67352956efe7b7"
-        "27f7b6ad741c067679a07a59e3a80dfdf35f21329e0622d509ebb751cbb8ed07cbcbe305ff"
-        "dd0257cfe7754d2c64716e0c2d0094b347efe79838c33b3675aac3a2388839c02af48ee0ec"
-        "925fa22e8a261491d289e1eb8acae69d2933ffe13ac9ab327ee4f34b2cb679d2c6e8fcf0e6"
-        "96e1b783b0152bd311ebca0f98f66e28ad4f65df7d8e28a1c82ebac3d7e1c4b9838b7ddbe7"
-        "85f72cf0412268b76d2a28b65df23bbc6480785ce1d083d5050af337efd352c43bdf062c4e"
-        "0836247a72368396c0776afdd96a3dcbcd52ab63a84762a55c84386abe455ba4859414f185"
-        "6b1ac07e419a279094e24dac07cd374b1a08706f296a6b00eb0bd95898ae073705206ae6da"
-        "7e4495f6bf06ed49c56d77c2721e5014fabef7a3db98cceda96bf5615c2e"
+        "231b4a42f4d017b8681c4c9704c8ef47e0cedfe10ed934504fce15552418ffdf4f10e1"
+        "4c516af4c9c70193b282c37964371d62b2d544d0d7beccd3878cd9a50e8cf83afbb80b"
+        "546e7b97e6253ef5fb98a45aa85789d5fa62f6109985dd64d4832118ae855f6dcc43a2"
+        "1d8f3cd0256d3dd7235cdb0e999b10b08e6042e80b4df0804a2d31b2579d917959db79"
+        "22b757a0686c1a9f145e16ee9db0e424b29b63f7d8c937c39bc6cadc40a05e6d74cdca"
+        "f1e3535c88d4461c1494fe377c30224d26733e88024e78ffda037be2ba055025645b25"
+        "82ec3527c64128ffeb84407594d89c7d7fb8162b74b44b132c87c44a2dc6932562b768"
+        "0ec18f3e5eaa3bd54a14b89525475560307ca33b25cc4879dc3c92cb8233403948b4af"
+        "081e37d1c56da35a74bf3e4d7bb8c574b9687d4ee7789848f5eba2ff1048a4e57042b6"
+        "ce47da9c808a29b61911693ca62abab710a3e9fe289bfad0292f280980aaefc9fa3e59"
+        "788936cd6083c4b2d702cf093828a5b179061122524df95a27669a1a0c6cc0cad560cf"
+        "43a54db556b4e04b3de3d0175eee80213649284ee99b4488bdeadcf22e175a03cf469a"
+        "7d0daedf7f5e148ef5b76e758e3fc9e778e50470493fc054b6f206c30e15600f682305"
+        "a0eb0d3cadcc06224c15845a3cc983181837d39c3c44cb0abd58d76bcbf89c5e9e8359"
+        "c49f4c06a17fc3e42f13506ef4e9184401832fc6498fce8534ac1e4f412906ee326942"
+        "27a4d5f00414ebb0a6bdab592d70bff9f561b9b413e544d590c9d1f9d73de0abfb63f3"
+        "4c509a4e9c546d3b47c46da43a20368e13607ac73688c832415257b46e999b9b0f60b5"
+        "cc1f5a59a9235d32d7d0f66733142ae147dca1150510b7ac2dbd42734011794d39fbf5"
+        "0090be56ac2562af2b7b94c9935c09aeff0614bfb6db46308e5c5168558d05bb9c6d47"
+        "22396f828d62d81332bbaf9df45878b8f89e435ea9b9ec85e174744948d374f3f4cf13"
+        "e5ac58fc5c73"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
     let expected = LocalFileManifest {
+        parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
         updated: now,
         base: FileManifest {
             author: alice.device_id.to_owned(),
@@ -116,7 +120,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
                     )),
-                    key: None,
                     offset: 0,
                     size: NonZeroU64::try_from(512).unwrap(),
                 },
@@ -125,7 +128,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                     digest: HashDigest::from(hex!(
                         "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
                     )),
-                    key: None,
                     offset: 512,
                     size: NonZeroU64::try_from(188).unwrap(),
                 },
@@ -143,182 +145,6 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                         "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f3"
                         "6560"
                     )),
-                    key: None,
-                    offset: 0,
-                    size: NonZeroU64::try_from(512).unwrap(),
-                }),
-                raw_offset: 0,
-                raw_size: NonZeroU64::new(512).unwrap(),
-                start: 0,
-                stop: NonZeroU64::new(250).unwrap(),
-            },
-            Chunk {
-                id: ChunkID::from_hex("2f99258022a94555b3109e81d34bdf97").unwrap(),
-                access: None,
-                raw_offset: 250,
-                raw_size: NonZeroU64::new(250).unwrap(),
-                start: 0,
-                stop: NonZeroU64::new(250).unwrap(),
-            },
-        ]],
-        blocksize: Blocksize::try_from(512).unwrap(),
-        need_sync: true,
-        size: 500,
-    };
-
-    let manifest = LocalFileManifest::decrypt_and_load(&data, &key).unwrap();
-
-    p_assert_eq!(manifest, expected);
-
-    // Also test serialization round trip
-    let data2 = manifest.dump_and_encrypt(&key);
-    // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalFileManifest::decrypt_and_load(&data2, &key).unwrap();
-
-    p_assert_eq!(manifest2, expected);
-}
-
-#[rstest]
-fn serde_local_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "local_file_manifest"
-    //   updated: ext(1, 1638618643.208821)
-    //   base: {
-    //     type: "file_manifest"
-    //     author: "alice@dev1"
-    //     timestamp: ext(1, 1638618643.208821)
-    //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //     version: 42
-    //     created: ext(1, 1638618643.208821)
-    //     updated: ext(1, 1638618643.208821)
-    //     blocks: [
-    //       {
-    //         id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //         digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //         key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-    //         offset: 0
-    //         size: 512
-    //       }
-    //       {
-    //         id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-    //         digest: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
-    //         key: hex!("c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc")
-    //         offset: 512
-    //         size: 188
-    //       }
-    //     ]
-    //     blocksize: 512
-    //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //     size: 700
-    //   }
-    //   blocks: [
-    //     [
-    //       {
-    //         id: ext(2, hex!("ad67b6b5b9ad4653bf8e2b405bb6115f"))
-    //         access: {
-    //           id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //           digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //           key: hex!("6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57")
-    //           offset: 0
-    //           size: 512
-    //         }
-    //         raw_offset: 0
-    //         raw_size: 512
-    //         start: 0
-    //         stop: 250
-    //       }
-    //       {
-    //         id: ext(2, hex!("2f99258022a94555b3109e81d34bdf97"))
-    //         access: None
-    //         raw_offset: 250
-    //         raw_size: 250
-    //         start: 0
-    //         stop: 250
-    //       }
-    //     ]
-    //   ]
-    //   blocksize: 512
-    //   need_sync: true
-    //   size: 500
-    let data = hex!(
-        "c450757c3d73e4286e1552494251bba10b8cab17c36960c544fad501577b580fe7da7f6159"
-        "b5592db42601f13bcf268557de21f99fcf80b97dfe6b180834f791e84f7ce4334751c855ec"
-        "c6881e14896f8fd0632fea01976009f913b78641dfc6b6c440fa9e49d2ddc3e1e0302b543a"
-        "1c574cbac9c635721aa7ddf427fe9516894db53e9dfc62aeb1aff20bb06c775ca6bf95310c"
-        "546ba68680bd532dd8a00b923e675e16fd484d96d08e830fd1f217a8ffe919946b523d3623"
-        "75af13648b46abd2a48f6bf7175c899bfaa15653344689189c4eba626092f904d2604605ff"
-        "994f45c90e36de0c78597fca533f38c1e8f66e09310922708345cc8fe4225860d45ec3a4ce"
-        "11a0fb24953d25aedab9cffdb07e675a02cc0e41df25ee50fb6edcd2dddb58be6f65c6af62"
-        "8a46b1bcb079a8ea1c9399c4aaae0f665f7ac842ececf91d0a739401d0635e3ebed48959e4"
-        "0498b4e3c32d963b6202a1e1d8e0c99fa6adfcf22626ba5de7d91326d88932a7f4df9c0610"
-        "99e69b212296b959e4d6a3cd58a4a6cc4bfc2b2a5b0f490f46fc36f7932eb585cd9ac765ce"
-        "1e36730c72498c918514ccf0910f73bda2fea78bfb9cf90a5fe6b099efe95677ea253a6efb"
-        "fc0d709d0badf6fe90043433f4a3e8699b747ed079cdff37358ececb0e84b5a597a3edd2c9"
-        "26d79bb17607d0fc41c35a5511f84d4b6cb168e5d384f96b86341440a9abe0f6682b148a1e"
-        "4926d07f9e408883788a21cf2ffd7dfb930fe26f8a46a4fee80bcbe425dded489dca9f3e7d"
-        "45eec851543f35bb1763e3f3a68a54d279b033617339ee9ab6da2db3fb79e5c62c90006ff3"
-        "db702f4dc373debfafa3326fe3099768bae557c02837115249a21240af86d227d19c896672"
-        "fb6fb729d8131837bfa086682a4299fc173a6b05ce025d8020488625df5931bb1696f06828"
-        "d80c868394004b8de95423456a6cef1a8b1a2c9f5836d1a377757d2636c382cc9c6d86e0d7"
-        "e4df3752f17e43f5c7e6697cdcf40263f21b9a741aa3dc04bde55e3ea4047f7b8137ab27fc"
-        "5706b74e9691788ce3b3d9cc4230bbb5aea343fa0bd13706d002211cc16e29d598cef41085"
-        "1777d69068df1250f19518e735cd34f03af9"
-    );
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let key = SecretKey::from(hex!(
-        "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
-    ));
-    let expected = LocalFileManifest {
-        updated: now,
-        base: FileManifest {
-            author: alice.device_id.to_owned(),
-            timestamp: now,
-            id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-            version: 42,
-            created: now,
-            updated: now,
-            blocks: vec![
-                BlockAccess {
-                    id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560"
-                    )),
-                    // In Parsec < v3, access block access has a dedicated key instead of a key index
-                    key: Some(SecretKey::from(hex!(
-                        "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                    ))),
-                    offset: 0,
-                    size: NonZeroU64::try_from(512).unwrap(),
-                },
-                BlockAccess {
-                    id: BlockID::from_hex("d7e3af6a03e1414db0f4682901e9aa4b").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6"
-                    )),
-                    key: Some(SecretKey::from(hex!(
-                        "c21ed3aae92c648cb1b6df8be149ebc872247db0dbd37686ff2d075e2d7505cc"
-                    ))),
-                    offset: 512,
-                    size: NonZeroU64::try_from(188).unwrap(),
-                },
-            ],
-            blocksize: Blocksize::try_from(512).unwrap(),
-            parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
-            size: 700,
-        },
-        blocks: vec![vec![
-            Chunk {
-                id: ChunkID::from_hex("ad67b6b5b9ad4653bf8e2b405bb6115f").unwrap(),
-                access: Some(BlockAccess {
-                    id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
-                    digest: HashDigest::from(hex!(
-                        "076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f3"
-                        "6560"
-                    )),
-                    key: Some(SecretKey::from(hex!(
-                        "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
-                    ))),
                     offset: 0,
                     size: NonZeroU64::try_from(512).unwrap(),
                 }),
@@ -355,9 +181,10 @@ fn serde_local_file_manifest_legacy_pre_parsec_v3_0(alice: &Device) {
 
 #[rstest]
 fn serde_local_file_manifest_invalid_blocksize() {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Parsec v3.0.0-b.6+dev
     // Content:
     //   type: "local_file_manifest"
+    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
     //   updated: ext(1, 1638618643.208821)
     //   base: {
     //     type: "file_manifest"
@@ -370,22 +197,23 @@ fn serde_local_file_manifest_invalid_blocksize() {
     //     blocks: []
     //     blocksize: 512
     //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //     size: 700
+    //     size: 0
     //   }
     //   blocks: []
     //   blocksize: 2
     //   need_sync: true
-    //   size: 500
+    //   size: 0
     let data = hex!(
-        "9642b002d69dca6df364c5828c7308477aba91645175df36e2451798cce2a32b1b68f9138c"
-        "24779a4cf009ec1ef21363db76b779e50aaade081b476c9423d033f615a159455c3f79f9ba"
-        "eac79059b3aeafda5bb25cf6394b50d1c487fc193740cf207bba4a98803d81c672f05ec2a0"
-        "7a88701972bb92cd17400ae25c28344619d5b504b13ff4898831485653b7b260e9622899ac"
-        "e85d4897c86b013e2eac1443f1dbd0d3792af7db872c7c4ddece260fa55e24caeeb63b404a"
-        "4a775d4ddcfc461b48d4b7773cdf83e0861020c754f51a972bad16c73d5030b7a4f7c6136a"
-        "0a8e8eb9664ac5c9b697fd4b693776a6dc6f5eb3b32373d5339c4848ed27cb62f622caffaa"
-        "2a67c7a879e877030de49352b649a164902a9c2d74dd84fb84d45a47e811855d369c259bfa"
-        "eb7ff946f60d66d48a"
+        "499cd965c263dd61f437d04caec66a0f73a50d2a27ea54aa38a1b45af1bc037911f87c"
+        "4487cdb3484f0121d21da7b612bca847ac193b6f0b16a40ebb59fff3d153f9f7ca1582"
+        "e4c34450f1b7dcf53a9fa5b2edea8655410a479856865234969fd51cdcfbdde01928df"
+        "b88405fd61d3e43b28316680dbbff6a78b97e72e8e3b3f61aa033e6036550e8902ab40"
+        "d7393f48a1d1017033af349fff6e718e08b6e9f81a97c18826bb81d22e12a5a7a9bda1"
+        "368ec38dd3436dcd7ce8688c7d14560b25117dc44630d7c0431fb0b19b967442fa6697"
+        "620be5d2f47eb7e08300b66e7a19902186d516f79f4091e39038f2c19b7430c0623ced"
+        "99ba3575ad2f28b4d24d958bd42d20eebb0593b7ccf3e13256974298de75ec793dba99"
+        "25942a2a12b9eb91b085a44fdc2ff0f214df58102fe350c139dab6353a18e07a269c78"
+        "8eacbf6cc7b9c4698d04b6"
     );
 
     let key = SecretKey::from(hex!(
@@ -404,6 +232,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
         // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_folder_manifest"
+        //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
         //   updated: ext(1, 1638618643.208821)
         //   base: {
         //     type: "folder_manifest"
@@ -422,21 +251,22 @@ fn serde_local_file_manifest_invalid_blocksize() {
         //   need_sync: true
         //   speculative: false
         &hex!(
-            "199d17c0df1c4158f7cf9de4ddac04fc469512e34c9d711d3bce7f0892df3864ef9827"
-            "dd1af08207bfc6625619896bb5c8c0a7d2d85580f0e812aa295d0c6cb7f38925c22994"
-            "a44b2ed2a2d7b6c993b9d5f16d4ebec4ddcd39f94853b025d7a2115a37c7be2b25550f"
-            "d3c5a473ca393cf092b29e76d439f1cb0eed0e1c81aca267065b5f639befdc2f3fe02a"
-            "e2008cc185937c7cd491d733135e8ae9d2409587f4cc053e39a9c203e64fd422e3f8b7"
-            "a10c68505b378904524cfcb922817d9d37968607e9940aa488ace790d1d1f10e11b359"
-            "61832935db003ed513fe3b9d139d355228d401a318ce1fa332088fdaaf1d8d8e39a729"
-            "8cec0b5f7ca84530d906878458cfa7aefe538b96b2e8e0e7478cd7e55a9b75642f6def"
-            "90d26a0acd21d0803c1895f89fc510bb451bb40f1c4a39cd8200066535e931530d3372"
-            "faa9111e08daa13f51ccf6d055c74db7eb31acb1186b70f454adb11333cea3cb57c5fe"
-            "166fba7dc830b8951a7c7a87065020d05637be6bb35bea78c89a6f9f8314234b221123"
-            "61d6e0a72a8c37acd350d84a769a3cf1b5a11dc5a4b40271ce15aac2f0c234fe4e6516"
-            "55ea09"
+            "9c8a25134ade10150c12d5c9b9f4d47dfd32c887102d9aeecde2bd7f752651e3c5cdf0"
+            "ef6bbd9b7c395437af73696b27bfd6fd2e8b0d5dd7269969e1bc3a1e8aa124be6218a1"
+            "4e7432abc5d263c641b8b4742d4a3470d415323f967e3825e4aafc02b7aafe7ddd62ff"
+            "f0910b66fe1133889a7a583fd1b945eec325f99b0ca5003bf4658355c188625fb1bb13"
+            "87b19533eace14045191e35197566ddb1c650bbe6abc4d95ed354242ce55f15e53e354"
+            "186eb15c44a0bc78abf94a723613ab3bb58e1186e1c157488c18a615ccb623df06561c"
+            "e5919b10c726812366bdac8cda53c8337157848f6ad9dfd531bce00b9c0b19a855a3ee"
+            "4ecb1cb6f9b74302674e996d3ddf3530483044754e4767cb6ecfc74ff25519e3bc5593"
+            "2bbf94f74bf4664167af157f170d5d5978307018f35edffcab17c1cd617f0d17a3136b"
+            "9ed5275ae56349567ce1f7ea5f65a3c4740c259fe50de67b067488548354969ee16f1c"
+            "ca6cc763194414a469b875b98e6e82d2a95a0f9d2701844fe8781227a59a607bab8b5d"
+            "ce7b8bd2c17590c15718a129a6ee7c6691eff49c4c33e56b5c94d66d005292f68e556e"
+            "7d99ce68645d7fda63803581e29f1909e06f67a2783afd77bff4a18a"
         )[..],
         LocalFolderManifest {
+            parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
             base: FolderManifest {
                 author: alice.device_id.to_owned(),
@@ -466,6 +296,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
         // Generated from Parsec v3.0.0-b.6+dev
         // Content:
         //   type: "local_folder_manifest"
+        //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
         //   updated: ext(1, 1638618643.208821)
         //   base: {
         //     type: "folder_manifest"
@@ -484,18 +315,20 @@ fn serde_local_file_manifest_invalid_blocksize() {
         //   need_sync: true
         //   speculative: true
         &hex!(
-            "7dce0d23f47e8a33eae42311870f5f030aa2dafea63e695d4eec371105e4a5182d29a5"
-            "0f0d667d187e760a36bd429f0df8440dddcfa983987d66e0d2ceeac1238a2d4c47d9a2"
-            "e267ee70f6ea84bf48912d92bda0ca6a5a1030d6b9f6b8ad431fd6026e82f4ebb38102"
-            "3744cc059cda4c4ee749868e2abd0d920e04c29edc2f2f596f6ba16f0c50a308028dd4"
-            "69c4b1265745bc5f2c0355c41f2471d99fe82b081d0da2efff6c4c87ca938159393a10"
-            "c2d0250772570caee3d0e63d9a0be05f6533a91740189038dba9b4fa80c867e068bd91"
-            "da97c9c4f4d06aff2c74d94e19da4a605631993b71adde221a3c521a26e49ce1928f7e"
-            "c38b86f9e6d2b22984eefeab64e42a0f6a83428aaf064a3f72ea8e50709323d36fcffe"
-            "56e1f331b7a0eb5cadf4201b072241f9828ea74b01c3a805060e48198537f88d9bb9c5"
-            "624260214381e8796b0dea5dda4d43054f250c9f43943953"
+            "c9478625a33eb9516ae53b2b38428ed093ad36091db5305fb70c1cb39810677baed3b0"
+            "0ee5b142f1cc3957809ba360af76282b41eb4834262e6afe1b2ec8adcf7d866bfcb4dd"
+            "6e2b91bc7316a20250e37a3063d9220dd3b5b93c45dbc7e1a1fbad032c5f6215a10431"
+            "ff8ce49dc4692a84794b61a2e2d7c4180b60386eca4789a2fd02e699d889af23a360ad"
+            "6a4db25baa9bbcdae8b59542a77770d3488d39d0a1b87f04c3d79dc26397930f7dddcb"
+            "1ce7cc31d166150fd7689737235b27a8e1b4136a526523e897f628fb5fbc8df021abbd"
+            "7021d02560f048a55e01209ad8c761ef1397ed3360b68fc56911a129c56e9495a62a76"
+            "3fef4be06d9c529d1f4a5088532ad92050d3ca2a4023045c81ebf255bc59349c7fc1f9"
+            "fa50717fb7a70e4d09544ffd9c89a4ead4cd8eebff83656be1b7ea43bae784e58c940d"
+            "63eb7c6c2fa6d95cdc7c35dc1441939196a7d3c2fcca21b6e4a9787da43b7f3e7a732c"
+            "5e55cf055f3b954d96a54bfe1c0f"
         )[..],
         LocalFolderManifest {
+            parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
             base: FolderManifest {
                 author: alice.device_id.to_owned(),
@@ -523,8 +356,6 @@ fn serde_local_folder_manifest(
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
-
-    println!("==========>{:?}", expected.dump_and_encrypt(&key));
 
     let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
 
@@ -1110,7 +941,6 @@ fn chunk_promote_as_block() {
     p_assert_eq!(block.raw_size, NonZeroU64::try_from(4).unwrap());
     p_assert_eq!(*block.access.as_ref().unwrap().id, *id);
     p_assert_eq!(block.access.as_ref().unwrap().offset, 1);
-    p_assert_eq!(block.access.as_ref().unwrap().key, None);
     p_assert_eq!(
         block.access.as_ref().unwrap().size,
         NonZeroU64::try_from(4).unwrap()
@@ -1122,7 +952,6 @@ fn chunk_promote_as_block() {
 
     let block_access = BlockAccess {
         id: BlockID::default(),
-        key: None,
         offset: 1,
         size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(b"<data>"),
@@ -1266,14 +1095,12 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
 #[case::blocks((1024, vec![
     BlockAccess {
         id: BlockID::default(),
-        key: None,
         offset: 1,
         size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
     },
     BlockAccess {
         id: BlockID::default(),
-        key: None,
         offset: 513,
         size: NonZeroU64::try_from(4).unwrap(),
         digest: HashDigest::from_data(&[]),
@@ -1366,7 +1193,6 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
         blocksize: Blocksize::try_from(512).unwrap(),
         blocks: vec![BlockAccess {
             id: BlockID::default(),
-            key: None,
             offset: 0,
             size: NonZeroU64::try_from(1).unwrap(),
             digest: HashDigest::from_data(&[]),
@@ -1375,6 +1201,7 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
 
     let lfm = LocalFileManifest {
         base: fm.clone(),
+        parent: fm.parent,
         need_sync: false,
         updated: timestamp,
         size: fm.size,
@@ -1390,6 +1217,32 @@ fn local_file_manifest_match_remote(timestamp: DateTime) {
     };
 
     assert!(lfm.match_remote(&fm));
+
+    {
+        let mut lfm = lfm.clone();
+        lfm.parent = VlobID::default();
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.updated = fm.updated.add_us(1);
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.size = fm.size + 1;
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.blocksize = (*fm.blocksize + 1).try_into().unwrap();
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.blocks[0][0].raw_size = lfm.blocks[0][0].raw_size.checked_add(1).unwrap();
+        assert!(!lfm.match_remote(&fm));
+    }
 }
 
 #[rstest]
@@ -1569,6 +1422,7 @@ fn local_folder_manifest_from_remote_with_local_context(
 
     let lfm = LocalFolderManifest {
         base: fm.clone(),
+        parent: fm.parent,
         need_sync: false,
         updated: timestamp,
         children: local_children.clone(),
@@ -1633,6 +1487,7 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
 
     let lfm = LocalFolderManifest {
         base: fm.clone(),
+        parent: fm.parent,
         need_sync: false,
         updated: timestamp,
         children: HashMap::new(),
@@ -1642,6 +1497,22 @@ fn local_folder_manifest_match_remote(timestamp: DateTime) {
     };
 
     assert!(lfm.match_remote(&fm));
+
+    {
+        let mut lfm = lfm.clone();
+        lfm.parent = VlobID::default();
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.updated = fm.updated.add_us(1);
+        assert!(!lfm.match_remote(&fm));
+    }
+    {
+        let mut lfm = lfm.clone();
+        lfm.children.insert("foo".parse().unwrap(), VlobID::default());
+        assert!(!lfm.match_remote(&fm));
+    }
 }
 
 #[rstest]
@@ -1698,6 +1569,7 @@ fn local_folder_manifest_evolve_children_and_mark_updated(
 
     let lfm = LocalFolderManifest {
         base: fm.clone(),
+        parent: fm.parent,
         need_sync: false,
         updated: timestamp,
         children,
@@ -1733,6 +1605,7 @@ fn local_folder_manifest_apply_prevent_sync_pattern(timestamp: DateTime) {
 
     let lfm = LocalFolderManifest {
         base: fm.clone(),
+        parent: fm.parent,
         need_sync: false,
         updated: timestamp,
         children: HashMap::new(),
@@ -1895,4 +1768,10 @@ fn local_user_manifest_match_remote(
     };
 
     assert!(lum.match_remote(&um));
+
+    {
+        let mut lum = lum.clone();
+        lum.updated = um.updated.add_us(1);
+        assert!(!lum.match_remote(&um));
+    }
 }
