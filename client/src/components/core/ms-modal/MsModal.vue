@@ -98,7 +98,7 @@
 
 <script setup lang="ts">
 import { MsModalConfig, MsModalResult } from '@/components/core/ms-modal/types';
-import { MsReportText } from '@/components/core/ms-text';
+import { MsReportText } from 'megashark-lib';
 import { MsReportTheme } from '@/components/core/ms-types';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, IonToolbar, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';

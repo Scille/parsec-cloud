@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsReportText } from '@/components/core/ms-text';
+import { MsReportText } from 'megashark-lib';
 import { MsReportTheme } from '@/components/core/ms-types';
 </script>
 
