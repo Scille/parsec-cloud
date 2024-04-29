@@ -6,9 +6,6 @@ export * from '@/components/core/ms-types';
 // ** ms-modal ** //
 export * from '@/components/core/ms-modal';
 
-// ** ms-stepper ** //
-export * from '@/components/core/ms-stepper';
-
 // ** ms-text ** //
 export * from '@/components/core/ms-text';
 

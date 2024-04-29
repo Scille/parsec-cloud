@@ -1,8 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import MsWizardStepper from '@/components/core/ms-stepper/MsWizardStepper.vue';
 import { IonText } from '@ionic/vue';
 import { VueWrapper, mount } from '@vue/test-utils';
+import { MsWizardStepper } from 'megashark-lib';
 
 describe('Wizard stepper', () => {
   let wrapper: VueWrapper;
