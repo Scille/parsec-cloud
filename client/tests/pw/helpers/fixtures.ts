@@ -2,7 +2,7 @@
 
 import { test as base, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
-import { dropTestbed, newTestbed } from '@tests/pw/helpers/utils';
+import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
 
 export const msTest = base.extend<{ home: Page; connected: Page }>({
   home: async ({ page, context }, use) => {
