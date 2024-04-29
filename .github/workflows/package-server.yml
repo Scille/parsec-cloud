@@ -76,7 +76,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@1d96c772d19495a3b5c517cd2bc0cb401ea0529f # pin v4.1.3
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # pin v4.1.4
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -88,7 +88,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@9c19ed7fe5d278cd354c7dfd5d3b88589c7e2395 # pin v4.1.6
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # pin v4.1.7
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -135,7 +135,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@e7e3978ba00920884c8a5790a28699b85397e972 # pin v2.33.6
+      - uses: taiki-e/install-action@00a67321d66e038602baf558d366a594a7019ea2 # pin v2.33.9
         with:
           tool: syft@0.84.0
 
