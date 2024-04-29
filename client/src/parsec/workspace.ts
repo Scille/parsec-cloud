@@ -466,5 +466,5 @@ export async function getSystemPath(
   if (!needsMocks()) {
     return await libparsec.mountpointToOsPath(infoResult.value.mountpoints[0][0], entryPath);
   }
-  return { ok: true, value: '/home' };
+  return { ok: true, value: `/home${entryPath}` };
 }

@@ -24,7 +24,7 @@
             </ion-text>
             <ion-label class="file-info-basic__edit body">
               <span>{{ $msTranslate('FileDetails.stats.updated') }}</span>
-              <!-- <span>{{ $d(entry.updated.toJSDate(), 'short') }}</span> -->
+              <span>{{ $msTranslate(I18n.formatDate(entry.updated, 'short')) }}</span>
             </ion-label>
           </div>
         </div>
@@ -36,7 +36,7 @@
               {{ $msTranslate('FileDetails.stats.created') }}
             </ion-label>
             <ion-text class="file-info-details-item__value body">
-              <!-- {{ $d(entry.created.toJSDate(), 'short') }} -->
+              {{ $msTranslate(I18n.formatDate(entry.created, 'short')) }}
             </ion-text>
           </div>
           <!-- Size (only for files) -->
@@ -68,14 +68,14 @@
           </ion-label>
           <div class="file-info-path-value">
             <ion-text class="file-info-path-value__text body">
-              {{ shortenFileName(path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
+              {{ shortenFileName(entry.path, { maxLength: 60, prefixLength: 20, suffixLength: 30 }) }}
             </ion-text>
             <ion-button
               fill="clear"
               size="small"
               id="copy-link-btn"
               @click="copyPath"
-              v-if="!pathCopiedToClipboard"
+              v-show="copyStatus === CopyStatus.NotCopied"
             >
               <ion-icon
                 class="icon-copy"
@@ -83,10 +83,16 @@
               />
             </ion-button>
             <ion-text
-              v-if="pathCopiedToClipboard"
+              v-show="copyStatus === CopyStatus.Copied"
               class="file-info-path-value__copied body copied"
             >
               {{ $msTranslate('FileDetails.stats.linkCopied') }}
+            </ion-text>
+            <ion-text
+              v-show="copyStatus === CopyStatus.FailedToCopy"
+              class="file-info-path-value__not-copied body"
+            >
+              {{ $msTranslate('FileDetails.stats.failedToCopy') }}
             </ion-text>
           </div>
         </div>
@@ -97,25 +103,44 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { Clipboard, Folder, MsImage, MsModal } from 'megashark-lib';
-import { EntryStat, EntryStatFile } from '@/parsec';
+import { Clipboard, Folder, MsImage, MsModal, I18n } from 'megashark-lib';
+import { EntryStat, EntryStatFile, getSystemPath, WorkspaceHandle } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
 
+enum CopyStatus {
+  NotCopied,
+  Copied,
+  FailedToCopy,
+}
+
 const props = defineProps<{
   entry: EntryStat;
-  path: string;
+  workspaceHandle: WorkspaceHandle;
 }>();
 
-const pathCopiedToClipboard = ref(false);
+const copyStatus = ref(CopyStatus.NotCopied);
 
 async function copyPath(): Promise<void> {
-  await Clipboard.writeText(props.path);
-  pathCopiedToClipboard.value = true;
+  const fullPathResult = await getSystemPath(props.workspaceHandle, props.entry.path);
+
+  if (fullPathResult.ok) {
+    if (await Clipboard.writeText(fullPathResult.value)) {
+      copyStatus.value = CopyStatus.Copied;
+      setTimeout(() => {
+        copyStatus.value = CopyStatus.NotCopied;
+      }, 4000);
+      return;
+    } else {
+      copyStatus.value = CopyStatus.FailedToCopy;
+    }
+  } else {
+    copyStatus.value = CopyStatus.FailedToCopy;
+  }
   setTimeout(() => {
-    pathCopiedToClipboard.value = false;
-  }, 5000);
+    copyStatus.value = CopyStatus.NotCopied;
+  }, 4000);
 }
 </script>
 
@@ -227,6 +252,10 @@ async function copyPath(): Promise<void> {
 
       &__copied {
         color: var(--parsec-color-light-success-700);
+      }
+
+      &__not-copied {
+        color: var(--parsec-color-light-danger-500);
       }
     }
   }

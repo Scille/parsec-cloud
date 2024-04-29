@@ -5,8 +5,9 @@ import { expect } from '@tests/pw/helpers/assertions';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/utils';
 
 export const msTest = base.extend<{ home: Page; connected: Page }>({
-  home: async ({ page }, use) => {
+  home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
+    await context.grantPermissions(['clipboard-read']);
 
     await page.addInitScript(() => {
       (window as any).TESTING = true;

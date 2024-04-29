@@ -186,41 +186,6 @@ describe('Check folders page', () => {
     cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
   });
 
-  it('Tests file details', () => {
-    cy.get('.file-list-item').last().find('.options-button').invoke('show').click();
-    cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
-    cy.get('.file-details-modal')
-      .find('.ms-modal-header__title')
-      .contains(/Details on File_[a-z_]+/);
-    cy.get('.file-details-modal')
-      .find('.file-info-basic__name')
-      .contains(/File_[a-z_]+/);
-    cy.get('.file-info-container')
-      .find('.file-info-details-item__value')
-      .eq(1)
-      .contains(/^\d+ B|KB|MB|GB$/);
-    cy.get('.file-info-container').find('.file-info-details-item__value').eq(2).contains('1');
-    // Fails for unknown reasons
-    // cy.get('.file-info-container')
-    //   .find('.file-info-path-value__text')
-    //   .contains(/^\/[A-Za-z_./]+$/);
-  });
-
-  it('Tests folder details', () => {
-    cy.get('.file-list-item').first().find('.options-button').invoke('show').click();
-    cy.get('#file-context-menu').find('ion-item').eq(8).contains('Details').click();
-    cy.get('.file-details-modal')
-      .find('.ms-modal-header__title')
-      .contains(/Details on Dir_[a-z_]+/);
-    cy.get('.file-details-modal')
-      .find('.file-info-basic__name')
-      .contains(/Dir_[a-z_]+/);
-    cy.get('.file-info-container').find('.file-info-details-item__value').eq(1).contains('1');
-    cy.get('.file-info-container')
-      .find('.file-info-path-value__text')
-      .contains(/^\/Dir_[a-z_]+$/);
-  });
-
   // Disabled until we get the bindings for it
   // it('Tests get file link', () => {
   //   cy.get('.file-list-item').last().find('.options-button').invoke('show').click();

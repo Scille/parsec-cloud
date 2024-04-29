@@ -485,7 +485,8 @@
             "version": "Version",
             "size": "Taille",
             "path": "Emplacement",
-            "linkCopied": "Copié"
+            "linkCopied": "Copié",
+            "failedToCopy": "Impossible de copier"
         }
     },
     "OrganizationPage": {
