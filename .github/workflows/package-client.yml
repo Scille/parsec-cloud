@@ -5,7 +5,7 @@ on:
     paths:
       - .github/workflows/package-client.yml
       - client/electron/package.js
-      - client/electron/snap
+      - client/electron/snap/*
   workflow_call:
     inputs:
       version:
@@ -112,9 +112,7 @@ jobs:
     needs: version
     runs-on: ubuntu-22.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    # if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
-    # TODO: snap is temporary disabled
-    if: false
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
         with:
