@@ -73,8 +73,32 @@ parts:
       cp -va dist/libparsec/index.node "$CRAFT_PART_INSTALL/libparsec.node"
       cp -va dist/libparsec/index.d.ts "$CRAFT_PART_INSTALL/libparsec.d.ts"
 
+  # We pre-package `megashark-lib` to workaround a permission issue during it's `prepare` step when installed as a 3rd dependencies from `client-vite`.
+  megashark-lib:
+    plugin: nil
+    build-snaps:
+      - node/18/stable
+    source: client
+    build-packages:
+      - git
+      - jq
+    override-build: |
+      set -x
+
+      # Clone megashark-lib locally
+      MEGASHARK_COMMIT_ID=$(jq -r '.packages."node_modules/megashark-lib".resolved' package-lock.json | cut -d '#' -f 2)
+      git clone https://github.com/Scille/megashark-lib.git
+      cd megashark-lib
+      git reset --hard $MEGASHARK_COMMIT_ID
+
+      npm clean-install
+      MEGASHARK_ARCHIVE=$(npm pack | tail -n1)
+
+      cp -v $MEGASHARK_ARCHIVE "$CRAFT_STAGE/megashark-lib.tar.gz"
+
   parsec:
     after:
+      - megashark-lib
       - libparsec
     plugin: nil
     source: client
@@ -89,7 +113,10 @@ parts:
       node --version
       npm --version
 
-      npm clean-install
+      # Patch client package.json to use local pre-packaged megashark-lib
+      sed -i "s;megashark-lib\": \".*\";megashark-lib\": \"file:${CRAFT_STAGE}/megashark-lib.tar.gz\";" package.json
+
+      npm install
       npm run electron:copy
 
       cd electron
