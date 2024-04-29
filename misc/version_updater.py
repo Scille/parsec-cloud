@@ -136,9 +136,8 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
         found_license_count = 0
         for line in input_lines:
             match = regex.search(line)
-            if match:
+            if match and found_license_count < 1:
                 found_license_count += 1
-                assert found_license_count <= 1, "Multiple license fields found in package.json"
                 prefix = line[: match.start()]
                 suffix = line[match.end() :]
                 step1_lines.append(f"{prefix}{replace}{suffix}")
