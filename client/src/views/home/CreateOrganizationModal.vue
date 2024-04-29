@@ -116,7 +116,7 @@
 
         <!-- part 7 (loading) -->
         <div
-          class="step orga-created"
+          class="step org-created"
           v-show="pageStep === CreateOrganizationStep.FinishStep"
         >
           <ms-informative-text>

@@ -55,6 +55,7 @@
     <ms-input
       class="item-radio__input"
       :placeholder="'CreateOrganization.parsecServerUrl'"
+      :validator="parsecAddrValidator"
       v-model="serverAddr"
       name="serverUrl"
       v-show="mode === ServerMode.Custom"

@@ -58,10 +58,15 @@ export const parsecAddrValidator: IValidator = async function (value: string) {
     return { validity: Validity.Intermediate };
   }
   const result = await parseParsecAddr(value);
-  if (result.ok) {
-    return result.value.tag === ParsedParsecAddrTag.Server ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  if (result.ok && result.value.tag === ParsedParsecAddrTag.Server) {
+    return { validity: Validity.Valid };
   }
-  return { validity: Validity.Invalid };
+  let reason = '';
+  if (!value.startsWith('parsec3://')) {
+    reason = 'validators.invalidProtocol';
+  }
+
+  return { validity: Validity.Invalid, reason: reason };
 };
 
 export const parsecOrganizationAddrValidator: IValidator = async function (value: string) {

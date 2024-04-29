@@ -1,37 +1,46 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Page } from '@playwright/test';
+import { Locator, Page } from '@playwright/test';
+import { expect } from '@tests/pw/helpers/assertions';
 
-type TestbedTemplate = 'coolorg' | 'empty';
-
-export async function newTestbed(page: Page, template: TestbedTemplate = 'coolorg'): Promise<void> {
-  const TESTBED_SERVER_URL = process.env.TESTBED_SERVER_URL;
-  if (TESTBED_SERVER_URL === undefined) {
-    throw new Error('Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
-  }
-
-  // `page.evaluate` runs inside the web page, hence why we pass a function with
-  // parameters instead of a closure.
-  await page.evaluate(
-    async ([template, testbedServerUrl]) => {
-      const [libparsec, nextStage] = window.nextStageHook();
-      const configResult = await libparsec.testNewTestbed(template, testbedServerUrl);
-      if (!configResult.ok) {
-        throw new Error(`Failed to init the testbed ${configResult.error}`);
-      }
-      const configPath = configResult.value;
-      (window as any).TESTING_CONFIG_PATH = configPath;
-      await nextStage(configPath, 'en-US');
-      return configPath;
-    },
-    [template, TESTBED_SERVER_URL],
-  );
+interface QuestionOptions {
+  expectedTitleText?: string | RegExp;
+  expectedQuestionText?: string | RegExp;
+  expectedPositiveText?: string | RegExp;
+  expectedNegativeText?: string | RegExp;
 }
 
-export async function dropTestbed(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    if ('TESTING_CONFIG_PATH' in window) {
-      await window.libparsec.testDropTestbed(window.TESTING_CONFIG_PATH as string);
+export async function answerQuestion(page: Page, positiveAnswer: boolean, options?: QuestionOptions): Promise<void> {
+  const modal = page.locator('.question-modal');
+  const positiveButton = modal.locator('#next-button');
+  const negativeButton = modal.locator('#cancel-button');
+
+  await expect(modal).toBeVisible();
+
+  if (options) {
+    if (options.expectedTitleText) {
+      await expect(modal.locator('.ms-modal-header__title')).toHaveText(options.expectedTitleText);
     }
-  });
+    if (options.expectedQuestionText) {
+      await expect(modal.locator('.ms-modal-header__text')).toHaveText(options.expectedQuestionText);
+    }
+    if (options.expectedPositiveText) {
+      await expect(positiveButton).toHaveText(options.expectedPositiveText);
+    }
+    if (options.expectedNegativeText) {
+      await expect(negativeButton).toHaveText(options.expectedNegativeText);
+    }
+  }
+  if (positiveAnswer) {
+    await positiveButton.click();
+  } else {
+    await negativeButton.click();
+  }
+  await expect(modal).toBeHidden();
+}
+
+export async function fillIonInput(ionInput: Locator, text: string): Promise<void> {
+  const input = ionInput.locator('input');
+  await input.fill(text);
+  await input.blur();
 }

@@ -10,40 +10,6 @@ describe('Create a new organization', () => {
     cy.dropTestbed();
   });
 
-  it('Open org creation modal', () => {
-    cy.get('.create-organization-modal').should('not.exist');
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item').should('have.length', 2);
-    cy.get('.popover-viewport').find('ion-item').first().contains('Create');
-    cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.get('.create-organization-modal').should('exist');
-    cy.get('.create-organization-modal').find('.modal-header__title').contains('Create an organization');
-  });
-
-  it('Test org name validation', () => {
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.get('.create-organization-modal').find('.org-name').find('.input-item').as('input').should('have.class', 'input-default');
-    cy.get('.create-organization-modal').find('#next-button').as('okButton').should('have.class', 'button-disabled');
-    cy.get('.create-organization-modal').find('.org-name').find('.form-error').as('error').should('not.be.visible');
-
-    cy.get('@input').find('input').type('Org#').blur();
-    cy.get('@input').should('have.class', 'input-invalid');
-    cy.get('@error').should('be.visible');
-    cy.get('@error').contains('Only letters, digits, underscores and hyphens. No spaces.');
-    cy.get('@okButton').should('have.class', 'button-disabled');
-
-    cy.get('@input').find('input').clear();
-    cy.get('@input').should('have.class', 'input-default');
-    cy.get('@error').should('not.be.visible');
-    cy.get('@okButton').should('have.class', 'button-disabled');
-
-    cy.get('@input').find('input').type('MyOrg').blur();
-    cy.get('@input').should('have.class', 'input-valid');
-    cy.get('@error').should('not.be.visible');
-    cy.get('@okButton').should('not.have.class', 'button-disabled');
-  });
-
   it('Go through the org creation process', () => {
     cy.get('#create-organization-button').click();
     cy.get('.popover-viewport').find('ion-item').first().click();
@@ -152,32 +118,6 @@ describe('Create a new organization', () => {
     // Should be logged in on workspace page
     cy.get('#button-new-workspace').contains('New workspace');
     cy.get('.card').should('have.length', 3);
-  });
-
-  it('Close with X button', () => {
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').find('ion-item').first().click();
-    cy.get('.create-organization-modal').find('.modal-header__title').contains('Create an organization');
-
-    // First page does not have modal
-    cy.get('.org-name').find('ion-input').find('input').type('MyOrg');
-    cy.get('#next-button').click();
-    cy.get('.create-organization-modal').find('.closeBtn').should('be.visible');
-    cy.get('.create-organization-modal').find('.closeBtn').click();
-
-    cy.get('.question-modal').find('.ms-modal-header__title').contains('Cancel organization creation');
-    cy.get('.question-modal')
-      .find('.ms-modal-header__text')
-      .contains('Are you sure you want to cancel the process? Information will not be saved, you will have to restart.');
-    cy.get('.question-modal').find('#next-button').contains('Cancel process').click();
-    cy.get('.question-modal').find('#cancel-button').contains('Resume').click();
-    cy.get('.question-modal').should('not.exist');
-
-    // Main modal does not dismiss.
-    // cy.get('.create-organization-modal').find('.closeBtn').click();
-    // cy.get('.question-modal').find('#next-button').click();
-    // cy.get('.question-modal').should('not.exist');
-    // cy.get('.create-organization-modal').should('not.exist');
   });
 
   // it('Can go to the previous page', () => {
