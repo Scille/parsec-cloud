@@ -85,8 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core';
-import { MsChoosePasswordInput, MsPasswordInput, asyncComputed } from 'megashark-lib';
+import { MsChoosePasswordInput, MsModalResult, MsPasswordInput, asyncComputed } from 'megashark-lib';
 import {
   AccessStrategy,
   AvailableDevice,

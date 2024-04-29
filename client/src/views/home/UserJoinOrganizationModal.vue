@@ -165,7 +165,6 @@
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
 import { getDefaultDeviceName } from '@/common/device';
-import { Answer, MsModalResult, askQuestion } from '@/components/core';
 import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
@@ -180,7 +179,16 @@ import {
   UserClaim,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { MsInformativeText, MsSpinner, MsWizardStepper, Translatable, asyncComputed } from 'megashark-lib';
+import {
+  Answer,
+  MsModalResult,
+  askQuestion,
+  MsInformativeText,
+  MsSpinner,
+  MsWizardStepper,
+  Translatable,
+  asyncComputed,
+} from 'megashark-lib';
 import { close } from 'ionicons/icons';
 import { computed, onMounted, ref } from 'vue';
 

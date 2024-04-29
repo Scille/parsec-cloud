@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { workspaceNameValidator } from '@/common/validators';
-import { getTextInputFromUser } from '@/components/core';
 import {
   ClientRenameWorkspaceErrorTag,
   UserProfile,
@@ -20,7 +19,7 @@ import { StorageManager } from '@/services/storageManager';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
-import { Clipboard, DisplayState, Translatable } from 'megashark-lib';
+import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -217,7 +216,7 @@ async function renameWorkspace(workspace: WorkspaceInfo, newName: WorkspaceName,
 }
 
 async function openRenameWorkspaceModal(workspace: WorkspaceInfo, informationManager: InformationManager): Promise<void> {
-  const newWorkspaceName = await getTextInputFromUser({
+  const newWorkspaceName = await getTextFromUser({
     title: 'WorkspacesPage.RenameWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,

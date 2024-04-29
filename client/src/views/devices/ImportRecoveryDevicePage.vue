@@ -148,8 +148,7 @@
 
 <script setup lang="ts">
 import { secretKeyValidator } from '@/common/validators';
-import { MsReportTheme } from '@/components/core';
-import { MsChoosePasswordInput, MsInformativeText, MsReportText, MsInput, asyncComputed, Validity } from 'megashark-lib';
+import { MsChoosePasswordInput, MsInformativeText, MsReportText, MsReportTheme, MsInput, asyncComputed, Validity } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';

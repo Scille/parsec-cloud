@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal } from '@/components/core';
+import { MsModal } from 'megashark-lib';
 import AboutView from '@/views/about/AboutView.vue';
 </script>
 

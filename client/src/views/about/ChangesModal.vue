@@ -116,11 +116,10 @@
 
 <script setup lang="ts">
 import { VersionChange, getChanges } from '@/common/mocks';
-import { MsModal } from '@/components/core';
 import { IonIcon, IonItem, IonList, IonPage, IonText } from '@ionic/vue';
 import { construct, infinite, sparkles } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
-import { I18n } from 'megashark-lib';
+import { I18n, MsModal } from 'megashark-lib';
 
 const changes: Ref<VersionChange[]> = ref([]);
 

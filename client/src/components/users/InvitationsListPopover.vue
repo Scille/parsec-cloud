@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModalResult } from '@/components/core';
+import { MsModalResult } from 'megashark-lib';
 import InvitationPopoverItem from '@/components/users/InvitationPopoverItem.vue';
 import { InvitationAction } from '@/components/users/types';
 import { UserInvitation, listUserInvitations } from '@/parsec';

@@ -150,12 +150,11 @@
 </template>
 
 <script setup lang="ts">
-import { getPasswordFromUser } from '@/components/core';
 import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { MsInformativeText, Translatable, I18n } from 'megashark-lib';
+import { MsInformativeText, Translatable, I18n, getPasswordFromUser } from 'megashark-lib';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';

@@ -20,7 +20,6 @@ import { IonicVue, isPlatform, modalController } from '@ionic/vue';
 import '@/theme/global.scss';
 
 import { claimLinkValidator, fileLinkValidator } from '@/common/validators';
-import { Answer, askQuestion } from '@/components/core';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, parseFileLink } from '@/parsec';
@@ -29,7 +28,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Base64, I18n, TranslationPlugin, Validity } from 'megashark-lib';
+import { Answer, Base64, I18n, TranslationPlugin, Validity, askQuestion } from 'megashark-lib';
 import Vue3Lottie from 'vue3-lottie';
 
 enum AppState {

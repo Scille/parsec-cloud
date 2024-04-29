@@ -1,10 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { FsPath, Path } from '@/parsec';
-
+import FolderSelectionModal from '@/components/files/FolderSelectionModal.vue';
+import { FsPath, Path, WorkspaceHandle } from '@/parsec';
+import { modalController } from '@ionic/vue';
+import { MsModalResult, Translatable } from 'megashark-lib';
 export interface FileImportTuple {
   file: File;
   path: string;
+}
+
+export interface FolderSelectionOptions {
+  title: Translatable;
+  subtitle?: Translatable;
+  startingPath: FsPath;
+  workspaceHandle: WorkspaceHandle;
 }
 
 export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<FileImportTuple[]> {
@@ -30,6 +39,19 @@ export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<
     }
   }
   return [];
+}
+
+export async function selectFolder(options: FolderSelectionOptions): Promise<FsPath | null> {
+  const modal = await modalController.create({
+    component: FolderSelectionModal,
+    canDismiss: true,
+    cssClass: 'folder-selection-modal',
+    componentProps: options,
+  });
+  await modal.present();
+  const result = await modal.onWillDismiss();
+  await modal.dismiss();
+  return result.role === MsModalResult.Confirm ? result.data : null;
 }
 
 async function unwindEntry(currentPath: string, fsEntry: FileSystemEntry): Promise<FileImportTuple[]> {

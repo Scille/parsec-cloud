@@ -154,8 +154,18 @@
 
 <script setup lang="ts">
 import { claimLinkValidator } from '@/common/validators';
-import { MsModalResult, MsOptions } from '@/components/core';
-import { formatTimeSince, MsImage, NoOrganization, MsSorter, MsSorterChangeEvent, MsSearchInput, MsInput, Validity } from 'megashark-lib';
+import {
+  formatTimeSince,
+  MsImage,
+  NoOrganization,
+  MsSorter,
+  MsModalResult,
+  MsOptions,
+  MsSorterChangeEvent,
+  MsSearchInput,
+  MsInput,
+  Validity,
+} from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
 import { Routes } from '@/router';

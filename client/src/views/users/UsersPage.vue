@@ -107,8 +107,11 @@
 
 <script setup lang="ts">
 import { emailValidator } from '@/common/validators';
-import { Answer, MsOptions, askQuestion, getTextInputFromUser } from '@/components/core';
 import {
+  Answer,
+  MsOptions,
+  askQuestion,
+  getTextFromUser,
   MsImage,
   NoActiveUser,
   DisplayState,
@@ -352,7 +355,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
 }
 
 async function inviteUser(): Promise<void> {
-  const email = await getTextInputFromUser({
+  const email = await getTextFromUser({
     title: 'UsersPage.CreateUserInvitationModal.pageTitle',
     trim: true,
     validator: emailValidator,

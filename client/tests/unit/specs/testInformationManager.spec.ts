@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { MsReportTheme } from '@/components/core';
 import { WorkspaceRole } from '@/parsec';
 import {
   Information,
@@ -10,6 +9,7 @@ import {
   InformationOptions,
   PresentationMode,
 } from '@/services/informationManager';
+import { MsReportTheme } from 'megashark-lib';
 import { vi } from 'vitest';
 
 describe('Information Manager', () => {

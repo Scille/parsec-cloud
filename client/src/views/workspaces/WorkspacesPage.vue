@@ -142,8 +142,9 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { MsOptions, getTextInputFromUser } from '@/components/core';
 import {
+  MsOptions,
+  getTextFromUser,
   MsImage,
   NoWorkspace,
   DisplayState,
@@ -467,7 +468,7 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
 }
 
 async function openCreateWorkspaceModal(): Promise<void> {
-  const workspaceName = await getTextInputFromUser({
+  const workspaceName = await getTextFromUser({
     title: 'WorkspacesPage.CreateWorkspaceModal.pageTitle',
     trim: true,
     validator: workspaceNameValidator,

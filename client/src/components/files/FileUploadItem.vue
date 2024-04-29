@@ -126,8 +126,7 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage } from 'megashark-lib';
-import MsInformationTooltip from '@/components/core/ms-tooltip/MsInformationTooltip.vue';
+import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { ImportData, ImportState } from '@/services/importManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';

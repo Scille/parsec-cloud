@@ -48,8 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal } from '@/components/core';
-import { MsSearchInput } from 'megashark-lib';
+import { MsModal, MsSearchInput } from 'megashark-lib';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import {
   UserProfile,
