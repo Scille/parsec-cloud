@@ -850,7 +850,7 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
 }
 
 async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
-  if (entries.length !== 1) {
+  if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
   const entry = entries[0];
@@ -859,7 +859,7 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
     cssClass: 'file-details-modal',
     componentProps: {
       entry: entry,
-      path: await parsec.Path.join(currentPath.value, entry.name),
+      workspaceHandle: workspaceInfo.value.handle,
     },
   });
   await modal.present();
