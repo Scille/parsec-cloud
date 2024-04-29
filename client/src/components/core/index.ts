@@ -5,6 +5,3 @@ export * from '@/components/core/ms-types';
 
 // ** ms-modal ** //
 export * from '@/components/core/ms-modal';
-
-// ** ms-tooltip ** //
-export * from '@/components/core/ms-tooltip';
