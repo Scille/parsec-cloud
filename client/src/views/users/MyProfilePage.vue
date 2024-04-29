@@ -93,8 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsInformativeText } from '@/components/core';
-import { MsInput } from 'megashark-lib';
+import { MsInformativeText, MsInput } from 'megashark-lib';
 import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
