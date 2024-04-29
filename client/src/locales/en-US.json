@@ -21,6 +21,9 @@
         "clientRevoked": "You have been revoked from this organization. You can still see some of the data you had access to, but most features of Parsec will not work.",
         "expiredOrganization": "This organization has expired. Please contact an administrator."
     },
+    "formatter": {
+        "version": "v{version} "
+    },
     "workspaceRoles": {
         "updateRejectedReasons": {
             "outsiderProfile": "Outsiders cannot change roles",
@@ -100,7 +103,8 @@
             "logoutImportsConfirmQuestion": "All imports will be cancelled. Are you sure you want to log out?",
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
-            "logoutFailed": "An error occured while logging out."
+            "logoutFailed": "An error occured while logging out.",
+            "updateAvailable": "Update available"
         },
         "organizationList": {
             "title": "Your organizations",

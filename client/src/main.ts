@@ -23,7 +23,7 @@ import { claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import { Answer, askQuestion } from '@/components/core';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
-import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, parseFileLink } from '@/parsec';
+import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
@@ -226,8 +226,11 @@ async function setupApp(): Promise<void> {
       openFile: (_path: string): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       sendMountpointFolder: (_path: string): void => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      getUpdateAvailability: (): void => {},
+      getUpdateAvailability: (): void => {
+        if (needsMocks()) {
+          injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '3.1.0' });
+        }
+      },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       updateApp: (): void => {},
     };

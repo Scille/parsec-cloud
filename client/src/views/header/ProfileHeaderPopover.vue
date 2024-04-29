@@ -2,15 +2,27 @@
 
 <template>
   <ion-list class="container">
-    <ion-item class="profile-email">
-      <ion-text class="body-sm profile-email-text">
+    <div class="header-list">
+      <ion-text class="body-sm header-list-email">
         {{ email }}
       </ion-text>
-    </ion-item>
-    <ion-item>
       <tag-profile :profile="profile" />
-    </ion-item>
+    </div>
     <div class="main-list">
+      <div
+        button
+        class="main-list__item update-item"
+        @click="update"
+        v-show="updateAvailability.updateAvailable"
+      >
+        <ion-text class="update-item-text subtitles-sm">
+          {{ $msTranslate('app.name') }}
+          {{ $msTranslate({ key: 'formatter.version', data: { version: updateAvailability.version } }) }}
+        </ion-text>
+        <ion-text class="button-small">
+          {{ $msTranslate('AboutPage.update.update') }}
+        </ion-text>
+      </div>
       <ion-item
         class="main-list__item"
         @click="onOptionClick(ProfilePopoverOption.MyProfile)"
@@ -78,44 +90,26 @@ export enum ProfilePopoverOption {
 <script setup lang="ts">
 import { APP_VERSION } from '@/common/mocks';
 import TagProfile from '@/components/users/TagProfile.vue';
-import { isElectron, UserProfile } from '@/parsec';
-import { EventData, EventDistributor, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
+import { UserProfile } from '@/parsec';
+import { UpdateAvailabilityData } from '@/services/eventDistributor';
 import { popoverController } from '@ionic/core';
 import { IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { cog, logOut, personCircle } from 'ionicons/icons';
-import { onMounted, onUnmounted } from 'vue';
 
-let cbId: string | null = null;
-
-const props = defineProps<{
+defineProps<{
   email: string;
   profile: UserProfile;
-  eventDistributor: EventDistributor;
+  updateAvailability: UpdateAvailabilityData;
 }>();
-
-async function onUpdateAvailability(event: Events, data: EventData): Promise<void> {
-  // The whole process of handling new updates should be moved to
-  // its own component
-  const _updateData = data as UpdateAvailabilityData;
-}
-
-onMounted(async () => {
-  cbId = await props.eventDistributor.registerCallback(Events.UpdateAvailability, onUpdateAvailability);
-  if (isElectron()) {
-    window.electronAPI.getUpdateAvailability();
-  }
-});
-
-onUnmounted(async () => {
-  if (cbId) {
-    await props.eventDistributor.removeCallback(cbId);
-  }
-});
 
 async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   await popoverController.dismiss({
     option: option,
   });
+}
+
+async function update(): Promise<void> {
+  console.log('update');
 }
 </script>
 
@@ -124,14 +118,14 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   padding: 0;
 }
 
-.profile-email {
+.header-list {
+  padding: 1rem;
   color: var(--parsec-color-light-secondary-grey);
-  --padding-start: 1rem;
-  --padding-end: 1rem;
-  --padding-top: 1rem;
-  --padding-bottom: 0;
-  --min-height: 0;
-  &-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &-email {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
@@ -143,7 +137,6 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  margin-top: 0.5rem;
   border-top: 1px solid var(--parsec-color-light-secondary-medium);
 
   &__item {
@@ -196,6 +189,23 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
       ion-icon {
         color: var(--parsec-color-light-primary-700);
       }
+    }
+  }
+
+  .update-item {
+    background: var(--parsec-color-light-gradient);
+    color: var(--parsec-color-light-secondary-white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0.875rem;
+
+    &-text {
+      flex: 1;
+    }
+
+    &:hover {
+      opacity: 0.9;
     }
   }
 }
