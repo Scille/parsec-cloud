@@ -7,6 +7,7 @@ Helper that help changing the version of a tool across the repository.
 import enum
 import glob
 import re
+import subprocess
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
@@ -126,44 +127,14 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
             continue
 
         lock_file = file.parent / "package-lock.json"
-
         print(f"Refreshing npm lock file {lock_file} ...")
-        input_lines = lock_file.read_text().splitlines()
 
-        # The project's license field is the first "license" field in the file
-        regex, replace = JSON_LICENSE_FIELD.compile(TOOLS_VERSION[Tool.License])
-        step1_lines = []
-        found_license_count = 0
-        for line in input_lines:
-            match = regex.search(line)
-            if match:
-                found_license_count += 1
-                assert found_license_count <= 1, "Multiple license fields found in package.json"
-                prefix = line[: match.start()]
-                suffix = line[match.end() :]
-                step1_lines.append(f"{prefix}{replace}{suffix}")
-            else:
-                step1_lines.append(line)
-        assert found_license_count == 1, "No license field found in package.json"
+        subprocess.check_call(["npm", "install", "--package-lock-only"], cwd=file.parent)
 
-        # The project's version field is present twice at the beginning of the file
-        found_version_count = 0
-        step2_lines = []
-        regex, replace = JSON_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
-        for line in step1_lines:
-            match = regex.search(line)
-            if match and found_version_count < 2:
-                found_version_count += 1
-                prefix = line[: match.start()]
-                suffix = line[match.end() :]
-                step2_lines.append(f"{prefix}{replace}{suffix}")
-            else:
-                step2_lines.append(line)
-        assert found_version_count == 2, "Expected two version fields to modify in package.json"
-
-        content = ("\n".join(step2_lines) + "\n").encode("utf8")
-        lock_file.write_bytes(content)  # Use write_bytes to keep \n on Windows
-        updated.add(lock_file)
+        out = subprocess.check_output(["git", "status", "--porcelain", str(lock_file)])
+        if len(out) > 0:
+            print(f"npm lock file {lock_file} has been updated")
+            updated.add(lock_file)
 
     return updated
 
