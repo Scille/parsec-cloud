@@ -7,6 +7,11 @@
             "type": "FileManifest"
         },
         {
+            // In case of the root folder, `parent` and `id` fields must be equal
+            "name": "parent",
+            "type": "VlobID"
+        },
+        {
             "name": "need_sync",
             "type": "Boolean"
         },

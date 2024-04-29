@@ -112,7 +112,6 @@ async fn non_placeholder(env: &TestbedEnv) {
                 p_assert_eq!(key.decrypt(&req.block).unwrap(), NEW_DATA);
                 expected_base_blocks.lock().unwrap().push(BlockAccess {
                     id: req.block_id,
-                    key: None,
                     offset: 0,
                     size: (NEW_DATA.len() as u64).try_into().unwrap(),
                     digest: HashDigest::from_data(NEW_DATA),

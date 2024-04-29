@@ -356,12 +356,14 @@ async fn update_store_with_remote_child(
                 );
                 let LocalFileManifest {
                     base: _,
+                    parent,
                     need_sync,
                     updated,
                     size,
                     blocksize,
                     blocks,
                 } = local.as_ref();
+                conflicted.parent = *parent;
                 conflicted.need_sync = *need_sync;
                 conflicted.updated = *updated;
                 conflicted.size = *size;

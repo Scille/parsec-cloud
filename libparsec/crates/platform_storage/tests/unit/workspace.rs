@@ -1032,6 +1032,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
             updated: workspace_manifest.updated,
             children: HashMap::new(),
         },
+        parent: realm_id,
         need_sync: true,
         updated: workspace_manifest.updated,
         children: HashMap::new(),
