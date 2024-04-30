@@ -44,13 +44,12 @@
           />
         </div>
 
-        <ion-title class="card-content__title body">
+        <ion-text class="card-content__title body">
           {{ entry.name }}
-        </ion-title>
+        </ion-text>
 
         <ion-text class="card-content-last-update body-sm">
-          <span>{{ $msTranslate('FoldersPage.File.lastUpdate') }}</span>
-          <span>{{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}</span>
+          {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
         </ion-text>
       </div>
     </file-drop-zone>
@@ -64,7 +63,7 @@ import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, Path } from '@/parsec';
-import { IonCheckbox, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
+import { IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
@@ -122,6 +121,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &::part(native) {
     --inner-padding-end: 0px;
+    height: 100%;
   }
 
   &:hover {
@@ -133,7 +133,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   &.selected {
     --background: var(--parsec-color-light-primary-100);
     --background-hover: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-100);
+    border: 1px solid var(--parsec-color-light-primary-300);
   }
 }
 
@@ -205,15 +205,17 @@ async function onOptionsClick(event: Event): Promise<void> {
   &__title {
     color: var(--parsec-color-light-primary-900);
     text-align: center;
-    padding: 0 0 0.25rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-height: 3rem;
     width: inherit;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    ion-text {
-      width: 100%;
-      overflow: hidden;
-    }
+  &-last-update {
+    padding-top: 0.25rem;
   }
 }
 
