@@ -33,7 +33,6 @@ for (const workspace of workspaces) {
   msTest(`Check workspace card of ${workspace.name}`, async ({ connected }) => {
     const workspaceCard = connected.locator('.workspaces-grid-item', { hasText: workspace.name });
     await expect(workspaceCard).toContainText(workspace.name);
-    await expect(workspaceCard).toContainText('Last updated:');
     expect(workspaceCard).toBeDefined();
     const workspaceInfo = workspaceCard.locator('.workspace-info');
     if (workspace.sharedWith.length === 0) {

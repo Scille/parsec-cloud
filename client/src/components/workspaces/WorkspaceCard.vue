@@ -39,7 +39,10 @@
       </ion-title>
 
       <ion-text class="card-content-last-update caption-caption">
-        <span v-show="true">{{ $msTranslate('WorkspacesPage.Workspace.lastUpdate') }}</span>
+        <ion-icon
+          :icon="time"
+          class="time"
+        />
         <span v-show="true">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
       </ion-text>
 
@@ -77,7 +80,7 @@ import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
-import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
+import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time } from 'ionicons/icons';
 
 defineProps<{
   workspace: WorkspaceInfo;
@@ -100,12 +103,11 @@ defineEmits<{
   text-align: center;
   background-color: var(--parsec-color-light-secondary-background);
   user-select: none;
-  border-radius: 8px;
+  border-radius: var(--parsec-radius-12);
   width: 16rem;
 
   &:hover {
     background-color: var(--parsec-color-light-primary-30);
-    // box-shadow: var(--parsec-shadow-light);
   }
 }
 
@@ -196,9 +198,9 @@ defineEmits<{
   text-align: center;
   margin: 0.5rem 0 2rem;
   display: flex;
+  gap: 0.25rem;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
 }
 
 .workspace-info {

@@ -398,7 +398,7 @@ onMounted(async () => {
   callbackId = await importManager.registerCallback(onFileImportState);
   currentPath.value = getDocumentPath();
   await listFolder();
-  intervalId = setInterval(listFolder, 10000);
+  intervalId = setInterval(listFolder, 1000000);
 });
 
 onUnmounted(async () => {
