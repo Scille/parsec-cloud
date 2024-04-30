@@ -247,3 +247,35 @@ async fn unknown_file_descriptor(env: &TestbedEnv) {
 
 // TODO: test invalid manifest with less block that in declared size
 // TODO: test read with data not in store
+
+#[parsec_test(testbed = "minimal")]
+async fn foo(env: &TestbedEnv) {
+    let wksp1_id = VlobID::default();
+    let alice = env.local_device("alice@dev1");
+
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let vlob_id = ops.create_file("/foo.txt".parse().unwrap()).await.unwrap();
+
+    let fd = ops
+        .open_file_by_id(
+            vlob_id,
+            OpenOptions {
+                read: true,
+                write: true,
+                truncate: false,
+                create: false,
+                create_new: true,
+            },
+        )
+        .await
+        .unwrap();
+
+    ops.fd_write(fd, 0, b"hello").await.unwrap();
+
+    let mut data = vec![0; 5];
+    let data_len = ops.fd_read(fd, 0, 5, &mut data).await.unwrap();
+
+    p_assert_eq!(data_len, 5);
+    p_assert_eq!(data, b"hello");
+}
