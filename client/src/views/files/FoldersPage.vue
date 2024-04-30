@@ -19,7 +19,7 @@
             id="button-import"
             v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.import'"
-            :icon="document"
+            :image="DocumentImport"
             @click="onImportClicked($event)"
           />
         </div>
@@ -187,6 +187,7 @@ import {
   MsOptions,
   EmptyFolder,
   MsImage,
+  DocumentImport,
   DisplayState,
   MsActionBar,
   MsActionBarButton,
@@ -230,7 +231,7 @@ import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
-import { arrowRedo, copy, document, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
+import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
 interface FoldersPageSavedData {
