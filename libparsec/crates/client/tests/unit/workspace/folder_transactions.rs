@@ -6,7 +6,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{ls, workspace_ops_factory};
-use crate::EventWorkspaceOpsOutboundSyncNeeded;
+use crate::{workspace::MoveEntryMode, EventWorkspaceOpsOutboundSyncNeeded};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
@@ -104,7 +104,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     // Rename folder
 
-    ops.rename_entry(dir1, "dir2".parse().unwrap(), false)
+    ops.move_entry(dir1, dir2.clone(), MoveEntryMode::NoReplace)
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
@@ -118,7 +118,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     // Overwrite by rename folder
 
-    ops.rename_entry(dir3, "dir2".parse().unwrap(), true)
+    ops.move_entry(dir3, dir2, MoveEntryMode::CanReplace)
         .await
         .unwrap();
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
