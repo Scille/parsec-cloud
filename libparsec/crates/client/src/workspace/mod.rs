@@ -27,8 +27,8 @@ pub use transactions::{
     WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
     WorkspaceGetNeedInboundSyncEntriesError, WorkspaceGetNeedOutboundSyncEntriesError,
     WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError,
-    WorkspaceRemoveEntryError, WorkspaceRenameEntryError, WorkspaceStatEntryError,
-    WorkspaceStatFolderChildrenError, WorkspaceSyncError,
+    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    WorkspaceSyncError,
 };
 
 use self::{store::FileUpdater, transactions::FdWriteStrategy};
@@ -326,16 +326,6 @@ impl WorkspaceOps {
         entry_id: VlobID,
     ) -> Result<Vec<(EntryName, EntryStat)>, WorkspaceStatFolderChildrenError> {
         transactions::stat_folder_children_by_id(self, entry_id).await
-    }
-
-    // TODO: remove me !
-    pub async fn rename_entry(
-        &self,
-        path: FsPath,
-        new_name: EntryName,
-        overwrite: bool,
-    ) -> Result<(), WorkspaceRenameEntryError> {
-        transactions::rename_entry(self, path, new_name, overwrite).await
     }
 
     pub async fn move_entry(
