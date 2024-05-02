@@ -15,6 +15,8 @@ enum Events {
   ClientRevoked = 1 << 6,
   ExpiredOrganization = 1 << 7,
   UpdateAvailability = 1 << 8,
+  WorkspaceUpdated = 1 << 9,
+  EntryUpdated = 1 << 10,
 }
 
 interface WorkspaceCreatedData {
@@ -37,7 +39,19 @@ interface UpdateAvailabilityData {
   version?: string;
 }
 
-type EventData = WorkspaceCreatedData | OnlineData | OfflineData | InvitationUpdatedData | WorkspaceFavoriteData | UpdateAvailabilityData;
+interface WorkspaceUpdatedData {}
+
+interface EntryUpdatedData {}
+
+type EventData =
+  | WorkspaceCreatedData
+  | OnlineData
+  | OfflineData
+  | InvitationUpdatedData
+  | WorkspaceFavoriteData
+  | UpdateAvailabilityData
+  | EntryUpdatedData
+  | WorkspaceUpdatedData;
 
 interface Callback {
   id: string;

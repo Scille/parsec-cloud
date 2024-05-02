@@ -233,6 +233,7 @@ import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -278,6 +279,7 @@ const importManager: ImportManager = inject(ImportManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
@@ -290,9 +292,7 @@ const displayView = ref(DisplayState.List);
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
 
 const fileInputsRef = ref();
-
-// Replace by events when available
-let intervalId: any = null;
+let eventCbId: string | null = null;
 
 const selectedFilesCount = computed(() => {
   return files.value.selectedCount() + folders.value.selectedCount();
@@ -388,6 +388,12 @@ onMounted(async () => {
 
   await defineShortcuts();
 
+  eventCbId = await eventDistributor.registerCallback(Events.EntryUpdated, async (event: Events, _data: EventData) => {
+    if (event === Events.EntryUpdated) {
+      await listFolder();
+    }
+  });
+
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
     const infoResult = await parsec.getWorkspaceInfo(workspaceHandle);
@@ -398,7 +404,6 @@ onMounted(async () => {
   callbackId = await importManager.registerCallback(onFileImportState);
   currentPath.value = getDocumentPath();
   await listFolder();
-  intervalId = setInterval(listFolder, 1000000);
 });
 
 onUnmounted(async () => {
@@ -409,8 +414,8 @@ onUnmounted(async () => {
     importManager.removeCallback(callbackId);
   }
   routeWatchCancel();
-  if (intervalId) {
-    clearInterval(intervalId);
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
   }
 });
 

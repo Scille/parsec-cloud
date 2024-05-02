@@ -40,6 +40,8 @@ import { EventDistributor, Events } from '@/services/eventDistributor';
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
   device: AvailableDevice;
+  // Used to simulate update events, remove when we have real events
+  intervalId: any;
 }
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
@@ -145,7 +147,12 @@ export async function login(
     const clientConfig = getClientConfig();
     const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
     if (result.ok) {
-      loggedInDevices.push({ handle: result.value, device: device });
+      // Simulate an update event every 10s to force a refresh
+      const intervalId = setInterval(() => {
+        eventDistributor.dispatchEvent(Events.WorkspaceUpdated, {});
+        eventDistributor.dispatchEvent(Events.EntryUpdated, {});
+      }, 10000);
+      loggedInDevices.push({ handle: result.value, device: device, intervalId: intervalId });
     }
     return result;
   } else {
@@ -153,7 +160,7 @@ export async function login(
       accessStrategy.tag === DeviceAccessStrategyTag.Password &&
       ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
     ) {
-      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device });
+      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, intervalId: null });
       return { ok: true, value: DEFAULT_HANDLE };
     }
     return {
@@ -176,7 +183,10 @@ export async function logout(handle?: ConnectionHandle | undefined | null): Prom
     if (result.ok) {
       const index = loggedInDevices.findIndex((info) => info.handle === handle);
       if (index !== -1) {
-        loggedInDevices.splice(index, 1);
+        const removed = loggedInDevices.splice(index, 1);
+        if (removed && removed.length > 0) {
+          clearInterval(removed[0].intervalId);
+        }
       }
     }
     return result;

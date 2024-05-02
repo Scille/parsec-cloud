@@ -222,9 +222,6 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 let eventCbId: string | null = null;
 
-// Replace by events when available
-let intervalId: any = null;
-
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Workspaces)) {
     return;
@@ -273,11 +270,16 @@ onMounted(async (): Promise<void> => {
     },
   );
 
-  eventCbId = await eventDistributor.registerCallback(Events.WorkspaceFavorite, async (event: Events, _data: EventData) => {
-    if (event === Events.WorkspaceFavorite) {
-      await loadFavorites();
-    }
-  });
+  eventCbId = await eventDistributor.registerCallback(
+    Events.WorkspaceFavorite | Events.WorkspaceUpdated,
+    async (event: Events, _data: EventData) => {
+      if (event === Events.WorkspaceFavorite) {
+        await loadFavorites();
+      } else if (event === Events.WorkspaceUpdated) {
+        await refreshWorkspacesList();
+      }
+    },
+  );
 
   clientProfile.value = await getClientProfile();
   await refreshWorkspacesList();
@@ -289,8 +291,6 @@ onMounted(async (): Promise<void> => {
       await navigateTo(Routes.Workspaces, { query: {} });
     }
   }
-
-  intervalId = setInterval(refreshWorkspacesList, 10000);
 });
 
 onUnmounted(async () => {
@@ -298,9 +298,6 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
   }
