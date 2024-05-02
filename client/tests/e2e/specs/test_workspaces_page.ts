@@ -121,7 +121,7 @@ describe('Check workspaces page', () => {
     cy.get('@createButton').should('not.have.class', 'button-disabled');
     cy.get('@createButton').click();
     cy.get('.text-input-modal').should('not.exist');
-    cy.checkToastMessageWithSidebar('success', "The workspace 'MyWorkspace' has been created!");
+    cy.checkToastMessage('success', "The workspace 'MyWorkspace' has been created!");
     cy.get('#button-new-workspace').click();
     cy.get('ion-modal').should('exist');
     cy.get('ion-modal').find('.closeBtn').click();
@@ -140,7 +140,7 @@ describe('Check workspaces page', () => {
     cy.get('.text-input-modal').find('.input').find('input').type('New workspace name');
     cy.get('@renameButton').click();
     cy.get('.text-input-modal').should('not.exist');
-    cy.checkToastMessageWithSidebar('success', 'Workspace has been successfully renamed to New workspace name');
+    cy.checkToastMessage('success', 'Workspace has been successfully renamed to New workspace name');
   });
 
   it('Navigate into a workspace', () => {
@@ -189,7 +189,7 @@ describe('Check workspaces page', () => {
   it('Get link to the workspace', () => {
     cy.get('.card').eq(0).find('.card-option').click();
     cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(8).contains('Copy link').click();
-    cy.checkToastMessageWithSidebar('info', 'Workspace link has been copied to clipboard.');
+    cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
@@ -207,7 +207,7 @@ describe('Check workspaces page', () => {
     cy.get('@menuItem').eq(3).contains('Rename').should('not.be.visible');
     cy.get('@menuItem').eq(7).contains('Collaboration');
     cy.get('@menuItem').eq(8).contains('Copy link').click();
-    cy.checkToastMessageWithSidebar('info', 'Workspace link has been copied to clipboard.');
+    cy.checkToastMessage('info', 'Workspace link has been copied to clipboard.');
     cy.window().then((win) => {
       win.navigator.clipboard.readText().then((text) => {
         // cspell:disable-next-line
