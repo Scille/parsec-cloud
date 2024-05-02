@@ -104,7 +104,8 @@
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
             "logoutFailed": "An error occured while logging out.",
-            "updateAvailable": "Update available"
+            "updateAvailable": "Update available",
+            "newVersionAvailable": "New version available"
         },
         "organizationList": {
             "title": "Your organizations",
