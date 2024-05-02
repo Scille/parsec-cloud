@@ -258,7 +258,9 @@
             "message": "Impossible de récupérer les informations de partage de cet espace de travail.",
             "alreadyNotShared": "Cet espace de travail n'est pas partagé avec {user}.",
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
-        }
+        },
+        "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
+        "owner": "propriétaire"
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",

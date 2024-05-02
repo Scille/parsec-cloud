@@ -258,7 +258,9 @@
             "message": "Failed to get sharing information for this workspace.",
             "alreadyNotShared": "This workspace is not shared with {user}.",
             "alreadyHasRole": "{user} is already {role} on this workspace."
-        }
+        },
+        "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
+        "owner": "owner"
     },
     "SettingsModal": {
         "pageTitle": "Settings",

@@ -9,6 +9,20 @@
       <ion-text class="modal-title">
         {{ workspaceName }}
       </ion-text>
+      <ms-report-text
+        :theme="MsReportTheme.Info"
+        v-if="isOnlyOwner()"
+        class="only-owner-warning"
+      >
+        <i18n-t
+          keypath="WorkspaceSharing.onlyOwnerWarning"
+          scope="global"
+        >
+          <template #owner>
+            <strong> {{ $msTranslate('WorkspaceSharing.owner') }} </strong>
+          </template>
+        </i18n-t>
+      </ms-report-text>
       <!-- content -->
       <div class="modal-container">
         <ms-search-input
@@ -62,7 +76,7 @@ import {
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { I18n } from 'megashark-lib';
+import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
 
@@ -141,6 +155,18 @@ onMounted(async () => {
 onUnmounted(() => {
   unwatchSearch();
 });
+
+function isOnlyOwner(): boolean {
+  if (props.ownRole !== WorkspaceRole.Owner) {
+    return false;
+  }
+  for (const role of userRoles.value) {
+    if (role[1] === WorkspaceRole.Owner) {
+      return false;
+    }
+  }
+  return true;
+}
 
 async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Promise<void> {
   const current = userRoles.value.find((item) => item[0].id === user.id);
@@ -236,8 +262,12 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
   color: var(--parsec-color-light-secondary-text);
+}
+
+.only-owner-warning {
+  margin-bottom: 1rem;
 }
 </style>
 

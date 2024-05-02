@@ -28,7 +28,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, Base64, I18n, MegaSharkPlugin, Validity, askQuestion } from 'megashark-lib';
+import { Answer, Base64, I18n, Locale, MegaSharkPlugin, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -41,14 +41,6 @@ async function setupApp(): Promise<void> {
 
   const config = await storageManager.retrieveConfig();
 
-  const i18n = I18n.init({
-    defaultLocale: config.locale,
-    customAssets: {
-      'fr-FR': appFrFR,
-      'en-US': appEnUS,
-    },
-  });
-
   const injectionProvider = new InjectionProvider();
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
@@ -58,7 +50,15 @@ async function setupApp(): Promise<void> {
       rippleEffect: false,
     })
     .use(router)
-    .use(MegaSharkPlugin);
+    .use(MegaSharkPlugin, {
+      i18n: {
+        defaultLocale: config.locale,
+        customAssets: {
+          'fr-FR': appFrFR,
+          'en-US': appEnUS,
+        },
+      },
+    });
 
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);
@@ -97,7 +97,7 @@ async function setupApp(): Promise<void> {
     }
 
     if (locale) {
-      (i18n.global.locale as any).value = locale;
+      I18n.changeLocale(locale as Locale);
     }
     app.mount('#app');
     appElem.setAttribute('app-state', AppState.Ready);
