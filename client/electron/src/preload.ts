@@ -14,8 +14,8 @@ process.once('loaded', () => {
     sendConfig: (config: any) => {
       ipcRenderer.send(PageToWindowChannel.ConfigUpdate, config);
     },
-    receive: (channel: string, f: (data: any) => Promise<void>) => {
-      ipcRenderer.on(channel, async (event, data) => await f(data));
+    receive: (channel: string, f: (...args: any[]) => Promise<void>) => {
+      ipcRenderer.on(channel, async (event, ...args) => await f(...args));
     },
     closeApp: () => {
       ipcRenderer.send(PageToWindowChannel.CloseApp);

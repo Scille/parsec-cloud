@@ -47,7 +47,7 @@ import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/Profi
 import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
-import { inject, onMounted, onUnmounted, ref } from 'vue';
+import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 
 const isOnline = ref(true);
 const isPopoverOpen = ref(false);
@@ -56,7 +56,7 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const importManager: ImportManager = inject(ImportManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
-let updateAvailability: UpdateAvailabilityData = { updateAvailable: false };
+const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
 let intervalId: any = null;
 
@@ -75,7 +75,7 @@ onMounted(async () => {
       } else if (event === Events.Online) {
         isOnline.value = true;
       } else if (event === Events.UpdateAvailability) {
-        updateAvailability = data as UpdateAvailabilityData;
+        updateAvailability.value = data as UpdateAvailabilityData;
       }
     },
   );
@@ -104,7 +104,7 @@ async function openPopover(event: Event): Promise<void> {
     componentProps: {
       email: props.email,
       profile: props.profile,
-      updateAvailability: updateAvailability,
+      updateAvailability: updateAvailability.value,
     },
     event: event,
     showBackdrop: false,
