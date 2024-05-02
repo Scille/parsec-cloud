@@ -44,3 +44,13 @@ export async function fillIonInput(ionInput: Locator, text: string): Promise<voi
   await input.fill(text);
   await input.blur();
 }
+
+export async function fillInputModal(root: Locator | Page, text: string): Promise<void> {
+  const modal = root.locator('.text-input-modal');
+  const okButton = modal.locator('.ms-modal-footer-buttons').locator('#next-button');
+  await expect(okButton).toHaveDisabledAttribute();
+  await fillIonInput(modal.locator('ion-input'), text);
+  await expect(okButton).not.toHaveDisabledAttribute();
+  await okButton.click();
+  await expect(modal).toBeHidden();
+}

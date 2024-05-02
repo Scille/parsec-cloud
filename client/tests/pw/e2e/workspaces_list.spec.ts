@@ -2,6 +2,7 @@
 
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
+import { fillInputModal } from '@tests/pw/helpers/utils';
 
 const workspaces = [
   {
@@ -76,3 +77,15 @@ msTest('Workspace sort order', async ({ connected }) => {
   await expect(connected.locator('.card-content__title')).toHaveText(names);
   await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
 });
+
+for (const createWithSidebar of [false, true]) {
+  msTest(`Create new workspace ${createWithSidebar ? 'with sidebar' : 'with action bar'}`, async ({ connected }) => {
+    if (createWithSidebar) {
+      await connected.locator('#workspaces-ms-action-bar').locator('#button-new-workspace').click();
+    } else {
+      await connected.locator('.sidebar').locator('.organization-workspaces').locator('#new-workspace').click();
+    }
+    await fillInputModal(connected, 'My Workspace');
+    await expect(connected).toShowToast("The workspace 'My Workspace' has been created!", 'Success');
+  });
+}
