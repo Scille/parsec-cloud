@@ -1095,6 +1095,22 @@ export type MountpointUnmountError =
   | MountpointUnmountErrorInternal
 
 
+// MoveEntryMode
+export interface MoveEntryModeCanReplace {
+    tag: "CanReplace"
+}
+export interface MoveEntryModeExchange {
+    tag: "Exchange"
+}
+export interface MoveEntryModeNoReplace {
+    tag: "NoReplace"
+}
+export type MoveEntryMode =
+  | MoveEntryModeCanReplace
+  | MoveEntryModeExchange
+  | MoveEntryModeNoReplace
+
+
 // ParseParsecAddrError
 export interface ParseParsecAddrErrorInvalidUrl {
     tag: "InvalidUrl"
@@ -1231,8 +1247,8 @@ export interface WorkspaceCreateFileErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceCreateFileErrorParentIsFile {
-    tag: "ParentIsFile"
+export interface WorkspaceCreateFileErrorParentNotAFolder {
+    tag: "ParentNotAFolder"
     error: string
 }
 export interface WorkspaceCreateFileErrorParentNotFound {
@@ -1255,7 +1271,7 @@ export type WorkspaceCreateFileError =
   | WorkspaceCreateFileErrorInvalidManifest
   | WorkspaceCreateFileErrorNoRealmAccess
   | WorkspaceCreateFileErrorOffline
-  | WorkspaceCreateFileErrorParentIsFile
+  | WorkspaceCreateFileErrorParentNotAFolder
   | WorkspaceCreateFileErrorParentNotFound
   | WorkspaceCreateFileErrorReadOnlyRealm
   | WorkspaceCreateFileErrorStopped
@@ -1290,8 +1306,8 @@ export interface WorkspaceCreateFolderErrorOffline {
     tag: "Offline"
     error: string
 }
-export interface WorkspaceCreateFolderErrorParentIsFile {
-    tag: "ParentIsFile"
+export interface WorkspaceCreateFolderErrorParentNotAFolder {
+    tag: "ParentNotAFolder"
     error: string
 }
 export interface WorkspaceCreateFolderErrorParentNotFound {
@@ -1314,7 +1330,7 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorInvalidManifest
   | WorkspaceCreateFolderErrorNoRealmAccess
   | WorkspaceCreateFolderErrorOffline
-  | WorkspaceCreateFolderErrorParentIsFile
+  | WorkspaceCreateFolderErrorParentNotAFolder
   | WorkspaceCreateFolderErrorParentNotFound
   | WorkspaceCreateFolderErrorReadOnlyRealm
   | WorkspaceCreateFolderErrorStopped
@@ -1556,6 +1572,70 @@ export type WorkspaceMountError =
   | WorkspaceMountErrorInternal
 
 
+// WorkspaceMoveEntryError
+export interface WorkspaceMoveEntryErrorCannotMoveRoot {
+    tag: "CannotMoveRoot"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorDestinationExists {
+    tag: "DestinationExists"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorDestinationNotFound {
+    tag: "DestinationNotFound"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorReadOnlyRealm {
+    tag: "ReadOnlyRealm"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorSourceNotFound {
+    tag: "SourceNotFound"
+    error: string
+}
+export interface WorkspaceMoveEntryErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceMoveEntryError =
+  | WorkspaceMoveEntryErrorCannotMoveRoot
+  | WorkspaceMoveEntryErrorDestinationExists
+  | WorkspaceMoveEntryErrorDestinationNotFound
+  | WorkspaceMoveEntryErrorInternal
+  | WorkspaceMoveEntryErrorInvalidCertificate
+  | WorkspaceMoveEntryErrorInvalidKeysBundle
+  | WorkspaceMoveEntryErrorInvalidManifest
+  | WorkspaceMoveEntryErrorNoRealmAccess
+  | WorkspaceMoveEntryErrorOffline
+  | WorkspaceMoveEntryErrorReadOnlyRealm
+  | WorkspaceMoveEntryErrorSourceNotFound
+  | WorkspaceMoveEntryErrorStopped
+
+
 // WorkspaceOpenFileError
 export interface WorkspaceOpenFileErrorEntryExistsInCreateNewMode {
     tag: "EntryExistsInCreateNewMode"
@@ -1682,65 +1762,6 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
   | WorkspaceRemoveEntryErrorStopped
-
-
-// WorkspaceRenameEntryError
-export interface WorkspaceRenameEntryErrorCannotRenameRoot {
-    tag: "CannotRenameRoot"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorDestinationExists {
-    tag: "DestinationExists"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorEntryNotFound {
-    tag: "EntryNotFound"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInternal {
-    tag: "Internal"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidCertificate {
-    tag: "InvalidCertificate"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidKeysBundle {
-    tag: "InvalidKeysBundle"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidManifest {
-    tag: "InvalidManifest"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorNoRealmAccess {
-    tag: "NoRealmAccess"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorOffline {
-    tag: "Offline"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorReadOnlyRealm {
-    tag: "ReadOnlyRealm"
-    error: string
-}
-export interface WorkspaceRenameEntryErrorStopped {
-    tag: "Stopped"
-    error: string
-}
-export type WorkspaceRenameEntryError =
-  | WorkspaceRenameEntryErrorCannotRenameRoot
-  | WorkspaceRenameEntryErrorDestinationExists
-  | WorkspaceRenameEntryErrorEntryNotFound
-  | WorkspaceRenameEntryErrorInternal
-  | WorkspaceRenameEntryErrorInvalidCertificate
-  | WorkspaceRenameEntryErrorInvalidKeysBundle
-  | WorkspaceRenameEntryErrorInvalidManifest
-  | WorkspaceRenameEntryErrorNoRealmAccess
-  | WorkspaceRenameEntryErrorOffline
-  | WorkspaceRenameEntryErrorReadOnlyRealm
-  | WorkspaceRenameEntryErrorStopped
 
 
 // WorkspaceStatEntryError
@@ -2189,6 +2210,12 @@ export function workspaceInfo(
 export function workspaceMount(
     workspace: number
 ): Promise<Result<[number, string], WorkspaceMountError>>
+export function workspaceMoveEntry(
+    workspace: number,
+    src: string,
+    dst: string,
+    mode: MoveEntryMode
+): Promise<Result<null, WorkspaceMoveEntryError>>
 export function workspaceOpenFile(
     workspace: number,
     path: string,
@@ -2210,12 +2237,6 @@ export function workspaceRemoveFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<null, WorkspaceRemoveEntryError>>
-export function workspaceRenameEntry(
-    workspace: number,
-    path: string,
-    new_name: string,
-    overwrite: boolean
-): Promise<Result<null, WorkspaceRenameEntryError>>
 export function workspaceStatEntry(
     workspace: number,
     path: string

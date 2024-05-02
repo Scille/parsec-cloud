@@ -1293,6 +1293,27 @@ export interface MountpointUnmountErrorInternal {
 export type MountpointUnmountError =
   | MountpointUnmountErrorInternal
 
+// MoveEntryMode
+export enum MoveEntryModeTag {
+    CanReplace = 'MoveEntryModeCanReplace',
+    Exchange = 'MoveEntryModeExchange',
+    NoReplace = 'MoveEntryModeNoReplace',
+}
+
+export interface MoveEntryModeCanReplace {
+    tag: MoveEntryModeTag.CanReplace
+}
+export interface MoveEntryModeExchange {
+    tag: MoveEntryModeTag.Exchange
+}
+export interface MoveEntryModeNoReplace {
+    tag: MoveEntryModeTag.NoReplace
+}
+export type MoveEntryMode =
+  | MoveEntryModeCanReplace
+  | MoveEntryModeExchange
+  | MoveEntryModeNoReplace
+
 // ParseParsecAddrError
 export enum ParseParsecAddrErrorTag {
     InvalidUrl = 'ParseParsecAddrErrorInvalidUrl',
@@ -1429,7 +1450,7 @@ export enum WorkspaceCreateFileErrorTag {
     InvalidManifest = 'WorkspaceCreateFileErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceCreateFileErrorNoRealmAccess',
     Offline = 'WorkspaceCreateFileErrorOffline',
-    ParentIsFile = 'WorkspaceCreateFileErrorParentIsFile',
+    ParentNotAFolder = 'WorkspaceCreateFileErrorParentNotAFolder',
     ParentNotFound = 'WorkspaceCreateFileErrorParentNotFound',
     ReadOnlyRealm = 'WorkspaceCreateFileErrorReadOnlyRealm',
     Stopped = 'WorkspaceCreateFileErrorStopped',
@@ -1463,8 +1484,8 @@ export interface WorkspaceCreateFileErrorOffline {
     tag: WorkspaceCreateFileErrorTag.Offline
     error: string
 }
-export interface WorkspaceCreateFileErrorParentIsFile {
-    tag: WorkspaceCreateFileErrorTag.ParentIsFile
+export interface WorkspaceCreateFileErrorParentNotAFolder {
+    tag: WorkspaceCreateFileErrorTag.ParentNotAFolder
     error: string
 }
 export interface WorkspaceCreateFileErrorParentNotFound {
@@ -1487,7 +1508,7 @@ export type WorkspaceCreateFileError =
   | WorkspaceCreateFileErrorInvalidManifest
   | WorkspaceCreateFileErrorNoRealmAccess
   | WorkspaceCreateFileErrorOffline
-  | WorkspaceCreateFileErrorParentIsFile
+  | WorkspaceCreateFileErrorParentNotAFolder
   | WorkspaceCreateFileErrorParentNotFound
   | WorkspaceCreateFileErrorReadOnlyRealm
   | WorkspaceCreateFileErrorStopped
@@ -1501,7 +1522,7 @@ export enum WorkspaceCreateFolderErrorTag {
     InvalidManifest = 'WorkspaceCreateFolderErrorInvalidManifest',
     NoRealmAccess = 'WorkspaceCreateFolderErrorNoRealmAccess',
     Offline = 'WorkspaceCreateFolderErrorOffline',
-    ParentIsFile = 'WorkspaceCreateFolderErrorParentIsFile',
+    ParentNotAFolder = 'WorkspaceCreateFolderErrorParentNotAFolder',
     ParentNotFound = 'WorkspaceCreateFolderErrorParentNotFound',
     ReadOnlyRealm = 'WorkspaceCreateFolderErrorReadOnlyRealm',
     Stopped = 'WorkspaceCreateFolderErrorStopped',
@@ -1535,8 +1556,8 @@ export interface WorkspaceCreateFolderErrorOffline {
     tag: WorkspaceCreateFolderErrorTag.Offline
     error: string
 }
-export interface WorkspaceCreateFolderErrorParentIsFile {
-    tag: WorkspaceCreateFolderErrorTag.ParentIsFile
+export interface WorkspaceCreateFolderErrorParentNotAFolder {
+    tag: WorkspaceCreateFolderErrorTag.ParentNotAFolder
     error: string
 }
 export interface WorkspaceCreateFolderErrorParentNotFound {
@@ -1559,7 +1580,7 @@ export type WorkspaceCreateFolderError =
   | WorkspaceCreateFolderErrorInvalidManifest
   | WorkspaceCreateFolderErrorNoRealmAccess
   | WorkspaceCreateFolderErrorOffline
-  | WorkspaceCreateFolderErrorParentIsFile
+  | WorkspaceCreateFolderErrorParentNotAFolder
   | WorkspaceCreateFolderErrorParentNotFound
   | WorkspaceCreateFolderErrorReadOnlyRealm
   | WorkspaceCreateFolderErrorStopped
@@ -1858,6 +1879,84 @@ export type WorkspaceMountError =
   | WorkspaceMountErrorDisabled
   | WorkspaceMountErrorInternal
 
+// WorkspaceMoveEntryError
+export enum WorkspaceMoveEntryErrorTag {
+    CannotMoveRoot = 'WorkspaceMoveEntryErrorCannotMoveRoot',
+    DestinationExists = 'WorkspaceMoveEntryErrorDestinationExists',
+    DestinationNotFound = 'WorkspaceMoveEntryErrorDestinationNotFound',
+    Internal = 'WorkspaceMoveEntryErrorInternal',
+    InvalidCertificate = 'WorkspaceMoveEntryErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceMoveEntryErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceMoveEntryErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceMoveEntryErrorNoRealmAccess',
+    Offline = 'WorkspaceMoveEntryErrorOffline',
+    ReadOnlyRealm = 'WorkspaceMoveEntryErrorReadOnlyRealm',
+    SourceNotFound = 'WorkspaceMoveEntryErrorSourceNotFound',
+    Stopped = 'WorkspaceMoveEntryErrorStopped',
+}
+
+export interface WorkspaceMoveEntryErrorCannotMoveRoot {
+    tag: WorkspaceMoveEntryErrorTag.CannotMoveRoot
+    error: string
+}
+export interface WorkspaceMoveEntryErrorDestinationExists {
+    tag: WorkspaceMoveEntryErrorTag.DestinationExists
+    error: string
+}
+export interface WorkspaceMoveEntryErrorDestinationNotFound {
+    tag: WorkspaceMoveEntryErrorTag.DestinationNotFound
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInternal {
+    tag: WorkspaceMoveEntryErrorTag.Internal
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidCertificate {
+    tag: WorkspaceMoveEntryErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidKeysBundle {
+    tag: WorkspaceMoveEntryErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceMoveEntryErrorInvalidManifest {
+    tag: WorkspaceMoveEntryErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceMoveEntryErrorNoRealmAccess {
+    tag: WorkspaceMoveEntryErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceMoveEntryErrorOffline {
+    tag: WorkspaceMoveEntryErrorTag.Offline
+    error: string
+}
+export interface WorkspaceMoveEntryErrorReadOnlyRealm {
+    tag: WorkspaceMoveEntryErrorTag.ReadOnlyRealm
+    error: string
+}
+export interface WorkspaceMoveEntryErrorSourceNotFound {
+    tag: WorkspaceMoveEntryErrorTag.SourceNotFound
+    error: string
+}
+export interface WorkspaceMoveEntryErrorStopped {
+    tag: WorkspaceMoveEntryErrorTag.Stopped
+    error: string
+}
+export type WorkspaceMoveEntryError =
+  | WorkspaceMoveEntryErrorCannotMoveRoot
+  | WorkspaceMoveEntryErrorDestinationExists
+  | WorkspaceMoveEntryErrorDestinationNotFound
+  | WorkspaceMoveEntryErrorInternal
+  | WorkspaceMoveEntryErrorInvalidCertificate
+  | WorkspaceMoveEntryErrorInvalidKeysBundle
+  | WorkspaceMoveEntryErrorInvalidManifest
+  | WorkspaceMoveEntryErrorNoRealmAccess
+  | WorkspaceMoveEntryErrorOffline
+  | WorkspaceMoveEntryErrorReadOnlyRealm
+  | WorkspaceMoveEntryErrorSourceNotFound
+  | WorkspaceMoveEntryErrorStopped
+
 // WorkspaceOpenFileError
 export enum WorkspaceOpenFileErrorTag {
     EntryExistsInCreateNewMode = 'WorkspaceOpenFileErrorEntryExistsInCreateNewMode',
@@ -2013,78 +2112,6 @@ export type WorkspaceRemoveEntryError =
   | WorkspaceRemoveEntryErrorOffline
   | WorkspaceRemoveEntryErrorReadOnlyRealm
   | WorkspaceRemoveEntryErrorStopped
-
-// WorkspaceRenameEntryError
-export enum WorkspaceRenameEntryErrorTag {
-    CannotRenameRoot = 'WorkspaceRenameEntryErrorCannotRenameRoot',
-    DestinationExists = 'WorkspaceRenameEntryErrorDestinationExists',
-    EntryNotFound = 'WorkspaceRenameEntryErrorEntryNotFound',
-    Internal = 'WorkspaceRenameEntryErrorInternal',
-    InvalidCertificate = 'WorkspaceRenameEntryErrorInvalidCertificate',
-    InvalidKeysBundle = 'WorkspaceRenameEntryErrorInvalidKeysBundle',
-    InvalidManifest = 'WorkspaceRenameEntryErrorInvalidManifest',
-    NoRealmAccess = 'WorkspaceRenameEntryErrorNoRealmAccess',
-    Offline = 'WorkspaceRenameEntryErrorOffline',
-    ReadOnlyRealm = 'WorkspaceRenameEntryErrorReadOnlyRealm',
-    Stopped = 'WorkspaceRenameEntryErrorStopped',
-}
-
-export interface WorkspaceRenameEntryErrorCannotRenameRoot {
-    tag: WorkspaceRenameEntryErrorTag.CannotRenameRoot
-    error: string
-}
-export interface WorkspaceRenameEntryErrorDestinationExists {
-    tag: WorkspaceRenameEntryErrorTag.DestinationExists
-    error: string
-}
-export interface WorkspaceRenameEntryErrorEntryNotFound {
-    tag: WorkspaceRenameEntryErrorTag.EntryNotFound
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInternal {
-    tag: WorkspaceRenameEntryErrorTag.Internal
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidCertificate {
-    tag: WorkspaceRenameEntryErrorTag.InvalidCertificate
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidKeysBundle {
-    tag: WorkspaceRenameEntryErrorTag.InvalidKeysBundle
-    error: string
-}
-export interface WorkspaceRenameEntryErrorInvalidManifest {
-    tag: WorkspaceRenameEntryErrorTag.InvalidManifest
-    error: string
-}
-export interface WorkspaceRenameEntryErrorNoRealmAccess {
-    tag: WorkspaceRenameEntryErrorTag.NoRealmAccess
-    error: string
-}
-export interface WorkspaceRenameEntryErrorOffline {
-    tag: WorkspaceRenameEntryErrorTag.Offline
-    error: string
-}
-export interface WorkspaceRenameEntryErrorReadOnlyRealm {
-    tag: WorkspaceRenameEntryErrorTag.ReadOnlyRealm
-    error: string
-}
-export interface WorkspaceRenameEntryErrorStopped {
-    tag: WorkspaceRenameEntryErrorTag.Stopped
-    error: string
-}
-export type WorkspaceRenameEntryError =
-  | WorkspaceRenameEntryErrorCannotRenameRoot
-  | WorkspaceRenameEntryErrorDestinationExists
-  | WorkspaceRenameEntryErrorEntryNotFound
-  | WorkspaceRenameEntryErrorInternal
-  | WorkspaceRenameEntryErrorInvalidCertificate
-  | WorkspaceRenameEntryErrorInvalidKeysBundle
-  | WorkspaceRenameEntryErrorInvalidManifest
-  | WorkspaceRenameEntryErrorNoRealmAccess
-  | WorkspaceRenameEntryErrorOffline
-  | WorkspaceRenameEntryErrorReadOnlyRealm
-  | WorkspaceRenameEntryErrorStopped
 
 // WorkspaceStatEntryError
 export enum WorkspaceStatEntryErrorTag {
@@ -2561,6 +2588,12 @@ export interface LibParsecPlugin {
     workspaceMount(
         workspace: Handle
     ): Promise<Result<[Handle, Path], WorkspaceMountError>>
+    workspaceMoveEntry(
+        workspace: Handle,
+        src: FsPath,
+        dst: FsPath,
+        mode: MoveEntryMode
+    ): Promise<Result<null, WorkspaceMoveEntryError>>
     workspaceOpenFile(
         workspace: Handle,
         path: FsPath,
@@ -2582,12 +2615,6 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<null, WorkspaceRemoveEntryError>>
-    workspaceRenameEntry(
-        workspace: Handle,
-        path: FsPath,
-        new_name: EntryName,
-        overwrite: boolean
-    ): Promise<Result<null, WorkspaceRenameEntryError>>
     workspaceStatEntry(
         workspace: Handle,
         path: FsPath
