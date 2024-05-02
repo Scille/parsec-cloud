@@ -315,9 +315,6 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 
-// Replace by events when available
-let intervalId: any = null;
-
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
@@ -367,9 +364,9 @@ async function loadAll(): Promise<void> {
 
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceCreated | Events.WorkspaceFavorite,
+    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated,
     async (event: Events, _data: EventData) => {
-      if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite) {
+      if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
         await loadAll();
       }
     },
@@ -386,7 +383,6 @@ onMounted(async () => {
     });
     gesture.enable();
   }
-  intervalId = setInterval(loadAll, 10000);
 });
 
 onUnmounted(() => {
@@ -394,9 +390,6 @@ onUnmounted(() => {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
   watchSidebarWidthCancel();
-  if (intervalId) {
-    clearInterval(intervalId);
-  }
   setToastOffset(0);
 });
 
