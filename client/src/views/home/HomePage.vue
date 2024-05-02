@@ -73,7 +73,6 @@ import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } fr
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
-import { Position, SlideHorizontal } from '@/transitions';
 import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
 import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
@@ -85,7 +84,7 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Base64, Validity, MsModalResult, getTextFromUser } from 'megashark-lib';
+import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 
 enum HomePageState {
