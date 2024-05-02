@@ -22,7 +22,7 @@
         "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur."
     },
     "formatter": {
-        "version": "v`{version}` "
+        "version": "v{version} "
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -104,7 +104,8 @@
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté(e)",
             "logoutFailed": "Une erreur est survenue lors de la déconnexion.",
-            "updateAvailable": "Mise à jour disponible"
+            "updateAvailable": "Mise à jour disponible",
+            "newVersionAvailable": "Nouvelle version disponible"
         },
         "organizationList": {
             "title": "Vos organisations",

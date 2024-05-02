@@ -15,12 +15,12 @@
         @click="update"
         v-show="updateAvailability.updateAvailable"
       >
-        <ion-text class="update-item-text subtitles-sm">
-          {{ $msTranslate('app.name') }}
-          {{ $msTranslate({ key: 'formatter.version', data: { version: updateAvailability.version } }) }}
+        <ion-text class="update-item-text subtitles-normal">
+          {{ $msTranslate('HomePage.topbar.newVersionAvailable') }}
         </ion-text>
-        <ion-text class="button-small">
-          {{ $msTranslate('AboutPage.update.update') }}
+        <ion-text class="update-item-version body">
+          <span>{{ $msTranslate('app.name') }}</span>
+          <span>{{ $msTranslate({ key: 'formatter.version', data: { version: updateAvailability.version } }) }}</span>
         </ion-text>
       </div>
       <ion-item
@@ -196,12 +196,32 @@ async function update(): Promise<void> {
     background: var(--parsec-color-light-gradient);
     color: var(--parsec-color-light-secondary-white);
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
     padding: 1rem 0.875rem;
+    position: relative;
+
+    &::after {
+      content: url('@/assets/images/background/logo-icon-white.svg');
+      opacity: 0.1;
+      width: 100%;
+      max-width: 80px;
+      max-height: 32px;
+      position: absolute;
+      bottom: 30px;
+      right: -16px;
+      z-index: 0;
+    }
 
     &-text {
       flex: 1;
+    }
+
+    &-version {
+      opacity: 0.8;
+      display: flex;
+      gap: 0.375rem;
+      z-index: 1;
     }
 
     &:hover {
