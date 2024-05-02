@@ -5,7 +5,6 @@ import { ref } from 'vue';
 const defaultWidth = 300;
 const initialWidth = ref<number>(defaultWidth);
 const computedWidth = ref<number>(defaultWidth);
-const wasReset = ref<boolean>(false);
 
 export default function useSidebarMenu(): any {
   function isVisible(): boolean {
@@ -15,7 +14,6 @@ export default function useSidebarMenu(): any {
   function reset(): void {
     initialWidth.value = defaultWidth;
     computedWidth.value = defaultWidth;
-    wasReset.value = true;
   }
 
   return {
@@ -24,6 +22,5 @@ export default function useSidebarMenu(): any {
     computedWidth,
     isVisible,
     reset,
-    wasReset,
   };
 }

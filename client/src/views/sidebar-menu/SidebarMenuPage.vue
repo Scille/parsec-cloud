@@ -302,7 +302,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart, star } from 'ionicons/icons';
-import { Ref, WatchStopHandle, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -310,19 +310,18 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 let eventDistributorCbId: string | null = null;
 const divider = ref();
-const { defaultWidth, initialWidth, computedWidth, wasReset } = useSidebarMenu();
+const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
+const sidebarWidthProperty = ref(`${defaultWidth}px`);
 
 // Replace by events when available
 let intervalId: any = null;
 
-// watching wasReset value
-const resetWatchCancel: WatchStopHandle = watch(wasReset, (value) => {
-  if (value) {
-    resizeMenu(defaultWidth);
-    wasReset.value = false;
-  }
+const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
+  sidebarWidthProperty.value = `${value}px`;
+  // set toast offset
+  setToastOffset(value);
 });
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
@@ -376,6 +375,7 @@ onMounted(async () => {
     },
   );
 
+  setToastOffset(computedWidth.value);
   await loadAll();
   if (divider.value) {
     const gesture = createGesture({
@@ -393,11 +393,16 @@ onUnmounted(() => {
   if (eventDistributorCbId) {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
-  resetWatchCancel();
+  watchSidebarWidthCancel();
   if (intervalId) {
     clearInterval(intervalId);
   }
+  setToastOffset(0);
 });
+
+function setToastOffset(width: number): void {
+  document.documentElement.style.setProperty('--ms-toast-offset', `${width}px`);
+}
 
 const favoritesWorkspaces = computed(() => {
   return Array.from(workspaces.value)
@@ -421,7 +426,6 @@ function onMove(detail: GestureDetail): void {
       if (currentWidth <= 150) {
         currentWidth = 2;
       }
-      resizeMenu(currentWidth);
       computedWidth.value = currentWidth;
     }
   });
@@ -429,10 +433,6 @@ function onMove(detail: GestureDetail): void {
 
 function onEnd(): void {
   initialWidth.value = computedWidth.value;
-}
-
-function resizeMenu(newWidth: number): void {
-  document.documentElement.style.setProperty('--parsec-sidebar-menu-width', `${newWidth}px`);
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
@@ -460,7 +460,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   width: 0.25rem;
   height: 100%;
   position: absolute;
-  left: calc(var(--parsec-sidebar-menu-width) - 2px);
+  left: calc(v-bind(sidebarWidthProperty) - 2px);
   top: 0;
   z-index: 10000;
   cursor: ew-resize;
@@ -647,7 +647,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 ion-split-pane {
   --side-min-width: var(--parsec-sidebar-menu-min-width);
   --side-max-width: var(--parsec-sidebar-menu-max-width);
-  --side-width: var(--parsec-sidebar-menu-width);
+  --side-width: v-bind(sidebarWidthProperty);
 }
 
 ion-menu {
