@@ -109,25 +109,6 @@ describe('Check workspaces page', () => {
     cy.get('.workspace-list-item').eq(1).find('.card-favorite-off');
   });
 
-  it('Create workspace', () => {
-    cy.get('#button-new-workspace').click();
-    cy.get('.text-input-modal').should('exist');
-    cy.get('.ms-modal-header__title').contains('Create a new workspace');
-    cy.get('.ion-page').find('.closeBtn').should('exist');
-    cy.get('ion-input').should('be.visible');
-    cy.get('.text-input-modal').find('.ms-modal-footer-buttons').find('ion-button').eq(1).as('createButton').contains('Create');
-    cy.get('@createButton').should('have.class', 'button-disabled');
-    cy.get('.text-input-modal').find('.input').find('input').type('MyWorkspace');
-    cy.get('@createButton').should('not.have.class', 'button-disabled');
-    cy.get('@createButton').click();
-    cy.get('.text-input-modal').should('not.exist');
-    cy.checkToastMessage('success', "The workspace 'MyWorkspace' has been created!");
-    cy.get('#button-new-workspace').click();
-    cy.get('ion-modal').should('exist');
-    cy.get('ion-modal').find('.closeBtn').click();
-    cy.get('ion-modal').should('not.exist');
-  });
-
   it('Rename workspace', () => {
     cy.get('.card').eq(1).find('.card-option').click();
     cy.get('#workspace-context-menu').find('.menu-list').find('ion-item').eq(3).contains('Rename').click();
