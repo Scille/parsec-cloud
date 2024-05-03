@@ -14,7 +14,6 @@ use super::{
     },
     per_manifest_update_lock::ManifestUpdateLockGuard,
 };
-use super::{PathConfinementPoint, ResolvePathError};
 
 pub(super) type UpdateFileManifestAndContinueError = super::WorkspaceStoreOperationError;
 
@@ -49,47 +48,40 @@ pub(super) async fn for_update_file(
 ) -> Result<(FileUpdater, Arc<LocalFileManifest>), ForUpdateFileError> {
     // Guard's drop will panic if the lock is not released
     macro_rules! release_guard_on_error {
-        ($entry_guard:expr) => {
+        ($update_guard:expr) => {
             let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_guard.lock_update_manifests.release($entry_guard);
+            cache_guard.lock_update_manifests.release($update_guard);
         };
     }
 
     // Step 1, 2 and 3 are about retrieving the manifest and locking it for update
 
     let mut maybe_need_wait = None;
-    let (entry_guard, manifest) = loop {
+    let (update_guard, manifest) = loop {
         if let Some(listener) = maybe_need_wait {
             listener.await;
         }
 
-        let entry_guard = {
+        let update_guard = {
             let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
 
             // 1) Lock for update
 
             let outcome = cache_guard.lock_update_manifests.take(entry_id);
             match outcome {
-                ManifestUpdateLockTakeOutcome::Taken(entry_guard) => {
-                    // 2a) Special case if the entry to modify is the root dir...
+                ManifestUpdateLockTakeOutcome::Taken(update_guard) => {
+                    // 2) Cache lookup for entry...
 
-                    if entry_id == store.realm_id {
-                        break (
-                            entry_guard,
-                            ArcLocalChildManifest::Folder(cache_guard.root_manifest.clone()),
-                        );
-                    }
-
-                    // 2b) Non-root dir requires cache lookup...
-
-                    let found = cache_guard.child_manifests.get(&entry_id);
+                    let found = cache_guard.manifests.get(&entry_id);
                     if let Some(manifest) = found {
-                        // Cache hit ! We go to step 3.
-                        break (entry_guard, manifest.clone());
+                        // Cache hit ! We go to step 4.
+                        break (update_guard, manifest.clone());
                     }
-                    // The entry is not in cache, from there we release the cache
-                    // lock and jump to step 2.
-                    entry_guard
+                    // The entry is not in cache, go to step 3 for a lookup in the local storage.
+                    // Note we keep the update lock: this has no impact on read operation, and
+                    // any other write operation taking the lock will have no choice but to try
+                    // to populate the cache just like we are going to do.
+                    update_guard
                 }
 
                 ManifestUpdateLockTakeOutcome::NeedWait(listener) => {
@@ -101,6 +93,8 @@ pub(super) async fn for_update_file(
                 }
             }
         };
+
+        // Be careful here: `update_guard` must be manually released in case of error !
 
         // 3) ...and, in case of cache miss, fetch from local storage or server
 
@@ -128,9 +122,9 @@ pub(super) async fn for_update_file(
             });
 
         match outcome {
-            Ok(manifest) => break (entry_guard, manifest),
+            Ok(manifest) => break (update_guard, manifest),
             Err(err) => {
-                release_guard_on_error!(entry_guard);
+                release_guard_on_error!(update_guard);
                 return Err(err);
             }
         }
@@ -141,50 +135,16 @@ pub(super) async fn for_update_file(
     let manifest = match manifest {
         ArcLocalChildManifest::File(manifest) => manifest,
         ArcLocalChildManifest::Folder(_) => {
-            release_guard_on_error!(entry_guard);
+            release_guard_on_error!(update_guard);
             return Err(ForUpdateFileError::EntryNotAFile);
         }
     };
 
     let updater = FileUpdater {
-        _update_guard: entry_guard,
-    };
-
-    Ok((updater, manifest))
-}
-
-pub async fn resolve_path_for_update_file_manifest(
-    store: &super::WorkspaceStore,
-    path: &FsPath,
-) -> Result<(Arc<LocalFileManifest>, PathConfinementPoint, FileUpdater), ForUpdateFileError> {
-    let (manifest, confinement, update_guard) =
-        super::resolve_path::resolve_path_and_lock_for_update(store, path)
-            .await
-            .map_err(|err| match err {
-                ResolvePathError::Offline => ForUpdateFileError::Offline,
-                ResolvePathError::Stopped => ForUpdateFileError::Stopped,
-                ResolvePathError::EntryNotFound => ForUpdateFileError::EntryNotFound,
-                ResolvePathError::NoRealmAccess => ForUpdateFileError::NoRealmAccess,
-                ResolvePathError::InvalidKeysBundle(err) => {
-                    ForUpdateFileError::InvalidKeysBundle(err)
-                }
-                ResolvePathError::InvalidCertificate(err) => {
-                    ForUpdateFileError::InvalidCertificate(err)
-                }
-                ResolvePathError::InvalidManifest(err) => ForUpdateFileError::InvalidManifest(err),
-                ResolvePathError::Internal(err) => err.context("cannot resolve path").into(),
-            })?;
-
-    // From now on we shouldn't fail given `update_guard` doesn't release the lock on drop.
-
-    let updater = FileUpdater {
         _update_guard: update_guard,
     };
 
-    match manifest {
-        ArcLocalChildManifest::File(manifest) => Ok((manifest, confinement, updater)),
-        ArcLocalChildManifest::Folder(_) => Err(ForUpdateFileError::EntryNotAFile),
-    }
+    Ok((updater, manifest))
 }
 
 /// /!\ The underlying lock doesn't get released on drop /!\
@@ -202,8 +162,8 @@ impl FileUpdater {
         &self,
         store: &super::WorkspaceStore,
         manifest: Arc<LocalFileManifest>,
-        new_chunks: &[(ChunkID, Vec<u8>)],
-        removed_chunks: &[ChunkID],
+        new_chunks: impl Iterator<Item = (ChunkID, &[u8])>,
+        removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> Result<(), UpdateFileManifestAndContinueError> {
         let mut storage_guard = store.storage.lock().await;
         let storage = storage_guard
@@ -218,9 +178,7 @@ impl FileUpdater {
         };
 
         let new_chunks = new_chunks
-            .iter()
-            .map(|(chunk_id, cleartext)| (*chunk_id, store.device.local_symkey.encrypt(cleartext)));
-        let removed_chunks = removed_chunks.iter().copied();
+            .map(|(chunk_id, cleartext)| (chunk_id, store.device.local_symkey.encrypt(cleartext)));
         storage
             .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
             .await?;
@@ -228,8 +186,8 @@ impl FileUpdater {
         // Finally update cache
         let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
         cache
-            .child_manifests
-            .insert(manifest.base.id, ArcLocalChildManifest::File(manifest));
+            .manifests
+            .insert(ArcLocalChildManifest::File(manifest));
 
         Ok(())
     }

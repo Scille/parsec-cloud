@@ -41,19 +41,125 @@ impl ChunksCache {
     }
 }
 
+mod manifest_hash_map {
+    use super::*;
+
+    #[derive(Debug)]
+    pub(crate) struct ManifestsHashMap {
+        manifests: HashMap<VlobID, ArcLocalChildManifest>,
+        root_manifest_id: VlobID,
+    }
+
+    impl ManifestsHashMap {
+        pub fn new(root_manifest: Arc<LocalFolderManifest>) -> Self {
+            let root_manifest_id = root_manifest.base.id;
+            let manifests = HashMap::from_iter([(
+                root_manifest_id,
+                ArcLocalChildManifest::Folder(root_manifest),
+            )]);
+            Self {
+                manifests,
+                root_manifest_id,
+            }
+        }
+
+        // We don't use this for now, however the root manifest special case makes it
+        // tricky to implement...
+        #[allow(dead_code)]
+        /// The root manifest must always be available, so this method remove
+        /// everything else from the cache.
+        pub fn clear_all_but_root(&mut self) {
+            let root_manifest = self
+                .manifests
+                .remove(&self.root_manifest_id)
+                .expect("always present");
+            self.manifests.clear();
+            self.manifests.insert(self.root_manifest_id, root_manifest);
+        }
+
+        /// Add the manifest in the cache, overwritting whatever value was already present.
+        /// This should only be used with the update lock is held to avoid concurrency issues !
+        /// (use `insert_if_missing` otherwise).
+        pub fn insert(&mut self, manifest: ArcLocalChildManifest) {
+            let manifest_id = match &manifest {
+                ArcLocalChildManifest::File(m) => {
+                    let manifest_id = m.base.id;
+                    assert!(
+                        manifest_id != self.root_manifest_id,
+                        "Root manifest must be a folder !"
+                    );
+                    manifest_id
+                }
+                ArcLocalChildManifest::Folder(m) => m.base.id,
+            };
+            self.manifests.insert(manifest_id, manifest);
+        }
+
+        /// If the update lock is not held, we can still have to insert the manifest in
+        /// cache when populating it.
+        /// Hence this `insert_if_missing` method that handles the case of a populate
+        /// already done by a concurrent operation, in which case the provided manifest
+        /// is simply discarded.
+        ///
+        /// This method returns the manifest in cache.
+        pub fn insert_if_missing(
+            &mut self,
+            manifest: ArcLocalChildManifest,
+        ) -> ArcLocalChildManifest {
+            let manifest_id = match &manifest {
+                ArcLocalChildManifest::File(m) => {
+                    let manifest_id = m.base.id;
+                    assert!(
+                        manifest_id != self.root_manifest_id,
+                        "Root manifest must be a folder !"
+                    );
+                    manifest_id
+                }
+                ArcLocalChildManifest::Folder(m) => m.base.id,
+            };
+
+            match self.manifests.entry(manifest_id) {
+                std::collections::hash_map::Entry::Vacant(entry) => {
+                    entry.insert(manifest.clone());
+                    manifest
+                }
+                // Plot twist: a concurrent operation has updated the cache !
+                // So we discard the data we've fetched and pretend we got a cache hit in
+                // the first place.
+                std::collections::hash_map::Entry::Occupied(entry) => entry.get().to_owned(),
+            }
+        }
+
+        pub fn root_manifest(&self) -> &Arc<LocalFolderManifest> {
+            match self
+                .manifests
+                .get(&self.root_manifest_id)
+                .expect("always present")
+            {
+                ArcLocalChildManifest::Folder(root_manifest) => root_manifest,
+                ArcLocalChildManifest::File(_) => unreachable!("Root manifest must be a folder !"),
+            }
+        }
+    }
+
+    impl std::ops::Deref for ManifestsHashMap {
+        type Target = HashMap<VlobID, ArcLocalChildManifest>;
+        fn deref(&self) -> &Self::Target {
+            &self.manifests
+        }
+    }
+}
+pub(super) use manifest_hash_map::ManifestsHashMap;
+
 #[derive(Debug)]
 pub(super) struct CurrentViewCache {
-    /// Workspace's root folder manifest is special in that we always have access to it
-    /// (given we know it must be a folder manifest, we create an empty speculative folder
-    /// manifest if we don't have it yet). For this reason, it is kept apart.
-    pub root_manifest: Arc<LocalFolderManifest>,
-    /// `child_manifests` contains a cache on the database:
-    /// - the cache may be cleaned at any given time (i.e. inserting an entry in the cache
-    ///   doesn't guarantee it will be available later on)
+    /// `manifests` contains a cache on the database:
+    /// - the cache may be cleared at any given time (i.e. inserting an entry in the cache
+    ///   doesn't guarantee it will be available later on).
     /// - if the cache is present, it always correspond to the latest value (so the cache
-    ///   should always be preferred over data coming from the database)
-    /// - each cache entry can be "taken" for write access. In this mode
-    pub child_manifests: HashMap<VlobID, ArcLocalChildManifest>,
+    ///   should always be preferred over data coming from the database).
+    /// - the root manifest is guaranteed to be always present (even after a clear !).
+    pub manifests: ManifestsHashMap,
     /// Each manifest has a dedicated async lock to prevent concurrent update (ensuring
     /// consistency between cache and database).
     pub lock_update_manifests: PerManifestUpdateLock,
@@ -63,8 +169,7 @@ pub(super) struct CurrentViewCache {
 impl CurrentViewCache {
     pub fn new(root_manifest: Arc<LocalFolderManifest>) -> Self {
         Self {
-            root_manifest,
-            child_manifests: HashMap::new(),
+            manifests: ManifestsHashMap::new(root_manifest),
             lock_update_manifests: PerManifestUpdateLock::new(),
             chunks: ChunksCache::new(),
         }
@@ -125,16 +230,7 @@ pub(super) async fn populate_cache_from_local_storage(
     // 2) We got our manifest, don't forget to update the cache before returning it
 
     let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-    let manifest = match cache.child_manifests.entry(entry_id) {
-        std::collections::hash_map::Entry::Vacant(entry) => {
-            entry.insert(manifest.clone());
-            manifest
-        }
-        // Plot twist: a concurrent operation has updated the cache !
-        // So we discard the data we've fetched and pretend we got a cache hit in
-        // the first place.
-        std::collections::hash_map::Entry::Occupied(entry) => entry.get().to_owned(),
-    };
+    let manifest = cache.manifests.insert_if_missing(manifest);
 
     Ok(manifest)
 }
@@ -309,16 +405,7 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
     // 4) Also update the cache
 
     let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-    let manifest = match cache.child_manifests.entry(entry_id) {
-        std::collections::hash_map::Entry::Vacant(entry) => {
-            entry.insert(manifest.clone());
-            manifest
-        }
-        // Plot twist: a concurrent operation has updated the cache !
-        // So we discard the data we've fetched and pretend we got a cache hit in
-        // the first place.
-        std::collections::hash_map::Entry::Occupied(entry) => entry.get().to_owned(),
-    };
+    let manifest = cache.manifests.insert_if_missing(manifest);
 
     Ok(manifest)
 }

@@ -54,13 +54,29 @@ impl EntryName {
     }
 
     pub fn extension(&self) -> Option<&str> {
-        self.0.split_once('.').map(|(_, ext)| ext)
+        self.base_and_extension().1
     }
 
     // TODO: Handle case of hidden UNIX file (e.g. `.foo`) ?
     pub fn base_and_extension(&self) -> (&str, Option<&str>) {
         match self.0.split_once('.') {
-            Some((base, ext)) => (base, Some(ext)),
+            Some((base, ext)) => {
+                // Check for special case of hidden UNIX file (e.g. `.foo`)
+                if !base.is_empty() {
+                    (base, Some(ext))
+                } else {
+                    match ext.find('.') {
+                        // The name had multiple dots (e.g. `.foo.txt`)
+                        Some(i) => {
+                            let (base, ext) = self.0.split_at(i + 1);
+                            (base, Some(ext))
+                        }
+                        // The name contained a single leading dot
+                        None => (self.0.as_str(), None),
+                    }
+                }
+            },
+            // Name without any dot
             None => (self.0.as_str(), None),
         }
     }

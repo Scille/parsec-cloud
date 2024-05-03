@@ -137,8 +137,6 @@ impl ReparentingUpdater<'_> {
             encrypted: dst_parent_manifest.dump_and_encrypt(&store.device.local_symkey),
         };
 
-        let src_child_id = src_child_update_data.entry_id;
-
         match &dst_child_manifest {
             // 3 manifests to update
             None => {
@@ -189,29 +187,15 @@ impl ReparentingUpdater<'_> {
 
         let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
 
-        if src_parent_manifest.base.id == store.realm_id {
-            cache.root_manifest = src_parent_manifest;
-        } else {
-            cache.child_manifests.insert(
-                src_parent_manifest.base.id,
-                ArcLocalChildManifest::Folder(src_parent_manifest),
-            );
-        }
-        if dst_parent_manifest.base.id == store.realm_id {
-            cache.root_manifest = dst_parent_manifest;
-        } else {
-            cache.child_manifests.insert(
-                dst_parent_manifest.base.id,
-                ArcLocalChildManifest::Folder(dst_parent_manifest),
-            );
-        }
         cache
-            .child_manifests
-            .insert(src_child_id, src_child_manifest);
+            .manifests
+            .insert(ArcLocalChildManifest::Folder(src_parent_manifest));
+        cache
+            .manifests
+            .insert(ArcLocalChildManifest::Folder(dst_parent_manifest));
+        cache.manifests.insert(src_child_manifest);
         if let Some(dst_child_manifest) = dst_child_manifest {
-            cache
-                .child_manifests
-                .insert(dst_child_manifest.id(), dst_child_manifest);
+            cache.manifests.insert(dst_child_manifest);
         }
 
         Ok(())

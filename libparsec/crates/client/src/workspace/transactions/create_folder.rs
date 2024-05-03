@@ -79,7 +79,7 @@ pub(crate) async fn create_folder(
 
     let (mut parent_manifest, _, parent_updater) = ops
         .store
-        .resolve_path_for_update_folder_manifest(&parent_path)
+        .resolve_path_for_update_folder(&parent_path)
         .await
         .map_err(|err| match err {
             ForUpdateFolderError::Offline => WorkspaceCreateFolderError::Offline,

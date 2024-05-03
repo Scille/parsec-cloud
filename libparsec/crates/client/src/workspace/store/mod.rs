@@ -7,6 +7,7 @@ mod manifest_access;
 mod per_manifest_update_lock;
 mod reparent_updater;
 mod resolve_path;
+mod sync_updater;
 
 use std::{
     path::Path,
@@ -29,38 +30,11 @@ pub(crate) use folder_updater::{FolderUpdater, ForUpdateFolderError};
 pub(crate) use manifest_access::GetManifestError;
 pub(crate) use reparent_updater::{ForUpdateReparentingError, ReparentingUpdater};
 pub(crate) use resolve_path::{PathConfinementPoint, ResolvePathError};
+pub(crate) use sync_updater::{
+    ForUpdateSyncLocalOnlyError, IntoSyncConflictUpdaterError, SyncUpdater,
+};
 
 use super::fetch::FetchRemoteBlockError;
-
-// #[derive(Debug, thiserror::Error)]
-// pub(super) enum ReadChunkOrBlockLocalOnlyError {
-//     #[error("Component has stopped")]
-//     Stopped,
-//     #[error("Chunk doesn't exist")]
-//     ChunkNotFound,
-//     #[error(transparent)]
-//     Internal(#[from] anyhow::Error),
-// }
-
-// #[derive(Debug, thiserror::Error)]
-// pub(super) enum ReadChunkOrBlockError {
-//     #[error("Cannot reach the server")]
-//     Offline,
-//     #[error("Component has stopped")]
-//     Stopped,
-//     #[error("Chunk doesn't exist")]
-//     ChunkNotFound,
-//     #[error("Not allowed to access this realm")]
-//     NoRealmAccess,
-//     #[error(transparent)]
-//     InvalidBlockAccess(#[from] Box<InvalidBlockAccessError>),
-//     #[error(transparent)]
-//     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
-//     #[error(transparent)]
-//     InvalidCertificate(#[from] Box<InvalidCertificateError>),
-//     #[error(transparent)]
-//     Internal(#[from] anyhow::Error),
-// }
 
 #[derive(Debug, thiserror::Error)]
 pub enum WorkspaceStoreOperationError {
@@ -215,7 +189,8 @@ impl WorkspaceStore {
         self.current_view_cache
             .lock()
             .expect("Mutex is poisoned")
-            .root_manifest
+            .manifests
+            .root_manifest()
             .clone()
     }
 
@@ -231,7 +206,7 @@ impl WorkspaceStore {
     /// It may contain invalid data (i.e. referencing a non existing child ID, or a child
     /// which `parent` field not matching).
     ///
-    /// Hence this method that ensure the pontential child exists and *is* a child of the parent.
+    /// Hence this method that ensure the potential child exists and *is* a child of the parent.
     pub async fn ensure_manifest_exists_with_parent(
         &self,
         child_id: VlobID,
@@ -264,6 +239,14 @@ impl WorkspaceStore {
         Ok(child_manifest.parent() == expected_parent_id)
     }
 
+    /// Lock the folder entry for update.
+    /// Notes:
+    /// - Server access may occur to fetch the entry manifest if it is missing.
+    /// - If the entry is already locked for update, this method will wait until it
+    ///   can take the lock.
+    ///  - The returned `FolderUpdater` is designed to have a short lifetime (as it is
+    ///    not possible to open a folder), hence the fact it releases the update lock
+    ///    on drop.
     pub async fn for_update_folder(
         &self,
         entry_id: VlobID,
@@ -271,13 +254,13 @@ impl WorkspaceStore {
         folder_updater::for_update_folder(self, entry_id).await
     }
 
-    /// Resolve the given path, then lock the entry for update.
+    /// Resolve the given path, then lock the folder entry for update.
     /// Notes:
     /// - Server access may occur to fetch missing manifest for the path resolution or
     ///   to get the entry manifest.
     /// - If the entry is already locked for update, this method will wait until it
     ///   can take the lock.
-    pub async fn resolve_path_for_update_folder_manifest<'a>(
+    pub async fn resolve_path_for_update_folder<'a>(
         &'a self,
         path: &FsPath,
     ) -> Result<
@@ -288,7 +271,39 @@ impl WorkspaceStore {
         ),
         ForUpdateFolderError,
     > {
-        folder_updater::resolve_path_for_update_folder_manifest(self, path).await
+        folder_updater::resolve_path_for_update_folder(self, path).await
+    }
+
+    /// Lock the folder entry for update.
+    /// Notes:
+    /// - Server access may occur to fetch the entry manifest if it is missing.
+    /// - The returned `FileUpdater` is designed to have a long lifetime (typically
+    ///   as long a the file is open) and hence must be manually closed once you are done.
+    /// - If the entry is already locked for update, this method will return
+    ///   without waiting. This is because in this case the caller is supposed to
+    ///   already posses the `FileUpdater` responsible for the lock.
+    pub async fn for_update_file(
+        &self,
+        entry_id: VlobID,
+        wait: bool,
+    ) -> Result<(FileUpdater, Arc<LocalFileManifest>), ForUpdateFileError> {
+        file_updater::for_update_file(self, entry_id, wait).await
+    }
+
+    // Note, unlike for folder, there is no `resolve_path_for_update_file` method.
+    // In theory this method should be used by `WorkspaceOps::open_file`, but it is
+    // not the case due to how is implemented create-on-open.
+
+    /// As its name suggest, this methods won't fetch missing entry from the server.
+    ///
+    /// The reason is pretty obvious: this method is meant to be used while synchronize
+    /// data between client and server, which is precisely what is needed when fetching
+    /// missing data from the server !
+    pub async fn for_update_sync_local_only(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<(SyncUpdater, Option<ArcLocalChildManifest>), ForUpdateSyncLocalOnlyError> {
+        sync_updater::for_update_sync_local_only(self, entry_id).await
     }
 
     pub async fn resolve_path_for_update_reparenting<'a>(
@@ -308,29 +323,7 @@ impl WorkspaceStore {
         .await
     }
 
-    pub async fn for_update_file(
-        &self,
-        entry_id: VlobID,
-        wait: bool,
-    ) -> Result<(FileUpdater, Arc<LocalFileManifest>), ForUpdateFileError> {
-        file_updater::for_update_file(self, entry_id, wait).await
-    }
-
-    /// Resolve the given path, then lock the entry for update.
-    /// Notes:
-    /// - Server access may occur to fetch missing manifest for the path resolution or
-    ///   to get the entry manifest.
-    /// - If the entry is already locked for update, this method will wait until it
-    ///   can take the lock.
-    pub async fn resolve_path_for_update_file_manifest(
-        &self,
-        path: &FsPath,
-    ) -> Result<(Arc<LocalFileManifest>, PathConfinementPoint, FileUpdater), ForUpdateFileError>
-    {
-        file_updater::resolve_path_for_update_file_manifest(self, path).await
-    }
-
-    pub async fn is_child_entry_locked(&self, entry_id: VlobID) -> bool {
+    pub async fn is_entry_locked(&self, entry_id: VlobID) -> bool {
         let cache_guard = self.current_view_cache.lock().expect("Mutex is poisoned");
         cache_guard.lock_update_manifests.is_taken(entry_id)
     }
