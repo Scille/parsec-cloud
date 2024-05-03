@@ -165,6 +165,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   .cloud-overlay {
     font-size: 1rem;
     flex-shrink: 0;
+    margin-left: auto;
 
     &-ok {
       color: var(--parsec-color-light-primary-500);
