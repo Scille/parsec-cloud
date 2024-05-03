@@ -13,7 +13,7 @@ import {
   navigateTo,
   switchOrganization,
 } from '@/router';
-import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
 import { IonicVue, isPlatform, modalController } from '@ionic/vue';
 
 /* Theme variables */
@@ -28,7 +28,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, Base64, I18n, Locale, MegaSharkPlugin, Validity, askQuestion } from 'megashark-lib';
+import { Answer, Base64, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -75,7 +75,7 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath?: string, locale?: string): Promise<void> => {
+  const nextStage = async (configPath?: string, locale?: Locale): Promise<void> => {
     await router.isReady();
 
     const configDir = await libparsec.getDefaultConfigDir();
@@ -97,10 +97,13 @@ async function setupApp(): Promise<void> {
     }
 
     if (locale) {
-      I18n.changeLocale(locale as Locale);
+      I18n.changeLocale(locale);
     }
     app.mount('#app');
     appElem.setAttribute('app-state', AppState.Ready);
+
+    const themeManager = new ThemeManager(config.theme);
+    app.provide(ThemeManagerKey, themeManager);
   };
 
   // We can start the app with different cases :
@@ -225,13 +228,9 @@ async function setupApp(): Promise<void> {
   } else {
     window.electronAPI = {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      sendConfig: (_config: Config): void => {
-        console.log('Not available.');
-      },
+      sendConfig: (_config: Config): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      closeApp: (): void => {
-        console.log('Not available.');
-      },
+      closeApp: (): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function

@@ -70,7 +70,7 @@
                   <ms-dropdown
                     class="dropdown"
                     :options="themeOptions"
-                    :default-option-key="'light' ? 'light' : config.theme"
+                    :default-option-key="config.theme"
                     @change="changeTheme($event.option.key)"
                     :disabled="true"
                   />
@@ -134,13 +134,13 @@
 <script setup lang="ts">
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isMacOS } from '@/parsec/environment';
-import { Config, StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { MsModal, MsOptions, MsDropdown, Locale, I18n } from 'megashark-lib';
-import { toggleDarkMode } from '@/states/darkMode';
+import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
+import { MsModal, MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, getSystemTheme } from 'megashark-lib';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 
+const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
@@ -158,11 +158,11 @@ const languageOptions: MsOptions = new MsOptions([
 
 const themeOptions: MsOptions = new MsOptions([
   {
-    key: 'dark',
+    key: Theme.Dark,
     label: 'SettingsModal.theme.values.dark',
   },
   {
-    key: 'light',
+    key: Theme.Light,
     label: 'SettingsModal.theme.values.light',
   },
   {
@@ -175,6 +175,7 @@ enum SettingsTabs {
   General = 'General',
   Advanced = 'Advanced',
 }
+
 const settingTab = ref(SettingsTabs.General);
 
 const configUnwatch = watch(
@@ -194,18 +195,17 @@ async function changeLang(lang: Locale): Promise<void> {
   I18n.changeLocale(lang);
 }
 
-async function changeTheme(selectedTheme: string): Promise<void> {
-  config.value.theme = selectedTheme;
-  toggleDarkMode(selectedTheme);
+async function changeTheme(selectedTheme: Theme | 'system'): Promise<void> {
+  if (selectedTheme === 'system') {
+    selectedTheme = getSystemTheme();
+  }
+  config.value.theme = selectedTheme as Theme;
+  themeManager.use(selectedTheme as Theme);
 }
 
 onMounted(async (): Promise<void> => {
   justLoaded = true;
   config.value = await storageManager.retrieveConfig();
-
-  if (!config.value.theme) {
-    config.value.theme = 'system';
-  }
 });
 
 onUnmounted(async (): Promise<void> => {
