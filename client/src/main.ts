@@ -26,7 +26,7 @@ import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDev
 import { Platform, libparsec } from '@/plugins/libparsec';
 import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
-import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Answer, Base64, I18n, MegaSharkPlugin, Validity, askQuestion } from 'megashark-lib';
 
@@ -210,6 +210,17 @@ async function setupApp(): Promise<void> {
     });
     window.electronAPI.receive('parsec-update-availability', async (updateAvailable: boolean, version?: string) => {
       injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: updateAvailable, version: version });
+      if (updateAvailable && version) {
+        injectionProvider.notifyAll(
+          new Information({
+            message: '',
+            level: InformationLevel.Info,
+            unique: true,
+            data: { type: InformationDataType.NewVersionAvailable, newVersion: version },
+          }),
+          PresentationMode.Notification,
+        );
+      }
     });
   } else {
     window.electronAPI = {
@@ -234,6 +245,15 @@ async function setupApp(): Promise<void> {
       getUpdateAvailability: (): void => {
         if (needsMocks()) {
           injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '3.1.0' });
+          injectionProvider.notifyAll(
+            new Information({
+              message: '',
+              level: InformationLevel.Info,
+              unique: true,
+              data: { type: InformationDataType.NewVersionAvailable, newVersion: '3.1.0' },
+            }),
+            PresentationMode.Notification,
+          );
         }
       },
       // eslint-disable-next-line @typescript-eslint/no-empty-function

@@ -79,6 +79,8 @@ function getComponentType(notification: Notification): Component {
       return Notifications.AllImportedElementsNotification;
     case InformationDataType.NewDevice:
       return Notifications.NewDeviceNotification;
+    case InformationDataType.NewVersionAvailable:
+      return Notifications.NewVersionAvailableNotification;
     default:
       return Notifications.DefaultNotification;
   }

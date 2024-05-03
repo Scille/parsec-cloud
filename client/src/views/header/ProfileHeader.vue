@@ -58,7 +58,6 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
-let intervalId: any = null;
 
 const props = defineProps<{
   name: string;
@@ -80,19 +79,12 @@ onMounted(async () => {
     },
   );
 
-  intervalId = setInterval(async () => {
-    window.electronAPI.getUpdateAvailability();
-  }, 600000); // Checking every 10min
-  // Also calling it right now
   window.electronAPI.getUpdateAvailability();
 });
 
 onUnmounted(async () => {
   if (eventCbId) {
     eventDistributor.removeCallback(eventCbId);
-  }
-  if (intervalId) {
-    clearInterval(intervalId);
   }
 });
 

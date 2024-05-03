@@ -4,6 +4,7 @@ import AllImportedElementsNotification from '@/components/notifications/AllImpor
 import DefaultNotification from '@/components/notifications/DefaultNotification.vue';
 import MultipleUsersJoinWorkspaceNotification from '@/components/notifications/MultipleUsersJoinWorkspaceNotification.vue';
 import NewDeviceNotification from '@/components/notifications/NewDeviceNotification.vue';
+import NewVersionAvailableNotification from '@/components/notifications/NewVersionAvailableNotification.vue';
 import UserJoinWorkspaceNotification from '@/components/notifications/UserJoinWorkspaceNotification.vue';
 import UserSharedDocumentNotification from '@/components/notifications/UserSharedDocumentNotification.vue';
 import WorkspaceAccessNotification from '@/components/notifications/WorkspaceAccessNotification.vue';
@@ -18,4 +19,5 @@ export const Notifications = {
   UserSharedDocumentNotification,
   WorkspaceAccessNotification,
   WorkspaceRoleChangedNotification,
+  NewVersionAvailableNotification,
 };

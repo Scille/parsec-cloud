@@ -17,6 +17,7 @@ export enum InformationDataType {
   UserSharedDocument,
   AllImportedElements,
   NewDevice,
+  NewVersionAvailable,
 }
 
 export interface AbstractInformationData {
@@ -75,6 +76,12 @@ export interface NewDeviceData extends AbstractInformationData {
   type: InformationDataType.NewDevice;
 }
 
+// A new version of the app is available
+export interface NewVersionAvailableData extends AbstractInformationData {
+  type: InformationDataType.NewVersionAvailable;
+  newVersion: string;
+}
+
 export type InformationData =
   | NewWorkspaceAccessData
   | WorkspaceRoleChangedData
@@ -82,7 +89,8 @@ export type InformationData =
   | MultipleUsersJoinWorkspaceData
   | UserSharedDocumentData
   | AllImportedElementsData
-  | NewDeviceData;
+  | NewDeviceData
+  | NewVersionAvailableData;
 
 export enum InformationLevel {
   Info = 'INFO',
@@ -95,6 +103,7 @@ export interface InformationOptions {
   message: Translatable;
   level: InformationLevel;
   data?: InformationData;
+  unique?: boolean;
 }
 
 export class Information {
@@ -102,12 +111,14 @@ export class Information {
   message: Translatable;
   level: InformationLevel;
   data?: InformationData;
+  unique?: boolean;
 
-  constructor({ message, level, data }: InformationOptions) {
+  constructor({ message, level, data, unique }: InformationOptions) {
     this.id = uuid4();
     this.message = message;
     this.level = level;
     this.data = data;
+    this.unique = unique;
   }
 
   get theme(): MsReportTheme {
