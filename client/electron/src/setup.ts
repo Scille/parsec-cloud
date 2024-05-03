@@ -122,7 +122,9 @@ export class ElectronCapacitorApp {
     return this.customScheme;
   }
 
-  updateApp(): void {}
+  updateApp(): void {
+    console.log('In electron update app. Sadly does nothing for now :(');
+  }
 
   // Will evolve with auto-update
   async getUpdateInfo(): Promise<{ updateAvailable: boolean; version?: string }> {

@@ -109,7 +109,7 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
 }
 
 async function update(): Promise<void> {
-  console.log('update');
+  window.electronAPI.updateApp();
 }
 </script>
 

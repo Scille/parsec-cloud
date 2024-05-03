@@ -214,22 +214,32 @@ async function setupApp(): Promise<void> {
   } else {
     window.electronAPI = {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      sendConfig: (_config: Config): void => {},
+      sendConfig: (_config: Config): void => {
+        console.log('Not available.');
+      },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      closeApp: (): void => {},
+      closeApp: (): void => {
+        console.log('Not available.');
+      },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      openFile: (_path: string): void => {},
+      openFile: (_path: string): void => {
+        console.log('Not available.');
+      },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      sendMountpointFolder: (_path: string): void => {},
+      sendMountpointFolder: (_path: string): void => {
+        console.log('Not available.');
+      },
       getUpdateAvailability: (): void => {
         if (needsMocks()) {
           injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '3.1.0' });
         }
       },
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      updateApp: (): void => {},
+      updateApp: (): void => {
+        console.log('Not available.');
+      },
     };
   }
 }
