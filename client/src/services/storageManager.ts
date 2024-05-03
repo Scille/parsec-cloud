@@ -3,17 +3,18 @@
 import { isElectron } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
-import { Locale } from 'megashark-lib';
+import { I18n, Locale, Theme, getSystemTheme } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
+export const ThemeManagerKey = 'themeManager';
 
 export interface StoredDeviceData {
   lastLogin: DateTime;
 }
 
 export interface Config {
-  locale?: Locale;
-  theme: string;
+  locale: Locale;
+  theme: Theme;
   enableTelemetry: boolean;
   minimizeToTray: boolean;
   confirmBeforeQuit: boolean;
@@ -26,10 +27,10 @@ export class StorageManager {
   static STORED_CONFIG_KEY = 'config';
   static STORED_COMPONENT_PREFIX = 'comp';
 
-  // TODO: CHANGE BACK THEME TO SYSTEM WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427
   static get DEFAULT_CONFIG(): Config {
     return {
-      theme: 'light',
+      locale: I18n.getPreferredLocale(),
+      theme: getSystemTheme(),
       enableTelemetry: true,
       minimizeToTray: true,
       confirmBeforeQuit: true,
@@ -148,11 +149,13 @@ export class StorageManager {
       return StorageManager.DEFAULT_CONFIG;
     }
 
+    const currentTheme = Object.values(Theme).find((t) => t === data.theme);
+
     // We could just return directly but we create a new object explicitly
     // so we don't have any implicit deserialization that we don't want
     const config: Config = {
       locale: data.locale ? data.locale : StorageManager.DEFAULT_CONFIG.locale,
-      theme: data.theme ? data.theme : StorageManager.DEFAULT_CONFIG.theme,
+      theme: currentTheme ? currentTheme : StorageManager.DEFAULT_CONFIG.theme,
       enableTelemetry: data.enableTelemetry !== undefined ? data.enableTelemetry : StorageManager.DEFAULT_CONFIG.enableTelemetry,
       minimizeToTray: data.minimizeToTray !== undefined ? data.minimizeToTray : StorageManager.DEFAULT_CONFIG.minimizeToTray,
       confirmBeforeQuit: data.confirmBeforeQuit !== undefined ? data.confirmBeforeQuit : StorageManager.DEFAULT_CONFIG.confirmBeforeQuit,

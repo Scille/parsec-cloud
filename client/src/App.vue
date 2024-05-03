@@ -7,18 +7,11 @@
 </template>
 
 <script setup lang="ts">
-import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { toggleDarkMode } from '@/states/darkMode';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { IonApp, IonRouterOutlet } from '@ionic/vue';
-import { inject, onMounted } from 'vue';
-
-const storageManager: StorageManager = inject(StorageManagerKey)!;
+import { onMounted } from 'vue';
 
 onMounted(async (): Promise<void> => {
   SplashScreen.hide();
-
-  const config = await storageManager.retrieveConfig();
-  toggleDarkMode(config.theme);
 });
 </script>
