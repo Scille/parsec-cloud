@@ -11,6 +11,7 @@ use super::utils::workspace_ops_factory;
 enum RemoteModification {
     Nothing,
     Overwritten,
+    ReParented,
 }
 
 enum LocalModification {
@@ -26,6 +27,7 @@ async fn non_placeholder(
     #[values(
         RemoteModification::Nothing,
         RemoteModification::Overwritten,
+        RemoteModification::ReParented,
         // TODO: New vlob contains corrupted data
         // TODO: New vlob contains a folder manifest instead of the expected file
     )]
@@ -45,6 +47,9 @@ async fn non_placeholder(
         (
             LocalModification::Conflicting | LocalModification::ConflictingAndNameClash,
             RemoteModification::Nothing
+        ) | (
+            LocalModification::ConflictingAndNameClash,
+            RemoteModification::ReParented
         )
     ) {
         // Meaningless case, just skip it
@@ -53,6 +58,8 @@ async fn non_placeholder(
 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     // 1) Customize testbed
 
@@ -81,17 +88,43 @@ async fn non_placeholder(
                         manifest.size = block_data.len() as u64;
                         manifest.blocks.push(BlockAccess {
                             id: wksp1_bar_txt_new_block_id,
-                            key: None,
                             offset: 0,
                             size: manifest.size.try_into().unwrap(),
                             digest: HashDigest::from_data(block_data),
                         });
                     });
             }
+            RemoteModification::ReParented => {
+                builder
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.manifest);
+                        manifest
+                            .children
+                            .insert("bar.txt".parse().unwrap(), wksp1_bar_txt_id);
+                    });
+                builder
+                    .create_or_update_file_manifest_vlob(
+                        "alice@dev2",
+                        wksp1_id,
+                        wksp1_bar_txt_id,
+                        None,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.manifest);
+                        manifest.parent = wksp1_foo_id;
+                    });
+            }
         };
 
         match (&local_modification, &remote_modification) {
             (LocalModification::Nothing, _) => (),
+
             (
                 LocalModification::Conflicting | LocalModification::ConflictingAndNameClash,
                 RemoteModification::Overwritten,
@@ -148,10 +181,39 @@ async fn non_placeholder(
                         });
                 }
             }
+
+            (LocalModification::Conflicting, RemoteModification::ReParented) => {
+                builder
+                    .workspace_data_storage_local_folder_manifest_create_or_update(
+                        "alice@dev1",
+                        wksp1_id,
+                        wksp1_foo_spam_id,
+                        None,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.local_manifest);
+                        manifest
+                            .children
+                            .insert("bar.txt".parse().unwrap(), wksp1_bar_txt_id);
+                    });
+                builder
+                    .workspace_data_storage_local_file_manifest_create_or_update(
+                        "alice@dev1",
+                        wksp1_id,
+                        wksp1_bar_txt_id,
+                        None,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.local_manifest);
+                        manifest.parent = wksp1_foo_spam_id;
+                    });
+            }
+
             (
                 LocalModification::Conflicting | LocalModification::ConflictingAndNameClash,
                 RemoteModification::Nothing,
-            ) => {
+            )
+            | (LocalModification::ConflictingAndNameClash, RemoteModification::ReParented) => {
                 unreachable!()
             }
         }
@@ -180,7 +242,7 @@ async fn non_placeholder(
 
     let before_sync_bar_txt_manifest = match wksp1_ops
         .store
-        .get_child_manifest(wksp1_bar_txt_id)
+        .get_manifest(wksp1_bar_txt_id)
         .await
         .unwrap()
     {
@@ -238,7 +300,7 @@ async fn non_placeholder(
     wksp1_ops.inbound_sync(wksp1_bar_txt_id).await.unwrap();
     let bar_txt_manifest = match wksp1_ops
         .store
-        .get_child_manifest(wksp1_bar_txt_id)
+        .get_manifest(wksp1_bar_txt_id)
         .await
         .unwrap()
     {
@@ -254,7 +316,7 @@ async fn non_placeholder(
     p_assert_eq!(bar_txt_manifest.base, *wksp1_bar_txt_last_remote_manifest);
     p_assert_eq!(bar_txt_manifest.need_sync, false);
 
-    let parent_manifest = wksp1_ops.store.get_workspace_manifest();
+    let parent_manifest = wksp1_ops.store.get_root_manifest();
     p_assert_eq!(
         *parent_manifest
             .children
@@ -269,24 +331,21 @@ async fn non_placeholder(
             .get(&"bar (2).txt".parse().unwrap())
             .unwrap();
         p_assert_ne!(conflicted_id, wksp1_bar_txt_id);
-        let conflicted_manifest = match wksp1_ops
-            .store
-            .get_child_manifest(conflicted_id)
-            .await
-            .unwrap()
-        {
+        let conflicted_manifest = match wksp1_ops.store.get_manifest(conflicted_id).await.unwrap() {
             ArcLocalChildManifest::File(manifest) => manifest,
             ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {:?}", manifest),
         };
 
         let LocalFileManifest {
             base,
+            parent,
             need_sync,
             updated,
             size,
             blocksize,
             blocks,
         } = conflicted_manifest.as_ref();
+        p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
         p_assert_eq!(*updated, before_sync_bar_txt_manifest.updated);
         p_assert_eq!(*size, before_sync_bar_txt_manifest.size);
@@ -329,24 +388,21 @@ async fn non_placeholder(
             .unwrap();
         p_assert_ne!(conflicted_id, wksp1_bar_txt_id);
         p_assert_ne!(conflicted_id, wksp1_bar2_txt_id);
-        let conflicted_manifest = match wksp1_ops
-            .store
-            .get_child_manifest(conflicted_id)
-            .await
-            .unwrap()
-        {
+        let conflicted_manifest = match wksp1_ops.store.get_manifest(conflicted_id).await.unwrap() {
             ArcLocalChildManifest::File(manifest) => manifest,
             ArcLocalChildManifest::Folder(manifest) => panic!("Expected file, got {:?}", manifest),
         };
 
         let LocalFileManifest {
             base,
+            parent,
             need_sync,
             updated,
             size,
             blocksize,
             blocks,
         } = conflicted_manifest.as_ref();
+        p_assert_eq!(*parent, before_sync_bar_txt_manifest.parent);
         p_assert_eq!(*need_sync, before_sync_bar_txt_manifest.need_sync);
         p_assert_eq!(*updated, before_sync_bar_txt_manifest.updated);
         p_assert_eq!(*size, before_sync_bar_txt_manifest.size);
@@ -377,3 +433,4 @@ async fn non_placeholder(
 }
 
 // TODO: test inbound sync on an opened file: the sync should be rejected
+// TODO: test sync with parent field changing and conflict

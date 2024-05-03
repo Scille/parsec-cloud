@@ -235,3 +235,4 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
 
 // TODO: test with placeholder folder manifest
 // TODO: test `OutboundSyncOutcome::EntryIsBusy`
+// TODO: test sync with parent field changing and conflict

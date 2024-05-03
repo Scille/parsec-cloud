@@ -1,11 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::merge::merge_local_folder_manifests;
+use crate::workspace::merge::{merge_local_folder_manifest, MergeLocalFolderManifestOutcome};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_remote_change(
@@ -57,8 +58,8 @@ async fn no_remote_change(
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
-    let outcome = merge_local_folder_manifests(&local_author, timestamp, &local, remote);
-    p_assert_eq!(outcome, None);
+    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    p_assert_eq!(outcome, MergeLocalFolderManifestOutcome::NoChange);
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -117,8 +118,11 @@ async fn remote_only_change(env: &TestbedEnv) {
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
-    let outcome = merge_local_folder_manifests(&local_author, timestamp, &local, remote);
-    p_assert_eq!(outcome, Some(expected));
+    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    p_assert_eq!(
+        outcome,
+        MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
+    );
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -156,13 +160,13 @@ async fn local_and_remote_changes(
     };
     let mut local = LocalFolderManifest {
         base: remote.clone(),
-        parent: parent_id,
+        speculative: false,
         need_sync: false,
-        updated: "2021-01-02T00:00:00Z".parse().unwrap(),
-        children: HashMap::new(),
+        updated: remote.updated,
+        parent: remote.parent,
+        children: remote.children.clone(),
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
-        speculative: false,
     };
 
     let expected = match kind {
@@ -431,6 +435,11 @@ async fn local_and_remote_changes(
         unknown => panic!("Unknown kind: {}", unknown),
     };
 
-    let outcome = merge_local_folder_manifests(&local_author, timestamp, &local, remote);
-    p_assert_eq!(outcome, Some(expected));
+    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    p_assert_eq!(
+        outcome,
+        MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
+    );
 }
+
+// TODO: test prevent sync pattern !

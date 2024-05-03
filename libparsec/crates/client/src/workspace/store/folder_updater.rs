@@ -46,47 +46,40 @@ pub(super) async fn for_update_folder(
 ) -> Result<(FolderUpdater<'_>, Arc<LocalFolderManifest>), ForUpdateFolderError> {
     // Guard's drop will panic if the lock is not released
     macro_rules! release_guard_on_error {
-        ($entry_guard:expr) => {
+        ($update_guard:expr) => {
             let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
-            cache_guard.lock_update_manifests.release($entry_guard);
+            cache_guard.lock_update_manifests.release($update_guard);
         };
     }
 
     // Step 1, 2 and 3 are about retrieving the manifest and locking it for update
 
     let mut maybe_need_wait = None;
-    let (entry_guard, manifest) = loop {
+    let (update_guard, manifest) = loop {
         if let Some(listener) = maybe_need_wait {
             listener.await;
         }
 
-        let entry_guard = {
+        let update_guard = {
             let mut cache_guard = store.current_view_cache.lock().expect("Mutex is poisoned");
 
             // 1) Lock for update
 
             let outcome = cache_guard.lock_update_manifests.take(entry_id);
             match outcome {
-                ManifestUpdateLockTakeOutcome::Taken(entry_guard) => {
-                    // 2a) Special case if the entry to modify is the root dir...
+                ManifestUpdateLockTakeOutcome::Taken(update_guard) => {
+                    // 2) Cache lookup for entry...
 
-                    if entry_id == store.realm_id {
-                        break (
-                            entry_guard,
-                            ArcLocalChildManifest::Folder(cache_guard.root_manifest.clone()),
-                        );
-                    }
-
-                    // 2b) Non-root dir requires cache lookup...
-
-                    let found = cache_guard.child_manifests.get(&entry_id);
+                    let found = cache_guard.manifests.get(&entry_id);
                     if let Some(manifest) = found {
-                        // Cache hit ! We go to step 3.
-                        break (entry_guard, manifest.clone());
+                        // Cache hit ! We go to step 4.
+                        break (update_guard, manifest.clone());
                     }
-                    // The entry is not in cache, from there we release the cache
-                    // lock and jump to step 2.
-                    entry_guard
+                    // The entry is not in cache, go to step 3 for a lookup in the local storage.
+                    // Note we keep the update lock: this has no impact on read operation, and
+                    // any other write operation taking the lock will have no choice but to try
+                    // to populate the cache just like we are going to do.
+                    update_guard
                 }
 
                 ManifestUpdateLockTakeOutcome::NeedWait(listener) => {
@@ -95,6 +88,8 @@ pub(super) async fn for_update_folder(
                 }
             }
         };
+
+        // Be careful here: `update_guard` must be manually released in case of error !
 
         // 3) ...and, in case of cache miss, fetch from local storage or server
 
@@ -126,9 +121,9 @@ pub(super) async fn for_update_folder(
             });
 
         match outcome {
-            Ok(manifest) => break (entry_guard, manifest),
+            Ok(manifest) => break (update_guard, manifest),
             Err(err) => {
-                release_guard_on_error!(entry_guard);
+                release_guard_on_error!(update_guard);
                 return Err(err);
             }
         }
@@ -139,20 +134,20 @@ pub(super) async fn for_update_folder(
     let manifest = match manifest {
         ArcLocalChildManifest::Folder(manifest) => manifest,
         ArcLocalChildManifest::File(_) => {
-            release_guard_on_error!(entry_guard);
+            release_guard_on_error!(update_guard);
             return Err(ForUpdateFolderError::EntryNotAFolder);
         }
     };
 
     let updater = FolderUpdater {
         store,
-        update_guard: Some(entry_guard),
+        update_guard: Some(update_guard),
     };
 
     Ok((updater, manifest))
 }
 
-pub async fn resolve_path_for_update_folder_manifest<'a>(
+pub async fn resolve_path_for_update_folder<'a>(
     store: &'a super::WorkspaceStore,
     path: &FsPath,
 ) -> Result<
@@ -229,13 +224,9 @@ impl<'a> FolderUpdater<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                if manifest.base.id == self.store.realm_id {
-                    cache.root_manifest = manifest;
-                } else {
-                    cache
-                        .child_manifests
-                        .insert(manifest.base.id, ArcLocalChildManifest::Folder(manifest));
-                }
+                cache
+                    .manifests
+                    .insert(ArcLocalChildManifest::Folder(manifest));
             }
 
             Some(new_child) => {
@@ -253,7 +244,6 @@ impl<'a> FolderUpdater<'a> {
                         encrypted: new_child.dump_and_encrypt(&self.store.device.local_symkey),
                     },
                 };
-                let new_child_id = new_child_update_data.entry_id;
                 storage
                     .update_manifests([update_data, new_child_update_data].into_iter())
                     .await?;
@@ -264,14 +254,10 @@ impl<'a> FolderUpdater<'a> {
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned");
-                if manifest.base.id == self.store.realm_id {
-                    cache.root_manifest = manifest;
-                } else {
-                    cache
-                        .child_manifests
-                        .insert(manifest.base.id, ArcLocalChildManifest::Folder(manifest));
-                }
-                cache.child_manifests.insert(new_child_id, new_child);
+                cache
+                    .manifests
+                    .insert(ArcLocalChildManifest::Folder(manifest));
+                cache.manifests.insert(new_child);
             }
         }
 

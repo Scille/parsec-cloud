@@ -78,6 +78,23 @@ fn entry_name_debug() {
 }
 
 #[rstest]
+#[case::no_extension("foo", "foo", None)]
+#[case::with_extension("foo.txt", "foo", Some("txt"))]
+#[case::with_multiple_extensions("foo.tar.gz", "foo", Some("tar.gz"))]
+#[case::unix_hidden_no_extension(".foo", ".foo", None)]
+#[case::unix_hidden_with_extension(".foo.txt", ".foo", Some("txt"))]
+#[case::double_leading_dot("..foo.txt", ".", Some(".foo.txt"))]
+fn entry_name_extension(#[case] raw_path: &str, #[case] expected_base: &str, #[case] expected_extension: Option<&str>) {
+    let path: EntryName = raw_path.parse().unwrap();
+
+    let (base, extension) = path.base_and_extension();
+    p_assert_eq!(extension, expected_extension);
+    p_assert_eq!(base, expected_base);
+
+    p_assert_eq!(path.extension(), expected_extension);
+}
+
+#[rstest]
 #[case("/", "/", None, true, "/", &[])]
 #[case("/a", "/a", Some("a"), false, "/", &["a"])]
 #[case("/a/b", "/a/b", Some("b"), false, "/a", &["a", "b"])]

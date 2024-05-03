@@ -98,8 +98,11 @@ pub(super) async fn force_reshape_and_flush(
         .update_file_manifest_and_continue(
             &ops.store,
             opened_file.manifest.clone(),
-            &opened_file.new_chunks,
-            &opened_file.removed_chunks,
+            opened_file
+                .new_chunks
+                .iter()
+                .map(|(id, data)| (*id, data.as_ref())),
+            opened_file.removed_chunks.iter().cloned(),
         )
         .await
         .map_err(|err| match err {

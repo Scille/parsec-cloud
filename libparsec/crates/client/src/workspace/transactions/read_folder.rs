@@ -143,10 +143,10 @@ impl FolderReader {
             return Ok(FolderReaderStatNextOutcome::InvalidChild);
         }
 
-        return Ok(FolderReaderStatNextOutcome::Entry {
+        Ok(FolderReaderStatNextOutcome::Entry {
             name: child_name,
             stat: child_stat,
-        });
+        })
     }
 
     // /// Needed by WinFSP

@@ -231,7 +231,8 @@ fn cache_only_path_resolution(
                         };
                     }
                     StepKind::Root => {
-                        let manifest = ArcLocalChildManifest::Folder(cache.root_manifest.clone());
+                        let manifest =
+                            ArcLocalChildManifest::Folder(cache.manifests.root_manifest().clone());
                         let confinement = PathConfinementPoint::None;
                         return CacheOnlyPathResolutionOutcome::Done {
                             manifest,
@@ -244,7 +245,7 @@ fn cache_only_path_resolution(
         };
 
         let (parent_manifest, parent_confinement) = match &last_step {
-            StepKind::Root => (&cache.root_manifest, PathConfinementPoint::None),
+            StepKind::Root => (cache.manifests.root_manifest(), PathConfinementPoint::None),
             StepKind::Child {
                 manifest,
                 confinement,
@@ -263,7 +264,7 @@ fn cache_only_path_resolution(
             None => return CacheOnlyPathResolutionOutcome::EntryNotFound,
         };
 
-        let child_manifest = match cache.child_manifests.get(&child_id) {
+        let child_manifest = match cache.manifests.get(&child_id) {
             Some(manifest) => manifest.to_owned(),
             // Cache miss !
             // `part_index` is not incremented here, so we are going to
@@ -368,7 +369,7 @@ pub(crate) async fn resolve_path_for_reparenting(
     loop {
         // On top of path resolution, the key part of this function is to atomically
         // lock three update guards.
-        // However it is easy to mess up the logic that release what has been locked
+        // However it is easy to mess up the logic that releases what has been locked
         // so far in case a subsequent lock cannot be achieved for now (e.g. because
         // of cache miss or lock already held by another coroutine).
         // Hence this `AutoReleaseGuards` structure whose drop makes sure the locks
@@ -390,6 +391,9 @@ pub(crate) async fn resolve_path_for_reparenting(
                     self.cache.lock_update_manifests.release(guard);
                 }
                 if let Some(guard) = self.dst_parent_guard.take() {
+                    self.cache.lock_update_manifests.release(guard);
+                }
+                if let Some(guard) = self.dst_child_guard.take() {
                     self.cache.lock_update_manifests.release(guard);
                 }
             }
@@ -449,7 +453,7 @@ pub(crate) async fn resolve_path_for_reparenting(
 
             let src_parent_resolution_outcome = cache_only_path_resolution(
                 store,
-                &mut auto_release_guards.cache,
+                auto_release_guards.cache,
                 src_parent_path_parts,
                 true,
             );
@@ -481,13 +485,13 @@ pub(crate) async fn resolve_path_for_reparenting(
             // 3) Resolve the source child path and lock for update
 
             let src_child_manifest = {
-                let src_child_id = match src_parent_manifest.children.get(&src_child_name) {
+                let src_child_id = match src_parent_manifest.children.get(src_child_name) {
                     Some(src_child_id) => *src_child_id,
                     None => return Err(ResolvePathForReparentingError::SourceNotFound),
                 };
 
                 let src_child_manifest =
-                    match auto_release_guards.cache.child_manifests.get(&src_child_id) {
+                    match auto_release_guards.cache.manifests.get(&src_child_id) {
                         Some(manifest) => manifest.to_owned(),
                         // Cache miss !
                         None => {
@@ -525,13 +529,13 @@ pub(crate) async fn resolve_path_for_reparenting(
             // 4) Resolve the destination child path and lock for update
 
             let dst_child_manifest = if let Some(dst_child_name) = dst_child_name {
-                let dst_child_id = match dst_parent_manifest.children.get(&dst_child_name) {
+                let dst_child_id = match dst_parent_manifest.children.get(dst_child_name) {
                     Some(dst_child_id) => *dst_child_id,
                     None => return Err(ResolvePathForReparentingError::DestinationNotFound),
                 };
 
                 let dst_child_manifest =
-                    match auto_release_guards.cache.child_manifests.get(&dst_child_id) {
+                    match auto_release_guards.cache.manifests.get(&dst_child_id) {
                         Some(manifest) => manifest.to_owned(),
                         // Cache miss !
                         None => {
@@ -568,7 +572,7 @@ pub(crate) async fn resolve_path_for_reparenting(
                 None
             };
 
-            // 5) All done, we defuse the auto release system to return it guards
+            // 5) All done, we defuse the auto release system to return its guards
 
             return Ok(ResolvePathForReparenting {
                 src_parent_update_lock_guard: auto_release_guards
