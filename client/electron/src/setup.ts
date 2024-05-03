@@ -97,6 +97,12 @@ export class ElectronCapacitorApp {
       directory: join(app.getAppPath(), 'app'),
       scheme: this.customScheme,
     });
+
+    // Check periodically if an update is available
+    setInterval(async () => {
+      const updateInfo = await this.getUpdateInfo();
+      this.sendEvent(WindowToPageChannel.UpdateAvailability, updateInfo.updateAvailable, updateInfo.version);
+    }, 600000); // 10min
   }
 
   // Helper function to load in the app.

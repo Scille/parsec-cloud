@@ -22,7 +22,7 @@
         "expiredOrganization": "This organization has expired. Please contact an administrator."
     },
     "formatter": {
-        "version": "v{version} "
+        "version": "(v{version})"
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
@@ -68,7 +68,9 @@
         "viewJoinedUsers": "View users",
         "goToDevices": "Go to my devices",
         "openEnclosingFolder": "Open enclosing folder",
-        "noNotification": "You are up to date!"
+        "noNotification": "You are up to date!",
+        "update": "Update",
+        "newVersionAvailable": "A new version is available"
     },
     "invitationList": {
         "title": "Invitations",

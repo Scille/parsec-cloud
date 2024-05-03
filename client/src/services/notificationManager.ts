@@ -10,6 +10,7 @@ export class Notification {
   information: Information;
   time: DateTime;
   read: boolean;
+
   constructor(information: Information) {
     this.information = information;
     this.time = DateTime.now();
@@ -35,6 +36,18 @@ export class NotificationManager {
   }
 
   add(information: Information): void {
+    // Some notification should only be shown once
+    if (information.unique) {
+      const existing = this.notifications.value.find((notif) => {
+        if (notif.information.data && information.data && notif.information.data.type === information.data.type) {
+          return true;
+        }
+        return false;
+      });
+      if (existing) {
+        return;
+      }
+    }
     const notification = new Notification(information);
     this.notifications.value.unshift(notification);
   }

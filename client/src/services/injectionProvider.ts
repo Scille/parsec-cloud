@@ -3,7 +3,7 @@
 import { ConnectionHandle, needsMocks } from '@/parsec';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
 import { ImportManager } from '@/services/importManager';
-import { InformationManager } from '@/services/informationManager';
+import { Information, InformationManager } from '@/services/informationManager';
 
 interface Injections {
   importManager: ImportManager;
@@ -64,6 +64,12 @@ export class InjectionProvider {
   async distributeEventToAll(event: Events, data: EventData): Promise<void> {
     for (const injections of this.injections.values()) {
       await injections.eventDistributor.dispatchEvent(event, data);
+    }
+  }
+
+  async notifyAll(info: Information, mode: number): Promise<void> {
+    for (const injections of this.injections.values()) {
+      await injections.informationManager.present(info, mode);
     }
   }
 
