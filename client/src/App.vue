@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { toggleDarkMode } from '@/states/darkMode';
+import { toggleDarkMode } from 'megashark-lib';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { IonApp, IonRouterOutlet } from '@ionic/vue';
 import { inject, onMounted } from 'vue';
