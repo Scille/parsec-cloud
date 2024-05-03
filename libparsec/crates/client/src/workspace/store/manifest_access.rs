@@ -35,10 +35,7 @@ pub(super) async fn get_manifest(
     // Fast path: cache lookup
     {
         let cache = store.current_view_cache.lock().expect("Mutex is poisoned");
-        if store.realm_id == entry_id {
-            return Ok(ArcLocalChildManifest::Folder(cache.root_manifest.clone()));
-        }
-        if let Some(manifest) = cache.child_manifests.get(&entry_id) {
+        if let Some(manifest) = cache.manifests.get(&entry_id) {
             return Ok(manifest.clone());
         }
     }

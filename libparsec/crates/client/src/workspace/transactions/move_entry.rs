@@ -158,7 +158,7 @@ pub(crate) async fn move_entry(
     if src_parent_path == dst_parent_path {
         let (parent_manifest, _, parent_updater) = ops
             .store
-            .resolve_path_for_update_folder_manifest(&src_parent_path)
+            .resolve_path_for_update_folder(&src_parent_path)
             .await
             .map_err(|err| match err {
                 ForUpdateFolderError::Offline => WorkspaceMoveEntryError::Offline,

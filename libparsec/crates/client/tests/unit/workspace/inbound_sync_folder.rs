@@ -390,3 +390,5 @@ async fn non_placeholder(
 
     wksp1_ops.stop().await.unwrap();
 }
+
+// TODO: test sync with parent field changing and conflict

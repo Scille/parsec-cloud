@@ -177,7 +177,7 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
                 updated: now,
                 children: Default::default(),
             };
-            manifest.dump_sign_and_encrypt(&alice.signing_key, &realm_last_key)
+            manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key)
         }
         unknown => panic!("Unknown kind {}", unknown),
     };

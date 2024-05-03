@@ -312,11 +312,10 @@ impl LocalFileManifest {
     }
 
     pub fn from_remote(remote: FileManifest) -> Self {
-        let base = remote.clone();
         let chunks: Vec<Chunk> = remote
             .blocks
-            .into_iter()
-            .map(Chunk::from_block_access)
+            .iter()
+            .map(|access| Chunk::from_block_access(access.to_owned()))
             .collect();
 
         let mut blocks = vec![];
@@ -329,13 +328,13 @@ impl LocalFileManifest {
         }
 
         let manifest = Self {
-            base,
             parent: remote.parent,
             need_sync: false,
             updated: remote.updated,
             size: remote.size,
             blocksize: remote.blocksize,
             blocks,
+            base: remote,
         };
         // TODO: use proper error handling
         manifest.assert_integrity();
@@ -352,7 +351,10 @@ impl LocalFileManifest {
         let blocks = self
             .blocks
             .iter()
+            // In local manifest each blocksize area is represented by a list of chunks,
+            // on the other hand the remote manifest only store the non-empty list of chunks
             .filter(|chunks| !chunks.is_empty())
+            // Remote manifest is only composed of reshaped blocks
             .map(|chunks| chunks[0].get_block_access())
             .collect::<Result<Vec<_>, _>>()
             .map_err(|_| "Need reshape")?
@@ -372,16 +374,6 @@ impl LocalFileManifest {
             blocksize: self.blocksize,
             blocks,
         })
-    }
-
-    pub fn match_remote(&self, remote_manifest: &FileManifest) -> bool {
-        let mut reference =
-            match self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp) {
-                Ok(reference) => reference,
-                _ => return false,
-            };
-        reference.version = remote_manifest.version;
-        reference == *remote_manifest
     }
 
     pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) -> Result<Vec<Chunk>, u64> {
@@ -642,29 +634,22 @@ impl LocalFolderManifest {
     ) -> Self {
         let result = self.clone();
         result
-            // Filter local confinement points
             .filter_local_confinement_points()
-            // Restore remote confinement points
             .restore_remote_confinement_points()
-            // Filter remote confinement_points
             .filter_remote_entries(prevent_sync_pattern)
-            // Restore local confinement points
             .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
     }
 
     pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: Option<&Regex>) -> Self {
-        let updated = remote.updated;
-        let children = remote.children.clone();
-
         Self {
             parent: remote.parent,
-            base: remote,
             need_sync: false,
-            updated,
-            children,
+            updated: remote.updated,
+            children: remote.children.clone(),
             local_confinement_points: HashSet::new(),
             remote_confinement_points: HashSet::new(),
             speculative: false,
+            base: remote,
         }
         .filter_remote_entries(prevent_sync_pattern)
     }
@@ -685,9 +670,7 @@ impl LocalFolderManifest {
     pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
         let result = self
             .clone()
-            // Filter confined entries
             .filter_local_confinement_points()
-            // Restore filtered entries
             .restore_remote_confinement_points();
         // Create remote manifest
         FolderManifest {
@@ -700,13 +683,6 @@ impl LocalFolderManifest {
             updated: result.updated,
             children: result.children,
         }
-    }
-
-    pub fn match_remote(&self, remote_manifest: &FolderManifest) -> bool {
-        let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
-        reference.version = remote_manifest.version;
-        reference == *remote_manifest
     }
 }
 
@@ -786,14 +762,12 @@ impl LocalUserManifest {
     }
 
     pub fn from_remote(remote: UserManifest) -> Self {
-        let base = remote.clone();
-
         Self {
-            base,
             need_sync: false,
             updated: remote.updated,
             local_workspaces: vec![],
             speculative: false,
+            base: remote,
         }
     }
 
@@ -806,13 +780,6 @@ impl LocalUserManifest {
             created: self.base.created,
             updated: self.updated,
         }
-    }
-
-    pub fn match_remote(&self, remote_manifest: &UserManifest) -> bool {
-        let mut reference =
-            self.to_remote(remote_manifest.author.clone(), remote_manifest.timestamp);
-        reference.version = remote_manifest.version;
-        reference == *remote_manifest
     }
 }
 

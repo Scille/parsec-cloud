@@ -868,72 +868,6 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
 }
 
 #[rstest]
-fn local_file_manifest_match_remote(timestamp: DateTime) {
-    let fm = FileManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        parent: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        size: 1,
-        blocksize: Blocksize::try_from(512).unwrap(),
-        blocks: vec![BlockAccess {
-            id: BlockID::default(),
-            offset: 0,
-            size: NonZeroU64::try_from(1).unwrap(),
-            digest: HashDigest::from_data(&[]),
-        }],
-    };
-
-    let lfm = LocalFileManifest {
-        base: fm.clone(),
-        parent: fm.parent,
-        need_sync: false,
-        updated: timestamp,
-        size: fm.size,
-        blocksize: fm.blocksize,
-        blocks: vec![vec![Chunk {
-            id: ChunkID::default(),
-            start: 0,
-            stop: NonZeroU64::try_from(1).unwrap(),
-            raw_offset: 0,
-            raw_size: NonZeroU64::try_from(1).unwrap(),
-            access: Some(fm.blocks[0].clone()),
-        }]],
-    };
-
-    assert!(lfm.match_remote(&fm));
-
-    {
-        let mut lfm = lfm.clone();
-        lfm.parent = VlobID::default();
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.updated = fm.updated.add_us(1);
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.size = fm.size + 1;
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.blocksize = (*fm.blocksize + 1).try_into().unwrap();
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.blocks[0][0].raw_size = lfm.blocks[0][0].raw_size.checked_add(1).unwrap();
-        assert!(!lfm.match_remote(&fm));
-    }
-}
-
-#[rstest]
 fn local_folder_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = VlobID::default();
@@ -1161,50 +1095,6 @@ fn local_folder_manifest_to_remote(timestamp: DateTime) {
 }
 
 #[rstest]
-fn local_folder_manifest_match_remote(timestamp: DateTime) {
-    let fm = FolderManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        parent: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-        children: HashMap::new(),
-    };
-
-    let lfm = LocalFolderManifest {
-        base: fm.clone(),
-        parent: fm.parent,
-        need_sync: false,
-        updated: timestamp,
-        children: HashMap::new(),
-        local_confinement_points: HashSet::new(),
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
-    };
-
-    assert!(lfm.match_remote(&fm));
-
-    {
-        let mut lfm = lfm.clone();
-        lfm.parent = VlobID::default();
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.updated = fm.updated.add_us(1);
-        assert!(!lfm.match_remote(&fm));
-    }
-    {
-        let mut lfm = lfm.clone();
-        lfm.children
-            .insert("foo".parse().unwrap(), VlobID::default());
-        assert!(!lfm.match_remote(&fm));
-    }
-}
-
-#[rstest]
 #[case::empty(HashMap::new(), HashMap::new(), HashMap::new(), 0, false, "")]
 #[case::no_data(
     HashMap::new(),
@@ -1370,34 +1260,6 @@ fn local_user_manifest_to_remote(timestamp: DateTime) {
     p_assert_eq!(um.version, lum.base.version + 1);
     p_assert_eq!(um.created, lum.base.created);
     p_assert_eq!(um.updated, lum.updated);
-}
-
-#[rstest]
-fn local_user_manifest_match_remote(timestamp: DateTime) {
-    let um = UserManifest {
-        author: DeviceID::default(),
-        timestamp,
-        id: VlobID::default(),
-        version: 0,
-        created: timestamp,
-        updated: timestamp,
-    };
-
-    let lum = LocalUserManifest {
-        base: um.clone(),
-        need_sync: false,
-        updated: timestamp,
-        local_workspaces: vec![],
-        speculative: false,
-    };
-
-    assert!(lum.match_remote(&um));
-
-    {
-        let mut lum = lum.clone();
-        lum.updated = um.updated.add_us(1);
-        assert!(!lum.match_remote(&um));
-    }
 }
 
 #[rstest]

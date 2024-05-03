@@ -7,7 +7,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::OutboundSyncOutcome;
+use crate::workspace::{MoveEntryMode, OutboundSyncOutcome};
 
 enum Modification {
     Create,
@@ -29,7 +29,7 @@ async fn non_placeholder(
     let get_folder_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
         async move {
-            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
+            let child_manifest = wksp1_ops.store.get_manifest(entry_id).await.unwrap();
             match child_manifest {
                 ArcLocalChildManifest::File(m) => panic!("Expected folder, got {:?}", m),
                 ArcLocalChildManifest::Folder(m) => m,
@@ -66,10 +66,10 @@ async fn non_placeholder(
         }
         Modification::Rename => {
             wksp1_ops
-                .rename_entry(
+                .move_entry(
                     "/foo/spam".parse().unwrap(),
-                    "spam_renamed".parse().unwrap(),
-                    false,
+                    "/foo/spam_renamed".parse().unwrap(),
+                    MoveEntryMode::NoReplace,
                 )
                 .await
                 .unwrap();
@@ -147,7 +147,7 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     let get_folder_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
         async move {
-            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
+            let child_manifest = wksp1_ops.store.get_manifest(entry_id).await.unwrap();
             match child_manifest {
                 ArcLocalChildManifest::File(m) => panic!("Expected folder, got {:?}", m),
                 ArcLocalChildManifest::Folder(m) => m,
@@ -158,10 +158,10 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     // Modify the folder to require a sync
 
     wksp1_ops
-        .rename_entry(
+        .move_entry(
             "/foo/spam".parse().unwrap(),
-            "spam_renamed".parse().unwrap(),
-            false,
+            "/foo/spam_renamed".parse().unwrap(),
+            MoveEntryMode::NoReplace,
         )
         .await
         .unwrap();
@@ -209,3 +209,4 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
 
 // TODO: test with placeholder folder manifest
 // TODO: test `OutboundSyncOutcome::EntryIsBusy`
+// TODO: test sync with parent field changing and conflict
