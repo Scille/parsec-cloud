@@ -831,7 +831,9 @@
             "titleRemove": "Deletion",
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user | Revoke these users",
-            "actionDetails": "View details"
+            "actionDetails": "View details",
+            "titleAssignRoles": "Workspace roles",
+            "actionAssignRoles": "Assign workspace roles to someone else"
         },
         "greet": {
             "titles": {
@@ -945,6 +947,17 @@
             "admin": "Administrator",
             "standard": "Standard",
             "outsider": "Outsider"
+        },
+        "assignRoles": {
+            "title": "Copy workspace roles",
+            "okButton": "Copy roles",
+            "assignSuccess": "All roles from {sourceUser} have been transfered to {targetUser}.",
+            "assignSomeFailed": "Some roles could not be transferred.",
+            "assignAllFailed": "Could not transfer the roles.",
+            "processing": "Processing the changes to be made...",
+            "noRoles": "No new roles to transfer to {user}.",
+            "close": "Close",
+            "update": "Update"
         }
     },
     "AboutPage": {
@@ -1070,5 +1083,11 @@
                 "description": "Your password must be secure and you must remember it. We advise you to create several devices if possible and to share workspaces."
             }
         }
+    },
+    "UserSelect": {
+        "defaultLabel": "Choose a person",
+        "defaultPlaceholder": "Name or email of the person",
+        "noMatch": "No users matching this query were found.",
+        "queryFailed": "An error prevents us from listing the users."
     }
 }

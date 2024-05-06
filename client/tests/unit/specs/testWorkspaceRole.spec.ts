@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { canChangeRole } from '@/components/workspaces/utils';
+import { canChangeRole, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import { UserProfile, WorkspaceRole } from '@/parsec';
 import { I18n } from 'megashark-lib';
 import { it } from 'vitest';
@@ -137,5 +137,26 @@ describe('Workspace role', () => {
   ])('test workspace role can change (%#)', (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
     expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).authorized).to.equal(expected);
     expect(I18n.translate(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason)).to.equal(reason);
+  });
+
+  it.each([
+    [WorkspaceRole.Owner, WorkspaceRole.Owner, 0],
+    [WorkspaceRole.Owner, WorkspaceRole.Manager, 1],
+    [WorkspaceRole.Owner, WorkspaceRole.Contributor, 1],
+    [WorkspaceRole.Owner, WorkspaceRole.Reader, 1],
+    [WorkspaceRole.Manager, WorkspaceRole.Owner, -1],
+    [WorkspaceRole.Manager, WorkspaceRole.Manager, 0],
+    [WorkspaceRole.Manager, WorkspaceRole.Contributor, 1],
+    [WorkspaceRole.Manager, WorkspaceRole.Reader, 1],
+    [WorkspaceRole.Contributor, WorkspaceRole.Owner, -1],
+    [WorkspaceRole.Contributor, WorkspaceRole.Manager, -1],
+    [WorkspaceRole.Contributor, WorkspaceRole.Contributor, 0],
+    [WorkspaceRole.Contributor, WorkspaceRole.Reader, 1],
+    [WorkspaceRole.Reader, WorkspaceRole.Owner, -1],
+    [WorkspaceRole.Reader, WorkspaceRole.Manager, -1],
+    [WorkspaceRole.Reader, WorkspaceRole.Contributor, -1],
+    [WorkspaceRole.Reader, WorkspaceRole.Reader, 0],
+  ])('test workspace role comparaison', async (role1, role2, expected) => {
+    expect(compareWorkspaceRoles(role1, role2)).to.equal(expected);
   });
 });

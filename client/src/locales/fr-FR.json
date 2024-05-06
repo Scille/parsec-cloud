@@ -945,6 +945,17 @@
             "admin": "Administrateur",
             "standard": "Standard",
             "outsider": "Externe"
+        },
+        "assignRoles": {
+            "title": "Transférer les rôles",
+            "okButton": "Transférer les rôles",
+            "assignSuccess": "Tous les rôles de {sourceUser} ont été transférés à {targetUser}.",
+            "assignSomeFailed": "Certains rôles n'ont pas pu être transférés.",
+            "assignAllFailed": "Impossible de transférer les rôles.",
+            "processing": "Calcul des changements...",
+            "noRoles": "Aucun nouveau rôle à transférer à {user}",
+            "close": "Fermer",
+            "update": "Mettre à jour"
         }
     },
     "AboutPage": {
@@ -1070,5 +1081,11 @@
                 "description": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail."
             }
         }
+    },
+    "UserSelect": {
+        "defaultLabel": "Choisir une personne",
+        "defaultPlaceholder": "Nom ou email de la personne",
+        "noMatch": "Aucun utilisateur trouvé",
+        "queryFailed": "Une erreur empêche de trouver les utilisateurs."
     }
 }

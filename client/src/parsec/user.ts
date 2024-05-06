@@ -7,12 +7,23 @@ import { getParsecHandle } from '@/parsec/routing';
 import { ClientListUsersError, ClientRevokeUserError, Result, UserID, UserInfo, UserProfile } from '@/parsec/types';
 import { DateTime } from 'luxon';
 
-export async function listUsers(skipRevoked = true): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
+function filterUserList(list: Array<UserInfo>, pattern: string): Array<UserInfo> {
+  pattern = pattern.toLocaleLowerCase();
+  return list.filter((item) => {
+    return item.humanHandle.label.toLocaleLowerCase().includes(pattern) || item.humanHandle.email.toLocaleLowerCase().includes(pattern);
+  });
+}
+
+export async function listUsers(skipRevoked = true, pattern = ''): Promise<Result<Array<UserInfo>, ClientListUsersError>> {
   const handle = getParsecHandle();
 
   if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListUsers(handle, skipRevoked);
     if (result.ok) {
+      if (pattern.length > 0) {
+        // Won't be using dates or `isRevoked` so the cast is fine
+        result.value = filterUserList(result.value as Array<UserInfo>, pattern);
+      }
       result.value.map((item) => {
         item.createdOn = DateTime.fromSeconds(item.createdOn as any as number);
         if (item.revokedOn) {
@@ -24,7 +35,7 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
     }
     return result as any as Promise<Result<Array<UserInfo>, ClientListUsersError>>;
   } else {
-    const value: Array<UserInfo> = [
+    let value: Array<UserInfo> = [
       {
         id: 'me',
         humanHandle: {
@@ -119,6 +130,9 @@ export async function listUsers(skipRevoked = true): Promise<Result<Array<UserIn
           isRevoked: (): boolean => true,
         },
       );
+    }
+    if (pattern.length > 0) {
+      value = filterUserList(value, pattern);
     }
     return { ok: true, value: value };
   }

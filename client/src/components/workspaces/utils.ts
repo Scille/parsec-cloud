@@ -263,3 +263,26 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo, informationManager:
     );
   }
 }
+
+/**
+ *
+ * @param role1 A workspace role
+ * @param role2 A workspace role
+ * @returns -1 if role2 is inferior to role1, 0 if they're equal, 1 if role1 is superior to role2
+ */
+export function compareWorkspaceRoles(role1: WorkspaceRole, role2: WorkspaceRole): -1 | 0 | 1 {
+  const WEIGHTS = new Map<WorkspaceRole, number>([
+    [WorkspaceRole.Owner, 4],
+    [WorkspaceRole.Manager, 3],
+    [WorkspaceRole.Contributor, 2],
+    [WorkspaceRole.Reader, 1],
+  ]);
+
+  const diff = (WEIGHTS.get(role1) as number) - (WEIGHTS.get(role2) as number);
+  if (diff < 0) {
+    return -1;
+  } else if (diff > 0) {
+    return 1;
+  }
+  return 0;
+}

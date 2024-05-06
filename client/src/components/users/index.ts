@@ -6,7 +6,8 @@ import UserCard from '@/components/users/UserCard.vue';
 import UserFilter from '@/components/users/UserFilter.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import UserListItem from '@/components/users/UserListItem.vue';
+import UserSelect from '@/components/users/UserSelect.vue';
 
 export { InvitationAction, SortProperty, UserCollection } from '@/components/users/types';
 export type { UserFilterChangeEvent, UserFilterLabels, UserModel } from '@/components/users/types';
-export { TagProfile, UserAvatarName, UserCard, UserFilter, UserInformation, UserListItem };
+export { TagProfile, UserAvatarName, UserCard, UserFilter, UserInformation, UserListItem, UserSelect };

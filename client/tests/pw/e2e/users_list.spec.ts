@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { answerQuestion, fillInputModal, sortBy } from '@tests/pw/helpers/utils';
+import { answerQuestion, fillInputModal, fillIonInput, sortBy } from '@tests/pw/helpers/utils';
 
 const USERS = [
   {
@@ -116,7 +116,7 @@ for (const revokedUser of [false, true]) {
     await item.locator('.options-button').click();
     await expect(usersPage.locator('#user-context-menu')).toBeVisible();
     const menu = usersPage.locator('#user-context-menu');
-    const expectedActions = ['User details', 'View details'];
+    const expectedActions = ['User details', 'View details', 'Workspace roles', 'Assign workspace roles to someone else'];
     if (!revokedUser) {
       expectedActions.unshift(...['Deletion', 'Revoke this user']);
     }
@@ -456,4 +456,36 @@ msTest('Invite user with already existing email', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   await fillInputModal(usersPage, 'jaheira@gmail.com');
   await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by a member of this organization.', 'Error');
+});
+
+msTest('Reassign workspace role', async ({ usersPage }) => {
+  const sourceUser = usersPage.locator('.users-container').locator('#users-page-user-list').locator('.user-list-item').nth(3);
+  await sourceUser.hover();
+  await sourceUser.locator('.options-button').click();
+  const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(2).getByRole('listitem').nth(1);
+  await expect(menuButton).toHaveText('Assign workspace roles to someone else');
+  await menuButton.click();
+  const modal = usersPage.locator('.role-assignment-modal');
+  await expect(modal).toBeVisible();
+  const nextButton = modal.locator('#next-button');
+  await expect(nextButton).toHaveText('Copy roles');
+  await expect(nextButton).toHaveDisabledAttribute();
+  const input = modal.locator('#select-user-input').locator('ion-input');
+  await fillIonInput(input, 'gmail');
+  const dropdown = usersPage.locator('.user-select-dropdown-popover');
+  await expect(dropdown.getByRole('listitem')).toHaveCount(2);
+  // cspell:disable-next-line
+  await expect(dropdown.getByRole('listitem').nth(0).locator('.option-text__label')).toHaveText('Jaheira');
+  // cspell:disable-next-line
+  await expect(dropdown.getByRole('listitem').nth(1).locator('.option-text__label')).toHaveText('Karl Hungus');
+  await dropdown.getByRole('listitem').nth(1).click();
+  // cspell:disable-next-line
+  await expect(input.locator('input')).toHaveValue('Karl Hungus <karlhungus@gmail.com>');
+  await expect(nextButton).not.toHaveDisabledAttribute();
+  await nextButton.click();
+  await usersPage.waitForTimeout(1000);
+  const newRoles = modal.locator('.role-updates').getByRole('listitem');
+  await expect(newRoles).toHaveCount(2);
+  await expect(newRoles).toHaveText(['Trademeet Not shared > Reader', 'The Copper Coronet Not shared > Reader']);
+  await nextButton.click();
 });
