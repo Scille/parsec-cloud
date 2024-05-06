@@ -1,0 +1,113 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <ms-input
+    id="select-user-input"
+    ref="inputRef"
+    :label="label || 'UserSelect.defaultLabel'"
+    :placeholder="placeholder || 'UserSelect.defaultPlaceholder'"
+    @change="onInput"
+    :model-value="selectedUser ? `${selectedUser.humanHandle.label} <${selectedUser.humanHandle.email}>` : undefined"
+    :disabled="querying"
+  />
+  <ion-label v-if="errorMessage">
+    {{ $msTranslate(errorMessage) }}
+  </ion-label>
+</template>
+
+<script setup lang="ts">
+import { IonLabel, popoverController } from '@ionic/vue';
+import { onMounted, Ref, ref } from 'vue';
+import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
+import { listUsers, UserInfo } from '@/parsec';
+import UserSelectDropdown from '@/components/users/UserSelectDropdown.vue';
+import { wait } from '@/parsec/internals';
+
+const props = defineProps<{
+  label?: Translatable;
+  placeholder?: Translatable;
+  excludeUsers?: UserInfo[];
+  modelValue?: UserInfo;
+}>();
+
+const emits = defineEmits<{
+  (e: 'update:modelValue', value: UserInfo | undefined): void;
+}>();
+
+const querying = ref(false);
+const inputRef = ref();
+const selectedUser: Ref<UserInfo | undefined> = ref();
+let queryCount = 0;
+const errorMessage = ref('');
+
+async function queryMatchingUsers(search: string): Promise<void> {
+  if (querying.value) {
+    return;
+  }
+  querying.value = true;
+
+  const result = await listUsers(true, search);
+
+  if (!result.ok || result.value.length === 0) {
+    querying.value = false;
+    if (!result.ok) {
+      errorMessage.value = 'UserSelect.queryFailed';
+    } else if (result.value.length === 0) {
+      errorMessage.value = 'UserSelect.noMatch';
+    }
+    return;
+  }
+
+  if (props.excludeUsers) {
+    result.value = result.value.filter((user) => props.excludeUsers?.find((item) => item.id === user.id) === undefined);
+  }
+
+  const popover = await popoverController.create({
+    component: UserSelectDropdown,
+    cssClass: 'user-select-dropdown-popover',
+    componentProps: {
+      // Limit to the first five users at most, else the dropdown becomes too big
+      users: result.value.slice(0, 5),
+    },
+    trigger: 'select-user-input',
+    side: 'bottom',
+    alignment: 'start',
+    showBackdrop: false,
+  });
+  await popover.present();
+  const { role, data } = await popover.onDidDismiss();
+  await popover.dismiss();
+  if (role === MsModalResult.Confirm && data) {
+    selectedUser.value = data.user;
+    emits('update:modelValue', data.user);
+  }
+  querying.value = false;
+}
+
+async function onInput(value: string): Promise<void> {
+  if (selectedUser.value) {
+    selectedUser.value = undefined;
+    emits('update:modelValue', undefined);
+    return;
+  }
+  queryCount += 1;
+  const backup = queryCount;
+  errorMessage.value = '';
+
+  await wait(500);
+  if (queryCount !== backup || querying.value) {
+    return;
+  }
+
+  await queryMatchingUsers(value);
+}
+
+onMounted(async () => {
+  await inputRef.value.setFocus();
+  if (props.modelValue) {
+    selectedUser.value = props.modelValue;
+  }
+});
+</script>
+
+<style scoped lang="scss"></style>

@@ -144,13 +144,6 @@ export async function listWorkspaces(): Promise<Result<Array<WorkspaceInfo>, Cli
       },
     ];
 
-    for (let i = 0; i < value.length; i++) {
-      const result = await getWorkspaceSharing(value[i].id, false);
-      if (result.ok) {
-        value[i].sharing = result.value;
-      }
-    }
-
     return { ok: true, value: value };
   }
 }
@@ -434,7 +427,11 @@ export async function getWorkspacesSharedWith(user: UserID): Promise<Result<Arra
   const retValue: Array<SharedWithInfo> = [];
 
   for (const workspace of result.value) {
-    const sharing = workspace.sharing.find((item) => item[0].id === user);
+    const sharingResult = await getWorkspaceSharing(workspace.id, false, false);
+    if (!sharingResult.ok) {
+      continue;
+    }
+    const sharing = sharingResult.value.find((item) => item[0].id === user);
 
     if (sharing && sharing[1]) {
       retValue.push({

@@ -146,6 +146,7 @@ import UserListDisplay from '@/views/users/UserListDisplay.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -336,6 +337,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   const actions = new Map<UserAction, (user: UserInfo) => Promise<void>>([
     [UserAction.Revoke, revokeUser],
     [UserAction.Details, openUserDetails],
+    [UserAction.AssignRoles, assignWorkspaceRoles],
   ]);
 
   if (!data) {
@@ -352,6 +354,21 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
   if (onFinished) {
     onFinished();
   }
+}
+
+async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
+  const modal = await modalController.create({
+    component: BulkRoleAssignmentModal,
+    cssClass: 'role-assignment-modal',
+    componentProps: {
+      sourceUser: user,
+      currentUser: currentUser.value,
+      informationManager: informationManager,
+    },
+  });
+  await modal.present();
+  await modal.onWillDismiss();
+  await modal.dismiss();
 }
 
 async function inviteUser(): Promise<void> {

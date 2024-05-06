@@ -42,6 +42,24 @@
           </ion-label>
         </ion-item>
       </ion-item-group>
+
+      <ion-item-group class="list-group">
+        <ion-item class="list-group-title caption-caption">
+          <ion-label class="list-group-title__label">
+            {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
+          </ion-label>
+        </ion-item>
+        <ion-item
+          button
+          @click="onClick(UserAction.AssignRoles)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="informationCircle" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
+          </ion-label>
+        </ion-item>
+      </ion-item-group>
     </ion-list>
   </ion-content>
 </template>
@@ -50,6 +68,7 @@
 export enum UserAction {
   Revoke,
   Details,
+  AssignRoles,
 }
 </script>
 
