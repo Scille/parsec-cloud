@@ -79,4 +79,39 @@ export const expect = baseExpect.extend({
       pass: pass,
     };
   },
+
+  async toHaveWizardStepper(locator: Locator, titles: string[], currentIndex: number): Promise<AssertReturnType> {
+    const wizard = locator.locator('.ms-wizard-stepper');
+    const steps = wizard.locator('.ms-wizard-stepper__step');
+    let pass = true;
+    let errorMessage = '';
+    try {
+      await expect(steps).toHaveCount(titles.length);
+      await expect(steps.locator('.step-title')).toHaveText(titles);
+    } catch (error: any) {
+      pass = false;
+      errorMessage = `Invalid stepper titles. Expected '${error.matcherResult.expected}', got '${error.matcherResult.actual}' instead.`;
+    }
+    if (pass) {
+      try {
+        for (let i = 0; i < titles.length; i++) {
+          if (i < currentIndex) {
+            await expect(steps.nth(i).locator('.ms-wizard-stepper-step').locator('.done')).toBeVisible();
+          } else if (i === currentIndex) {
+            await expect(steps.nth(i).locator('.ms-wizard-stepper-step').locator('.active')).toBeVisible();
+          } else {
+            await expect(steps.nth(i).locator('.ms-wizard-stepper-step').locator('.default')).toBeVisible();
+          }
+        }
+      } catch (error: any) {
+        console.log(error);
+        pass = false;
+        errorMessage = `Invalid step. ${currentIndex} should be active.`;
+      }
+    }
+    return {
+      message: () => errorMessage,
+      pass: pass,
+    };
+  },
 });
