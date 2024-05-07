@@ -739,7 +739,7 @@
             "start": {
                 "first": "In order to avoid any attack, you will have to be in direct contact with the host during the whole onboarding process.",
                 "second": "The host will have to go to Users, then Pending invitation to start the process.",
-                "greeter": "You will be welcomed into the organization by {greeter} <{greeterEmail}>."
+                "greeter": "You will be welcomed into the organization {organizationName} by {greeter} <{greeterEmail}>."
             },
             "finish": {
                 "first": "You can now log in to Parsec.",

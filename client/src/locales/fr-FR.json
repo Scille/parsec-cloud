@@ -739,7 +739,7 @@
             "start": {
                 "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée du processus d'accueil.",
                 "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus.",
-                "greeter": "Vous serez accueilli(e) dans l'organisation par {greeter} <{greeterEmail}>."
+                "greeter": "Vous serez accueilli(e) dans l'organisation {organizationName} par {greeter} <{greeterEmail}>."
             },
             "finish": {
                 "first": "Vous pouvez maintenant vous connecter à Parsec.",

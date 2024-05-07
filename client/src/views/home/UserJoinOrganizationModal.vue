@@ -37,16 +37,16 @@
     >
       <ion-header class="modal-header">
         <ion-title
-          v-if="titles.get(pageStep)?.title !== ''"
+          v-if="getTitle(pageStep).title !== ''"
           class="modal-header__title title-h2"
         >
-          {{ $msTranslate(titles.get(pageStep)?.title) }}
+          {{ $msTranslate(getTitle(pageStep).title) }}
         </ion-title>
         <ion-text
-          v-if="titles.get(pageStep)?.subtitle !== ''"
+          v-if="getTitle(pageStep).subtitle !== ''"
           class="modal-header__text body"
         >
-          {{ $msTranslate(titles.get(pageStep)?.subtitle) }}
+          {{ $msTranslate(getTitle(pageStep).subtitle) }}
         </ion-text>
       </ion-header>
       <!-- modal content: create component for each part-->
@@ -70,6 +70,7 @@
                   data: {
                     greeter: claimer.greeter.label,
                     greeterEmail: claimer.greeter.email,
+                    organizationName: organizationName,
                   },
                 })
               }}
@@ -177,6 +178,9 @@ import {
   DeviceSaveStrategyPassword,
   DeviceSaveStrategyTag,
   UserClaim,
+  parseParsecAddr,
+  ParsedParsecAddrTag,
+  OrganizationID,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
@@ -190,7 +194,7 @@ import {
   asyncComputed,
 } from 'megashark-lib';
 import { close } from 'ionicons/icons';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, Ref } from 'vue';
 
 enum UserJoinOrganizationStep {
   WaitForHost = 1,
@@ -206,6 +210,7 @@ const userInfoPage = ref();
 const authChoice = ref();
 const fieldsUpdated = ref(false);
 const cancelled = ref(false);
+const organizationName: Ref<OrganizationID> = ref('');
 
 const claimer = ref(new UserClaim());
 
@@ -221,50 +226,46 @@ interface Title {
   subtitle: Translatable;
 }
 
-const titles = new Map<UserJoinOrganizationStep, Title>([
-  [
-    UserJoinOrganizationStep.WaitForHost,
-    {
-      title: 'JoinOrganization.titles.waitForHost',
-      subtitle: 'JoinOrganization.subtitles.waitForHost',
-    },
-  ],
-  [
-    UserJoinOrganizationStep.GetHostSasCode,
-    {
-      title: 'JoinOrganization.titles.getHostCode',
-      subtitle: 'JoinOrganization.subtitles.getHostCode',
-    },
-  ],
-  [
-    UserJoinOrganizationStep.ProvideGuestCode,
-    {
-      title: 'JoinOrganization.titles.provideGuestCode',
-      subtitle: 'JoinOrganization.subtitles.provideGuestCode',
-    },
-  ],
-  [
-    UserJoinOrganizationStep.GetUserInfo,
-    {
-      title: 'JoinOrganization.titles.getUserInfo',
-      subtitle: 'JoinOrganization.subtitles.getUserInfo',
-    },
-  ],
-  [
-    UserJoinOrganizationStep.GetAuthentication,
-    {
-      title: 'JoinOrganization.titles.getAuthentication',
-      subtitle: 'JoinOrganization.subtitles.getAuthentication',
-    },
-  ],
-  [
-    UserJoinOrganizationStep.Finish,
-    {
-      title: { key: 'JoinOrganization.titles.finish', data: { org: '' } },
-      subtitle: 'JoinOrganization.subtitles.finish',
-    },
-  ],
-]);
+function getTitle(step: UserJoinOrganizationStep): Title {
+  switch (step) {
+    case UserJoinOrganizationStep.WaitForHost: {
+      return {
+        title: 'JoinOrganization.titles.waitForHost',
+        subtitle: 'JoinOrganization.subtitles.waitForHost',
+      };
+    }
+    case UserJoinOrganizationStep.GetHostSasCode: {
+      return {
+        title: 'JoinOrganization.titles.getHostCode',
+        subtitle: 'JoinOrganization.subtitles.getHostCode',
+      };
+    }
+    case UserJoinOrganizationStep.ProvideGuestCode: {
+      return {
+        title: 'JoinOrganization.titles.provideGuestCode',
+        subtitle: 'JoinOrganization.subtitles.provideGuestCode',
+      };
+    }
+    case UserJoinOrganizationStep.GetUserInfo: {
+      return {
+        title: 'JoinOrganization.titles.getUserInfo',
+        subtitle: 'JoinOrganization.subtitles.getUserInfo',
+      };
+    }
+    case UserJoinOrganizationStep.GetAuthentication: {
+      return {
+        title: 'JoinOrganization.titles.getAuthentication',
+        subtitle: 'JoinOrganization.subtitles.getAuthentication',
+      };
+    }
+    case UserJoinOrganizationStep.Finish: {
+      return {
+        title: { key: 'JoinOrganization.titles.finish', data: { org: organizationName.value } },
+        subtitle: 'JoinOrganization.subtitles.finish',
+      };
+    }
+  }
+}
 
 async function showErrorAndRestart(message: Translatable): Promise<void> {
   props.informationManager.present(
@@ -478,6 +479,10 @@ async function restartProcess(): Promise<void> {
 }
 
 onMounted(async () => {
+  const result = await parseParsecAddr(props.invitationLink);
+  if (result.ok && result.value.tag === ParsedParsecAddrTag.InvitationUser) {
+    organizationName.value = result.value.organizationId;
+  }
   await startProcess();
 });
 </script>
