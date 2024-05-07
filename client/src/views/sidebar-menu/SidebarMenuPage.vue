@@ -356,7 +356,7 @@ async function loadAll(): Promise<void> {
 
   const result = await parsecListWorkspaces();
   if (result.ok) {
-    workspaces.value = result.value;
+    workspaces.value = result.value.sort((w1, w2) => w1.currentName.toLocaleLowerCase().localeCompare(w2.currentName.toLocaleLowerCase()));
   } else {
     console.log('Failed to list workspaces', result.error);
   }

@@ -57,3 +57,7 @@ export async function fillInputModal(root: Locator | Page, text: string, clear?:
   await okButton.click();
   await expect(modal).toBeHidden();
 }
+
+export async function getClipboardText(page: Page): Promise<string> {
+  return await page.evaluate(() => navigator.clipboard.readText());
+}

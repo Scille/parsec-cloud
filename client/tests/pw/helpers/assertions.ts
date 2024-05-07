@@ -18,9 +18,10 @@ export const expect = baseExpect.extend({
   },
 
   async toHaveTheClass(locator: Locator, className: string): Promise<AssertReturnType> {
-    const pass = await locator.evaluate((node, clsName) => node.classList.contains(clsName), className);
+    const classList = await locator.evaluate((node) => Array.from(node.classList.values()));
+    const pass = classList.includes(className);
     return {
-      message: () => `Does not have class '${className}'`,
+      message: () => `Does not have class '${className}'. Found classes: ${classList}`,
       pass: pass,
     };
   },
@@ -36,14 +37,43 @@ export const expect = baseExpect.extend({
     if (pass) {
       try {
         await baseExpect(toast.locator('.toast-message')).toHaveText(message);
-      } catch (_error) {
-        errorMessage = `Toast does not contain the text '${message}'`;
+      } catch (error: any) {
+        errorMessage = `Toast does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
         pass = false;
       }
     } else {
       errorMessage = `Toast does not have the theme '${theme}'`;
     }
 
+    return {
+      message: () => errorMessage,
+      pass: pass,
+    };
+  },
+
+  async toHaveHeader(page: Page, breadcrumbs: string[], backButtonVisible: boolean): Promise<AssertReturnType> {
+    const header = page.locator('#connected-header').locator('.topbar-left');
+    const backButton = header.locator('.back-button');
+    let pass = true;
+    let errorMessage = '';
+    try {
+      if (backButtonVisible) {
+        await baseExpect(backButton).toBeVisible();
+      } else {
+        await baseExpect(backButton).toBeHidden();
+      }
+    } catch (error: any) {
+      pass = false;
+      errorMessage = `Back button is ${backButtonVisible ? 'hidden' : 'visible'}`;
+    }
+    try {
+      const bcs = header.locator('ion-breadcrumb');
+      await expect(bcs).toHaveCount(breadcrumbs.length);
+      await expect(bcs).toHaveText(breadcrumbs);
+    } catch (error: any) {
+      pass = false;
+      errorMessage = `Invalid breadcrumbs. Expected '[${breadcrumbs}]', got '[${error.matcherResult.actual}]' instead.`;
+    }
     return {
       message: () => errorMessage,
       pass: pass,
