@@ -1,8 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
 import { fillInputModal } from '@tests/pw/helpers/utils';
+
+async function isInGridMode(page: Page): Promise<boolean> {
+  return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
+}
+
+async function toggleViewMode(page: Page): Promise<void> {
+  if (await isInGridMode(page)) {
+    await page.locator('#workspaces-ms-action-bar').locator('#list-view').click();
+  } else {
+    await page.locator('#workspaces-ms-action-bar').locator('#grid-view').click();
+  }
+}
 
 const workspaces = [
   {
@@ -89,3 +102,61 @@ for (const createWithSidebar of [false, true]) {
     await expect(connected).toShowToast("The workspace 'My Workspace' has been created!", 'Success');
   });
 }
+
+async function ensureFavorite(page: Page, favoritesCount: number): Promise<void> {
+  for (let i = 0; i < 3; i++) {
+    let item;
+    if (await isInGridMode(page)) {
+      item = page.locator('.workspaces-grid-item').nth(i);
+    } else {
+      item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(i);
+    }
+    const expectedClass = `card-favorite-${i < favoritesCount ? 'on' : 'off'}`;
+    await expect(item.locator('.card-favorite')).toHaveTheClass(expectedClass);
+  }
+  const sidebarFavorites = page.locator('.sidebar').locator('.organization-workspaces').locator('.favorites');
+  if (favoritesCount > 0) {
+    await expect(sidebarFavorites).toBeVisible();
+    await expect(sidebarFavorites.getByRole('listitem')).toHaveCount(favoritesCount);
+  } else {
+    await expect(sidebarFavorites).toBeHidden();
+  }
+}
+
+msTest('Checks favorites', async ({ connected }) => {
+  await expect(connected.locator('.workspaces-grid-item').locator('.card-content__title')).toHaveText([
+    'The Copper Coronet',
+    'Trademeet',
+    "Watcher's Keep",
+  ]);
+  await ensureFavorite(connected, 0);
+  await connected.locator('.workspaces-grid-item').nth(1).locator('.card-favorite').click();
+  // Put favorite in first
+  await expect(connected.locator('.workspaces-grid-item').locator('.card-content__title')).toHaveText([
+    'Trademeet',
+    'The Copper Coronet',
+    "Watcher's Keep",
+  ]);
+  await ensureFavorite(connected, 1);
+  // Check in list mode too
+  await toggleViewMode(connected);
+  await ensureFavorite(connected, 1);
+
+  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1).locator('.card-favorite').click();
+  await expect(connected.locator('.workspace-list-item').locator('.workspace-name__label')).toHaveText([
+    'The Copper Coronet',
+    'Trademeet',
+    "Watcher's Keep",
+  ]);
+  await ensureFavorite(connected, 2);
+  // Check in grid mode too
+  await toggleViewMode(connected);
+  await ensureFavorite(connected, 2);
+
+  await connected.locator('.workspaces-grid-item').nth(1).locator('.card-favorite').click();
+  await ensureFavorite(connected, 1);
+  await toggleViewMode(connected);
+
+  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0).locator('.card-favorite').click();
+  await ensureFavorite(connected, 0);
+});

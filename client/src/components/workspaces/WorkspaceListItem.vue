@@ -75,7 +75,7 @@
 
     <!-- favorites -->
     <div
-      class="card-favorite card-favorite-on"
+      class="card-favorite"
       :class="{
         'card-favorite-on': isFavorite,
         'card-favorite-off': !isFavorite,
