@@ -336,6 +336,23 @@ pub(super) async fn validate_child_manifest(
             )
             .await?;
 
+            // Last check: child manifest's parent should never points to itself
+            let same_id_and_parent = match &res {
+                ChildManifest::File(manifest) => manifest.id == manifest.parent,
+                ChildManifest::Folder(manifest) => manifest.id == manifest.parent,
+            };
+            if same_id_and_parent {
+                let what = Box::new(InvalidManifestError::Corrupted {
+                    realm: realm_id,
+                    vlob: vlob_id,
+                    version,
+                    author: author.to_owned(),
+                    timestamp,
+                    error: Box::new(DataError::Serialization),
+                });
+                return Err(CertifValidateManifestError::InvalidManifest(what));
+            }
+
             Ok(res)
         })
         .await
