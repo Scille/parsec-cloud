@@ -147,7 +147,7 @@ async fn non_existent_author(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn corrupted(env: &TestbedEnv) {
+async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, env: &TestbedEnv) {
     let (env, realm_id) = env.customize_with_map(|builder| {
         let realm_id = builder
             .new_realm("alice")
@@ -156,11 +156,31 @@ async fn corrupted(env: &TestbedEnv) {
         builder.certificates_storage_fetch_certificates("alice@dev1");
         realm_id
     });
-    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+    let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
 
+    let child_id = VlobID::default();
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
 
     let alice = env.local_device("alice@dev1");
+
+    let encrypted = match kind {
+        "dummy" => b"<dummy data>".to_vec(),
+        "parent_pointing_on_itself" => {
+            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
+            let manifest = FolderManifest {
+                author: alice.device_id.clone(),
+                timestamp: now,
+                id: child_id,
+                parent: child_id,
+                version: 1,
+                created: now,
+                updated: now,
+                children: Default::default(),
+            };
+            manifest.dump_sign_and_encrypt(&alice.signing_key, &realm_last_key)
+        }
+        unknown => panic!("Unknown kind {}", unknown),
+    };
 
     let ops = certificates_ops_factory(&env, &alice).await;
 
@@ -182,11 +202,11 @@ async fn corrupted(env: &TestbedEnv) {
             env.get_last_common_certificate_timestamp(),
             realm_id,
             realm_key_index,
-            VlobID::default(),
+            child_id,
             &alice.device_id,
             0,
             now,
-            b"",
+            &encrypted,
         )
         .await
         .unwrap_err();
