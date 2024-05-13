@@ -189,12 +189,12 @@ In addition to the [shared requirements](#shared-requirements), for working with
 
 2. Install `wasm-pack`
 
-   Currently we use `wasm-pack@0.11.0`.
+   Currently we use `wasm-pack@0.12.1`.
 
    Install it with:
 
    ```shell
-   cargo install wasm-pack@0.11.0
+   cargo install wasm-pack@0.12.1
    ```
 
    > We install it using cargo because it's the simpler way to specify which version of `wasm-pack` to use.

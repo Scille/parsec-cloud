@@ -98,7 +98,7 @@ jobs:
       # Install cargo nextest command
       - uses: taiki-e/install-action@e6c7481b7078ae07f9bc243a2c974cbf2fee8334 # pin v2.41.3
         with:
-          tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
+          tool: nextest@0.9.54, wasm-pack@0.12.1, cargo-deny@0.14.3
 
       - name: Categorize workspace crates
         id: crates
