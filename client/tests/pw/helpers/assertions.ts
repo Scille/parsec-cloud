@@ -80,6 +80,43 @@ export const expect = baseExpect.extend({
     };
   },
 
+  async toHavePageTitle(page: Page, title: string): Promise<AssertReturnType> {
+    try {
+      await expect(page.locator('.topbar-left').locator('.topbar-left__title')).toHaveText(title);
+    } catch (error: any) {
+      return {
+        message: () => `Invalid page title, expected '${title}', got '${error.actual}'`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toHaveState(checkbox: Locator, state: 'indeterminate' | 'unchecked' | 'checked'): Promise<AssertReturnType> {
+    try {
+      if (state === 'indeterminate') {
+        await expect(checkbox).toHaveTheClass('checkbox-indeterminate');
+      } else if (state === 'checked') {
+        await expect(checkbox).toHaveTheClass('checkbox-checked');
+      } else {
+        await expect(checkbox).not.toHaveTheClass('checkbox-checked');
+        await expect(checkbox).not.toHaveTheClass('checkbox-indeterminate');
+      }
+    } catch (error: any) {
+      return {
+        message: () => `Checkbox is not '${state}'`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
   async toHaveWizardStepper(locator: Locator, titles: string[], currentIndex: number): Promise<AssertReturnType> {
     const wizard = locator.locator('.ms-wizard-stepper');
     const steps = wizard.locator('.ms-wizard-stepper__step');
