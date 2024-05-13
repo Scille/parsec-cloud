@@ -172,7 +172,7 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.Python: "3.12.0",
     Tool.Poetry: "1.5.1",
     Tool.Node: "18.12.0",
-    Tool.WasmPack: "0.11.0",
+    Tool.WasmPack: "0.12.1",
     Tool.Parsec: "3.0.0-b.6+dev",
     Tool.Nextest: "0.9.54",
     Tool.License: "BUSL-1.1",
