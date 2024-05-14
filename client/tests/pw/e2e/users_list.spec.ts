@@ -11,6 +11,7 @@ const USERS = [
     email: 'user@host.com',
     profile: 'Administrator',
     active: true,
+    currentUser: true,
   },
   {
     // cspell:disable-next-line
@@ -183,7 +184,23 @@ usersTest('Revoke two users with selection', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
 });
 
-usersTest('Test users selection', async ({ usersPage }) => {
+usersTest('Selection in grid mode', async ({ usersPage }) => {
+  await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+  const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(1);
+  await item.hover();
+  await expect(item.locator('ion-checkbox')).toHaveState('unchecked');
+  // Selecting one user
+  await item.locator('ion-checkbox').click();
+  await expect(item.locator('ion-checkbox')).toHaveState('checked');
+  const actionBar = usersPage.locator('#activate-users-ms-action-bar');
+  await expect(actionBar.locator('#button-invite-user')).toBeHidden();
+  await expect(actionBar.locator('#button-revoke-user')).toBeVisible();
+  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this user');
+  await expect(actionBar.locator('#button-common-workspaces')).toBeVisible();
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+});
+
+usersTest('Test users selection in list mode', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await expect(item.locator('ion-checkbox')).toHaveState('unchecked');
@@ -196,6 +213,7 @@ usersTest('Test users selection', async ({ usersPage }) => {
   await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this user');
   await expect(actionBar.locator('#button-common-workspaces')).toBeVisible();
   await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+
   const headerCheckbox = usersPage.locator('.user-list-header').locator('ion-checkbox');
   // Header checkbox should be indeterminate since not all users are selected
   await expect(headerCheckbox).toHaveState('indeterminate');
@@ -233,4 +251,210 @@ usersTest('Test users selection', async ({ usersPage }) => {
   // Unselect all
   await headerCheckbox.click();
   await expect(headerCheckbox).toHaveState('unchecked');
+});
+
+usersTest('Maintain selection between modes', async ({ usersPage }) => {
+  for (const index of [1, 3, 4]) {
+    const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
+    await item.hover();
+    await item.locator('ion-checkbox').click();
+  }
+
+  const actionBar = usersPage.locator('#activate-users-ms-action-bar');
+  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  // Check the checkboxes in list mode
+  for (const [index, user] of USERS.entries()) {
+    // Revoked users do not have a checkbox
+    if (user.active && !user.currentUser) {
+      const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 3, 4].includes(index) ? 'checked' : 'unchecked');
+    }
+  }
+
+  // Switch to grid mode
+  await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  // Check the checkboxes in grid mode
+  for (const [index, user] of USERS.entries()) {
+    // Revoked users do not have a checkbox
+    if (user.active && !user.currentUser) {
+      const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
+      await item.hover();
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 3, 4].includes(index) ? 'checked' : 'unchecked');
+    }
+  }
+  // Uncheck one
+  await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(3).locator('ion-checkbox').click();
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  for (const [index, user] of USERS.entries()) {
+    if (user.active && !user.currentUser) {
+      const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
+      await item.hover();
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 4].includes(index) ? 'checked' : 'unchecked');
+    }
+  }
+
+  // Back to list mode
+  await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#list-view').click();
+
+  // Check the checkboxes in list mode
+  for (const [index, user] of USERS.entries()) {
+    // Revoked users do not have a checkbox
+    if (user.active && !user.currentUser) {
+      const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
+      await expect(item.locator('ion-checkbox')).toHaveState([1, 4].includes(index) ? 'checked' : 'unchecked');
+    }
+  }
+});
+
+usersTest('User filter popover default state', async ({ usersPage }) => {
+  await expect(usersPage.locator('.filter-popover')).toBeHidden();
+  await usersPage.locator('#activate-users-ms-action-bar').locator('#select-filter-popover-button').click();
+  await expect(usersPage.locator('.filter-popover')).toBeVisible();
+  const popover = usersPage.locator('.filter-popover');
+  await expect(popover.locator('#user-filter-list').getByRole('group')).toHaveCount(2);
+  const statusGroup = popover.locator('#user-filter-list').getByRole('group').nth(0);
+  await expect(statusGroup.locator('.list-group-title')).toHaveText('Status');
+  await expect(statusGroup.getByRole('listitem')).toHaveCount(2);
+  await expect(statusGroup.getByRole('listitem')).toHaveText(['Active', 'Revoked']);
+  for (const checkbox of await statusGroup.locator('ion-checkbox').all()) {
+    await expect(checkbox).toHaveState('checked');
+  }
+  const profileGroup = popover.locator('#user-filter-list').getByRole('group').nth(1);
+  await expect(profileGroup.locator('.list-group-title')).toHaveText('Profile');
+  await expect(profileGroup.getByRole('listitem')).toHaveCount(3);
+  await expect(profileGroup.getByRole('listitem')).toHaveText(['Administrator', 'Standard', 'Outsider']);
+  for (const checkbox of await profileGroup.locator('ion-checkbox').all()) {
+    await expect(checkbox).toHaveState('checked');
+  }
+});
+
+async function toggleFilter(page: Page, name: string): Promise<void> {
+  await page.locator('#activate-users-ms-action-bar').locator('#select-filter-popover-button').click();
+  const popover = page.locator('.filter-popover');
+  await popover.getByRole('listitem').filter({ hasText: name }).locator('ion-checkbox').click();
+  // Click the backdrop to hide the popover
+  await page.locator('.filter-popover').locator('ion-backdrop').click();
+}
+
+usersTest('Filter users list', async ({ usersPage }) => {
+  const usersList = usersPage.locator('#users-page-user-list');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(USERS.map((u) => u.name));
+  // Hide admins
+  await toggleFilter(usersPage, 'Administrator');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.filter((u) => u.profile !== 'Administrator' || u.currentUser).map((u) => u.name),
+  );
+  // Also hides revoked
+  await toggleFilter(usersPage, 'Revoked');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.filter((u) => (u.profile !== 'Administrator' && u.active === true) || u.currentUser).map((u) => u.name),
+  );
+  // Also hides outsiders
+  await toggleFilter(usersPage, 'Outsider');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.filter((u) => (u.profile !== 'Administrator' && u.profile !== 'Outsider' && u.active === true) || u.currentUser).map(
+      (u) => u.name,
+    ),
+  );
+  // Show admins again
+  await toggleFilter(usersPage, 'Administrator');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.filter((u) => (u.profile !== 'Outsider' && u.active === true) || u.currentUser).map((u) => u.name),
+  );
+  // Also hide active users
+  await toggleFilter(usersPage, 'Active');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.filter((u) => u.currentUser).map((u) => u.name),
+  );
+});
+
+usersTest('Remove selection on filtering', async ({ usersPage }) => {
+  const actionBar = usersPage.locator('#activate-users-ms-action-bar');
+  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
+  const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3);
+  await item.hover();
+  await item.locator('ion-checkbox').click();
+  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await toggleFilter(usersPage, 'Standard');
+  const expectedUsers = USERS.filter((u) => u.currentUser || u.profile !== 'Standard');
+  await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} users`, { useInnerText: true });
+});
+
+async function sortBy(page: Page, name: string): Promise<void> {
+  await page.locator('#activate-users-ms-action-bar').locator('#select-popover-button').click();
+  const popover = page.locator('.sorter-popover');
+  await popover.getByRole('listitem').filter({ hasText: name }).click();
+  await expect(popover).toBeHidden();
+}
+
+usersTest('User sort popover default state', async ({ usersPage }) => {
+  await expect(usersPage.locator('.sorter-popover')).toBeHidden();
+  const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
+  await expect(sortButton).toHaveText('Profile');
+  await sortButton.click();
+  await expect(usersPage.locator('.sorter-popover')).toBeVisible();
+  const popover = usersPage.locator('.sorter-popover');
+  const items = popover.locator('.sorter-container').getByRole('listitem');
+  await expect(items).toHaveCount(5);
+  await expect(items).toHaveText(['Ascending', 'Name', 'Date joined', 'Profile', 'Status']);
+  for (const [index, item] of (await items.all()).entries()) {
+    if (index === 3) {
+      await expect(item).toHaveTheClass('selected');
+    } else {
+      await expect(item).not.toHaveTheClass('selected');
+    }
+  }
+});
+
+usersTest('Sort users list', async ({ usersPage }) => {
+  const usersList = usersPage.locator('#users-page-user-list');
+  const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
+
+  await sortBy(usersPage, 'Name');
+  await expect(sortButton).toHaveText('Name');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.sort((u1, u2) => {
+      if (u1.currentUser) {
+        return -1;
+      } else if (u2.currentUser) {
+        return 1;
+      } else {
+        return u1.name.localeCompare(u2.name);
+      }
+    }).map((u) => u.name),
+  );
+
+  await sortBy(usersPage, 'Ascending');
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.sort((u1, u2) => {
+      if (u1.currentUser) {
+        return -1;
+      } else if (u2.currentUser) {
+        return 1;
+      } else {
+        return u2.name.localeCompare(u1.name);
+      }
+    }).map((u) => u.name),
+  );
+  await sortBy(usersPage, 'Descending');
+  await sortBy(usersPage, 'Status');
+  await expect(sortButton).toHaveText('Status');
+  const PROFILE_WEIGHTS = new Map([
+    ['Administrator', 8],
+    ['Standard', 4],
+    ['Outsider', 2],
+  ]);
+  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
+    USERS.sort((u1, u2) => {
+      if (u1.currentUser) {
+        return -1;
+      } else if (u2.currentUser) {
+        return 1;
+      }
+      const u1Weight = (PROFILE_WEIGHTS.get(u1.profile) as number) + Number(u1.active) * 16;
+      const u2Weight = (PROFILE_WEIGHTS.get(u2.profile) as number) + Number(u2.active) * 16;
+      return u1.name.localeCompare(u2.name) - (u1Weight - u2Weight);
+    }).map((u) => u.name),
+  );
 });

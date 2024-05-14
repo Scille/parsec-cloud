@@ -44,7 +44,7 @@
           class="body-sm list-group-title"
           id="filter-title-role"
         >
-          {{ $msTranslate('UsersPage.filter.role') }}
+          {{ $msTranslate('UsersPage.filter.profile') }}
         </ion-text>
         <ion-item
           class="list-group-item ion-no-padding"
