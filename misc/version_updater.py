@@ -76,7 +76,7 @@ class Tool(enum.Enum):
     WinFSP = "winfsp"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
-        updated = set()
+        updated: set[Path] = set()
         match self:
             case Tool.Parsec:
                 updated |= refresh_cargo_lock(updated_files)
@@ -96,7 +96,7 @@ def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
     print("Refreshing Cargo.lock file ...")
     cargo_lock = ROOT_DIR / "Cargo.lock"
 
-    lines = []
+    lines: list[str] = []
     previous_line = None
     regex, replace = TOML_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
     for line in cargo_lock.read_text().splitlines():
@@ -119,7 +119,7 @@ def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
 
 
 def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
-    updated = set()
+    updated: set[Path] = set()
 
     for file in update_files:
         if file.name != "package.json":
@@ -132,7 +132,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
 
         # The project's license field is the first "license" field in the file
         regex, replace = JSON_LICENSE_FIELD.compile(TOOLS_VERSION[Tool.License])
-        step1_lines = []
+        step1_lines: list[str] = []
         found_license_count = 0
         for line in input_lines:
             match = regex.search(line)
@@ -147,7 +147,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
 
         # The project's version field is present twice at the beginning of the file
         found_version_count = 0
-        step2_lines = []
+        step2_lines: list[str] = []
         regex, replace = JSON_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
         for line in step1_lines:
             match = regex.search(line)
@@ -405,7 +405,7 @@ def check_tool_version(
     except re.error:
         raise ValueError(f"Failed to compile regexes for file `{filename}`")
     matched = {regex[0].pattern: False for regex in regexes}
-    errors = []
+    errors: list[str] = []
 
     for line_nu, line in enumerate(filename.read_text().splitlines()):
         for regex, expected_line in regexes:
@@ -456,7 +456,7 @@ def compile_regexes(regexes: RawRegexes, version: str) -> list[tuple[Pattern[str
 
 
 def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -> list[str]:
-    errors = []
+    errors: list[str] = []
     for pattern, matched in have_matched.items():
         if not matched:
             errors.append(f"{filename}: Regex `{pattern}` found no matches")
@@ -468,23 +468,23 @@ def check_tool(tool: Tool, update: bool) -> VersionUpdateResult:
     version = TOOLS_VERSION[tool]
     update_res = VersionUpdateResult([], set())
 
-    for filename, tools_in_file in FILES_WITH_VERSION_INFO.items():
+    for glob_path, tools_in_file in FILES_WITH_VERSION_INFO.items():
         regexes = tools_in_file.get(tool, None)
         if regexes is None:
             continue
 
-        matched_files = glob.glob(str(filename), recursive=True)
-        if len(matched_files) > 0:
-            for file in matched_files:
-                file = Path(file)
-                if update:
-                    res = update_tool_version(file, regexes, version)
-                    update_res.errors += res.errors
-                    update_res.updated.update(res.updated)
-                else:
-                    update_res.errors += check_tool_version(file, regexes, version).errors
-        else:
-            update_res.errors.append(f"No match with regex `{filename}`")
+        matched_files = glob.glob(str(glob_path), recursive=True)
+        if not matched_files:
+            update_res.errors.append(f"No match with regex `{glob_path}`")
+            continue
+
+        for file in map(Path, matched_files):
+            if update:
+                res = update_tool_version(file, regexes, version)
+                update_res.errors += res.errors
+                update_res.updated.update(res.updated)
+            else:
+                update_res.errors += check_tool_version(file, regexes, version).errors
 
     if not update_res.errors and update_res.updated:
         update_res.updated |= tool.post_update_hook(update_res.updated)
