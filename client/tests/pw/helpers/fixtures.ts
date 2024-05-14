@@ -34,6 +34,7 @@ export const msTest = base.extend<{ home: Page; connected: Page }>({
     await expect(home.locator('.login-button')).toBeEnabled();
     await home.locator('.login-button').click();
     await expect(home.locator('#connected-header')).toContainText('My workspaces');
+    await expect(home).toBeWorkspacePage();
 
     await use(home);
   },

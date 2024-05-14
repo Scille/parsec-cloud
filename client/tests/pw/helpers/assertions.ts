@@ -151,4 +151,50 @@ export const expect = baseExpect.extend({
       pass: pass,
     };
   },
+
+  async toBeHomePage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/home$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not home page (url is '${error.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toBeWorkspacePage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/\d+\/workspaces$/);
+    } catch (error: any) {
+      console.log(error);
+      return {
+        message: () => `Page is not workspace page (url is '${error.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toBeDocumentPage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/\d+\/documents$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not documents page (url is '${error.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
 });

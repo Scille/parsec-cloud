@@ -9,55 +9,6 @@ describe('Check organization list', () => {
     cy.dropTestbed();
   });
 
-  it('Visit the app root url', () => {
-    cy.contains('Your organizations');
-    cy.get('.organization-list-row__col').should('have.length', 5);
-  });
-
-  it('Go to login page and back to organizations', () => {
-    cy.get('.organization-list-row__col').should('have.length', 5);
-    cy.get('.login-button').should('not.exist');
-    cy.get('.organization-list').contains('Boby McBobFace').click();
-    cy.wait(200);
-    cy.get('.login-card-header').contains('Boby McBobFace');
-    cy.get('.login-button').should('exist');
-    cy.contains('Return to organizations').click();
-    cy.contains('Your organizations');
-    cy.get('.organization-list-row__col').should('have.length', 5);
-  });
-
-  it('Go to login page and enter wrong password', () => {
-    cy.contains('Boby McBobFace').click();
-    cy.get('.login-button').should('have.class', 'button-disabled');
-    cy.get('#password-input').find('.input-item').as('inputItem').should('not.have.class', 'input-invalid');
-    cy.get('#password-input').find('input').as('input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('@input').type('Wr0ngP@ssw0rd.');
-    cy.get('.login-button').should('not.have.class', 'button-disabled');
-    cy.get('.login-button').click();
-    cy.get('#password-input').find('.form-error').as('formError').should('contain.text', 'Incorrect password.');
-    cy.get('@inputItem').should('have.class', 'input-invalid');
-
-    cy.get('@input').type('{backspace}');
-    cy.get('@formError').should('not.contain.text', 'Incorrect password.');
-    cy.get('@inputItem').should('have.class', 'input-invalid');
-
-    cy.get('@input').clear();
-    cy.get('@formError').should('not.contain.text', 'Incorrect password.');
-    cy.get('@inputItem').should('not.have.class', 'input-invalid');
-  });
-
-  it('Go to login page and enter password', () => {
-    cy.get('.organization-list-row__col').should('have.length', 5);
-    cy.contains('Boby McBobFace').click();
-    cy.get('.login-button').should('have.class', 'button-disabled');
-    cy.get('#ms-password-input').find('input').invoke('attr', 'type').should('eq', 'password');
-    cy.get('#ms-password-input').find('input').type('P@ssw0rd.');
-    cy.get('.login-button').should('not.have.class', 'button-disabled');
-    cy.get('.login-button').click();
-    cy.get('.topbar-left__breadcrumb').contains('My workspaces');
-    cy.wait(200);
-  });
-
   it('Go to login page and sort and filter orgs', () => {
     cy.get('.organization-list-row__col').as('orgList').should('have.length', 5);
     // Sorted by org name asc by default
@@ -81,16 +32,6 @@ describe('Check organization list', () => {
     // Now sorted by user name desc
     cy.get('@orgList').first().contains('Malloryy McMalloryFace');
     cy.get('@orgList').last().contains('Alicey McAliceFace');
-  });
-
-  it('Open create organization dialog', () => {
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').contains('I want to create an organization');
-  });
-
-  it('Open join organization dialog', () => {
-    cy.get('#create-organization-button').click();
-    cy.get('.popover-viewport').contains('I received an invitation to join an organization');
   });
 
   it('Test join org link validation', () => {
@@ -144,16 +85,5 @@ describe('Check organization list', () => {
       .blur();
     cy.get('@okButton').should('not.have.class', 'button-disabled');
     cy.get('@error').should('not.be.visible');
-  });
-
-  it('Log into organization with command and log out', () => {
-    // Uses Cypress command to simplify the log in part
-    cy.login('Boby', 'P@ssw0rd.');
-    cy.get('.topbar-left__breadcrumb').contains('My workspaces');
-    cy.get('#profile-button').click();
-    cy.get('.popover-viewport').contains('Log out').click();
-    cy.get('.ion-page').find('.ms-modal').find('ion-buttons').contains('Log out').click();
-    cy.get('.organization-title').contains('Your organizations');
-    cy.wait(300);
   });
 });
