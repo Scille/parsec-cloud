@@ -35,12 +35,12 @@ jobs:
         timeout-minutes: 1
 
       - name: Create nightly release
-        run: python misc/releaser.py build --nightly --yes --no-gpg-sign
+        run: python misc/releaser.py build --nightly --yes --no-gpg-sign --skip-tag
         timeout-minutes: 2
 
       - name: Get commit for nightly tag
         id: commit
-        run: echo "id=$(git rev-parse nightly)" | tee -a $GITHUB_OUTPUT
+        run: echo "id=$(git rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Parse version
