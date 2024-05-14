@@ -17,6 +17,7 @@ from parsec.components.postgresql.invite import PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.ping import PGPingComponent
 from parsec.components.postgresql.realm import PGRealmComponent
+from parsec.components.postgresql.shamir import PGShamirComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
 from parsec.config import BackendConfig
@@ -53,6 +54,7 @@ async def components_factory(
                     config=config.blockstore_config, postgresql_pool=pool
                 )
                 block = PGBlockComponent(pool=pool)
+                shamir = PGShamirComponent()
 
                 pki = None
                 sequester = None
@@ -72,6 +74,7 @@ async def components_factory(
                     "blockstore": blockstore,
                     "pki": pki,
                     "sequester": sequester,
+                    "shamir": shamir,
                 }
                 for component in components.values():
                     method = getattr(component, "register_components", None)

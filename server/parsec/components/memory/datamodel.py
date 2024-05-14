@@ -27,6 +27,8 @@ from parsec._parsec import (
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     SequesterServiceID,
+    ShamirRecoveryBriefCertificate,
+    ShamirRevealToken,
     UserCertificate,
     UserID,
     UserProfile,
@@ -68,6 +70,11 @@ class MemoryOrganization:
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
+    # The user id is the author of the shamir recovery process
+    # TODO after https://github.com/Scille/parsec-cloud/issues/7364
+    # keep previous setups dict[UserID, List[MemoryShamirSetup | MemoryShamirRemoval]]
+    # see https://github.com/Scille/parsec-cloud/pull/7324#discussion_r1616803899
+    shamir_setup: dict[UserID, MemoryShamirSetup] = field(default_factory=dict)
 
     @property
     def last_sequester_certificate_timestamp(self) -> DateTime:
@@ -138,6 +145,13 @@ class MemoryOrganization:
                 *(ts for r in self.realms.values() if (ts := r.last_vlob_timestamp) is not None),
             )
         )
+
+    @property
+    def last_shamir_certificate_timestamp(self) -> DateTime | None:
+        if len(self.shamir_setup) == 0:
+            return None
+        else:
+            return max(setup.brief.timestamp for setup in self.shamir_setup.values())
 
     def clone_as(self, new_organization_id: OrganizationID) -> MemoryOrganization:
         cloned = deepcopy(self)
@@ -397,3 +411,24 @@ class MemoryBlock:
     created_on: DateTime
     # None if not deleted
     deleted_on: DateTime | None = None
+
+
+@dataclass(slots=True)
+class MemoryShamirSetup:
+    # The actual data we want to recover.
+    # It is encrypted with `data_key` that is itself split into shares.
+    # This should contains a serialized `LocalDevice`
+    ciphered_data: bytes
+    # The token the claimer should provide to get access to `ciphered_data`.
+    # This token is split into shares, hence it acts as a proof the claimer
+    # asking for the `ciphered_data` had it identity confirmed by the recipients.
+    reveal_token: ShamirRevealToken
+    # The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
+    # It contains the threshold for the quorum and the shares recipients.
+    # This field has a certain level of duplication with the "shares" below,
+    # but they are used for different things (we provide the encrypted share
+    # data only when needed)
+    brief: ShamirRecoveryBriefCertificate
+    # The shares provided as a `ShamirRecoveryShareCertificate` since
+    # each share is aimed at a specific recipient.
+    shares: dict[UserID, bytes]

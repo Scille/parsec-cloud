@@ -230,6 +230,7 @@ generate_field_type_enum!(
     OrganizationID => libparsec_types::OrganizationID,
     UserID => libparsec_types::UserID,
     VlobID => libparsec_types::VlobID,
+    ShamirRevealToken => libparsec_types::ShamirRevealToken,
     EnrollmentID => libparsec_types::EnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
     DeviceLabel => libparsec_types::DeviceLabel,

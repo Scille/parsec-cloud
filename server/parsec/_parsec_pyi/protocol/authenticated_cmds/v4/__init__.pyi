@@ -30,6 +30,7 @@ from . import (
     realm_rotate_key,
     realm_share,
     realm_unshare,
+    shamir_recovery_setup,
     user_create,
     user_revoke,
     user_update,
@@ -70,6 +71,7 @@ class AnyCmdReq:
         | realm_rotate_key.Req
         | realm_share.Req
         | realm_unshare.Req
+        | shamir_recovery_setup.Req
         | user_create.Req
         | user_revoke.Req
         | user_update.Req
@@ -107,6 +109,7 @@ __all__ = [
     "realm_rotate_key",
     "realm_share",
     "realm_unshare",
+    "shamir_recovery_setup",
     "user_create",
     "user_revoke",
     "user_update",

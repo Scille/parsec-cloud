@@ -1,0 +1,132 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "shamir_recovery_setup",
+            "fields": [
+                {
+                    "name": "setup",
+                    // Set to `None` to clear previous Shamir recovery setup
+                    "type": "RequiredOption<ShamirRecoverySetup>"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Cannot deserialize brief data into the expected certificate
+                "status": "brief_invalid_data"
+            },
+            {
+                // Cannot deserialize share data into the expected certificate
+                "status": "share_invalid_data"
+            },
+            {
+                // a recipient is missing, revoked or frozen
+                "status": "invalid_recipient"
+            },
+            {
+                // A share has a recipient not mentioned in brief
+                "status": "share_recipient_not_in_brief"
+            },
+            {
+                // A recipient has multiple share. Share weight must be used instead
+                "status": "duplicate_share_for_recipient"
+            },
+            {
+                // The author has a share where they are a recipient
+                "status": "author_included_as_recipient"
+            },
+            {
+                // A recipient listed in brief has no associated share
+                "status": "missing_share_for_recipient"
+            },
+            {
+                // Threshold is greater than total number of weighted shares
+                "status": "threshold_greater_than_total_shares"
+            },
+            {
+                // A share has a timestamp different than the brief timestamp.
+                "status": "share_incoherent_timestamp"
+            },
+            {
+                // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
+                "status": "shamir_setup_already_exists"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ],
+        "nested_types": [
+            {
+                "name": "ShamirRecoverySetup",
+                "fields": [
+                    {
+                        // The actual data we want to recover.
+                        // It is encrypted with `data_key` that is itself split into shares.
+                        // This should contains a serialized `LocalDevice`
+                        "name": "ciphered_data",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The token the claimer should provide to get access to `ciphered_data`.
+                        // This token is split into shares, hence it acts as a proof the claimer
+                        // asking for the `ciphered_data` had its identity confirmed by the recipients.
+                        "name": "reveal_token",
+                        "type": "ShamirRevealToken"
+                    },
+                    {
+                        // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
+                        // It contains the threshold for the quorum and the shares recipients.
+                        // This field has a certain level of duplication with the "shares" below,
+                        // but they are used for different things (we provide the encrypted share
+                        // data only when needed)
+                        "name": "brief",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The shares provided as a `ShamirRecoveryShareCertificate` since
+                        // each share is aimed at a specific recipient.
+                        "name": "shares",
+                        "type": "List<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]

@@ -34,6 +34,7 @@ from parsec.components.pki import BasePkiEnrollmentComponent
 from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
 from parsec.components.sequester import BaseSequesterComponent
+from parsec.components.shamir import BaseShamirComponent
 from parsec.components.user import BaseUserComponent
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
@@ -77,6 +78,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             pki=components["pki"],
             sequester=components["sequester"],
             events=components["events"],
+            shamir=components["shamir"],
         )
 
 
@@ -100,6 +102,7 @@ class Backend:
     pki: BasePkiEnrollmentComponent
     sequester: BaseSequesterComponent
     events: BaseEventsComponent
+    shamir: BaseShamirComponent
 
     # Only available if `config.db_url == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -118,6 +121,7 @@ class Backend:
             self.block,
             self.pki,
             self.events,
+            self.shamir,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )

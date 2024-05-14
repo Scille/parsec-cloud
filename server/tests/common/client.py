@@ -15,6 +15,9 @@ from parsec._parsec import (
     HumanHandle,
     InvitationToken,
     OrganizationID,
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryShareCertificate,
+    ShamirRevealToken,
     SigningKey,
     UserID,
     VerifyKey,
@@ -375,6 +378,35 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
         )
 
         await testbed.drop_organization(organization_id)
+
+
+async def setup_shamir_for_coolorg(
+    coolorg: CoolorgRpcClients,
+):
+    dt = DateTime.now()
+    share = ShamirRecoveryShareCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.alice.user_id,
+        timestamp=dt,
+        recipient=coolorg.mallory.user_id,
+        ciphered_share=b"abc",
+    )
+    brief = ShamirRecoveryBriefCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.alice.user_id,
+        timestamp=dt,
+        threshold=1,
+        per_recipient_shares={coolorg.mallory.user_id: 2},
+    )
+
+    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
+        b"abc",
+        ShamirRevealToken.new(),
+        brief.dump_and_sign(coolorg.alice.signing_key),
+        [share.dump_and_sign(coolorg.alice.signing_key)],
+    )
+    rep = await coolorg.alice.shamir_recovery_setup(setup)
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
 
 
 @dataclass(slots=True)
