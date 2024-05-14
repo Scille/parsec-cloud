@@ -34,6 +34,35 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "empty")]
+async fn multiple(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder
+            .bootstrap_organization("alice")
+            .and_set_sequestered_organization();
+        let service_id0 = builder.new_sequester_service().map(|event| event.id);
+        let service_id1 = builder.new_sequester_service().map(|event| event.id);
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        builder.revoke_sequester_service(service_id0);
+        builder.revoke_sequester_service(service_id1);
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+    let sequester_certificates = env.get_sequester_certificates_signed();
+
+    let switch = ops
+        .add_certificates_batch(
+            &[],
+            &sequester_certificates[sequester_certificates.len() - 2..],
+            &[],
+            &Default::default(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "empty")]
 async fn already_revoked(env: &TestbedEnv) {
     let (env, timestamp) = env.customize_with_map(|builder| {
         builder
