@@ -255,7 +255,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "docs/development/quickstart.md": {
+    ROOT_DIR / "docs/development/README.md": {
         Tool.Rust: [
             ReplaceRegex(r"Rust v[0-9.]+", "Rust v{version}"),
             ReplaceRegex(
@@ -467,14 +467,18 @@ def check_tool(tool: Tool, update: bool) -> VersionUpdateResult:
         if regexes is None:
             continue
 
-        for glob_file in glob.glob(str(filename), recursive=True):
-            file = Path(glob_file)
-            if update:
-                res = update_tool_version(file, regexes, version)
-                update_res.errors += res.errors
-                update_res.updated.update(res.updated)
-            else:
-                update_res.errors += check_tool_version(file, regexes, version).errors
+        matched_files = glob.glob(str(filename), recursive=True)
+        if len(matched_files) > 0:
+            for file in matched_files:
+                file = Path(file)
+                if update:
+                    res = update_tool_version(file, regexes, version)
+                    update_res.errors += res.errors
+                    update_res.updated.update(res.updated)
+                else:
+                    update_res.errors += check_tool_version(file, regexes, version).errors
+        else:
+            update_res.errors.append(f"No match with regex `{filename}`")
 
     if not update_res.errors and update_res.updated:
         update_res.updated |= tool.post_update_hook(update_res.updated)
