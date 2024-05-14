@@ -10,7 +10,7 @@ import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
-import AppUpdater, { UpdaterState } from './updater';
+import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
@@ -63,7 +63,7 @@ export class ElectronCapacitorApp {
   public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
-  updater: AppUpdater;
+  updater?: AppUpdater;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
     this.CapacitorFileConfig = capacitorFileConfig;
@@ -100,14 +100,18 @@ export class ElectronCapacitorApp {
       scheme: this.customScheme,
     });
 
-    this.updater = new AppUpdater();
+    this.updater = createAppUpdater();
 
-    this.updater.on(UpdaterState.UpdateDownloaded, (info) => {
-      this.sendEvent(WindowToPageChannel.UpdateAvailability, true, info.version);
-    });
+    if (this.updater) {
+      this.updater.on(UpdaterState.UpdateDownloaded, (info) => {
+        this.sendEvent(WindowToPageChannel.UpdateAvailability, true, info.version);
+      });
 
-    // Check periodically if an update is available
-    setInterval(this.updater.checkForUpdates, 600000); // 10min
+      // Check periodically if an update is available
+      setInterval(this.updater.checkForUpdates, 600000); // 10min
+    } else if (!electronIsDev) {
+      console.warn("We are in a production build but the updater isn't available.");
+    }
   }
 
   // Helper function to load in the app.
