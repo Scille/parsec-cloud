@@ -2093,6 +2093,7 @@ dependencies = [
  "bytes",
  "futures",
  "glob",
+ "hex",
  "libparsec_serialization_format",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",

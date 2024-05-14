@@ -314,6 +314,13 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.realm_unshare.Rep.load(raw_rep)
 
+    async def shamir_recovery_setup(
+        self, setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup | None
+    ) -> authenticated_cmds.latest.shamir_recovery_setup.Rep:
+        req = authenticated_cmds.latest.shamir_recovery_setup.Req(setup=setup)
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.shamir_recovery_setup.Rep.load(raw_rep)
+
     async def user_create(
         self,
         user_certificate: bytes,

@@ -39,6 +39,7 @@ const REALM_CERTIFICATES: [&str; 4] = [
 const SHAMIR_RECOVERY_CERTIFICATES: [&str; 2] = [
     "shamir_recovery_share_certificate",
     "shamir_recovery_brief_certificate",
+    // TODO deletion certificate
 ];
 
 #[derive(Debug)]

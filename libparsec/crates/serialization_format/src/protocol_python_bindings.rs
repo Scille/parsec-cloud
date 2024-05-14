@@ -817,6 +817,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
         FieldType::UserID => quote! { crate::ids::UserID },
         FieldType::VlobID => quote! { crate::ids::VlobID },
+        FieldType::ShamirRevealToken => quote! { crate::token::ShamirRevealToken },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
@@ -933,6 +934,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID(#field_path.to_owned()) },
         FieldType::UserID => quote! { crate::ids::UserID(#field_path.to_owned()) },
         FieldType::VlobID => quote! { crate::ids::VlobID(#field_path.to_owned()) },
+        FieldType::ShamirRevealToken => {
+            quote! { crate::token::ShamirRevealToken(#field_path.to_owned()) }
+        }
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID(#field_path.to_owned()) },
         FieldType::SequesterServiceID => {
             quote! { crate::ids::SequesterServiceID(#field_path.to_owned()) }
@@ -1037,6 +1041,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
         FieldType::UserID => quote! { crate::ids::UserID },
         FieldType::VlobID => quote! { crate::ids::VlobID },
+        FieldType::ShamirRevealToken => quote! { crate::token::ShamirRevealToken },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
@@ -1160,6 +1165,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::OrganizationID
         | FieldType::UserID
         | FieldType::VlobID
+        | FieldType::ShamirRevealToken
         | FieldType::EnrollmentID
         | FieldType::SequesterServiceID
         | FieldType::DeviceLabel
