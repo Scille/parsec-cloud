@@ -928,7 +928,7 @@
         "filter": {
             "title": "Filter",
             "status": "Status",
-            "role": "Role",
+            "profile": "Profile",
             "admin": "Administrator",
             "standard": "Standard",
             "outsider": "Outsider"
