@@ -10,7 +10,7 @@ import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
 import { join } from 'path';
 import { WindowToPageChannel } from './communicationChannels';
-import AppUpdater from './updater';
+import AppUpdater, { UpdaterState } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
@@ -102,11 +102,12 @@ export class ElectronCapacitorApp {
 
     this.updater = new AppUpdater();
 
+    this.updater.on(UpdaterState.UpdateDownloaded, (info) => {
+      this.sendEvent(WindowToPageChannel.UpdateAvailability, true, info.version);
+    });
+
     // Check periodically if an update is available
-    setInterval(async () => {
-      const updateInfo = await this.getUpdateInfo();
-      this.sendEvent(WindowToPageChannel.UpdateAvailability, updateInfo.updateAvailable, updateInfo.version);
-    }, 600000); // 10min
+    setInterval(this.updater.checkForUpdates, 600000); // 10min
   }
 
   // Helper function to load in the app.
@@ -136,13 +137,12 @@ export class ElectronCapacitorApp {
     console.log('In electron update app. Sadly does nothing for now :(');
   }
 
-  async getUpdateInfo(): Promise<{ updateAvailable: boolean; version?: string }> {
-    const updateRes = await this.updater?.checkForUpdates();
-    if (updateRes === undefined) {
-      return { updateAvailable: false };
-    } else {
-      return { updateAvailable: true, version: updateRes.version };
-    }
+  /**
+   * Ask the updater to check for updates.
+   * If an update is available, an event will be sent to the web app.
+   */
+  async checkForUpdates(): Promise<void> {
+    await this.updater?.checkForUpdates();
   }
 
   updateConfig(newConfig: object): void {
