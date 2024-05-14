@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import type { CustomPublishOptions, UpdateInfo } from 'builder-util-runtime';
+import type { CustomPublishOptions, ProgressInfo, UpdateInfo } from 'builder-util-runtime';
 import type { Logger } from 'electron-log';
 import type { BaseUpdater, AppUpdater as _AppUpdater } from 'electron-updater';
 import { GitHubProvider } from 'electron-updater/out/providers/GitHubProvider';
@@ -56,7 +56,7 @@ export interface UpdateAvailable {
   version: string;
 }
 
-enum UpdaterState {
+export enum UpdaterState {
   Idle,
   CheckingForUpdate,
   UpdateAvailable,
@@ -65,12 +65,29 @@ enum UpdaterState {
   UpdateDownloaded,
 }
 
+export type ListenerSignature = {
+  [UpdaterState.Idle]: () => void;
+  [UpdaterState.CheckingForUpdate]: () => void;
+  [UpdaterState.UpdateAvailable]: (info: UpdateInfo) => void;
+  [UpdaterState.UpdateNotAvailable]: (info: UpdateInfo) => void;
+  [UpdaterState.DownloadingUpdate]: (progress: ProgressInfo) => void;
+  [UpdaterState.UpdateDownloaded]: (info: UpdateInfo) => void;
+};
+
 export default class AppUpdater {
   private updater: BaseUpdater;
   private state: UpdaterState = UpdaterState.Idle;
   private lastUpdateInfo: UpdateInfo | undefined = undefined;
   private lastError: Error | undefined = undefined;
   private lastDownloadedUpdate: UpdateInfo | undefined = undefined;
+  private listeners: { [K in UpdaterState]: ListenerSignature[K][] } = {
+    [UpdaterState.Idle]: [],
+    [UpdaterState.CheckingForUpdate]: [],
+    [UpdaterState.UpdateAvailable]: [],
+    [UpdaterState.UpdateNotAvailable]: [],
+    [UpdaterState.DownloadingUpdate]: [],
+    [UpdaterState.UpdateDownloaded]: [],
+  };
 
   constructor() {
     switch (process.platform) {
@@ -106,34 +123,40 @@ export default class AppUpdater {
     this.updater.on('error', (error) => {
       this.state = UpdaterState.Idle;
       this.lastError = error;
+      this.emit(this.state);
     });
     // https://www.electron.build/auto-update#event-checking-for-update
     this.updater.on('checking-for-update', () => {
       console.debug('Checking for update');
       this.state = UpdaterState.CheckingForUpdate;
+      this.emit(this.state);
     });
     // https://www.electron.build/auto-update#event-update-available
     this.updater.on('update-available', (info) => {
       console.debug('Update available', info);
       this.state = UpdaterState.UpdateAvailable;
       this.lastUpdateInfo = info;
+      this.emit(this.state, this.lastUpdateInfo);
     });
     // https://www.electron.build/auto-update#event-update-not-available
     this.updater.on('update-not-available', (info) => {
       console.debug('Update not available', info);
       this.state = UpdaterState.UpdateNotAvailable;
       this.lastUpdateInfo = info;
+      this.emit(this.state, this.lastUpdateInfo);
     });
     // https://www.electron.build/auto-update#event-download-progress
     this.updater.on('download-progress', (progress) => {
       console.debug('Download progress', progress);
       this.state = UpdaterState.DownloadingUpdate;
+      this.emit(this.state, progress);
     });
     // https://www.electron.build/auto-update#event-update-downloaded
     this.updater.on('update-downloaded', (info) => {
       console.debug('Update downloaded', info);
       this.state = UpdaterState.UpdateDownloaded;
       this.lastDownloadedUpdate = info;
+      this.emit(this.state, this.lastDownloadedUpdate);
     });
   }
 
@@ -157,5 +180,21 @@ export default class AppUpdater {
     if (this.state === UpdaterState.UpdateAvailable) {
       return { version: this.lastUpdateInfo!.version };
     }
+  }
+
+  emit<U extends UpdaterState>(event: U, ...args: Parameters<ListenerSignature[U]>): void {
+    this.listeners[event].forEach((listener) => (listener as (...args: Parameters<ListenerSignature[U]>) => void)(...args));
+  }
+
+  on<U extends UpdaterState>(event: U, listener: ListenerSignature[U]): void {
+    this.listeners[event].push(listener);
+  }
+
+  removeListener<U extends UpdaterState>(event: U, listener: ListenerSignature[U]): void {
+    (this.listeners[event] as ListenerSignature[U][]) = this.listeners[event].filter((l) => l !== listener);
+  }
+
+  removeAllListeners(event: UpdaterState): void {
+    this.listeners[event] = [];
   }
 }
