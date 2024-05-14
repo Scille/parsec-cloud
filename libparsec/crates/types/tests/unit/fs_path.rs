@@ -78,20 +78,29 @@ fn entry_name_debug() {
 }
 
 #[rstest]
-#[case::no_extension("foo", "foo", None)]
-#[case::with_extension("foo.txt", "foo", Some("txt"))]
-#[case::with_multiple_extensions("foo.tar.gz", "foo", Some("tar.gz"))]
-#[case::unix_hidden_no_extension(".foo", ".foo", None)]
-#[case::unix_hidden_with_extension(".foo.txt", ".foo", Some("txt"))]
-#[case::double_leading_dot("..foo.txt", ".", Some(".foo.txt"))]
-fn entry_name_extension(#[case] raw_path: &str, #[case] expected_base: &str, #[case] expected_extension: Option<&str>) {
-    let path: EntryName = raw_path.parse().unwrap();
+#[case::no_suffix("foo", "foo", None)]
+#[case::with_suffix("foo.txt", "foo", Some("txt"))]
+#[case::trailing_dot("foo.", "foo", Some(""))]
+#[case::multiple_suffixes("foo.tar.gz", "foo", Some("tar.gz"))]
+#[case::multiple_suffixes_and_trailing_dot("foo.tar.gz.", "foo", Some("tar.gz."))]
+#[case::multiple_trailing_dots("foo...", "foo", Some(".."))]
+#[case::unix_hidden_no_suffix(".foo", ".foo", None)]
+#[case::unix_hidden_with_suffix(".foo.txt", ".foo", Some("txt"))]
+#[case::double_leading_dot("..foo.txt", ".", Some("foo.txt"))]
+#[case::only_dots("...", ".", Some("."))]
+fn entry_name_prefix_and_suffix(
+    #[case] raw_name: &str,
+    #[case] expected_prefix: &str,
+    #[case] expected_suffix: Option<&str>,
+) {
+    let name: EntryName = raw_name.parse().unwrap();
 
-    let (base, extension) = path.base_and_extension();
-    p_assert_eq!(extension, expected_extension);
-    p_assert_eq!(base, expected_base);
+    let (prefix, suffix) = name.prefix_and_suffix();
+    p_assert_eq!(prefix, expected_prefix);
+    p_assert_eq!(suffix, expected_suffix);
 
-    p_assert_eq!(path.extension(), expected_extension);
+    p_assert_eq!(name.prefix(), expected_prefix);
+    p_assert_eq!(name.suffix(), expected_suffix);
 }
 
 #[rstest]

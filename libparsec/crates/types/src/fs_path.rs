@@ -34,7 +34,7 @@ pub struct EntryName(String);
 impl EntryName {
     pub const MAX_LENGTH_BYTES: usize = 255;
 
-    /// Stick to UNIX filesystem philosophy:
+    /// Entry name is made of valid UTF8, plus follows the UNIX filesystem philosophy:
     /// - no `.` or `..` name
     /// - no `/` or null byte in the name
     /// - max 255 bytes long name
@@ -53,12 +53,25 @@ impl EntryName {
         }
     }
 
-    pub fn extension(&self) -> Option<&str> {
-        self.base_and_extension().1
+    pub fn prefix(&self) -> &str {
+        self.prefix_and_suffix().0
     }
 
-    // TODO: Handle case of hidden UNIX file (e.g. `.foo`) ?
-    pub fn base_and_extension(&self) -> (&str, Option<&str>) {
+    pub fn suffix(&self) -> Option<&str> {
+        self.prefix_and_suffix().1
+    }
+
+    /// The prefix is:
+    ///
+    /// - The entire name if there is no embedded `.`;
+    /// - The portion of the name before the first non-beginning `.`;
+    /// - The entire name if the name begins with `.` and has no other `.`s within;
+    /// - The portion of the name before the second `.` if the name begins with `.`
+    ///
+    /// Example:
+    /// - `foo.tar.gz` -> prefix: `foo` suffix: `tar.gz`
+    /// - `.foo.txt` -> prefix: `.foo` suffix: `txt`
+    pub fn prefix_and_suffix(&self) -> (&str, Option<&str>) {
         match self.0.split_once('.') {
             Some((base, ext)) => {
                 // Check for special case of hidden UNIX file (e.g. `.foo`)
@@ -69,13 +82,13 @@ impl EntryName {
                         // The name had multiple dots (e.g. `.foo.txt`)
                         Some(i) => {
                             let (base, ext) = self.0.split_at(i + 1);
-                            (base, Some(ext))
+                            (base, Some(&ext[1..]))
                         }
                         // The name contained a single leading dot
                         None => (self.0.as_str(), None),
                     }
                 }
-            },
+            }
             // Name without any dot
             None => (self.0.as_str(), None),
         }
@@ -106,6 +119,8 @@ impl TryFrom<&str> for EntryName {
     type Error = EntryNameError;
 
     fn try_from(id: &str) -> Result<Self, Self::Error> {
+        // NFC normalization is an important step to ensure a given name is always
+        // encoded the same way (e.g. "é" can also be encoded in UTF8 as "<accent>+e").
         let id: String = id.nfc().collect();
 
         Self::is_valid(&id).map(|_| Self(id))
@@ -277,10 +292,6 @@ impl FsPath {
             dest.parts.extend_from_slice(&self.parts[offset..]);
         }
         dest
-    }
-
-    pub fn extension(&self) -> Option<&str> {
-        self.name().and_then(|name| name.extension())
     }
 
     pub fn from_parts(parts: Vec<EntryName>) -> Self {

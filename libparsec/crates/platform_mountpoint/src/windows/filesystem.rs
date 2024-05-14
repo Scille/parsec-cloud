@@ -14,10 +14,10 @@ use winfsp_wrs::{
 };
 
 use libparsec_client::workspace::{
-    EntryStat, FolderReader, FolderReaderStatEntryError, OpenOptions, WorkspaceCreateFolderError,
-    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
-    WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps,
-    WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    EntryStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
+    MoveEntryMode, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdFlushError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError, WorkspaceMoveEntryError,
+    WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps, WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -42,8 +42,10 @@ const ENTRY_INFO_EXTENSION: &str = "__parsec_entry_info__";
 
 #[allow(dead_code)]
 fn is_entry_info_path(path: &FsPath) -> bool {
-    path.extension()
-        .map(|ext| ext == ENTRY_INFO_EXTENSION)
+    path.parts()
+        .last()
+        .and_then(|name| name.suffix())
+        .map(|suffix| suffix == ENTRY_INFO_EXTENSION)
         .unwrap_or_default()
 }
 
@@ -697,24 +699,34 @@ impl FileSystemContext for ParsecFileSystemContext {
             let outcome = self.ops.open_folder_reader(&parsec_file_name).await;
             match outcome {
                 Ok(reader) => {
-                    let maybe_child_stat =
-                        reader
-                            .stat_next(&self.ops, 0)
-                            .await
-                            .map_err(|err| match err {
-                                FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                                FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                                FolderReaderStatEntryError::NoRealmAccess
-                                | FolderReaderStatEntryError::InvalidKeysBundle(_)
-                                | FolderReaderStatEntryError::InvalidCertificate(_)
-                                | FolderReaderStatEntryError::InvalidManifest(_)
-                                | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
-                            })?;
-
-                    if maybe_child_stat.is_none() {
-                        Ok(())
-                    } else {
-                        Err(STATUS_DIRECTORY_NOT_EMPTY)
+                    let mut index = 0;
+                    loop {
+                        let outcome =
+                            reader
+                                .stat_child(&self.ops, index)
+                                .await
+                                .map_err(|err| match err {
+                                    FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                                    FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                                    FolderReaderStatEntryError::NoRealmAccess
+                                    | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                                    | FolderReaderStatEntryError::InvalidCertificate(_)
+                                    | FolderReaderStatEntryError::InvalidManifest(_)
+                                    | FolderReaderStatEntryError::Internal(_) => {
+                                        STATUS_ACCESS_DENIED
+                                    }
+                                })?;
+                        match outcome {
+                            FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
+                            FolderReaderStatNextOutcome::Entry { .. } => {
+                                break Err(STATUS_DIRECTORY_NOT_EMPTY)
+                            }
+                            // Current entry is invalid, just ignore it
+                            FolderReaderStatNextOutcome::InvalidChild => {
+                                index += 1;
+                                continue;
+                            }
+                        }
                     }
                 }
                 Err(err) => match err {
@@ -751,33 +763,29 @@ impl FileSystemContext for ParsecFileSystemContext {
             let parsec_file_name = os_path_to_parsec_path(file_name)?;
             let parsec_new_file_name = os_path_to_parsec_path(new_file_name)?;
 
-            let (parsec_new_file_parent, parsec_new_file_name) = parsec_new_file_name.into_parent();
-            let parsec_new_file_name = match parsec_new_file_name {
-                Some(parsec_new_file_name) => parsec_new_file_name,
-                None => return Err(STATUS_OBJECT_NAME_NOT_FOUND),
+            let mode = if replace_if_exists {
+                MoveEntryMode::CanReplace
+            } else {
+                MoveEntryMode::NoReplace
             };
-            // TODO: ensure rename *is* a rename (i.e. not a move)
-            if !parsec_file_name.is_descendant_of(&parsec_new_file_parent) {
-                return Err(STATUS_NOT_IMPLEMENTED);
-            }
-
             self.ops
-                .rename_entry(parsec_file_name, parsec_new_file_name, replace_if_exists)
+                .move_entry(parsec_file_name, parsec_new_file_name, mode)
                 .await
                 .map_err(|err| match err {
-                    WorkspaceRenameEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                    WorkspaceRenameEntryError::CannotRenameRoot => STATUS_OBJECT_NAME_NOT_FOUND, // TODO
-                    WorkspaceRenameEntryError::DestinationExists { .. } => {
+                    WorkspaceMoveEntryError::SourceNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
+                    WorkspaceMoveEntryError::DestinationNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
+                    WorkspaceMoveEntryError::CannotMoveRoot => STATUS_OBJECT_NAME_NOT_FOUND, // TODO
+                    WorkspaceMoveEntryError::DestinationExists { .. } => {
                         STATUS_OBJECT_NAME_NOT_FOUND
                     } // TODO
-                    WorkspaceRenameEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                    WorkspaceRenameEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                    WorkspaceRenameEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
-                    WorkspaceRenameEntryError::NoRealmAccess
-                    | WorkspaceRenameEntryError::InvalidKeysBundle(_)
-                    | WorkspaceRenameEntryError::InvalidCertificate(_)
-                    | WorkspaceRenameEntryError::InvalidManifest(_)
-                    | WorkspaceRenameEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                    WorkspaceMoveEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                    WorkspaceMoveEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                    WorkspaceMoveEntryError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
+                    WorkspaceMoveEntryError::NoRealmAccess
+                    | WorkspaceMoveEntryError::InvalidKeysBundle(_)
+                    | WorkspaceMoveEntryError::InvalidCertificate(_)
+                    | WorkspaceMoveEntryError::InvalidManifest(_)
+                    | WorkspaceMoveEntryError::Internal(_) => STATUS_ACCESS_DENIED,
                 })
         })
     }
@@ -900,21 +908,35 @@ impl FileSystemContext for ParsecFileSystemContext {
                 }
             }
 
-            let offset = match marker {
+            let index = match marker {
                 Some(marker) => match marker.to_string_lossy().parse::<EntryName>() {
-                    Ok(marker) => match reader.get_offset_for_name(&marker) {
-                        Some(previous_offset) => previous_offset + 1,
-                        None => 0,
-                    },
+                    Ok(marker) => {
+                        let outcome = reader
+                            .get_index_for_name(&self.ops, &marker)
+                            .await
+                            .map_err(|err| match err {
+                                FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                                FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                                FolderReaderStatEntryError::NoRealmAccess
+                                | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                                | FolderReaderStatEntryError::InvalidCertificate(_)
+                                | FolderReaderStatEntryError::InvalidManifest(_)
+                                | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                            })?;
+                        match outcome {
+                            Some(previous_index) => previous_index + 1,
+                            None => 0,
+                        }
+                    }
                     Err(_) => 0,
                 },
                 None => 0,
             };
 
-            for offset in offset.. {
+            for index in index.. {
                 let maybe_child_stat =
                     reader
-                        .stat_next(&self.ops, offset)
+                        .stat_child(&self.ops, index)
                         .await
                         .map_err(|err| match err {
                             FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
@@ -927,8 +949,9 @@ impl FileSystemContext for ParsecFileSystemContext {
                         })?;
 
                 let (child_name, child_stat) = match maybe_child_stat {
-                    Some(name_and_stat) => name_and_stat,
-                    None => break,
+                    FolderReaderStatNextOutcome::Entry { name, stat } => (name, stat),
+                    FolderReaderStatNextOutcome::NoMoreEntries => break,
+                    FolderReaderStatNextOutcome::InvalidChild => continue,
                 };
                 let winified_child_name = winify_entry_name(child_name);
 
