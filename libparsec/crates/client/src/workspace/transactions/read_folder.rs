@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{GetManifestError, ResolvePathError},
+        store::{EnsureManifestExistsWithParentError, GetManifestError, ResolvePathError},
         EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
@@ -71,6 +71,7 @@ impl From<ConnectionError> for FolderReaderStatEntryError {
     }
 }
 
+#[derive(Debug)]
 pub struct FolderReader {
     manifest: Arc<LocalFolderManifest>,
 }
@@ -164,18 +165,44 @@ impl FolderReader {
     }
 
     /// Needed by WinFSP
-    pub fn get_offset_for_name(&self, name: &EntryName) -> Option<usize> {
-        self.manifest
-            .children
-            .iter()
-            .enumerate()
-            .find_map(|(offset, (child_name, _))| {
-                if child_name == name {
-                    Some(offset)
-                } else {
-                    None
+    pub async fn get_index_for_name(
+        &self,
+        ops: &WorkspaceOps,
+        name: &EntryName,
+    ) -> Result<Option<usize>, FolderReaderStatEntryError> {
+        for (offset, (child_name, child_id)) in self.manifest.children.iter().enumerate() {
+            if child_name == name {
+                let actual_child = ops
+                    .store
+                    .ensure_manifest_exists_with_parent(*child_id, self.manifest.base.id)
+                    .await
+                    .map_err(|err| match err {
+                        EnsureManifestExistsWithParentError::Offline => {
+                            FolderReaderStatEntryError::Offline
+                        }
+                        EnsureManifestExistsWithParentError::Stopped => {
+                            FolderReaderStatEntryError::Stopped
+                        }
+                        EnsureManifestExistsWithParentError::NoRealmAccess => {
+                            FolderReaderStatEntryError::NoRealmAccess
+                        }
+                        EnsureManifestExistsWithParentError::InvalidKeysBundle(err) => {
+                            FolderReaderStatEntryError::InvalidKeysBundle(err)
+                        }
+                        EnsureManifestExistsWithParentError::InvalidCertificate(err) => {
+                            FolderReaderStatEntryError::InvalidCertificate(err)
+                        }
+                        EnsureManifestExistsWithParentError::InvalidManifest(err) => {
+                            FolderReaderStatEntryError::InvalidManifest(err)
+                        }
+                        EnsureManifestExistsWithParentError::Internal(err) => err.into(),
+                    })?;
+                if actual_child {
+                    return Ok(Some(offset));
                 }
-            })
+            }
+        }
+        Ok(None)
     }
 }
 
