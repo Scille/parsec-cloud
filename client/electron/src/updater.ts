@@ -47,10 +47,28 @@ class CustomGithubProvider extends GitHubProvider {
   }
 }
 
-const publishOption: CustomPublishOptions | CustomGitHubOptions = {
-  ...require('../assets/publishConfig.json'),
-  updateProvider: CustomGithubProvider,
-};
+function loadPublishOption(): (CustomPublishOptions & CustomGitHubOptions) | undefined {
+  let data = undefined;
+  try {
+    data = require('../assets/publishConfig.json');
+  } catch {
+    console.log('Failed to load publish config file');
+    return undefined;
+  }
+
+  return {
+    ...data,
+    updateProvider: CustomGithubProvider,
+  };
+}
+
+export function createAppUpdater(): AppUpdater | undefined {
+  const publishOption = loadPublishOption();
+  if (publishOption === undefined) {
+    return undefined;
+  }
+  return new AppUpdater(publishOption);
+}
 
 export interface UpdateAvailable {
   version: string;
@@ -89,7 +107,7 @@ export default class AppUpdater {
     [UpdaterState.UpdateDownloaded]: [],
   };
 
-  constructor() {
+  constructor(publishOption: CustomPublishOptions & CustomGitHubOptions) {
     switch (process.platform) {
       case 'darwin':
         const { MacUpdater } = require('electron-updater');
