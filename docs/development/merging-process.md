@@ -161,12 +161,12 @@ assigned to a pull request.
 Hints:
 
 - If the pull request is related to more than one category in `PER CODE`, this
-  may suggests that it needs to be splitted into smaller pull requests.
+  may suggests that it needs to be split into smaller pull requests.
   > This would not be enforced because sometime it is required to change
   > multiple parts of the code at the same time.
 
 - If the pull request is related to more than one category in `PER OS`, this
-  will certainly indicate that the change is not OS-specific so spliting the
+  will certainly indicate that the change is not OS-specific so splitting the
   pull request is recommended.
 
 ### The pull request checklist

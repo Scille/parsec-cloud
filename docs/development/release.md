@@ -87,7 +87,7 @@ python misc/releaser.py build --base=origin/master v2.9.0
 The script will:
 
 - Ensure the release version is greater than the current version.
-- Ensure _git env_ is clean (no changes to be commited).
+- Ensure _git env_ is clean (no changes to be committed).
 - Create the release branch `releases/2.9` (and switch to it).
 - Update the license Date & version.
 - Update the parsec version across different files in our repository.

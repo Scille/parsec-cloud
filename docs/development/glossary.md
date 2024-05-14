@@ -92,7 +92,7 @@ A Workspace can have multiple owners. The Workspace creator has the Owner role b
 
 ### Invitation
 
-The action of inviting a new user to join an existing Organization. Tipically the user receive an email to start the Onboarding process.
+The action of inviting a new user to join an existing Organization. Typically the user receive an email to start the Onboarding process.
 
 <!-- TODO: Confirm following terms to avoid -->
 - Terms to avoid: *Enroll*, *Enlist*, *Onboard*, *Greet*, *Join*
