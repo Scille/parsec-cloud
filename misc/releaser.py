@@ -558,7 +558,9 @@ def create_bump_commit_to_dev_version(
     )
 
 
-def push_release(tag: str, release_branch: str, yes: bool, force_push: bool) -> None:
+def push_release(
+    tag: str, release_branch: str, yes: bool, force_push: bool, skip_tag: bool
+) -> None:
     print("Pushing changes to remote...")
 
     if not yes:
@@ -572,7 +574,7 @@ def push_release(tag: str, release_branch: str, yes: bool, force_push: bool) -> 
             *(["--force"] if force_push else []),
             "origin",
             release_branch,
-            tag,
+            *([] if skip_tag else [tag]),
         )
     )
 
@@ -690,6 +692,7 @@ def build_main(args: argparse.Namespace) -> None:
     yes: bool = args.yes
     base_ref: str | None = args.base_ref
     current_version = get_version_from_code()
+    skip_tag = args.skip_tag
 
     if args.nightly:
         release_version = generate_uniq_version(current_version)
@@ -741,15 +744,16 @@ def build_main(args: argparse.Namespace) -> None:
         gpg_sign=args.gpg_sign,
     )
 
-    create_tag_for_new_version(release_version, tag, gpg_sign=args.gpg_sign, force=args.nightly)
+    if not skip_tag:
+        create_tag_for_new_version(release_version, tag, gpg_sign=args.gpg_sign, force=args.nightly)
 
-    inspect_tag(tag, yes, gpg_sign=args.gpg_sign)
+        inspect_tag(tag, yes, gpg_sign=args.gpg_sign)
 
     # No need to create a dev version for a nightly release.
     if not args.nightly:
         create_bump_commit_to_dev_version(release_version, license_eol_date, gpg_sign=args.gpg_sign)
 
-    push_release(tag, release_branch, yes, force_push=args.nightly)
+    push_release(tag, release_branch, yes, force_push=args.nightly, skip_tag=skip_tag)
 
 
 def check_main(args: argparse.Namespace) -> None:
@@ -922,6 +926,11 @@ def cli(description: str) -> argparse.Namespace:
         type=str,
         default=None,
         help="The base ref to use when creating the release branch",
+    )
+    build.add_argument(
+        "--skip-tag",
+        action="store_true",
+        help="Skip the tag creation",
     )
 
     check = subparsers.add_parser(
