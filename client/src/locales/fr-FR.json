@@ -1051,5 +1051,12 @@
         "loggedInOrgs": "Organisations connectées",
         "myOrgs": "Mes organisations",
         "active": "Active"
+    },
+    "lib": {
+        "components": {
+            "msChoosePasswordInput": {
+                "description": "Votre mot de passe doit être sécurisé et vous devez le mémoriser. Nous vous conseillons de créer plusieurs appareils si possible et de partager les espaces de travail."
+            }
+        }
     }
 }
