@@ -214,7 +214,7 @@ import {
   SortProperty,
   selectFolder,
 } from '@/components/files';
-import { Path, entryStat } from '@/parsec';
+import { Path, entryStat, WorkspaceCreateFolderErrorTag } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -611,14 +611,18 @@ async function createFolder(): Promise<void> {
   const folderPath = await parsec.Path.join(currentPath.value, folderName);
   const result = await parsec.createFolder(workspaceInfo.value.handle, folderPath);
   if (!result.ok) {
+    let message: Translatable = { key: 'FoldersPage.errors.createFolderFailed', data: { name: folderName } };
+    switch (result.error.tag) {
+      case WorkspaceCreateFolderErrorTag.EntryExists: {
+        message = { key: 'FoldersPage.errors.createFolderAlreadyExists', data: { name: folderName } };
+        break;
+      }
+      default:
+        break;
+    }
     informationManager.present(
       new Information({
-        message: {
-          key: 'FoldersPage.errors.createFolderFailed',
-          data: {
-            name: folderName,
-          },
-        },
+        message: message,
         level: InformationLevel.Error,
       }),
       PresentationMode.Toast,

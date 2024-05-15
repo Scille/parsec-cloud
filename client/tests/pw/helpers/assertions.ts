@@ -29,21 +29,27 @@ export const expect = baseExpect.extend({
   async toShowToast(page: Page, message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): Promise<AssertReturnType> {
     const toast = page.locator('.notification-toast');
     let errorMessage = '';
-    let pass = await toast.evaluate((node, theme: string) => {
-      const expectedClass = `ms-${theme.toLowerCase()}`;
-      return node.classList.contains(expectedClass);
-    }, theme);
+    let pass = true;
+
+    try {
+      await baseExpect(toast.locator('.toast-message')).toHaveText(message);
+    } catch (error: any) {
+      errorMessage = `Toast does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
+      pass = false;
+    }
 
     if (pass) {
-      try {
-        await baseExpect(toast.locator('.toast-message')).toHaveText(message);
-      } catch (error: any) {
-        errorMessage = `Toast does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
-        pass = false;
+      pass = await toast.evaluate((node, theme: string) => {
+        const expectedClass = `ms-${theme.toLowerCase()}`;
+        return node.classList.contains(expectedClass);
+      }, theme);
+      if (!pass) {
+        errorMessage = `Toast does not have the theme '${theme}'`;
       }
-    } else {
-      errorMessage = `Toast does not have the theme '${theme}'`;
     }
+
+    // Close toast
+    await toast.locator('.toast-button-confirm').click();
 
     return {
       message: () => errorMessage,
