@@ -11,7 +11,6 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     RealmRole,
-    UserProfile,
     VlobID,
 )
 from parsec.components.block import (
@@ -25,7 +24,6 @@ from parsec.components.blockstore import (
     BlockStoreCreateBadOutcome,
     BlockStoreReadBadOutcome,
 )
-from parsec.components.organization import Organization, OrganizationGetBadOutcome
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.realm import PGRealmComponent
@@ -41,10 +39,10 @@ from parsec.components.postgresql.utils import (
     q_user_can_read_vlob,
     q_user_can_write_vlob,
     q_user_internal_id,
+    require_valid_organization_and_author,
     transaction,
 )
 from parsec.components.realm import BadKeyIndex, RealmCheckBadOutcome
-from parsec.components.user import CheckDeviceBadOutcome
 
 _q_get_block_info = Q(
     f"""
@@ -154,6 +152,7 @@ class PGBlockComponent(BaseBlockComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(BlockReadBadOutcome)
     async def read(
         self,
         conn: AsyncpgConnection,
@@ -161,22 +160,6 @@ class PGBlockComponent(BaseBlockComponent):
         author: DeviceID,
         block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization():
-                pass
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case (UserProfile(), DateTime()):
-                pass
-
         row = await conn.fetchrow(
             *_q_get_block_info(organization_id=organization_id.str, block_id=block_id)
         )
@@ -210,6 +193,7 @@ class PGBlockComponent(BaseBlockComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(BlockReadBadOutcome)
     async def create(
         self,
         conn: AsyncpgConnection,
@@ -221,22 +205,6 @@ class PGBlockComponent(BaseBlockComponent):
         key_index: int,
         block: bytes,
     ) -> None | BadKeyIndex | BlockCreateBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization():
-                pass
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case (UserProfile(), DateTime()):
-                pass
-
         match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return BlockCreateBadOutcome.REALM_NOT_FOUND

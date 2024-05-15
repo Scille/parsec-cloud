@@ -42,9 +42,9 @@ from parsec.components.postgresql.utils import (
     q_device_internal_id,
     q_organization_internal_id,
     q_user_internal_id,
+    require_valid_organization_and_author,
     transaction,
 )
-from parsec.components.user import CheckDeviceBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -397,6 +397,7 @@ class PGInviteComponent(BaseInviteComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(InviteNewForUserBadOutcome, [UserProfile.ADMIN])
     async def new_for_user(
         self,
         conn: AsyncpgConnection,
@@ -408,26 +409,6 @@ class PGInviteComponent(BaseInviteComponent):
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return InviteNewForUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as current_profile, DateTime()):
-                pass
-        if current_profile != UserProfile.ADMIN:
-            return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
-
         user_id = await query_retrieve_active_human_by_email(conn, organization_id, claimer_email)
         if user_id:
             return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
@@ -463,6 +444,7 @@ class PGInviteComponent(BaseInviteComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(InviteNewForDeviceBadOutcome)
     async def new_for_device(
         self,
         conn: AsyncpgConnection,
@@ -473,24 +455,6 @@ class PGInviteComponent(BaseInviteComponent):
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_user_or_device_invitation(
             conn,
@@ -521,6 +485,7 @@ class PGInviteComponent(BaseInviteComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(InviteCancelBadOutcome)
     async def cancel(
         self,
         conn: AsyncpgConnection,
@@ -529,24 +494,6 @@ class PGInviteComponent(BaseInviteComponent):
         author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return InviteCancelBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         row = await conn.fetchrow(
             *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
         )
@@ -574,27 +521,10 @@ class PGInviteComponent(BaseInviteComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(InviteListBadOutcome)
     async def list(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return InviteListBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return InviteListBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return InviteListBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return InviteListBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         rows = await conn.fetch(
             *_q_list_invitations(organization_id=organization_id.str, user_id=author.user_id.str)
         )
@@ -645,6 +575,7 @@ class PGInviteComponent(BaseInviteComponent):
             invitations.append(invitation)
         return invitations
 
+    # TODO: This is called from outside the component (see PGInviteComponent.invited_auth)
     async def _info_as_invited(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:

@@ -30,6 +30,7 @@ from parsec.components.postgresql.utils import (
     q_realm_internal_id,
     q_user,
     q_user_internal_id,
+    require_valid_organization_and_author,
     transaction,
 )
 from parsec.components.realm import (
@@ -552,6 +553,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmCreateStoreBadOutcome)
     async def create(
         self,
         conn: AsyncpgConnection,
@@ -568,15 +570,7 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmCreateStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-
-        if org.is_expired:
-            return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
-
+        # TODO: refactor to get last_common_certificate_timestamp
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
@@ -631,6 +625,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmShareStoreBadOutcome)
     async def share(
         self,
         conn: AsyncpgConnection,
@@ -650,25 +645,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmShareStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-
-        if org.is_expired:
-            return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return RealmShareStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match realm_share_validate(
             now=now,
             expected_author=author,
@@ -680,6 +656,7 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
+        # TODO: duplicate code to get target_current_profile???
         match await self.user._check_user(conn, organization_id, certif.user_id):
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
@@ -789,6 +766,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmUnshareStoreBadOutcome)
     async def unshare(
         self,
         conn: AsyncpgConnection,
@@ -805,25 +783,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmUnshareStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-
-        if org.is_expired:
-            return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match realm_unshare_validate(
             now=now,
             expected_author=author,
@@ -916,6 +875,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmRenameStoreBadOutcome)
     async def rename(
         self,
         conn: AsyncpgConnection,
@@ -934,25 +894,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmRenameStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-
-        if org.is_expired:
-            return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match realm_rename_validate(
             now=now,
             expected_author=author,
@@ -1021,6 +962,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmRotateKeyStoreBadOutcome)
     async def rotate_key(
         self,
         conn: AsyncpgConnection,
@@ -1039,25 +981,6 @@ class PGRealmComponent(BaseRealmComponent):
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-
-        if org.is_expired:
-            return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match realm_rotate_key_validate(
             now=now,
             expected_author=author,
@@ -1114,6 +1037,7 @@ class PGRealmComponent(BaseRealmComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(RealmGetKeysBundleBadOutcome)
     async def get_keys_bundle(
         self,
         conn: AsyncpgConnection,
@@ -1122,24 +1046,6 @@ class PGRealmComponent(BaseRealmComponent):
         realm_id: VlobID,
         key_index: int | None,
     ) -> KeysBundle | RealmGetKeysBundleBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmGetKeysBundleBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-        if org.is_expired:
-            return RealmGetKeysBundleBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match await self._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
