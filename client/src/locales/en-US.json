@@ -415,6 +415,7 @@
             "renameFailed": "Failed to rename file `{name}`, please try again.",
             "renameFailedAlreadyExists": "A file with the same name already exists in this folder.",
             "createFolderFailed": "Failed to create folder `{name}`, please try again.",
+            "createFolderAlreadyExists": "Failed to create folder `{name}` because an entry with the same name already exists.",
             "listFailed": "Failed to list content of folder `{path}`",
             "deleteMultipleAllFailed": "Failed to delete any entry.",
             "deleteMultipleSomeFailed": "Some entries could not be deleted.",

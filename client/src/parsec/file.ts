@@ -50,6 +50,7 @@ export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPat
     return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
   } else {
     return { ok: false, error: { tag: WorkspaceCreateFolderErrorTag.EntryExists, error: 'already exists' } };
+    // return { ok: true, value: '42' };
   }
 }
 
