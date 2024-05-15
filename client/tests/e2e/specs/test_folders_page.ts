@@ -11,28 +11,6 @@ describe('Check folders page', () => {
     cy.dropTestbed();
   });
 
-  it('Checks initial status', () => {
-    cy.get('.folder-list-header').find('ion-checkbox').should('not.have.class', 'checkbox-checked');
-    cy.get('#button-new-folder').contains('New folder');
-    cy.get('#button-import').contains('Import');
-    cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    // cy.get('#folders-ms-action-bar').find('#list-view').should('have.attr', 'disabled');
-    cy.get('#folders-ms-action-bar').find('#grid-view').should('not.have.attr', 'disabled');
-    cy.get('.counter').contains(/\d items/);
-  });
-
-  it('Switch to grid view', () => {
-    cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    cy.get('#folders-ms-action-bar').find('#list-view').as('listButton').should('have.attr', 'disabled');
-    cy.get('#folders-ms-action-bar').find('#grid-view').as('gridButton').should('not.have.attr', 'disabled');
-    cy.get('@gridButton').click();
-    cy.get('.file-list-item').should('have.length', 0);
-    cy.get('.folder-grid-item').should('have.length.greaterThan', 1);
-    cy.get('@listButton').click();
-    cy.get('.file-list-item').should('have.length.greaterThan', 1);
-    cy.get('.folder-grid-item').should('have.length', 0);
-  });
-
   it('Create new folder', () => {
     cy.get('#button-new-folder').contains('New folder').click();
     cy.get('.text-input-modal').find('.ms-modal-footer').find('ion-button').eq(1).as('createButton').contains('Create');

@@ -4,7 +4,7 @@ import { test as base, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
 
-export const msTest = base.extend<{ home: Page; connected: Page }>({
+export const msTest = base.extend<{ home: Page; connected: Page; documents: Page; documentsReadOnly: Page }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
     await context.grantPermissions(['clipboard-read']);
@@ -37,5 +37,19 @@ export const msTest = base.extend<{ home: Page; connected: Page }>({
     await expect(home).toBeWorkspacePage();
 
     await use(home);
+  },
+
+  documents: async ({ connected }, use) => {
+    await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(0).click();
+    await expect(connected).toHaveHeader(['/', 'The Copper Coronet'], true);
+    await expect(connected).toBeDocumentPage();
+    use(connected);
+  },
+
+  documentsReadOnly: async ({ connected }, use) => {
+    await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(2).click();
+    await expect(connected).toHaveHeader(['/', "Watcher's Keep"], true);
+    await expect(connected).toBeDocumentPage();
+    use(connected);
   },
 });
