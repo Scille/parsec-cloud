@@ -3,7 +3,7 @@
 import { isElectron } from '@/parsec';
 import { Storage } from '@ionic/storage';
 import { DateTime } from 'luxon';
-import { I18n, Locale, Theme, getSystemTheme } from 'megashark-lib';
+import { I18n, Locale, Theme } from 'megashark-lib';
 
 export const StorageManagerKey = 'storageManager';
 export const ThemeManagerKey = 'themeManager';
@@ -30,7 +30,8 @@ export class StorageManager {
   static get DEFAULT_CONFIG(): Config {
     return {
       locale: I18n.getPreferredLocale(),
-      theme: getSystemTheme(),
+      theme: Theme.Light,
+      // theme: Theme.System, Remove previous line and uncomment this when dark theme will be implemented
       enableTelemetry: true,
       minimizeToTray: true,
       confirmBeforeQuit: true,

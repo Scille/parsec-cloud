@@ -62,7 +62,7 @@
                   />
                 </settings-option>
                 <!-- change theme -->
-                <!-- TODO: REMOVE "'light' ? 'light' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
+                <!-- TODO: REMOVE "disabled=true' : " WHEN DARK MODE WILL BE HERE: https://github.com/Scille/parsec-cloud/issues/5427 -->
                 <settings-option
                   :title="'SettingsModal.theme.label'"
                   :description="'SettingsModal.theme.description'"
@@ -135,7 +135,7 @@
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { isMacOS } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
-import { MsModal, MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, getSystemTheme } from 'megashark-lib';
+import { MsModal, MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, LocaleOptions } from 'megashark-lib';
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
@@ -145,16 +145,7 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
 
-const languageOptions: MsOptions = new MsOptions([
-  {
-    key: 'en-US',
-    label: 'SettingsModal.language.values.enUS',
-  },
-  {
-    key: 'fr-FR',
-    label: 'SettingsModal.language.values.frFR',
-  },
-]);
+const languageOptions: MsOptions = new MsOptions(LocaleOptions);
 
 const themeOptions: MsOptions = new MsOptions([
   {
@@ -166,7 +157,7 @@ const themeOptions: MsOptions = new MsOptions([
     label: 'SettingsModal.theme.values.light',
   },
   {
-    key: 'system',
+    key: Theme.System,
     label: 'SettingsModal.theme.values.system',
   },
 ]);
@@ -195,10 +186,7 @@ async function changeLang(lang: Locale): Promise<void> {
   I18n.changeLocale(lang);
 }
 
-async function changeTheme(selectedTheme: Theme | 'system'): Promise<void> {
-  if (selectedTheme === 'system') {
-    selectedTheme = getSystemTheme();
-  }
+async function changeTheme(selectedTheme: Theme): Promise<void> {
   config.value.theme = selectedTheme as Theme;
   themeManager.use(selectedTheme as Theme);
 }
