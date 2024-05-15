@@ -170,6 +170,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             state=state,
             payload=payload,
             peer_payload=curr_peer_payload,
+            last_exchange=invitation.conduit_is_last_exchange,
         )
 
     @override
@@ -257,7 +258,12 @@ class MemoryInviteComponent(BaseInviteComponent):
                 invitation.conduit_state == NEXT_CONDUIT_STATE[ctx.state]
                 and curr_our_payload is None
             ):
-                return ctx.peer_payload, invitation.conduit_is_last_exchange
+                # Careful here: it's possible that peer has already changed the state
+                # of the conduit by the time we reach this point. The means it might
+                # have already changed the `last_exchange` flag. We should not rely on.
+                # Instead, we return the one we captured during the `conduit_talk`,
+                # along with the peer payload.
+                return ctx.peer_payload, ctx.last_exchange
 
             elif (
                 invitation.conduit_state != ctx.state

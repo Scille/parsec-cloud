@@ -1,11 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
 import secrets
 
 import anyio
 import pytest
 
 from parsec._parsec import HashDigest, PrivateKey, authenticated_cmds, invited_cmds
+from parsec.components.memory.invite import MemoryInviteComponent
+from parsec.components.postgresql.invite import ConduitState, PGInviteComponent
 from tests.common import CoolorgRpcClients, RpcTransportError
 
 
@@ -17,7 +20,34 @@ from tests.common import CoolorgRpcClients, RpcTransportError
         "user",
     ),
 )
-async def test_device_enrollment(invitation: str, coolorg: CoolorgRpcClients):
+@pytest.mark.parametrize(
+    "issue7212",
+    (
+        False,
+        True,
+    ),
+    ids=("normal", "issue7212"),
+)
+async def test_device_enrollment(
+    invitation: str, coolorg: CoolorgRpcClients, issue7212: bool, monkeypatch
+):
+    if issue7212:
+        pg_conduit_listen = PGInviteComponent._conduit_listen
+        memory_conduit_listen = MemoryInviteComponent._conduit_listen
+
+        async def patched_pg_conduit_listen(self, now, ctx, *args, **kwargs):
+            if not ctx.is_greeter and ctx.state == ConduitState.STATE_4_COMMUNICATE:
+                await asyncio.sleep(0.1)
+            return await pg_conduit_listen(self, now, ctx, *args, **kwargs)
+
+        async def patched_memory_conduit_listen(self, now, ctx, *args, **kwargs):
+            if not ctx.is_greeter and ctx.state == ConduitState.STATE_4_COMMUNICATE:
+                await asyncio.sleep(0.1)
+            return await memory_conduit_listen(self, now, ctx, *args, **kwargs)
+
+        monkeypatch.setattr(PGInviteComponent, "_conduit_listen", patched_pg_conduit_listen)
+        monkeypatch.setattr(MemoryInviteComponent, "_conduit_listen", patched_memory_conduit_listen)
+
     match invitation:
         case "device":
             invitation_token = coolorg.invited_alice_dev3.token
