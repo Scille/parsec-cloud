@@ -104,6 +104,20 @@ async function setupApp(): Promise<void> {
 
     const themeManager = new ThemeManager(config.theme);
     app.provide(ThemeManagerKey, themeManager);
+
+    // Annoying in dev mode because it prompts on page reload
+    if (!needsMocks() && (await libparsec.getPlatform()) === Platform.Web) {
+      // Only called when the user has interacted with the page
+      window.addEventListener('beforeunload', async (event: BeforeUnloadEvent) => {
+        event.preventDefault();
+        event.returnValue = true;
+      });
+
+      window.addEventListener('unload', async (_event: Event) => {
+        // Stop the imports and properly logout on close.
+        await cleanBeforeQuitting(injectionProvider);
+      });
+    }
   };
 
   // We can start the app with different cases :
@@ -147,32 +161,29 @@ async function setupApp(): Promise<void> {
   }
 
   if (isElectron()) {
-    let isQuitDialogOpen: boolean = false;
-
     if ((await libparsec.getPlatform()) === Platform.Windows) {
       const mountpoint = await libparsec.getDefaultMountpointBaseDir();
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
+    let isQuitDialogOpen = false;
+
     window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
-      if (isQuitDialogOpen) {
-        return;
-      }
-      let answer: Answer = Answer.Yes;
+      let quit = true;
       if (force === false) {
+        if (isQuitDialogOpen) {
+          return;
+        }
         isQuitDialogOpen = true;
-        answer = await askQuestion('quit.title', 'quit.subtitle', {
+        const answer = await askQuestion('quit.title', 'quit.subtitle', {
           yesText: 'quit.yes',
           noText: 'quit.no',
         });
         isQuitDialogOpen = false;
+        quit = answer === Answer.Yes;
       }
-      if (answer === Answer.Yes) {
-        const devices = await getLoggedInDevices();
-        await injectionProvider.cleanAll();
-        for (const device of devices) {
-          await logout(device.handle);
-        }
+      if (quit) {
+        await cleanBeforeQuitting(injectionProvider);
         window.electronAPI.closeApp();
       }
     });
@@ -260,6 +271,14 @@ async function setupApp(): Promise<void> {
         console.log('Not available.');
       },
     };
+  }
+}
+
+async function cleanBeforeQuitting(injectionProvider: InjectionProvider): Promise<void> {
+  const devices = await getLoggedInDevices();
+  await injectionProvider.cleanAll();
+  for (const device of devices) {
+    await logout(device.handle);
   }
 }
 
