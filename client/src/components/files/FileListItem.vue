@@ -66,7 +66,7 @@
         <!-- file size -->
         <div class="file-size">
           <ion-label
-            v-show="entry.isFile()"
+            v-if="entry.isFile()"
             class="label-size cell"
           >
             {{ $msTranslate(formatFileSize((entry as FileModel).size)) }}

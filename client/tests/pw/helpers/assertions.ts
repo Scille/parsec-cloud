@@ -157,7 +157,7 @@ export const expect = baseExpect.extend({
       await expect(page).toHaveURL(/\/home$/);
     } catch (error: any) {
       return {
-        message: () => `Page is not home page (url is '${error.actual}')`,
+        message: () => `Page is not home page (url is '${error.matcherResult.actual}')`,
         pass: false,
       };
     }
@@ -173,7 +173,7 @@ export const expect = baseExpect.extend({
     } catch (error: any) {
       console.log(error);
       return {
-        message: () => `Page is not workspace page (url is '${error.actual}')`,
+        message: () => `Page is not workspace page (url is '${error.matcherResult.actual}')`,
         pass: false,
       };
     }
@@ -185,10 +185,10 @@ export const expect = baseExpect.extend({
 
   async toBeDocumentPage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/\d+\/documents$/);
+      await expect(page).toHaveURL(/\/\d+\/documents\/\d+\?documentPath=\/.*$/);
     } catch (error: any) {
       return {
-        message: () => `Page is not documents page (url is '${error.actual}')`,
+        message: () => `Page is not documents page (url is '${error.matcherResult.actual}')`,
         pass: false,
       };
     }
