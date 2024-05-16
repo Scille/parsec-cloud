@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator, Page } from '@playwright/test';
+import { BrowserContext, Locator, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 
 interface QuestionOptions {
@@ -60,4 +60,15 @@ export async function fillInputModal(root: Locator | Page, text: string, clear?:
 
 export async function getClipboardText(page: Page): Promise<string> {
   return await page.evaluate(() => navigator.clipboard.readText());
+}
+
+export async function setWriteClipboardPermission(context: BrowserContext, allow: boolean): Promise<void> {
+  if (allow) {
+    await context.grantPermissions(['clipboard-write']);
+  } else {
+    // There doesn't seem to be a function to remove specific permissions, so we clear
+    // them all and re-add clipboard-read.
+    await context.clearPermissions();
+    await context.grantPermissions(['clipboard-read']);
+  }
 }

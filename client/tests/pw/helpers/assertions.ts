@@ -50,6 +50,7 @@ export const expect = baseExpect.extend({
 
     // Close toast
     await toast.locator('.toast-button-confirm').click();
+    await expect(toast).toBeHidden();
 
     return {
       message: () => errorMessage,
@@ -195,6 +196,21 @@ export const expect = baseExpect.extend({
     } catch (error: any) {
       return {
         message: () => `Page is not documents page (url is '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
+
+  async toBeUserPage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/\d+\/users\??.*$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not users page (url is '${error.matcherResult.actual}')`,
         pass: false,
       };
     }

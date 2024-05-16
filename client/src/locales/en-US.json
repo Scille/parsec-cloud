@@ -867,7 +867,7 @@
             "rejectUser": "Cancel",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
-            "inviteFailedAlreadyMember": "This email is already used by a member of this organization.",
+            "inviteFailedAlreadyMember": "The email {email} is already used by a member of this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
             "inviteFailedNotAllowed": "Only an administrator can invite new users into the organization.",
             "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
