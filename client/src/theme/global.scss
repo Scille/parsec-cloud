@@ -3,9 +3,6 @@
 /* Ionic Variables and Theming. For more info, please see:
 http://ionicframework.com/docs/theming/ */
 
-// Ionic imports
-@import 'ionic';
-
 // import variables
 @import 'variables/colors';
 @import 'variables/colorsIonic';
@@ -16,18 +13,12 @@ http://ionicframework.com/docs/theming/ */
 @import 'variables/width';
 
 // import components
-@import 'components/buttons';
-@import 'components/cards';
 @import 'components/inputs';
-@import 'components/list';
 @import 'components/modals';
+@import 'components/list';
 @import 'components/notifications';
-@import 'components/toasts';
 @import 'components/popovers';
-@import 'components/scrollbars';
-@import 'components/contextual-menu';
 @import 'components/tags';
-@import 'components/toggles';
 
 /**** Global CSS overloads ****/
 
