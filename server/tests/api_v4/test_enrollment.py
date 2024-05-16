@@ -21,32 +21,55 @@ from tests.common import CoolorgRpcClients, RpcTransportError
     ),
 )
 @pytest.mark.parametrize(
-    "issue7212",
+    "delay_state_4_claimer",  # see issue https://github.com/Scille/parsec-cloud/issues/7212
     (
-        False,
-        True,
+        pytest.param(False, id="normal"),
+        pytest.param(True, id="delay_state_4_claimer"),
     ),
-    ids=("normal", "issue7212"),
 )
 async def test_device_enrollment(
-    invitation: str, coolorg: CoolorgRpcClients, issue7212: bool, monkeypatch
+    invitation: str,
+    coolorg: CoolorgRpcClients,
+    delay_state_4_claimer: bool,
+    monkeypatch: pytest.MonkeyPatch,
 ):
-    if issue7212:
-        pg_conduit_listen = PGInviteComponent._conduit_listen
-        memory_conduit_listen = MemoryInviteComponent._conduit_listen
+    if delay_state_4_claimer:
+        # The point here is to reproduce a rare race condition reported in issue #7212 that happens about ~1% of the time on the CI.
+        # The following patch causes it to happen 100% of the time instead.
+        # More precisely, it makes sure the operations happen in the following order:
+        #
+        # 1. State 4A greeter talk, registering `<from greeter 1>` payload
+        # 2. State 4A claimer talk, registering `<from claimer 1>` payload
+        # 3. State 4A greeter listen, updating state to 4B, resetting the payloads and returning `<from claimer 1>`
+        # ** Here 4A claimer listen is delayed for some reason **
+        # 4. State 4B greeter talk, registering `<from greeter 2>` and setting the `last_exchange` flag to `True`
+        # 5. State 4A claimer listen, returning `<from greeter 1>` and `last_exchange` flag to `False`
+        #
+        # Due to a bug, step 5 used to return the `last_exchange` flag to `True` instead of `False`.
 
-        async def patched_pg_conduit_listen(self, now, ctx, *args, **kwargs):
-            if not ctx.is_greeter and ctx.state == ConduitState.STATE_4_COMMUNICATE:
-                await asyncio.sleep(0.1)
-            return await pg_conduit_listen(self, now, ctx, *args, **kwargs)
+        def patch_conduit_listen(cls):
+            greeter_last_listen = asyncio.Event()
+            orignal_method = cls._conduit_listen
 
-        async def patched_memory_conduit_listen(self, now, ctx, *args, **kwargs):
-            if not ctx.is_greeter and ctx.state == ConduitState.STATE_4_COMMUNICATE:
-                await asyncio.sleep(0.1)
-            return await memory_conduit_listen(self, now, ctx, *args, **kwargs)
+            async def patched_conduit_listen(self, now, ctx, *args, **kwargs):
+                if (
+                    not ctx.is_greeter
+                    and ctx.state == ConduitState.STATE_4_COMMUNICATE
+                    and ctx.payload == b"<from claimer 1>"
+                ):
+                    await greeter_last_listen.wait()
+                if (
+                    ctx.is_greeter
+                    and ctx.state == ConduitState.STATE_4_COMMUNICATE
+                    and ctx.payload == b"<from greeter 2>"
+                ):
+                    greeter_last_listen.set()
+                return await orignal_method(self, now, ctx, *args, **kwargs)
 
-        monkeypatch.setattr(PGInviteComponent, "_conduit_listen", patched_pg_conduit_listen)
-        monkeypatch.setattr(MemoryInviteComponent, "_conduit_listen", patched_memory_conduit_listen)
+            monkeypatch.setattr(cls, "_conduit_listen", patched_conduit_listen)
+
+        patch_conduit_listen(PGInviteComponent)
+        patch_conduit_listen(MemoryInviteComponent)
 
     match invitation:
         case "device":
