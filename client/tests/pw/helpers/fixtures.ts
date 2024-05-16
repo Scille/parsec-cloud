@@ -1,10 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { test as base, Page } from '@playwright/test';
+import { Locator, Page, test as base } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
+import { fillInputModal } from '@tests/pw/helpers/utils';
 
-export const msTest = base.extend<{ home: Page; connected: Page; documents: Page; documentsReadOnly: Page; usersPage: Page }>({
+export const msTest = base.extend<{
+  home: Page;
+  connected: Page;
+  documents: Page;
+  documentsReadOnly: Page;
+  usersPage: Page;
+  userJoinModal: Locator;
+}>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
     await context.grantPermissions(['clipboard-read']);
@@ -58,5 +66,18 @@ export const msTest = base.extend<{ home: Page; connected: Page; documents: Page
     await expect(connected).toHavePageTitle('Users');
     await expect(connected).toBeUserPage();
     use(connected);
+  },
+
+  userJoinModal: async ({ home }, use) => {
+    // cspell:disable-next-line
+    const INVITATION_LINK = 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS';
+
+    await home.locator('#create-organization-button').click();
+    await expect(home.locator('.homepage-popover')).toBeVisible();
+    await home.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+    await fillInputModal(home, INVITATION_LINK);
+    const modal = home.locator('.join-organization-modal');
+    await expect(home.locator('.join-organization-modal')).toBeVisible();
+    await use(modal);
   },
 });

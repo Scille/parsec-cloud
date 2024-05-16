@@ -62,34 +62,47 @@ for (const workspace of workspaces) {
   });
 }
 
-msTest('Workspace sort order', async ({ connected }) => {
-  // Order by name asc (default)
-  let names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName1.localeCompare(wName2));
-  await expect(connected.locator('.card-content__title')).toHaveText(names);
-  const actionBar = connected.locator('#workspaces-ms-action-bar');
-  const sortSelector = actionBar.locator('#workspace-filter-select');
-  await expect(sortSelector).toHaveText('Name');
-  await expect(connected.locator('.popover-viewport')).toBeHidden();
-  await sortSelector.click();
-  const popover = connected.locator('.popover-viewport');
-  const sortItems = popover.getByRole('listitem');
-  await expect(sortItems).toHaveCount(4);
-  await expect(sortItems).toHaveText(['Ascending', 'Name', 'Size', 'Last updated']);
-  for (const [index, checked] of [false, true, false, false].entries()) {
-    if (checked) {
-      await expect(sortItems.nth(index)).toHaveTheClass('selected');
-    } else {
-      await expect(sortItems.nth(index)).not.toHaveTheClass('selected');
+for (const gridMode of [false, true]) {
+  msTest(`Workspace sort order in ${gridMode ? 'grid' : 'list'} mode`, async ({ connected }) => {
+    if (!gridMode) {
+      await toggleViewMode(connected);
     }
-  }
-  await sortItems.nth(0).click();
-  await expect(connected.locator('.popover-viewport')).toBeHidden();
-  // Order by name desc
-  names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName2.localeCompare(wName1));
-  await sortSelector.click();
-  await expect(connected.locator('.card-content__title')).toHaveText(names);
-  await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
-});
+    // Order by name asc (default)
+    let names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName1.localeCompare(wName2));
+    if (gridMode) {
+      await expect(connected.locator('.workspaces-container').locator('.card-content__title')).toHaveText(names);
+    } else {
+      await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
+    }
+    const actionBar = connected.locator('#workspaces-ms-action-bar');
+    const sortSelector = actionBar.locator('#workspace-filter-select');
+    await expect(sortSelector).toHaveText('Name');
+    await expect(connected.locator('.popover-viewport')).toBeHidden();
+    await sortSelector.click();
+    const popover = connected.locator('.popover-viewport');
+    const sortItems = popover.getByRole('listitem');
+    await expect(sortItems).toHaveCount(4);
+    await expect(sortItems).toHaveText(['Ascending', 'Name', 'Size', 'Last updated']);
+    for (const [index, checked] of [false, true, false, false].entries()) {
+      if (checked) {
+        await expect(sortItems.nth(index)).toHaveTheClass('selected');
+      } else {
+        await expect(sortItems.nth(index)).not.toHaveTheClass('selected');
+      }
+    }
+    await sortItems.nth(0).click();
+    await expect(connected.locator('.popover-viewport')).toBeHidden();
+    // Order by name desc
+    names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName2.localeCompare(wName1));
+    await sortSelector.click();
+    if (gridMode) {
+      await expect(connected.locator('.workspaces-container').locator('.card-content__title')).toHaveText(names);
+    } else {
+      await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
+    }
+    await expect(connected.locator('.popover-viewport').getByRole('listitem').nth(0)).toHaveText('Descending');
+  });
+}
 
 for (const createWithSidebar of [false, true]) {
   msTest(`Create new workspace ${createWithSidebar ? 'with sidebar' : 'with action bar'}`, async ({ connected }) => {
