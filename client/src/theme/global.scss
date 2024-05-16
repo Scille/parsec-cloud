@@ -6,7 +6,7 @@ http://ionicframework.com/docs/theming/ */
 // Ionic imports
 @import 'ionic';
 
-//import variables
+// import variables
 @import 'variables/colors';
 @import 'variables/colorsIonic';
 @import 'variables/fonts';
@@ -30,54 +30,6 @@ http://ionicframework.com/docs/theming/ */
 @import 'components/toggles';
 
 /**** Global CSS overloads ****/
-
-/* fix issue on global */
-* {
-  --inner-border-width: 0px;
-  --box-shadow: var(--parsec-shadow-light);
-  --min-height: 0;
-
-  &:focus-visible {
-    outline: none;
-  }
-}
-
-.header-md,
-.footer-md {
-  -webkit-box-shadow: inherit;
-  box-shadow: inherit;
-}
-
-ion-list.container {
-  margin-top: 0;
-}
-
-.header-md::after {
-  background-image: none;
-}
-
-ion-grid.md {
-  padding: 0;
-}
-
-ion-item > .ion-item-child-clickable {
-  z-index: 2;
-  position: relative;
-}
-
-ion-icon {
-  margin-inline: 0;
-}
-
-// fix issue with offset on checkbox
-.in-item:is(ion-checkbox) {
-  width: fit-content;
-}
-
-a {
-  text-decoration: none;
-  color: var(--parsec-color-light-primary-500);
-}
 
 // scroll behavior: user(revoked, active, invitation)/folder/workspace
 .content-scroll {
