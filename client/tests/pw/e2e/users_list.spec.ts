@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { answerQuestion } from '@tests/pw/helpers/utils';
+import { answerQuestion, fillInputModal } from '@tests/pw/helpers/utils';
 
 const USERS = [
   {
@@ -449,4 +449,18 @@ msTest('Sort users list', async ({ usersPage }) => {
       return u1.name.localeCompare(u2.name) - (u1Weight - u2Weight);
     }).map((u) => u.name),
   );
+});
+
+msTest('Invite new user', async ({ usersPage }) => {
+  await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
+  // cspell:disable-next-line
+  await fillInputModal(usersPage, 'zana@wraeclast');
+  // cspell:disable-next-line
+  await expect(usersPage).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
+});
+
+msTest('Invite user with already existing email', async ({ usersPage }) => {
+  await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
+  await fillInputModal(usersPage, 'jaheira@gmail.com');
+  await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by a member of this organization.', 'Error');
 });
