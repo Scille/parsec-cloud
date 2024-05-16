@@ -1,91 +1,5 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
-/* **** Parsec modal **** */
-:root {
-  --parsec-modal-width-sm: 33.125rem;
-  --parsec-modal-width-md: 42rem;
-  --parsec-modal-width-lg: 43.75rem;
-  --parsec-modal-max-height: 35rem;
-}
-
-ion-modal::part(content) {
-  border-radius: var(--parsec-radius-8);
-  min-width: var(--parsec-modal-width-sm);
-  width: fit-content;
-}
-
-ion-modal {
-  --height: auto;
-  --max-height: auto;
-}
-
-ion-modal .ion-page {
-  position: relative;
-  display: block;
-  contain: content;
-  height: -webkit-fill-available;
-
-  & > div {
-    height: 100%;
-  }
-
-  .ms-modal {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    &-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    &-footer {
-      margin-top: auto;
-    }
-  }
-}
-
-ion-modal .inner-content {
-  overflow: visible;
-}
-
-// close button
-.closeBtn-container {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  border-radius: var(--parsec-radius-6);
-
-  .closeBtn {
-    margin: 0;
-    --padding-start: 0;
-    --padding-end: 0;
-    width: fit-content;
-    height: fit-content;
-    --background-hover: var(--parsec-color-light-secondary-medium);
-
-    &::part(native) {
-      padding: 0;
-    }
-
-    &__icon {
-      padding: 0.25rem;
-      color: var(--parsec-color-light-secondary-grey);
-    }
-
-    &:active {
-      --background: var(--parsec-color-light-secondary-medium);
-      --border-radius: var(--parsec-radius-6);
-    }
-  }
-
-  &:hover {
-    ion-icon {
-      color: var(--parsec-color-light-secondary-text);
-    }
-  }
-}
-
 /* -- modal-stepper -- */
 .modal-stepper {
   // global
@@ -267,14 +181,6 @@ ion-modal .inner-content {
   max-width: var(--parsec-modal-width-sm);
 }
 
-.overlapped-modal {
-  visibility: hidden;
-  & ~ ion-modal.modal-default {
-    --backdrop-opacity: var(--ion-backdrop-opacity, 0.32) !important;
-    --box-shadow: var(--parsec-shadow-light) !important;
-  }
-}
-
 .folder-selection-modal {
   &::part(content) {
     height: 615px;
@@ -305,17 +211,5 @@ ion-modal .inner-content {
 
   &:has(.NewPassword)::part(content) {
     min-width: var(--parsec-modal-width-md);
-  }
-}
-
-.question-modal,
-.information-modal {
-  &::part(content) {
-    max-width: var(--parsec-modal-width-sm);
-    width: var(--parsec-modal-width-sm);
-  }
-
-  .ms-modal-header {
-    padding-bottom: 0rem !important;
   }
 }

@@ -1,38 +1,5 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
-/* **** Parsec popover **** */
-:root {
-  --popover-border-radius: var(--parsec-radius-8);
-  --popover-default-width: 20rem;
-  --popover-option-width: 17rem;
-  --popover-option-height: 25rem;
-  --popover-dropdown-width: var(--popover-default-width);
-  --popover-notification-center-width: 28rem;
-  --popover-dropdown-settings-width: 9rem;
-  --popover-dropdown-sort-width: 15.5rem;
-  --popover-dropdown-filter-width: 14rem;
-}
-
-// Global popover style
-ion-popover {
-  --width: var(--popover-default-width);
-  --box-shadow: var(--parsec-shadow-strong);
-  --height: fit-content;
-
-  &::part(content) {
-    border-radius: var(--popover-border-radius);
-    border: none;
-  }
-}
-
-.popover-side-bottom {
-  .popover-viewport {
-    border: none;
-    border-radius: var(--popover-border-radius);
-    overflow: hidden;
-  }
-}
-
 // Custom popover style
 /* --- homepage popover --- */
 .homepage-popover {
@@ -43,13 +10,6 @@ ion-popover {
 .profile-header-popover {
   --offset-x: -1em;
   --offset-y: 0.5em;
-}
-
-/* --- tooltip popover --- */
-.tooltip-popover {
-  --background: none;
-  --box-shadow: none;
-  --width: fit-content;
 }
 
 /* --- notification center popover --- */
@@ -70,13 +30,7 @@ ion-popover {
   --offset-x: -5%;
 }
 
-/* --- sorter, dropdown popover --- */
-.sorter-popover,
-.dropdown-popover {
-  --width: fit-content;
-}
-
-/* --- filter, dropdown popover --- */
+/* --- users filter popover --- */
 .filter-popover {
   --width: var(--popover-dropdown-filter-width);
 }
@@ -178,18 +132,6 @@ ion-popover {
     padding-bottom: 0;
     border-bottom: none;
   }
-}
-
-/* --- dropdown outline popover --- */
-.dropdown-popover {
-  --width: var(--popover-dropdown-width);
-}
-
-/* --- Sorter popover --- */
-.sorter-popover {
-  --width: var(--popover-dropdown-sort-width);
-  --offset-x: 1em;
-  --offset-y: 0.5em;
 }
 
 /* --- Filter popover --- */
