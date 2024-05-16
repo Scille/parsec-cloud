@@ -159,6 +159,12 @@ repos:
         types_or: [python, pyi]
         args: [--project=server/]
 
+      - id: deptry
+        name: deptry
+        entry: poetry --directory ./server run python -c 'import os;os.chdir("./server");os.execlp("deptry", "deptry", ".");'
+        require_serial: true
+        language: system
+
   ######
   # Rust
 
