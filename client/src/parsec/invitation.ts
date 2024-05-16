@@ -6,6 +6,7 @@ import {
   ClientCancelInvitationError,
   ClientNewDeviceInvitationError,
   ClientNewUserInvitationError,
+  ClientNewUserInvitationErrorTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   InvitationToken,
@@ -14,6 +15,7 @@ import {
   Result,
   UserInvitation,
 } from '@/parsec/types';
+import { listUsers } from '@/parsec/user';
 import { InviteListItem, InviteListItemTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
@@ -23,6 +25,18 @@ export async function inviteUser(email: string): Promise<Result<NewInvitationInf
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientNewUserInvitation(handle, email, true);
   } else {
+    const usersResult = await listUsers(true);
+    if (usersResult.ok) {
+      if (usersResult.value.map((u) => u.humanHandle.email).includes(email)) {
+        return {
+          ok: false,
+          error: {
+            tag: ClientNewUserInvitationErrorTag.AlreadyMember,
+            error: `${email} is already a member of this organization`,
+          },
+        };
+      }
+    }
     return {
       ok: true,
       value: {

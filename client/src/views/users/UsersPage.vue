@@ -399,7 +399,7 @@ async function inviteUser(): Promise<void> {
     let message: Translatable = '';
     switch (result.error.tag) {
       case ClientNewUserInvitationErrorTag.AlreadyMember:
-        message = 'UsersPage.invitation.inviteFailedAlreadyMember';
+        message = { key: 'UsersPage.invitation.inviteFailedAlreadyMember', data: { email: email } };
         break;
       case ClientNewUserInvitationErrorTag.Offline:
         message = 'UsersPage.invitation.inviteFailedOffline';
