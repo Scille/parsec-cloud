@@ -123,6 +123,7 @@ debouncer
 deconnection
 Deeplink
 dehaze
+deptry
 derandomize
 derivated
 DESYNC
