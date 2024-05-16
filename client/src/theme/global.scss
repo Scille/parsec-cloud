@@ -1,18 +1,6 @@
 /* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
 
-/* Ionic Variables and Theming. For more info, please see:
-http://ionicframework.com/docs/theming/ */
-
-// import variables
-@import 'variables/colors';
-@import 'variables/colorsIonic';
-@import 'variables/fonts';
-@import 'variables/radius';
-@import 'variables/shadows';
-@import 'variables/spacing';
-@import 'variables/width';
-
-// import components
+/**** Components CSS overloads ****/
 @import 'components/inputs';
 @import 'components/modals';
 @import 'components/list';
@@ -21,7 +9,6 @@ http://ionicframework.com/docs/theming/ */
 @import 'components/tags';
 
 /**** Global CSS overloads ****/
-
 // scroll behavior: user(revoked, active, invitation)/folder/workspace
 .content-scroll {
   --overflow: hidden;
