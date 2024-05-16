@@ -77,7 +77,7 @@ class ConduitListenCtx:
     state: ConduitState
     payload: bytes
     peer_payload: bytes | None
-    last_exchange: bool
+    is_last_exchange: bool
 
 
 @dataclass(slots=True)

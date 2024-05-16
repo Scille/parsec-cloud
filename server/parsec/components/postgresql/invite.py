@@ -820,7 +820,7 @@ class PGInviteComponent(BaseInviteComponent):
             is_greeter=is_greeter,
             payload=payload,
             peer_payload=curr_peer_payload,
-            last_exchange=curr_last_exchange,
+            is_last_exchange=curr_last_exchange,
         )
 
     @override
@@ -913,6 +913,10 @@ class PGInviteComponent(BaseInviteComponent):
                         greeter=ctx.greeter,
                     )
                 )
+
+                # The peer payload is the one that was in the base right before we updated the state.
+                # Similarly, the `is_last_exchange` flag is also the one we captured right before updating
+                # the state.
                 return curr_peer_payload, is_last_exchange
 
         else:
@@ -921,12 +925,12 @@ class PGInviteComponent(BaseInviteComponent):
             # has switched to it next state.
 
             if curr_conduit_state == NEXT_CONDUIT_STATE[ctx.state] and curr_our_payload is None:
-                # Careful here: it's possible that peer has already changed the state
-                # of the conduit by the time we reach this point. The means it might
-                # have already changed the `last_exchange` flag. We should not rely on.
-                # Instead, we return the one we captured during the `conduit_talk`,
-                # along with the peer payload.
-                return ctx.peer_payload, ctx.last_exchange
+                # Careful here: it's possible that the other peer has already sent its payload
+                # for the new state by the time we reach this point. This also means that it might
+                # already have changed the `last_exchange` flag, so we can't rely on what is currently
+                # in the database to determine if this is the last exchange. Instead, we return the
+                # flag we captured during the `conduit_talk` along with the peer payload.
+                return ctx.peer_payload, ctx.is_last_exchange
             elif (
                 curr_conduit_state != ctx.state
                 or curr_our_payload != ctx.payload
