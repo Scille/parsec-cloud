@@ -5,7 +5,10 @@ updates:
   #################
 
   - package-ecosystem: github-actions
-    directory: /
+    directories:
+      - /
+      - /.github/actions/setup-python-poetry
+      - /.github/actions/use-pre-commit
     pull-request-branch-name:
       separator: "-"
     labels:
@@ -17,39 +20,9 @@ updates:
       time: "04:20"
       timezone: Europe/Paris
     groups:
-      github-workflows:
+      github-actions:
         patterns:
           - "*"
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: github-actions
-    directory: /.github/actions/setup-python-poetry
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - I-Dependency
-      - I-Github-Actions
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
-    open-pull-requests-limit: 5
-    rebase-strategy: disabled
-
-  - package-ecosystem: github-actions
-    directory: /.github/actions/use-pre-commit
-    pull-request-branch-name:
-      separator: "-"
-    labels:
-      - I-Dependency
-      - I-Github-Actions
-    schedule:
-      interval: weekly
-      day: monday
-      time: "04:20"
-      timezone: Europe/Paris
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
