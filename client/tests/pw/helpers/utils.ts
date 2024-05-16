@@ -72,3 +72,18 @@ export async function setWriteClipboardPermission(context: BrowserContext, allow
     await context.grantPermissions(['clipboard-read']);
   }
 }
+
+export async function selectDropdown(button: Locator, select: string, currentlySelected?: string): Promise<void> {
+  const page = button.page();
+  await expect(page.locator('.dropdown-popover')).toBeHidden();
+  await button.click();
+  const dropdown = page.locator('.dropdown-popover');
+  await expect(dropdown).toBeVisible();
+
+  const options = dropdown.getByRole('listitem');
+  if (currentlySelected) {
+    await expect(options.filter({ hasText: currentlySelected })).toHaveTheClass('selected');
+  }
+  await options.filter({ hasText: select }).click();
+  await expect(page.locator('.dropdown-popover')).toBeHidden();
+}
