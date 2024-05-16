@@ -62,15 +62,7 @@ const USERS = [
   },
 ];
 
-const usersTest = msTest.extend<{ usersPage: Page }>({
-  usersPage: async ({ connected }, use) => {
-    await connected.locator('.sidebar').locator('.organization-card-manageBtn').click();
-    await expect(connected).toHavePageTitle('Users');
-    use(connected);
-  },
-});
-
-usersTest('User list default state', async ({ usersPage }) => {
+msTest('User list default state', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('#button-invite-user')).toBeVisible();
   await expect(actionBar.locator('#button-invite-user')).toHaveText('Invite a user');
@@ -83,7 +75,7 @@ usersTest('User list default state', async ({ usersPage }) => {
 });
 
 for (const [index, user] of USERS.entries()) {
-  usersTest(`Check user list item of ${user.name}`, async ({ usersPage }) => {
+  msTest(`Check user list item of ${user.name}`, async ({ usersPage }) => {
     const usersList = usersPage.locator('#users-page-user-list');
     const item = usersList.getByRole('listitem').nth(index);
     await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
@@ -97,7 +89,7 @@ for (const [index, user] of USERS.entries()) {
 }
 
 for (const [index, user] of USERS.entries()) {
-  usersTest(`Check user grid item of ${user.name}`, async ({ usersPage }) => {
+  msTest(`Check user grid item of ${user.name}`, async ({ usersPage }) => {
     await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
     const usersGrid = usersPage.locator('.users-container-grid');
     const card = usersGrid.locator('.user-card-item').nth(index);
@@ -114,7 +106,7 @@ for (const [index, user] of USERS.entries()) {
 }
 
 for (const revokedUser of [false, true]) {
-  usersTest(`Check user context menu for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
+  msTest(`Check user context menu for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
     const item = usersPage
       .locator('#users-page-user-list')
       .getByRole('listitem')
@@ -132,7 +124,7 @@ for (const revokedUser of [false, true]) {
   });
 }
 
-usersTest('Revoke one user with context menu', async ({ usersPage }) => {
+msTest('Revoke one user with context menu', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await item.locator('.options-button').click();
@@ -148,7 +140,7 @@ usersTest('Revoke one user with context menu', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('Jaheira has been revoked. They can no longer access this organization.', 'Success');
 });
 
-usersTest('Revoke one user with selection', async ({ usersPage }) => {
+msTest('Revoke one user with selection', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await item.locator('ion-checkbox').click();
@@ -164,7 +156,7 @@ usersTest('Revoke one user with selection', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('Jaheira has been revoked. They can no longer access this organization.', 'Success');
 });
 
-usersTest('Revoke two users with selection', async ({ usersPage }) => {
+msTest('Revoke two users with selection', async ({ usersPage }) => {
   const item1 = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item1.hover();
   await item1.locator('ion-checkbox').click();
@@ -184,7 +176,7 @@ usersTest('Revoke two users with selection', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
 });
 
-usersTest('Selection in grid mode', async ({ usersPage }) => {
+msTest('Selection in grid mode', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
   const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(1);
   await item.hover();
@@ -200,7 +192,7 @@ usersTest('Selection in grid mode', async ({ usersPage }) => {
   await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
 });
 
-usersTest('Test users selection in list mode', async ({ usersPage }) => {
+msTest('Test users selection in list mode', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
   await expect(item.locator('ion-checkbox')).toHaveState('unchecked');
@@ -253,7 +245,7 @@ usersTest('Test users selection in list mode', async ({ usersPage }) => {
   await expect(headerCheckbox).toHaveState('unchecked');
 });
 
-usersTest('Maintain selection between modes', async ({ usersPage }) => {
+msTest('Maintain selection between modes', async ({ usersPage }) => {
   for (const index of [1, 3, 4]) {
     const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(index);
     await item.hover();
@@ -307,7 +299,7 @@ usersTest('Maintain selection between modes', async ({ usersPage }) => {
   }
 });
 
-usersTest('User filter popover default state', async ({ usersPage }) => {
+msTest('User filter popover default state', async ({ usersPage }) => {
   await expect(usersPage.locator('.filter-popover')).toBeHidden();
   await usersPage.locator('#activate-users-ms-action-bar').locator('#select-filter-popover-button').click();
   await expect(usersPage.locator('.filter-popover')).toBeVisible();
@@ -337,7 +329,7 @@ async function toggleFilter(page: Page, name: string): Promise<void> {
   await page.locator('.filter-popover').locator('ion-backdrop').click();
 }
 
-usersTest('Filter users list', async ({ usersPage }) => {
+msTest('Filter users list', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(USERS.map((u) => u.name));
   // Hide admins
@@ -369,7 +361,7 @@ usersTest('Filter users list', async ({ usersPage }) => {
   );
 });
 
-usersTest('Remove selection on filtering', async ({ usersPage }) => {
+msTest('Remove selection on filtering', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3);
@@ -388,7 +380,7 @@ async function sortBy(page: Page, name: string): Promise<void> {
   await expect(popover).toBeHidden();
 }
 
-usersTest('User sort popover default state', async ({ usersPage }) => {
+msTest('User sort popover default state', async ({ usersPage }) => {
   await expect(usersPage.locator('.sorter-popover')).toBeHidden();
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
   await expect(sortButton).toHaveText('Profile');
@@ -407,7 +399,7 @@ usersTest('User sort popover default state', async ({ usersPage }) => {
   }
 });
 
-usersTest('Sort users list', async ({ usersPage }) => {
+msTest('Sort users list', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
 

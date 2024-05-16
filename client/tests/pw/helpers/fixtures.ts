@@ -4,7 +4,7 @@ import { test as base, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
 
-export const msTest = base.extend<{ home: Page; connected: Page; documents: Page; documentsReadOnly: Page }>({
+export const msTest = base.extend<{ home: Page; connected: Page; documents: Page; documentsReadOnly: Page; usersPage: Page }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
     await context.grantPermissions(['clipboard-read']);
@@ -50,6 +50,12 @@ export const msTest = base.extend<{ home: Page; connected: Page; documents: Page
     await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(2).click();
     await expect(connected).toHaveHeader(['/', "Watcher's Keep"], true);
     await expect(connected).toBeDocumentPage();
+    use(connected);
+  },
+
+  usersPage: async ({ connected }, use) => {
+    await connected.locator('.sidebar').locator('.organization-card-manageBtn').click();
+    await expect(connected).toHavePageTitle('Users');
     use(connected);
   },
 });
