@@ -43,7 +43,7 @@
       </ion-col>
     </ion-row>
     <ion-row>
-      <ion-col class="container-clear">
+      <ion-col class="container-clear button-none">
         <ion-button
           class="button-clear"
           fill="clear"

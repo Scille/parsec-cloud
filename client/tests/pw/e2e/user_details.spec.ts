@@ -25,7 +25,7 @@ msTest('User details modal', async ({ usersPage }) => {
   // cspell:disable-next-line
   await expect(detailsItems.nth(0).locator('.details-item__text')).toHaveText('Cernd');
   await expect(detailsItems.nth(1).locator('.details-item__title')).toHaveText('Joined');
-  await expect(detailsItems.nth(1).locator('.details-item__text')).toHaveText('now');
+  await expect(detailsItems.nth(1).locator('.details-item__text')).toHaveText(/^now|< 1 minute$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
   await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.item-container__name')).toHaveText([

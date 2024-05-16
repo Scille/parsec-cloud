@@ -1,24 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { Locator } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
-
-// cspell:disable-next-line
-const INVITATION_LINK = 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS';
-
-const userJoinTest = msTest.extend<{ userJoinModal: Locator }>({
-  userJoinModal: async ({ home }, use) => {
-    await home.locator('#create-organization-button').click();
-    await expect(home.locator('.homepage-popover')).toBeVisible();
-    await home.locator('.homepage-popover').getByRole('listitem').nth(1).click();
-    await fillInputModal(home, INVITATION_LINK);
-    const modal = home.locator('.join-organization-modal');
-    await expect(home.locator('.join-organization-modal')).toBeVisible();
-    await use(modal);
-  },
-});
+import { answerQuestion, fillIonInput } from '@tests/pw/helpers/utils';
 
 msTest('Opens the user join organization modal', async ({ home }) => {
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
@@ -35,7 +19,7 @@ msTest('Opens the user join organization modal', async ({ home }) => {
   await expect(modal.locator('#next-button')).toHaveText('Join');
 });
 
-userJoinTest('Go through the join user process', async ({ home, userJoinModal }) => {
+msTest('Go through the join user process', async ({ home, userJoinModal }) => {
   const nextButton = userJoinModal.locator('#next-button');
   const title = userJoinModal.locator('.modal-header__title');
   await expect(title).toHaveText('Welcome to Parsec!');
@@ -60,6 +44,12 @@ userJoinTest('Go through the join user process', async ({ home, userJoinModal })
   await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 3);
   await expect(nextButton).toHaveText('Join the organization');
   await expect(nextButton).toHaveDisabledAttribute();
+  const authRadio = userJoinModal.locator('.choose-auth-page').locator('.radio-list-item');
+  await expect(authRadio).toHaveCount(2);
+  await expect(authRadio.nth(0)).toHaveTheClass('radio-disabled');
+  await expect(authRadio.nth(0).locator('.item-radio__label')).toHaveText('Use System Authentication');
+  await expect(authRadio.nth(0).locator('.item-radio__text:visible')).toHaveText('Unavailable on web');
+  await expect(authRadio.nth(1)).toHaveText('Use Password');
   const passwordChoice = userJoinModal.locator('#get-password').locator('.choose-password');
   await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
   await expect(nextButton).toHaveDisabledAttribute();
@@ -71,4 +61,74 @@ userJoinTest('Go through the join user process', async ({ home, userJoinModal })
   await nextButton.click();
   await expect(userJoinModal).toBeHidden();
   await expect(home).toShowToast('You successfully joined the organization.', 'Success');
+});
+
+msTest('User join select invalid SAS code', async ({ userJoinModal }) => {
+  const nextButton = userJoinModal.locator('#next-button');
+  const title = userJoinModal.locator('.modal-header__title');
+  await expect(title).toHaveText('Welcome to Parsec!');
+  await expect(nextButton).toHaveText('I understand!');
+  await nextButton.click();
+  await expect(title).toHaveText('Get host code');
+  await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
+  const sasCodeButtons = userJoinModal.locator('.button-choice');
+  await sasCodeButtons.nth(0).click();
+  await expect(userJoinModal.page()).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
+  await expect(title).toHaveText('Welcome to Parsec!');
+  await expect(nextButton).toHaveText('I understand!');
+});
+
+msTest('User join select no SAS code', async ({ userJoinModal }) => {
+  const nextButton = userJoinModal.locator('#next-button');
+  const title = userJoinModal.locator('.modal-header__title');
+  await expect(title).toHaveText('Welcome to Parsec!');
+  await expect(nextButton).toHaveText('I understand!');
+  await nextButton.click();
+  await expect(title).toHaveText('Get host code');
+  await expect(userJoinModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details', 'Authentication'], 0);
+  const sasCodeNone = userJoinModal.locator('.button-none');
+  await sasCodeNone.click();
+  await expect(userJoinModal.page()).toShowToast(
+    'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
+    'Error',
+  );
+  await expect(title).toHaveText('Welcome to Parsec!');
+  await expect(nextButton).toHaveText('I understand!');
+});
+
+msTest('Close user join process', async ({ userJoinModal }) => {
+  const closeButton = userJoinModal.locator('.closeBtn');
+  await expect(closeButton).toBeVisible();
+
+  await closeButton.click();
+  await answerQuestion(userJoinModal.page(), false, {
+    expectedTitleText: 'Cancel the onboarding',
+    expectedQuestionText:
+      'Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.',
+    expectedPositiveText: 'Cancel process',
+    expectedNegativeText: 'Resume',
+  });
+
+  const nextButton = userJoinModal.locator('#next-button');
+  await nextButton.click();
+
+  await closeButton.click();
+  await answerQuestion(userJoinModal.page(), false);
+
+  const sasCodeButtons = userJoinModal.locator('.button-choice');
+  await sasCodeButtons.nth(1).click();
+
+  // cspell:disable-next-line
+  await fillIonInput(userJoinModal.locator('#get-user-info').locator('ion-input').nth(0), 'Shadowheart');
+  await nextButton.click();
+
+  await closeButton.click();
+  await answerQuestion(userJoinModal.page(), false);
+
+  const passwordChoice = userJoinModal.locator('#get-password').locator('.choose-password');
+  await fillIonInput(passwordChoice.locator('ion-input').nth(0), 'AVeryL0ngP@ssw0rd');
+  await fillIonInput(passwordChoice.locator('ion-input').nth(1), 'AVeryL0ngP@ssw0rd');
+  await nextButton.click();
+
+  await expect(closeButton).toBeHidden();
 });
