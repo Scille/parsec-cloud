@@ -499,6 +499,7 @@ pyobj
 pyobject
 pypa
 pypac
+pyproj
 PYQT
 pyqtboundsignal
 pyrcc
