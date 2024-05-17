@@ -113,7 +113,6 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 }
 
 async function selectAll(selected: boolean): Promise<void> {
-  console.log('Selected', selected);
   props.files.selectAll(selected);
   props.folders.selectAll(selected);
 }
