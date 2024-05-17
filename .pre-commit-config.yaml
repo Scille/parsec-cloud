@@ -161,7 +161,10 @@ repos:
 
       - id: deptry
         name: deptry
-        entry: poetry --directory ./server run python -c 'import os;os.chdir("./server");os.execlp("deptry", "deptry", ".");'
+        entry: poetry --directory ./server run deptry server --config=server/pyproject.toml
+        files: ^server/
+        types_or: [python, pyproj]
+        pass_filenames: false  # no need to pass filenames, deptry expects only the root directory to scan
         require_serial: true
         language: system
 
