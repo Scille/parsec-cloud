@@ -196,11 +196,17 @@ const emits = defineEmits<{
   (e: 'joinOrganizationWithLinkClick', link: string): void;
 }>();
 
+enum SortCriteria {
+  UserName = 'user_name',
+  LastLogin = 'last_login',
+  Organization = 'organization',
+}
+
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
-const sortBy = ref('organization');
+const sortBy = ref(SortCriteria.Organization);
 const sortByAsc = ref(true);
 const searchQuery = ref('');
 const querying = ref(true);
@@ -213,10 +219,10 @@ let hotkeys: HotkeyGroup | null = null;
 const msSorterOptions: MsOptions = new MsOptions([
   {
     label: 'HomePage.organizationList.sortByOrganization',
-    key: 'organization',
+    key: SortCriteria.Organization,
   },
-  { label: 'HomePage.organizationList.sortByUserName', key: 'user_name' },
-  { label: 'HomePage.organizationList.sortByLastLogin', key: 'last_login' },
+  { label: 'HomePage.organizationList.sortByUserName', key: SortCriteria.UserName },
+  { label: 'HomePage.organizationList.sortByLastLogin', key: SortCriteria.LastLogin },
 ]);
 
 const msSorterLabels = {
@@ -302,19 +308,27 @@ const filteredDevices = computed(() => {
     .sort((a, b) => {
       const aLabel = a.humanHandle.label;
       const bLabel = b.humanHandle.label;
-      if (sortBy.value === 'organization') {
+      if (sortBy.value === SortCriteria.Organization) {
         if (sortByAsc.value) {
+          // If orgs are the same, sort by user name
+          if (a.organizationId === b.organizationId) {
+            return aLabel.localeCompare(bLabel);
+          }
           return a.organizationId.localeCompare(b.organizationId);
         } else {
+          // If orgs are the same, sort by user name
+          if (a.organizationId === b.organizationId) {
+            return aLabel.localeCompare(bLabel);
+          }
           return b.organizationId.localeCompare(a.organizationId);
         }
-      } else if (sortBy.value === 'user_name' && aLabel && bLabel) {
+      } else if (sortBy.value === SortCriteria.UserName) {
         if (sortByAsc.value) {
-          return aLabel?.localeCompare(bLabel ?? '');
+          return aLabel.localeCompare(bLabel);
         } else {
-          return bLabel?.localeCompare(aLabel ?? '');
+          return bLabel.localeCompare(aLabel);
         }
-      } else if (sortBy.value === 'last_login') {
+      } else if (sortBy.value === SortCriteria.LastLogin) {
         const aLastLogin =
           a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined
             ? storedDeviceDataDict.value[a.slug].lastLogin

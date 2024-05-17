@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { answerQuestion, fillInputModal } from '@tests/pw/helpers/utils';
+import { answerQuestion, fillInputModal, sortBy } from '@tests/pw/helpers/utils';
 
 const USERS = [
   {
@@ -373,13 +373,6 @@ msTest('Remove selection on filtering', async ({ usersPage }) => {
   await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} users`, { useInnerText: true });
 });
 
-async function sortBy(page: Page, name: string): Promise<void> {
-  await page.locator('#activate-users-ms-action-bar').locator('#select-popover-button').click();
-  const popover = page.locator('.sorter-popover');
-  await popover.getByRole('listitem').filter({ hasText: name }).click();
-  await expect(popover).toBeHidden();
-}
-
 msTest('User sort popover default state', async ({ usersPage }) => {
   await expect(usersPage.locator('.sorter-popover')).toBeHidden();
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
@@ -403,7 +396,7 @@ msTest('Sort users list', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   const sortButton = usersPage.locator('#activate-users-ms-action-bar').locator('#select-popover-button');
 
-  await sortBy(usersPage, 'Name');
+  await sortBy(sortButton, 'Name');
   await expect(sortButton).toHaveText('Name');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.sort((u1, u2) => {
@@ -417,7 +410,7 @@ msTest('Sort users list', async ({ usersPage }) => {
     }).map((u) => u.name),
   );
 
-  await sortBy(usersPage, 'Ascending');
+  await sortBy(sortButton, 'Ascending');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.sort((u1, u2) => {
       if (u1.currentUser) {
@@ -429,8 +422,8 @@ msTest('Sort users list', async ({ usersPage }) => {
       }
     }).map((u) => u.name),
   );
-  await sortBy(usersPage, 'Descending');
-  await sortBy(usersPage, 'Status');
+  await sortBy(sortButton, 'Descending');
+  await sortBy(sortButton, 'Status');
   await expect(sortButton).toHaveText('Status');
   const PROFILE_WEIGHTS = new Map([
     ['Administrator', 8],

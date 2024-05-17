@@ -87,3 +87,10 @@ export async function selectDropdown(button: Locator, select: string, currentlyS
   await options.filter({ hasText: select }).click();
   await expect(page.locator('.dropdown-popover')).toBeHidden();
 }
+
+export async function sortBy(sortButton: Locator, clickOnLabel: string): Promise<void> {
+  await sortButton.click();
+  const popover = sortButton.page().locator('.sorter-popover');
+  await popover.getByRole('listitem').filter({ hasText: clickOnLabel }).click();
+  await expect(popover).toBeHidden();
+}

@@ -2,19 +2,106 @@
 
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { answerQuestion, fillIonInput } from '@tests/pw/helpers/utils';
+import { answerQuestion, fillIonInput, sortBy } from '@tests/pw/helpers/utils';
+
+const USER_NAMES = ['Alicey McAliceFace', 'Alicey McAliceFace', 'Boby McBobFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
 msTest('Home default state with devices', async ({ home }) => {
   await expect(home.locator('.organization-title')).toHaveText('Your organizations');
+  await expect(home.locator('#organization-filter-select')).toHaveText('Organization');
+  await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
+  await expect(home.locator('#ms-search-input')).toBeVisible();
   const cards = home.locator('.organization-list').locator('.organization-card');
 
-  await expect(cards).toHaveCount(5);
+  await expect(cards).toHaveCount(USER_NAMES.length);
 
   for (const card of await cards.all()) {
     await expect(card.locator('.organization-info').locator('.title-h4')).toHaveText(/Org\d+/);
     await expect(card.locator('.card-content-footer-login').nth(0)).toHaveText('--');
   }
-  await expect(cards.nth(0).locator('.organization-info').locator('.subtitles-sm')).toHaveText('Alicey McAliceFace');
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+});
+
+msTest('Sort devices', async ({ home }) => {
+  const sortButton = home.locator('#organization-filter-select');
+  const cards = home.locator('.organization-list').locator('.organization-card');
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await sortBy(sortButton, 'Ascending');
+  // Should not change anything right now because all devices have the same organization
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await sortBy(sortButton, 'Name');
+  // By name desc
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u2.localeCompare(u1)));
+  await sortBy(sortButton, 'Descending');
+  // By name asc
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+});
+
+msTest('Filter devices', async ({ home }) => {
+  const cards = home.locator('.organization-list').locator('.organization-card');
+  const searchInput = home.locator('#ms-search-input').locator('ion-input');
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await fillIonInput(searchInput, 'cey');
+  await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveText(
+    USER_NAMES.filter((u) => u.includes('cey')),
+  );
+  await fillIonInput(searchInput, 'al');
+  await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveCount(3);
+  await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveText(
+    USER_NAMES.filter((u) => u.toLowerCase().includes('al')),
+  );
+});
+
+msTest('Check join link', async ({ home }) => {
+  const LINKS = [
+    {
+      // cspell:disable-next-line
+      link: 'http://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
+      expectedError: "Link should start with 'parsec3://'.",
+    },
+    {
+      // cspell:disable-next-line
+      link: 'parsec3://parsec.cloud/Test?p=xBBHJlEjlpxNZYTCvBWWDPIS',
+      expectedError: 'Link does not include an action.',
+    },
+    {
+      // cspell:disable-next-line
+      link: 'parsec3://parsec.cloud/Test?a=bootstrap_organization&p=xBBHJlEjlpxNZYTCvBWWDPIS',
+      expectedError: 'Link contains an invalid action.',
+    },
+    {
+      link: 'parsec3://parsec.cloud/Test?a=claim_user',
+      expectedError: 'Link does not include a token.',
+    },
+    {
+      link: 'parsec3://parsec.cloud/Test?a=claim_user&p=abcde',
+      expectedError: 'Link contains an invalid token.',
+    },
+    {
+      // cspell:disable-next-line
+      link: 'parsec3://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
+    },
+  ];
+
+  await home.locator('#create-organization-button').click();
+  await home.locator('.homepage-popover').getByRole('listitem').nth(1).click();
+  const confirmButton = home.locator('.text-input-modal').locator('#next-button');
+  const errorForm = home.locator('.text-input-modal').locator('.form-error');
+  const input = home.locator('.text-input-modal').locator('ion-input');
+
+  await expect(confirmButton).toHaveDisabledAttribute();
+
+  for (const linkInfo of LINKS) {
+    await fillIonInput(input, linkInfo.link);
+    if (linkInfo.expectedError) {
+      await expect(errorForm).toBeVisible();
+      await expect(errorForm).toHaveText(linkInfo.expectedError);
+      await expect(confirmButton).toHaveDisabledAttribute();
+    } else {
+      await expect(errorForm).toBeHidden();
+      await expect(confirmButton).not.toHaveDisabledAttribute();
+    }
+  }
 });
 
 msTest('Login', async ({ home }) => {
