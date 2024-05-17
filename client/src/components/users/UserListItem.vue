@@ -17,14 +17,12 @@
   >
     <div class="user-selected">
       <!-- eslint-disable vue/no-mutating-props -->
-      <ion-checkbox
-        aria-label=""
+      <ms-checkbox
         v-model="user.isSelected"
         v-show="user.isSelected || isHovered || showCheckbox"
         v-if="!user.isRevoked()"
-        class="checkbox"
         @click.stop
-        @ion-change="$emit('select', user, $event.detail.checked)"
+        @change="$emit('select', user, $event)"
       />
       <!-- eslint-enable vue/no-mutating-props -->
     </div>
@@ -95,12 +93,12 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
+import { formatTimeSince, MsCheckbox } from 'megashark-lib';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
-import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
 

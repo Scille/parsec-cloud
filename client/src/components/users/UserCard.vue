@@ -14,13 +14,11 @@
       v-if="!user.isRevoked()"
     >
       <!-- eslint-disable vue/no-mutating-props -->
-      <ion-checkbox
-        aria-label=""
+      <ms-checkbox
         v-model="user.isSelected"
         v-if="user.isSelected || isHovered || showCheckbox"
-        class="checkbox"
         @click.stop
-        @ion-change="$emit('select', user, $event.detail.checked)"
+        @ion-change="$emit('select', user, $event)"
       />
       <!-- eslint-enable vue/no-mutating-props -->
     </div>
@@ -68,9 +66,10 @@ import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
-import { IonCheckbox, IonIcon, IonItem, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { ref } from 'vue';
+import { MsCheckbox } from 'megashark-lib';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);

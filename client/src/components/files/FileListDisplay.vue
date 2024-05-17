@@ -14,10 +14,8 @@
           lines="full"
         >
           <ion-label class="folder-list-header__label ion-text-nowrap label-selected">
-            <ion-checkbox
-              aria-label=""
-              class="checkbox"
-              @ion-change="selectAll($event.detail.checked)"
+            <ms-checkbox
+              @change="selectAll"
               :checked="allSelected"
               :indeterminate="someSelected && !allSelected"
             />
@@ -79,8 +77,9 @@ import FileListItemImporting from '@/components/files/FileListItemImporting.vue'
 import { EntryCollection, EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
-import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
+import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
 import { computed, ref } from 'vue';
+import { MsCheckbox } from 'megashark-lib';
 
 const props = defineProps<{
   importing: Array<FileImportProgress>;
@@ -114,6 +113,7 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 }
 
 async function selectAll(selected: boolean): Promise<void> {
+  console.log('Selected', selected);
   props.files.selectAll(selected);
   props.folders.selectAll(selected);
 }

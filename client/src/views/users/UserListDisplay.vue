@@ -10,10 +10,8 @@
       lines="full"
     >
       <ion-label class="user-list-header__label label-selected">
-        <ion-checkbox
-          aria-label=""
-          class="checkbox"
-          @ion-change="users.selectAll($event.detail.checked)"
+        <ms-checkbox
+          @change="users.selectAll($event)"
           :checked="allSelected"
           :indeterminate="someSelected && !allSelected"
         />
@@ -58,8 +56,9 @@
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
-import { IonCheckbox, IonLabel, IonList, IonListHeader } from '@ionic/vue';
+import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
 import { computed } from 'vue';
+import { MsCheckbox } from 'megashark-lib';
 
 const props = defineProps<{
   users: UserCollection;

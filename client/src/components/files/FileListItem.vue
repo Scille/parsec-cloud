@@ -18,12 +18,10 @@
       <div class="file-list-item">
         <div class="file-selected">
           <!-- eslint-disable vue/no-mutating-props -->
-          <ion-checkbox
-            aria-label="''"
-            class="checkbox"
+          <ms-checkbox
             v-model="entry.isSelected"
             v-show="entry.isSelected || isHovered || showCheckbox"
-            @ion-change="$emit('selectedChange', entry, $event.detail.checked)"
+            @change="$emit('selectedChange', entry, $event)"
             @click.stop
           />
           <!-- eslint-enable vue/no-mutating-props -->
@@ -95,13 +93,13 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon } from '@/common/file';
-import { Folder, formatTimeSince, MsImage } from 'megashark-lib';
+import { Folder, formatTimeSince, MsImage, MsCheckbox } from 'megashark-lib';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryModel, FileModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path } from '@/parsec';
-import { IonButton, IonCheckbox, IonIcon, IonItem, IonLabel } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 

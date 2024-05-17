@@ -19,11 +19,9 @@
           id="filter-check-active"
         >
           <user-status-tag :revoked="false" />
-          <ion-checkbox
-            aria-label=""
-            class="checkbox"
+          <ms-checkbox
             v-model="users.filters.statusActive"
-            @ion-change="users.unselectHiddenUsers()"
+            @change="users.unselectHiddenUsers()"
           />
         </ion-item>
         <ion-item
@@ -31,11 +29,9 @@
           id="filter-check-revoked"
         >
           <user-status-tag :revoked="true" />
-          <ion-checkbox
-            aria-label=""
-            class="checkbox"
+          <ms-checkbox
             v-model="users.filters.statusRevoked"
-            @ion-change="users.unselectHiddenUsers()"
+            @change="users.unselectHiddenUsers()"
           />
         </ion-item>
       </ion-item-group>
@@ -51,11 +47,9 @@
           id="filter-check-admin"
         >
           <span class="body">{{ $msTranslate('UsersPage.filter.admin') }}</span>
-          <ion-checkbox
-            aria-label=""
-            class="checkbox"
+          <ms-checkbox
             v-model="users.filters.profileAdmin"
-            @ion-change="users.unselectHiddenUsers()"
+            @change="users.unselectHiddenUsers()"
           />
         </ion-item>
         <ion-item
@@ -63,9 +57,7 @@
           id="filter-check-standard"
         >
           <span class="body">{{ $msTranslate('UsersPage.filter.standard') }}</span>
-          <ion-checkbox
-            aria-label=""
-            class="checkbox"
+          <ms-checkbox
             v-model="users.filters.profileStandard"
             @ion-change="users.unselectHiddenUsers()"
           />
@@ -75,9 +67,7 @@
           id="filter-check-outsider"
         >
           <span class="body">{{ $msTranslate('UsersPage.filter.outsider') }}</span>
-          <ion-checkbox
-            aria-label=""
-            class="checkbox"
+          <ms-checkbox
             v-model="users.filters.profileOutsider"
             @ion-change="users.unselectHiddenUsers()"
           />
@@ -91,15 +81,12 @@
 <script setup lang="ts">
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserCollection } from '@/components/users/types';
-import { IonCheckbox, IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { MsCheckbox } from 'megashark-lib';
 
 defineProps<{
   users: UserCollection;
 }>();
 </script>
 
-<style lang="scss" scoped>
-.checkbox {
-  margin-left: auto;
-}
-</style>
+<style lang="scss" scoped></style>
