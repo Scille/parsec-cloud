@@ -321,6 +321,7 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
 class EventOrganizationConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_CONFIG"] = "ORGANIZATION_CONFIG"
+    event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimitField
