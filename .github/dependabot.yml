@@ -63,8 +63,6 @@ updates:
       - /server
       - /docs
     ignore:
-      - dependency-name: toastedmarshmallow
-      - dependency-name: trio_typing
       - dependency-name: typing-extensions
     pull-request-branch-name:
       separator: "-"
@@ -84,6 +82,7 @@ updates:
       pytools:
         patterns:
           - cibuildwheel
+          - deptry
           - editorconfig-checker
           - maturin
           - patchelf
@@ -108,6 +107,7 @@ updates:
           - sphinx*
           # pytools
           - cibuildwheel
+          - deptry
           - editorconfig-checker
           - maturin
           - patchelf
