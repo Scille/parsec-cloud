@@ -135,7 +135,7 @@ export default class AppUpdater {
 
     this.updater.setFeedURL(publishOption);
     this.updater.autoDownload = true;
-    this.updater.autoInstallOnAppQuit = true;
+    this.updater.autoInstallOnAppQuit = false;
 
     // https://www.electron.build/auto-update#event-error
     this.updater.on('error', (error) => {
