@@ -59,23 +59,9 @@ updates:
   ##########
 
   - package-ecosystem: pip
-    directory: /docs
-    labels:
-      - I-Dependency
-      - I-Python
-    schedule:
-      interval: monthly
-    pull-request-branch-name:
-      separator: "-"
-    groups:
-      parsec-docs:
-        patterns:
-          - "*"
-    open-pull-requests-limit: 1
-    rebase-strategy: disabled
-
-  - package-ecosystem: pip
-    directory: /server
+    directories:
+      - /server
+      - /docs
     ignore:
       - dependency-name: toastedmarshmallow
       - dependency-name: trio_typing
@@ -93,28 +79,41 @@ updates:
     groups:
       pytest:
         patterns:
-          - pytest*
           - hypothesis
+          - pytest*
       pytools:
         patterns:
-          - ruff
-          - maturin
+          - cibuildwheel
           - editorconfig-checker
+          - maturin
+          - patchelf
+          - pyright
+          - ruff
           - setuptools
       pydocs:
         patterns:
+          - docutils
+          - poutils
           - sphinx*
       pydeps:
         patterns:
           - "*"
         exclude-patterns:
-          - pytest*
+          # pytest
           - hypothesis
-          - ruff
-          - maturin
-          - editorconfig-checker
-          - setuptools
+          - pytest*
+          # pydocs
+          - docutils
+          - poutils
           - sphinx*
+          # pytools
+          - cibuildwheel
+          - editorconfig-checker
+          - maturin
+          - patchelf
+          - pyright
+          - ruff
+          - setuptools
     open-pull-requests-limit: 5
     rebase-strategy: disabled
 
