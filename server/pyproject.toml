@@ -30,7 +30,7 @@ parsec = "parsec.cli:cli"
 [tool.poetry.dependencies]
 python = "~3.12.0"
 # Base requirements
-anyio = ">=3.7.1,<5.0.0"
+anyio = ">=3.7.1,<4.0.0"
 click = "^8.0"
 httpx = ">=0.25,<0.28"
 pbr = { version = ">=5.9,<7.0" }
