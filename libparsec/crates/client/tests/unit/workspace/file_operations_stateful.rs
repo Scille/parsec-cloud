@@ -185,9 +185,7 @@ impl StateMachineTest for FileOperationStateMachine {
 
 prop_state_machine! {
     #![proptest_config(Config {
-        // Enable verbose mode to make the state machine test print the
-        // transitions for each case.
-        verbose: 0,
+        cases: 10000, // About 2 seconds
         .. Config::default()
     })]
     #[parsec_test]
