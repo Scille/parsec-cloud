@@ -12,6 +12,7 @@ export const msTest = base.extend<{
   documentsReadOnly: Page;
   usersPage: Page;
   userJoinModal: Locator;
+  createOrgModal: Locator;
 }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
@@ -78,6 +79,15 @@ export const msTest = base.extend<{
     await fillInputModal(home, INVITATION_LINK);
     const modal = home.locator('.join-organization-modal');
     await expect(home.locator('.join-organization-modal')).toBeVisible();
+    await use(modal);
+  },
+
+  createOrgModal: async ({ home }, use) => {
+    await home.locator('#create-organization-button').click();
+    await expect(home.locator('.homepage-popover')).toBeVisible();
+    await home.locator('.homepage-popover').getByRole('listitem').nth(0).click();
+    const modal = home.locator('.create-organization-modal');
+    await expect(home.locator('.create-organization-modal')).toBeVisible();
     await use(modal);
   },
 });
