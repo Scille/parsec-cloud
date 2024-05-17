@@ -108,13 +108,13 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
         # We simulate that sending an event to the client will block (this is
         # the expected behavior if the buffer is full and there are no tasks
         # waiting to receive)
-        registered_clients = backend.events._registered_clients  # pyright: ignore[reportPrivateUsage]
+        registered_clients = backend.events._registered_clients
         assert len(registered_clients) == 1
         reg_client_id: int = next(iter(registered_clients.keys()))
         mock_send_nowait = MagicMock(side_effect=anyio.WouldBlock)
         registered_clients[reg_client_id].channel_sender.send_nowait = mock_send_nowait
 
-        await backend.event_bus.send(  # pyright: ignore[reportPrivateUsage]
+        await backend.event_bus.send(
             EventPinged(
                 organization_id=minimalorg.organization_id,
                 ping="foo",
