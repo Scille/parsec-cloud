@@ -80,36 +80,6 @@ impl EntryName {
             None => (self.0.as_str(), None),
         }
     }
-
-    pub fn build_next_conflicted_name(&self, attempt: u32) -> Self {
-        let (mut base_name, mut extension) = self.base_and_extension();
-
-        loop {
-            let name = match extension {
-                None => format!("{} ({})", base_name, attempt),
-                Some(extension) => {
-                    format!("{} ({}).{}", base_name, attempt, extension)
-                }
-            };
-            match name.parse::<Self>() {
-                Ok(name) => return name,
-                // Entry name too long
-                Err(EntryNameError::NameTooLong) => {
-                    // Simply strip 10 characters from the first name then try again
-                    if base_name.len() > 10 {
-                        base_name = &base_name[..base_name.len() - 10];
-                    } else {
-                        // Very rare case where the extensions are very long,
-                        // we have no choice but to strip it...
-                        let extension_str = extension.expect("must be present");
-                        extension = Some(&extension_str[..extension_str.len() - 10]);
-                    }
-                }
-                // Not possible given name is only composed of valid characters
-                Err(EntryNameError::InvalidName) => unreachable!(),
-            }
-        }
-    }
 }
 
 impl std::convert::AsRef<str> for EntryName {
