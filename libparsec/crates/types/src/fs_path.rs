@@ -126,6 +126,20 @@ impl TryFrom<&str> for EntryName {
     }
 }
 
+impl TryFrom<String> for EntryName {
+    type Error = EntryNameError;
+
+    fn try_from(id: String) -> Result<Self, Self::Error> {
+        let id = match unicode_normalization::is_nfc_quick(id.chars()) {
+            unicode_normalization::IsNormalized::Yes => id,
+            unicode_normalization::IsNormalized::No
+            | unicode_normalization::IsNormalized::Maybe => id.nfc().collect(),
+        };
+
+        Self::is_valid(&id).map(|_| Self(id))
+    }
+}
+
 impl From<EntryName> for String {
     fn from(item: EntryName) -> String {
         item.0
