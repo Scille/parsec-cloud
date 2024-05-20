@@ -13,7 +13,11 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            p_assert_eq!(os_ls!(mountpoint_path).await, ["bar.txt", "foo"]);
+            let mut items = os_ls!(mountpoint_path).await;
+            // Children are stored in the workspace/folder manifests as a hashmap, so
+            // the order of iteration is not stable between runs...
+            items.sort();
+            p_assert_eq!(items, ["bar.txt", "foo"]);
         }
     );
 }
