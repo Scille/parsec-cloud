@@ -2,10 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use libparsec_client::{
-    workspace::{EntryStat, WorkspaceOps},
-    Client,
-};
+use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
 };
@@ -23,11 +20,11 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
 
             tokio::fs::create_dir(&new_dir).await.unwrap();
 
-            let stat = wksp1_ops
-                .stat_entry(&"/new_dir".parse().unwrap())
+            let stats = wksp1_ops
+                .stat_folder_children(&"/new_dir".parse().unwrap())
                 .await
                 .unwrap();
-            p_assert_matches!(stat, EntryStat::Folder{children, ..} if children.is_empty());
+            assert!(stats.is_empty());
         }
     );
 }
@@ -81,6 +78,7 @@ async fn already_exists(
 #[cfg(not(target_os = "windows"))]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
+    use libparsec_client::workspace::EntryStat;
     use libparsec_types::prelude::*;
 
     mount_and_test!(
@@ -96,12 +94,12 @@ async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
                         Some(Ok(EntryStat::Folder {
                             confinement_point: None,
                             id: VlobID::default(),
+                            parent: VlobID::default(),
                             created: "2000-01-01T00:00:00Z".parse().unwrap(),
                             updated: "2000-01-01T00:00:00Z".parse().unwrap(),
                             base_version: 0,
                             is_placeholder: false,
                             need_sync: false,
-                            children: vec![],
                         }))
                     } else {
                         // Fallback to real lookup

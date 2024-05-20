@@ -14,9 +14,10 @@ use winfsp_wrs::{
 };
 
 use libparsec_client::workspace::{
-    EntryStat, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdFlushError,
-    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError, WorkspaceOpenFileError,
-    WorkspaceOps, WorkspaceRenameEntryError, WorkspaceStatEntryError,
+    EntryStat, FolderReader, FolderReaderStatEntryError, OpenOptions, WorkspaceCreateFolderError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
+    WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps,
+    WorkspaceRenameEntryError, WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -50,6 +51,7 @@ fn is_entry_info_path(path: &FsPath) -> bool {
 pub(crate) enum OpenedObj {
     Folder {
         parsec_file_name: FsPath,
+        folder_reader: Option<FolderReader>,
     },
     File {
         parsec_file_name: FsPath,
@@ -147,7 +149,9 @@ impl ParsecFileSystemContext {
 impl ParsecFileSystemContext {
     async fn get_file_info_async(&self, file_context: &OpenedObj) -> Result<FileInfo, NTSTATUS> {
         let parsec_file_name = match file_context {
-            OpenedObj::Folder { parsec_file_name } => parsec_file_name,
+            OpenedObj::Folder {
+                parsec_file_name, ..
+            } => parsec_file_name,
             OpenedObj::File {
                 parsec_file_name, ..
             } => parsec_file_name,
@@ -274,7 +278,10 @@ impl FileSystemContext for ParsecFileSystemContext {
                         | WorkspaceCreateFolderError::Internal(_) => STATUS_ACCESS_DENIED,
                     })?;
 
-                let opened_obj = OpenedObj::Folder { parsec_file_name };
+                let opened_obj = OpenedObj::Folder {
+                    parsec_file_name,
+                    folder_reader: None,
+                };
                 let file_info = self.get_file_info_async(&opened_obj).await?;
                 let file_context = Arc::new(Mutex::new(opened_obj));
 
@@ -377,9 +384,10 @@ impl FileSystemContext for ParsecFileSystemContext {
                     fd,
                 }),
                 Err(err) => match err {
-                    WorkspaceOpenFileError::EntryNotAFile => {
-                        Ok(OpenedObj::Folder { parsec_file_name })
-                    }
+                    WorkspaceOpenFileError::EntryNotAFile => Ok(OpenedObj::Folder {
+                        parsec_file_name,
+                        folder_reader: None,
+                    }),
                     WorkspaceOpenFileError::Offline => Err(STATUS_HOST_UNREACHABLE),
                     WorkspaceOpenFileError::Stopped => Err(STATUS_NO_SUCH_DEVICE),
                     WorkspaceOpenFileError::ReadOnlyRealm => Err(STATUS_MEDIA_WRITE_PROTECTED),
@@ -684,28 +692,42 @@ impl FileSystemContext for ParsecFileSystemContext {
                 return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
             }
 
-            let outcome = self.ops.stat_entry(&parsec_file_name).await;
+            let outcome = self.ops.open_folder_reader(&parsec_file_name).await;
             match outcome {
-                Ok(stat) => match stat {
-                    EntryStat::File { .. } => Ok(()),
-                    EntryStat::Folder { children, .. } => {
-                        if children.is_empty() {
-                            Ok(())
-                        } else {
-                            Err(STATUS_DIRECTORY_NOT_EMPTY)
-                        }
+                Ok(reader) => {
+                    let maybe_child_stat =
+                        reader
+                            .stat_next(&self.ops, 0)
+                            .await
+                            .map_err(|err| match err {
+                                FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                                FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                                FolderReaderStatEntryError::NoRealmAccess
+                                | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                                | FolderReaderStatEntryError::InvalidCertificate(_)
+                                | FolderReaderStatEntryError::InvalidManifest(_)
+                                | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                            })?;
+
+                    if maybe_child_stat.is_none() {
+                        Ok(())
+                    } else {
+                        Err(STATUS_DIRECTORY_NOT_EMPTY)
                     }
+                }
+                Err(err) => match err {
+                    WorkspaceOpenFolderReaderError::EntryIsFile => Ok(()),
+                    WorkspaceOpenFolderReaderError::Offline => Err(STATUS_HOST_UNREACHABLE),
+                    WorkspaceOpenFolderReaderError::Stopped => Err(STATUS_DEVICE_NOT_READY),
+                    WorkspaceOpenFolderReaderError::EntryNotFound => {
+                        Err(STATUS_OBJECT_NAME_NOT_FOUND)
+                    }
+                    WorkspaceOpenFolderReaderError::NoRealmAccess
+                    | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
+                    | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
+                    | WorkspaceOpenFolderReaderError::InvalidManifest(_)
+                    | WorkspaceOpenFolderReaderError::Internal(_) => Err(STATUS_ACCESS_DENIED),
                 },
-                Err(err) => Err(match err {
-                    WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                    WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                    WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                    WorkspaceStatEntryError::NoRealmAccess
-                    | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                    | WorkspaceStatEntryError::InvalidCertificate(_)
-                    | WorkspaceStatEntryError::InvalidManifest(_)
-                    | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
-                }),
             }
         })
     }
@@ -785,7 +807,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         marker: Option<&U16CStr>,
         mut add_dir_info: impl FnMut(DirInfo) -> bool,
     ) -> Result<(), NTSTATUS> {
-        let fc = file_context.lock().expect("Mutex is poisoned");
+        let mut fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!(
             "[WinFSP] read_directory(file_context: {:?}, marker: {:?})",
             fc,
@@ -793,95 +815,126 @@ impl FileSystemContext for ParsecFileSystemContext {
         );
 
         self.tokio_handle.block_on(async move {
-            let path = match &*fc {
-                OpenedObj::Folder { parsec_file_name } => Ok(parsec_file_name),
-                OpenedObj::File { .. } => Err(STATUS_NOT_A_DIRECTORY),
+            let (dir_path, reader) = match &mut *fc {
+                OpenedObj::Folder {
+                    parsec_file_name,
+                    folder_reader: folder_reader @ None,
+                } => {
+                    let reader = self
+                        .ops
+                        .open_folder_reader(parsec_file_name)
+                        .await
+                        .map_err(|err| match err {
+                            // Concurrent modification may have changed the type of the entry since it has been opened
+                            WorkspaceOpenFolderReaderError::EntryIsFile => STATUS_NOT_A_DIRECTORY,
+
+                            WorkspaceOpenFolderReaderError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceOpenFolderReaderError::Stopped => STATUS_DEVICE_NOT_READY,
+                            WorkspaceOpenFolderReaderError::EntryNotFound => {
+                                STATUS_OBJECT_NAME_NOT_FOUND
+                            }
+                            WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
+                            | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
+                            | WorkspaceOpenFolderReaderError::InvalidManifest(_)
+                            | WorkspaceOpenFolderReaderError::Internal(_) => STATUS_ACCESS_DENIED,
+                        })?;
+                    *folder_reader = Some(reader);
+                    (parsec_file_name, folder_reader.as_ref().expect("set above"))
+                }
+
+                OpenedObj::Folder {
+                    folder_reader: Some(folder_reader),
+                    parsec_file_name,
+                } => (parsec_file_name, &*folder_reader),
+
+                OpenedObj::File { .. } => return Err(STATUS_NOT_A_DIRECTORY),
                 // OpenedObj::EntryInfo { .. } => Err(STATUS_NOT_A_DIRECTORY),
-            }?;
-
-            macro_rules! stat_entry {
-                ($path:expr) => {
-                    async move {
-                        let outcome = self.ops.stat_entry($path).await;
-                        match outcome {
-                            Ok(stat) => Ok(stat),
-                            Err(err) => Err(match err {
-                                WorkspaceStatEntryError::EntryNotFound => {
-                                    STATUS_OBJECT_NAME_NOT_FOUND
-                                }
-                                WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                                WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                                WorkspaceStatEntryError::NoRealmAccess
-                                | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                                | WorkspaceStatEntryError::InvalidCertificate(_)
-                                | WorkspaceStatEntryError::InvalidManifest(_)
-                                | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
-                            }),
-                        }
-                    }
-                };
-            }
-
-            let stat = stat_entry!(&path).await?;
-            let file_info = parsec_entry_stat_to_winfsp_file_info(&stat);
-            let children = match stat {
-                EntryStat::Folder { children, .. } => Ok(children),
-                // Concurrent modification may have changed the type of the entry since it has been opened
-                EntryStat::File { .. } => Err(STATUS_NOT_A_DIRECTORY),
-            }?;
+            };
 
             // NOTE: The "." and ".." directories should ONLY be included
             // if the queried directory is not root
+            // (see https://github.com/winfsp/winfsp/blob/507c7944709e42b909c3f0c363d78b62c530ce7f/tst/memfs/memfs.cpp#L1901-L1920)
 
-            if !path.is_root() && marker.is_none() {
-                if !add_dir_info(DirInfo::new(file_info, u16cstr!("."))) {
-                    return Ok(());
+            if !dir_path.is_root() {
+                if marker.is_none() {
+                    let directory_stat = reader.stat_folder();
+
+                    if !add_dir_info(DirInfo::new(
+                        parsec_entry_stat_to_winfsp_file_info(&directory_stat),
+                        u16cstr!("."),
+                    )) {
+                        return Ok(());
+                    }
                 }
 
-                let parent_path = path.parent();
-                let parent_stat = stat_entry!(&parent_path).await?;
-                if !add_dir_info(DirInfo::new(
-                    parsec_entry_stat_to_winfsp_file_info(&parent_stat),
-                    u16cstr!(".."),
-                )) {
-                    return Ok(());
+                if marker.is_none() || marker == Some(u16cstr!(".")) {
+                    let directory_parent_id = match reader.stat_folder() {
+                        EntryStat::File { parent, .. } => parent,
+                        EntryStat::Folder { parent, .. } => parent,
+                    };
+
+                    let parent_stat = self
+                        .ops
+                        .stat_entry_by_id(directory_parent_id)
+                        .await
+                        .map_err(|err| match err {
+                            WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                            WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
+                            WorkspaceStatEntryError::NoRealmAccess
+                            | WorkspaceStatEntryError::InvalidKeysBundle(_)
+                            | WorkspaceStatEntryError::InvalidCertificate(_)
+                            | WorkspaceStatEntryError::InvalidManifest(_)
+                            | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                        })?;
+
+                    if !add_dir_info(DirInfo::new(
+                        parsec_entry_stat_to_winfsp_file_info(&parent_stat),
+                        u16cstr!(".."),
+                    )) {
+                        return Ok(());
+                    }
                 }
             }
 
-            // NOTE: we *do not* rely on alphabetically sorting to compare the
-            // marker given `..` is always the first element event if we could
-            // have children name before it (`.-foo` for instance)
-            // All remaining children are located after the marker
+            let offset = match marker {
+                Some(marker) => match marker.to_string_lossy().parse::<EntryName>() {
+                    Ok(marker) => match reader.get_offset_for_name(&marker) {
+                        Some(previous_offset) => previous_offset + 1,
+                        None => 0,
+                    },
+                    Err(_) => 0,
+                },
+                None => 0,
+            };
 
-            if let Some(marker) = marker {
-                for (child_name, _) in children
-                    .into_iter()
-                    .skip_while(|(name, _)| name.as_ref() != marker.to_string_lossy())
-                    .skip(1)
-                {
-                    let winified_child_name = winify_entry_name(&child_name);
-                    let child_path = path.join(child_name);
-                    let child_stat = stat_entry!(&child_path).await?;
+            for offset in offset.. {
+                let maybe_child_stat =
+                    reader
+                        .stat_next(&self.ops, offset)
+                        .await
+                        .map_err(|err| match err {
+                            FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                            FolderReaderStatEntryError::NoRealmAccess
+                            | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                            | FolderReaderStatEntryError::InvalidCertificate(_)
+                            | FolderReaderStatEntryError::InvalidManifest(_)
+                            | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                        })?;
 
-                    if !add_dir_info(DirInfo::from_str(
-                        parsec_entry_stat_to_winfsp_file_info(&child_stat),
-                        &winified_child_name,
-                    )) {
-                        return Ok(());
-                    }
-                }
-            } else {
-                for (child_name, _) in children.into_iter() {
-                    let winified_child_name = winify_entry_name(&child_name);
-                    let child_path = path.join(child_name);
-                    let child_stat = stat_entry!(&child_path).await?;
+                let (child_name, child_stat) = match maybe_child_stat {
+                    Some(name_and_stat) => name_and_stat,
+                    None => break,
+                };
+                let winified_child_name = winify_entry_name(child_name);
 
-                    if !add_dir_info(DirInfo::from_str(
-                        parsec_entry_stat_to_winfsp_file_info(&child_stat),
-                        &winified_child_name,
-                    )) {
-                        return Ok(());
-                    }
+                if !add_dir_info(DirInfo::from_str(
+                    parsec_entry_stat_to_winfsp_file_info(&child_stat),
+                    &winified_child_name,
+                )) {
+                    break;
                 }
             }
 
@@ -944,7 +997,9 @@ impl FileSystemContext for ParsecFileSystemContext {
 
         self.tokio_handle.block_on(async move {
             let child_path = match &*fc {
-                OpenedObj::Folder { parsec_file_name } => {
+                OpenedObj::Folder {
+                    parsec_file_name, ..
+                } => {
                     let child_name = file_name
                         .to_string()
                         .map_err(|_| STATUS_OBJECT_NAME_INVALID)

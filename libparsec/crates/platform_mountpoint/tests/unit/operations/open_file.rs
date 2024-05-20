@@ -140,6 +140,7 @@ async fn no_create_and_not_found(tmp_path: TmpPath, env: &TestbedEnv) {
                         Some(Ok(EntryStat::File {
                             confinement_point: None,
                             id: VlobID::default(),
+                            parent: VlobID::default(),
                             created: "2000-01-01T00:00:00Z".parse().unwrap(),
                             updated: "2000-01-01T00:00:00Z".parse().unwrap(),
                             base_version: 0,
