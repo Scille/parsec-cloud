@@ -24,13 +24,13 @@ import {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceHandle,
+  WorkspaceMoveEntryError,
   WorkspaceOpenFileError,
   WorkspaceRemoveEntryError,
-  WorkspaceRenameEntryError,
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
-import { ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
+import { MoveEntryModeTag, ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
@@ -51,7 +51,6 @@ export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPat
     return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
   } else {
     return { ok: false, error: { tag: WorkspaceCreateFolderErrorTag.EntryExists, error: 'already exists' } };
-    // return { ok: true, value: '42' };
   }
 }
 
@@ -79,11 +78,11 @@ export async function rename(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
   newName: EntryName,
-): Promise<Result<null, WorkspaceRenameEntryError>> {
+): Promise<Result<null, WorkspaceMoveEntryError>> {
   const clientHandle = getParsecHandle();
 
   if (clientHandle && !needsMocks()) {
-    return await libparsec.workspaceRenameEntry(workspaceHandle, path, newName, false);
+    return await libparsec.workspaceMoveEntry(workspaceHandle, path, newName, { tag: MoveEntryModeTag.NoReplace });
   } else {
     return { ok: true, value: null };
   }
@@ -102,9 +101,11 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       if (result.value.tag === FileType.File) {
         (result.value as EntryStatFile).isFile = (): boolean => true;
         (result.value as EntryStatFile).name = fileName;
+        (result.value as EntryStatFile).path = path;
       } else {
         (result.value as EntryStatFolder).isFile = (): boolean => false;
         (result.value as EntryStatFolder).name = fileName;
+        (result.value as EntryStatFolder).path = path;
       }
     }
     return result as Result<EntryStat, WorkspaceStatEntryError>;
@@ -183,11 +184,11 @@ export async function statFolderChildren(
       if (stat.tag === FileType.File) {
         (stat as EntryStatFile).isFile = (): boolean => true;
         (stat as EntryStatFile).name = name;
-        (stat as EntryStatFile).path = path;
+        (stat as EntryStatFile).path = await Path.join(path, name);
       } else {
         (stat as EntryStatFolder).isFile = (): boolean => false;
         (stat as EntryStatFolder).name = name;
-        (stat as EntryStatFolder).path = path;
+        (stat as EntryStatFolder).path = await Path.join(path, name);
       }
       cooked.push(stat as EntryStat);
     }
@@ -239,7 +240,7 @@ export async function statFolderChildren(
       size: Math.floor(Math.random() * 1_000_000),
       isFile: (): boolean => true,
       name: name,
-      path: path,
+      path: await Path.join(path, name),
     };
 
     items.push(stat);
@@ -261,7 +262,7 @@ export async function statFolderChildren(
       needSync: Math.floor(Math.random() * 2) === 1,
       isFile: (): boolean => false,
       name: name,
-      path: path,
+      path: await Path.join(path, name),
     };
 
     items.push(stat);

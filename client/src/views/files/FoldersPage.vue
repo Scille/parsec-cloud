@@ -752,7 +752,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (!result.ok) {
     let message: Translatable = '';
     switch (result.error.tag) {
-      case parsec.WorkspaceRenameEntryErrorTag.DestinationExists:
+      case parsec.WorkspaceMoveEntryErrorTag.DestinationExists:
         message = 'FoldersPage.errors.renameFailedAlreadyExists';
         break;
       default:
