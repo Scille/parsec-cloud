@@ -2768,6 +2768,7 @@ dependencies = [
 name = "parsec"
 version = "3.0.0-b.6+dev"
 dependencies = [
+ "chrono",
  "futures",
  "lazy_static",
  "libparsec_crypto",

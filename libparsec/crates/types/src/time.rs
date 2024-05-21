@@ -117,14 +117,6 @@ impl DateTime {
         self.into()
     }
 
-    // TODO: remove me and only rely on TimeProvider instead !
-    #[cfg(not(feature = "test-mock-time"))]
-    #[inline]
-    pub fn now_legacy() -> Self {
-        let now = chrono::Utc::now();
-        now.into()
-    }
-
     /// Use RFC3339 format when stable serialization to text is needed (e.g. in the administration REST API)
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
@@ -253,45 +245,6 @@ pub enum MockedTime {
     },
 }
 
-// TODO: remove me and only rely on TimeProvider instead !
-#[cfg(feature = "test-mock-time")]
-mod mock_time {
-    use super::{DateTime, MockedTime};
-    use std::sync::{Arc, Mutex};
-
-    lazy_static! {
-        static ref MOCK_TIME: Arc<Mutex<MockedTime>> = Arc::new(Mutex::new(MockedTime::RealTime));
-    }
-
-    impl DateTime {
-        pub fn now_legacy() -> Self {
-            match *MOCK_TIME.lock().expect("Mutex is poisoned") {
-                MockedTime::RealTime => chrono::Utc::now().into(),
-                MockedTime::FrozenTime(dt) => dt,
-                MockedTime::ShiftedTime { microseconds: us } => {
-                    DateTime::from(chrono::Utc::now()).add_us(us)
-                }
-                MockedTime::FasterTime {
-                    reference,
-                    microseconds: us,
-                    speed_factor,
-                } => {
-                    let delta = DateTime::from(chrono::Utc::now()) - reference;
-                    let delta_us = delta
-                        .num_microseconds()
-                        .expect("No reason to get an overflow");
-                    let speed_shift = speed_factor * delta_us as f64;
-                    reference.add_us(us + speed_shift as i64)
-                }
-            }
-        }
-
-        pub fn mock_time(time: MockedTime) {
-            *MOCK_TIME.lock().expect("Mutex is poisoned") = time;
-        }
-    }
-}
-
 /*
  * TimeProvider
  */
@@ -394,8 +347,7 @@ mod time_provider {
 
         pub fn parent_now_or_realtime(&self) -> DateTime {
             match &self.parent {
-                // TODO: remove me and only rely on `chrono::Utc::now().into()` instead !
-                None => DateTime::now_legacy(),
+                None => chrono::Utc::now().into(),
                 Some(parent) => parent.lock().expect("Mutex is poisoned").now(),
             }
         }
