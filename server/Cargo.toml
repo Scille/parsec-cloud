@@ -40,3 +40,4 @@ lazy_static = { workspace = true }
 futures = { workspace = true, features = ["std", "async-await", "executor"] }
 rmp-serde = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+chrono = { workspace = true }

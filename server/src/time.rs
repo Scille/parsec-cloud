@@ -82,7 +82,7 @@ impl DateTime {
 
     #[classmethod]
     fn now(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec_types::DateTime::now_legacy()))
+        Ok(Self(chrono::Utc::now().into()))
     }
 
     fn timestamp(&self) -> PyResult<f64> {
