@@ -77,70 +77,31 @@ pub(super) async fn ensure_realm_initial_key_rotation(
 
     // ...then try to do the key rotation.
 
-    let outcome = realm_initial_key_rotation_idempotent(
-        ops,
-        realm_id,
-        WorkspaceKeyOrigin::NewlyGenerated(SecretKey::generate()),
-    )
-    .await
-    .map_err(|e| match e {
-        CertifRotateRealmKeyError::UnknownRealm => CertifRotateRealmKeyError::UnknownRealm,
-        CertifRotateRealmKeyError::AuthorNotAllowed => CertifRotateRealmKeyError::AuthorNotAllowed,
-        CertifRotateRealmKeyError::Offline => CertifRotateRealmKeyError::Offline,
-        CertifRotateRealmKeyError::Stopped => CertifRotateRealmKeyError::Stopped,
-        CertifRotateRealmKeyError::TimestampOutOfBallpark {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-        } => CertifRotateRealmKeyError::TimestampOutOfBallpark {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-        },
-        CertifRotateRealmKeyError::InvalidCertificate(err) => {
-            CertifRotateRealmKeyError::InvalidCertificate(err)
-        }
-        CertifRotateRealmKeyError::Internal(err) => err.into(),
-    })?;
-
-    // Backward compatibility: if the realm has been created with Parsec < v3, the
-    // initial key rotation needs to be done with the key the existing realm's data
-    // are encrypted with !
-    match outcome {
-        RealmInitialKeyRotationOutcome::Done(outcome) => Ok(outcome),
-        RealmInitialKeyRotationOutcome::LegacyRealmWithNewlyGeneratedKey {
-            encryption_revision: _,
-        } => {
-            // TODO: finish me !
-            todo!();
-            // 1) Crawl the user manifests to find the legacy key
-            // 2) Re-do the key rotation
-
-            // let outcome = realm_initial_key_rotation_idempotent(ops, realm_id, WorkspaceKeyOrigin::LegacyFromUserManifest(key)).await?;
-            // if matches!(outcome, RealmInitialKeyRotationOutcome::Done) {
-            //     return Err(anyhow::anyhow!("Unexpected outcome"));
-            // }
-        }
-    }
-}
-
-enum WorkspaceKeyOrigin {
-    NewlyGenerated(SecretKey),
-    // TODO: finish self-heal !
-    #[allow(dead_code)]
-    LegacyFromUserManifest(SecretKey),
-}
-
-enum RealmInitialKeyRotationOutcome {
-    /// All when smoothly ;-)
-    Done(CertificateBasedActionOutcome),
-    /// We try to do the initial key rotation on a legacy realm with a newly
-    /// generated key :-(
-    // TODO: finish self-heal !
-    #[allow(dead_code)]
-    LegacyRealmWithNewlyGeneratedKey { encryption_revision: IndexInt },
+    realm_initial_key_rotation_idempotent(ops, realm_id)
+        .await
+        .map_err(|e| match e {
+            CertifRotateRealmKeyError::UnknownRealm => CertifRotateRealmKeyError::UnknownRealm,
+            CertifRotateRealmKeyError::AuthorNotAllowed => {
+                CertifRotateRealmKeyError::AuthorNotAllowed
+            }
+            CertifRotateRealmKeyError::Offline => CertifRotateRealmKeyError::Offline,
+            CertifRotateRealmKeyError::Stopped => CertifRotateRealmKeyError::Stopped,
+            CertifRotateRealmKeyError::TimestampOutOfBallpark {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            } => CertifRotateRealmKeyError::TimestampOutOfBallpark {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            },
+            CertifRotateRealmKeyError::InvalidCertificate(err) => {
+                CertifRotateRealmKeyError::InvalidCertificate(err)
+            }
+            CertifRotateRealmKeyError::Internal(err) => err.into(),
+        })
 }
 
 /// Note the fact this function is idempotent means the provided key may
@@ -148,16 +109,8 @@ enum RealmInitialKeyRotationOutcome {
 async fn realm_initial_key_rotation_idempotent(
     ops: &CertifOps,
     realm_id: VlobID,
-    key: WorkspaceKeyOrigin,
-) -> Result<RealmInitialKeyRotationOutcome, CertifRotateRealmKeyError> {
-    // `never_legacy_reencrypted_or_fail` is a flag to ask the server to reject
-    // key rotation if the realm is a legacy one: in that case the initial key
-    // rotation must provide the current realm's key (which must be retrieved
-    // from the user manifest history) instead of a newly generated one.
-    let (key, never_legacy_reencrypted_or_fail) = match key {
-        WorkspaceKeyOrigin::NewlyGenerated(key) => (key, true),
-        WorkspaceKeyOrigin::LegacyFromUserManifest(key) => (key, false),
-    };
+) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
+    let key = SecretKey::generate();
     let key_canary = key.encrypt(b"");
     let mut timestamp = ops.device.now();
     loop {
@@ -258,32 +211,20 @@ async fn realm_initial_key_rotation_idempotent(
             realm_key_rotation_certificate: certif.into(),
             keys_bundle,
             per_participant_keys_bundle_access,
-            never_legacy_reencrypted_or_fail,
         };
 
         let rep = ops.cmds.send(req).await?;
 
         return match rep {
-            Rep::Ok => Ok(RealmInitialKeyRotationOutcome::Done(
-                CertificateBasedActionOutcome::Uploaded {
-                    certificate_timestamp: timestamp,
-                },
-            )),
+            Rep::Ok => Ok(CertificateBasedActionOutcome::Uploaded {
+                certificate_timestamp: timestamp,
+            }),
             // Bad key index means another key rotation occured, hence our job is done here !
             Rep::BadKeyIndex {
                 last_realm_certificate_timestamp,
-            } => Ok(RealmInitialKeyRotationOutcome::Done(
-                CertificateBasedActionOutcome::RemoteIdempotent {
-                    certificate_timestamp: last_realm_certificate_timestamp,
-                },
-            )),
-            Rep::LegacyReencryptedRealm {
-                encryption_revision,
-            } => Ok(
-                RealmInitialKeyRotationOutcome::LegacyRealmWithNewlyGeneratedKey {
-                    encryption_revision,
-                },
-            ),
+            } => Ok(CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp: last_realm_certificate_timestamp,
+            }),
             Rep::RealmNotFound => Err(CertifRotateRealmKeyError::UnknownRealm),
             Rep::AuthorNotAllowed => Err(CertifRotateRealmKeyError::AuthorNotAllowed),
             Rep::ParticipantMismatch => {
