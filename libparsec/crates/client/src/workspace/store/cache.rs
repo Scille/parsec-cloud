@@ -77,7 +77,7 @@ mod manifest_hash_map {
             self.manifests.insert(self.root_manifest_id, root_manifest);
         }
 
-        /// Add the manifest in the cache, overwritting whatever value was already present.
+        /// Add the manifest in the cache, overwriting whatever value was already present.
         /// This should only be used with the update lock is held to avoid concurrency issues !
         /// (use `insert_if_missing` otherwise).
         pub fn insert(&mut self, manifest: ArcLocalChildManifest) {

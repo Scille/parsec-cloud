@@ -33,6 +33,7 @@ mailhog
 Malloryy
 Manraj
 Mcalice
+Megaforce
 michu
 MINIO
 Moiron

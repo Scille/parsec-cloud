@@ -21,7 +21,7 @@ use crate::{
 pub enum MoveEntryMode {
     /// Destination may or may not exist.
     CanReplace,
-    /// Destination must not exit so that source can be moved without overwritting anything.
+    /// Destination must not exit so that source can be moved without overwriting anything.
     NoReplace,
     /// Destination and source entries will be swapped, i.e. both must exist and neither will be deleted.
     Exchange,
