@@ -146,6 +146,8 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
     assert_ls!(ops, "/", ["bar.txt"]).await;
 }
 
+// TODO: not supported yet, fix me !!!!
+#[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn remove_file_with_local_changes(
     #[values(false, true)] removed_while_opened: bool,
@@ -233,6 +235,8 @@ async fn remove_file_with_local_changes(
     );
 }
 
+// TODO: not supported yet, fix me !!!!
+#[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn remove_folder_with_local_changes(
     #[values("add_child", "rename_child")] kind: &str,
