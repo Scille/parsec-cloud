@@ -14,6 +14,8 @@ import AppUpdater, { UpdaterState, createAppUpdater } from './updater';
 import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
+const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
+
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
   debouncer: null,
@@ -108,7 +110,9 @@ export class ElectronCapacitorApp {
       });
 
       // Check periodically if an update is available
-      setInterval(this.updater.checkForUpdates, 600000); // 10min
+      setInterval(() => {
+        this.updater.checkForUpdates();
+      }, CHECK_UPDATE_INTERVAL);
     } else if (!electronIsDev) {
       console.warn("We are in a production build but the updater isn't available.");
     }
