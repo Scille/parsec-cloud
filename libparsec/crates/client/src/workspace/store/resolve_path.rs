@@ -101,7 +101,7 @@ async fn resolve_path_maybe_lock_for_update(
     // - Each time we resolve a child, we ensure the parent and child agree on the
     //   parenting relationship.
     //
-    // This in practice means our valid data form a direct acyclic graph (DAG) and henc
+    // This in practice means our valid data form a direct acyclic graph (DAG) and hence
     // we cannot end up in a circular path.
     //
     // Note this is only valid because we start the resolution from the root, if we
@@ -355,7 +355,7 @@ pub(crate) async fn resolve_path_for_reparenting(
     // - Each time we resolve a child, we ensure the parent and child agree on the
     //   parenting relationship.
     //
-    // This in practice means our valid data form a direct acyclic graph (DAG) and henc
+    // This in practice means our valid data form a direct acyclic graph (DAG) and hence
     // we cannot end up in a circular path.
     //
     // Note this is only valid because we start the resolution from the root, if we

@@ -150,7 +150,7 @@ pub(super) async fn for_update_file(
 /// /!\ The underlying lock doesn't get released on drop /!\
 ///
 /// Instead `FileUpdater::close` must be called once you are done.
-/// The reason for this is that, unlike folder updater, the file udpater is expected to
+/// The reason for this is that, unlike folder updater, the file updater is expected to
 /// have a long lifetime (i.e. the time the file is open). Hence the file update doesn't
 /// keep hold on the store.
 pub(crate) struct FileUpdater {

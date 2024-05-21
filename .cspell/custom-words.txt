@@ -538,6 +538,7 @@ regexes
 releasedir
 renamesourcefileattribute
 renderplugins
+reparenting
 replacen
 Reqwest
 rerunfailures

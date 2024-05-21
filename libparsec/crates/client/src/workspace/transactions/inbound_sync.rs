@@ -67,7 +67,7 @@
 /// - D3: This case is not possible (we are going to explain why), but seems plausible when
 //        a file child is moved to another parent while also having its content changed o_O.
 ///       The trick is to consider how local changes are made:
-///       - This case cannot occures due to removing a locally modified file. This is
+///       - This case cannot occurs due to removing a locally modified file. This is
 ///         because the remove operation also clears non-synced changes of the remove
 ///         item (i.e. it doesn't just update the parent manifest's children).
 ///       - The move operation in local is atomic (i.e. old parent, new parent and
