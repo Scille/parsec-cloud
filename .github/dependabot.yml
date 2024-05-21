@@ -64,6 +64,9 @@ updates:
       - /docs
     ignore:
       - dependency-name: typing-extensions
+      - dependency-name: anyio
+        versions:
+          - ">=4.0.0"
     pull-request-branch-name:
       separator: "-"
     labels:
