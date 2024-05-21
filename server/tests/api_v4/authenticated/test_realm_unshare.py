@@ -149,11 +149,13 @@ async def test_authenticated_realm_unshare_recipient_already_unshared(
 ) -> None:
     # 1) Use certificate to unshare Bob via the backend
     outcome = await backend.realm.unshare(
-        alice_unshare_bob_certificate.timestamp,
-        coolorg.organization_id,
-        coolorg.alice.device_id,
-        coolorg.alice.signing_key.verify_key,
-        alice_unshare_bob_certificate.dump_and_sign(coolorg.alice.signing_key),
+        now=alice_unshare_bob_certificate.timestamp,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_role_certificate=alice_unshare_bob_certificate.dump_and_sign(
+            coolorg.alice.signing_key
+        ),
     )
     assert isinstance(outcome, RealmRoleCertificate)
 

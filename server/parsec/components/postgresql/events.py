@@ -24,7 +24,12 @@ from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import parse_signal, send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.utils import Q, q_realm, q_user_internal_id, transaction
+from parsec.components.postgresql.utils import (
+    Q,
+    q_realm,
+    q_user_internal_id,
+    transaction,
+)
 from parsec.components.user import CheckDeviceBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
@@ -131,6 +136,8 @@ class PGEventsComponent(BaseEventsComponent):
 
     @override
     @transaction
+    # TODO: Refactor to use this decorator (need to get 'org' and 'profile')
+    # @require_valid_organization_and_author(SseAPiEventsListenBadOutcome)
     async def _get_registration_info_for_author(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:

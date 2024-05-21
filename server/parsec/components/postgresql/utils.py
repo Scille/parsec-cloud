@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from functools import wraps
-from typing import Any, Awaitable, Callable, Protocol, TypeVar, cast
+from typing import Any, Awaitable, Callable, List, Optional, Protocol, TypeVar, cast
 
 from typing_extensions import Concatenate, ParamSpec
 
@@ -296,3 +296,74 @@ def transaction[**P, T, S: WithPool](
             return result
 
     return wrapper
+
+
+from enum import EnumType
+
+from parsec._parsec import DateTime, UserProfile
+
+
+def require_valid_organization_and_author(
+    bad_outcome_type: EnumType, authorized_profiles: Optional[List[UserProfile]] = None
+):
+    """
+    This decorator for an API command will ensure that:
+    - organization exists and is not expired
+    - author(user) exists and is not revoked
+    - author(user) profile is among those listed in authorized_profiles (optional)
+    - author(device) exists
+
+    The following bad outcome values are returned from bad_outcome_type:
+    - ORGANIZATION_NOT_FOUND
+    - ORGANIZATION_EXPIRED
+    - AUTHOR_NOT_FOUND
+    - AUTHOR_REVOKED
+    - AUTHOR_NOT_ALLOWED
+    """
+    from parsec.components.postgresql.organization import (
+        Organization,
+        OrganizationGetBadOutcome,
+    )
+    from parsec.components.postgresql.user import CheckDeviceBadOutcome
+
+    def wrapper_decorator(func):
+        @wraps(func)
+        async def wrapped(self, conn: AsyncpgConnection, *args, **kwargs):
+            author = kwargs["author"]
+            organization_id = kwargs["organization_id"]
+
+            match await self.organization._get(conn, organization_id):
+                case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                    return bad_outcome_type["ORGANIZATION_NOT_FOUND"]
+                case Organization() as organization:
+                    # TODO: move this out of the match statement (improve typing to detect exhaustiveness of match)
+                    if organization.is_expired:
+                        return bad_outcome_type["ORGANIZATION_EXPIRED"]
+                    pass
+                # TODO: unreachable, improve typing to remove this case
+                case _:
+                    pass
+
+            # TODO: this is not great, refactor!
+            user_component = self.user if hasattr(self, "user") else self
+            match await user_component._check_device(conn, organization_id, author):
+                case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                    return bad_outcome_type["AUTHOR_NOT_FOUND"]
+                case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                    return bad_outcome_type["AUTHOR_NOT_FOUND"]
+                case CheckDeviceBadOutcome.USER_REVOKED:
+                    return bad_outcome_type["AUTHOR_REVOKED"]
+                case (UserProfile() as current_profile, DateTime()):
+                    # TODO: move this out of the match statement (improve typing to detect exhaustiveness of match)
+                    if authorized_profiles and current_profile not in authorized_profiles:
+                        return bad_outcome_type["AUTHOR_NOT_ALLOWED"]
+                    pass
+                # TODO: unreachable, improve typing to remove this case
+                case _:
+                    pass
+
+            return await func(self, conn, *args, **kwargs)
+
+        return wrapped
+
+    return wrapper_decorator

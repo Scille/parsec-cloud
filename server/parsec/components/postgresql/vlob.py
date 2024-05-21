@@ -30,6 +30,7 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_device_internal_id,
     q_realm_internal_id,
+    require_valid_organization_and_author,
     transaction,
 )
 from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
@@ -230,6 +231,8 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
+    # TODO: Refactor to use this decorator (need to get 'org' and 'last_common_certificate_timestamp')
+    # @require_valid_organization_and_author(VlobCreateBadOutcome)
     async def create(
         self,
         conn: AsyncpgConnection,
@@ -344,6 +347,8 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
+    # TODO: Refactor to use this decorator (need to get 'org' and 'last_common_certificate_timestamp')
+    # @require_valid_organization_and_author(VlobUpdateBadOutcome)
     async def update(
         self,
         conn: AsyncpgConnection,
@@ -459,6 +464,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(VlobPollChangesAsUserBadOutcome)
     async def poll_changes(
         self,
         conn: AsyncpgConnection,
@@ -467,24 +473,6 @@ class PGVlobComponent(BaseVlobComponent):
         realm_id: VlobID,
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-        if org.is_expired:
-            return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
-
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
-
         match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
@@ -513,6 +501,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(VlobReadAsUserBadOutcome)
     async def read_batch(
         self,
         conn: AsyncpgConnection,
@@ -522,14 +511,7 @@ class PGVlobComponent(BaseVlobComponent):
         vlobs: list[VlobID],
         at: DateTime | None,
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-        if org.is_expired:
-            return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
-
+        # TODO: refactor to get last_common_certificate_timestamp
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
@@ -591,6 +573,7 @@ class PGVlobComponent(BaseVlobComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(VlobReadAsUserBadOutcome)
     async def read_versions(
         self,
         conn: AsyncpgConnection,
@@ -599,14 +582,7 @@ class PGVlobComponent(BaseVlobComponent):
         realm_id: VlobID,
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as org:
-                pass
-        if org.is_expired:
-            return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
-
+        # TODO: refactor to get last_common_certificate_timestamp
         match await self.user._check_device(conn, organization_id, author):
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND

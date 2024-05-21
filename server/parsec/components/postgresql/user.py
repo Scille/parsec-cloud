@@ -32,6 +32,7 @@ from parsec.components.postgresql.utils import (
     q_human_internal_id,
     q_organization_internal_id,
     q_user_internal_id,
+    require_valid_organization_and_author,
     transaction,
 )
 from parsec.components.realm import CertificateBasedActionIdempotentOutcome
@@ -561,8 +562,8 @@ class PGUserComponent(BaseUserComponent):
         )
         assert result == "UPDATE 1", f"Unexpected {result}"
 
+    @staticmethod
     async def _check_device(
-        self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
@@ -616,6 +617,7 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(UserCreateUserStoreBadOutcome, [UserProfile.ADMIN])
     async def create_user(
         self,
         conn: AsyncpgConnection,
@@ -634,27 +636,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-
-        if organization.is_expired:
-            return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
-
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
-
-        match await self._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_create_user_validate(
             now=now,
@@ -719,6 +701,7 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(UserCreateDeviceStoreBadOutcome)
     async def create_device(
         self,
         conn: AsyncpgConnection,
@@ -735,26 +718,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-
-        if organization.is_expired:
-            return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
-
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
-
-        match await self._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match user_create_device_validate(
             now=now,
@@ -795,6 +759,7 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(UserUpdateUserStoreBadOutcome, [UserProfile.ADMIN])
     async def update_user(
         self,
         conn: AsyncpgConnection,
@@ -810,26 +775,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
-
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
-
-        match await self._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_update_user_validate(
             now=now,
@@ -941,6 +887,8 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    # TODO: There is no check for expired org here (nor valid device). Is it OK?
+    # @require_valid_organization_and_author(UserListUsersBadOutcome)
     async def list_users(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
@@ -954,6 +902,8 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    # TODO: This code differs from decorator (checks for bootstrapped_on and uses profile for redacted flag)
+    # @require_valid_organization_and_author(UserGetCertificatesAsUserBadOutcome, [UserProfile.ADMIN])
     async def get_certificates(
         self,
         conn: AsyncpgConnection,
@@ -1074,6 +1024,7 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    @require_valid_organization_and_author(UserRevokeUserStoreBadOutcome, [UserProfile.ADMIN])
     async def revoke_user(
         self,
         conn: AsyncpgConnection,
@@ -1090,26 +1041,7 @@ class PGUserComponent(BaseUserComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
-        match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case Organization() as organization:
-                pass
-        if organization.is_expired:
-            return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
-
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
-
-        match await self._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_revoke_user_validate(
             now=now,
@@ -1185,6 +1117,8 @@ class PGUserComponent(BaseUserComponent):
 
     @override
     @transaction
+    # TODO: There is no check for expired org here (nor valid device). Is it OK?
+    # @require_valid_organization_and_author(UserFreezeUserBadOutcome)
     async def freeze_user(
         self,
         conn: AsyncpgConnection,
