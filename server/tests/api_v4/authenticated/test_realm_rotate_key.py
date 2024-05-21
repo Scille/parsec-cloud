@@ -98,7 +98,6 @@ async def test_authenticated_realm_rotate_key_ok(
                 user_id: f"<{user_id} keys bundle access>".encode() for user_id in participants
             },
             keys_bundle=b"<keys bundle>",
-            never_legacy_reencrypted_or_fail=False,
         )
         assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
         await spy.wait_event_occurred(
@@ -150,7 +149,6 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
             coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
 
@@ -172,19 +170,8 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
             coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
-
-
-@pytest.mark.xfail(
-    reason="TODO: realm_rotate_key never returns RepLegacyReencryptedRealm. Not implemented?"
-)
-async def test_authenticated_realm_rotate_key_legacy_reencrypted_realm(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
-) -> None:
-    assert False
 
 
 @pytest.mark.parametrize("initial_key_rotation", (False, True))
@@ -247,7 +234,6 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
             user_id: b"<keys bundle access>" for user_id in participants
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp_last_certificate_timestamp
@@ -279,7 +265,6 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
         ),
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch()
 
@@ -307,7 +292,6 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
             coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepInvalidCertificate()
 
@@ -326,7 +310,6 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
             coolorg.alice.user_id: "<alice keys bundle access>".encode()
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert isinstance(rep, authenticated_cmds.v4.realm_rotate_key.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
@@ -386,7 +369,6 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
-        never_legacy_reencrypted_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_create.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp

@@ -183,13 +183,11 @@ class BaseAuthenticatedRpcClient:
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
-        never_legacy_reencrypted_or_fail: bool,
     ) -> authenticated_cmds.latest.realm_rotate_key.Rep:
         req = authenticated_cmds.latest.realm_rotate_key.Req(
             realm_key_rotation_certificate=realm_key_rotation_certificate,
             per_participant_keys_bundle_access=per_participant_keys_bundle_access,
             keys_bundle=keys_bundle,
-            never_legacy_reencrypted_or_fail=never_legacy_reencrypted_or_fail,
         )
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)

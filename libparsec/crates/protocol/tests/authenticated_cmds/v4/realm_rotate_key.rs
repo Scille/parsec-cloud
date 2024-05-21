@@ -18,7 +18,6 @@ pub fn req() {
     // Content:
     //   cmd: "realm_rotate_key"
     //   keys_bundle: hex!("666f6f626172")
-    //   never_legacy_reencrypted_or_fail: false
     //   per_participant_keys_bundle_access: {"alice":hex!("666f6f626172")}
     //   realm_key_rotation_certificate: hex!("666f6f626172")
     //
@@ -32,7 +31,6 @@ pub fn req() {
 
     let req = authenticated_cmds::realm_rotate_key::Req {
         keys_bundle: Bytes::from_static(b"foobar"),
-        never_legacy_reencrypted_or_fail: false,
         per_participant_keys_bundle_access: HashMap::from([(
             "alice".parse().unwrap(),
             Bytes::from_static(b"foobar"),
@@ -244,32 +242,6 @@ pub fn rep_participant_mismatch() {
 
     // Also test serialization round trip
     let raw2 = expected.dump().unwrap();
-
-    let data2 = authenticated_cmds::realm_rotate_key::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_legacy_reencrypted_realm() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   status: "legacy_reencrypted_realm"
-    //   encryption_revision: 8
-    let raw = hex!(
-        "82a6737461747573b86c65676163795f7265656e637279707465645f7265616c6db3656e63"
-        "72797074696f6e5f7265766973696f6e08"
-    );
-
-    let expected = authenticated_cmds::realm_rotate_key::Rep::LegacyReencryptedRealm {
-        encryption_revision: 8,
-    };
-
-    let data = authenticated_cmds::realm_rotate_key::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
 
     let data2 = authenticated_cmds::realm_rotate_key::Rep::load(&raw2).unwrap();
 

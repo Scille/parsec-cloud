@@ -22,29 +22,6 @@
                     // keys ever in use for this realm
                     "name": "keys_bundle",
                     "type": "Bytes"
-                },
-                {
-                    // If set to `true`, a `legacy_reencrypted_realm` error will be
-                    // returned if the realm has been created in Parsec < v3.0.
-                    //
-                    // This is required for the initial key rotation: realms created
-                    // in Parsec < v3.0 have they data encrypted with a single key
-                    // that may be replaced by a reencryption mechanism.
-                    // Hence the initial key rotation must use the key actually used
-                    // to encrypt the data.
-                    //
-                    // So with this flag the client can always start with a regular
-                    // key rotation (i.e. with a randomly generated key), then fallback
-                    // to searching the key in the user manifest history if the
-                    // realm is actually a legacy one.
-                    //
-                    // Note the fact the server can lie to the client about which key
-                    // should be use is not a security issue: the server never controls
-                    // the key and at most the realm data will end-up unreadable (which
-                    // the server can already achieved by providing dummy data when the
-                    // client fetch a vlob/blob).
-                    "name": "never_legacy_reencrypted_or_fail",
-                    "type": "Boolean"
                 }
             ]
         },
@@ -58,16 +35,6 @@
             },
             {
                 "status": "realm_not_found"
-            },
-            {
-                "status": "legacy_reencrypted_realm",
-                "fields": [
-                    {
-                        "name": "encryption_revision",
-                        "type": "Index"
-                    }
-                ]
-
             },
             {
                 // If the `key_index` in the certificate is not currently the realm's last one plus one
