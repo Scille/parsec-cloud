@@ -113,10 +113,6 @@ impl DateTime {
         self.0.nanosecond() / 1000
     }
 
-    pub fn to_local(self) -> LocalDateTime {
-        self.into()
-    }
-
     /// Use RFC3339 format when stable serialization to text is needed (e.g. in the administration REST API)
     pub fn to_rfc3339(&self) -> String {
         self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
@@ -182,12 +178,6 @@ impl From<DateTime> for chrono::DateTime<chrono::Utc> {
 impl From<DateTime> for std::time::SystemTime {
     fn from(dt: DateTime) -> Self {
         dt.0.into()
-    }
-}
-
-impl From<LocalDateTime> for DateTime {
-    fn from(ldt: LocalDateTime) -> Self {
-        Self(ldt.0.into())
     }
 }
 
@@ -528,112 +518,6 @@ mod time_provider {
 }
 
 pub use time_provider::TimeProvider;
-
-/*
- * LocalDateTime
- */
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Hash)]
-pub struct LocalDateTime(chrono::DateTime<chrono::Local>);
-
-impl From<DateTime> for LocalDateTime {
-    fn from(dt: DateTime) -> Self {
-        Self(dt.0.into())
-    }
-}
-
-impl LocalDateTime {
-    pub fn from_ymd_hms_us(
-        year: i32,
-        month: u32,
-        day: u32,
-        hour: u32,
-        minute: u32,
-        second: u32,
-        microsecond: u32,
-    ) -> LocalResult<Self> {
-        chrono::Local
-            .with_ymd_and_hms(year, month, day, hour, minute, second)
-            .map(|x| x + Duration::microseconds(microsecond as i64))
-            .map(Self)
-    }
-
-    // Don't implement this as `From<f64>` to keep it private
-    pub fn from_f64_with_us_precision(ts: f64) -> Self {
-        let mut t = ts.trunc() as i64;
-        let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1_000_000 {
-            t += 1;
-            us -= 1_000_000;
-        } else if us < 0 {
-            t -= 1;
-            us += 1_000_000;
-        }
-
-        Self(chrono::Local.timestamp_opt(t, (us as u32) * 1000).unwrap())
-    }
-
-    // Don't implement this as `Into<f64>` to keep it private
-    pub fn get_f64_with_us_precision(&self) -> f64 {
-        let ts_us = self
-            .0
-            .timestamp_nanos_opt()
-            .expect("Value out of range for a timestamp with nanosecond precision")
-            / 1000;
-        ts_us as f64 / 1e6
-    }
-
-    pub fn year(&self) -> u64 {
-        self.0.year() as u64
-    }
-
-    pub fn month(&self) -> u64 {
-        self.0.month() as u64
-    }
-
-    pub fn day(&self) -> u64 {
-        self.0.day() as u64
-    }
-
-    pub fn hour(&self) -> u64 {
-        self.0.hour() as u64
-    }
-
-    pub fn minute(&self) -> u64 {
-        self.0.minute() as u64
-    }
-
-    pub fn second(&self) -> u64 {
-        self.0.second() as u64
-    }
-
-    pub fn to_utc(self) -> DateTime {
-        self.into()
-    }
-
-    pub fn format(&self, fmt: &str) -> String {
-        self.0.format(fmt).to_string()
-    }
-}
-
-impl std::fmt::Debug for LocalDateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_tuple("LocalDateTime")
-            .field(&self.to_string())
-            .field(&self.0.nanosecond())
-            .finish()
-    }
-}
-
-impl std::fmt::Display for LocalDateTime {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.0.to_rfc3339_opts(chrono::SecondsFormat::AutoSi, false)
-        )
-    }
-}
 
 #[cfg(test)]
 #[path = "../tests/unit/time.rs"]
