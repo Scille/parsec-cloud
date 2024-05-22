@@ -324,6 +324,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
+        # Note we don't check if the recipient is revoked here: it is indeed allowed
+        # to unshare with a revoked user. This allows for client to only check for
+        # unshare event to detect when key rotation is needed.
         if certif.user_id not in org.users:
             return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
 

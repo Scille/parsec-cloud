@@ -839,7 +839,9 @@ class PGRealmComponent(BaseRealmComponent):
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
-                pass  # TODO: Is that OK to pass here?
+                # It is allowed to unshare with a revoked user. This allows for client
+                # to only check for unshare event to detect when key rotation is needed.
+                pass
             case (UserProfile(), DateTime()):
                 pass
 
