@@ -11,6 +11,7 @@ export const msTest = base.extend<{
   documents: Page;
   documentsReadOnly: Page;
   usersPage: Page;
+  myProfilePage: Page;
   userJoinModal: Locator;
   createOrgModal: Locator;
   userGreetModal: Locator;
@@ -67,6 +68,16 @@ export const msTest = base.extend<{
     await connected.locator('.sidebar').locator('.organization-card-manageBtn').click();
     await expect(connected).toHavePageTitle('Users');
     await expect(connected).toBeUserPage();
+    use(connected);
+  },
+
+  myProfilePage: async ({ connected }, use) => {
+    await connected.locator('.topbar').locator('.profile-header').click();
+    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+    await expect(myProfileButton).toHaveText('My profile');
+    await myProfileButton.click();
+    await expect(connected).toHavePageTitle('My profile');
+    await expect(connected).toBeMyProfilePage();
     use(connected);
   },
 
