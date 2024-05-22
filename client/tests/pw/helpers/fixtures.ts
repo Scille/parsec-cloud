@@ -13,6 +13,7 @@ export const msTest = base.extend<{
   usersPage: Page;
   userJoinModal: Locator;
   createOrgModal: Locator;
+  userGreetModal: Locator;
 }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
@@ -88,6 +89,15 @@ export const msTest = base.extend<{
     await home.locator('.homepage-popover').getByRole('listitem').nth(0).click();
     const modal = home.locator('.create-organization-modal');
     await expect(home.locator('.create-organization-modal')).toBeVisible();
+    await use(modal);
+  },
+
+  userGreetModal: async ({ connected }, use) => {
+    await connected.locator('.topbar').locator('#invitations-button').click();
+    const greetButton = connected.locator('.invitations-list-popover ').getByRole('listitem').nth(0).locator('ion-button').nth(2);
+    await expect(greetButton).toHaveText('Greet');
+    await greetButton.click();
+    const modal = connected.locator('.greet-organization-modal');
     await use(modal);
   },
 });
