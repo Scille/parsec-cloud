@@ -113,14 +113,18 @@ impl InvitedCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
+            401 => Err(ConnectionError::MissingAuthenticationInfo),
+            403 => Err(ConnectionError::BadAuthenticationInfo),
             404 => Err(ConnectionError::InvitationNotFound),
+            406 => Err(ConnectionError::BadAcceptType),
             410 => Err(ConnectionError::InvitationAlreadyDeleted),
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
-            461 => Err(ConnectionError::RevokedUser),
+            // No 461&462: no user here
+            // No 498: invitation token cannot expire like an authentication token
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
             503 => Err(ConnectionError::NoResponse(None)),

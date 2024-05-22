@@ -191,7 +191,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
         let mut stream = match cmds.start_sse::<Req>(last_event_id.clone()).await {
             Ok(stream) => stream,
             Err(err) => {
-                if handle_sse_error(&mut state, &event_bus, err.into()).is_break() {
+                if handle_sse_error(&mut state, &event_bus, err).is_break() {
                     return;
                 }
                 continue;

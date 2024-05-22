@@ -8,8 +8,7 @@ use std::sync::Arc;
 
 use crate::{
     test_register_low_level_send_hook, AuthenticatedCmds, Bytes, ConnectionError, HeaderMap,
-    HeaderValue, ProxyConfig, ResponseMock, SSEConnectionError, SSEResponseOrMissedEvents,
-    StatusCode,
+    HeaderValue, ProxyConfig, ResponseMock, SSEResponseOrMissedEvents, StatusCode,
 };
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_protocol::authenticated_cmds::latest as authenticated_cmds;
@@ -107,15 +106,7 @@ async fn rpc_unauthorized_mocked(env: &TestbedEnv) {
             ping: "foo".to_owned(),
         })
         .await;
-    assert!(
-        matches!(
-            rep,
-            Err(ConnectionError::InvalidResponseStatus(
-                reqwest::StatusCode::UNAUTHORIZED
-            ))
-        ),
-        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
-    );
+    p_assert_matches!(rep, Err(ConnectionError::MissingAuthenticationInfo));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -155,15 +146,7 @@ async fn rpc_forbidden(env: &TestbedEnv, mocked: bool) {
             ping: "foo".to_owned(),
         })
         .await;
-    assert!(
-        matches!(
-            rep,
-            Err(ConnectionError::InvalidResponseStatus(
-                reqwest::StatusCode::FORBIDDEN
-            ))
-        ),
-        r#"expected `InvalidResponseStatus` with code 403, but got {rep:?}"#
-    );
+    p_assert_matches!(rep, Err(ConnectionError::BadAuthenticationInfo));
 }
 
 // TODO: SSE not implemented in web yet
@@ -353,15 +336,7 @@ async fn sse_forbidden(env: &TestbedEnv, mocked: bool) {
     let rep = cmds_bad_alice
         .start_sse::<authenticated_cmds::events_listen::Req>(None)
         .await;
-    assert!(
-        matches!(
-            rep,
-            Err(SSEConnectionError::InvalidStatusCode(
-                reqwest::StatusCode::FORBIDDEN
-            ))
-        ),
-        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
-    );
+    p_assert_matches!(rep, Err(ConnectionError::BadAuthenticationInfo));
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -383,15 +358,7 @@ async fn sse_unauthorized_mocked(env: &TestbedEnv) {
     let rep = cmds
         .start_sse::<authenticated_cmds::events_listen::Req>(None)
         .await;
-    assert!(
-        matches!(
-            rep,
-            Err(SSEConnectionError::InvalidStatusCode(
-                reqwest::StatusCode::UNAUTHORIZED
-            ))
-        ),
-        r#"expected `InvalidResponseStatus` with code 401, but got {rep:?}"#
-    );
+    p_assert_matches!(rep, Err(ConnectionError::MissingAuthenticationInfo));
 }
 
 // TODO: SSE not implemented in web yet
