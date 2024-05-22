@@ -188,20 +188,8 @@ jobs:
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_mac_*.dmg*
-            release-files/Parsec-SBOM-Wheel-linux.spdx.json
-            release-files/Parsec-SBOM-Wheel-linux.spdx.json.sha256
-            release-files/Parsec-SBOM-Wheel-windows.spdx.json
-            release-files/Parsec-SBOM-Wheel-windows.spdx.json.sha256
-            release-files/Parsec-SBOM-Wheel-macos.spdx.json
-            release-files/Parsec-SBOM-Wheel-macos.spdx.json.sha256
-            release-files/Parsec-SBOM-Electron-linux.spdx.json
-            release-files/Parsec-SBOM-Electron-linux.spdx.json.sha256
-            release-files/Parsec-SBOM-Electron-windows.spdx.json
-            release-files/Parsec-SBOM-Electron-windows.spdx.json.sha256
-            release-files/Parsec-SBOM-Electron-macos.spdx.json
-            release-files/Parsec-SBOM-Electron-macos.spdx.json.sha256
-            release-files/Parsec-SBOM-Web.spdx.json
-            release-files/Parsec-SBOM-Web.spdx.json.sha256
+            release-files/Parsec-SBOM-*.spdx.json
+            release-files/Parsec-SBOM-*.spdx.json.sha256
             release-files/version
             release-files/version.sha256
           fail_on_unmatched_files: true

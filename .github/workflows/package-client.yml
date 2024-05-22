@@ -175,7 +175,7 @@ jobs:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app-snap
           path: |
             Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
-            Parsec-SBOM-Electron-linux.spdx.json
+            Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
 
@@ -318,6 +318,6 @@ jobs:
             client/electron/dist/${{ steps.build-info.outputs.app_file }}
             client/electron/dist/${{ steps.build-info.outputs.app_file }}.blockmap
             client/electron/dist/${{ steps.build-info.outputs.latest_file }}
-            client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json
+            client/electron/dist/Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
