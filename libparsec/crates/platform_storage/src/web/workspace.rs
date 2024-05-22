@@ -151,7 +151,7 @@ impl PlatformWorkspaceStorage {
         match super::model::Chunk::get(&transaction, &block_id.as_bytes().to_vec().into()).await? {
             Some(mut chunk) if chunk.is_block == 1 => {
                 super::model::Chunk::remove(&transaction, &chunk.chunk_id).await?;
-                chunk.accessed_on = Some(timestamp.get_f64_with_us_precision());
+                chunk.accessed_on = Some(timestamp.as_timestamp_micros());
                 let data = chunk.data.to_vec();
                 chunk.insert(&transaction).await?;
 
@@ -366,11 +366,11 @@ impl PlatformWorkspaceStorage {
                 BlockID::try_from(block.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
             let size = block.size;
             let offline = block.offline;
-            let accessed_on = DateTime::from_f64_with_us_precision(
+            let accessed_on = DateTime::from_timestamp_micros(
                 block
                     .accessed_on
                     .ok_or(anyhow::anyhow!("Missing accessed_on field"))?,
-            )
+            )?
             .to_rfc3339();
             output += &format!(
                 "{{\n\
@@ -494,7 +494,7 @@ async fn db_insert_block(
         chunk_id: block_id.as_bytes().to_vec().into(),
         size: encrypted.len() as IndexInt,
         offline: false,
-        accessed_on: Some(accessed_on.get_f64_with_us_precision()),
+        accessed_on: Some(accessed_on.as_timestamp_micros()),
         data: encrypted.to_vec().into(),
         is_block: 1,
     }

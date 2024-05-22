@@ -183,7 +183,7 @@ class WorkspaceExport:
 
     def load_manifest(self, manifest_id: VlobID) -> ChildManifest:
         # Convert datetime to integer timestamp with us precision (format used in sqlite dump).
-        filter_timestamp = int(self.filter_on_date.timestamp() * 1000000)
+        filter_timestamp = self.filter_on_date.as_timestamp_micros()
         row = self.db.con.execute(
             "SELECT version, blob, author, timestamp FROM vlob_atom WHERE vlob_id = ? and timestamp <= ? ORDER BY version DESC LIMIT 1",
             (manifest_id.bytes, filter_timestamp),
@@ -205,7 +205,7 @@ class WorkspaceExport:
                 raise InconsistentWorkspaceError(
                     f"Missing device certificate for `{author_internal_id}`"
                 )
-            timestamp = DateTime.from_timestamp(raw_timestamp / 1000000)
+            timestamp = DateTime.from_timestamp_micros(raw_timestamp)
 
             decrypted_blob = self.decryption_key.decrypt(blob)
 

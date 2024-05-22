@@ -178,8 +178,8 @@ class HumanHandle(Structure):
 
 
 class DateTime(F64BasedType):
-    custom_from_rs_f64 = """|n: f64| -> Result<_, &'static str> { Ok(libparsec::DateTime::from_f64_with_us_precision(n)) }"""
-    custom_to_rs_f64 = "|dt: libparsec::DateTime| -> Result<f64, &'static str> { Ok(dt.get_f64_with_us_precision()) }"
+    custom_from_rs_f64 = """|n: f64| -> Result<_, &'static str> { libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64).map_err(|_| "Out-of-bound datetime") }"""
+    custom_to_rs_f64 = "|dt: libparsec::DateTime| -> Result<f64, &'static str> { Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64) }"
     # We use Luxon's Datetime type on client side
     custom_ts_type_declaration = (
         "export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';"

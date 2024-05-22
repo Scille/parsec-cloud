@@ -68,7 +68,7 @@ pub fn rep_ok() {
     let raw = hex!("82a6737461747573a26f6bac7375626d69747465645f6f6ed70141d8ddd78ad5a96d");
 
     let expected = anonymous_cmds::pki_enrollment_submit::Rep::Ok {
-        submitted_on: DateTime::from_f64_with_us_precision(1668767275.338466),
+        submitted_on: DateTime::from_timestamp_micros(1668767275338466).unwrap(),
     };
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();
@@ -95,7 +95,7 @@ pub fn rep_x509_certificate_already_submitted() {
     );
 
     let expected = anonymous_cmds::pki_enrollment_submit::Rep::X509CertificateAlreadySubmitted {
-        submitted_on: DateTime::from_f64_with_us_precision(1668767275.338466),
+        submitted_on: DateTime::from_timestamp_micros(1668767275338466).unwrap(),
     };
 
     let data = anonymous_cmds::pki_enrollment_submit::Rep::load(&raw).unwrap();

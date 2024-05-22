@@ -3,8 +3,15 @@
 use serde::Deserialize;
 use serde_bytes::ByteBuf;
 
-use crate::DateTime;
+use crate::{DateTime, DatetimeFromTimestampMicrosError};
 
+// Note msgpack already define a extension type for timestamp
+// (see https://github.com/msgpack/msgpack/blob/master/spec.md#timestamp-extension-type)
+// However is not a good fit for our use case:
+// - it is more complexe than needed with 3 different ways to encode the timestamp.
+// - it precision is in nanosecond, we only need microsecond (this is important since
+//   PostgreSQL's TIMESTAMPZ type has a microsecond precision, and losing precision on
+//   round trip would be very error prone).
 pub(crate) const DATETIME_EXT_ID: i8 = 1;
 pub(crate) const UUID_EXT_ID: i8 = 2;
 
@@ -18,7 +25,7 @@ impl serde::Serialize for DateTime {
     where
         S: serde::Serializer,
     {
-        let buf = self.get_f64_with_us_precision().to_be_bytes();
+        let buf = self.as_timestamp_micros().to_be_bytes();
         // `rmp_serde::MSGPACK_EXT_STRUCT_NAME` is a magic value to tell
         // rmp_serde this should be treated as an extension type
         serializer.serialize_newtype_struct(
@@ -72,21 +79,25 @@ impl<'de> serde::de::Visitor<'de> for DateTimeExtVisitor {
             return Err(serde::de::Error::invalid_value(unexpected, &self));
         }
 
-        const F64_SIZE: usize = std::mem::size_of::<f64>();
+        const I64_SIZE: usize = std::mem::size_of::<i64>();
 
-        if data.len() != F64_SIZE {
+        if data.len() != I64_SIZE {
             return Err(serde::de::Error::custom(
                 "invalid data for datetime extension",
             ));
         }
 
-        let ts = f64::from_be_bytes(
-            data[..F64_SIZE]
+        let ts = i64::from_be_bytes(
+            data[..I64_SIZE]
                 .try_into()
-                .expect("data.len() should be equal to F64_SIZE"),
+                .expect("data.len() should be equal to I64_SIZE"),
         );
 
-        Ok(Self::Value::from_f64_with_us_precision(ts))
+        Self::Value::from_timestamp_micros(ts).map_err(|err| match err {
+            DatetimeFromTimestampMicrosError::OutOfRange => {
+                serde::de::Error::custom("out-of-range datetime")
+            }
+        })
     }
 }
 

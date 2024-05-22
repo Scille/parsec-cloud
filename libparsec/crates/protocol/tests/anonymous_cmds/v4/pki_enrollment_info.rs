@@ -67,9 +67,9 @@ pub fn rep_ok() {
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Accepted {
                     accept_payload: hex!("64756d6d79").as_ref().into(),
                     accept_payload_signature: hex!("64756d6d79").as_ref().into(),
-                    accepted_on: DateTime::from_f64_with_us_precision(1668768160.714565),
+                    accepted_on: DateTime::from_timestamp_micros(1668768160714565).unwrap(),
                     accepter_der_x509_certificate: hex!("64756d6d79").as_ref().into(),
-                    submitted_on: DateTime::from_f64_with_us_precision(1668768160.714573),
+                    submitted_on: DateTime::from_timestamp_micros(1668768160714573).unwrap(),
                 },
             ),
         ),
@@ -87,8 +87,8 @@ pub fn rep_ok() {
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Cancelled {
-                    cancelled_on: DateTime::from_f64_with_us_precision(1668768160.716388),
-                    submitted_on: DateTime::from_f64_with_us_precision(1668768160.716395),
+                    cancelled_on: DateTime::from_timestamp_micros(1668768160716388).unwrap(),
+                    submitted_on: DateTime::from_timestamp_micros(1668768160716395).unwrap(),
                 },
             ),
         ),
@@ -106,8 +106,8 @@ pub fn rep_ok() {
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Rejected {
-                    rejected_on: DateTime::from_f64_with_us_precision(1668768160.716569),
-                    submitted_on: DateTime::from_f64_with_us_precision(1668768160.716576),
+                    rejected_on: DateTime::from_timestamp_micros(1668768160716569).unwrap(),
+                    submitted_on: DateTime::from_timestamp_micros(1668768160716576).unwrap(),
                 },
             ),
         ),
@@ -123,7 +123,7 @@ pub fn rep_ok() {
             )[..],
             anonymous_cmds::pki_enrollment_info::Rep::Ok(
                 anonymous_cmds::pki_enrollment_info::PkiEnrollmentInfoStatus::Submitted {
-                    submitted_on: DateTime::from_f64_with_us_precision(1668768160.716755),
+                    submitted_on: DateTime::from_timestamp_micros(1668768160716755).unwrap(),
                 },
             ),
         ),

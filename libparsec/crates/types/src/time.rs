@@ -11,30 +11,17 @@ pub use chrono::Duration; // Reexported
 
 // DateTime with microsecond precision.
 //
-// Python's datetime uses microseconds precision unlike chrono::Datetime (which goes
-// up to the nanosecond).
-// In theory this is not a big deal given microsecond is good enough for our needs.
-// However things get ugly given our serialization protocol encode the datetime
-// as a 64bits floating number.
-//
-// Floating point numbers have a step depending of the size of the number. This may
-// cause rounding issues when converting into datetime if we try to retrieve
-// too much precision.
-// Typically if we consider a 1e9 timestamp (representing 2001-9-9T1:46:40.0Z) the
-// floating point atomic step is 1e-7, hence we are safe to represent microseconds,
-// but not nanoseconds.
-// This property is kept up until ~4e9 (so around year 2096). In our case this is
-// "fine enough" given we use datetime to store events that have occurred (hence
-// further fix is required in 70years ^^).
-//
-// Hence we choose to use microsecond in Rust to avoid potential tenacious bugs due
-// to a datetime with sub-microsecond precision not equal to itself after being
-// serialized (i.e. `dt = now(); dt != load(dump(dt))`).
-//
-// Aaaaaand we've learn a lesson here, next time we will stick with good old integer
-// instead of playing smart with float !
+// Why using microsecond precision which `chrono::Datetime` goes up to the nanosecond ?
+// The reason is that PostgreSQL's TIMESTAMPZ and Python's datetime types both have
+// a microsecond precision, and losing precision on round trip would be very error prone.
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct DateTime(chrono::DateTime<chrono::Utc>);
+
+#[derive(Debug, thiserror::Error)]
+pub enum DatetimeFromTimestampMicrosError {
+    #[error("Out-of-range timestamp")]
+    OutOfRange,
+}
 
 impl DateTime {
     pub fn epoch() -> Self {
@@ -49,36 +36,38 @@ impl DateTime {
         minute: u32,
         second: u32,
         microsecond: u32,
-    ) -> LocalResult<Self> {
-        chrono::Utc
+    ) -> Result<Self, DatetimeFromTimestampMicrosError> {
+        let outcome = chrono::Utc
             .with_ymd_and_hms(year, month, day, hour, minute, second)
             .map(|x| x + Duration::microseconds(microsecond as i64))
-            .map(Self)
-    }
-
-    // Don't implement this as `From<f64>` to prevent misunderstanding on precision
-    pub fn from_f64_with_us_precision(ts: f64) -> Self {
-        let mut t = ts.trunc() as i64;
-        let mut us = (ts.fract() * 1e6).round() as i32;
-        if us >= 1_000_000 {
-            t += 1;
-            us -= 1_000_000;
-        } else if us < 0 {
-            t -= 1;
-            us += 1_000_000;
+            .map(Self);
+        match outcome {
+            LocalResult::Single(dt) => Ok(dt),
+            _ => Err(DatetimeFromTimestampMicrosError::OutOfRange),
         }
-
-        Self(chrono::Utc.timestamp_opt(t, (us as u32) * 1000).unwrap())
     }
 
-    // Don't implement this as `Into<f64>` to prevent misunderstanding on precision
-    pub fn get_f64_with_us_precision(&self) -> f64 {
-        let ts_us = self
-            .0
-            .timestamp_nanos_opt()
-            .expect("Value out of range for a timestamp with nanosecond precision")
-            / 1000;
-        ts_us as f64 / 1e6
+    // Don't implement this as `From<i64>` to prevent misunderstanding on precision
+    pub fn from_timestamp_micros(ts: i64) -> Result<Self, DatetimeFromTimestampMicrosError> {
+        match chrono::Utc.timestamp_micros(ts).map(Self) {
+            LocalResult::Single(dt) => Ok(dt),
+            _ => Err(DatetimeFromTimestampMicrosError::OutOfRange),
+        }
+    }
+
+    // Don't implement this as `Into<i64>` to prevent misunderstanding on precision
+    pub fn as_timestamp_micros(&self) -> i64 {
+        self.0.timestamp_micros()
+    }
+
+    // Don't implement this as `From<i64>` to prevent misunderstanding on precision
+    pub fn from_timestamp_seconds(ts: i64) -> Result<Self, DatetimeFromTimestampMicrosError> {
+        Self::from_timestamp_micros(ts * 1_000_000)
+    }
+
+    // Don't implement this as `Into<i64>` to prevent misunderstanding on precision
+    pub fn as_timestamp_seconds(&self) -> i64 {
+        self.0.timestamp()
     }
 
     pub fn add_us(&self, us: i64) -> Self {
@@ -164,6 +153,7 @@ impl From<chrono::DateTime<chrono::Utc>> for DateTime {
         Self(
             chrono::Utc
                 .timestamp_opt(dt.timestamp(), dt.timestamp_subsec_micros() * 1000)
+                // Always valid as params comes from a `chrono::DateTime`
                 .unwrap(),
         )
     }
@@ -264,6 +254,10 @@ mod time_provider {
             if let Ok(time) = time.to_std() {
                 libparsec_platform_async::sleep(time).await;
             }
+        }
+
+        pub fn new_child(&self) -> Self {
+            Self(())
         }
     }
 }
@@ -478,13 +472,13 @@ mod time_provider {
             }
         }
 
-        // Following methods are only implemented for testing purpose
-
         pub fn new_child(&self) -> Self {
             Self(Arc::new(Mutex::new(TimeProviderAgent::new(Some(
                 self.0.clone(),
             )))))
         }
+
+        // Following methods are only implemented for testing purpose
 
         fn mock_time(&self, time: MockedTime) {
             self.0.lock().expect("Mutex is poisoned").mock_time(time);

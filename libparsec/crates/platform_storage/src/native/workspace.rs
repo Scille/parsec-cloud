@@ -391,7 +391,7 @@ impl PlatformWorkspaceStorage {
             let size = row.try_get::<u32, _>(1)?;
             let offline = row.try_get::<bool, _>(2)?;
             let accessed_on =
-                DateTime::from_f64_with_us_precision(row.try_get::<f64, _>(3)?).to_rfc3339();
+                DateTime::from_timestamp_micros(row.try_get::<i64, _>(3)?)?.to_rfc3339();
             output += &format!(
                 "{{\n\
                 \tblock_id: {block_id}\n\
@@ -555,7 +555,7 @@ pub async fn db_get_block_and_update_accessed_on(
         RETURNING data \
         ",
     )
-    .bind(timestamp.get_f64_with_us_precision())
+    .bind(timestamp.as_timestamp_micros())
     .bind(block_id.as_bytes())
     .fetch_optional(executor)
     .await?;
@@ -691,7 +691,7 @@ async fn db_insert_block(
     // SQLite's INTEGER type is at most an 8 bytes signed, so we must use `i64` here
     .bind(encrypted.len() as i64)
     .bind(false)
-    .bind(accessed_on.get_f64_with_us_precision())
+    .bind(accessed_on.as_timestamp_micros())
     .execute(executor)
     .await?;
 

@@ -252,4 +252,4 @@ class ParsecDateTimeClickType(click.ParamType):
         # so we must correct it given we know it is in fact a UTC
         py_datetime = py_datetime.replace(tzinfo=datetime.timezone.utc)
 
-        return DateTime.from_timestamp(py_datetime.timestamp())
+        return DateTime.from_timestamp_micros(int(py_datetime.timestamp() * 1_000_000))

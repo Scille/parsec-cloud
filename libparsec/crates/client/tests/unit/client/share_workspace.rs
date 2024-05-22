@@ -374,9 +374,11 @@ async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
-    // Alice's clock is 1h too late
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+    // Mock Alice clock to be 1h too late, but not the one used to communicate with
+    // the server (so that only the content is rejected, not the request itself)
     alice.time_provider.mock_time_shifted(-3_600_000_000);
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    client.cmds.time_provider.mock_time_shifted(3_600_000_000);
 
     let err = client
         .share_workspace(
